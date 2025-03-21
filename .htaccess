@@ -1,0 +1,110 @@
+RewriteEngine On
+
+# Redirect admin/ to dashboard
+RewriteRule ^admin/?$ admin/dashboard [L,R=301]
+RewriteRule ^account/?$ account/dashboard [L,R=301]
+
+# Block direct access to the /config directory
+RewriteRule ^config(/.*)?$ - [F,L]
+
+# Custom error documents
+ErrorDocument 404 /404.php
+ErrorDocument 403 /403.php
+
+# Handle clean URLs for logout
+RewriteRule ^logout$ logout.php [L]
+
+# Handle clean URLs for auth actions with absolute URLs
+# This ensures auth endpoints work correctly even when accessed from error pages
+RewriteRule ^auth/([^/]+)$ %{ENV:BASE_URL}login/login.php?action=$1 [QSA,L]
+
+# Authentication routes with absolute URLs
+RewriteRule ^auth/check-identifier$ %{ENV:BASE_URL}login/login.php?action=check-identifier [L,QSA]
+RewriteRule ^auth/login$ %{ENV:BASE_URL}login/login.php?action=login [L,QSA]
+RewriteRule ^auth/register$ %{ENV:BASE_URL}login/login.php?action=register [L,QSA]
+RewriteRule ^auth/switch-mode$ %{ENV:BASE_URL}login/login.php?action=switch-mode [L,QSA]
+RewriteRule ^auth/go-back$ %{ENV:BASE_URL}login/login.php?action=go-back [L,QSA]
+RewriteRule ^auth/resend-otp$ %{ENV:BASE_URL}login/login.php?action=resend-otp [L,QSA]
+
+# Set BASE_URL environment variable for use in RewriteRules
+# This should match the BASE_URL defined in config.php
+SetEnvIf Request_URI ".*" BASE_URL=http://localhost/newzzimba/
+
+# Rewrite rules for clean URLs
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^about-us$ about-us.php [L]
+RewriteRule ^request-for-quote$ request-for-quote.php [L]
+RewriteRule ^contact-us$ contact-us.php [L]
+RewriteRule ^products-page$ products-page.php [L]
+
+# Admin section clean URLs
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^admin/dashboard$ admin/dashboard.php [L]
+RewriteRule ^admin/mapping$ admin/mapping.php [L]
+RewriteRule ^admin/cash-account$ admin/cash-account.php [L]
+RewriteRule ^admin/manage-products$ admin/manage-products.php [L]
+RewriteRule ^admin/manage-vendors$ admin/manage-vendors.php [L]
+RewriteRule ^admin/zzimba-credit$ admin/zzimba-credit.php [L]
+RewriteRule ^admin/fundi$ admin/fundi.php [L]
+RewriteRule ^admin/order-catalogue$ admin/order-catalogue.php [L]
+RewriteRule ^admin/member-subscription$ admin/member-subscription.php [L]
+RewriteRule ^admin/quotations$ admin/quotations.php [L]
+RewriteRule ^admin/search-log$ admin/search-log.php [L]
+RewriteRule ^admin/ads-management$ admin/ads-management.php [L]
+RewriteRule ^admin/page-activity$ admin/page-activity.php [L]
+RewriteRule ^admin/ad-submissions$ admin/ad-submissions.php [L]
+RewriteRule ^admin/schedule-ads$ admin/schedule-ads.php [L]
+RewriteRule ^admin/notifications$ admin/notifications.php [L]
+RewriteRule ^admin/sessions$ admin/sessions.php [L] 
+RewriteRule ^admin/product-package$ admin/product-package.php [L]
+RewriteRule ^admin/vendor-categories$ admin/vendor-categories.php [L]
+RewriteRule ^admin/vendor-profile$ admin/vendor-profile.php [L]
+RewriteRule ^admin/users$ admin/users.php [L]
+RewriteRule ^admin/profile$ admin/profile.php [L]
+
+# User's section clean URLs
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^account/dashboard$ account/dashboard.php [L]
+RewriteRule ^account/order-history$ account/order-history.php [L]
+RewriteRule ^account/zzimba-credit$ account/zzimba-credit.php [L]
+RewriteRule ^account/notifications$ account/notifications.php [L]
+RewriteRule ^account/profile$ account/profile.php [L]
+
+# General Rule for Fetch Folder (For All Files)
+# Rewrite fetch/{filename}/{action} → fetch/{filename}.php?action={action}
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^fetch/([^/]+)/([^/]+)$ fetch/$1.php?action=$2 [L,QSA]
+
+# Rewrite fetch/{filename} → fetch/{filename}.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^fetch/([^/]+)$ fetch/$1.php [L]
+
+# General Rule for Admin Fetch Folder (For All Files)
+# Rewrite fetch/{filename}/{action} → fetch/{filename}.php?action={action}
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^admin/fetch/([^/]+)/([^/]+)$ admin/fetch/$1.php?action=$2 [L,QSA]
+
+# Rewrite admin/fetch/{filename} → admin/fetch/{filename}.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^admin/fetch/([^/]+)$ admin/fetch/$1.php [L]
+
+# Remove .php extension from URLs
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# General rule for other files to work without .php extension
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^/.]+)$ $1.php [L]
+
+# Set default index file
+DirectoryIndex index.php
+
