@@ -1,4 +1,4 @@
-name: SFTP Deploy
+name: FTP Deploy
 
 on:
   push:
@@ -14,19 +14,21 @@ jobs:
       with:
         fetch-depth: 1  # Only fetch the most recent commit for speed
 
-    - name: 📤 SFTP Deploy
-      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+    - name: 📤 FTP Deploy
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ftp.zzimbaonline.com
         username: zzimba@newzzimba.zzimbaonline.com
         password: Syscontrol.1##
-        port: 22  # SFTP typically uses port 22 (SSH port)
-        local_path: ./
-        remote_path: /
-        delete_remote_files: true  # This will delete files on the server that don't exist in the repo
+        port: 21  # Back to standard FTP port
+        local-dir: ./
+        server-dir: /
+        dangerous-clean-slate: false  # Don't delete all files on server first
         exclude: |
           **/.git*
           **/.git*/**
           **/node_modules/**
           README.md
           .github/**
+        state-name: .ftp-deploy-sync-state.json  # Tracks sync state between deployments
+
