@@ -31,4 +31,3 @@ jobs:
           README.md
           .github/**
         state-name: .ftp-deploy-sync-state.json  # Tracks sync state between deployments
-
