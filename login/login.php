@@ -953,7 +953,7 @@ $message = $auth_state['message'] ?? '';
                     action = 'register';
                 }
 
-                fetch('auth/' + action, {
+                fetch('<?= BASE_URL ?>auth/' + action, {
                         method: 'POST',
                         body: formData
                     })
@@ -1039,7 +1039,7 @@ $message = $auth_state['message'] ?? '';
                     action = 'register';
                 }
 
-                fetch('auth/' + action, {
+                fetch('<?= BASE_URL ?>auth/' + action, {
                         method: 'POST',
                         body: formData
                     })
@@ -1097,7 +1097,7 @@ $message = $auth_state['message'] ?? '';
     }
 
     function switchAuthMode(mode) {
-        fetch('auth/switch-mode', {
+        fetch('<?= BASE_URL ?>auth/switch-mode', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1176,7 +1176,7 @@ $message = $auth_state['message'] ?? '';
     }
 
     function goBack() {
-        fetch('auth/go-back', {
+        fetch('<?= BASE_URL ?>auth/go-back', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1196,7 +1196,7 @@ $message = $auth_state['message'] ?? '';
     }
 
     function resendOTP(type) {
-        fetch('auth/resend-otp', {
+        fetch('<?= BASE_URL ?>auth/resend-otp', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
