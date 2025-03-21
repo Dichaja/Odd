@@ -20,15 +20,15 @@ jobs:
         server: ftp.zzimbaonline.com
         username: zzimba@newzzimba.zzimbaonline.com
         password: Syscontrol.1##
-        port: 21  # Back to standard FTP port
+        port: 21  # Switch back to standard FTP port
         local-dir: ./
         server-dir: /
-        dangerous-clean-slate: false  # Don't delete all files on server first
+        dangerous-clean-slate: false
         exclude: |
           **/.git*
           **/.git*/**
           **/node_modules/**
           README.md
           .github/**
-        state-name: .ftp-deploy-sync-state.json  # Tracks sync state between deployments
+        state-name: .ftp-deploy-sync-state.json
 
