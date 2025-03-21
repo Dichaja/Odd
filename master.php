@@ -1191,23 +1191,23 @@ curl_close($ch);
         });
         window.addEventListener('scroll', updateScrollProgress);
         updateScrollProgress();
-        // document.addEventListener('DOMContentLoaded', () => {
-        //     const adPopup = document.getElementById('adPopup');
-        //     const adClose = document.getElementById('adClose');
-        //     const adProgressBar = document.getElementById('adProgressBar');
-        //     setTimeout(() => {
-        //         adPopup.classList.add('show');
-        //         document.body.style.overflow = 'hidden';
-        //         adProgressBar.style.width = '100%';
-        //     }, 5000);
-        //     setTimeout(() => {
-        //         adClose.style.display = 'flex';
-        //     }, 10000);
-        //     adClose.addEventListener('click', () => {
-        //         adPopup.classList.remove('show');
-        //         document.body.style.overflow = 'auto';
-        //     });
-        // });
+        document.addEventListener('DOMContentLoaded', () => {
+            const adPopup = document.getElementById('adPopup');
+            const adClose = document.getElementById('adClose');
+            const adProgressBar = document.getElementById('adProgressBar');
+            setTimeout(() => {
+                adPopup.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                adProgressBar.style.width = '100%';
+            }, 5000);
+            setTimeout(() => {
+                adClose.style.display = 'flex';
+            }, 10000);
+            adClose.addEventListener('click', () => {
+                adPopup.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            });
+        });
     </script>
 </body>
 
