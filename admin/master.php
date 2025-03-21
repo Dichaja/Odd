@@ -1,20 +1,10 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in'] || !$_SESSION['user']['is_admin']) {
-    header('HTTP/1.1 403 Forbidden');
-    include_once __DIR__ . '/../403.php';
-    exit;
-}
-
 $title = isset($pageTitle) ? $pageTitle . ' | Admin Console - Zzimba Online' : 'Admin Dashboard';
 $activeNav = $activeNav ?? 'dashboard';
 
-$userName = $_SESSION['user']['username'];
+// Get user information
+$userName = 'Admin User'; // This would typically come from a session or database
 $userInitials = '';
 $nameParts = explode(' ', $userName);
 foreach ($nameParts as $part) {
@@ -23,8 +13,7 @@ foreach ($nameParts as $part) {
     }
 }
 
-$lastLogin = isset($_SESSION['user']['last_login']) ? date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) : 'First login';
-
+// Define the menu structure with improved organization
 $menuItems = [
     'overview' => [
         'title' => 'Overview',
@@ -158,14 +147,17 @@ $menuItems = [
 
 <body class="bg-gray-50 font-rubik">
     <div class="flex min-h-screen">
+        <!-- Sidebar -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
+                <!-- Logo -->
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
                     <a href="<?= BASE_URL ?>admin/dashboard" class="flex items-center space-x-3">
                         <img src="<?= BASE_URL ?>img/logo_alt.png" alt="Logo" class="h-8 w-auto">
                     </a>
                 </div>
 
+                <!-- Navigation -->
                 <nav id="sidebarNav" class="flex-1 overflow-y-auto py-6 px-4 pt-0 pb-1">
                     <?php foreach ($menuItems as $categoryKey => $category): ?>
                         <div class="nav-category"><?= htmlspecialchars($category['title']) ?></div>
@@ -189,13 +181,14 @@ $menuItems = [
                     <?php endforeach; ?>
                 </nav>
 
+                <!-- Sidebar Footer -->
                 <div class="p-4 border-t border-gray-100">
                     <div class="space-y-2">
                         <a href="users" class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-primary transition-colors duration-200">
                             <i class="fas fa-users w-5 h-5 mr-3"></i>
-                            Users
+                            users
                         </a>
-                        <a href="profile" class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-primary transition-colors duration-200">
+                        <a href="#" class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-primary transition-colors duration-200">
                             <i class="fas fa-cog w-5 h-5 mr-3"></i>
                             Settings
                         </a>
@@ -204,7 +197,9 @@ $menuItems = [
             </div>
         </aside>
 
+        <!-- Main Content -->
         <div class="flex-1 lg:ml-72">
+            <!-- Header -->
             <header class="sticky top-0 z-40 bg-white border-b border-gray-100">
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
@@ -215,6 +210,7 @@ $menuItems = [
                     </div>
 
                     <div class="flex items-center gap-2">
+                        <!-- Notifications -->
                         <div class="relative">
                             <a href="<?= BASE_URL ?>admin/notifications">
                                 <button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 relative">
@@ -224,26 +220,25 @@ $menuItems = [
                             </a>
                         </div>
 
+                        <!-- User Menu -->
                         <div class="relative" id="userDropdown">
                             <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2">
                                 <div class="user-initials"><?= htmlspecialchars($userInitials) ?></div>
-                                <div class="hidden md:block text-left">
-                                    <span class="block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
-                                    <span class="block text-xs text-gray-500">Last login: <?= htmlspecialchars($lastLogin) ?></span>
-                                </div>
+                                <span class="hidden md:block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
                                 <i class="fas fa-chevron-down text-sm text-gray-400"></i>
                             </button>
+                            <!-- Dropdown Menu -->
                             <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
                                 <a href="profile" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                                     <i class="fas fa-user w-5 h-5 text-gray-400"></i>
                                     Profile
                                 </a>
-                                <a href="<?= BASE_URL ?>admin/settings" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                                     <i class="fas fa-cog w-5 h-5 text-gray-400"></i>
                                     Settings
                                 </a>
                                 <div class="my-2 border-t border-gray-100"></div>
-                                <a href="javascript:void(0);" onclick="logoutUser(); return false;" class="flex items-center gap-3 px-4 py-2.5 text-sm text-primary hover:bg-gray-50">
+                                <a href="#" class="flex items-center gap-3 px-4 py-2.5 text-sm text-primary hover:bg-gray-50">
                                     <i class="fas fa-sign-out-alt w-5 h-5"></i>
                                     Logout
                                 </a>
@@ -253,6 +248,7 @@ $menuItems = [
                 </div>
             </header>
 
+            <!-- Main Content Area -->
             <main class="p-6">
                 <?= $mainContent ?? '' ?>
             </main>
@@ -260,6 +256,7 @@ $menuItems = [
     </div>
 
     <script>
+        // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const overlay = document.createElement('div');
@@ -287,6 +284,7 @@ $menuItems = [
         sidebarToggle.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
 
+        // User dropdown functionality
         const userDropdown = document.getElementById('userDropdown');
         const userDropdownMenu = document.getElementById('userDropdownMenu');
 
@@ -299,6 +297,7 @@ $menuItems = [
             userDropdownMenu.classList.add('hidden');
         });
 
+        // Close sidebar on window resize if screen becomes large
         window.addEventListener('resize', () => {
             if (window.innerWidth >= 1024) {
                 sidebar.classList.remove('-translate-x-full');
@@ -307,37 +306,27 @@ $menuItems = [
             }
         });
 
+        // Scroll active nav item into view
         document.addEventListener('DOMContentLoaded', function() {
             const activeNavItem = document.querySelector('.active-nav-item');
             const sidebarNav = document.getElementById('sidebarNav');
 
             if (activeNavItem && sidebarNav) {
+                // Get the position of the active item relative to the sidebar
+                const activeItemRect = activeNavItem.getBoundingClientRect();
+                const sidebarRect = sidebarNav.getBoundingClientRect();
+
+                // Calculate the scroll position to bring the active item to the top
+                // with a small offset for better visibility
                 const scrollTop = activeNavItem.offsetTop - sidebarNav.offsetTop - 20;
+
+                // Scroll the sidebar to the active item
                 sidebarNav.scrollTo({
                     top: scrollTop,
                     behavior: 'smooth'
                 });
             }
         });
-
-        function logoutUser() {
-            fetch('<?= BASE_URL ?>logout', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.href = data.redirect;
-                    }
-                })
-                .catch(error => {
-                    console.error('Logout error:', error);
-                    window.location.href = '<?= BASE_URL ?>';
-                });
-        }
     </script>
 </body>
 
