@@ -20,7 +20,9 @@ jobs:
         server: ftp.zzimbaonline.com
         username: zzimba@newzzimba.zzimbaonline.com
         password: Syscontrol.1##
-        port: 21  # Switch back to standard FTP port
+        port: 21
+        protocol: ftps  # Use explicit FTPS
+        security: explicit  # Explicit FTPS
         local-dir: ./
         server-dir: /
         dangerous-clean-slate: false
