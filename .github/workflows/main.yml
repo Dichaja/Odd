@@ -21,8 +21,8 @@ jobs:
         username: zzimba@newzzimba.zzimbaonline.com
         password: Syscontrol.1##
         port: 21
-        protocol: ftps  # Use explicit FTPS
-        security: explicit  # Explicit FTPS
+        protocol: ftps  # Use FTPS
+        security: loose  # Changed from "explicit" to "loose"
         local-dir: ./
         server-dir: /
         dangerous-clean-slate: false
