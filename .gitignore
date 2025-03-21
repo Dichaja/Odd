@@ -1,2 +1,3 @@
 .env
 track/session_log.json
+/config/

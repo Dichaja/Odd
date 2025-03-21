@@ -437,7 +437,7 @@ $_SESSION['last_activity'] = time();
             background: white;
             border-radius: 0.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            min-width: 250px;
+            min-width: 200px;
             z-index: 50;
             overflow: hidden;
         }
