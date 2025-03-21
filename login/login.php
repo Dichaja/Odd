@@ -1,7 +1,18 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-// Only set headers if they haven't been sent yet
+// Set CORS headers to allow requests from the same domain
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
+
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('HTTP/1.1 200 OK');
+    exit;
+}
+
+// Only set content type headers if they haven't been sent yet
 if (!headers_sent()) {
     header('Content-Type: application/json');
     header('Access-Control-Allow-Methods: POST');
@@ -907,6 +918,9 @@ $message = $auth_state['message'] ?? '';
 </div>
 
 <script>
+    // Store the base URL for use in all AJAX requests
+    const baseUrl = '<?= BASE_URL ?>';
+
     document.addEventListener('DOMContentLoaded', function() {
         const phoneInputField = document.querySelector("#phone");
         if (phoneInputField) {
@@ -953,9 +967,10 @@ $message = $auth_state['message'] ?? '';
                     action = 'register';
                 }
 
-                fetch('<?= BASE_URL ?>auth/' + action, {
+                fetch(baseUrl + 'auth/' + action, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        credentials: 'same-origin'
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -993,6 +1008,7 @@ $message = $auth_state['message'] ?? '';
         }
     });
 
+    // Update all other JavaScript functions to use baseUrl
     function initializeEventListeners() {
         const phoneInputField = document.querySelector("#phone");
         if (phoneInputField) {
@@ -1039,9 +1055,10 @@ $message = $auth_state['message'] ?? '';
                     action = 'register';
                 }
 
-                fetch('<?= BASE_URL ?>auth/' + action, {
+                fetch(baseUrl + 'auth/' + action, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        credentials: 'same-origin'
                     })
                     .then(response => response.json())
                     .then(data => {
@@ -1097,12 +1114,13 @@ $message = $auth_state['message'] ?? '';
     }
 
     function switchAuthMode(mode) {
-        fetch('<?= BASE_URL ?>auth/switch-mode', {
+        fetch(baseUrl + 'auth/switch-mode', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `switch-mode=${mode}&ajax_request=1`
+                body: `switch-mode=${mode}&ajax_request=1`,
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
@@ -1176,12 +1194,13 @@ $message = $auth_state['message'] ?? '';
     }
 
     function goBack() {
-        fetch('<?= BASE_URL ?>auth/go-back', {
+        fetch(baseUrl + 'auth/go-back', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: 'go_back=1&ajax_request=1'
+                body: 'go_back=1&ajax_request=1',
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {
@@ -1196,12 +1215,13 @@ $message = $auth_state['message'] ?? '';
     }
 
     function resendOTP(type) {
-        fetch('<?= BASE_URL ?>auth/resend-otp', {
+        fetch(baseUrl + 'auth/resend-otp', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: `resend-otp=${type}&ajax_request=1`
+                body: `resend-otp=${type}&ajax_request=1`,
+                credentials: 'same-origin'
             })
             .then(response => response.json())
             .then(data => {

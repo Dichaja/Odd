@@ -14,21 +14,16 @@ ErrorDocument 403 /403.php
 # Handle clean URLs for logout
 RewriteRule ^logout$ logout.php [L]
 
-# Handle clean URLs for auth actions with absolute URLs
-# This ensures auth endpoints work correctly even when accessed from error pages
-RewriteRule ^auth/([^/]+)$ %{ENV:BASE_URL}login/login.php?action=$1 [QSA,L]
+# Handle clean URLs for auth actions
+RewriteRule ^auth/([^/]+)$ login/login.php?action=$1 [QSA,L]
 
-# Authentication routes with absolute URLs
-RewriteRule ^auth/check-identifier$ %{ENV:BASE_URL}login/login.php?action=check-identifier [L,QSA]
-RewriteRule ^auth/login$ %{ENV:BASE_URL}login/login.php?action=login [L,QSA]
-RewriteRule ^auth/register$ %{ENV:BASE_URL}login/login.php?action=register [L,QSA]
-RewriteRule ^auth/switch-mode$ %{ENV:BASE_URL}login/login.php?action=switch-mode [L,QSA]
-RewriteRule ^auth/go-back$ %{ENV:BASE_URL}login/login.php?action=go-back [L,QSA]
-RewriteRule ^auth/resend-otp$ %{ENV:BASE_URL}login/login.php?action=resend-otp [L,QSA]
-
-# Set BASE_URL environment variable for use in RewriteRules
-# This should match the BASE_URL defined in config.php
-SetEnvIf Request_URI ".*" BASE_URL=http://localhost/newzzimba/
+# Authentication routes
+RewriteRule ^auth/check-identifier$ login/login.php?action=check-identifier [L,QSA]
+RewriteRule ^auth/login$ login/login.php?action=login [L,QSA]
+RewriteRule ^auth/register$ login/login.php?action=register [L,QSA]
+RewriteRule ^auth/switch-mode$ login/login.php?action=switch-mode [L,QSA]
+RewriteRule ^auth/go-back$ login/login.php?action=go-back [L,QSA]
+RewriteRule ^auth/resend-otp$ login/login.php?action=resend-otp [L,QSA]
 
 # Rewrite rules for clean URLs
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -107,4 +102,3 @@ RewriteRule ^([^/.]+)$ $1.php [L]
 
 # Set default index file
 DirectoryIndex index.php
-
