@@ -1,8 +1,11 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-// Only set headers if they haven't been sent yet
-if (!headers_sent()) {
+// Set appropriate content type for AJAX responses
+$isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
+if ($isAjax && !headers_sent()) {
     header('Content-Type: application/json');
     header('Access-Control-Allow-Methods: POST');
     header('Access-Control-Allow-Headers: Content-Type');
@@ -168,10 +171,17 @@ function checkIdentifier()
         exit;
     }
 
+    // Check for admin prefix and remove it if present
     $isAdminLogin = false;
     if (strpos($identifier, 'Admin:') === 0) {
         $isAdminLogin = true;
         $identifier = trim(substr($identifier, 6));
+        // If after removing prefix it's empty, return error
+        if (empty($identifier)) {
+            $response['errors'][] = 'Username is required after Admin: prefix';
+            echo json_encode($response);
+            exit;
+        }
     }
 
     $is_email = filter_var($identifier, FILTER_VALIDATE_EMAIL) !== false;
@@ -196,7 +206,7 @@ function checkIdentifier()
                 exit;
             }
 
-            $_SESSION['auth_state']['data']['identifier'] = $identifier;
+            $_SESSION['auth_state']['data']['identifier'] = 'Admin:' . $identifier;
             $_SESSION['auth_state']['data']['is_email'] = $is_email;
             $_SESSION['auth_state']['data']['is_admin'] = true;
             $_SESSION['auth_state']['data']['user_id'] = binToUuid($user['id']);
@@ -206,7 +216,6 @@ function checkIdentifier()
                 $stmt = $pdo->prepare("SELECT id, username, email, status FROM zzimba_users WHERE email = :identifier");
                 $stmt->bindParam(':identifier', $identifier);
             } else {
-                // Remove BINARY and COLLATE for username check to make it more flexible
                 $stmt = $pdo->prepare("SELECT id, username, email, status FROM zzimba_users WHERE username = :identifier");
                 $stmt->bindParam(':identifier', $identifier);
             }
@@ -249,11 +258,7 @@ function checkIdentifier()
         exit;
     } catch (PDOException $e) {
         error_log("Database error in checkIdentifier: " . $e->getMessage() . " - SQL: " . $e->getTraceAsString());
-        if (strpos($e->getMessage(), 'Connection') !== false) {
-            $response['errors'][] = 'Database connection error. Please try again later.';
-        } else {
-            $response['errors'][] = 'Error checking username. Please try again.';
-        }
+        $response['errors'][] = 'Database error. Please try again later.';
         echo json_encode($response);
         exit;
     }
@@ -420,12 +425,14 @@ function processRegistration()
                 exit;
             }
 
-            try {
-                $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE username = :username COLLATE utf8mb4_bin");
-                $stmt->bindParam(':username', $username);
-                $stmt->execute();
 
-                if ($stmt->rowCount() > 0) {
+            try {
+                // First check if username exists with a simpler query
+                $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM zzimba_users WHERE username = ?");
+                $stmt->execute([$username]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($result['count'] > 0) {
                     $response['errors'][] = 'Username already exists';
                     echo json_encode($response);
                     exit;
@@ -448,8 +455,8 @@ function processRegistration()
                 echo json_encode($response);
                 exit;
             } catch (PDOException $e) {
-                error_log("Database error: " . $e->getMessage());
-                $response['errors'][] = 'System error. Please try again later.';
+                error_log("Database error in processRegistration (username step): " . $e->getMessage());
+                $response['errors'][] = 'Database error. Please try again later.';
                 echo json_encode($response);
                 exit;
             }
@@ -1097,7 +1104,7 @@ $message = $auth_state['message'] ?? '';
     }
 
     function switchAuthMode(mode) {
-        fetch('<?= BASE_URL ?>auth/switch-mode', {
+        fetch('auth/switch-mode', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1176,7 +1183,7 @@ $message = $auth_state['message'] ?? '';
     }
 
     function goBack() {
-        fetch('<?= BASE_URL ?>auth/go-back', {
+        fetch('auth/go-back', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1196,7 +1203,7 @@ $message = $auth_state['message'] ?? '';
     }
 
     function resendOTP(type) {
-        fetch('<?= BASE_URL ?>auth/resend-otp', {
+        fetch('auth/resend-otp', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -1228,15 +1235,45 @@ $message = $auth_state['message'] ?? '';
     function openAuthModal() {
         const authModal = document.getElementById('auth-modal');
         if (authModal) {
-            authModal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            // Reset auth state to login/username when opening the modal
+            fetch('<?= BASE_URL ?>auth/switch-mode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'switch-mode=login&ajax_request=1'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.html) {
+                        document.querySelector('#auth-modal .modal-container').innerHTML = data.html;
+                        initializeEventListeners();
 
-            const modalContainer = authModal.querySelector('.modal-container');
-            if (modalContainer) {
-                setTimeout(() => {
-                    modalContainer.classList.add('active');
-                }, 10);
-            }
+                        // Display the modal after content is updated
+                        authModal.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+
+                        const modalContainer = authModal.querySelector('.modal-container');
+                        if (modalContainer) {
+                            setTimeout(() => {
+                                modalContainer.classList.add('active');
+                            }, 10);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Show modal even if fetch fails
+                    authModal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+
+                    const modalContainer = authModal.querySelector('.modal-container');
+                    if (modalContainer) {
+                        setTimeout(() => {
+                            modalContainer.classList.add('active');
+                        }, 10);
+                    }
+                });
         }
     }
 
@@ -1257,3 +1294,15 @@ $message = $auth_state['message'] ?? '';
 
     document.addEventListener('DOMContentLoaded', initializeEventListeners);
 </script>
+
+<?php
+// This ensures the auth state is reset when the page is loaded directly
+if (!isset($_GET['action']) && !isset($_POST['ajax_request'])) {
+    $_SESSION['auth_state'] = [
+        'mode' => 'login',
+        'step' => 'username',
+        'data' => [],
+        'errors' => [],
+        'message' => ''
+    ];
+}
