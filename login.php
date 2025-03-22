@@ -708,58 +708,113 @@ function getStepTitle($mode, $step)
 
     function setupOTPInputs() {
         const inputs = document.querySelectorAll('.otp-input');
-        inputs.forEach((inp, index) => {
-            inp.addEventListener('keyup', (e) => {
-                const t = inp.getAttribute('data-otp-target');
-                if (inp.value.length === 1 && index < 5) {
-                    inputs[index + 1].focus();
+
+        // Clear any existing event listeners
+        inputs.forEach(input => {
+            input.removeEventListener('keydown', handleKeyDown);
+            input.removeEventListener('input', handleInput);
+            input.removeEventListener('paste', handlePaste);
+        });
+
+        // Add event listeners for each input
+        inputs.forEach((input, index) => {
+            // Handle keydown for navigation and backspace
+            input.addEventListener('keydown', function(e) {
+                const target = e.target.getAttribute('data-otp-target');
+                const allInputs = document.querySelectorAll(`.otp-input[data-otp-target="${target}"]`);
+
+                // Handle backspace/delete
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    if (input.value === '') {
+                        // If current input is empty, focus previous input
+                        if (index > 0) {
+                            e.preventDefault();
+                            allInputs[index - 1].focus();
+                            allInputs[index - 1].value = '';
+                        }
+                    } else {
+                        // Clear current input
+                        input.value = '';
+                    }
+                    updateOTPValue(target);
                 }
-                if (e.key === 'Backspace' && index > 0 && inp.value.length === 0) {
-                    inputs[index - 1].focus();
+
+                // Handle arrow keys for navigation
+                if (e.key === 'ArrowLeft' && index > 0) {
+                    e.preventDefault();
+                    allInputs[index - 1].focus();
                 }
-                updateOTPValue(t);
-                const allFilled = Array.from(document.querySelectorAll(`.otp-input[data-otp-target="${t}"]`)).every(i => i.value.length === 1);
+                if (e.key === 'ArrowRight' && index < allInputs.length - 1) {
+                    e.preventDefault();
+                    allInputs[index + 1].focus();
+                }
+            });
+
+            // Handle input for auto-focus to next input
+            input.addEventListener('input', function(e) {
+                // Ensure only numbers are entered
+                input.value = input.value.replace(/[^0-9]/g, '');
+
+                const target = input.getAttribute('data-otp-target');
+                const allInputs = document.querySelectorAll(`.otp-input[data-otp-target="${target}"]`);
+
+                // Auto-focus to next input when a digit is entered
+                if (input.value.length === 1 && index < allInputs.length - 1) {
+                    allInputs[index + 1].focus();
+                }
+
+                updateOTPValue(target);
+
+                // Check if all inputs are filled
+                const allFilled = Array.from(allInputs).every(inp => inp.value.length === 1);
                 if (allFilled) {
-                    if (t === 'email-otp') {
+                    if (target === 'email-otp') {
                         handleEmailOTPSubmit();
-                    } else if (t === 'phone-otp') {
+                    } else if (target === 'phone-otp') {
                         handlePhoneOTPSubmit();
-                    } else if (t === 'reset-otp') {
+                    } else if (target === 'reset-otp') {
                         handleResetOTPSubmit();
                     }
                 }
             });
-            inp.addEventListener('input', () => {
-                inp.value = inp.value.replace(/[^0-9]/g, '');
-            });
-            inp.addEventListener('paste', (e) => {
-                e.preventDefault();
-                const t = inp.getAttribute('data-otp-target');
-                const pd = (e.clipboardData || window.clipboardData).getData('text');
-                const all = document.querySelectorAll(`.otp-input[data-otp-target="${t}"]`);
-                for (let i = 0; i < Math.min(pd.length, all.length); i++) {
-                    if (/[0-9]/.test(pd[i])) {
-                        all[i].value = pd[i];
+
+            // Handle paste event (only for the first input of each group)
+            if (index === 0) {
+                input.addEventListener('paste', function(e) {
+                    e.preventDefault();
+
+                    const target = input.getAttribute('data-otp-target');
+                    const allInputs = document.querySelectorAll(`.otp-input[data-otp-target="${target}"]`);
+
+                    // Get pasted data and clean it
+                    const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                    const digits = pasteData.replace(/\D/g, '').substring(0, 6);
+
+                    // Fill inputs with pasted digits
+                    for (let i = 0; i < Math.min(digits.length, allInputs.length); i++) {
+                        allInputs[i].value = digits[i] || '';
                     }
-                }
-                updateOTPValue(t);
-                const li = Math.min(pd.length - 1, all.length - 1);
-                if (li < all.length - 1) {
-                    all[li + 1].focus();
-                } else {
-                    all[li].focus();
-                }
-                const af = Array.from(all).every(i => i.value.length === 1);
-                if (af) {
-                    if (t === 'email-otp') {
-                        handleEmailOTPSubmit();
-                    } else if (t === 'phone-otp') {
-                        handlePhoneOTPSubmit();
-                    } else if (t === 'reset-otp') {
-                        handleResetOTPSubmit();
+
+                    // Focus the last filled input or the next empty one
+                    const lastIndex = Math.min(digits.length, allInputs.length) - 1;
+                    if (lastIndex >= 0) {
+                        allInputs[lastIndex].focus();
                     }
-                }
-            });
+
+                    updateOTPValue(target);
+
+                    // Auto-submit if all fields are filled
+                    if (digits.length >= 6) {
+                        if (target === 'email-otp') {
+                            handleEmailOTPSubmit();
+                        } else if (target === 'phone-otp') {
+                            handlePhoneOTPSubmit();
+                        } else if (target === 'reset-otp') {
+                            handleResetOTPSubmit();
+                        }
+                    }
+                });
+            }
         });
     }
 

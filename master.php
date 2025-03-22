@@ -26,6 +26,7 @@ curl_close($ch);
     <script src="<?= BASE_URL ?>track/eventLog.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
     <link rel="icon" type="image/png" href="favicon.png">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         const BASE_URL = "<?php echo BASE_URL; ?>";
         const ACTIVE_NAV = <?php echo ($activeNav !== null) ? json_encode($activeNav) : "null"; ?>;
@@ -920,6 +921,115 @@ curl_close($ch);
                     });
                 });
             }
+        }
+
+        // Enhanced OTP input handling
+        $(document).ready(function() {
+            // Handle OTP inputs
+            function setupOTPInputs() {
+                // Handle keydown for navigation and backspace
+                $(document).on('keydown', '.otp-input', function(e) {
+                    const $current = $(this);
+                    const index = $('.otp-input[data-otp-target="' + $current.data('otp-target') + '"]').index($current);
+                    const $inputs = $('.otp-input[data-otp-target="' + $current.data('otp-target') + '"]');
+
+                    // Handle backspace/delete
+                    if (e.keyCode === 8 || e.keyCode === 46) {
+                        if ($current.val() === '') {
+                            // If current input is empty, focus and clear previous input
+                            if (index > 0) {
+                                e.preventDefault();
+                                $inputs.eq(index - 1).focus().val('');
+                                updateOTPValue($current.data('otp-target'));
+                            }
+                        }
+                    }
+
+                    // Arrow key navigation
+                    if (e.keyCode === 37 && index > 0) { // Left arrow
+                        e.preventDefault();
+                        $inputs.eq(index - 1).focus();
+                    }
+                    if (e.keyCode === 39 && index < $inputs.length - 1) { // Right arrow
+                        e.preventDefault();
+                        $inputs.eq(index + 1).focus();
+                    }
+                });
+
+                // Handle input for auto-focus to next input
+                $(document).on('input', '.otp-input', function() {
+                    const $current = $(this);
+                    const $inputs = $('.otp-input[data-otp-target="' + $current.data('otp-target') + '"]');
+                    const index = $inputs.index($current);
+
+                    // Ensure only numbers are entered
+                    $current.val($current.val().replace(/[^0-9]/g, ''));
+
+                    // Auto-focus to next input when a digit is entered
+                    if ($current.val().length === 1 && index < $inputs.length - 1) {
+                        $inputs.eq(index + 1).focus();
+                    }
+
+                    updateOTPValue($current.data('otp-target'));
+
+                    // Check if all inputs are filled for auto-submit
+                    const allFilled = $inputs.toArray().every(input => input.value.length === 1);
+                    if (allFilled) {
+                        const target = $current.data('otp-target');
+                        if (target === 'email-otp') {
+                            handleEmailOTPSubmit();
+                        } else if (target === 'phone-otp') {
+                            handlePhoneOTPSubmit();
+                        } else if (target === 'reset-otp') {
+                            handleResetOTPSubmit();
+                        }
+                    }
+                });
+
+                // Handle paste event (only for the first input of each group)
+                $(document).on('paste', '.otp-input:first-of-type', function(e) {
+                    e.preventDefault();
+
+                    const $current = $(this);
+                    const target = $current.data('otp-target');
+                    const $inputs = $('.otp-input[data-otp-target="' + target + '"]');
+
+                    // Get pasted data and clean it
+                    const pasteData = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
+                    const digits = pasteData.replace(/\D/g, '').substring(0, 6);
+
+                    // Fill inputs with pasted digits
+                    for (let i = 0; i < Math.min(digits.length, $inputs.length); i++) {
+                        $inputs.eq(i).val(digits[i] || '');
+                    }
+
+                    // Focus the last filled input
+                    $inputs.eq(Math.min(digits.length, $inputs.length) - 1).focus();
+
+                    updateOTPValue(target);
+
+                    // Auto-submit if all fields are filled
+                    if (digits.length >= 6) {
+                        if (target === 'email-otp') {
+                            handleEmailOTPSubmit();
+                        } else if (target === 'phone-otp') {
+                            handlePhoneOTPSubmit();
+                        } else if (target === 'reset-otp') {
+                            handleResetOTPSubmit();
+                        }
+                    }
+                });
+            }
+
+            // Initialize OTP inputs when document is ready
+            setupOTPInputs();
+        });
+
+        function updateOTPValue(target) {
+            const values = $('.otp-input[data-otp-target="' + target + '"]').map(function() {
+                return this.value;
+            }).get().join('');
+            $('#' + target).val(values);
         }
     </script>
 </body>
