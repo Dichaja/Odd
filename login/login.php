@@ -22,7 +22,6 @@ function getStepTitle($mode, $step)
     return 'Authentication';
 }
 ?>
-<!-- Login: Username -->
 <div id="login-step-username" class="auth-form active">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -45,7 +44,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Login: Password -->
 <div id="login-step-password" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -73,7 +71,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Username -->
 <div id="register-step-username" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -97,7 +94,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Email -->
 <div id="register-step-email" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -121,7 +117,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Email Verification -->
 <div id="register-step-email-verify" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -156,7 +151,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Phone -->
 <div id="register-step-phone" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -176,7 +170,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Phone Verification -->
 <div id="register-step-phone-verify" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -211,7 +204,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Password -->
 <div id="register-step-password" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -254,7 +246,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Forgot Password: Options -->
 <div id="forgot-password-options" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -291,7 +282,6 @@ function getStepTitle($mode, $step)
         </p>
     </div>
 </div>
-<!-- Forgot Password: Email Form -->
 <div id="forgot-password-email-form" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -314,7 +304,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Forgot Password: Phone Form -->
 <div id="forgot-password-phone-form" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -334,7 +323,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Reset Password: Verify OTP -->
 <div id="reset-password-verify" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -369,7 +357,6 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Reset Password: New Password -->
 <div id="reset-password-form" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -692,7 +679,6 @@ function getStepTitle($mode, $step)
         document.getElementById(t).value = val;
     }
 
-    // LOGIN
     function handleLoginUsernameSubmit() {
         const u = document.getElementById('login-username').value;
         if (!u) {
@@ -700,18 +686,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('login-username-error');
 
-        // Show loading state
         const button = document.querySelector('#login-username-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
 
-        // Make AJAX request to check if username/email exists
         $.ajax({
-            url: 'login/handleAuth.php?action=checkUser',
+            url: BASE_URL + 'auth/checkUser',
             type: 'POST',
             data: JSON.stringify({
                 identifier: u
@@ -752,18 +735,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('login-password-error');
 
-        // Show loading state
         const button = document.querySelector('#login-password-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Logging in...';
 
-        // Make AJAX request to verify password
         $.ajax({
-            url: 'login/handleAuth.php?action=login',
+            url: BASE_URL + 'auth/login',
             type: 'POST',
             data: JSON.stringify({
                 identifier: loginData.identifier,
@@ -804,7 +784,6 @@ function getStepTitle($mode, $step)
         });
     }
 
-    // REGISTER
     function handleRegisterUsernameSubmit() {
         const u = document.getElementById('register-username').value;
         if (!u) {
@@ -816,18 +795,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('register-username-error');
 
-        // Show loading state
         const button = document.querySelector('#register-username-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
 
-        // Make AJAX request to check if username is available
         $.ajax({
-            url: 'login/handleAuth.php?action=checkUsername',
+            url: BASE_URL + 'auth/checkUsername',
             type: 'POST',
             data: JSON.stringify({
                 username: u
@@ -871,18 +847,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('register-email-error');
 
-        // Show loading state
         const button = document.querySelector('#register-email-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
 
-        // Make AJAX request to check if email is available
         $.ajax({
-            url: 'login/handleAuth.php?action=checkEmail',
+            url: BASE_URL + 'auth/checkEmail',
             type: 'POST',
             data: JSON.stringify({
                 email: e
@@ -897,9 +870,8 @@ function getStepTitle($mode, $step)
                     registrationData.email = e;
                     document.getElementById('register-email-display').textContent = e;
 
-                    // Request OTP
                     $.ajax({
-                        url: 'login/handleAuth.php?action=sendEmailOTP',
+                        url: BASE_URL + 'auth/sendEmailOTP',
                         type: 'POST',
                         data: JSON.stringify({
                             email: e
@@ -949,18 +921,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('email-otp-error');
 
-        // Show loading state
         const button = document.querySelector('#register-email-verify-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
 
-        // Make AJAX request to verify email OTP
         $.ajax({
-            url: 'login/handleAuth.php?action=verifyEmailOTP',
+            url: BASE_URL + 'auth/verifyEmailOTP',
             type: 'POST',
             data: JSON.stringify({
                 email: registrationData.email,
@@ -1002,18 +971,15 @@ function getStepTitle($mode, $step)
         }
         const pn = iti.getNumber();
 
-        // Clear any previous errors
         hideError('register-phone-error');
 
-        // Show loading state
         const button = document.querySelector('#register-phone-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
 
-        // Make AJAX request to check if phone is available
         $.ajax({
-            url: 'login/handleAuth.php?action=checkPhone',
+            url: BASE_URL + 'auth/checkPhone',
             type: 'POST',
             data: JSON.stringify({
                 phone: pn
@@ -1028,9 +994,8 @@ function getStepTitle($mode, $step)
                     registrationData.phone = pn;
                     document.getElementById('register-phone-display').textContent = pn;
 
-                    // Request OTP
                     $.ajax({
-                        url: 'login/handleAuth.php?action=sendPhoneOTP',
+                        url: BASE_URL + 'auth/sendPhoneOTP',
                         type: 'POST',
                         data: JSON.stringify({
                             phone: pn
@@ -1080,18 +1045,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('phone-otp-error');
 
-        // Show loading state
         const button = document.querySelector('#register-phone-verify-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
 
-        // Make AJAX request to verify phone OTP
         $.ajax({
-            url: 'login/handleAuth.php?action=verifyPhoneOTP',
+            url: BASE_URL + 'auth/verifyPhoneOTP',
             type: 'POST',
             data: JSON.stringify({
                 phone: registrationData.phone,
@@ -1146,18 +1108,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('register-password-error');
 
-        // Show loading state
         const button = document.querySelector('#register-password-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating account...';
 
-        // Make AJAX request to complete registration
         $.ajax({
-            url: 'login/handleAuth.php?action=register',
+            url: BASE_URL + 'auth/register',
             type: 'POST',
             data: JSON.stringify({
                 username: registrationData.username,
@@ -1199,7 +1158,6 @@ function getStepTitle($mode, $step)
         });
     }
 
-    // FORGOT PASSWORD
     function handleForgotEmailSubmit() {
         const e = document.getElementById('forgot-email').value;
         if (!e) {
@@ -1211,18 +1169,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('forgot-email-error');
 
-        // Show loading state
         const button = document.querySelector('#forgot-password-email-form-element button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
 
-        // Make AJAX request to send reset code
         $.ajax({
-            url: 'login/handleAuth.php?action=sendResetEmail',
+            url: BASE_URL + 'auth/sendResetEmail',
             type: 'POST',
             data: JSON.stringify({
                 email: e
@@ -1275,18 +1230,15 @@ function getStepTitle($mode, $step)
         }
         const pn = iti.getNumber();
 
-        // Clear any previous errors
         hideError('forgot-phone-error');
 
-        // Show loading state
         const button = document.querySelector('#forgot-password-phone-form-element button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
 
-        // Make AJAX request to send reset code
         $.ajax({
-            url: 'login/handleAuth.php?action=sendResetPhone',
+            url: BASE_URL + 'auth/sendResetPhone',
             type: 'POST',
             data: JSON.stringify({
                 phone: pn
@@ -1330,7 +1282,6 @@ function getStepTitle($mode, $step)
         });
     }
 
-    // RESET PASSWORD
     function handleResetOTPSubmit() {
         const o = document.getElementById('reset-otp').value;
         if (!o || o.length !== 6) {
@@ -1338,18 +1289,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('reset-otp-error');
 
-        // Show loading state
         const button = document.querySelector('#reset-verify-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
 
-        // Make AJAX request to verify reset OTP
         $.ajax({
-            url: 'login/handleAuth.php?action=verifyResetOTP',
+            url: BASE_URL + 'auth/verifyResetOTP',
             type: 'POST',
             data: JSON.stringify({
                 contact: forgotPasswordData.contact,
@@ -1400,18 +1348,15 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Clear any previous errors
         hideError('reset-password-error');
 
-        // Show loading state
         const button = document.querySelector('#reset-password-form-element button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Resetting password...';
 
-        // Make AJAX request to reset password
         $.ajax({
-            url: 'login/handleAuth.php?action=resetPassword',
+            url: BASE_URL + 'auth/resetPassword',
             type: 'POST',
             data: JSON.stringify({
                 contact: forgotPasswordData.contact,
@@ -1448,7 +1393,6 @@ function getStepTitle($mode, $step)
         });
     }
 
-    // Helper functions
     function showError(elementId, message) {
         const errorElement = document.getElementById(elementId);
         errorElement.textContent = message;
@@ -1461,17 +1405,12 @@ function getStepTitle($mode, $step)
         errorElement.classList.add('hidden');
     }
 
-    // Initialize event listeners
     document.addEventListener('DOMContentLoaded', () => {
-        // Setup OTP inputs
-        setupOTPInputs();
-
-        // Email OTP resend
         document.getElementById('resend-email-otp').addEventListener('click', () => {
             if (document.getElementById('resend-email-otp').disabled) return;
 
             $.ajax({
-                url: 'login/handleAuth.php?action=sendEmailOTP',
+                url: BASE_URL + 'auth/sendEmailOTP',
                 type: 'POST',
                 data: JSON.stringify({
                     email: registrationData.email
@@ -1494,12 +1433,11 @@ function getStepTitle($mode, $step)
             });
         });
 
-        // Phone OTP resend
         document.getElementById('resend-phone-otp').addEventListener('click', () => {
             if (document.getElementById('resend-phone-otp').disabled) return;
 
             $.ajax({
-                url: 'login/handleAuth.php?action=sendPhoneOTP',
+                url: BASE_URL + 'auth/sendPhoneOTP',
                 type: 'POST',
                 data: JSON.stringify({
                     phone: registrationData.phone
@@ -1522,7 +1460,6 @@ function getStepTitle($mode, $step)
             });
         });
 
-        // Reset OTP resend
         document.getElementById('resend-reset-otp').addEventListener('click', () => {
             if (document.getElementById('resend-reset-otp').disabled) return;
 
@@ -1534,7 +1471,7 @@ function getStepTitle($mode, $step)
             };
 
             $.ajax({
-                url: 'login/handleAuth.php?action=' + endpoint,
+                url: BASE_URL + 'auth/' + endpoint,
                 type: 'POST',
                 data: JSON.stringify(data),
                 contentType: 'application/json',

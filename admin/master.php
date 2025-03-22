@@ -8,9 +8,6 @@ if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in'] || !$_SESSION['
     exit;
 }
 
-$lastLogin = isset($_SESSION['user']['last_login']) ? $_SESSION['user']['last_login'] : 'Never';
-$formattedLastLogin = $lastLogin !== 'Never' ? date('M d, Y h:i A', strtotime($lastLogin)) : 'Never';
-
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)) {
     session_unset();
     session_destroy();
@@ -19,6 +16,13 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 }
 
 $_SESSION['last_activity'] = time();
+
+$stmt = $pdo->prepare("SELECT last_login FROM admin_users WHERE id = :user_id");
+$stmt->bindParam(':user_id', $_SESSION['user']['user_id'], PDO::PARAM_LOB);
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$lastLogin = $result['last_login'] ?? 'Never';
+$formattedLastLogin = $lastLogin !== 'Never' ? date('M d, Y h:i A', strtotime($lastLogin)) : 'Never';
 
 $title = isset($pageTitle) ? $pageTitle . ' | Admin Console - Zzimba Online' : 'Admin Dashboard';
 $activeNav = $activeNav ?? 'dashboard';
@@ -331,7 +335,7 @@ $menuItems = [
         });
 
         function logoutUser() {
-            fetch('<?= BASE_URL ?>login/handleAuth.php?action=logout', {
+            fetch('<?= BASE_URL ?>auth/logout', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

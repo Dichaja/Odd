@@ -1165,7 +1165,7 @@ $isLoggedIn = isset($_SESSION['user']) && $_SESSION['user']['logged_in'];
         // Fix the logoutUser function to properly handle the action parameter
         function logoutUser() {
             $.ajax({
-                url: BASE_URL + 'login/handleAuth.php?action=logout',
+                url: BASE_URL + 'auth/logout',
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',

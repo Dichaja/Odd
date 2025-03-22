@@ -22,6 +22,13 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 
 $_SESSION['last_activity'] = time();
 
+$stmt = $pdo->prepare("SELECT last_login FROM zzimba_users WHERE id = :user_id");
+$stmt->bindParam(':user_id', $_SESSION['user']['user_id'], PDO::PARAM_LOB);
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$lastLogin = $result['last_login'] ?? '';
+$formattedLastLogin = $lastLogin ? date('M d, Y g:i A', strtotime($lastLogin)) : 'First login';
+
 $title = isset($pageTitle) ? $pageTitle . ' | User Dashboard - Zzimba Online' : 'User Dashboard';
 $activeNav = $activeNav ?? 'dashboard';
 
@@ -34,9 +41,6 @@ foreach ($nameParts as $part) {
         $userInitials .= strtoupper(substr($part, 0, 1));
     }
 }
-
-$lastLogin = isset($_SESSION['user']['last_login']) ? $_SESSION['user']['last_login'] : '';
-$formattedLastLogin = $lastLogin ? date('M d, Y g:i A', strtotime($lastLogin)) : 'First login';
 
 $menuItems = [
     'main' => [
@@ -387,7 +391,7 @@ $menuItems = [
 
         function logoutUser() {
             $.ajax({
-                url: BASE_URL + 'login/handleAuth.php?action=logout',
+                url: BASE_URL + 'auth/logout',
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',
