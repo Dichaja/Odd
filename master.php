@@ -1162,31 +1162,26 @@ $isLoggedIn = isset($_SESSION['user']) && $_SESSION['user']['logged_in'];
             $('#' + target).val(values);
         }
 
+        // Fix the logoutUser function to properly handle the action parameter
         function logoutUser() {
             $.ajax({
-                url: BASE_URL + 'login/handleAuth.php',
+                url: BASE_URL + 'login/handleAuth.php?action=logout',
                 type: 'POST',
-                data: {
-                    action: 'logout'
-                },
+                contentType: 'application/json',
+                dataType: 'json',
                 success: function(response) {
-                    try {
-                        const data = JSON.parse(response);
-                        if (data.success) {
-                            notifications.success('You have been successfully logged out');
-                            setTimeout(function() {
-                                window.location.href = BASE_URL;
-                            }, 1000);
-                        } else {
-                            notifications.error(data.message || 'Failed to logout');
-                        }
-                    } catch (e) {
-                        notifications.error('An error occurred during logout');
-                        console.error(e);
+                    if (response.success) {
+                        notifications.success('You have been successfully logged out');
+                        setTimeout(function() {
+                            window.location.href = BASE_URL;
+                        }, 1000);
+                    } else {
+                        notifications.error(response.message || 'Failed to logout');
                     }
                 },
-                error: function() {
-                    notifications.error('Failed to connect to the server');
+                error: function(xhr, status, error) {
+                    console.error("Logout error:", xhr, status, error);
+                    notifications.error('Failed to connect to the server. Please try again.');
                 }
             });
         }

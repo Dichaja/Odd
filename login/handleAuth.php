@@ -8,6 +8,45 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 date_default_timezone_set('Africa/Kampala');
 
+// Ensure database tables exist
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS admin_users (
+        id BINARY(16) PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        phone VARCHAR(20) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        first_name VARCHAR(50),
+        last_name VARCHAR(50),
+        role ENUM('super_admin', 'admin', 'editor') NOT NULL DEFAULT 'admin',
+        status ENUM('active', 'inactive', 'suspended') NOT NULL DEFAULT 'active',
+        profile_pic_url VARCHAR(255),
+        current_login DATETIME,
+        last_login DATETIME,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS zzimba_users (
+        id BINARY(16) PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        phone VARCHAR(20) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        first_name VARCHAR(50),
+        last_name VARCHAR(50),
+        status ENUM('active', 'inactive', 'suspended') NOT NULL DEFAULT 'active',
+        profile_pic_url VARCHAR(255),
+        current_login DATETIME,
+        last_login DATETIME,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL
+    )");
+} catch (PDOException $e) {
+    error_log("Table creation error: " . $e->getMessage());
+    die(json_encode(['success' => false, 'errors' => ['Database setup failed']]));
+}
+
 // Helper functions
 function generateUuidV7()
 {
@@ -75,42 +114,53 @@ try {
             }
 
             $identifier = $data['identifier'];
-
-            // Check if the identifier is an email
             $isEmail = isValidEmail($identifier);
 
-            // Check in admin_users table
-            if ($isEmail) {
-                $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE email = :identifier");
+            // Check if username has Admin: prefix
+            $isAdmin = false;
+            $originalIdentifier = $identifier;
+            if (!$isEmail && strpos($identifier, 'Admin:') === 0) {
+                $isAdmin = true;
+                $identifier = substr($identifier, 6); // Remove the Admin: prefix
+            }
+
+            if ($isAdmin) {
+                // Only check admin_users table if Admin: prefix was used
+                if ($isEmail) {
+                    $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE email = :identifier");
+                } else {
+                    $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE username = :identifier");
+                }
+                $stmt->bindParam(':identifier', $identifier);
+                $stmt->execute();
+
+                if ($stmt->rowCount() > 0) {
+                    echo json_encode(['success' => true, 'userType' => 'admin']);
+                    break;
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'Admin user not found. Please check your credentials.']);
+                    break;
+                }
             } else {
-                $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE username = :identifier");
-            }
-            $stmt->bindParam(':identifier', $identifier);
-            $stmt->execute();
+                // Only check zzimba_users table if no Admin: prefix was used
+                if ($isEmail) {
+                    $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE email = :identifier");
+                } else {
+                    $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE username = :identifier");
+                }
+                $stmt->bindParam(':identifier', $identifier);
+                $stmt->execute();
 
-            if ($stmt->rowCount() > 0) {
-                echo json_encode(['success' => true, 'userType' => 'admin']);
-                break;
+                if ($stmt->rowCount() > 0) {
+                    echo json_encode(['success' => true, 'userType' => 'user']);
+                    break;
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'User not found. Please check your credentials or register a new account.']);
+                    break;
+                }
             }
-
-            // Check in zzimba_users table
-            if ($isEmail) {
-                $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE email = :identifier");
-            } else {
-                $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE username = :identifier");
-            }
-            $stmt->bindParam(':identifier', $identifier);
-            $stmt->execute();
-
-            if ($stmt->rowCount() > 0) {
-                echo json_encode(['success' => true, 'userType' => 'user']);
-                break;
-            }
-
-            // User not found
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'User not found']);
-            break;
 
         case 'login':
             if (!isset($data['identifier']) || !isset($data['password']) || !isset($data['userType'])) {
@@ -127,14 +177,14 @@ try {
 
             // Check if username has Admin: prefix
             $isAdmin = false;
-            $username = $identifier;
-            if (strpos($username, 'Admin:') === 0) {
+            $originalIdentifier = $identifier;
+            if (!$isEmail && strpos($identifier, 'Admin:') === 0) {
                 $isAdmin = true;
-                $username = substr($username, 6); // Remove the Admin: prefix
+                $identifier = substr($identifier, 6); // Remove the Admin: prefix
             }
 
             // Get the user from the appropriate table
-            $table = ($userType === 'admin') ? 'admin_users' : 'zzimba_users';
+            $table = ($userType === 'admin' || $isAdmin) ? 'admin_users' : 'zzimba_users';
 
             if ($isEmail) {
                 $stmt = $pdo->prepare("SELECT id, username, password, status, email FROM $table WHERE email = :identifier");
@@ -146,7 +196,11 @@ try {
 
             if ($stmt->rowCount() === 0) {
                 http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'User not found']);
+                if ($isAdmin) {
+                    echo json_encode(['success' => false, 'message' => 'Admin user not found. Please check your credentials.']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'User not found. Please check your credentials or register a new account.']);
+                }
                 break;
             }
 
@@ -175,21 +229,17 @@ try {
 
             // Set session variables
             session_start();
-            // $_SESSION['user_id'] = bin2hex($user['id']);
-            // $_SESSION['username'] = $user['username'];
-            // $_SESSION['user_type'] = $userType;
-
             $_SESSION['user'] = [
                 'logged_in' => true,
                 'user_id' => $user['id'],
                 'username' => $user['username'],
                 'email' => $user['email'],
-                'is_admin' => $isAdmin,
-                'last_login' => date('Y-m-d H:i:s')
+                'is_admin' => ($table === 'admin_users'),
+                'last_login' => $now
             ];
 
             // Determine redirect URL
-            $redirect = ($userType === 'admin') ? 'admin/dashboard' : 'account/dashboard';
+            $redirect = ($table === 'admin_users') ? 'admin/dashboard' : 'account/dashboard';
 
             echo json_encode(['success' => true, 'message' => 'Login successful', 'redirect' => $redirect]);
             break;
@@ -705,6 +755,7 @@ try {
             break;
 
         case 'logout':
+            session_start();
             // Clear all session variables
             $_SESSION = array();
 
