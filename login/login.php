@@ -1,37 +1,4 @@
 <?php
-function generateOTP($length = 6)
-{
-    $digits = '0123456789';
-    $otp = '';
-    for ($i = 0; $i < $length; $i++) {
-        $otp .= $digits[rand(0, strlen($digits) - 1)];
-    }
-    return $otp;
-}
-function isValidEmail($email)
-{
-    return filter_var($email, FILTER_VALIDATE_EMAIL);
-}
-function isValidPhone($phone)
-{
-    return preg_match('/^\+[0-9]{10,15}$/', $phone);
-}
-function isStrongPassword($password)
-{
-    return (strlen($password) >= 8 &&
-        preg_match('/[A-Z]/', $password) &&
-        preg_match('/[a-z]/', $password) &&
-        preg_match('/[0-9]/', $password) &&
-        preg_match('/[^A-Za-z0-9]/', $password));
-}
-function sendEmailOTP($email, $otp)
-{
-    return true;
-}
-function sendSMSOTP($phone, $otp)
-{
-    return true;
-}
 function getStepTitle($mode, $step)
 {
     if ($mode === 'login') {
@@ -72,6 +39,7 @@ function getStepTitle($mode, $step)
                     <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     <input type="text" id="login-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your username or email" autofocus autocomplete="off">
                 </div>
+                <div id="login-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
             <button type="button" onclick="handleLoginUsernameSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
         </form>
@@ -96,6 +64,7 @@ function getStepTitle($mode, $step)
                     <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your password" id="login-password" autofocus autocomplete="off">
                     <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('login-password')"><i class="fas fa-eye"></i></button>
                 </div>
+                <div id="login-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
             <div class="flex items-center justify-end">
                 <a href="javascript:void(0)" onclick="showForgotPasswordOptions()" class="text-sm text-primary hover:text-red-700">Forgot Password?</a>
@@ -119,9 +88,10 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                 <div class="relative">
                     <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="register-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Choose a username (letters only)" autofocus autocomplete="off" minlength="3" pattern="[a-zA-Z]+">
+                    <input type="text" id="register-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Choose a username (letters and numbers only)" autofocus autocomplete="off" minlength="3">
                 </div>
-                <p class="text-xs text-gray-500 mt-1">Username must be at least 3 characters and contain only letters.</p>
+                <div id="register-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                <p class="text-xs text-gray-500 mt-1">Username must be at least 3 characters.</p>
             </div>
             <button type="button" onclick="handleRegisterUsernameSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
         </form>
@@ -145,6 +115,7 @@ function getStepTitle($mode, $step)
                     <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     <input type="email" id="register-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autofocus autocomplete="off">
                 </div>
+                <div id="register-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
             <button type="button" onclick="handleRegisterEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
         </form>
@@ -173,6 +144,7 @@ function getStepTitle($mode, $step)
                     <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="email-otp">
                 </div>
                 <input type="hidden" id="email-otp" value="">
+                <div id="email-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="mt-2 text-sm text-gray-500 text-center">
                     Didn't receive the code?
                     <button type="button" id="resend-email-otp" class="text-primary hover:text-red-700 text-sm">Resend</button>
@@ -198,6 +170,7 @@ function getStepTitle($mode, $step)
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                 <input type="tel" id="phone" name="phone" required placeholder="Phone Number" class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
+                <div id="register-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
             <button type="button" onclick="handleRegisterPhoneSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
         </form>
@@ -226,6 +199,7 @@ function getStepTitle($mode, $step)
                     <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="phone-otp">
                 </div>
                 <input type="hidden" id="phone-otp" value="">
+                <div id="phone-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="mt-2 text-sm text-gray-500 text-center">
                     Didn't receive the code?
                     <button type="button" id="resend-phone-otp" class="text-primary hover:text-red-700 text-sm">Resend</button>
@@ -267,9 +241,10 @@ function getStepTitle($mode, $step)
                     <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm your password" id="register-confirm-password" autocomplete="new-password">
                     <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('register-confirm-password')"><i class="fas fa-eye"></i></button>
                 </div>
+                <div id="register-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
             <div class="flex items-start">
-                <input type="checkbox" required class="mt-1 rounded border-gray-300 text-primary focus:ring-primary">
+                <input type="checkbox" id="terms-checkbox" required class="mt-1 rounded border-gray-300 text-primary focus:ring-primary">
                 <span class="ml-2 text-sm text-gray-600">I agree to the
                     <a href="terms-and-conditions" class="text-primary hover:text-red-700">Terms of Service</a> and
                     <a href="#" class="text-primary hover:text-red-700">Privacy Policy</a>
@@ -333,6 +308,7 @@ function getStepTitle($mode, $step)
                     <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     <input type="email" id="forgot-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autofocus autocomplete="off">
                 </div>
+                <div id="forgot-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
             <button type="button" onclick="handleForgotEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset Code</button>
         </form>
@@ -352,6 +328,7 @@ function getStepTitle($mode, $step)
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                 <input type="tel" id="forgot-phone" name="forgot-phone" required placeholder="Phone Number" class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
+                <div id="forgot-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
             <button type="button" onclick="handleForgotPhoneSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset Code</button>
         </form>
@@ -380,6 +357,7 @@ function getStepTitle($mode, $step)
                     <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="reset-otp">
                 </div>
                 <input type="hidden" id="reset-otp" value="">
+                <div id="reset-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="mt-2 text-sm text-gray-500 text-center">
                     Didn't receive the code?
                     <button type="button" id="resend-reset-otp" class="text-primary hover:text-red-700 text-sm">Resend</button>
@@ -421,6 +399,7 @@ function getStepTitle($mode, $step)
                     <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm new password" id="confirm-new-password" autocomplete="new-password">
                     <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('confirm-new-password')"><i class="fas fa-eye"></i></button>
                 </div>
+                <div id="reset-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
             <button type="button" onclick="handleResetPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Reset Password</button>
         </form>
@@ -471,6 +450,7 @@ function getStepTitle($mode, $step)
             });
         });
     })();
+
     let registrationData = {};
     let loginData = {};
     let forgotPasswordData = {};
@@ -706,369 +686,873 @@ function getStepTitle($mode, $step)
         }
     }
 
-    function setupOTPInputs() {
-        const inputs = document.querySelectorAll('.otp-input');
-
-        // Clear any existing event listeners
-        inputs.forEach(input => {
-            input.removeEventListener('keydown', handleKeyDown);
-            input.removeEventListener('input', handleInput);
-            input.removeEventListener('paste', handlePaste);
-        });
-
-        // Add event listeners for each input
-        inputs.forEach((input, index) => {
-            // Handle keydown for navigation and backspace
-            input.addEventListener('keydown', function(e) {
-                const target = e.target.getAttribute('data-otp-target');
-                const allInputs = document.querySelectorAll(`.otp-input[data-otp-target="${target}"]`);
-
-                // Handle backspace/delete
-                if (e.key === 'Backspace' || e.key === 'Delete') {
-                    if (input.value === '') {
-                        // If current input is empty, focus previous input
-                        if (index > 0) {
-                            e.preventDefault();
-                            allInputs[index - 1].focus();
-                            allInputs[index - 1].value = '';
-                        }
-                    } else {
-                        // Clear current input
-                        input.value = '';
-                    }
-                    updateOTPValue(target);
-                }
-
-                // Handle arrow keys for navigation
-                if (e.key === 'ArrowLeft' && index > 0) {
-                    e.preventDefault();
-                    allInputs[index - 1].focus();
-                }
-                if (e.key === 'ArrowRight' && index < allInputs.length - 1) {
-                    e.preventDefault();
-                    allInputs[index + 1].focus();
-                }
-            });
-
-            // Handle input for auto-focus to next input
-            input.addEventListener('input', function(e) {
-                // Ensure only numbers are entered
-                input.value = input.value.replace(/[^0-9]/g, '');
-
-                const target = input.getAttribute('data-otp-target');
-                const allInputs = document.querySelectorAll(`.otp-input[data-otp-target="${target}"]`);
-
-                // Auto-focus to next input when a digit is entered
-                if (input.value.length === 1 && index < allInputs.length - 1) {
-                    allInputs[index + 1].focus();
-                }
-
-                updateOTPValue(target);
-
-                // Check if all inputs are filled
-                const allFilled = Array.from(allInputs).every(inp => inp.value.length === 1);
-                if (allFilled) {
-                    if (target === 'email-otp') {
-                        handleEmailOTPSubmit();
-                    } else if (target === 'phone-otp') {
-                        handlePhoneOTPSubmit();
-                    } else if (target === 'reset-otp') {
-                        handleResetOTPSubmit();
-                    }
-                }
-            });
-
-            // Handle paste event (only for the first input of each group)
-            if (index === 0) {
-                input.addEventListener('paste', function(e) {
-                    e.preventDefault();
-
-                    const target = input.getAttribute('data-otp-target');
-                    const allInputs = document.querySelectorAll(`.otp-input[data-otp-target="${target}"]`);
-
-                    // Get pasted data and clean it
-                    const pasteData = (e.clipboardData || window.clipboardData).getData('text');
-                    const digits = pasteData.replace(/\D/g, '').substring(0, 6);
-
-                    // Fill inputs with pasted digits
-                    for (let i = 0; i < Math.min(digits.length, allInputs.length); i++) {
-                        allInputs[i].value = digits[i] || '';
-                    }
-
-                    // Focus the last filled input or the next empty one
-                    const lastIndex = Math.min(digits.length, allInputs.length) - 1;
-                    if (lastIndex >= 0) {
-                        allInputs[lastIndex].focus();
-                    }
-
-                    updateOTPValue(target);
-
-                    // Auto-submit if all fields are filled
-                    if (digits.length >= 6) {
-                        if (target === 'email-otp') {
-                            handleEmailOTPSubmit();
-                        } else if (target === 'phone-otp') {
-                            handlePhoneOTPSubmit();
-                        } else if (target === 'reset-otp') {
-                            handleResetOTPSubmit();
-                        }
-                    }
-                });
-            }
-        });
-    }
-
     function updateOTPValue(t) {
         const ai = document.querySelectorAll(`.otp-input[data-otp-target="${t}"]`);
         const val = Array.from(ai).map(i => i.value).join('');
         document.getElementById(t).value = val;
     }
+
     // LOGIN
     function handleLoginUsernameSubmit() {
         const u = document.getElementById('login-username').value;
         if (!u) {
-            notifications.error('Please enter your username or email');
+            showError('login-username-error', 'Please enter your username or email');
             return;
         }
-        loginData.username = u;
-        document.getElementById('login-username-display').textContent = u;
-        showLoginStep('password');
+
+        // Clear any previous errors
+        hideError('login-username-error');
+
+        // Show loading state
+        const button = document.querySelector('#login-username-form button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+
+        // Make AJAX request to check if username/email exists
+        $.ajax({
+            url: 'login/handleAuth.php?action=checkUser',
+            type: 'POST',
+            data: JSON.stringify({
+                identifier: u
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    loginData.identifier = u;
+                    loginData.userType = response.userType;
+                    document.getElementById('login-username-display').textContent = u;
+                    showLoginStep('password');
+                } else {
+                    showError('login-username-error', response.message || 'User not found');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('login-username-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('login-username-error', 'Server error. Please try again later.');
+                }
+            }
+        });
     }
 
     function handleLoginPasswordSubmit() {
         const p = document.getElementById('login-password').value;
         if (!p) {
-            notifications.error('Please enter your password');
+            showError('login-password-error', 'Please enter your password');
             return;
         }
-        loginData.password = p;
-        notifications.success('Login successful! Redirecting...');
-        setTimeout(() => {
-            closeAuthModal();
-            notifications.info('Welcome back!');
-        }, 1500);
+
+        // Clear any previous errors
+        hideError('login-password-error');
+
+        // Show loading state
+        const button = document.querySelector('#login-password-form button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Logging in...';
+
+        // Make AJAX request to verify password
+        $.ajax({
+            url: 'login/handleAuth.php?action=login',
+            type: 'POST',
+            data: JSON.stringify({
+                identifier: loginData.identifier,
+                password: p,
+                userType: loginData.userType
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    notifications.success('Login successful! Redirecting...');
+                    setTimeout(() => {
+                        closeAuthModal();
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 1500);
+                } else {
+                    showError('login-password-error', response.message || 'Invalid password');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('login-password-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('login-password-error', 'Server error. Please try again later.');
+                }
+            }
+        });
     }
+
     // REGISTER
     function handleRegisterUsernameSubmit() {
         const u = document.getElementById('register-username').value;
         if (!u) {
-            notifications.error('Please choose a username');
+            showError('register-username-error', 'Please choose a username');
             return;
         }
         if (u.length < 3) {
-            notifications.error('Username must be at least 3 characters long');
+            showError('register-username-error', 'Username must be at least 3 characters long');
             return;
         }
-        registrationData.username = u;
-        document.getElementById('register-username-display').textContent = u;
-        showRegisterStep('email');
+
+        // Clear any previous errors
+        hideError('register-username-error');
+
+        // Show loading state
+        const button = document.querySelector('#register-username-form button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+
+        // Make AJAX request to check if username is available
+        $.ajax({
+            url: 'login/handleAuth.php?action=checkUsername',
+            type: 'POST',
+            data: JSON.stringify({
+                username: u
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    registrationData.username = u;
+                    document.getElementById('register-username-display').textContent = u;
+                    showRegisterStep('email');
+                } else {
+                    showError('register-username-error', response.message || 'Username is already taken');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('register-username-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('register-username-error', 'Server error. Please try again later.');
+                }
+            }
+        });
     }
 
     function handleRegisterEmailSubmit() {
         const e = document.getElementById('register-email').value;
         if (!e) {
-            notifications.error('Please enter your email address');
+            showError('register-email-error', 'Please enter your email address');
             return;
         }
         if (!isValidEmail(e)) {
-            notifications.error('Please enter a valid email address');
+            showError('register-email-error', 'Please enter a valid email address');
             return;
         }
-        registrationData.email = e;
-        document.getElementById('register-email-display').textContent = e;
-        emailOTP = generateOTP();
-        document.getElementById('demo-email-otp').textContent = emailOTP;
-        sendEmailOTP(e, emailOTP);
-        startOTPTimer('email-otp', 120);
-        showRegisterStep('email-verify');
-        document.querySelectorAll('.otp-input[data-otp-target="email-otp"]').forEach(i => {
-            i.value = '';
+
+        // Clear any previous errors
+        hideError('register-email-error');
+
+        // Show loading state
+        const button = document.querySelector('#register-email-form button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+
+        // Make AJAX request to check if email is available
+        $.ajax({
+            url: 'login/handleAuth.php?action=checkEmail',
+            type: 'POST',
+            data: JSON.stringify({
+                email: e
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    registrationData.email = e;
+                    document.getElementById('register-email-display').textContent = e;
+
+                    // Request OTP
+                    $.ajax({
+                        url: 'login/handleAuth.php?action=sendEmailOTP',
+                        type: 'POST',
+                        data: JSON.stringify({
+                            email: e
+                        }),
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        success: function(otpResponse) {
+                            if (otpResponse.success) {
+                                emailOTP = otpResponse.otp;
+                                document.getElementById('demo-email-otp').textContent = emailOTP;
+                                startOTPTimer('email-otp', 120);
+                                showRegisterStep('email-verify');
+                                document.querySelectorAll('.otp-input[data-otp-target="email-otp"]').forEach(i => {
+                                    i.value = '';
+                                });
+                                document.getElementById('email-otp').value = '';
+                            } else {
+                                showError('register-email-error', otpResponse.message || 'Failed to send verification code');
+                            }
+                        },
+                        error: function() {
+                            showError('register-email-error', 'Failed to send verification code. Please try again.');
+                        }
+                    });
+                } else {
+                    showError('register-email-error', response.message || 'Email is already registered');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('register-email-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('register-email-error', 'Server error. Please try again later.');
+                }
+            }
         });
-        document.getElementById('email-otp').value = '';
     }
 
     function handleEmailOTPSubmit() {
         const o = document.getElementById('email-otp').value;
         if (!o || o.length !== 6) {
-            notifications.error('Please enter the complete verification code');
+            showError('email-otp-error', 'Please enter the complete verification code');
             return;
         }
-        if (o !== emailOTP) {
-            notifications.error('Invalid verification code');
-            return;
-        }
-        showRegisterStep('phone');
+
+        // Clear any previous errors
+        hideError('email-otp-error');
+
+        // Show loading state
+        const button = document.querySelector('#register-email-verify-form button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+
+        // Make AJAX request to verify email OTP
+        $.ajax({
+            url: 'login/handleAuth.php?action=verifyEmailOTP',
+            type: 'POST',
+            data: JSON.stringify({
+                email: registrationData.email,
+                otp: o
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    registrationData.emailVerified = true;
+                    showRegisterStep('phone');
+                } else {
+                    showError('email-otp-error', response.message || 'Invalid verification code');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('email-otp-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('email-otp-error', 'Server error. Please try again later.');
+                }
+            }
+        });
     }
 
     function handleRegisterPhoneSubmit() {
         const pi = document.querySelector('#phone');
         const iti = window.intlTelInputGlobals.getInstance(pi);
         if (!iti.isValidNumber()) {
-            notifications.error('Please enter a valid phone number');
+            showError('register-phone-error', 'Please enter a valid phone number');
             return;
         }
         const pn = iti.getNumber();
-        registrationData.phone = pn;
-        document.getElementById('register-phone-display').textContent = pn;
-        phoneOTP = generateOTP();
-        document.getElementById('demo-phone-otp').textContent = phoneOTP;
-        sendSMSOTP(pn, phoneOTP);
-        startOTPTimer('phone-otp', 120);
-        showRegisterStep('phone-verify');
-        document.querySelectorAll('.otp-input[data-otp-target="phone-otp"]').forEach(i => {
-            i.value = '';
+
+        // Clear any previous errors
+        hideError('register-phone-error');
+
+        // Show loading state
+        const button = document.querySelector('#register-phone-form button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+
+        // Make AJAX request to check if phone is available
+        $.ajax({
+            url: 'login/handleAuth.php?action=checkPhone',
+            type: 'POST',
+            data: JSON.stringify({
+                phone: pn
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    registrationData.phone = pn;
+                    document.getElementById('register-phone-display').textContent = pn;
+
+                    // Request OTP
+                    $.ajax({
+                        url: 'login/handleAuth.php?action=sendPhoneOTP',
+                        type: 'POST',
+                        data: JSON.stringify({
+                            phone: pn
+                        }),
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        success: function(otpResponse) {
+                            if (otpResponse.success) {
+                                phoneOTP = otpResponse.otp;
+                                document.getElementById('demo-phone-otp').textContent = phoneOTP;
+                                startOTPTimer('phone-otp', 120);
+                                showRegisterStep('phone-verify');
+                                document.querySelectorAll('.otp-input[data-otp-target="phone-otp"]').forEach(i => {
+                                    i.value = '';
+                                });
+                                document.getElementById('phone-otp').value = '';
+                            } else {
+                                showError('register-phone-error', otpResponse.message || 'Failed to send verification code');
+                            }
+                        },
+                        error: function() {
+                            showError('register-phone-error', 'Failed to send verification code. Please try again.');
+                        }
+                    });
+                } else {
+                    showError('register-phone-error', response.message || 'Phone number is already registered');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('register-phone-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('register-phone-error', 'Server error. Please try again later.');
+                }
+            }
         });
-        document.getElementById('phone-otp').value = '';
     }
 
     function handlePhoneOTPSubmit() {
         const o = document.getElementById('phone-otp').value;
         if (!o || o.length !== 6) {
-            notifications.error('Please enter the complete verification code');
+            showError('phone-otp-error', 'Please enter the complete verification code');
             return;
         }
-        if (o !== phoneOTP) {
-            notifications.error('Invalid verification code');
-            return;
-        }
-        showRegisterStep('password');
+
+        // Clear any previous errors
+        hideError('phone-otp-error');
+
+        // Show loading state
+        const button = document.querySelector('#register-phone-verify-form button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+
+        // Make AJAX request to verify phone OTP
+        $.ajax({
+            url: 'login/handleAuth.php?action=verifyPhoneOTP',
+            type: 'POST',
+            data: JSON.stringify({
+                phone: registrationData.phone,
+                otp: o
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    registrationData.phoneVerified = true;
+                    showRegisterStep('password');
+                } else {
+                    showError('phone-otp-error', response.message || 'Invalid verification code');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('phone-otp-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('phone-otp-error', 'Server error. Please try again later.');
+                }
+            }
+        });
     }
 
     function handleRegisterPasswordSubmit() {
         const p = document.getElementById('register-password').value;
         const c = document.getElementById('register-confirm-password').value;
+        const termsChecked = document.getElementById('terms-checkbox').checked;
+
         if (!p) {
-            notifications.error('Please create a password');
+            showError('register-password-error', 'Please create a password');
             return;
         }
         if (!isStrongPassword(p)) {
-            notifications.error('Password must be at least 8 characters with uppercase, lowercase, number, and special character');
+            showError('register-password-error', 'Password must be at least 8 characters with uppercase, lowercase, number, and special character');
             return;
         }
         if (p !== c) {
-            notifications.error('Passwords do not match');
+            showError('register-password-error', 'Passwords do not match');
             return;
         }
-        registrationData.password = p;
-        notifications.success('Account created successfully! Redirecting...');
-        setTimeout(() => {
-            closeAuthModal();
-            notifications.info('Welcome to Zzimba Online!');
-        }, 1500);
+        if (!termsChecked) {
+            showError('register-password-error', 'You must agree to the Terms of Service and Privacy Policy');
+            return;
+        }
+
+        // Clear any previous errors
+        hideError('register-password-error');
+
+        // Show loading state
+        const button = document.querySelector('#register-password-form button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating account...';
+
+        // Make AJAX request to complete registration
+        $.ajax({
+            url: 'login/handleAuth.php?action=register',
+            type: 'POST',
+            data: JSON.stringify({
+                username: registrationData.username,
+                email: registrationData.email,
+                phone: registrationData.phone,
+                password: p
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    notifications.success('Account created successfully! Redirecting...');
+                    setTimeout(() => {
+                        closeAuthModal();
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 1500);
+                } else {
+                    showError('register-password-error', response.message || 'Registration failed');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('register-password-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('register-password-error', 'Server error. Please try again later.');
+                }
+            }
+        });
     }
+
     // FORGOT PASSWORD
     function handleForgotEmailSubmit() {
         const e = document.getElementById('forgot-email').value;
         if (!e) {
-            notifications.error('Please enter your email address');
+            showError('forgot-email-error', 'Please enter your email address');
             return;
         }
         if (!isValidEmail(e)) {
-            notifications.error('Please enter a valid email address');
+            showError('forgot-email-error', 'Please enter a valid email address');
             return;
         }
-        forgotPasswordData.email = e;
-        forgotPasswordData.contact = e;
-        resetOTP = generateOTP();
-        document.getElementById('demo-reset-otp').textContent = resetOTP;
-        sendEmailOTP(e, resetOTP);
-        document.getElementById('reset-contact-display').textContent = e;
-        document.getElementById('reset-back-link').onclick = function() {
-            showForgotPasswordForm('email');
-        };
-        startOTPTimer('reset-otp', 120);
-        showResetVerifyForm();
-        document.querySelectorAll('.otp-input[data-otp-target="reset-otp"]').forEach(i => {
-            i.value = '';
+
+        // Clear any previous errors
+        hideError('forgot-email-error');
+
+        // Show loading state
+        const button = document.querySelector('#forgot-password-email-form-element button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+
+        // Make AJAX request to send reset code
+        $.ajax({
+            url: 'login/handleAuth.php?action=sendResetEmail',
+            type: 'POST',
+            data: JSON.stringify({
+                email: e
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    forgotPasswordData.email = e;
+                    forgotPasswordData.contact = e;
+                    resetOTP = response.otp;
+                    document.getElementById('demo-reset-otp').textContent = resetOTP;
+                    document.getElementById('reset-contact-display').textContent = e;
+                    document.getElementById('reset-back-link').onclick = function() {
+                        showForgotPasswordForm('email');
+                    };
+                    startOTPTimer('reset-otp', 120);
+                    showResetVerifyForm();
+                    document.querySelectorAll('.otp-input[data-otp-target="reset-otp"]').forEach(i => {
+                        i.value = '';
+                    });
+                    document.getElementById('reset-otp').value = '';
+                } else {
+                    showError('forgot-email-error', response.message || 'Email not found');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('forgot-email-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('forgot-email-error', 'Server error. Please try again later.');
+                }
+            }
         });
-        document.getElementById('reset-otp').value = '';
     }
 
     function handleForgotPhoneSubmit() {
         const pi = document.querySelector('#forgot-phone');
         const iti = window.intlTelInputGlobals.getInstance(pi);
         if (!iti.isValidNumber()) {
-            notifications.error('Please enter a valid phone number');
+            showError('forgot-phone-error', 'Please enter a valid phone number');
             return;
         }
         const pn = iti.getNumber();
-        forgotPasswordData.phone = pn;
-        forgotPasswordData.contact = pn;
-        resetOTP = generateOTP();
-        document.getElementById('demo-reset-otp').textContent = resetOTP;
-        sendSMSOTP(pn, resetOTP);
-        document.getElementById('reset-contact-display').textContent = pn;
-        document.getElementById('reset-back-link').onclick = function() {
-            showForgotPasswordForm('phone');
-        };
-        startOTPTimer('reset-otp', 120);
-        showResetVerifyForm();
-        document.querySelectorAll('.otp-input[data-otp-target="reset-otp"]').forEach(i => {
-            i.value = '';
+
+        // Clear any previous errors
+        hideError('forgot-phone-error');
+
+        // Show loading state
+        const button = document.querySelector('#forgot-password-phone-form-element button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+
+        // Make AJAX request to send reset code
+        $.ajax({
+            url: 'login/handleAuth.php?action=sendResetPhone',
+            type: 'POST',
+            data: JSON.stringify({
+                phone: pn
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    forgotPasswordData.phone = pn;
+                    forgotPasswordData.contact = pn;
+                    resetOTP = response.otp;
+                    document.getElementById('demo-reset-otp').textContent = resetOTP;
+                    document.getElementById('reset-contact-display').textContent = pn;
+                    document.getElementById('reset-back-link').onclick = function() {
+                        showForgotPasswordForm('phone');
+                    };
+                    startOTPTimer('reset-otp', 120);
+                    showResetVerifyForm();
+                    document.querySelectorAll('.otp-input[data-otp-target="reset-otp"]').forEach(i => {
+                        i.value = '';
+                    });
+                    document.getElementById('reset-otp').value = '';
+                } else {
+                    showError('forgot-phone-error', response.message || 'Phone number not found');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('forgot-phone-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('forgot-phone-error', 'Server error. Please try again later.');
+                }
+            }
         });
-        document.getElementById('reset-otp').value = '';
     }
+
     // RESET PASSWORD
     function handleResetOTPSubmit() {
         const o = document.getElementById('reset-otp').value;
         if (!o || o.length !== 6) {
-            notifications.error('Please enter the complete verification code');
+            showError('reset-otp-error', 'Please enter the complete verification code');
             return;
         }
-        if (o !== resetOTP) {
-            notifications.error('Invalid verification code');
-            return;
-        }
-        showResetPasswordForm();
+
+        // Clear any previous errors
+        hideError('reset-otp-error');
+
+        // Show loading state
+        const button = document.querySelector('#reset-verify-form button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+
+        // Make AJAX request to verify reset OTP
+        $.ajax({
+            url: 'login/handleAuth.php?action=verifyResetOTP',
+            type: 'POST',
+            data: JSON.stringify({
+                contact: forgotPasswordData.contact,
+                contactType: resetMethod,
+                otp: o
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    forgotPasswordData.otpVerified = true;
+                    showResetPasswordForm();
+                } else {
+                    showError('reset-otp-error', response.message || 'Invalid verification code');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('reset-otp-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('reset-otp-error', 'Server error. Please try again later.');
+                }
+            }
+        });
     }
 
     function handleResetPasswordSubmit() {
         const np = document.getElementById('new-password').value;
         const cp = document.getElementById('confirm-new-password').value;
+
         if (!np) {
-            notifications.error('Please create a new password');
+            showError('reset-password-error', 'Please create a new password');
             return;
         }
         if (!isStrongPassword(np)) {
-            notifications.error('Password must be at least 8 characters with uppercase, lowercase, number, and special character');
+            showError('reset-password-error', 'Password must be at least 8 characters with uppercase, lowercase, number, and special character');
             return;
         }
         if (np !== cp) {
-            notifications.error('Passwords do not match');
+            showError('reset-password-error', 'Passwords do not match');
             return;
         }
-        notifications.success('Password reset successfully!');
-        setTimeout(() => {
-            showLoginStep('username');
-            notifications.info('Please login with your new password');
-        }, 1500);
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-        setupOTPInputs();
-        document.getElementById('resend-email-otp').addEventListener('click', () => {
-            emailOTP = generateOTP();
-            document.getElementById('demo-email-otp').textContent = emailOTP;
-            sendEmailOTP(registrationData.email, emailOTP);
-            startOTPTimer('email-otp', 120);
-            notifications.info('Verification code resent to your email');
-        });
-        document.getElementById('resend-phone-otp').addEventListener('click', () => {
-            phoneOTP = generateOTP();
-            document.getElementById('demo-phone-otp').textContent = phoneOTP;
-            sendSMSOTP(registrationData.phone, phoneOTP);
-            startOTPTimer('phone-otp', 120);
-            notifications.info('Verification code resent to your phone');
-        });
-        document.getElementById('resend-reset-otp').addEventListener('click', () => {
-            resetOTP = generateOTP();
-            document.getElementById('demo-reset-otp').textContent = resetOTP;
-            if (resetMethod === 'email') {
-                sendEmailOTP(forgotPasswordData.email, resetOTP);
-            } else {
-                sendSMSOTP(forgotPasswordData.phone, resetOTP);
+
+        // Clear any previous errors
+        hideError('reset-password-error');
+
+        // Show loading state
+        const button = document.querySelector('#reset-password-form-element button');
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Resetting password...';
+
+        // Make AJAX request to reset password
+        $.ajax({
+            url: 'login/handleAuth.php?action=resetPassword',
+            type: 'POST',
+            data: JSON.stringify({
+                contact: forgotPasswordData.contact,
+                contactType: resetMethod,
+                password: np
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                if (response.success) {
+                    notifications.success('Password reset successfully!');
+                    setTimeout(() => {
+                        showLoginStep('username');
+                        notifications.info('Please login with your new password');
+                    }, 1500);
+                } else {
+                    showError('reset-password-error', response.message || 'Password reset failed');
+                }
+            },
+            error: function(xhr) {
+                button.disabled = false;
+                button.innerHTML = originalText;
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    showError('reset-password-error', response.message || 'An error occurred');
+                } catch (e) {
+                    showError('reset-password-error', 'Server error. Please try again later.');
+                }
             }
-            startOTPTimer('reset-otp', 120);
-            notifications.info('Verification code resent');
+        });
+    }
+
+    // Helper functions
+    function showError(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        errorElement.textContent = message;
+        errorElement.classList.remove('hidden');
+    }
+
+    function hideError(elementId) {
+        const errorElement = document.getElementById(elementId);
+        errorElement.textContent = '';
+        errorElement.classList.add('hidden');
+    }
+
+    // Initialize event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        // Setup OTP inputs
+        setupOTPInputs();
+
+        // Email OTP resend
+        document.getElementById('resend-email-otp').addEventListener('click', () => {
+            if (document.getElementById('resend-email-otp').disabled) return;
+
+            $.ajax({
+                url: 'login/handleAuth.php?action=sendEmailOTP',
+                type: 'POST',
+                data: JSON.stringify({
+                    email: registrationData.email
+                }),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        emailOTP = response.otp;
+                        document.getElementById('demo-email-otp').textContent = emailOTP;
+                        startOTPTimer('email-otp', 120);
+                        notifications.info('Verification code resent to your email');
+                    } else {
+                        notifications.error(response.message || 'Failed to resend code');
+                    }
+                },
+                error: function() {
+                    notifications.error('Failed to resend code. Please try again.');
+                }
+            });
+        });
+
+        // Phone OTP resend
+        document.getElementById('resend-phone-otp').addEventListener('click', () => {
+            if (document.getElementById('resend-phone-otp').disabled) return;
+
+            $.ajax({
+                url: 'login/handleAuth.php?action=sendPhoneOTP',
+                type: 'POST',
+                data: JSON.stringify({
+                    phone: registrationData.phone
+                }),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        phoneOTP = response.otp;
+                        document.getElementById('demo-phone-otp').textContent = phoneOTP;
+                        startOTPTimer('phone-otp', 120);
+                        notifications.info('Verification code resent to your phone');
+                    } else {
+                        notifications.error(response.message || 'Failed to resend code');
+                    }
+                },
+                error: function() {
+                    notifications.error('Failed to resend code. Please try again.');
+                }
+            });
+        });
+
+        // Reset OTP resend
+        document.getElementById('resend-reset-otp').addEventListener('click', () => {
+            if (document.getElementById('resend-reset-otp').disabled) return;
+
+            const endpoint = resetMethod === 'email' ? 'sendResetEmail' : 'sendResetPhone';
+            const data = resetMethod === 'email' ? {
+                email: forgotPasswordData.email
+            } : {
+                phone: forgotPasswordData.phone
+            };
+
+            $.ajax({
+                url: 'login/handleAuth.php?action=' + endpoint,
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        resetOTP = response.otp;
+                        document.getElementById('demo-reset-otp').textContent = resetOTP;
+                        startOTPTimer('reset-otp', 120);
+                        notifications.info('Verification code resent');
+                    } else {
+                        notifications.error(response.message || 'Failed to resend code');
+                    }
+                },
+                error: function() {
+                    notifications.error('Failed to resend code. Please try again.');
+                }
+            });
         });
     });
 </script>

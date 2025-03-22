@@ -8,6 +8,10 @@ $ch = curl_init($js_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $js_code = curl_exec($ch);
 curl_close($ch);
+
+// Check if user is logged in
+session_start();
+$isLoggedIn = isset($_SESSION['user']) && $_SESSION['user']['logged_in'];
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -31,6 +35,8 @@ curl_close($ch);
         const BASE_URL = "<?php echo BASE_URL; ?>";
         const ACTIVE_NAV = <?php echo ($activeNav !== null) ? json_encode($activeNav) : "null"; ?>;
         const PAGE_TITLE = <?php echo ($pageTitle !== null) ? json_encode($pageTitle) : "null"; ?>;
+        const IS_LOGGED_IN = <?php echo $isLoggedIn ? 'true' : 'false'; ?>;
+
         tailwind.config = {
             theme: {
                 extend: {
@@ -433,6 +439,47 @@ curl_close($ch);
                 height: 60px
             }
         }
+
+        /* User dropdown menu */
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 240px;
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem 0;
+            z-index: 50;
+            display: none;
+        }
+
+        .user-dropdown:hover .user-dropdown-menu {
+            display: block;
+        }
+
+        .user-dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            color: #1a1a1a;
+            transition: background-color 0.2s ease;
+        }
+
+        .user-dropdown-item:hover {
+            background-color: #f3f4f6;
+            color: #D92B13;
+        }
+
+        .user-dropdown-divider {
+            height: 1px;
+            background-color: #e5e7eb;
+            margin: 0.25rem 0;
+        }
     </style>
 </head>
 
@@ -474,9 +521,46 @@ curl_close($ch);
                         <a href="#" class="text-secondary hover:text-primary transition-colors">
                             <i class="fas fa-shopping-cart text-xl"></i>
                         </a>
-                        <a href="#" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center" id="login-button">
-                            <i class="fas fa-user mr-2"></i>Login / Register
-                        </a>
+                        <?php if (isset($_SESSION['user']) && $_SESSION['user']['logged_in']): ?>
+                            <div class="user-dropdown">
+                                <button class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
+                                    <i class="fas fa-user mr-2"></i>Halo <?= htmlspecialchars($_SESSION['user']['username']) ?>!
+                                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                                </button>
+                                <div class="user-dropdown-menu">
+                                    <div class="px-4 py-3 bg-gray-50">
+                                        <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($_SESSION['user']['username']) ?></p>
+                                        <p class="text-xs text-gray-500"><?= htmlspecialchars($_SESSION['user']['email']) ?></p>
+                                        <?php if (isset($_SESSION['user']['last_login']) && $_SESSION['user']['last_login']): ?>
+                                            <p class="text-xs text-gray-500 mt-1">Last login: <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php if ($_SESSION['user']['is_admin']): ?>
+                                        <a href="<?= BASE_URL ?>admin/dashboard" class="user-dropdown-item">
+                                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                                        </a>
+                                        <a href="<?= BASE_URL ?>admin/profile" class="user-dropdown-item">
+                                            <i class="fas fa-user-circle mr-2"></i>Profile
+                                        </a>
+                                    <?php else: ?>
+                                        <a href="<?= BASE_URL ?>account/dashboard" class="user-dropdown-item">
+                                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                                        </a>
+                                        <a href="<?= BASE_URL ?>account/profile" class="user-dropdown-item">
+                                            <i class="fas fa-user-circle mr-2"></i>Profile
+                                        </a>
+                                    <?php endif; ?>
+                                    <div class="border-t border-gray-200 my-1"></div>
+                                    <a href="javascript:void(0);" onclick="logoutUser(); return false;" class="user-dropdown-item text-red-600">
+                                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                                    </a>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <a href="#" onclick="openAuthModal(); return false;" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
+                                <i class="fas fa-user mr-2"></i>Login / Register
+                            </a>
+                        <?php endif; ?>
                     </div>
                     <button class="md:hidden text-secondary hover:text-primary" id="mobile-menu-button">
                         <i class="fas fa-bars text-2xl"></i>
@@ -504,9 +588,24 @@ curl_close($ch);
             <a href="#" class="block text-center bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
                 <i class="fas fa-shopping-cart mr-2"></i>Cart
             </a>
-            <a href="#" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors" id="mobile-login-button">
-                <i class="fas fa-user mr-2"></i>Login / Register
-            </a>
+            <?php if (isset($_SESSION['user']) && $_SESSION['user']['logged_in']): ?>
+                <?php if ($_SESSION['user']['is_admin']): ?>
+                    <a href="<?= BASE_URL ?>admin/dashboard" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                <?php else: ?>
+                    <a href="<?= BASE_URL ?>account/dashboard" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                <?php endif; ?>
+                <a href="javascript:void(0);" onclick="logoutUser(); return false;" class="block text-center bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </a>
+            <?php else: ?>
+                <a href="#" onclick="openAuthModal(); return false;" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors" id="mobile-login-button">
+                    <i class="fas fa-user mr-2"></i>Login / Register
+                </a>
+            <?php endif; ?>
         </div>
     </div>
     <div id="auth-modal" style="z-index:1100" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
@@ -687,6 +786,7 @@ curl_close($ch);
                 l = 'Strong';
                 c = 'strength-strong';
             }
+
             m.classList.add(c);
             t.textContent = 'Password strength: ' + l;
         }
@@ -799,6 +899,22 @@ curl_close($ch);
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('desktop-nav').innerHTML = generateNavigation(navItems);
             document.getElementById('mobile-menu-items').innerHTML = generateMobileNavigation(navItems);
+
+            // User dropdown toggle
+            const userDropdownButton = document.getElementById('user-dropdown-button');
+            if (userDropdownButton) {
+                const userDropdownMenu = document.querySelector('.user-dropdown-menu');
+                userDropdownButton.addEventListener('click', function() {
+                    userDropdownMenu.classList.toggle('active');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!userDropdownButton.contains(e.target) && !userDropdownMenu.contains(e.target)) {
+                        userDropdownMenu.classList.remove('active');
+                    }
+                });
+            }
         });
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.querySelector('.mobile-menu');
@@ -879,33 +995,47 @@ curl_close($ch);
         });
         window.addEventListener('scroll', updateScrollProgress);
         updateScrollProgress();
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('login-button').addEventListener('click', function(e) {
-                e.preventDefault();
-                openAuthModal();
-            });
-            document.getElementById('mobile-login-button').addEventListener('click', function(e) {
-                e.preventDefault();
-                openAuthModal();
-            });
-        });
-        document.addEventListener('DOMContentLoaded', function() {
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    var container = document.getElementById('auth-forms-container');
-                    container.innerHTML = xhr.responseText;
-                    var scripts = container.getElementsByTagName('script');
-                    for (var i = 0; i < scripts.length; i++) {
-                        var newScript = document.createElement('script');
-                        newScript.text = scripts[i].text;
-                        document.head.appendChild(newScript);
-                    }
-                    initializePhoneInputs();
+
+        // Only setup login button if user is not logged in
+        if (!IS_LOGGED_IN) {
+            document.addEventListener('DOMContentLoaded', () => {
+                const loginButton = document.getElementById('login-button');
+                if (loginButton) {
+                    loginButton.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        openAuthModal();
+                    });
                 }
-            };
-            xhr.open('GET', 'login.php', true);
-            xhr.send();
+
+                const mobileLoginButton = document.getElementById('mobile-login-button');
+                if (mobileLoginButton) {
+                    mobileLoginButton.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        openAuthModal();
+                    });
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!IS_LOGGED_IN) {
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var container = document.getElementById('auth-forms-container');
+                        container.innerHTML = xhr.responseText;
+                        var scripts = container.getElementsByTagName('script');
+                        for (var i = 0; i < scripts.length; i++) {
+                            var newScript = document.createElement('script');
+                            newScript.text = scripts[i].text;
+                            document.head.appendChild(newScript);
+                        }
+                        initializePhoneInputs();
+                    }
+                };
+                xhr.open('GET', 'login/login.php', true);
+                xhr.send();
+            }
         });
 
         function initializePhoneInputs() {
@@ -1030,6 +1160,35 @@ curl_close($ch);
                 return this.value;
             }).get().join('');
             $('#' + target).val(values);
+        }
+
+        function logoutUser() {
+            $.ajax({
+                url: BASE_URL + 'login/handleAuth.php',
+                type: 'POST',
+                data: {
+                    action: 'logout'
+                },
+                success: function(response) {
+                    try {
+                        const data = JSON.parse(response);
+                        if (data.success) {
+                            notifications.success('You have been successfully logged out');
+                            setTimeout(function() {
+                                window.location.href = BASE_URL;
+                            }, 1000);
+                        } else {
+                            notifications.error(data.message || 'Failed to logout');
+                        }
+                    } catch (e) {
+                        notifications.error('An error occurred during logout');
+                        console.error(e);
+                    }
+                },
+                error: function() {
+                    notifications.error('Failed to connect to the server');
+                }
+            });
         }
     </script>
 </body>
