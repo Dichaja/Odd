@@ -128,6 +128,9 @@ RewriteRule ^account/zzimba-credit$ account/zzimba-credit.php [L]
 RewriteRule ^account/notifications$ account/notifications.php [L]
 RewriteRule ^account/profile$ account/profile.php [L]
 
+# Rewrite for manageProfile fetch - FIXED RULE
+RewriteRule ^fetch/manageProfile/([^/]+)$ account/fetch/manageProfile.php?action=$1 [L,QSA]
+
 # General Rule for Fetch Folder (For All Files)
 # Rewrite fetch/{filename}/{action} → fetch/{filename}.php?action={action}
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -149,11 +152,6 @@ RewriteRule ^admin/fetch/([^/]+)/([^/]+)$ admin/fetch/$1.php?action=$2 [L,QSA]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^admin/fetch/([^/]+)$ admin/fetch/$1.php [L]
-
-# Rewrite for manageProfile fetch
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^fetch/manageProfile/([^/]+)$ account/fetch/manageProfile.php?action=$1 [L,QSA]
 
 # General rule for other files to work without .php extension
 RewriteCond %{REQUEST_FILENAME} !-f

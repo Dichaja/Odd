@@ -14,7 +14,7 @@ if ($_SESSION['user']['is_admin']) {
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)) {
     session_unset();
     session_destroy();
-    header('Location: ' . BASE_URL . 'login.php?session_expired=1');
+    header('Location: ' . BASE_URL);
     exit;
 }
 
