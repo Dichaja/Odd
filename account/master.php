@@ -1,10 +1,32 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
+
+session_start();
+
+if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in']) {
+    header('HTTP/1.1 403 Forbidden');
+    exit;
+}
+
+if ($_SESSION['user']['is_admin']) {
+    header('Location: ' . BASE_URL . 'admin/dashboard');
+    exit;
+}
+
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)) {
+    session_unset();
+    session_destroy();
+    header('Location: ' . BASE_URL . 'login.php?session_expired=1');
+    exit;
+}
+
+$_SESSION['last_activity'] = time();
+
 $title = isset($pageTitle) ? $pageTitle . ' | User Dashboard - Zzimba Online' : 'User Dashboard';
 $activeNav = $activeNav ?? 'dashboard';
 
-// Get user information
-$userName = 'John Doe'; // This would typically come from a session or database
+$userName = $_SESSION['user']['username'];
+$userEmail = $_SESSION['user']['email'];
 $userInitials = '';
 $nameParts = explode(' ', $userName);
 foreach ($nameParts as $part) {
@@ -13,7 +35,9 @@ foreach ($nameParts as $part) {
     }
 }
 
-// Define the menu structure for user dashboard
+$lastLogin = isset($_SESSION['user']['last_login']) ? $_SESSION['user']['last_login'] : '';
+$formattedLastLogin = $lastLogin ? date('M d, Y g:i A', strtotime($lastLogin)) : 'First login';
+
 $menuItems = [
     'main' => [
         'title' => 'Main',
@@ -49,9 +73,10 @@ $menuItems = [
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="<?= BASE_URL ?>/img/favicon.png">
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script>
+        const BASE_URL = "<?php echo BASE_URL; ?>";
+
         tailwind.config = {
             theme: {
                 extend: {
@@ -59,10 +84,10 @@ $menuItems = [
                         primary: '#D92B13',
                         secondary: '#1a1a1a',
                         'gray-text': '#4B5563',
-                        'user-primary': '#D92B13', // Different primary color for user dashboard
-                        'user-secondary': '#F8C2BC', // Light blue background for user dashboard
-                        'user-accent': '#E6F2FF', // Accent color for content sections
-                        'user-content': '#F5F9FF', // Background color for content sections
+                        'user-primary': '#D92B13',
+                        'user-secondary': '#F8C2BC',
+                        'user-accent': '#E6F2FF',
+                        'user-content': '#F5F9FF',
                     },
                     fontFamily: {
                         rubik: ['Rubik', 'sans-serif'],
@@ -83,7 +108,6 @@ $menuItems = [
 
         ::-webkit-scrollbar-thumb {
             background-color: #0070C0;
-            /* Changed to user-primary */
             border-radius: 4px;
         }
 
@@ -113,7 +137,6 @@ $menuItems = [
             height: 2rem;
             border-radius: 9999px;
             background-color: #D92B13;
-            /* Changed to user-primary */
             color: white;
             font-weight: 600;
             font-size: 0.875rem;
@@ -132,16 +155,13 @@ $menuItems = [
             margin-top: 0;
         }
 
-        /* User dashboard specific styles */
         .user-sidebar {
             background-color: #F8FAFC;
-            /* Lighter background for user sidebar */
             border-right: 1px solid #E2E8F0;
         }
 
         .user-nav-item.active {
             background-color: rgba(192, 26, 0, 0.1);
-            /* Light blue background for active items */
             color: #D92B13;
         }
 
@@ -150,7 +170,6 @@ $menuItems = [
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
-        /* Content section styling */
         .content-section {
             background-color: #F5F9FF;
             border-radius: 0.5rem;
@@ -164,7 +183,6 @@ $menuItems = [
             border-radius: 0.5rem 0.5rem 0 0;
         }
 
-        /* Card styling */
         .user-card {
             background-color: white;
             border-radius: 0.5rem;
@@ -178,7 +196,6 @@ $menuItems = [
             transform: translateY(-2px);
         }
 
-        /* Main content area */
         .main-content-area {
             background-color: #F0F7FF;
         }
@@ -187,17 +204,14 @@ $menuItems = [
 
 <body class="bg-user-content font-rubik">
     <div class="flex min-h-screen">
-        <!-- Sidebar -->
         <aside id="sidebar" class="user-sidebar fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
-                <!-- Logo -->
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
                     <a href="<?= BASE_URL ?>account/dashboard" class="flex items-center space-x-3">
                         <img src="<?= BASE_URL ?>img/logo_alt.png" alt="Logo" class="h-8 w-auto">
                     </a>
                 </div>
 
-                <!-- Navigation -->
                 <nav id="sidebarNav" class="flex-1 overflow-y-auto py-6 px-4 pt-0 pb-1">
                     <?php foreach ($menuItems as $categoryKey => $category): ?>
                         <div class="nav-category"><?= htmlspecialchars($category['title']) ?></div>
@@ -221,7 +235,6 @@ $menuItems = [
                     <?php endforeach; ?>
                 </nav>
 
-                <!-- Sidebar Footer -->
                 <div class="p-4 border-t border-gray-100">
                     <div class="space-y-2">
                         <a href="profile" class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary transition-colors duration-200">
@@ -237,9 +250,7 @@ $menuItems = [
             </div>
         </aside>
 
-        <!-- Main Content -->
         <div class="flex-1 lg:ml-64">
-            <!-- Header -->
             <header class="user-header sticky top-0 z-40 border-b border-gray-100">
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
@@ -250,7 +261,6 @@ $menuItems = [
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <!-- Notifications -->
                         <div class="relative">
                             <a href="<?= BASE_URL ?>account/notifications">
                                 <button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 relative">
@@ -260,7 +270,6 @@ $menuItems = [
                             </a>
                         </div>
 
-                        <!-- Cart -->
                         <div class="relative">
                             <a href="<?= BASE_URL ?>cart">
                                 <button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 relative">
@@ -270,15 +279,18 @@ $menuItems = [
                             </a>
                         </div>
 
-                        <!-- User Menu -->
                         <div class="relative" id="userDropdown">
-                            <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2">
+                            <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2" title="Last login: <?= htmlspecialchars($formattedLastLogin) ?>">
                                 <div class="user-initials"><?= htmlspecialchars($userInitials) ?></div>
                                 <span class="hidden md:block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
                                 <i class="fas fa-chevron-down text-sm text-gray-400"></i>
                             </button>
-                            <!-- Dropdown Menu -->
                             <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
+                                <div class="px-4 py-3 bg-gray-50">
+                                    <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($userName) ?></p>
+                                    <p class="text-xs text-gray-500"><?= htmlspecialchars($userEmail) ?></p>
+                                    <p class="text-xs text-gray-500 mt-1">Last login: <?= htmlspecialchars($formattedLastLogin) ?></p>
+                                </div>
                                 <a href="profile" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                                     <i class="fas fa-user w-5 h-5 text-gray-400"></i>
                                     My Profile
@@ -292,7 +304,7 @@ $menuItems = [
                                     Settings
                                 </a>
                                 <div class="my-2 border-t border-gray-100"></div>
-                                <a href="logout" class="flex items-center gap-3 px-4 py-2.5 text-sm text-user-primary hover:bg-gray-50">
+                                <a href="javascript:void(0);" onclick="logoutUser(); return false;" class="flex items-center gap-3 px-4 py-2.5 text-sm text-user-primary hover:bg-gray-50">
                                     <i class="fas fa-sign-out-alt w-5 h-5"></i>
                                     Logout
                                 </a>
@@ -302,12 +314,10 @@ $menuItems = [
                 </div>
             </header>
 
-            <!-- Main Content Area -->
             <main class="main-content-area p-6">
                 <?= $mainContent ?? '' ?>
             </main>
 
-            <!-- Footer -->
             <footer class="bg-white border-t border-gray-100 py-4 px-6 text-center text-sm text-gray-500">
                 <p>&copy; <?= date('Y') ?> Zzimba Online. All rights reserved.</p>
             </footer>
@@ -315,7 +325,6 @@ $menuItems = [
     </div>
 
     <script>
-        // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const overlay = document.createElement('div');
@@ -343,7 +352,6 @@ $menuItems = [
         sidebarToggle.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
 
-        // User dropdown functionality
         const userDropdown = document.getElementById('userDropdown');
         const userDropdownMenu = document.getElementById('userDropdownMenu');
 
@@ -356,7 +364,6 @@ $menuItems = [
             userDropdownMenu.classList.add('hidden');
         });
 
-        // Close sidebar on window resize if screen becomes large
         window.addEventListener('resize', () => {
             if (window.innerWidth >= 1024) {
                 sidebar.classList.remove('-translate-x-full');
@@ -365,27 +372,38 @@ $menuItems = [
             }
         });
 
-        // Scroll active nav item into view
         document.addEventListener('DOMContentLoaded', function() {
             const activeNavItem = document.querySelector('.user-nav-item.active');
             const sidebarNav = document.getElementById('sidebarNav');
 
             if (activeNavItem && sidebarNav) {
-                // Get the position of the active item relative to the sidebar
-                const activeItemRect = activeNavItem.getBoundingClientRect();
-                const sidebarRect = sidebarNav.getBoundingClientRect();
-
-                // Calculate the scroll position to bring the active item to the top
-                // with a small offset for better visibility
                 const scrollTop = activeNavItem.offsetTop - sidebarNav.offsetTop - 20;
-
-                // Scroll the sidebar to the active item
                 sidebarNav.scrollTo({
                     top: scrollTop,
                     behavior: 'smooth'
                 });
             }
         });
+
+        function logoutUser() {
+            $.ajax({
+                url: BASE_URL + 'login/handleAuth.php?action=logout',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        window.location.href = BASE_URL;
+                    } else {
+                        alert(response.message || 'Failed to logout');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Logout error:", xhr, status, error);
+                    alert('Failed to connect to the server. Please try again.');
+                }
+            });
+        }
     </script>
 </body>
 
