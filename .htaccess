@@ -150,6 +150,11 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^admin/fetch/([^/]+)$ admin/fetch/$1.php [L]
 
+# Rewrite for manageProfile fetch
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^fetch/manageProfile/([^/]+)$ account/fetch/manageProfile.php?action=$1 [L,QSA]
+
 # General rule for other files to work without .php extension
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

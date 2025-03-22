@@ -209,7 +209,6 @@ try {
             $stmt->bindParam(':id', $user['id'], PDO::PARAM_LOB);
             $stmt->execute();
 
-            session_start();
             $_SESSION['user'] = [
                 'logged_in' => true,
                 'user_id' => $user['id'],
@@ -344,7 +343,6 @@ try {
             $email = $data['email'];
             $otp = generateOTP();
 
-            session_start();
             $_SESSION['email_otp'] = $otp;
             $_SESSION['email_otp_time'] = time();
             $_SESSION['email_for_otp'] = $email;
@@ -363,7 +361,6 @@ try {
             $email = $data['email'];
             $otp = $data['otp'];
 
-            session_start();
             if (!isset($_SESSION['email_otp']) || !isset($_SESSION['email_for_otp']) || $_SESSION['email_for_otp'] !== $email) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid verification attempt']);
@@ -397,7 +394,6 @@ try {
             $phone = $data['phone'];
             $otp = generateOTP();
 
-            session_start();
             $_SESSION['phone_otp'] = $otp;
             $_SESSION['phone_otp_time'] = time();
             $_SESSION['phone_for_otp'] = $phone;
@@ -416,7 +412,6 @@ try {
             $phone = $data['phone'];
             $otp = $data['otp'];
 
-            session_start();
             if (!isset($_SESSION['phone_otp']) || !isset($_SESSION['phone_for_otp']) || $_SESSION['phone_for_otp'] !== $phone) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid verification attempt']);
@@ -530,7 +525,6 @@ try {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             $otp = generateOTP();
 
-            session_start();
             $_SESSION['reset_otp'] = $otp;
             $_SESSION['reset_otp_time'] = time();
             $_SESSION['reset_email'] = $email;
@@ -563,7 +557,6 @@ try {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             $otp = generateOTP();
 
-            session_start();
             $_SESSION['reset_otp'] = $otp;
             $_SESSION['reset_otp_time'] = time();
             $_SESSION['reset_phone'] = $phone;
@@ -584,8 +577,6 @@ try {
             $contact = $data['contact'];
             $contactType = $data['contactType'];
             $otp = $data['otp'];
-
-            session_start();
 
             if ($contactType === 'email') {
                 if (!isset($_SESSION['reset_otp']) || !isset($_SESSION['reset_email']) || $_SESSION['reset_email'] !== $contact) {
@@ -625,8 +616,6 @@ try {
             $contact = $data['contact'];
             $contactType = $data['contactType'];
             $password = $data['password'];
-
-            session_start();
 
             if ($contactType === 'email') {
                 if (!isset($_SESSION['reset_email']) || $_SESSION['reset_email'] !== $contact) {
@@ -675,7 +664,6 @@ try {
             break;
 
         case 'logout':
-            session_start();
             $_SESSION = array();
             session_destroy();
 

@@ -10,8 +10,7 @@ $js_code = curl_exec($ch);
 curl_close($ch);
 
 // Check if user is logged in
-session_start();
-$isLoggedIn = isset($_SESSION['user']) && $_SESSION['user']['logged_in'];
+$isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -1188,4 +1187,4 @@ $isLoggedIn = isset($_SESSION['user']) && $_SESSION['user']['logged_in'];
     </script>
 </body>
 
-</html> 
+</html>
