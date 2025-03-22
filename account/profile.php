@@ -6,6 +6,9 @@ $activeNav = 'profile';
 ob_start();
 ?>
 
+<!-- Add intl-tel-input CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css">
+
 <div class="space-y-6">
     <!-- Profile Header -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
@@ -58,24 +61,24 @@ ob_start();
             <p class="text-sm text-gray-text mt-1">Update your personal details</p>
         </div>
         <div class="p-6">
-            <form id="personalInfoForm">
+            <form id="personalInfoForm" autocomplete="off">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                        <input type="text" id="firstName" name="first_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                        <input type="text" id="firstName" name="first_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
                     </div>
                     <div>
                         <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                        <input type="text" id="lastName" name="last_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                        <input type="text" id="lastName" name="last_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
                     </div>
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                        <input type="email" id="email" name="email" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                        <input type="email" id="email" name="email" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
                     </div>
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        <p class="text-xs text-gray-500 mt-1">Format: +256XXXXXXXXX</p>
+                        <input type="tel" id="phone" name="phone" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
+                        <div id="phone-error" class="text-red-500 text-xs mt-1 hidden"></div>
                     </div>
                 </div>
                 <div class="mt-6">
@@ -101,12 +104,12 @@ ob_start();
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <form id="changePasswordForm">
+            <form id="changePasswordForm" autocomplete="off">
                 <div class="space-y-4">
                     <div>
                         <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
                         <div class="relative">
-                            <input type="password" id="currentPassword" name="current_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                            <input type="password" id="currentPassword" name="current_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
                             <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-target="currentPassword">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -115,7 +118,7 @@ ob_start();
                     <div>
                         <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
                         <div class="relative">
-                            <input type="password" id="newPassword" name="new_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                            <input type="password" id="newPassword" name="new_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
                             <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-target="newPassword">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -130,7 +133,7 @@ ob_start();
                     <div>
                         <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
                         <div class="relative">
-                            <input type="password" id="confirmPassword" name="confirm_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                            <input type="password" id="confirmPassword" name="confirm_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
                             <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-target="confirmPassword">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -164,8 +167,40 @@ ob_start();
     </div>
 </div>
 
+<!-- Error Notification -->
+<div id="errorNotification" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
+    <div class="flex items-center">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        <span id="errorMessage"></span>
+    </div>
+</div>
+
+<!-- Add intl-tel-input JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js"></script>
+
 <script>
+    // Initialize phone input with country selector
+    let phoneInput;
+
     $(document).ready(function() {
+        // Initialize the international telephone input
+        const phoneInputField = document.querySelector("#phone");
+        phoneInput = window.intlTelInput(phoneInputField, {
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
+            preferredCountries: ["ug", "ke", "tz", "rw"],
+            separateDialCode: true,
+            autoPlaceholder: "polite"
+        });
+
+        // Style the country selector to match our design
+        $('.iti').addClass('w-full');
+
+        // Validate phone on blur
+        phoneInputField.addEventListener("blur", function() {
+            validatePhoneNumber();
+        });
+
         // Fetch user details
         fetchUserDetails();
 
@@ -203,7 +238,9 @@ ob_start();
         // Form submissions
         $('#personalInfoForm').submit(function(e) {
             e.preventDefault();
-            updateProfile();
+            if (validatePhoneNumber()) {
+                updateProfile();
+            }
         });
 
         $('#changePasswordForm').submit(function(e) {
@@ -211,6 +248,22 @@ ob_start();
             changePassword();
         });
     });
+
+    // Validate phone number
+    function validatePhoneNumber() {
+        const phoneError = document.getElementById("phone-error");
+        phoneError.classList.add("hidden");
+
+        if (phoneInput.getNumber()) {
+            if (!phoneInput.isValidNumber()) {
+                phoneError.textContent = "Invalid phone number for the selected country";
+                phoneError.classList.remove("hidden");
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
 
     // Fetch user details from the server
     function fetchUserDetails() {
@@ -226,7 +279,11 @@ ob_start();
                     $('#firstName').val(user.first_name || '');
                     $('#lastName').val(user.last_name || '');
                     $('#email').val(user.email || '');
-                    $('#phone').val(user.phone || '');
+
+                    // Set phone number with country code
+                    if (user.phone) {
+                        phoneInput.setNumber(user.phone);
+                    }
 
                     // Update profile header
                     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
@@ -277,7 +334,7 @@ ob_start();
             },
             error: function(xhr) {
                 console.error('Error fetching user details:', xhr);
-                showSuccessNotification('Failed to load user details. Please refresh the page.', 'error');
+                showErrorNotification('Failed to load user details. Please refresh the page.');
             }
         });
     }
@@ -293,12 +350,12 @@ ob_start();
             first_name: $('#firstName').val().trim(),
             last_name: $('#lastName').val().trim(),
             email: $('#email').val().trim(),
-            phone: $('#phone').val().trim()
+            phone: phoneInput.getNumber()
         };
 
         // Basic validation
-        if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone) {
-            $('#profile-form-error').removeClass('hidden').text('All fields are required');
+        if (!formData.first_name || !formData.last_name || !formData.email) {
+            $('#profile-form-error').removeClass('hidden').text('First name, last name, and email are required');
             return;
         }
 
@@ -306,13 +363,6 @@ ob_start();
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
             $('#profile-form-error').removeClass('hidden').text('Please enter a valid email address');
-            return;
-        }
-
-        // Phone validation
-        const phoneRegex = /^\+[0-9]{10,15}$/;
-        if (!phoneRegex.test(formData.phone)) {
-            $('#profile-form-error').removeClass('hidden').text('Please enter a valid phone number in format: +256XXXXXXXXX');
             return;
         }
 
@@ -339,6 +389,7 @@ ob_start();
                     fetchUserDetails();
                 } else {
                     $('#profile-form-error').removeClass('hidden').text(response.message);
+                    showErrorNotification(response.message);
                 }
             },
             error: function(xhr) {
@@ -346,9 +397,12 @@ ob_start();
 
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    $('#profile-form-error').removeClass('hidden').text(response.message || 'An error occurred');
+                    const errorMessage = response.message || 'An error occurred';
+                    $('#profile-form-error').removeClass('hidden').text(errorMessage);
+                    showErrorNotification(errorMessage);
                 } catch (e) {
                     $('#profile-form-error').removeClass('hidden').text('Server error. Please try again later.');
+                    showErrorNotification('Server error. Please try again later.');
                 }
             }
         });
@@ -414,6 +468,7 @@ ob_start();
                     showSuccessNotification(response.message);
                 } else {
                     $('#password-form-error').removeClass('hidden').text(response.message);
+                    showErrorNotification(response.message);
                 }
             },
             error: function(xhr) {
@@ -421,9 +476,12 @@ ob_start();
 
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    $('#password-form-error').removeClass('hidden').text(response.message || 'An error occurred');
+                    const errorMessage = response.message || 'An error occurred';
+                    $('#password-form-error').removeClass('hidden').text(errorMessage);
+                    showErrorNotification(errorMessage);
                 } catch (e) {
                     $('#password-form-error').removeClass('hidden').text('Server error. Please try again later.');
+                    showErrorNotification('Server error. Please try again later.');
                 }
             }
         });
@@ -440,21 +498,29 @@ ob_start();
     }
 
     // Show success notification
-    function showSuccessNotification(message, type = 'success') {
+    function showSuccessNotification(message) {
         const notification = document.getElementById('successNotification');
         const messageEl = document.getElementById('successMessage');
 
         // Set message
         messageEl.textContent = message;
 
-        // Set color based on type
-        if (type === 'error') {
-            notification.classList.remove('bg-green-100', 'border-green-500', 'text-green-700');
-            notification.classList.add('bg-red-100', 'border-red-500', 'text-red-700');
-        } else {
-            notification.classList.remove('bg-red-100', 'border-red-500', 'text-red-700');
-            notification.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
-        }
+        // Show notification
+        notification.classList.remove('hidden');
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 3000);
+    }
+
+    // Show error notification
+    function showErrorNotification(message) {
+        const notification = document.getElementById('errorNotification');
+        const messageEl = document.getElementById('errorMessage');
+
+        // Set message
+        messageEl.textContent = message;
 
         // Show notification
         notification.classList.remove('hidden');
