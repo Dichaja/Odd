@@ -1188,4 +1188,4 @@ $isLoggedIn = isset($_SESSION['user']) && $_SESSION['user']['logged_in'];
     </script>
 </body>
 
-</html>
+</html> 
