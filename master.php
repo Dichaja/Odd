@@ -2,11 +2,8 @@
 require_once __DIR__ . '/config/config.php';
 $title = isset($pageTitle) ? $pageTitle . ' | Buy Online - Deliver On-site' : 'Zzimba Online Uganda | Buy Online - Deliver On-site';
 $activeNav = $activeNav ?? 'home';
-
 date_default_timezone_set('Africa/Kampala');
 $js_url = BASE_URL . "track/eventLog.js";
-
-// Use cURL to fetch the JavaScript code from eventLog.js
 $ch = curl_init($js_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $js_code = curl_exec($ch);
@@ -23,7 +20,7 @@ curl_close($ch);
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
     <script src="<?= BASE_URL ?>track/eventLog.js"></script>
@@ -31,10 +28,8 @@ curl_close($ch);
     <link rel="icon" type="image/png" href="favicon.png">
     <script>
         const BASE_URL = "<?php echo BASE_URL; ?>";
-        const ACTIVE_NAV = <?php echo ($activeNav !== NULL) ? json_encode($activeNav) : "null"; ?>;
-        const PAGE_TITLE = <?php echo ($pageTitle !== NULL) ? json_encode($pageTitle) : "null"; ?>;
-    </script>
-    <script>
+        const ACTIVE_NAV = <?php echo ($activeNav !== null) ? json_encode($activeNav) : "null"; ?>;
+        const PAGE_TITLE = <?php echo ($pageTitle !== null) ? json_encode($pageTitle) : "null"; ?>;
         tailwind.config = {
             theme: {
                 extend: {
@@ -62,17 +57,17 @@ curl_close($ch);
             transition: all 0.3s ease;
             transform: translateY(10px);
             z-index: 50;
-            white-space: nowrap;
+            white-space: nowrap
         }
 
         .menu-item:hover .mega-menu {
             visibility: visible;
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0)
         }
 
         .nav-link {
-            position: relative;
+            position: relative
         }
 
         .nav-link::after {
@@ -83,48 +78,48 @@ curl_close($ch);
             bottom: -4px;
             left: 0;
             background-color: #C00000;
-            transition: width 0.3s ease;
+            transition: width 0.3s ease
         }
 
         .nav-link:hover::after {
-            width: 100%;
+            width: 100%
         }
 
         .dropdown-icon {
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease
         }
 
         .menu-item:hover .dropdown-icon {
-            transform: rotate(180deg);
+            transform: rotate(180deg)
         }
 
         .nav-link.active {
-            color: #C00000;
+            color: #C00000
         }
 
         .nav-link.active::after {
-            width: 100%;
+            width: 100%
         }
 
         @media (max-width:768px) {
             .mobile-menu {
-                display: none;
+                display: none
             }
 
             .mobile-menu.active {
-                display: block;
+                display: block
             }
         }
 
         .modal-container {
             transition: opacity 0.3s ease, transform 0.3s ease;
             opacity: 0;
-            transform: scale(0.95);
+            transform: scale(0.95)
         }
 
         .modal-container.active {
             opacity: 1;
-            transform: scale(1);
+            transform: scale(1)
         }
 
         .auth-form {
@@ -132,13 +127,13 @@ curl_close($ch);
             opacity: 0;
             transform: translateX(20px);
             position: absolute;
-            width: 100%;
+            width: 100%
         }
 
         .auth-form.active {
             opacity: 1;
             transform: translateX(0);
-            position: relative;
+            position: relative
         }
 
         .notification-container {
@@ -149,7 +144,7 @@ curl_close($ch);
             display: flex;
             flex-direction: column-reverse;
             gap: 0.5rem;
-            pointer-events: none;
+            pointer-events: none
         }
 
         .notification {
@@ -166,65 +161,65 @@ curl_close($ch);
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            gap: 1rem;
+            gap: 1rem
         }
 
         .notification.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0)
         }
 
         .notification.success {
-            border-left: 4px solid #10B981;
+            border-left: 4px solid #10B981
         }
 
         .notification.error {
-            border-left: 4px solid #EF4444;
+            border-left: 4px solid #EF4444
         }
 
         .notification.warning {
-            border-left: 4px solid #F59E0B;
+            border-left: 4px solid #F59E0B
         }
 
         .notification.info {
-            border-left: 4px solid #3B82F6;
+            border-left: 4px solid #3B82F6
         }
 
         .notification .icon {
             flex-shrink: 0;
             width: 1.5rem;
-            height: 1.5rem;
+            height: 1.5rem
         }
 
         .notification.success .icon {
-            color: #10B981;
+            color: #10B981
         }
 
         .notification.error .icon {
-            color: #EF4444;
+            color: #EF4444
         }
 
         .notification.warning .icon {
-            color: #F59E0B;
+            color: #F59E0B
         }
 
         .notification.info .icon {
-            color: #3B82F6;
+            color: #3B82F6
         }
 
         .notification .content {
-            flex-grow: 1;
+            flex-grow: 1
         }
 
         .notification .title {
             font-weight: 600;
             font-size: 0.875rem;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.25rem
         }
 
         .notification .message {
             font-size: 0.875rem;
-            color: #4B5563;
+            color: #4B5563
         }
 
         .notification .close {
@@ -233,20 +228,20 @@ curl_close($ch);
             cursor: pointer;
             padding: 0.25rem;
             border-radius: 0.25rem;
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease
         }
 
         .notification .close:hover {
-            background-color: #F3F4F6;
+            background-color: #F3F4F6
         }
 
         .search-form {
             display: none;
-            transition: all 0.3s ease;
+            transition: all 0.3s ease
         }
 
         .search-form.active {
-            display: flex;
+            display: flex
         }
 
         .mobile-menu {
@@ -258,11 +253,11 @@ curl_close($ch);
             background-color: white;
             transition: left 0.3s ease;
             z-index: 1000;
-            overflow-y: auto;
+            overflow-y: auto
         }
 
         .mobile-menu.active {
-            left: 0;
+            left: 0
         }
 
         .mobile-menu-overlay {
@@ -273,45 +268,45 @@ curl_close($ch);
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
             display: none;
-            z-index: 999;
+            z-index: 999
         }
 
         .mobile-menu-overlay.active {
-            display: block;
+            display: block
         }
 
         ::-webkit-scrollbar {
             width: 3px;
-            height: 3px;
+            height: 3px
         }
 
         ::-webkit-scrollbar-thumb {
             background-color: rgb(0, 0, 0);
-            border-radius: 3px;
+            border-radius: 3px
         }
 
         ::-webkit-scrollbar-track {
-            background: transparent;
+            background: transparent
         }
 
         * {
             scrollbar-width: thin;
-            scrollbar-color: rgb(135, 135, 135) transparent;
+            scrollbar-color: rgb(135, 135, 135)transparent
         }
 
         #scroll-to-top {
-            z-index: 1000;
+            z-index: 1000
         }
 
         #scroll-to-top.visible {
             opacity: 1;
-            visibility: visible;
+            visibility: visible
         }
 
         .scroll-indicator {
             transform: rotate(-90deg);
             transform-origin: 50% 50%;
-            transition: stroke-dashoffset 0.3s ease;
+            transition: stroke-dashoffset 0.3s ease
         }
 
         .ad-popup {
@@ -327,25 +322,25 @@ curl_close($ch);
             z-index: 9999;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: opacity 0.3s ease, visibility 0.3s ease
         }
 
         .ad-popup.show {
             opacity: 1;
-            visibility: visible;
+            visibility: visible
         }
 
         .ad-content {
             position: relative;
             max-width: 90%;
-            max-height: 90%;
+            max-height: 90%
         }
 
         .ad-image {
             width: 100%;
             height: auto;
             max-height: 60vh;
-            object-fit: contain;
+            object-fit: contain
         }
 
         .ad-close {
@@ -363,11 +358,11 @@ curl_close($ch);
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease
         }
 
         .ad-close:hover {
-            background-color: #fff;
+            background-color: #fff
         }
 
         .progress-bar {
@@ -377,52 +372,65 @@ curl_close($ch);
             height: 4px;
             background-color: #C00000;
             width: 0;
-            transition: width 5s linear;
+            transition: width 5s linear
         }
 
-        /* Password strength meter styles */
         .password-strength-meter {
             height: 5px;
             background-color: #ddd;
             border-radius: 3px;
             margin-top: 5px;
             position: relative;
-            overflow: hidden;
+            overflow: hidden
         }
 
         .password-strength-meter-fill {
             height: 100%;
             border-radius: 3px;
-            transition: width 0.3s ease, background-color 0.3s ease;
+            transition: width 0.3s ease, background-color 0.3s ease
         }
 
         .password-strength-text {
             font-size: 0.75rem;
-            margin-top: 5px;
+            margin-top: 5px
         }
 
         .strength-weak .password-strength-meter-fill {
             background-color: #ef4444;
-            width: 25%;
+            width: 25%
         }
 
         .strength-fair .password-strength-meter-fill {
             background-color: #f59e0b;
-            width: 50%;
+            width: 50%
         }
 
         .strength-good .password-strength-meter-fill {
             background-color: #3b82f6;
-            width: 75%;
+            width: 75%
         }
 
         .strength-strong .password-strength-meter-fill {
             background-color: #10b981;
-            width: 100%;
+            width: 100%
         }
 
         .iti {
-            width: 100%;
+            width: 100%
+        }
+
+        .otp-input {
+            width: 40px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.5rem
+        }
+
+        @media (min-width:640px) {
+            .otp-input {
+                width: 50px;
+                height: 60px
+            }
         }
     </style>
 </head>
@@ -465,7 +473,7 @@ curl_close($ch);
                         <a href="#" class="text-secondary hover:text-primary transition-colors">
                             <i class="fas fa-shopping-cart text-xl"></i>
                         </a>
-                        <a href="#" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center" onclick="openAuthModal()">
+                        <a href="#" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center" id="login-button">
                             <i class="fas fa-user mr-2"></i>Login / Register
                         </a>
                     </div>
@@ -495,167 +503,14 @@ curl_close($ch);
             <a href="#" class="block text-center bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
                 <i class="fas fa-shopping-cart mr-2"></i>Cart
             </a>
-            <a href="#" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors" onclick="openAuthModal()">
+            <a href="#" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors" id="mobile-login-button">
                 <i class="fas fa-user mr-2"></i>Login / Register
             </a>
         </div>
     </div>
     <div id="auth-modal" style="z-index:1100" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
         <div class="modal-container bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
-            <div id="login-form" class="auth-form active">
-                <div class="p-6 border-b">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-2xl font-bold text-secondary">Login</h2>
-                        <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
-                    </div>
-                    <p class="mb-4 text-center text-sm text-gray-600">Don't have an account?
-                        <a href="#" onclick="toggleAuthForms()" class="text-primary hover:text-red-700 font-medium">Create Account</a>
-                    </p>
-                    <form class="space-y-4" autocomplete="off">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <div class="relative">
-                                <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autocomplete="new-email">
-                            </div>
-                        </div>
-                        <div class="relative">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                            <div class="relative">
-                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your password" id="login-password" autocomplete="new-password">
-                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('login-password')"><i class="fas fa-eye"></i></button>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <label class="flex items-center">
-                                <input type="checkbox" class="rounded border-gray-300 text-primary focus:ring-primary">
-                                <span class="ml-2 text-sm text-gray-600">Remember me</span>
-                            </label>
-                            <a href="#" onclick="showForgotPasswordForm()" class="text-sm text-primary hover:text-red-700">Forgot Password?</a>
-                        </div>
-                        <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Login</button>
-                    </form>
-                </div>
-            </div>
-            <div id="register-form" class="auth-form" style="display: none;">
-                <div class="p-6 border-b">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-2xl font-bold text-secondary">Create Account</h2>
-                        <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
-                    </div>
-                    <p class="mb-4 text-center text-sm text-gray-600">Already have an account?
-                        <a href="#" onclick="toggleAuthForms()" class="text-primary hover:text-red-700 font-medium">Login</a>
-                    </p>
-                    <form class="space-y-4" autocomplete="off">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                            <div class="relative">
-                                <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Choose a username" autocomplete="new-username">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" required placeholder="Phone Number" class="w-full py-2 border border-gray-300 rounded-lg" autocomplete="new-phone">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <div class="relative">
-                                <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autocomplete="new-email">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                            <div class="relative">
-                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Create a password" id="register-password" autocomplete="new-password" oninput="checkPasswordStrength(this.value)">
-                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('register-password')"><i class="fas fa-eye"></i></button>
-                            </div>
-                            <div class="password-strength-meter mt-2">
-                                <div class="password-strength-meter-fill"></div>
-                            </div>
-                            <div class="password-strength-text text-xs text-gray-500"></div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                            <div class="relative">
-                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm your password" id="register-confirm-password" autocomplete="new-password">
-                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('register-confirm-password')"><i class="fas fa-eye"></i></button>
-                            </div>
-                        </div>
-                        <div class="flex items-start">
-                            <input type="checkbox" required class="mt-1 rounded border-gray-300 text-primary focus:ring-primary">
-                            <span class="ml-2 text-sm text-gray-600">I agree to the
-                                <a href="<?= BASE_URL ?>terms-and-conditions" class="text-primary hover:text-red-700">Terms of Service</a> and
-                                <a href="#" class="text-primary hover:text-red-700">Privacy Policy</a>
-                            </span>
-                        </div>
-                        <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Create Account</button>
-                    </form>
-                </div>
-            </div>
-            <div id="forgot-password-form" class="auth-form" style="display: none;">
-                <div class="p-6 border-b">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-2xl font-bold text-secondary">Forgot Password</h2>
-                        <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
-                    </div>
-                    <form class="space-y-4" autocomplete="off">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <div class="relative">
-                                <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autocomplete="new-email">
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset Code</button>
-                    </form>
-                    <p class="mt-4 text-center text-sm text-gray-600">Remember your password?
-                        <a href="#" onclick="showLoginForm()" class="text-primary hover:text-red-700 font-medium">Back to Login</a>
-                    </p>
-                </div>
-            </div>
-            <div id="reset-password-form" class="auth-form" style="display: none;">
-                <div class="p-6 border-b">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-2xl font-bold text-secondary">Reset Password</h2>
-                        <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
-                    </div>
-                    <form class="space-y-4" autocomplete="off">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
-                            <div class="relative">
-                                <i class="fas fa-key absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter verification code" autocomplete="off">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                            <div class="relative">
-                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter new password" id="new-password" autocomplete="new-password" oninput="checkPasswordStrength(this.value, 'new-password')">
-                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('new-password')"><i class="fas fa-eye"></i></button>
-                            </div>
-                            <div class="password-strength-meter mt-2">
-                                <div class="password-strength-meter-fill"></div>
-                            </div>
-                            <div class="password-strength-text text-xs text-gray-500"></div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                            <div class="relative">
-                                <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm new password" id="confirm-new-password" autocomplete="new-password">
-                                <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('confirm-new-password')"><i class="fas fa-eye"></i></button>
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Reset Password</button>
-                    </form>
-                </div>
-            </div>
+            <div id="auth-forms-container"></div>
         </div>
     </div>
     <div class="main-area flex-grow">
@@ -704,7 +559,7 @@ curl_close($ch);
     <div id="notification-container" class="notification-container"></div>
     <button id="scroll-to-top" class="fixed bottom-6 right-6 bg-primary hover:bg-red-600 text-white rounded-full p-3 shadow-lg transition-all duration-300 opacity-0 invisible" aria-label="Scroll to top">
         <svg class="w-6 h-6" viewBox="0 0 36 36">
-            <path class="scroll-circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255, 255, 255, 0.2)" stroke-width="3" />
+            <path class="scroll-circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="3" />
             <path class="scroll-indicator" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="100" stroke-dashoffset="100" />
             <i class="fas fa-arrow-up absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></i>
         </svg>
@@ -713,97 +568,177 @@ curl_close($ch);
         <div class="ad-content">
             <div class="progress-bar" id="adProgressBar"></div>
             <img src="https://placehold.co/800x450" alt="Advertisement" class="ad-image">
-            <button id="adClose" class="ad-close" style="display: none;">&times;</button>
+            <button id="adClose" class="ad-close" style="display:none">&times;</button>
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script>
-        // Prevent form autofill
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add random attributes to prevent autofill
-            const forms = document.querySelectorAll('form');
-            forms.forEach(form => {
-                form.setAttribute('autocomplete', 'off');
-                const randomStr = Math.random().toString(36).substring(2);
-                form.setAttribute('data-form-id', randomStr);
-            });
-
-            // Initialize phone input with East African countries prioritized
-            const phoneInputField = document.querySelector("#phone");
-            if (phoneInputField) {
-                const iti = window.intlTelInput(phoneInputField, {
-                    preferredCountries: ["ug", "rw", "ke", "tz"],
-                    initialCountry: "ug",
-                    separateDialCode: true,
-                    allowDropdown: true,
-                    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
-                });
-            }
-        });
-
-        // Password strength checker
-        function checkPasswordStrength(password, inputId = 'register-password') {
-            const meter = document.querySelector(`#${inputId}`).closest('div').nextElementSibling;
-            const meterFill = meter.querySelector('.password-strength-meter-fill');
-            const strengthText = meter.nextElementSibling;
-
-            // Remove all strength classes
-            meter.classList.remove('strength-weak', 'strength-fair', 'strength-good', 'strength-strong');
-
-            if (!password) {
-                meterFill.style.width = '0';
-                strengthText.textContent = '';
-                return;
-            }
-
-            // Check password strength
-            let strength = 0;
-
-            // Length check
-            if (password.length >= 8) strength += 1;
-            if (password.length >= 12) strength += 1;
-
-            // Character variety checks
-            if (/[A-Z]/.test(password)) strength += 1;
-            if (/[a-z]/.test(password)) strength += 1;
-            if (/[0-9]/.test(password)) strength += 1;
-            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-
-            // Set strength level
-            let strengthLevel = '';
-            let strengthClass = '';
-
-            if (strength < 3) {
-                strengthLevel = 'Weak';
-                strengthClass = 'strength-weak';
-            } else if (strength < 4) {
-                strengthLevel = 'Fair';
-                strengthClass = 'strength-fair';
-            } else if (strength < 6) {
-                strengthLevel = 'Good';
-                strengthClass = 'strength-good';
-            } else {
-                strengthLevel = 'Strong';
-                strengthClass = 'strength-strong';
-            }
-
-            meter.classList.add(strengthClass);
-            strengthText.textContent = `Password strength: ${strengthLevel}`;
+        function sendEmailOTP(email, otp) {
+            console.log("Demo: Sending Email OTP to", email, "OTP:", otp);
+            return true;
         }
 
-        const baseURL = "<?= BASE_URL ?>";
+        function sendSMSOTP(phone, otp) {
+            console.log("Demo: Sending SMS OTP to", phone, "OTP:", otp);
+            return true;
+        }
+        class NotificationSystem {
+            constructor() {
+                this.container = document.getElementById('notification-container');
+                this.notifications = new Map();
+                this.counter = 0;
+            }
+            show(o) {
+                const {
+                    type = 'info', title, message, duration = 10000
+                } = o;
+                const id = this.counter++;
+                const n = document.createElement('div');
+                n.className = 'notification ' + type;
+                n.setAttribute('role', 'alert');
+                let icon;
+                if (type === 'success') icon = '<i class="fas fa-check-circle"></i>';
+                else if (type === 'error') icon = '<i class="fas fa-exclamation-circle"></i>';
+                else if (type === 'warning') icon = '<i class="fas fa-exclamation-triangle"></i>';
+                else icon = '<i class="fas fa-info-circle"></i>';
+                n.innerHTML = `<div class="icon">${icon}</div><div class="content">${title ? `<div class="title">${title}</div>` : ''}<div class="message">${message}</div></div><button class="close" aria-label="Close notification"><i class="fas fa-times"></i></button>`;
+                this.container.appendChild(n);
+                this.notifications.set(id, n);
+                n.offsetHeight;
+                n.classList.add('show');
+                const closeBtn = n.querySelector('.close');
+                closeBtn.addEventListener('click', () => this.close(id));
+                if (duration > 0) {
+                    setTimeout(() => this.close(id), duration);
+                }
+                return id;
+            }
+            close(id) {
+                const n = this.notifications.get(id);
+                if (n) {
+                    n.classList.remove('show');
+                    setTimeout(() => {
+                        n.remove();
+                        this.notifications.delete(id);
+                    }, 300);
+                }
+            }
+            success(m, t = 'Success') {
+                return this.show({
+                    type: 'success',
+                    title: t,
+                    message: m
+                });
+            }
+            error(m, t = 'Error') {
+                return this.show({
+                    type: 'error',
+                    title: t,
+                    message: m
+                });
+            }
+            warning(m, t = 'Warning') {
+                return this.show({
+                    type: 'warning',
+                    title: t,
+                    message: m
+                });
+            }
+            info(m, t = 'Info') {
+                return this.show({
+                    type: 'info',
+                    title: t,
+                    message: m
+                });
+            }
+        }
+        const notifications = new NotificationSystem();
+
+        function checkPasswordStrength(p, i = 'register-password') {
+            const m = document.querySelector('#' + i).closest('div').nextElementSibling;
+            const f = m.querySelector('.password-strength-meter-fill');
+            const t = m.nextElementSibling;
+            m.classList.remove('strength-weak', 'strength-fair', 'strength-good', 'strength-strong');
+            if (!p) {
+                f.style.width = '0';
+                t.textContent = '';
+                return;
+            }
+            let s = 0;
+            if (p.length >= 8) s++;
+            if (p.length >= 12) s++;
+            if (/[A-Z]/.test(p)) s++;
+            if (/[a-z]/.test(p)) s++;
+            if (/[0-9]/.test(p)) s++;
+            if (/[^A-Za-z0-9]/.test(p)) s++;
+            let l = '',
+                c = '';
+            if (s < 3) {
+                l = 'Weak';
+                c = 'strength-weak';
+            } else if (s < 4) {
+                l = 'Fair';
+                c = 'strength-fair';
+            } else if (s < 6) {
+                l = 'Good';
+                c = 'strength-good';
+            } else {
+                l = 'Strong';
+                c = 'strength-strong';
+            }
+            m.classList.add(c);
+            t.textContent = 'Password strength: ' + l;
+        }
+
+        function togglePasswordVisibility(i) {
+            const e = document.getElementById(i);
+            const b = e.nextElementSibling;
+            const ic = b.querySelector('i');
+            if (e.type === 'password') {
+                e.type = 'text';
+                ic.classList.remove('fa-eye');
+                ic.classList.add('fa-eye-slash');
+                notifications.info('Password visible');
+            } else {
+                e.type = 'password';
+                ic.classList.remove('fa-eye-slash');
+                ic.classList.add('fa-eye');
+                notifications.info('Password hidden');
+            }
+        }
+
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function isStrongPassword(password) {
+            return (password.length >= 8 &&
+                /[A-Z]/.test(password) &&
+                /[a-z]/.test(password) &&
+                /[0-9]/.test(password) &&
+                /[^A-Za-z0-9]/.test(password));
+        }
+
+        function generateOTP(length = 6) {
+            let otp = '';
+            for (let i = 0; i < length; i++) {
+                otp += Math.floor(Math.random() * 10).toString();
+            }
+            return otp;
+        }
         document.getElementById("currentYear").textContent = new Date().getFullYear();
         const activeNavKey = "<?= $activeNav ?>";
         const navItems = {
             home: {
                 icon: 'fa-home',
                 title: 'Home',
-                url: baseURL
+                url: BASE_URL
             },
             about: {
                 icon: 'fa-building',
                 title: 'About Us',
-                url: baseURL + 'about-us'
+                url: BASE_URL + 'about-us'
             },
             materials: {
                 icon: 'fa-warehouse',
@@ -829,224 +764,40 @@ curl_close($ch);
             contact: {
                 icon: 'fa-envelope',
                 title: 'Contact Us',
-                url: baseURL + 'contact-us'
+                url: BASE_URL + 'contact-us'
             }
         };
 
-        function generateNavigation(items) {
-            let html = '';
-            for (const [key, item] of Object.entries(items)) {
-                if (item.children) {
-                    const isActive = key === activeNavKey ? 'active' : '';
-                    html += `
-                        <div class="menu-item relative group">
-                            <button class="flex items-center space-x-2 text-secondary hover:text-primary transition-colors nav-link ${isActive}">
-                                <i class="fas ${item.icon} mr-2"></i>
-                                <span>${item.title}</span>
-                                <i class="fas fa-chevron-down text-xs ml-1 dropdown-icon"></i>
-                            </button>
-                            <div class="mega-menu p-6">
-                                <div class="grid grid-cols-1 gap-8">
-                                    <div>
-                                        <h3 class="font-bold text-lg mb-4 text-secondary border-b pb-2">${item.title}</h3>
-                                        <ul class="space-y-2">
-                                            ${Object.entries(item.children).map(([childKey, child])=>`
-                                                <li>
-                                                    <a href="${child.url}" class="flex items-center text-gray-600 hover:text-primary transition-colors">
-                                                        <i class="fas ${child.icon} mr-2 text-sm"></i>
-                                                        ${child.title}
-                                                    </a>
-                                                </li>`).join('')}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
+        function generateNavigation(i) {
+            let h = '';
+            for (const [k, v] of Object.entries(i)) {
+                if (v.children) {
+                    const a = k === activeNavKey ? 'active' : '';
+                    h += `<div class="menu-item relative group"><button class="flex items-center space-x-2 text-secondary hover:text-primary transition-colors nav-link ${a}"><i class="fas ${v.icon} mr-2"></i><span>${v.title}</span><i class="fas fa-chevron-down text-xs ml-1 dropdown-icon"></i></button><div class="mega-menu p-6"><div class="grid grid-cols-1 gap-8"><div><h3 class="font-bold text-lg mb-4 text-secondary border-b pb-2">${v.title}</h3><ul class="space-y-2">${Object.entries(v.children).map(([ck, ch]) => `<li><a href="${ch.url}" class="flex items-center text-gray-600 hover:text-primary transition-colors"><i class="fas ${ch.icon} mr-2 text-sm"></i>${ch.title}</a></li>`).join('')}</ul></div></div></div></div>`;
                 } else {
-                    const isActive = key === activeNavKey ? 'active' : '';
-                    html += `
-                        <a href="${item.url}" class="nav-link text-secondary hover:text-primary transition-colors ${isActive}">
-                            <i class="fas ${item.icon} mr-2"></i>${item.title}
-                        </a>`;
+                    const a = k === activeNavKey ? 'active' : '';
+                    h += `<a href="${v.url}" class="nav-link text-secondary hover:text-primary transition-colors ${a}"><i class="fas ${v.icon} mr-2"></i>${v.title}</a>`;
                 }
             }
-            return html;
+            return h;
         }
 
-        function generateMobileNavigation(items) {
-            let html = '';
-            for (const [key, item] of Object.entries(items)) {
-                if (item.children) {
-                    const isActive = key === activeNavKey ? 'active' : '';
-                    html += `
-                        <div class="py-2 px-4 text-secondary">
-                            <div class="flex items-center justify-between ${isActive}">
-                                <span><i class="fas ${item.icon} mr-2"></i>${item.title}</span>
-                                <i class="fas fa-chevron-down text-xs"></i>
-                            </div>
-                            <div class="mt-2 ml-4 space-y-2">
-                                ${Object.entries(item.children).map(([childKey, child])=>`
-                                    <a href="${child.url}" class="block py-2 text-secondary hover:text-primary hover:bg-gray-50">
-                                        <i class="fas ${child.icon} mr-2"></i>${child.title}
-                                    </a>`).join('')}
-                            </div>
-                        </div>`;
+        function generateMobileNavigation(i) {
+            let h = '';
+            for (const [k, v] of Object.entries(i)) {
+                if (v.children) {
+                    const a = k === activeNavKey ? 'active' : '';
+                    h += `<div class="py-2 px-4 text-secondary"><div class="flex items-center justify-between ${a}"><span><i class="fas ${v.icon} mr-2"></i>${v.title}</span><i class="fas fa-chevron-down text-xs"></i></div><div class="mt-2 ml-4 space-y-2">${Object.entries(v.children).map(([ck, ch]) => `<a href="${ch.url}" class="block py-2 text-secondary hover:text-primary hover:bg-gray-50"><i class="fas ${ch.icon} mr-2"></i>${ch.title}</a>`).join('')}</div></div>`;
                 } else {
-                    const isActive = key === activeNavKey ? 'active' : '';
-                    html += `
-                        <a href="${item.url}" class="block py-2 px-4 text-secondary hover:text-primary hover:bg-gray-50 ${isActive}">
-                            <i class="fas ${item.icon} mr-2"></i>${item.title}
-                        </a>`;
+                    const a = k === activeNavKey ? 'active' : '';
+                    h += `<a href="${v.url}" class="block py-2 px-4 text-secondary hover:text-primary hover:bg-gray-50 ${a}"><i class="fas ${v.icon} mr-2"></i>${v.title}</a>`;
                 }
             }
-            return html;
+            return h;
         }
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('desktop-nav').innerHTML = generateNavigation(navItems);
             document.getElementById('mobile-menu-items').innerHTML = generateMobileNavigation(navItems);
-        });
-        class NotificationSystem {
-            constructor() {
-                this.container = document.getElementById('notification-container');
-                this.notifications = new Map();
-                this.counter = 0;
-            }
-            show(options) {
-                const {
-                    type = 'info', title, message, duration = 10000
-                } = options;
-                const id = this.counter++;
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                notification.setAttribute('role', 'alert');
-                let icon;
-                switch (type) {
-                    case 'success':
-                        icon = '<i class="fas fa-check-circle"></i>';
-                        break;
-                    case 'error':
-                        icon = '<i class="fas fa-exclamation-circle"></i>';
-                        break;
-                    case 'warning':
-                        icon = '<i class="fas fa-exclamation-triangle"></i>';
-                        break;
-                    default:
-                        icon = '<i class="fas fa-info-circle"></i>';
-                }
-                notification.innerHTML = `
-                    <div class="icon">${icon}</div>
-                    <div class="content">
-                        ${title ? `<div class="title">${title}</div>` : ''}
-                        <div class="message">${message}</div>
-                    </div>
-                    <button class="close" aria-label="Close notification"><i class="fas fa-times"></i></button>
-                `;
-                this.container.appendChild(notification);
-                this.notifications.set(id, notification);
-                notification.offsetHeight;
-                notification.classList.add('show');
-                const closeBtn = notification.querySelector('.close');
-                closeBtn.addEventListener('click', () => this.close(id));
-                if (duration > 0) {
-                    setTimeout(() => this.close(id), duration);
-                }
-                return id;
-            }
-            close(id) {
-                const notification = this.notifications.get(id);
-                if (notification) {
-                    notification.classList.remove('show');
-                    setTimeout(() => {
-                        notification.remove();
-                        this.notifications.delete(id);
-                    }, 300);
-                }
-            }
-            success(message, title = 'Success') {
-                return this.show({
-                    type: 'success',
-                    title,
-                    message
-                });
-            }
-            error(message, title = 'Error') {
-                return this.show({
-                    type: 'error',
-                    title,
-                    message
-                });
-            }
-            warning(message, title = 'Warning') {
-                return this.show({
-                    type: 'warning',
-                    title,
-                    message
-                });
-            }
-            info(message, title = 'Info') {
-                return this.show({
-                    type: 'info',
-                    title,
-                    message
-                });
-            }
-        }
-        const notifications = new NotificationSystem();
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                if (form.closest('#login-form')) {
-                    const email = form.querySelector('input[type="email"]').value;
-                    const password = form.querySelector('input[type="password"]').value;
-                    if (password.length < 8) {
-                        notifications.error('Password must be at least 8 characters long');
-                        return;
-                    }
-                    notifications.success('Login successful! Redirecting...');
-                    setTimeout(() => {
-                        notifications.info('Welcome back!');
-                    }, 1500);
-                }
-                if (form.closest('#register-form')) {
-                    const password = form.querySelector('#register-password').value;
-                    const confirmPassword = form.querySelector('#register-confirm-password').value;
-                    if (password.length < 8) {
-                        notifications.error('Password must be at least 8 characters long');
-                        return;
-                    }
-                    if (password !== confirmPassword) {
-                        notifications.error('Passwords do not match');
-                        return;
-                    }
-                    notifications.success('Account created successfully!');
-                }
-                if (form.closest('#forgot-password-form')) {
-                    notifications.success('Reset code sent to your email');
-                    showResetPasswordForm();
-                }
-                if (form.closest('#reset-password-form')) {
-                    const code = form.querySelector('input[type="text"]').value;
-                    const newPassword = form.querySelector('#new-password').value;
-                    const confirmPassword = form.querySelector('#confirm-new-password').value;
-                    if (code.length !== 6) {
-                        notifications.error('Please enter a valid 6-digit code');
-                        return;
-                    }
-                    if (newPassword.length < 8) {
-                        notifications.error('Password must be at least 8 characters long');
-                        return;
-                    }
-                    if (newPassword !== confirmPassword) {
-                        notifications.error('Passwords do not match');
-                        return;
-                    }
-                    notifications.success('Password reset successfully!');
-                    setTimeout(() => {
-                        showLoginForm();
-                        notifications.info('Please login with your new password');
-                    }, 1500);
-                }
-            });
         });
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.querySelector('.mobile-menu');
@@ -1069,88 +820,24 @@ curl_close($ch);
         mobileMenuOverlay.addEventListener('click', closeMobileMenu);
 
         function openAuthModal() {
-            const modal = document.getElementById('auth-modal');
-            const modalContainer = modal.querySelector('.modal-container');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modalContainer.offsetHeight;
-            modalContainer.classList.add('active');
+            const m = document.getElementById('auth-modal');
+            const c = m.querySelector('.modal-container');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            c.offsetHeight;
+            c.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
         function closeAuthModal() {
-            const modal = document.getElementById('auth-modal');
-            const modalContainer = modal.querySelector('.modal-container');
-            modalContainer.classList.remove('active');
+            const m = document.getElementById('auth-modal');
+            const c = m.querySelector('.modal-container');
+            c.classList.remove('active');
             setTimeout(() => {
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
+                m.classList.remove('flex');
+                m.classList.add('hidden');
                 document.body.style.overflow = 'auto';
             }, 300);
-        }
-
-        function switchForm(showFormId) {
-            const forms = ['login-form', 'register-form', 'forgot-password-form', 'reset-password-form'];
-            forms.forEach(formId => {
-                const form = document.getElementById(formId);
-                if (formId === showFormId) {
-                    form.style.display = 'block';
-                    form.offsetHeight;
-                    form.classList.add('active');
-                } else {
-                    form.classList.remove('active');
-                    setTimeout(() => {
-                        form.style.display = 'none';
-                    }, 300);
-                }
-            });
-        }
-
-        function toggleAuthForms() {
-            const loginForm = document.getElementById('login-form');
-            if (loginForm.classList.contains('active')) {
-                switchForm('register-form');
-            } else {
-                switchForm('login-form');
-            }
-        }
-
-        function showForgotPasswordForm() {
-            switchForm('forgot-password-form');
-        }
-
-        function showResetPasswordForm() {
-            switchForm('reset-password-form');
-        }
-
-        function showLoginForm() {
-            switchForm('login-form');
-        }
-        document.getElementById('auth-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'auth-modal') {
-                closeAuthModal();
-            }
-        });
-        document.querySelector('a[href="#"].bg-primary').addEventListener('click', (e) => {
-            e.preventDefault();
-            openAuthModal();
-        });
-
-        function togglePasswordVisibility(inputId) {
-            const input = document.getElementById(inputId);
-            const button = input.nextElementSibling;
-            const icon = button.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-                notifications.info('Password visible');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
-                notifications.info('Password hidden');
-            }
         }
         const searchToggle = document.getElementById('search-toggle');
         const searchForm = document.querySelector('.search-form');
@@ -1159,10 +846,10 @@ curl_close($ch);
             searchForm.classList.toggle('active');
             desktopNav.classList.toggle('hidden');
         });
-        document.addEventListener('click', (e) => {
+        document.addEventListener('click', e => {
             if (!searchForm.contains(e.target) && !searchToggle.contains(e.target)) {
-                const searchInput = searchForm.querySelector('input[type="text"]');
-                if (searchForm.classList.contains('active') && !searchInput.value) {
+                const si = searchForm.querySelector('input[type="text"]');
+                if (searchForm.classList.contains('active') && !si.value) {
                     searchForm.classList.remove('active');
                     desktopNav.classList.remove('hidden');
                 }
@@ -1172,16 +859,16 @@ curl_close($ch);
         const scrollIndicator = document.querySelector('.scroll-indicator');
 
         function updateScrollProgress() {
-            const winScroll = document.documentElement.scrollTop || document.body.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            const dashOffset = 100 - scrolled;
-            if (winScroll > 200) {
+            const ws = document.documentElement.scrollTop || document.body.scrollTop;
+            const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const sc = (ws / h) * 100;
+            const d = 100 - sc;
+            if (ws > 200) {
                 scrollToTopBtn.classList.add('visible');
             } else {
                 scrollToTopBtn.classList.remove('visible');
             }
-            scrollIndicator.style.strokeDashoffset = dashOffset;
+            scrollIndicator.style.strokeDashoffset = d;
         }
         scrollToTopBtn.addEventListener('click', () => {
             window.scrollTo({
@@ -1192,22 +879,48 @@ curl_close($ch);
         window.addEventListener('scroll', updateScrollProgress);
         updateScrollProgress();
         document.addEventListener('DOMContentLoaded', () => {
-            const adPopup = document.getElementById('adPopup');
-            const adClose = document.getElementById('adClose');
-            const adProgressBar = document.getElementById('adProgressBar');
-            setTimeout(() => {
-                adPopup.classList.add('show');
-                document.body.style.overflow = 'hidden';
-                adProgressBar.style.width = '100%';
-            }, 5000);
-            setTimeout(() => {
-                adClose.style.display = 'flex';
-            }, 10000);
-            adClose.addEventListener('click', () => {
-                adPopup.classList.remove('show');
-                document.body.style.overflow = 'auto';
+            document.getElementById('login-button').addEventListener('click', function(e) {
+                e.preventDefault();
+                openAuthModal();
+            });
+            document.getElementById('mobile-login-button').addEventListener('click', function(e) {
+                e.preventDefault();
+                openAuthModal();
             });
         });
+        document.addEventListener('DOMContentLoaded', function() {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var container = document.getElementById('auth-forms-container');
+                    container.innerHTML = xhr.responseText;
+                    var scripts = container.getElementsByTagName('script');
+                    for (var i = 0; i < scripts.length; i++) {
+                        var newScript = document.createElement('script');
+                        newScript.text = scripts[i].text;
+                        document.head.appendChild(newScript);
+                    }
+                    initializePhoneInputs();
+                }
+            };
+            xhr.open('GET', 'login.php', true);
+            xhr.send();
+        });
+
+        function initializePhoneInputs() {
+            const pi = document.querySelectorAll("input[type='tel']");
+            if (pi.length > 0) {
+                pi.forEach(ip => {
+                    window.intlTelInput(ip, {
+                        preferredCountries: ["ug", "rw", "ke", "tz"],
+                        initialCountry: "ug",
+                        separateDialCode: true,
+                        allowDropdown: true,
+                        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+                    });
+                });
+            }
+        }
     </script>
 </body>
 
