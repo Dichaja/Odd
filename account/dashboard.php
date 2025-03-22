@@ -3,30 +3,13 @@ require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Dashboard';
 $activeNav = 'dashboard';
 
-// Get last login time - in a real app, this would come from the database
-$lastLoginTimestamp = strtotime('-2 hours');
-$lastLogin = date('F jS, Y g:iA', $lastLoginTimestamp);
+$stmt = $pdo->prepare("SELECT last_login FROM zzimba_users WHERE id = :user_id");
+$stmt->bindParam(':user_id', $_SESSION['user']['user_id'], PDO::PARAM_LOB);
+$stmt->execute();
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
+$lastLogin = $result['last_login'] ?? '';
+$formattedLastLogin = $lastLogin ? date('M d, Y g:i A', strtotime($lastLogin)) : 'First login';
 
-// Function to format date with suffix
-function formatDateWithSuffix($timestamp)
-{
-    $day = date('j', $timestamp);
-    $suffix = '';
-
-    if ($day % 10 == 1 && $day != 11) {
-        $suffix = 'st';
-    } elseif ($day % 10 == 2 && $day != 12) {
-        $suffix = 'nd';
-    } elseif ($day % 10 == 3 && $day != 13) {
-        $suffix = 'rd';
-    } else {
-        $suffix = 'th';
-    }
-
-    return date('F ' . $day . $suffix . ', Y g:iA', $timestamp);
-}
-
-// Sample data for categories
 $categories = [
     [
         'id' => 134777,
@@ -82,14 +65,13 @@ ob_start();
 ?>
 
 <div class="space-y-6">
-    <!-- Welcome Banner -->
     <div class="content-section">
         <div class="content-header p-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 class="text-2xl md:text-3xl font-semibold text-secondary">Welcome Back!</h1>
                     <p class="text-sm text-gray-text mt-2">
-                        Last Login: <span class="font-medium text-user-primary"><?= $lastLogin ?></span>
+                        Last Login: <span class="font-medium text-user-primary"><?= $formattedLastLogin ?></span>
                     </p>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3">
@@ -106,14 +88,12 @@ ob_start();
         </div>
     </div>
 
-    <!-- Account Setup Section -->
     <div class="content-section">
         <div class="content-header p-6">
             <h2 class="text-xl font-semibold text-secondary">Account Set-Up</h2>
         </div>
         <div class="p-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Order History Card -->
                 <a href="order-history" class="user-card hover:shadow-md transition-shadow duration-300">
                     <div class="p-6 flex flex-col items-center text-center">
                         <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
@@ -124,7 +104,6 @@ ob_start();
                     </div>
                 </a>
 
-                <!-- Zzimba Credit Card -->
                 <a href="zzimba-credit" class="user-card hover:shadow-md transition-shadow duration-300">
                     <div class="p-6 flex flex-col items-center text-center">
                         <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
@@ -135,7 +114,6 @@ ob_start();
                     </div>
                 </a>
 
-                <!-- Zzimba Store Card -->
                 <a href="zzimba-store" class="user-card hover:shadow-md transition-shadow duration-300">
                     <div class="p-6 flex flex-col items-center text-center">
                         <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
@@ -149,7 +127,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Cash-in Delivery Section -->
     <div class="content-section">
         <div class="p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div class="flex items-center">
@@ -169,7 +146,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Advertisement Banner -->
     <div class="content-section">
         <div class="p-6">
             <a href="#" target="_blank" class="block">
@@ -178,7 +154,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Browse By Category Section -->
     <div class="content-section">
         <div class="content-header p-6">
             <h2 class="text-xl font-semibold text-secondary">Browse By Category</h2>
@@ -201,7 +176,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Membership Modal -->
 <div id="membershipModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/20" onclick="hideModal('membershipModal')"></div>
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
@@ -284,7 +258,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Token Modal -->
 <div id="tokenModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/20" onclick="hideModal('tokenModal')"></div>
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
@@ -308,7 +281,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Loading Overlay -->
 <div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
         <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -318,17 +290,14 @@ ob_start();
 
 <script>
     $(document).ready(function() {
-        // Membership modal
         $('#assignMembership').click(function() {
             showModal('membershipModal');
         });
 
-        // Token modal
         $('#sendToken').click(function() {
             showModal('tokenModal');
         });
 
-        // Payment method selection
         $('.payment-option').click(function() {
             $('.payment-option').removeClass('active');
             $(this).addClass('active');
@@ -362,12 +331,10 @@ ob_start();
             $('#paymentDetails').html(detailsHtml).removeClass('hidden');
         });
 
-        // Form submissions
         $('#subscriptionForm').submit(function(e) {
             e.preventDefault();
             showLoading();
 
-            // Simulate form submission
             setTimeout(function() {
                 hideLoading();
                 hideModal('membershipModal');
@@ -379,7 +346,6 @@ ob_start();
             e.preventDefault();
             showLoading();
 
-            // Simulate form submission
             setTimeout(function() {
                 hideLoading();
                 hideModal('tokenModal');
@@ -387,65 +353,55 @@ ob_start();
             }, 1500);
         });
 
-        // District change
         $('#district').change(function() {
             const districtId = $(this).val();
             if (!districtId) return;
 
-            // Simulate loading towns
             $('#town').html('<option value="">Select Town</option>');
 
-            if (districtId === '0001') { // Kampala
+            if (districtId === '0001') {
                 $('#town').append('<option value="1">Kampala Central</option>');
                 $('#town').append('<option value="2">Nakawa</option>');
                 $('#town').append('<option value="3">Kawempe</option>');
-            } else if (districtId === '7672') { // Wakiso
+            } else if (districtId === '7672') {
                 $('#town').append('<option value="4">Entebbe</option>');
                 $('#town').append('<option value="5">Nansana</option>');
             }
         });
 
-        // Town change
         $('#town').change(function() {
             const townId = $(this).val();
             if (!townId) return;
 
-            // Simulate loading locations
             $('#location').html('<option value="">Select Nearby Location</option>');
 
-            if (townId === '1') { // Kampala Central
+            if (townId === '1') {
                 $('#location').append('<option value="1">Nakasero</option>');
                 $('#location').append('<option value="2">Kololo</option>');
-            } else if (townId === '2') { // Nakawa
+            } else if (townId === '2') {
                 $('#location').append('<option value="3">Bugolobi</option>');
                 $('#location').append('<option value="4">Luzira</option>');
             }
         });
     });
 
-    // Show modal
     function showModal(modalId) {
         document.getElementById(modalId).classList.remove('hidden');
     }
 
-    // Hide modal
     function hideModal(modalId) {
         document.getElementById(modalId).classList.add('hidden');
     }
 
-    // Show loading overlay
     function showLoading() {
         document.getElementById('loadingOverlay').classList.remove('hidden');
     }
 
-    // Hide loading overlay
     function hideLoading() {
         document.getElementById('loadingOverlay').classList.add('hidden');
     }
 
-    // Show success notification
     function showSuccessNotification(message) {
-        // Create notification element if it doesn't exist
         let notification = document.getElementById('successNotification');
 
         if (!notification) {
@@ -461,11 +417,9 @@ ob_start();
             document.body.appendChild(notification);
         }
 
-        // Update message and show notification
         document.getElementById('successMessage').textContent = message;
         notification.classList.remove('hidden');
 
-        // Hide after 3 seconds
         setTimeout(() => {
             notification.classList.add('hidden');
         }, 3000);
