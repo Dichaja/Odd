@@ -3,51 +3,22 @@ require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'User Management';
 $activeNav = 'users';
 
-// Sample user data array - in a real application, this would come from a database
-$usersList = [
-    [
-        'id' => '1',
-        'username' => 'admin',
-        'email' => 'admin@zzimbaonline.com',
-        'phone' => '256700123456',
-        'role' => 'Super Admin',
-        'created_at' => '2023-01-15 08:30:00',
-        'last_login' => '2024-03-07 14:22:10',
-        'is_active' => true
-    ],
-    [
-        'id' => '2',
-        'username' => 'john.doe',
-        'email' => 'john.doe@zzimbaonline.com',
-        'phone' => '256701234567',
-        'role' => 'Admin',
-        'created_at' => '2023-02-20 10:15:00',
-        'last_login' => '2024-03-05 09:45:22',
-        'is_active' => true
-    ],
-    [
-        'id' => '3',
-        'username' => 'jane.smith',
-        'email' => 'jane.smith@zzimbaonline.com',
-        'phone' => '256772345678',
-        'role' => 'Editor',
-        'created_at' => '2023-03-10 14:20:00',
-        'last_login' => '2024-02-28 16:30:45',
-        'is_active' => false
-    ],
-    [
-        'id' => '4',
-        'username' => 'robert.johnson',
-        'email' => 'robert.johnson@zzimbaonline.com',
-        'phone' => '256783456789',
-        'role' => 'Viewer',
-        'created_at' => '2023-04-05 09:10:00',
-        'last_login' => '2024-03-01 11:15:30',
-        'is_active' => true
-    ]
+if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
+    header('Location: ' . BASE_URL . 'login/login.php');
+    exit;
+}
+
+$currentAdminId = $_SESSION['user']['id'] ?? '';
+
+$roleMapping = [
+    'super_admin' => 'Super Admin',
+    'admin' => 'Admin',
+    'editor' => 'Editor'
 ];
 
-// Function to format date
+$availableRoles = ['super_admin', 'admin', 'editor'];
+$displayRoles = ['Super Admin', 'Admin', 'Editor'];
+
 function formatDate($date)
 {
     if (!$date) return '-';
@@ -69,22 +40,19 @@ function formatDate($date)
     return date('F ' . $day . $suffix . ', Y g:i A', $timestamp);
 }
 
-// Function to format phone numbers
 function formatPhoneNumber($phone)
 {
     if (!$phone) return '-';
-    // Add + prefix if not already present
     return substr($phone, 0, 1) === '+' ? $phone : '+' . $phone;
 }
-
-// Available roles
-$availableRoles = ['Super Admin', 'Admin', 'Editor', 'Viewer'];
 
 ob_start();
 ?>
 
+<!-- Add intl-tel-input CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css">
+
 <div class="space-y-6">
-    <!-- Page Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl font-semibold text-secondary">User Management</h1>
@@ -102,7 +70,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- User Form Card -->
     <div id="userFormCard" class="bg-white rounded-lg shadow-sm border border-gray-100 mb-6 hidden">
         <div class="p-6 border-b border-gray-100">
             <h2 class="text-lg font-semibold text-secondary" id="formTitle">Add New User</h2>
@@ -113,7 +80,6 @@ ob_start();
                 <input type="hidden" id="userId" name="userId" value="">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Username -->
                     <div>
                         <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                         <input
@@ -125,7 +91,6 @@ ob_start();
                             required>
                     </div>
 
-                    <!-- Email -->
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                         <input
@@ -137,7 +102,6 @@ ob_start();
                             required>
                     </div>
 
-                    <!-- Phone -->
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                         <input
@@ -147,9 +111,9 @@ ob_start();
                             class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                             placeholder="Enter phone number"
                             required>
+                        <div id="phone-error" class="text-red-500 text-xs mt-1 hidden"></div>
                     </div>
 
-                    <!-- Role -->
                     <div>
                         <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
                         <select
@@ -158,13 +122,12 @@ ob_start();
                             class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                             required>
                             <option value="">Select role</option>
-                            <?php foreach ($availableRoles as $role): ?>
-                                <option value="<?= $role ?>"><?= $role ?></option>
+                            <?php foreach ($availableRoles as $index => $role): ?>
+                                <option value="<?= $role ?>"><?= $displayRoles[$index] ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
-                    <!-- Password -->
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                         <div class="relative">
@@ -184,7 +147,6 @@ ob_start();
                         </div>
                     </div>
 
-                    <!-- Confirm Password -->
                     <div>
                         <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                         <div class="relative">
@@ -205,11 +167,10 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- Active Status -->
                 <div class="flex items-center">
                     <label for="isActive" class="flex items-center cursor-pointer">
                         <div class="relative">
-                            <input type="checkbox" id="isActive" name="isActive" class="sr-only">
+                            <input type="checkbox" id="isActive" name="isActive" class="sr-only" checked>
                             <div class="block bg-gray-200 w-14 h-8 rounded-full"></div>
                             <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
                         </div>
@@ -217,7 +178,6 @@ ob_start();
                     </label>
                 </div>
 
-                <!-- Form Buttons -->
                 <div class="flex justify-end gap-3">
                     <button
                         type="button"
@@ -235,13 +195,12 @@ ob_start();
         </div>
     </div>
 
-    <!-- Users List Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h2 class="text-lg font-semibold text-secondary">Users List</h2>
                 <p class="text-sm text-gray-text mt-1">
-                    <span id="users-count"><?= count($usersList) ?></span> users found
+                    <span id="users-count">0</span> users found
                 </p>
             </div>
             <div class="flex flex-col md:flex-row items-center gap-3">
@@ -252,15 +211,14 @@ ob_start();
                 <div class="flex items-center gap-2 w-full md:w-auto">
                     <select id="filterRole" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
                         <option value="" selected="selected">Filter by Role</option>
-                        <?php foreach ($availableRoles as $role): ?>
-                            <option value="<?= $role ?>"><?= $role ?></option>
+                        <?php foreach ($availableRoles as $index => $role): ?>
+                            <option value="<?= $role ?>"><?= $displayRoles[$index] ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
             </div>
         </div>
 
-        <!-- Desktop Users Table -->
         <div class="overflow-x-auto hidden md:block">
             <table class="w-full" id="users-table">
                 <thead>
@@ -274,103 +232,19 @@ ob_start();
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <?php foreach ($usersList as $user): ?>
-                        <tr class="border-b border-gray-100">
-                            <td class="px-6 py-4">
-                                <p class="font-medium text-gray-900"><?= htmlspecialchars($user['username']) ?></p>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= htmlspecialchars($user['email']) ?>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= formatPhoneNumber($user['phone']) ?>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= htmlspecialchars($user['role']) ?>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= formatDate($user['last_login']) ?>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $user['is_active'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
-                                    <?= $user['is_active'] ? 'Active' : 'Inactive' ?>
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center space-x-2">
-                                    <button
-                                        class="action-btn text-blue-600 hover:text-blue-800"
-                                        data-tippy-content="Edit User"
-                                        onclick="editUser('<?= $user['id'] ?>')">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-
-                                    <button
-                                        class="action-btn text-red-600 hover:text-red-800"
-                                        data-tippy-content="Delete User"
-                                        onclick="deleteUser('<?= $user['id'] ?>')">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
+                <tbody id="users-table-body">
+                    <!-- User rows will be populated dynamically -->
                 </tbody>
             </table>
         </div>
 
-        <!-- Mobile Users List -->
-        <div class="md:hidden p-4">
-            <?php foreach ($usersList as $user): ?>
-                <div class="bg-white rounded-lg shadow-sm border border-gray-100 mb-4">
-                    <div class="p-4 border-b border-gray-100">
-                        <div class="flex justify-between items-center mb-3">
-                            <p class="font-medium text-gray-900"><?= htmlspecialchars($user['username']) ?></p>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= $user['is_active'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' ?>">
-                                <?= $user['is_active'] ? 'Active' : 'Inactive' ?>
-                            </span>
-                        </div>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <span class="text-xs text-gray-500">Email:</span>
-                                <span class="text-sm"><?= htmlspecialchars($user['email']) ?></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-xs text-gray-500">Phone:</span>
-                                <span class="text-sm"><?= formatPhoneNumber($user['phone']) ?></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-xs text-gray-500">Role:</span>
-                                <span class="text-sm"><?= htmlspecialchars($user['role']) ?></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-xs text-gray-500">Last Login:</span>
-                                <span class="text-sm"><?= formatDate($user['last_login']) ?></span>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex justify-end space-x-2">
-                            <button
-                                class="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                onclick="editUser('<?= $user['id'] ?>')">
-                                <i class="fas fa-edit mr-1"></i> Edit
-                            </button>
-
-                            <button
-                                class="px-3 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700"
-                                onclick="deleteUser('<?= $user['id'] ?>')">
-                                <i class="fas fa-trash mr-1"></i> Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
+        <div class="md:hidden p-4" id="mobile-users-list">
+            <!-- Mobile user cards will be populated dynamically -->
         </div>
 
-        <!-- Pagination -->
         <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="text-sm text-gray-text">
-                Showing <span id="showing-start">1</span> to <span id="showing-end"><?= count($usersList) ?></span> of <span id="total-users"><?= count($usersList) ?></span> users
+                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span id="total-users">0</span> users
             </div>
             <div class="flex items-center gap-2">
                 <button id="prev-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -387,7 +261,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 <div id="deleteConfirmationModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
     <div class="absolute inset-0 bg-black/20" onclick="hideDeleteConfirmationModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -409,6 +282,41 @@ ob_start();
     </div>
 </div>
 
+<div id="sessionExpiredModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
+        <div class="p-6">
+            <div class="text-center mb-4">
+                <i class="fas fa-clock text-4xl text-amber-600 mb-4"></i>
+                <h3 class="text-lg font-semibold text-gray-900">Session Expired</h3>
+                <p class="text-sm text-gray-500 mt-2">Your session has expired due to inactivity.</p>
+                <p class="text-sm text-gray-500 mt-1">Redirecting in <span id="countdown">10</span> seconds...</p>
+            </div>
+            <div class="flex justify-center mt-6">
+                <button onclick="redirectToLogin()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                    Login Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Notification -->
+<div id="successNotification" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
+    <div class="flex items-center">
+        <i class="fas fa-check-circle mr-2"></i>
+        <span id="successMessage"></span>
+    </div>
+</div>
+
+<!-- Error Notification -->
+<div id="errorNotification" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
+    <div class="flex items-center">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        <span id="errorMessage"></span>
+    </div>
+</div>
+
 <style>
     .action-btn {
         width: 32px;
@@ -424,7 +332,6 @@ ob_start();
         background-color: rgba(0, 0, 0, 0.05);
     }
 
-    /* Toggle switch styling */
     input:checked~.dot {
         transform: translateX(100%);
     }
@@ -448,18 +355,74 @@ ob_start();
     }
 </style>
 
+<!-- Add jQuery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<!-- Add intl-tel-input JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js"></script>
 <script src="https://unpkg.com/@popperjs/core@2"></script>
 <script src="https://unpkg.com/tippy.js@6"></script>
 <script>
+    const BASE_URL = '<?= BASE_URL ?>';
+    let usersData = [];
+    let phoneInput;
+
+    // Function to prevent form autocomplete
+    function preventFormAutocomplete() {
+        // Find all forms
+        const forms = document.querySelectorAll('form');
+
+        forms.forEach(form => {
+            // Add autocomplete="off" to the form
+            form.setAttribute('autocomplete', 'off');
+
+            // Add autocomplete="off" to all input fields
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.setAttribute('autocomplete', 'off');
+
+                // For password fields, use a more aggressive approach
+                if (input.type === 'password') {
+                    input.setAttribute('autocomplete', 'new-password');
+                }
+            });
+
+            // Add a hidden input to trick browsers
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'text';
+            hiddenInput.style.display = 'none';
+            form.appendChild(hiddenInput);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize tooltips
+        // Initialize the international telephone input
+        const phoneInputField = document.querySelector("#phone");
+        phoneInput = window.intlTelInput(phoneInputField, {
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
+            preferredCountries: ["ug", "ke", "tz", "rw"],
+            separateDialCode: true,
+            autoPlaceholder: "polite"
+        });
+
+        // Style the country selector to match our design
+        $('.iti').addClass('w-full');
+
+        // Validate phone on blur
+        phoneInputField.addEventListener("blur", function() {
+            validatePhoneNumber();
+        });
+
+        // Prevent form autocomplete
+        preventFormAutocomplete();
+
         tippy('[data-tippy-content]', {
             placement: 'top',
             arrow: true,
             theme: 'light',
         });
 
-        // Toggle user form
         const userFormCard = document.getElementById('userFormCard');
         const toggleUserFormBtn = document.getElementById('toggleUserForm');
         const cancelFormBtn = document.getElementById('cancelForm');
@@ -477,7 +440,6 @@ ob_start();
             resetForm();
         });
 
-        // Toggle password visibility
         const togglePassword = document.getElementById('togglePassword');
         const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
         const passwordInput = document.getElementById('password');
@@ -497,121 +459,338 @@ ob_start();
             this.querySelector('i').classList.toggle('fa-eye-slash');
         });
 
-        // Form submission
         const userForm = document.getElementById('userForm');
 
         userForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // Validate form
             if (!validateForm()) {
                 return;
             }
 
-            // Get form data
             const formData = new FormData(userForm);
             const userId = formData.get('userId');
 
-            // Check if it's an edit or create operation
             if (userId) {
-                // Update existing user
                 updateUser(formData);
             } else {
-                // Create new user
                 createUser(formData);
             }
-
-            // Hide form and reset
-            userFormCard.classList.add('hidden');
-            resetForm();
         });
 
-        // Search functionality
         document.getElementById('searchUsers').addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase();
             filterUsers(query, document.getElementById('filterRole').value);
         });
 
-        // Role filter
         document.getElementById('filterRole').addEventListener('change', function(e) {
             const role = e.target.value;
             filterUsers(document.getElementById('searchUsers').value.toLowerCase(), role);
         });
+
+        // Load users on page load
+        loadUsers();
     });
 
-    // User data
-    const userData = <?= json_encode($usersList) ?>;
+    // Validate phone number
+    function validatePhoneNumber() {
+        const phoneError = document.getElementById("phone-error");
+        phoneError.classList.add("hidden");
 
-    // Filter users based on search query and role
+        if (phoneInput.getNumber()) {
+            if (!phoneInput.isValidNumber()) {
+                phoneError.textContent = "Invalid phone number for the selected country";
+                phoneError.classList.remove("hidden");
+                return false;
+            }
+            return true;
+        }
+        return true; // Allow empty phone number
+    }
+
+    function loadUsers() {
+        // Show a loading indicator
+        const tableBody = document.getElementById('users-table-body');
+        tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center">Loading users...</td></tr>';
+
+        fetch(`${BASE_URL}admin/fetch/manageUsers/getUsers`)
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showSessionExpiredModal();
+                        throw new Error('Session expired');
+                    }
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.text(); // Get the raw text first for debugging
+            })
+            .then(text => {
+                // Try to parse the JSON, if it fails, we can see the raw response
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        usersData = data.users;
+                        renderUsers(usersData);
+                    } else {
+                        console.error('Error loading users:', data.error);
+                        showErrorNotification(data.error || 'Failed to load users');
+                        // Show empty state
+                        tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Error loading users</td></tr>';
+                    }
+                } catch (e) {
+                    console.error('JSON Parse Error:', e);
+                    console.error('Raw Response:', text);
+                    showErrorNotification('Invalid response from server');
+                    tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Error parsing server response</td></tr>';
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error loading users:', error);
+                    showErrorNotification('Failed to load users. Please try again.');
+                    tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Failed to load users</td></tr>';
+                }
+            });
+    }
+
+    function renderUsers(users) {
+        const tableBody = document.getElementById('users-table-body');
+        const mobileList = document.getElementById('mobile-users-list');
+
+        // Clear existing content
+        tableBody.innerHTML = '';
+        mobileList.innerHTML = '';
+
+        // Update counts
+        document.getElementById('users-count').textContent = users.length;
+        document.getElementById('showing-start').textContent = users.length > 0 ? '1' : '0';
+        document.getElementById('showing-end').textContent = users.length;
+        document.getElementById('total-users').textContent = users.length;
+
+        // Render desktop table rows
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-100';
+
+            const roleDisplay = getRoleDisplay(user.role);
+            const statusClass = user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+
+            row.innerHTML = `
+                <td class="px-6 py-4">
+                    <p class="font-medium text-gray-900">${escapeHtml(user.username)}</p>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-text">
+                    ${escapeHtml(user.email)}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-text">
+                    ${formatPhoneNumber(user.phone)}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-text">
+                    ${roleDisplay}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-text">
+                    ${formatDate(user.current_login)}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                        ${user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center space-x-2">
+                        <button
+                            class="action-btn text-blue-600 hover:text-blue-800"
+                            data-tippy-content="Edit User"
+                            onclick="editUser('${user.uuid_id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        <button
+                            class="action-btn text-red-600 hover:text-red-800"
+                            data-tippy-content="Delete User"
+                            onclick="deleteUser('${user.uuid_id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+
+            // Initialize tooltips for the new buttons
+            tippy(row.querySelectorAll('[data-tippy-content]'), {
+                placement: 'top',
+                arrow: true,
+                theme: 'light',
+            });
+        });
+
+        // Render mobile cards
+        users.forEach(user => {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-lg shadow-sm border border-gray-100 mb-4';
+
+            const roleDisplay = getRoleDisplay(user.role);
+            const statusClass = user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+
+            card.innerHTML = `
+                <div class="p-4 border-b border-gray-100">
+                    <div class="flex justify-between items-center mb-3">
+                        <p class="font-medium text-gray-900">${escapeHtml(user.username)}</p>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                            ${user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                        </span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-xs text-gray-500">Email:</span>
+                            <span class="text-sm">${escapeHtml(user.email)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-gray-500">Phone:</span>
+                            <span class="text-sm">${formatPhoneNumber(user.phone)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-gray-500">Role:</span>
+                            <span class="text-sm">${roleDisplay}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-gray-500">Last Login:</span>
+                            <span class="text-sm">${formatDate(user.current_login)}</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end space-x-2">
+                        <button
+                            class="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            onclick="editUser('${user.uuid_id}')">
+                            <i class="fas fa-edit mr-1"></i> Edit
+                        </button>
+
+                        <button
+                            class="px-3 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            onclick="deleteUser('${user.uuid_id}')">
+                            <i class="fas fa-trash mr-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            mobileList.appendChild(card);
+        });
+    }
+
+    function getRoleDisplay(role) {
+        const roleMap = {
+            'super_admin': 'Super Admin',
+            'admin': 'Admin',
+            'editor': 'Editor'
+        };
+        return roleMap[role] || role;
+    }
+
     function filterUsers(query, role) {
-        // Filter desktop rows
-        document.querySelectorAll('#users-table tbody tr').forEach(row => {
-            const text = row.textContent.toLowerCase();
-            const rowRole = row.querySelector('td:nth-child(4)').textContent.trim();
-
+        const filteredUsers = usersData.filter(user => {
+            const text = `${user.username} ${user.email} ${user.phone} ${getRoleDisplay(user.role)}`.toLowerCase();
             const matchesQuery = text.includes(query);
-            const matchesRole = !role || rowRole === role;
-
-            row.style.display = matchesQuery && matchesRole ? '' : 'none';
+            const matchesRole = !role || user.role === role;
+            return matchesQuery && matchesRole;
         });
 
-        // Filter mobile cards
-        document.querySelectorAll('.md\\:hidden > div').forEach(card => {
-            const text = card.textContent.toLowerCase();
-            const cardRole = card.querySelector('div:nth-child(1) div:nth-child(2) div:nth-child(3) span:nth-child(2)').textContent.trim();
+        renderUsers(filteredUsers);
+    }
 
-            const matchesQuery = text.includes(query);
-            const matchesRole = !role || cardRole === role;
+    function formatDate(date) {
+        if (!date) return '-';
+        const timestamp = new Date(date).getTime();
+        if (isNaN(timestamp)) return '-';
 
-            card.style.display = matchesQuery && matchesRole ? '' : 'none';
+        const dateObj = new Date(timestamp);
+        const day = dateObj.getDate();
+        const month = dateObj.toLocaleString('default', {
+            month: 'long'
         });
+        const year = dateObj.getFullYear();
+        const hours = dateObj.getHours();
+        const minutes = dateObj.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12;
 
-        updatePagination();
+        let suffix = 'th';
+        if (day % 10 === 1 && day !== 11) suffix = 'st';
+        else if (day % 10 === 2 && day !== 12) suffix = 'nd';
+        else if (day % 10 === 3 && day !== 13) suffix = 'rd';
+
+        return `${month} ${day}${suffix}, ${year} ${formattedHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
     }
 
-    // Update pagination info
-    function updatePagination() {
-        const visibleRows = document.querySelectorAll('#users-table tbody tr:not([style*="display: none"])').length;
-        const visibleCards = document.querySelectorAll('.md\\:hidden > div:not([style*="display: none"])').length;
-
-        const visibleCount = window.innerWidth >= 768 ? visibleRows : visibleCards;
-
-        document.getElementById('showing-start').textContent = visibleCount > 0 ? '1' : '0';
-        document.getElementById('showing-end').textContent = visibleCount;
-        document.getElementById('total-users').textContent = userData.length;
+    function formatPhoneNumber(phone) {
+        if (!phone) return '-';
+        return phone.startsWith('+') ? phone : `+${phone}`;
     }
 
-    // Edit user
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     function editUser(id) {
-        const user = userData.find(u => u.id === id);
-        if (!user) return;
+        fetch(`${BASE_URL}admin/fetch/manageUsers/getUser?id=${id}`)
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(response => {
+                // Check if the response is successful and contains data
+                if (!response.success || !response.data) {
+                    showErrorNotification(response.error || 'Failed to fetch user data');
+                    return;
+                }
 
-        // Populate form
-        document.getElementById('userId').value = user.id;
-        document.getElementById('username').value = user.username;
-        document.getElementById('email').value = user.email;
-        document.getElementById('phone').value = user.phone;
-        document.getElementById('role').value = user.role;
-        document.getElementById('isActive').checked = user.is_active;
+                // Get the user data from the response
+                const user = response.data;
 
-        // Clear password fields
-        document.getElementById('password').value = '';
-        document.getElementById('confirmPassword').value = '';
-        document.getElementById('password').required = false;
-        document.getElementById('confirmPassword').required = false;
+                // Populate the form fields
+                document.getElementById('userId').value = user.uuid_id;
+                document.getElementById('username').value = user.username;
+                document.getElementById('email').value = user.email;
 
-        // Update form title and button text
-        document.getElementById('formTitle').textContent = 'Edit User';
-        document.getElementById('submitButtonText').textContent = 'Update User';
+                // Set phone number with country code
+                if (user.phone) {
+                    phoneInput.setNumber(user.phone);
+                } else {
+                    phoneInput.setNumber('');
+                }
 
-        // Show form
-        document.getElementById('userFormCard').classList.remove('hidden');
-        document.getElementById('username').focus();
+                document.getElementById('role').value = user.role;
+                document.getElementById('isActive').checked = user.status === 'active';
+
+                // Clear password fields
+                document.getElementById('password').value = '';
+                document.getElementById('confirmPassword').value = '';
+                document.getElementById('password').required = false;
+                document.getElementById('confirmPassword').required = false;
+
+                // Update form title and button text
+                document.getElementById('formTitle').textContent = 'Edit User';
+                document.getElementById('submitButtonText').textContent = 'Update User';
+
+                // Show the form
+                document.getElementById('userFormCard').classList.remove('hidden');
+                document.getElementById('username').focus();
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error fetching user:', error);
+                    showErrorNotification('Failed to fetch user data. Please try again.');
+                }
+            });
     }
 
-    // Delete user
     function deleteUser(id) {
-        // Store the ID for confirmation
         document.getElementById('deleteConfirmationModal').setAttribute('data-user-id', id);
         document.getElementById('deleteConfirmationModal').classList.remove('hidden');
     }
@@ -622,108 +801,243 @@ ob_start();
 
     function confirmDelete() {
         const id = document.getElementById('deleteConfirmationModal').getAttribute('data-user-id');
-        // Here you would typically make an API call to delete the user
-        console.log('Deleting user:', id);
-        alert('User deleted successfully!');
-        hideDeleteConfirmationModal();
+
+        fetch(`${BASE_URL}admin/fetch/manageUsers/deleteUser`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `id=${id}`
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessNotification(data.message || 'User deleted successfully!');
+                    loadUsers();
+                } else {
+                    showErrorNotification(data.error || 'Failed to delete user');
+                }
+                hideDeleteConfirmationModal();
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error deleting user:', error);
+                    showErrorNotification('Failed to delete user. Please try again.');
+                    hideDeleteConfirmationModal();
+                }
+            });
     }
 
-    // Create new user
     function createUser(formData) {
-        const newUser = {
-            id: Math.floor(Math.random() * 1000).toString(),
+        // Get the phone number from the intl-tel-input
+        const phoneNumber = phoneInput.getNumber();
+
+        const userData = {
             username: formData.get('username'),
             email: formData.get('email'),
-            phone: formData.get('phone'),
+            phone: phoneNumber,
             role: formData.get('role'),
-            is_active: formData.get('isActive') === 'on',
-            created_at: new Date().toISOString(),
-            last_login: null
+            password: formData.get('password'),
+            status: formData.get('isActive') === 'on' ? 'active' : 'inactive'
         };
 
-        console.log('Creating user:', newUser);
-        alert('User created successfully!');
+        fetch(`${BASE_URL}admin/fetch/manageUsers/createUser`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessNotification(data.message || 'User created successfully!');
+                    loadUsers();
+                    document.getElementById('userFormCard').classList.add('hidden');
+                    resetForm();
+                } else {
+                    showErrorNotification(data.error || 'Failed to create user');
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error creating user:', error);
+                    showErrorNotification('Failed to create user. Please try again.');
+                }
+            });
     }
 
-    // Update existing user
     function updateUser(formData) {
+        // Get the phone number from the intl-tel-input
+        const phoneNumber = phoneInput.getNumber();
+
         const userId = formData.get('userId');
-        // Here you would typically make an API call to update the user
-        const updatedUser = {
+        const userData = {
             id: userId,
             username: formData.get('username'),
             email: formData.get('email'),
-            phone: formData.get('phone'),
+            phone: phoneNumber,
             role: formData.get('role'),
-            is_active: formData.get('isActive') === 'on'
+            status: formData.get('isActive') === 'on' ? 'active' : 'inactive'
         };
 
-        console.log('Updating user:', updatedUser);
-        alert('User updated successfully!');
+        if (formData.get('password')) {
+            userData.password = formData.get('password');
+        }
+
+        fetch(`${BASE_URL}admin/fetch/manageUsers/updateUser`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessNotification(data.message || 'User updated successfully!');
+                    loadUsers();
+                    document.getElementById('userFormCard').classList.add('hidden');
+                    resetForm();
+                } else {
+                    showErrorNotification(data.error || 'Failed to update user');
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error updating user:', error);
+                    showErrorNotification('Failed to update user. Please try again.');
+                }
+            });
     }
 
-    // Reset form
     function resetForm() {
         document.getElementById('userForm').reset();
         document.getElementById('userId').value = '';
         document.getElementById('password').required = true;
         document.getElementById('confirmPassword').required = true;
 
-        // Reset password toggle icons
+        // Reset phone input
+        phoneInput.setNumber('');
+        document.getElementById('phone-error').classList.add('hidden');
+
         document.querySelector('#togglePassword i').className = 'fas fa-eye';
         document.querySelector('#toggleConfirmPassword i').className = 'fas fa-eye';
 
-        // Reset password input types
         document.getElementById('password').setAttribute('type', 'password');
         document.getElementById('confirmPassword').setAttribute('type', 'password');
     }
 
-    // Validate form
     function validateForm() {
         const username = document.getElementById('username').value;
         const email = document.getElementById('email').value;
-        const phone = document.getElementById('phone').value;
         const role = document.getElementById('role').value;
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
         const userId = document.getElementById('userId').value;
 
-        // Check required fields
-        if (!username || !email || !phone || !role) {
-            alert('Please fill in all required fields');
+        if (!username || !email || !role) {
+            showErrorNotification('Please fill in all required fields');
             return false;
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            alert('Please enter a valid email address');
+            showErrorNotification('Please enter a valid email address');
             return false;
         }
 
-        // Validate phone format
-        const phoneRegex = /^\+?\d{10,15}$/;
-        if (!phoneRegex.test(phone)) {
-            alert('Please enter a valid phone number');
+        // Validate phone number
+        if (!validatePhoneNumber()) {
             return false;
         }
 
-        // Check password only for new users or if password is provided for existing users
         if (!userId || password || confirmPassword) {
-            // Check password length
             if (password.length < 8) {
-                alert('Password must be at least 8 characters long');
+                showErrorNotification('Password must be at least 8 characters long');
                 return false;
             }
 
-            // Check password match
             if (password !== confirmPassword) {
-                alert('Passwords do not match');
+                showErrorNotification('Passwords do not match');
                 return false;
             }
         }
 
         return true;
+    }
+
+    function showSessionExpiredModal() {
+        const modal = document.getElementById('sessionExpiredModal');
+        modal.classList.remove('hidden');
+
+        let countdown = 10; // Changed from 5 to 10
+        const countdownElement = document.getElementById('countdown');
+        countdownElement.textContent = countdown;
+
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+
+            if (countdown <= 0) {
+                clearInterval(timer);
+                redirectToLogin();
+            }
+        }, 1000);
+    }
+
+    function redirectToLogin() {
+        window.location.href = BASE_URL;
+    }
+
+    function showSuccessNotification(message) {
+        const notification = document.getElementById('successNotification');
+        const messageEl = document.getElementById('successMessage');
+
+        // Set message
+        messageEl.textContent = message;
+
+        // Show notification
+        notification.classList.remove('hidden');
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 3000);
+    }
+
+    function showErrorNotification(message) {
+        const notification = document.getElementById('errorNotification');
+        const messageEl = document.getElementById('errorMessage');
+
+        // Set message
+        messageEl.textContent = message;
+
+        // Show notification
+        notification.classList.remove('hidden');
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 3000);
     }
 </script>
 
