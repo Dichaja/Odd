@@ -128,6 +128,9 @@ RewriteRule ^account/zzimba-credit$ account/zzimba-credit.php [L]
 RewriteRule ^account/notifications$ account/notifications.php [L]
 RewriteRule ^account/profile$ account/profile.php [L]
 
+# Rewrite for admin manageProfile fetch - FIXED RULE
+RewriteRule ^admin/fetch/manageProfile/([^/]+)$ admin/fetch/manageProfile.php?action=$1 [L,QSA]
+
 # Rewrite for manageProfile fetch - FIXED RULE
 RewriteRule ^fetch/manageProfile/([^/]+)$ account/fetch/manageProfile.php?action=$1 [L,QSA]
 

@@ -3,454 +3,190 @@ require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'My Profile';
 $activeNav = 'profile';
 
-// Sample user data - in a real application, this would come from a session or database
-$currentUser = [
-    'id' => '1',
-    'username' => 'admin',
-    'email' => 'admin@zzimbaonline.com',
-    'phone' => '256700123456',
-    'role' => 'Super Admin',
-    'created_at' => '2023-01-15 08:30:00',
-    'last_login' => '2024-03-07 14:22:10',
-    'is_active' => true,
-    'avatar' => null // null means use initials
-];
-
-// Sample user activity data - in a real application, this would come from a database
-$userActivities = [
-    [
-        'id' => '1',
-        'action' => 'Login',
-        'description' => 'Logged in successfully',
-        'ip_address' => '192.168.1.1',
-        'timestamp' => '2024-03-07 14:22:10'
-    ],
-    [
-        'id' => '2',
-        'action' => 'Update',
-        'description' => 'Updated user profile',
-        'ip_address' => '192.168.1.1',
-        'timestamp' => '2024-03-06 10:15:30'
-    ],
-    [
-        'id' => '3',
-        'action' => 'Create',
-        'description' => 'Created new user: john.doe',
-        'ip_address' => '192.168.1.1',
-        'timestamp' => '2024-03-05 16:45:22'
-    ],
-    [
-        'id' => '4',
-        'action' => 'Delete',
-        'description' => 'Deleted user: test.user',
-        'ip_address' => '192.168.1.1',
-        'timestamp' => '2024-03-04 09:30:15'
-    ],
-    [
-        'id' => '5',
-        'action' => 'Login',
-        'description' => 'Logged in successfully',
-        'ip_address' => '192.168.1.1',
-        'timestamp' => '2024-03-03 08:10:45'
-    ]
-];
-
-// Function to format date
-function formatDate($date)
-{
-    if (!$date) return '-';
-    $timestamp = strtotime($date);
-
-    $day = date('j', $timestamp);
-    $suffix = '';
-
-    if ($day % 10 == 1 && $day != 11) {
-        $suffix = 'st';
-    } elseif ($day % 10 == 2 && $day != 12) {
-        $suffix = 'nd';
-    } elseif ($day % 10 == 3 && $day != 13) {
-        $suffix = 'rd';
-    } else {
-        $suffix = 'th';
-    }
-
-    return date('F ' . $day . $suffix . ', Y g:i A', $timestamp);
-}
-
-// Function to format phone numbers
-function formatPhoneNumber($phone)
-{
-    if (!$phone) return '-';
-    // Add + prefix if not already present
-    return substr($phone, 0, 1) === '+' ? $phone : '+' . $phone;
-}
-
-// Function to get user initials
-function getUserInitials($name)
-{
-    $initials = '';
-    $nameParts = explode(' ', $name);
-    foreach ($nameParts as $part) {
-        if (!empty($part)) {
-            $initials .= strtoupper(substr($part, 0, 1));
-        }
-    }
-    return $initials;
-}
-
-// Function to get action badge class
-function getActionBadgeClass($action)
-{
-    switch ($action) {
-        case 'Login':
-            return 'bg-blue-100 text-blue-800';
-        case 'Update':
-            return 'bg-yellow-100 text-yellow-800';
-        case 'Create':
-            return 'bg-green-100 text-green-800';
-        case 'Delete':
-            return 'bg-red-100 text-red-800';
-        default:
-            return 'bg-gray-100 text-gray-800';
-    }
-}
-
 ob_start();
 ?>
 
+<!-- Add intl-tel-input CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css">
+
 <div class="space-y-6">
-    <!-- Profile Overview Card -->
+    <!-- Profile Header -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div class="md:flex">
-            <!-- Profile Header -->
-            <div class="md:w-1/3 bg-gray-50 p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-100">
-                <div class="relative group">
-                    <?php if ($currentUser['avatar']): ?>
-                        <img src="<?= $currentUser['avatar'] ?>" alt="Profile Picture" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md">
-                    <?php else: ?>
-                        <div class="w-32 h-32 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-md">
-                            <?= getUserInitials($currentUser['username']) ?>
-                        </div>
-                    <?php endif; ?>
-                    <label for="avatar-upload" class="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-100 transition-colors">
-                        <i class="fas fa-camera text-gray-600"></i>
-                        <input type="file" id="avatar-upload" class="hidden" accept="image/*">
-                    </label>
+            <div class="md:w-1/3 bg-gradient-to-r from-primary to-blue-700 p-6 flex flex-col items-center justify-center text-white">
+                <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 flex items-center justify-center bg-white text-primary text-5xl font-bold" id="user-initials">
+                    <span>...</span>
                 </div>
-
-                <h2 class="text-xl font-semibold mt-4"><?= htmlspecialchars($currentUser['username']) ?></h2>
-                <p class="text-sm text-gray-500"><?= htmlspecialchars($currentUser['role']) ?></p>
-
-                <div class="mt-4 text-sm text-gray-600">
-                    <p class="flex items-center gap-2 mb-1">
-                        <i class="fas fa-envelope w-5 text-center"></i>
-                        <?= htmlspecialchars($currentUser['email']) ?>
-                    </p>
-                    <p class="flex items-center gap-2">
-                        <i class="fas fa-phone w-5 text-center"></i>
-                        <?= formatPhoneNumber($currentUser['phone']) ?>
-                    </p>
-                </div>
-
-                <div class="mt-6 w-full">
-                    <div class="flex justify-between text-sm mb-1">
-                        <span>Account Status</span>
-                        <span class="<?= $currentUser['is_active'] ? 'text-green-600' : 'text-red-600' ?>">
-                            <?= $currentUser['is_active'] ? 'Active' : 'Inactive' ?>
-                        </span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="<?= $currentUser['is_active'] ? 'bg-green-600' : 'bg-red-600' ?> h-2 rounded-full" style="width: <?= $currentUser['is_active'] ? '100%' : '0%' ?>;"></div>
-                    </div>
-                </div>
-
-                <div class="mt-6 text-xs text-gray-500">
-                    <p>Member since: <?= formatDate($currentUser['created_at']) ?></p>
-                    <p>Last login: <?= formatDate($currentUser['last_login']) ?></p>
+                <h1 class="text-2xl font-bold" id="user-fullname">Loading...</h1>
+                <p class="text-blue-100" id="user-username">@loading</p>
+                <div class="mt-4 text-sm text-center">
+                    <p id="user-joined">Member since ...</p>
+                    <p id="user-lastlogin">Last login: ...</p>
                 </div>
             </div>
-
-            <!-- Edit Profile Form -->
             <div class="md:w-2/3 p-6">
-                <h3 class="text-lg font-semibold text-secondary mb-4">Edit Profile</h3>
-
-                <form id="profileForm" class="space-y-4">
-                    <!-- Username -->
+                <h2 class="text-xl font-semibold text-secondary mb-4">Account Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                        <input
-                            type="text"
-                            id="username"
-                            name="username"
-                            value="<?= htmlspecialchars($currentUser['username']) ?>"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                            required>
+                        <h3 class="text-sm font-medium text-gray-text">Email Address</h3>
+                        <p class="text-secondary" id="overview-email">Loading...</p>
                     </div>
-
-                    <!-- Email -->
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value="<?= htmlspecialchars($currentUser['email']) ?>"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                            required>
+                        <h3 class="text-sm font-medium text-gray-text">Phone Number</h3>
+                        <p class="text-secondary" id="overview-phone">Loading...</p>
                     </div>
-
-                    <!-- Phone -->
                     <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            value="<?= htmlspecialchars($currentUser['phone']) ?>"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                            required>
+                        <h3 class="text-sm font-medium text-gray-text">Account Status</h3>
+                        <p class="text-secondary" id="overview-status">Loading...</p>
                     </div>
-
-                    <!-- Role (Read-only) -->
                     <div>
-                        <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                        <input
-                            type="text"
-                            id="role"
-                            value="<?= htmlspecialchars($currentUser['role']) ?>"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 cursor-not-allowed"
-                            readonly>
-                        <p class="text-xs text-gray-500 mt-1">Role cannot be changed. Contact an administrator for role changes.</p>
+                        <h3 class="text-sm font-medium text-gray-text">Role</h3>
+                        <p class="text-secondary" id="overview-role">Loading...</p>
                     </div>
-
-                    <!-- Change Password Toggle -->
-                    <div class="pt-2">
-                        <label for="changePassword" class="flex items-center cursor-pointer">
-                            <div class="relative">
-                                <input type="checkbox" id="changePassword" class="sr-only">
-                                <div class="block bg-gray-200 w-10 h-6 rounded-full"></div>
-                                <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
-                            </div>
-                            <div class="ml-3 text-gray-700 font-medium text-sm">Change Password</div>
-                        </label>
-                    </div>
-
-                    <!-- Password Fields (Hidden by default) -->
-                    <div id="passwordFields" class="space-y-4 hidden">
-                        <!-- Current Password -->
-                        <div>
-                            <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                            <div class="relative">
-                                <input
-                                    type="password"
-                                    id="currentPassword"
-                                    name="currentPassword"
-                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    placeholder="Enter current password">
-                                <button
-                                    type="button"
-                                    class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    data-target="currentPassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- New Password -->
-                        <div>
-                            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                            <div class="relative">
-                                <input
-                                    type="password"
-                                    id="newPassword"
-                                    name="newPassword"
-                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    placeholder="Enter new password">
-                                <button
-                                    type="button"
-                                    class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    data-target="newPassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Confirm New Password -->
-                        <div>
-                            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                            <div class="relative">
-                                <input
-                                    type="password"
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    placeholder="Confirm new password">
-                                <button
-                                    type="button"
-                                    class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                    data-target="confirmPassword">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <div class="pt-2">
-                        <button
-                            type="submit"
-                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
+                </div>
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <button id="editProfileBtn" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+                        <i class="fas fa-user-edit"></i>
+                        <span>Edit Profile</span>
+                    </button>
+                    <button id="changePasswordBtn" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
+                        <i class="fas fa-lock"></i>
+                        <span>Change Password</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Activity Card -->
+    <!-- Profile Sections -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Recent Activity</h3>
-            <p class="text-sm text-gray-text mt-1">Your recent actions and system activities</p>
+            <h2 class="text-xl font-semibold text-secondary">Personal Information</h2>
+            <p class="text-sm text-gray-text mt-1">Update your personal details</p>
         </div>
-
-        <!-- Activity List -->
-        <div class="overflow-x-auto">
-            <table class="w-full hidden md:table">
-                <thead>
-                    <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Action</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Description</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">IP Address</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Date & Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($userActivities as $activity): ?>
-                        <tr class="border-b border-gray-100">
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= getActionBadgeClass($activity['action']) ?>">
-                                    <?= htmlspecialchars($activity['action']) ?>
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= htmlspecialchars($activity['description']) ?>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= htmlspecialchars($activity['ip_address']) ?>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= formatDate($activity['timestamp']) ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-
-            <!-- Mobile Activity List -->
-            <div class="md:hidden p-4 space-y-4">
-                <?php foreach ($userActivities as $activity): ?>
-                    <div class="border border-gray-100 rounded-lg overflow-hidden">
-                        <div class="bg-gray-50 p-3 flex justify-between items-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <?= getActionBadgeClass($activity['action']) ?>">
-                                <?= htmlspecialchars($activity['action']) ?>
-                            </span>
-                            <span class="text-xs text-gray-500"><?= formatDate($activity['timestamp']) ?></span>
-                        </div>
-                        <div class="p-4">
-                            <p class="text-sm mb-2"><?= htmlspecialchars($activity['description']) ?></p>
-                            <p class="text-xs text-gray-500">IP: <?= htmlspecialchars($activity['ip_address']) ?></p>
-                        </div>
+        <div class="p-6">
+            <form id="personalInfoForm" autocomplete="off">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input type="text" id="firstName" name="first_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" autocomplete="off">
                     </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <!-- View More Button -->
-        <div class="p-4 border-t border-gray-100 text-center">
-            <button class="px-4 py-2 text-primary hover:text-primary/80 transition-colors text-sm font-medium">
-                View All Activity
-            </button>
+                    <div>
+                        <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input type="text" id="lastName" name="last_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" id="email" name="email" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" autocomplete="off">
+                        <div id="phone-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <button type="submit" class="h-10 px-6 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                        Save Changes
+                    </button>
+                    <div id="profile-form-error" class="text-red-500 text-sm mt-2 hidden"></div>
+                    <div id="profile-form-success" class="text-green-500 text-sm mt-2 hidden"></div>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Security Settings Card -->
+    <!-- Security Settings -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Security Settings</h3>
-            <p class="text-sm text-gray-text mt-1">Manage your account security preferences</p>
+            <h2 class="text-xl font-semibold text-secondary">Security Settings</h2>
+            <p class="text-sm text-gray-text mt-1">Manage your account security</p>
         </div>
-
-        <div class="p-6 space-y-6">
-            <!-- Two-Factor Authentication -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <h4 class="font-medium text-gray-900">Two-Factor Authentication</h4>
-                    <p class="text-sm text-gray-500 mt-1">Add an extra layer of security to your account</p>
-                </div>
-                <label class="flex items-center cursor-pointer">
-                    <div class="relative">
-                        <input type="checkbox" id="twoFactorAuth" class="sr-only">
-                        <div class="block bg-gray-200 w-14 h-8 rounded-full"></div>
-                        <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+        <div class="p-6">
+            <div class="border border-gray-100 rounded-lg p-4">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-lock text-blue-600"></i>
                     </div>
-                </label>
-            </div>
-
-            <!-- Session Management -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <h4 class="font-medium text-gray-900">Active Sessions</h4>
-                    <p class="text-sm text-gray-500 mt-1">Manage your active login sessions</p>
+                    <div>
+                        <h3 class="font-medium text-secondary">Password</h3>
+                        <p class="text-xs text-gray-text">Keep your account secure with a strong password</p>
+                    </div>
                 </div>
-                <button class="text-primary hover:text-primary/80 transition-colors text-sm font-medium">
-                    Manage
-                </button>
-            </div>
-
-            <!-- Account Deletion -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <h4 class="font-medium text-gray-900">Delete Account</h4>
-                    <p class="text-sm text-gray-500 mt-1">Permanently delete your account and all data</p>
-                </div>
-                <button id="deleteAccountBtn" class="text-red-600 hover:text-red-700 transition-colors text-sm font-medium">
-                    Delete
+                <p class="text-sm text-gray-text mb-4">
+                    A strong password helps protect your account from unauthorized access.
+                </p>
+                <button id="changePasswordBtn2" class="w-full h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-key"></i>
+                    <span>Change Password</span>
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Account Confirmation Modal -->
-<div id="deleteAccountModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-    <div class="absolute inset-0 bg-black/20" onclick="hideDeleteAccountModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
+<!-- Change Password Modal -->
+<div id="changePasswordModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/20" onclick="hideModal('changePasswordModal')"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
         <div class="p-6">
-            <div class="text-center mb-4">
-                <i class="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
-                <h3 class="text-lg font-semibold text-gray-900">Are you sure you want to delete your account?</h3>
-                <p class="text-sm text-gray-500 mt-2">This action is permanent and cannot be undone. All your data will be permanently deleted.</p>
-            </div>
-
-            <div class="mt-4">
-                <label for="deleteConfirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Enter your password to confirm</label>
-                <input
-                    type="password"
-                    id="deleteConfirmPassword"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                    placeholder="Enter your password">
-            </div>
-
-            <div class="flex justify-center gap-3 mt-6">
-                <button onclick="hideDeleteAccountModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
-                    Cancel
-                </button>
-                <button onclick="confirmDeleteAccount()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                    Delete Account
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Change Password</h3>
+                <button onclick="hideModal('changePasswordModal')" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
+            <form id="changePasswordForm" autocomplete="off">
+                <div class="space-y-4">
+                    <div>
+                        <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                        <div class="relative">
+                            <input type="password" id="currentPassword" name="current_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" autocomplete="off">
+                            <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-target="currentPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                        <div class="relative">
+                            <input type="password" id="newPassword" name="new_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" autocomplete="off">
+                            <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-target="newPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="mt-1">
+                            <div class="text-xs text-gray-text">Password strength:</div>
+                            <div class="w-full h-1 bg-gray-200 rounded-full mt-1">
+                                <div id="passwordStrength" class="h-1 bg-red-500 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                        <div class="relative">
+                            <input type="password" id="confirmPassword" name="confirm_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" autocomplete="off">
+                            <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-target="confirmPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-text">
+                        <p>Password must:</p>
+                        <ul class="list-disc pl-5 mt-1 space-y-1">
+                            <li id="length-check" class="text-gray-400">Be at least 8 characters long</li>
+                            <li id="uppercase-check" class="text-gray-400">Include at least one uppercase letter</li>
+                            <li id="lowercase-check" class="text-gray-400">Include at least one lowercase letter</li>
+                            <li id="number-check" class="text-gray-400">Include at least one number</li>
+                            <li id="special-check" class="text-gray-400">Include at least one special character</li>
+                        </ul>
+                    </div>
+                    <div id="password-form-error" class="text-red-500 text-sm hidden"></div>
+                    <button type="submit" class="w-full h-10 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                        Update Password
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -459,257 +195,481 @@ ob_start();
 <div id="successNotification" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-2"></i>
-        <span id="successMessage">Profile updated successfully!</span>
+        <span id="successMessage"></span>
     </div>
 </div>
 
-<style>
-    /* Toggle switch styling */
-    input:checked~.dot {
-        transform: translateX(100%);
-    }
+<!-- Error Notification -->
+<div id="errorNotification" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
+    <div class="flex items-center">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        <span id="errorMessage"></span>
+    </div>
+</div>
 
-    input:checked~.block {
-        background-color: #C00000;
-    }
+<!-- Add jQuery if not already included -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    .dot {
-        transition: all 0.3s ease-in-out;
-    }
-
-    @media (max-width: 768px) {
-        .overflow-x-auto {
-            margin: 0 -1rem;
-        }
-
-        table {
-            min-width: 800px;
-        }
-    }
-</style>
+<!-- Add intl-tel-input JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Toggle password change fields
-        const changePasswordToggle = document.getElementById('changePassword');
-        const passwordFields = document.getElementById('passwordFields');
+    // Define BASE_URL from PHP
+    const BASE_URL = "<?php echo BASE_URL; ?>";
 
-        changePasswordToggle.addEventListener('change', function() {
-            if (this.checked) {
-                passwordFields.classList.remove('hidden');
-                document.getElementById('currentPassword').setAttribute('required', 'required');
-                document.getElementById('newPassword').setAttribute('required', 'required');
-                document.getElementById('confirmPassword').setAttribute('required', 'required');
-            } else {
-                passwordFields.classList.add('hidden');
-                document.getElementById('currentPassword').removeAttribute('required');
-                document.getElementById('newPassword').removeAttribute('required');
-                document.getElementById('confirmPassword').removeAttribute('required');
-            }
+    // Initialize phone input with country selector
+    let phoneInput;
+
+    $(document).ready(function() {
+        // Initialize the international telephone input
+        const phoneInputField = document.querySelector("#phone");
+        phoneInput = window.intlTelInput(phoneInputField, {
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
+            preferredCountries: ["ug", "ke", "tz", "rw"],
+            separateDialCode: true,
+            autoPlaceholder: "polite"
+        });
+
+        // Style the country selector to match our design
+        $('.iti').addClass('w-full');
+
+        // Validate phone on blur
+        phoneInputField.addEventListener("blur", function() {
+            validatePhoneNumber();
+        });
+
+        // Fetch user details
+        fetchUserDetails();
+
+        // Open modals
+        $('#editProfileBtn').click(function() {
+            $('html, body').animate({
+                scrollTop: $('#personalInfoForm').offset().top - 100
+            }, 500);
+        });
+
+        $('#changePasswordBtn, #changePasswordBtn2').click(function() {
+            showModal('changePasswordModal');
         });
 
         // Toggle password visibility
-        const togglePasswordButtons = document.querySelectorAll('.toggle-password');
+        $('.toggle-password').click(function() {
+            const target = $(this).data('target');
+            const input = $(`#${target}`);
 
-        togglePasswordButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target');
-                const passwordInput = document.getElementById(targetId);
-
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-
-                const icon = this.querySelector('i');
-                icon.classList.toggle('fa-eye');
-                icon.classList.toggle('fa-eye-slash');
-            });
-        });
-
-        // Profile form submission
-        const profileForm = document.getElementById('profileForm');
-
-        profileForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            // Validate form
-            if (!validateProfileForm()) {
-                return;
-            }
-
-            // Get form data
-            const formData = new FormData(profileForm);
-
-            // Here you would typically make an API call to update the profile
-            console.log('Updating profile:', Object.fromEntries(formData));
-
-            // Show success notification
-            showSuccessNotification('Profile updated successfully!');
-        });
-
-        // Avatar upload
-        const avatarUpload = document.getElementById('avatar-upload');
-
-        avatarUpload.addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                const file = e.target.files[0];
-
-                // Check file type
-                if (!file.type.match('image.*')) {
-                    alert('Please select an image file');
-                    return;
-                }
-
-                // Check file size (max 2MB)
-                if (file.size > 2 * 1024 * 1024) {
-                    alert('File size should be less than 2MB');
-                    return;
-                }
-
-                // Here you would typically upload the file to the server
-                console.log('Uploading avatar:', file);
-
-                // For demo purposes, show a preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // If there's an existing avatar, update it
-                    const avatarContainer = document.querySelector('.w-32.h-32');
-
-                    if (avatarContainer.tagName === 'IMG') {
-                        avatarContainer.src = e.target.result;
-                    } else {
-                        // Replace the initials div with an image
-                        const parentElement = avatarContainer.parentElement;
-                        avatarContainer.remove();
-
-                        const avatarImg = document.createElement('img');
-                        avatarImg.src = e.target.result;
-                        avatarImg.alt = 'Profile Picture';
-                        avatarImg.className = 'w-32 h-32 rounded-full object-cover border-4 border-white shadow-md';
-
-                        parentElement.prepend(avatarImg);
-                    }
-
-                    showSuccessNotification('Profile picture updated successfully!');
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Delete account button
-        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-
-        deleteAccountBtn.addEventListener('click', function() {
-            document.getElementById('deleteAccountModal').classList.remove('hidden');
-        });
-
-        // Two-factor authentication toggle
-        const twoFactorAuthToggle = document.getElementById('twoFactorAuth');
-
-        twoFactorAuthToggle.addEventListener('change', function() {
-            if (this.checked) {
-                // Here you would typically enable 2FA
-                console.log('Enabling 2FA');
-                showSuccessNotification('Two-factor authentication enabled');
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                $(this).find('i').removeClass('fa-eye').addClass('fa-eye-slash');
             } else {
-                // Here you would typically disable 2FA
-                console.log('Disabling 2FA');
-                showSuccessNotification('Two-factor authentication disabled');
+                input.attr('type', 'password');
+                $(this).find('i').removeClass('fa-eye-slash').addClass('fa-eye');
             }
+        });
+
+        // Password strength checker
+        $('#newPassword').on('input', function() {
+            const password = $(this).val();
+            checkPasswordStrength(password);
+        });
+
+        // Form submissions
+        $('#personalInfoForm').submit(function(e) {
+            e.preventDefault();
+            if (validatePhoneNumber()) {
+                updateProfile();
+            }
+        });
+
+        $('#changePasswordForm').submit(function(e) {
+            e.preventDefault();
+            changePassword();
         });
     });
 
-    // Validate profile form
-    function validateProfileForm() {
-        const username = document.getElementById('username').value;
-        const email = document.getElementById('email').value;
-        const phone = document.getElementById('phone').value;
-        const changePassword = document.getElementById('changePassword').checked;
+    // Validate phone number
+    function validatePhoneNumber() {
+        const phoneError = document.getElementById("phone-error");
+        phoneError.classList.add("hidden");
 
-        // Check required fields
-        if (!username || !email || !phone) {
-            alert('Please fill in all required fields');
-            return false;
+        if (phoneInput.getNumber()) {
+            if (!phoneInput.isValidNumber()) {
+                phoneError.textContent = "Invalid phone number for the selected country";
+                phoneError.classList.remove("hidden");
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // Fetch user details from the server
+    function fetchUserDetails() {
+        $.ajax({
+            url: BASE_URL + 'admin/fetch/manageProfile/getUserDetails',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    const user = response.data;
+
+                    // Update profile form
+                    $('#firstName').val(user.first_name || '');
+                    $('#lastName').val(user.last_name || '');
+                    $('#email').val(user.email || '');
+
+                    // Set phone number with country code
+                    if (user.phone) {
+                        phoneInput.setNumber(user.phone);
+                    }
+
+                    // Update profile header
+                    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
+                    $('#user-fullname').text(fullName);
+                    $('#user-username').text('@' + (user.username || ''));
+
+                    // Generate initials
+                    let initials = '';
+                    if (user.first_name) initials += user.first_name.charAt(0).toUpperCase();
+                    if (user.last_name) initials += user.last_name.charAt(0).toUpperCase();
+                    if (!initials) initials = (user.username || 'U').charAt(0).toUpperCase();
+                    $('#user-initials span').text(initials);
+
+                    // Format dates
+                    const joinDate = new Date(user.created_at);
+                    const joinDateFormatted = joinDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    $('#user-joined').text('Member since ' + joinDateFormatted);
+
+                    if (user.last_login) {
+                        const lastLogin = new Date(user.last_login);
+                        const timeAgo = getTimeAgo(lastLogin);
+                        $('#user-lastlogin').text('Last login: ' + timeAgo);
+                    } else {
+                        $('#user-lastlogin').text('First login');
+                    }
+
+                    // Update overview section
+                    $('#overview-email').text(user.email || 'Not set');
+                    $('#overview-phone').text(user.phone || 'Not set');
+
+                    // Format role with proper styling
+                    const role = formatRole(user.role);
+                    $('#overview-role').text(role);
+
+                    // Format status with proper styling
+                    let statusHtml = '';
+                    if (user.status === 'active') {
+                        statusHtml = '<span class="text-green-600">Active</span>';
+                    } else if (user.status === 'inactive') {
+                        statusHtml = '<span class="text-yellow-600">Inactive</span>';
+                    } else if (user.status === 'suspended') {
+                        statusHtml = '<span class="text-red-600">Suspended</span>';
+                    } else {
+                        statusHtml = user.status || 'Unknown';
+                    }
+                    $('#overview-status').html(statusHtml);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error fetching user details:', xhr);
+                showErrorNotification('Failed to load user details. Please refresh the page.');
+            }
+        });
+    }
+
+    // Format role from snake_case to Title Case
+    function formatRole(role) {
+        if (!role) return 'Unknown';
+
+        return role.split('_').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    }
+
+    // Update user profile
+    function updateProfile() {
+        // Hide previous messages
+        $('#profile-form-error').addClass('hidden').text('');
+        $('#profile-form-success').addClass('hidden').text('');
+
+        // Get form data
+        const formData = {
+            first_name: $('#firstName').val().trim(),
+            last_name: $('#lastName').val().trim(),
+            email: $('#email').val().trim(),
+            phone: phoneInput.getNumber()
+        };
+
+        // Basic validation
+        if (!formData.first_name || !formData.last_name || !formData.email) {
+            $('#profile-form-error').removeClass('hidden').text('First name, last name, and email are required');
+            return;
         }
 
-        // Validate email format
+        // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert('Please enter a valid email address');
-            return false;
+        if (!emailRegex.test(formData.email)) {
+            $('#profile-form-error').removeClass('hidden').text('Please enter a valid email address');
+            return;
         }
 
-        // Validate phone format
-        const phoneRegex = /^\+?\d{10,15}$/;
-        if (!phoneRegex.test(phone)) {
-            alert('Please enter a valid phone number');
-            return false;
+        // Disable submit button
+        const submitBtn = $('#personalInfoForm button[type="submit"]');
+        const originalBtnText = submitBtn.html();
+        submitBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving...').prop('disabled', true);
+
+        // Send AJAX request
+        $.ajax({
+            url: BASE_URL + 'admin/fetch/manageProfile/updateProfile',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            dataType: 'json',
+            success: function(response) {
+                submitBtn.html(originalBtnText).prop('disabled', false);
+
+                if (response.success) {
+                    $('#profile-form-success').removeClass('hidden').text(response.message);
+                    showSuccessNotification(response.message);
+
+                    // Refresh user details to update the UI
+                    fetchUserDetails();
+                } else {
+                    $('#profile-form-error').removeClass('hidden').text(response.message);
+                    showErrorNotification(response.message);
+                }
+            },
+            error: function(xhr) {
+                submitBtn.html(originalBtnText).prop('disabled', false);
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    const errorMessage = response.message || 'An error occurred';
+                    $('#profile-form-error').removeClass('hidden').text(errorMessage);
+                    showErrorNotification(errorMessage);
+                } catch (e) {
+                    $('#profile-form-error').removeClass('hidden').text('Server error. Please try again later.');
+                    showErrorNotification('Server error. Please try again later.');
+                }
+            }
+        });
+    }
+
+    // Change password
+    function changePassword() {
+        // Hide previous error
+        $('#password-form-error').addClass('hidden').text('');
+
+        // Get form data
+        const currentPassword = $('#currentPassword').val();
+        const newPassword = $('#newPassword').val();
+        const confirmPassword = $('#confirmPassword').val();
+
+        // Validation
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            $('#password-form-error').removeClass('hidden').text('All fields are required');
+            return;
         }
 
-        // Validate password fields if change password is checked
-        if (changePassword) {
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                alert('Please fill in all password fields');
-                return false;
-            }
-
-            if (newPassword.length < 8) {
-                alert('New password must be at least 8 characters long');
-                return false;
-            }
-
-            if (newPassword !== confirmPassword) {
-                alert('New passwords do not match');
-                return false;
-            }
+        if (newPassword !== confirmPassword) {
+            $('#password-form-error').removeClass('hidden').text('Passwords do not match');
+            return;
         }
 
-        return true;
+        // Password strength validation
+        if (!(newPassword.length >= 8 &&
+                /[A-Z]/.test(newPassword) &&
+                /[a-z]/.test(newPassword) &&
+                /\d/.test(newPassword) &&
+                /[^A-Za-z0-9]/.test(newPassword))) {
+            $('#password-form-error').removeClass('hidden').text('Password does not meet the requirements');
+            return;
+        }
+
+        // Disable submit button
+        const submitBtn = $('#changePasswordForm button[type="submit"]');
+        const originalBtnText = submitBtn.html();
+        submitBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating...').prop('disabled', true);
+
+        // Send AJAX request
+        $.ajax({
+            url: BASE_URL + 'admin/fetch/manageProfile/changePassword',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword
+            }),
+            dataType: 'json',
+            success: function(response) {
+                submitBtn.html(originalBtnText).prop('disabled', false);
+
+                if (response.success) {
+                    // Clear form
+                    $('#changePasswordForm')[0].reset();
+
+                    // Hide modal
+                    hideModal('changePasswordModal');
+
+                    // Show success notification
+                    showSuccessNotification(response.message);
+                } else {
+                    $('#password-form-error').removeClass('hidden').text(response.message);
+                    showErrorNotification(response.message);
+                }
+            },
+            error: function(xhr) {
+                submitBtn.html(originalBtnText).prop('disabled', false);
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    const errorMessage = response.message || 'An error occurred';
+                    $('#password-form-error').removeClass('hidden').text(errorMessage);
+                    showErrorNotification(errorMessage);
+                } catch (e) {
+                    $('#password-form-error').removeClass('hidden').text('Server error. Please try again later.');
+                    showErrorNotification('Server error. Please try again later.');
+                }
+            }
+        });
+    }
+
+    // Show modal
+    function showModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    // Hide modal
+    function hideModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
     }
 
     // Show success notification
     function showSuccessNotification(message) {
         const notification = document.getElementById('successNotification');
-        const messageElement = document.getElementById('successMessage');
+        const messageEl = document.getElementById('successMessage');
 
-        messageElement.textContent = message;
+        // Set message
+        messageEl.textContent = message;
+
+        // Show notification
         notification.classList.remove('hidden');
 
+        // Hide after 3 seconds
         setTimeout(() => {
             notification.classList.add('hidden');
         }, 3000);
     }
 
-    // Hide delete account modal
-    function hideDeleteAccountModal() {
-        document.getElementById('deleteAccountModal').classList.add('hidden');
-        document.getElementById('deleteConfirmPassword').value = '';
+    // Show error notification
+    function showErrorNotification(message) {
+        const notification = document.getElementById('errorNotification');
+        const messageEl = document.getElementById('errorMessage');
+
+        // Set message
+        messageEl.textContent = message;
+
+        // Show notification
+        notification.classList.remove('hidden');
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 3000);
     }
 
-    // Confirm delete account
-    function confirmDeleteAccount() {
-        const password = document.getElementById('deleteConfirmPassword').value;
+    // Check password strength
+    function checkPasswordStrength(password) {
+        // Initialize strength
+        let strength = 0;
 
-        if (!password) {
-            alert('Please enter your password to confirm account deletion');
-            return;
+        // Check length
+        if (password.length >= 8) {
+            strength += 20;
+            $('#length-check').removeClass('text-gray-400').addClass('text-green-600');
+        } else {
+            $('#length-check').removeClass('text-green-600').addClass('text-gray-400');
         }
 
-        // Here you would typically make an API call to delete the account
-        console.log('Deleting account with password confirmation');
+        // Check uppercase
+        if (/[A-Z]/.test(password)) {
+            strength += 20;
+            $('#uppercase-check').removeClass('text-gray-400').addClass('text-green-600');
+        } else {
+            $('#uppercase-check').removeClass('text-green-600').addClass('text-gray-400');
+        }
 
-        // For demo purposes, show an alert
-        alert('Your account has been deleted successfully');
-        hideDeleteAccountModal();
+        // Check lowercase
+        if (/[a-z]/.test(password)) {
+            strength += 20;
+            $('#lowercase-check').removeClass('text-gray-400').addClass('text-green-600');
+        } else {
+            $('#lowercase-check').removeClass('text-green-600').addClass('text-gray-400');
+        }
 
-        // In a real application, you would redirect to the logout page
-        // window.location.href = '/logout';
+        // Check numbers
+        if (/\d/.test(password)) {
+            strength += 20;
+            $('#number-check').removeClass('text-gray-400').addClass('text-green-600');
+        } else {
+            $('#number-check').removeClass('text-green-600').addClass('text-gray-400');
+        }
+
+        // Check special characters
+        if (/[^A-Za-z0-9]/.test(password)) {
+            strength += 20;
+            $('#special-check').removeClass('text-gray-400').addClass('text-green-600');
+        } else {
+            $('#special-check').removeClass('text-green-600').addClass('text-gray-400');
+        }
+
+        // Update strength indicator
+        const strengthBar = $('#passwordStrength');
+        strengthBar.css('width', strength + '%');
+
+        // Update color based on strength
+        if (strength < 40) {
+            strengthBar.removeClass('bg-yellow-500 bg-green-500').addClass('bg-red-500');
+        } else if (strength < 80) {
+            strengthBar.removeClass('bg-red-500 bg-green-500').addClass('bg-yellow-500');
+        } else {
+            strengthBar.removeClass('bg-red-500 bg-yellow-500').addClass('bg-green-500');
+        }
+    }
+
+    // Get time ago string from date
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+
+        let interval = Math.floor(seconds / 31536000);
+        if (interval > 1) return interval + ' years ago';
+        if (interval === 1) return '1 year ago';
+
+        interval = Math.floor(seconds / 2592000);
+        if (interval > 1) return interval + ' months ago';
+        if (interval === 1) return '1 month ago';
+
+        interval = Math.floor(seconds / 86400);
+        if (interval > 1) return interval + ' days ago';
+        if (interval === 1) return '1 day ago';
+
+        interval = Math.floor(seconds / 3600);
+        if (interval > 1) return interval + ' hours ago';
+        if (interval === 1) return '1 hour ago';
+
+        interval = Math.floor(seconds / 60);
+        if (interval > 1) return interval + ' minutes ago';
+        if (interval === 1) return '1 minute ago';
+
+        if (seconds < 10) return 'just now';
+
+        return Math.floor(seconds) + ' seconds ago';
     }
 </script>
-
 <?php
 $mainContent = ob_get_clean();
 include __DIR__ . '/master.php';
