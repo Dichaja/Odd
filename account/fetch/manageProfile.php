@@ -1,9 +1,14 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
 
-// Check if user is logged in
-if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in']) {
-    header('Location: ' . BASE_URL);
+// Check if session exists and if it has expired
+if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in']) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Your session has expired due to inactivity. Please log in again.',
+        'session_expired' => true
+    ]);
     exit;
 }
 
@@ -17,44 +22,31 @@ $data = json_decode(file_get_contents('php://input'), true);
 try {
     switch ($action) {
         case 'getUserDetails':
-            try {
-                // Enable detailed error logging for development
-                ini_set('display_errors', 1);
-                error_reporting(E_ALL);
+            // Fetch user details from database
+            $stmt = $pdo->prepare("SELECT 
+              username, 
+              email, 
+              phone, 
+              first_name, 
+              last_name, 
+              status,
+              profile_pic_url,
+              DATE_FORMAT(current_login, '%Y-%m-%d %H:%i:%s') as current_login,
+              DATE_FORMAT(last_login, '%Y-%m-%d %H:%i:%s') as last_login,
+              DATE_FORMAT(created_at, '%Y-%m-%d') as created_at
+              FROM zzimba_users 
+              WHERE id = :user_id");
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
+            $stmt->execute();
 
-                // Log the user ID for debugging
-                error_log("Fetching user details for ID: " . $userId);
-
-                // Fetch user details from database - handle UUID correctly if necessary
-                $stmt = $pdo->prepare("SELECT 
-                    username, 
-                    email, 
-                    phone, 
-                    first_name, 
-                    last_name, 
-                    status,
-                    profile_pic_url,
-                    DATE_FORMAT(current_login, '%Y-%m-%d %H:%i:%s') as current_login,
-                    DATE_FORMAT(last_login, '%Y-%m-%d %H:%i:%s') as last_login,
-                    DATE_FORMAT(created_at, '%Y-%m-%d') as created_at
-                    FROM zzimba_users 
-                    WHERE id = ?");
-
-                $stmt->execute([$userId]);
-
-                if ($stmt->rowCount() === 0) {
-                    http_response_code(404);
-                    echo json_encode(['success' => false, 'message' => 'User not found']);
-                    break;
-                }
-
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
-                echo json_encode(['success' => true, 'data' => $user]);
-            } catch (Exception $e) {
-                error_log("Error in getUserDetails: " . $e->getMessage());
-                http_response_code(500);
-                echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+            if ($stmt->rowCount() === 0) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'User not found']);
+                break;
             }
+
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            echo json_encode(['success' => true, 'data' => $user]);
             break;
 
         case 'updateProfile':
@@ -84,8 +76,10 @@ try {
             }
 
             // Check if email is already taken by another user
-            $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE email = ? AND id != ?");
-            $stmt->execute([$email, $userId]);
+            $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE email = :email AND id != :user_id");
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
+            $stmt->execute();
 
             if ($stmt->rowCount() > 0) {
                 http_response_code(409);
@@ -94,8 +88,10 @@ try {
             }
 
             // Check if phone is already taken by another user
-            $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE phone = ? AND id != ?");
-            $stmt->execute([$phone, $userId]);
+            $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE phone = :phone AND id != :user_id");
+            $stmt->bindParam(':phone', $phone);
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
+            $stmt->execute();
 
             if ($stmt->rowCount() > 0) {
                 http_response_code(409);
@@ -106,13 +102,19 @@ try {
             // Update user profile
             $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
             $stmt = $pdo->prepare("UPDATE zzimba_users SET 
-                first_name = ?, 
-                last_name = ?, 
-                email = ?, 
-                phone = ?, 
-                updated_at = ? 
-                WHERE id = ?");
-            $stmt->execute([$firstName, $lastName, $email, $phone, $now, $userId]);
+              first_name = :first_name, 
+              last_name = :last_name, 
+              email = :email, 
+              phone = :phone, 
+              updated_at = :updated_at 
+              WHERE id = :user_id");
+            $stmt->bindParam(':first_name', $firstName);
+            $stmt->bindParam(':last_name', $lastName);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':phone', $phone);
+            $stmt->bindParam(':updated_at', $now);
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
+            $stmt->execute();
 
             // Update session data
             $_SESSION['user']['email'] = $email;
@@ -142,8 +144,9 @@ try {
             }
 
             // Verify current password
-            $stmt = $pdo->prepare("SELECT password FROM zzimba_users WHERE id = ?");
-            $stmt->execute([$userId]);
+            $stmt = $pdo->prepare("SELECT password FROM zzimba_users WHERE id = :user_id");
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
+            $stmt->execute();
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!password_verify($currentPassword, $user['password'])) {
@@ -155,8 +158,11 @@ try {
             // Update password
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
-            $stmt = $pdo->prepare("UPDATE zzimba_users SET password = ?, updated_at = ? WHERE id = ?");
-            $stmt->execute([$hashedPassword, $now, $userId]);
+            $stmt = $pdo->prepare("UPDATE zzimba_users SET password = :password, updated_at = :updated_at WHERE id = :user_id");
+            $stmt->bindParam(':password', $hashedPassword);
+            $stmt->bindParam(':updated_at', $now);
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
+            $stmt->execute();
 
             echo json_encode(['success' => true, 'message' => 'Password changed successfully']);
             break;
@@ -167,7 +173,6 @@ try {
             break;
     }
 } catch (Exception $e) {
-    error_log("Error in manageProfile.php: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }

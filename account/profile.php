@@ -177,7 +177,65 @@ ob_start();
 
 <!-- Add intl-tel-input JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js"></script>
+
+<script>
+    // Add session expiration modal
+    const sessionExpiredModalHTML = `
+    <div id="sessionExpiredModal" class="fixed inset-0 z-[1000] hidden">
+        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg p-6">
+            <div class="text-center">
+                <i class="fas fa-exclamation-circle text-red-500 text-5xl mb-4"></i>
+                <h3 class="text-xl font-semibold text-secondary mb-2">Session Expired</h3>
+                <p class="text-gray-600 mb-4">Your session has expired due to inactivity. Please log in again.</p>
+                <p class="text-gray-600 mb-6">Redirecting in <span id="countdown">10</span> seconds...</p>
+                <button onclick="redirectToLogin()" class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                    Login Now
+                </button>
+            </div>
+        </div>
+    </div>`;
+
+    // Add the modal to the document
+    document.body.insertAdjacentHTML('beforeend', sessionExpiredModalHTML);
+
+    // Function to handle session expiration
+    function handleSessionExpiration() {
+        const modal = document.getElementById('sessionExpiredModal');
+        const countdownEl = document.getElementById('countdown');
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        let countdown = 10;
+        countdownEl.textContent = countdown;
+
+        const timer = setInterval(() => {
+            countdown--;
+            countdownEl.textContent = countdown;
+
+            if (countdown <= 0) {
+                clearInterval(timer);
+                redirectToLogin();
+            }
+        }, 1000);
+    }
+
+    // Function to redirect to login page
+    function redirectToLogin() {
+        window.location.href = BASE_URL;
+    }
+
+    // Add session expiration handling to AJAX requests
+    $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+        if (jqXHR.status === 401 && jqXHR.responseJSON && jqXHR.responseJSON.session_expired) {
+            handleSessionExpiration();
+        }
+    });
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js">
+</script>
 
 <script>
     // Initialize phone input with country selector

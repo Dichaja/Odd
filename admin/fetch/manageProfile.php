@@ -1,8 +1,14 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
 
+// Check if session exists and if it has expired
 if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
-    header('HTTP/1.1 403 Forbidden');
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Your session has expired due to inactivity. Please log in again.',
+        'session_expired' => true
+    ]);
     exit;
 }
 
@@ -14,19 +20,19 @@ try {
     switch ($action) {
         case 'getUserDetails':
             $stmt = $pdo->prepare("SELECT 
-                username, 
-                email, 
-                phone, 
-                first_name, 
-                last_name, 
-                role,
-                status,
-                profile_pic_url,
-                DATE_FORMAT(current_login, '%Y-%m-%d %H:%i:%s') as current_login,
-                DATE_FORMAT(last_login, '%Y-%m-%d %H:%i:%s') as last_login,
-                DATE_FORMAT(created_at, '%Y-%m-%d') as created_at
-                FROM admin_users 
-                WHERE id = :user_id");
+              username, 
+              email, 
+              phone, 
+              first_name, 
+              last_name, 
+              role,
+              status,
+              profile_pic_url,
+              DATE_FORMAT(current_login, '%Y-%m-%d %H:%i:%s') as current_login,
+              DATE_FORMAT(last_login, '%Y-%m-%d %H:%i:%s') as last_login,
+              DATE_FORMAT(created_at, '%Y-%m-%d') as created_at
+              FROM admin_users 
+              WHERE id = :user_id");
             $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
             $stmt->execute();
 
@@ -88,12 +94,12 @@ try {
 
             $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
             $stmt = $pdo->prepare("UPDATE admin_users SET 
-                first_name = :first_name, 
-                last_name = :last_name, 
-                email = :email, 
-                phone = :phone, 
-                updated_at = :updated_at 
-                WHERE id = :user_id");
+              first_name = :first_name, 
+              last_name = :last_name, 
+              email = :email, 
+              phone = :phone, 
+              updated_at = :updated_at 
+              WHERE id = :user_id");
             $stmt->bindParam(':first_name', $firstName);
             $stmt->bindParam(':last_name', $lastName);
             $stmt->bindParam(':email', $email);
