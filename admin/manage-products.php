@@ -23,7 +23,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Products Filter Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -50,7 +49,6 @@ ob_start();
             </div>
         </div>
 
-        <!-- Filter Panel -->
         <div id="filterPanel" class="px-6 py-4 border-b border-gray-100">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -102,232 +100,252 @@ ob_start();
             </div>
         </div>
 
-        <!-- Products Grid -->
         <div class="p-6">
-            <div class="grid grid-cols-1 gap-6" id="products-container">
-                <!-- Product items will be populated here -->
-
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="products-container">
                 <!-- Product Item 1 -->
                 <div class="product-item bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-                    <div class="flex flex-col md:flex-row">
-                        <div class="md:w-1/3 p-4">
-                            <div class="product-image-slider relative rounded-lg overflow-hidden">
-                                <div class="swiper-container">
-                                    <div class="swiper-wrapper">
-                                        <div class="swiper-slide">
-                                            <img src="https://placehold.co/600x400?text=GG44548+Tile" alt="GG44548 40x40 Floor Tile" class="w-full h-64 object-cover">
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <img src="https://placehold.co/600x400?text=Tile+Side+View" alt="Tile Side View" class="w-full h-64 object-cover">
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <img src="https://placehold.co/600x400?text=Tile+Installation" alt="Tile Installation" class="w-full h-64 object-cover">
-                                        </div>
+                    <div class="relative bg-gray-100 h-64">
+                        <div class="product-image-slider h-full">
+                            <div class="swiper-container h-full">
+                                <div class="swiper-wrapper">
+                                    <div class="swiper-slide">
+                                        <img src="https://placehold.co/600x400?text=GG44548+Tile" alt="GG44548 40x40 Floor Tile" class="w-full h-64 object-cover">
                                     </div>
-                                    <div class="swiper-pagination"></div>
-                                    <div class="swiper-button-next"></div>
-                                    <div class="swiper-button-prev"></div>
+                                    <div class="swiper-slide">
+                                        <img src="https://placehold.co/600x400?text=Tile+Side+View" alt="Tile Side View" class="w-full h-64 object-cover">
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <img src="https://placehold.co/600x400?text=Tile+Installation" alt="Tile Installation" class="w-full h-64 object-cover">
+                                    </div>
                                 </div>
                             </div>
+                            <div class="swiper-pagination"></div>
+                            <div class="swiper-button-prev custom-nav-btn"></div>
+                            <div class="swiper-button-next custom-nav-btn"></div>
                         </div>
-                        <div class="md:w-2/3 p-4">
-                            <div class="flex justify-between items-start">
-                                <div class="category-badge">
-                                    <span class="inline-block bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full cursor-pointer">
-                                        Tiles & Accessories
-                                    </span>
-                                </div>
-                                <div class="publish-status">
-                                    <span class="inline-block bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                                        Published
-                                    </span>
-                                </div>
+                        <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-400 hover:text-primary transition-colors z-10 toggle-featured" data-id="609162" data-featured="false">
+                            <i class="far fa-heart text-lg"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center mb-2">
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
                             </div>
+                            <span class="text-sm text-gray-500 ml-2">0.0 (0)</span>
+                        </div>
 
-                            <h3 class="text-xl font-semibold mt-2">GG44548 40x40 Floor Tile</h3>
+                        <h3 class="text-xl font-semibold mb-2">GG44548 40x40 Floor Tile</h3>
 
-                            <div class="mt-3">
-                                <h4 class="text-sm font-medium text-gray-700">Description:</h4>
-                                <p class="text-sm text-gray-600 mt-1">
-                                    GOODWILL 40cmx40cm floor tile available in a 12pc carton covering 1.92sm floor space
-                                </p>
+                        <div class="flex items-center text-gray-500 mb-2">
+                            <i class="fas fa-tag mr-2"></i>
+                            <span>Tiles & Accessories</span>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center text-gray-500">
+                                <i class="fas fa-box mr-2"></i>
+                                <span>Carton</span>
                             </div>
+                            <div class="text-xl font-bold text-primary">USh 120,000</div>
+                        </div>
 
-                            <div class="mt-3 flex flex-wrap gap-3">
-                                <div class="bg-gray-50 px-3 py-1.5 rounded-lg">
-                                    <span class="text-xs text-gray-500">Activity Usage:</span>
-                                    <span class="text-sm font-medium text-gray-700 ml-1">2</span>
-                                </div>
-
-                                <div class="bg-gray-50 px-3 py-1.5 rounded-lg">
-                                    <span class="text-xs text-gray-500">Packaging:</span>
-                                    <span class="text-sm font-medium text-gray-700 ml-1">Carton</span>
-                                </div>
-
-                                <div class="feature-badge px-3 py-1.5 rounded-lg border border-gray-200">
-                                    Feature
-                                </div>
-                            </div>
-
-                            <div class="mt-4 flex justify-end gap-2">
-                                <button class="btn-edit px-4 py-2 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5" data-id="609162">
-                                    <i class="fas fa-edit mr-1"></i> Edit
-                                </button>
-                                <button class="btn-delete px-4 py-2 bg-white border border-danger text-danger rounded-lg hover:bg-danger/5" data-id="609162">
-                                    <i class="fas fa-trash-alt mr-1"></i> Delete
-                                </button>
-                            </div>
+                        <div class="flex justify-between">
+                            <button class="btn-edit px-4 py-2 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center" data-id="609162">
+                                <i class="fas fa-edit mr-1"></i> Edit
+                            </button>
+                            <button class="btn-details px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center">
+                                <i class="fas fa-home mr-1"></i> Details
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Product Item 2 -->
                 <div class="product-item bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-                    <div class="flex flex-col md:flex-row">
-                        <div class="md:w-1/3 p-4">
-                            <div class="product-image-slider relative rounded-lg overflow-hidden">
-                                <div class="swiper-container">
-                                    <div class="swiper-wrapper">
-                                        <div class="swiper-slide">
-                                            <img src="https://placehold.co/600x400?text=GS44506+Tile" alt="GS44506 40x40 Floor Tile" class="w-full h-64 object-cover">
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <img src="https://placehold.co/600x400?text=Glossy+Tile" alt="Glossy Tile" class="w-full h-64 object-cover">
-                                        </div>
+                    <div class="relative bg-gray-100 h-64">
+                        <div class="product-image-slider h-full">
+                            <div class="swiper-container h-full">
+                                <div class="swiper-wrapper">
+                                    <div class="swiper-slide">
+                                        <img src="https://placehold.co/600x400?text=GS44506+Tile" alt="GS44506 40x40 Floor Tile" class="w-full h-64 object-cover">
                                     </div>
-                                    <div class="swiper-pagination"></div>
-                                    <div class="swiper-button-next"></div>
-                                    <div class="swiper-button-prev"></div>
+                                    <div class="swiper-slide">
+                                        <img src="https://placehold.co/600x400?text=Glossy+Tile" alt="Glossy Tile" class="w-full h-64 object-cover">
+                                    </div>
                                 </div>
                             </div>
+                            <div class="swiper-pagination"></div>
+                            <div class="swiper-button-prev custom-nav-btn"></div>
+                            <div class="swiper-button-next custom-nav-btn"></div>
                         </div>
-                        <div class="md:w-2/3 p-4">
-                            <div class="flex justify-between items-start">
-                                <div class="category-badge">
-                                    <span class="inline-block bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full cursor-pointer">
-                                        Tiles & Accessories
-                                    </span>
-                                </div>
-                                <div class="publish-status">
-                                    <span class="inline-block bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                                        Published
-                                    </span>
-                                </div>
+                        <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-400 hover:text-primary transition-colors z-10 toggle-featured" data-id="787105" data-featured="false">
+                            <i class="far fa-heart text-lg"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center mb-2">
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
                             </div>
+                            <span class="text-sm text-gray-500 ml-2">0.0 (0)</span>
+                        </div>
 
-                            <h3 class="text-xl font-semibold mt-2">GS44506 40x40 Floor Tile</h3>
+                        <h3 class="text-xl font-semibold mb-2">GS44506 40x40 Floor Tile</h3>
 
-                            <div class="mt-3">
-                                <h4 class="text-sm font-medium text-gray-700">Description:</h4>
-                                <p class="text-sm text-gray-600 mt-1">
-                                    GOODWILL 40cmx40cm Glossy Floor Tile Available In A 12pc Carton Covering 1.92sm Floor Space
-                                </p>
+                        <div class="flex items-center text-gray-500 mb-2">
+                            <i class="fas fa-tag mr-2"></i>
+                            <span>Tiles & Accessories</span>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center text-gray-500">
+                                <i class="fas fa-box mr-2"></i>
+                                <span>Carton</span>
                             </div>
+                            <div class="text-xl font-bold text-primary">USh 135,000</div>
+                        </div>
 
-                            <div class="mt-3 flex flex-wrap gap-3">
-                                <div class="bg-gray-50 px-3 py-1.5 rounded-lg">
-                                    <span class="text-xs text-gray-500">Activity Usage:</span>
-                                    <span class="text-sm font-medium text-gray-700 ml-1">1</span>
-                                </div>
-
-                                <div class="bg-gray-50 px-3 py-1.5 rounded-lg">
-                                    <span class="text-xs text-gray-500">Packaging:</span>
-                                    <span class="text-sm font-medium text-gray-700 ml-1">Carton</span>
-                                </div>
-
-                                <div class="feature-badge px-3 py-1.5 rounded-lg border border-gray-200">
-                                    Feature
-                                </div>
-                            </div>
-
-                            <div class="mt-4 flex justify-end gap-2">
-                                <button class="btn-edit px-4 py-2 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5" data-id="787105">
-                                    <i class="fas fa-edit mr-1"></i> Edit
-                                </button>
-                                <button class="btn-delete px-4 py-2 bg-white border border-danger text-danger rounded-lg hover:bg-danger/5" data-id="787105">
-                                    <i class="fas fa-trash-alt mr-1"></i> Delete
-                                </button>
-                            </div>
+                        <div class="flex justify-between">
+                            <button class="btn-edit px-4 py-2 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center" data-id="787105">
+                                <i class="fas fa-edit mr-1"></i> Edit
+                            </button>
+                            <button class="btn-details px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center">
+                                <i class="fas fa-home mr-1"></i> Details
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Product Item 3 (Featured) -->
                 <div class="product-item bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-                    <div class="flex flex-col md:flex-row">
-                        <div class="md:w-1/3 p-4">
-                            <div class="product-image-slider relative rounded-lg overflow-hidden">
-                                <div class="swiper-container">
-                                    <div class="swiper-wrapper">
-                                        <div class="swiper-slide">
-                                            <img src="https://placehold.co/600x400?text=Solar+Garden+Light" alt="SOLAR GARDEN LIGHT ZC-CPD5004" class="w-full h-64 object-cover">
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <img src="https://placehold.co/600x400?text=Solar+Light+Night" alt="Solar Light at Night" class="w-full h-64 object-cover">
-                                        </div>
-                                        <div class="swiper-slide">
-                                            <img src="https://placehold.co/600x400?text=Solar+Light+Components" alt="Solar Light Components" class="w-full h-64 object-cover">
-                                        </div>
+                    <div class="relative bg-gray-100 h-64">
+                        <div class="product-image-slider h-full">
+                            <div class="swiper-container h-full">
+                                <div class="swiper-wrapper">
+                                    <div class="swiper-slide">
+                                        <img src="https://placehold.co/600x400?text=Solar+Garden+Light" alt="SOLAR GARDEN LIGHT ZC-CPD5004" class="w-full h-64 object-cover">
                                     </div>
-                                    <div class="swiper-pagination"></div>
-                                    <div class="swiper-button-next"></div>
-                                    <div class="swiper-button-prev"></div>
+                                    <div class="swiper-slide">
+                                        <img src="https://placehold.co/600x400?text=Solar+Light+Night" alt="Solar Light at Night" class="w-full h-64 object-cover">
+                                    </div>
+                                    <div class="swiper-slide">
+                                        <img src="https://placehold.co/600x400?text=Solar+Light+Components" alt="Solar Light Components" class="w-full h-64 object-cover">
+                                    </div>
                                 </div>
                             </div>
+                            <div class="swiper-pagination"></div>
+                            <div class="swiper-button-prev custom-nav-btn"></div>
+                            <div class="swiper-button-next custom-nav-btn"></div>
                         </div>
-                        <div class="md:w-2/3 p-4">
-                            <div class="flex justify-between items-start">
-                                <div class="category-badge">
-                                    <span class="inline-block bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full cursor-pointer">
-                                        STOTA Products
-                                    </span>
-                                </div>
-                                <div class="publish-status">
-                                    <span class="inline-block bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full">
-                                        Published
-                                    </span>
+                        <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-red-500 hover:text-red-600 transition-colors z-10 toggle-featured" data-id="05-3091563" data-featured="true">
+                            <i class="fas fa-heart text-lg"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center mb-2">
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <span class="text-sm text-gray-500 ml-2">0.0 (0)</span>
+                        </div>
+
+                        <h3 class="text-xl font-semibold mb-2">SOLAR GARDEN LIGHT ZC-CPD5004</h3>
+
+                        <div class="flex items-center text-gray-500 mb-2">
+                            <i class="fas fa-tag mr-2"></i>
+                            <span>STOTA Products</span>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center text-gray-500">
+                                <i class="fas fa-box mr-2"></i>
+                                <span>Unit</span>
+                            </div>
+                            <div class="text-xl font-bold text-primary">USh 250,000</div>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <button class="btn-edit px-4 py-2 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center" data-id="05-3091563">
+                                <i class="fas fa-edit mr-1"></i> Edit
+                            </button>
+                            <button class="btn-details px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center">
+                                <i class="fas fa-home mr-1"></i> Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Item 4 -->
+                <div class="product-item bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+                    <div class="relative bg-gray-100 h-64">
+                        <div class="product-image-slider h-full">
+                            <div class="swiper-container h-full">
+                                <div class="swiper-wrapper">
+                                    <div class="swiper-slide">
+                                        <img src="https://placehold.co/600x400?text=Cement" alt="Portland Cement" class="w-full h-64 object-cover">
+                                    </div>
                                 </div>
                             </div>
-
-                            <h3 class="text-xl font-semibold mt-2">SOLAR GARDEN LIGHT ZC-CPD5004</h3>
-
-                            <div class="mt-3">
-                                <h4 class="text-sm font-medium text-gray-700">Description:</h4>
-                                <p class="text-sm text-gray-600 mt-1">
-                                    Stota SOLAR GARDEN LIGHT ZC-CPD5004 fitted with Solar panel: Monocrystalline (5v/5W) with the following Specs; Battery: Lithium iron phosphate 3.2v/8AH, Material: PC+Alluminium, IP Rating: IP65
-                                </p>
+                            <div class="swiper-pagination"></div>
+                            <div class="swiper-button-prev custom-nav-btn"></div>
+                            <div class="swiper-button-next custom-nav-btn"></div>
+                        </div>
+                        <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-400 hover:text-primary transition-colors z-10 toggle-featured" data-id="45-2091" data-featured="false">
+                            <i class="far fa-heart text-lg"></i>
+                        </button>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center mb-2">
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
                             </div>
+                            <span class="text-sm text-gray-500 ml-2">0.0 (0)</span>
+                        </div>
 
-                            <div class="mt-3 flex flex-wrap gap-3">
-                                <div class="bg-gray-50 px-3 py-1.5 rounded-lg">
-                                    <span class="text-xs text-gray-500">Activity Usage:</span>
-                                    <span class="text-sm font-medium text-gray-700 ml-1">3</span>
-                                </div>
+                        <h3 class="text-xl font-semibold mb-2">Portland Cement</h3>
 
-                                <div class="bg-gray-50 px-3 py-1.5 rounded-lg">
-                                    <span class="text-xs text-gray-500">Packaging:</span>
-                                    <span class="text-sm font-medium text-gray-700 ml-1">Unit</span>
-                                </div>
+                        <div class="flex items-center text-gray-500 mb-2">
+                            <i class="fas fa-tag mr-2"></i>
+                            <span>Earth Materials</span>
+                        </div>
 
-                                <div class="feature-badge featured px-3 py-1.5 rounded-lg bg-gray-300 text-gray-700">
-                                    Featured
-                                </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center text-gray-500">
+                                <i class="fas fa-box mr-2"></i>
+                                <span>Bag</span>
                             </div>
+                            <div class="text-xl font-bold text-primary">USh 32,000</div>
+                        </div>
 
-                            <div class="mt-4 flex justify-end gap-2">
-                                <button class="btn-edit px-4 py-2 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5" data-id="05-3091563">
-                                    <i class="fas fa-edit mr-1"></i> Edit
-                                </button>
-                                <button class="btn-delete px-4 py-2 bg-white border border-danger text-danger rounded-lg hover:bg-danger/5" data-id="05-3091563">
-                                    <i class="fas fa-trash-alt mr-1"></i> Delete
-                                </button>
-                            </div>
+                        <div class="flex justify-between">
+                            <button class="btn-edit px-4 py-2 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center" data-id="45-2091">
+                                <i class="fas fa-edit mr-1"></i> Edit
+                            </button>
+                            <button class="btn-details px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 flex items-center">
+                                <i class="fas fa-home mr-1"></i> Details
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Pagination -->
             <div class="mt-6 flex flex-col md:flex-row justify-between items-center">
                 <div class="text-sm text-gray-500 mb-4 md:mb-0">
                     Showing <span id="showing-start">1</span> to <span id="showing-end">20</span> of <span id="total-products">300</span> products
@@ -355,10 +373,9 @@ ob_start();
     </div>
 </div>
 
-<!-- Add/Edit Product Modal -->
 <div id="productModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideProductModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 relative z-10 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-5xl mx-4 relative z-10 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between p-6 border-b border-gray-100">
             <h3 class="text-lg font-semibold text-secondary" id="modal-title">Add New Product</h3>
             <button onclick="hideProductModal()" class="text-gray-400 hover:text-gray-500">
@@ -398,22 +415,95 @@ ob_start();
                     <textarea id="product-description" rows="4" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter product description"></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="product-packaging" class="block text-sm font-medium text-gray-700 mb-1">Packaging</label>
-                        <select id="product-packaging" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            <option value="">Select Packaging</option>
-                            <option value="Carton">Carton</option>
-                            <option value="Piece">Piece</option>
-                            <option value="Unit">Unit</option>
-                            <option value="Bag">Bag</option>
-                            <option value="Roll">Roll</option>
-                            <option value="Trip">Trip</option>
-                            <option value="Set">Set</option>
-                            <option value="Unit Lease">Unit Lease</option>
-                        </select>
+                        <label for="product-meta-title" class="block text-sm font-medium text-gray-700 mb-1">Meta Title (SEO)</label>
+                        <input type="text" id="product-meta-title" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter SEO meta title">
+                        <p class="text-xs text-gray-500 mt-1">Recommended length: 50-60 characters</p>
                     </div>
+                    <div>
+                        <label for="product-meta-description" class="block text-sm font-medium text-gray-700 mb-1">Meta Description (SEO)</label>
+                        <textarea id="product-meta-description" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter SEO meta description"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Recommended length: 150-160 characters</p>
+                    </div>
+                </div>
 
+                <div>
+                    <label for="product-keywords" class="block text-sm font-medium text-gray-700 mb-1">SEO Keywords</label>
+                    <div class="relative">
+                        <input type="text" id="product-keywords-input" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Type keyword and press Enter">
+                        <button type="button" id="add-keyword" class="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-primary text-white rounded text-xs">Add</button>
+                    </div>
+                    <div id="keywords-container" class="flex flex-wrap gap-2 mt-2"></div>
+                    <input type="hidden" id="product-keywords" value="">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Product Images (16:9 ratio)</label>
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm text-gray-600">Upload and arrange product images. Drag to reorder.</p>
+                            <button type="button" id="add-image-btn" class="px-3 py-1 bg-primary text-white rounded-lg text-sm">
+                                <i class="fas fa-plus mr-1"></i> Add Image
+                            </button>
+                        </div>
+                        <div id="product-images-container" class="grid grid-cols-1 md:grid-cols-4 gap-4 sortable-images">
+                            <div class="image-preview-item relative border border-gray-200 rounded-lg overflow-hidden">
+                                <img src="https://placehold.co/600x400?text=Product+Image" class="w-full h-32 object-cover">
+                                <div class="absolute top-0 right-0 p-2 flex gap-2">
+                                    <button type="button" class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center edit-image-btn">
+                                        <i class="fas fa-crop-alt text-xs"></i>
+                                    </button>
+                                    <button type="button" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center remove-image-btn">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                </div>
+                                <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
+                                    <span class="image-order">1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="file" id="image-upload" class="hidden" accept="image/*">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Product Packaging & Pricing</label>
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <div id="product-packages" class="space-y-4">
+                            <div class="package-item grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Package Type</label>
+                                    <select class="package-type w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                        <option value="">Select Package</option>
+                                        <option value="Carton">Carton</option>
+                                        <option value="Piece">Piece</option>
+                                        <option value="Unit">Unit</option>
+                                        <option value="Bag">Bag</option>
+                                        <option value="Roll">Roll</option>
+                                        <option value="Trip">Trip</option>
+                                        <option value="Set">Set</option>
+                                        <option value="Unit Lease">Unit Lease</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">Price (USh)</label>
+                                    <input type="number" class="package-price w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter price">
+                                </div>
+                                <div class="flex items-end">
+                                    <button type="button" class="remove-package px-3 py-2 text-red-500 hover:text-red-700">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="add-package" class="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center">
+                            <i class="fas fa-plus mr-2"></i> Add Another Package
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="product-status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <select id="product-status" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
@@ -434,27 +524,6 @@ ob_start();
                         </div>
                     </div>
                 </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Product Images</label>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="product-images-container">
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors" id="add-image-btn">
-                            <div class="flex flex-col items-center justify-center h-32">
-                                <i class="fas fa-plus text-gray-400 text-2xl mb-2"></i>
-                                <span class="text-sm text-gray-500">Add Image</span>
-                            </div>
-                        </div>
-
-                        <!-- Image preview items will be added here -->
-                        <div class="relative border border-gray-200 rounded-lg overflow-hidden image-preview-item">
-                            <img src="https://placehold.co/600x400?text=Product+Image" class="w-full h-32 object-cover">
-                            <button type="button" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center remove-image-btn">
-                                <i class="fas fa-times text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <input type="file" id="image-upload" class="hidden" accept="image/*" multiple>
-                </div>
             </form>
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
@@ -468,7 +537,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideDeleteModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -491,19 +559,41 @@ ob_start();
             <button onclick="hideDeleteModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
                 Cancel
             </button>
-            <button id="confirmDelete" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-danger/90">
+            <button id="confirmDelete" class="px-4 py-2 bg-danger text-white rounded-lg hover:bg-danger/90">
                 Delete
             </button>
         </div>
     </div>
 </div>
 
-<style>
-    .feature-badge.featured {
-        background-color: #ccc;
-        color: #fff;
-    }
+<div id="cropperModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/50" onclick="hideCropperModal()"></div>
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 relative z-10">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-secondary">Crop Image (16:9)</h3>
+            <button onclick="hideCropperModal()" class="text-gray-400 hover:text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="mb-4">
+                <div id="image-cropper-container" class="max-h-[60vh] overflow-hidden">
+                    <img id="image-to-crop" src="/placeholder.svg" alt="Image to crop">
+                </div>
+            </div>
+        </div>
+        <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <button onclick="hideCropperModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+                Cancel
+            </button>
+            <button id="cropImage" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                Crop & Save
+            </button>
+        </div>
+    </div>
+</div>
 
+<style>
     .swiper-container {
         width: 100%;
         height: 100%;
@@ -517,48 +607,100 @@ ob_start();
         align-items: center;
     }
 
-    .swiper-button-next,
-    .swiper-button-prev {
-        color: #fff;
-        background: rgba(0, 0, 0, 0.3);
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    .custom-nav-btn {
+        width: 40px !important;
+        height: 40px !important;
+        background: #2196F3 !important;
+        border-radius: 50% !important;
+        color: white !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+        opacity: 0.9 !important;
+        transition: all 0.3s ease !important;
     }
 
-    .swiper-button-next:after,
-    .swiper-button-prev:after {
-        font-size: 14px;
+    .custom-nav-btn:hover {
+        background: #1976D2 !important;
+        transform: scale(1.05) !important;
+    }
+
+    .custom-nav-btn:after {
+        font-size: 18px !important;
+        font-weight: bold !important;
     }
 
     .swiper-pagination-bullet {
-        background: #fff;
-        opacity: 0.7;
+        width: 8px !important;
+        height: 8px !important;
+        background: #ccc !important;
+        opacity: 0.7 !important;
     }
 
     .swiper-pagination-bullet-active {
-        opacity: 1;
-        background: #fff;
+        background: #2196F3 !important;
+        opacity: 1 !important;
+        width: 10px !important;
+        height: 10px !important;
+    }
+
+    .keyword-tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: #e9f3ff;
+        color: #2196F3;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .keyword-tag .remove-keyword {
+        margin-left: 0.25rem;
+        cursor: pointer;
+        color: #2196F3;
+    }
+
+    .sortable-images .image-preview-item {
+        cursor: grab;
+    }
+
+    .sortable-images .image-preview-item:active {
+        cursor: grabbing;
+    }
+
+    .cropper-container {
+        width: 100%;
+        height: 100%;
     }
 </style>
 
 <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 
 <script>
-    // Sample product data - in a real application, this would come from an API
     const products = [{
             id: "609162",
             title: "GG44548 40x40 Floor Tile",
             category: "Tiles & Accessories",
             description: "GOODWILL 40cmx40cm floor tile available in a 12pc carton covering 1.92sm floor space",
-            packaging: "Carton",
+            packages: [{
+                    type: "Carton",
+                    price: 120000
+                },
+                {
+                    type: "Piece",
+                    price: 12000
+                }
+            ],
             status: "published",
             featured: false,
             activityUsage: 2,
+            metaTitle: "GG44548 40x40 Floor Tile - Premium Quality Tiles",
+            metaDescription: "Buy GG44548 40x40 Floor Tile for your home or office. High-quality GOODWILL tiles available in cartons or individual pieces.",
+            keywords: ["floor tile", "40x40 tile", "GOODWILL", "ceramic tile", "home improvement"],
             images: [
                 "https://placehold.co/600x400?text=GG44548+Tile",
                 "https://placehold.co/600x400?text=Tile+Side+View",
@@ -570,10 +712,21 @@ ob_start();
             title: "GS44506 40x40 Floor Tile",
             category: "Tiles & Accessories",
             description: "GOODWILL 40cmx40cm Glossy Floor Tile Available In A 12pc Carton Covering 1.92sm Floor Space",
-            packaging: "Carton",
+            packages: [{
+                    type: "Carton",
+                    price: 135000
+                },
+                {
+                    type: "Piece",
+                    price: 13500
+                }
+            ],
             status: "published",
             featured: false,
             activityUsage: 1,
+            metaTitle: "GS44506 40x40 Glossy Floor Tile - Premium Quality",
+            metaDescription: "Buy GS44506 40x40 Glossy Floor Tile for your home or office. High-quality GOODWILL glossy tiles available in cartons or individual pieces.",
+            keywords: ["glossy tile", "40x40 tile", "GOODWILL", "ceramic tile", "home improvement"],
             images: [
                 "https://placehold.co/600x400?text=GS44506+Tile",
                 "https://placehold.co/600x400?text=Glossy+Tile"
@@ -584,21 +737,53 @@ ob_start();
             title: "SOLAR GARDEN LIGHT ZC-CPD5004",
             category: "STOTA Products",
             description: "Stota SOLAR GARDEN LIGHT ZC-CPD5004 fitted with Solar panel: Monocrystalline (5v/5W) with the following Specs; Battery: Lithium iron phosphate 3.2v/8AH, Material: PC+Alluminium, IP Rating: IP65",
-            packaging: "Unit",
+            packages: [{
+                    type: "Unit",
+                    price: 250000
+                },
+                {
+                    type: "Set",
+                    price: 1200000
+                }
+            ],
             status: "published",
             featured: true,
             activityUsage: 3,
+            metaTitle: "Solar Garden Light ZC-CPD5004 - Eco-friendly Outdoor Lighting",
+            metaDescription: "Buy STOTA Solar Garden Light ZC-CPD5004 with Monocrystalline panel. Energy-efficient outdoor lighting solution with IP65 rating.",
+            keywords: ["solar light", "garden light", "outdoor lighting", "STOTA", "eco-friendly", "solar panel"],
             images: [
                 "https://placehold.co/600x400?text=Solar+Garden+Light",
                 "https://placehold.co/600x400?text=Solar+Light+Night",
                 "https://placehold.co/600x400?text=Solar+Light+Components"
             ]
+        },
+        {
+            id: "45-2091",
+            title: "Portland Cement",
+            category: "Earth Materials",
+            description: "High-quality Portland cement for construction projects",
+            packages: [{
+                type: "Bag",
+                price: 32000
+            }],
+            status: "published",
+            featured: false,
+            activityUsage: 5,
+            metaTitle: "Portland Cement - High Quality Construction Material",
+            metaDescription: "Buy high-quality Portland cement for your construction projects. Available in standard bags at competitive prices.",
+            keywords: ["portland cement", "construction material", "building supplies", "cement bag"],
+            images: [
+                "https://placehold.co/600x400?text=Cement"
+            ]
         }
     ];
 
-    // Initialize Swiper sliders
+    let cropper;
+    let currentImageIndex = null;
+
     function initSwipers() {
-        document.querySelectorAll('.swiper-container').forEach((swiperContainer, index) => {
+        document.querySelectorAll('.swiper-container').forEach((swiperContainer) => {
             new Swiper(swiperContainer, {
                 loop: true,
                 pagination: {
@@ -613,18 +798,43 @@ ob_start();
         });
     }
 
-    // Show product modal
+    function initSortable() {
+        const sortableContainer = document.querySelector('.sortable-images');
+        if (sortableContainer) {
+            new Sortable(sortableContainer, {
+                animation: 150,
+                ghostClass: 'bg-gray-100',
+                onEnd: function() {
+                    updateImageOrder();
+                }
+            });
+        }
+    }
+
+    function updateImageOrder() {
+        document.querySelectorAll('.image-preview-item').forEach((item, index) => {
+            item.querySelector('.image-order').textContent = index + 1;
+        });
+    }
+
     function showProductModal(productId = null) {
         const modal = document.getElementById('productModal');
         const modalTitle = document.getElementById('modal-title');
         const form = document.getElementById('productForm');
+        const packagesContainer = document.getElementById('product-packages');
+        const keywordsContainer = document.getElementById('keywords-container');
+        const imagesContainer = document.getElementById('product-images-container');
 
-        // Reset form
         form.reset();
         document.getElementById('product-id').value = '';
+        keywordsContainer.innerHTML = '';
+        imagesContainer.innerHTML = '';
+
+        while (packagesContainer.children.length > 1) {
+            packagesContainer.removeChild(packagesContainer.lastChild);
+        }
 
         if (productId) {
-            // Edit mode
             modalTitle.textContent = 'Edit Product';
             const product = products.find(p => p.id === productId);
 
@@ -633,27 +843,51 @@ ob_start();
                 document.getElementById('product-title').value = product.title;
                 document.getElementById('product-category').value = product.category;
                 document.getElementById('product-description').value = product.description;
-                document.getElementById('product-packaging').value = product.packaging;
+                document.getElementById('product-meta-title').value = product.metaTitle || '';
+                document.getElementById('product-meta-description').value = product.metaDescription || '';
                 document.getElementById('product-status').value = product.status;
                 document.getElementById('product-featured').checked = product.featured;
 
-                // TODO: Handle image previews for edit mode
+                if (product.keywords && product.keywords.length > 0) {
+                    product.keywords.forEach(keyword => {
+                        addKeywordTag(keyword);
+                    });
+                }
+
+                if (product.packages && product.packages.length > 0) {
+                    packagesContainer.innerHTML = '';
+
+                    product.packages.forEach((pkg, index) => {
+                        const packageItem = createPackageItem();
+                        const typeSelect = packageItem.querySelector('.package-type');
+                        const priceInput = packageItem.querySelector('.package-price');
+
+                        typeSelect.value = pkg.type;
+                        priceInput.value = pkg.price;
+
+                        packagesContainer.appendChild(packageItem);
+                    });
+                }
+
+                if (product.images && product.images.length > 0) {
+                    product.images.forEach((image, index) => {
+                        addImagePreview(image, index + 1);
+                    });
+                }
             }
         } else {
-            // Add mode
             modalTitle.textContent = 'Add New Product';
         }
 
         modal.classList.remove('hidden');
+        initSortable();
     }
 
-    // Hide product modal
     function hideProductModal() {
         const modal = document.getElementById('productModal');
         modal.classList.add('hidden');
     }
 
-    // Show delete confirmation modal
     function showDeleteModal(productId) {
         const modal = document.getElementById('deleteModal');
         const product = products.find(p => p.id === productId);
@@ -665,23 +899,179 @@ ob_start();
         }
     }
 
-    // Hide delete confirmation modal
     function hideDeleteModal() {
         const modal = document.getElementById('deleteModal');
         modal.classList.add('hidden');
     }
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Swiper sliders
-        initSwipers();
+    function showCropperModal(imageUrl, index) {
+        const modal = document.getElementById('cropperModal');
+        const imageElement = document.getElementById('image-to-crop');
 
-        // Add New Product button
+        currentImageIndex = index;
+        imageElement.src = imageUrl;
+
+        modal.classList.remove('hidden');
+
+        if (cropper) {
+            cropper.destroy();
+        }
+
+        cropper = new Cropper(imageElement, {
+            aspectRatio: 16 / 9,
+            viewMode: 1,
+            autoCropArea: 1,
+            zoomable: true,
+            scalable: true,
+            movable: true,
+            guides: true
+        });
+    }
+
+    function hideCropperModal() {
+        const modal = document.getElementById('cropperModal');
+        modal.classList.add('hidden');
+
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    function addImagePreview(imageUrl, order) {
+        const container = document.getElementById('product-images-container');
+
+        const previewItem = document.createElement('div');
+        previewItem.className = 'image-preview-item relative border border-gray-200 rounded-lg overflow-hidden';
+        previewItem.innerHTML = `
+            <img src="${imageUrl}" class="w-full h-32 object-cover">
+            <div class="absolute top-0 right-0 p-2 flex gap-2">
+                <button type="button" class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center edit-image-btn">
+                    <i class="fas fa-crop-alt text-xs"></i>
+                </button>
+                <button type="button" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center remove-image-btn">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
+                <span class="image-order">${order}</span>
+            </div>
+        `;
+
+        container.appendChild(previewItem);
+
+        previewItem.querySelector('.edit-image-btn').addEventListener('click', function() {
+            const imageUrl = previewItem.querySelector('img').src;
+            const index = Array.from(container.children).indexOf(previewItem);
+            showCropperModal(imageUrl, index);
+        });
+
+        previewItem.querySelector('.remove-image-btn').addEventListener('click', function() {
+            previewItem.remove();
+            updateImageOrder();
+        });
+    }
+
+    function createPackageItem() {
+        const packageItem = document.createElement('div');
+        packageItem.className = 'package-item grid grid-cols-1 md:grid-cols-3 gap-4 items-center';
+        packageItem.innerHTML = `
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Package Type</label>
+                <select class="package-type w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                    <option value="">Select Package</option>
+                    <option value="Carton">Carton</option>
+                    <option value="Piece">Piece</option>
+                    <option value="Unit">Unit</option>
+                    <option value="Bag">Bag</option>
+                    <option value="Roll">Roll</option>
+                    <option value="Trip">Trip</option>
+                    <option value="Set">Set</option>
+                    <option value="Unit Lease">Unit Lease</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Price (USh)</label>
+                <input type="number" class="package-price w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter price">
+            </div>
+            <div class="flex items-end">
+                <button type="button" class="remove-package px-3 py-2 text-red-500 hover:text-red-700">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `;
+
+        packageItem.querySelector('.remove-package').addEventListener('click', function() {
+            packageItem.remove();
+        });
+
+        return packageItem;
+    }
+
+    function addKeywordTag(keyword) {
+        const container = document.getElementById('keywords-container');
+        const keywordsInput = document.getElementById('product-keywords');
+
+        const tag = document.createElement('div');
+        tag.className = 'keyword-tag';
+        tag.innerHTML = `
+            ${keyword}
+            <span class="remove-keyword ml-2">
+                <i class="fas fa-times"></i>
+            </span>
+        `;
+
+        container.appendChild(tag);
+
+        tag.querySelector('.remove-keyword').addEventListener('click', function() {
+            tag.remove();
+            updateKeywordsInput();
+        });
+
+        updateKeywordsInput();
+    }
+
+    function updateKeywordsInput() {
+        const container = document.getElementById('keywords-container');
+        const keywordsInput = document.getElementById('product-keywords');
+
+        const keywords = Array.from(container.querySelectorAll('.keyword-tag')).map(tag => {
+            return tag.textContent.trim();
+        });
+
+        keywordsInput.value = JSON.stringify(keywords);
+    }
+
+    function toggleFeatured(productId, featured) {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+            product.featured = featured;
+
+            const button = document.querySelector(`.toggle-featured[data-id="${productId}"]`);
+            button.setAttribute('data-featured', featured);
+
+            if (featured) {
+                button.classList.remove('text-gray-400');
+                button.classList.add('text-red-500');
+                button.querySelector('i').classList.remove('far');
+                button.querySelector('i').classList.add('fas');
+            } else {
+                button.classList.add('text-gray-400');
+                button.classList.remove('text-red-500');
+                button.querySelector('i').classList.add('far');
+                button.querySelector('i').classList.remove('fas');
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initSwipers();
+        initSortable();
+
         document.getElementById('addNewProduct').addEventListener('click', function() {
             showProductModal();
         });
 
-        // Edit buttons
         document.querySelectorAll('.btn-edit').forEach(button => {
             button.addEventListener('click', function() {
                 const productId = this.getAttribute('data-id');
@@ -689,64 +1079,53 @@ ob_start();
             });
         });
 
-        // Delete buttons
-        document.querySelectorAll('.btn-delete').forEach(button => {
+        document.querySelectorAll('.toggle-featured').forEach(button => {
             button.addEventListener('click', function() {
                 const productId = this.getAttribute('data-id');
-                showDeleteModal(productId);
+                const currentFeatured = this.getAttribute('data-featured') === 'true';
+                toggleFeatured(productId, !currentFeatured);
             });
         });
 
-        // Save product
-        document.getElementById('saveProduct').addEventListener('click', function() {
-            // In a real application, you would send form data to the server
-            alert('Product saved successfully!');
-            hideProductModal();
+        document.getElementById('add-package').addEventListener('click', function() {
+            const packagesContainer = document.getElementById('product-packages');
+            const packageItem = createPackageItem();
+            packagesContainer.appendChild(packageItem);
         });
 
-        // Confirm delete
-        document.getElementById('confirmDelete').addEventListener('click', function() {
-            const productId = this.getAttribute('data-id');
-            // In a real application, you would send a delete request to the server
-            alert(`Product ${productId} would be deleted here`);
-            hideDeleteModal();
+        document.getElementById('add-keyword').addEventListener('click', function() {
+            const keywordInput = document.getElementById('product-keywords-input');
+            const keyword = keywordInput.value.trim();
+
+            if (keyword) {
+                addKeywordTag(keyword);
+                keywordInput.value = '';
+            }
         });
 
-        // Add image button
+        document.getElementById('product-keywords-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('add-keyword').click();
+            }
+        });
+
         document.getElementById('add-image-btn').addEventListener('click', function() {
             document.getElementById('image-upload').click();
         });
 
-        // Image upload
         document.getElementById('image-upload').addEventListener('change', function(e) {
             const files = e.target.files;
 
             if (files.length > 0) {
-                // In a real application, you would upload the files to the server
-                // For demo purposes, we'll just show a preview
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
                     const reader = new FileReader();
 
                     reader.onload = function(e) {
                         const container = document.getElementById('product-images-container');
-                        const addBtn = document.getElementById('add-image-btn');
-
-                        const previewItem = document.createElement('div');
-                        previewItem.className = 'relative border border-gray-200 rounded-lg overflow-hidden image-preview-item';
-                        previewItem.innerHTML = `
-              <img src="${e.target.result}" class="w-full h-32 object-cover">
-              <button type="button" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center remove-image-btn">
-                <i class="fas fa-times text-xs"></i>
-              </button>
-            `;
-
-                        container.insertBefore(previewItem, addBtn.nextSibling);
-
-                        // Add remove button event listener
-                        previewItem.querySelector('.remove-image-btn').addEventListener('click', function() {
-                            previewItem.remove();
-                        });
+                        const order = container.children.length + 1;
+                        showCropperModal(e.target.result, null);
                     };
 
                     reader.readAsDataURL(file);
@@ -754,65 +1133,131 @@ ob_start();
             }
         });
 
-        // Remove image buttons
-        document.querySelectorAll('.remove-image-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                this.closest('.image-preview-item').remove();
-            });
+        document.getElementById('cropImage').addEventListener('click', function() {
+            if (cropper) {
+                const croppedCanvas = cropper.getCroppedCanvas({
+                    width: 1600,
+                    height: 900,
+                    minWidth: 800,
+                    minHeight: 450,
+                    maxWidth: 1920,
+                    maxHeight: 1080,
+                    fillColor: '#fff'
+                });
+
+                const croppedImageUrl = croppedCanvas.toDataURL('image/jpeg');
+
+                if (currentImageIndex !== null) {
+                    const container = document.getElementById('product-images-container');
+                    const imageItems = container.querySelectorAll('.image-preview-item');
+
+                    if (currentImageIndex < imageItems.length) {
+                        imageItems[currentImageIndex].querySelector('img').src = croppedImageUrl;
+                    } else {
+                        const order = container.children.length + 1;
+                        addImagePreview(croppedImageUrl, order);
+                    }
+                } else {
+                    const container = document.getElementById('product-images-container');
+                    const order = container.children.length + 1;
+                    addImagePreview(croppedImageUrl, order);
+                }
+
+                hideCropperModal();
+            }
         });
 
-        // Filter toggle
+        document.getElementById('saveProduct').addEventListener('click', function() {
+            const productId = document.getElementById('product-id').value;
+            const title = document.getElementById('product-title').value;
+            const category = document.getElementById('product-category').value;
+            const description = document.getElementById('product-description').value;
+            const metaTitle = document.getElementById('product-meta-title').value;
+            const metaDescription = document.getElementById('product-meta-description').value;
+            const status = document.getElementById('product-status').value;
+            const featured = document.getElementById('product-featured').checked;
+
+            const keywordsInput = document.getElementById('product-keywords').value;
+            const keywords = keywordsInput ? JSON.parse(keywordsInput) : [];
+
+            const packages = [];
+            document.querySelectorAll('.package-item').forEach(item => {
+                const type = item.querySelector('.package-type').value;
+                const price = item.querySelector('.package-price').value;
+
+                if (type && price) {
+                    packages.push({
+                        type: type,
+                        price: parseInt(price)
+                    });
+                }
+            });
+
+            const images = [];
+            document.querySelectorAll('.image-preview-item img').forEach(img => {
+                images.push(img.src);
+            });
+
+            if (productId) {
+                const productIndex = products.findIndex(p => p.id === productId);
+                if (productIndex !== -1) {
+                    products[productIndex] = {
+                        ...products[productIndex],
+                        title,
+                        category,
+                        description,
+                        metaTitle,
+                        metaDescription,
+                        status,
+                        featured,
+                        keywords,
+                        packages,
+                        images
+                    };
+                }
+            } else {
+                const newId = Date.now().toString();
+                products.push({
+                    id: newId,
+                    title,
+                    category,
+                    description,
+                    metaTitle,
+                    metaDescription,
+                    status,
+                    featured,
+                    keywords,
+                    packages,
+                    images,
+                    activityUsage: 0
+                });
+            }
+
+            alert('Product saved successfully!');
+            hideProductModal();
+        });
+
+        document.getElementById('confirmDelete').addEventListener('click', function() {
+            const productId = this.getAttribute('data-id');
+            const productIndex = products.findIndex(p => p.id === productId);
+
+            if (productIndex !== -1) {
+                products.splice(productIndex, 1);
+            }
+
+            alert(`Product deleted successfully!`);
+            hideDeleteModal();
+        });
+
         document.getElementById('applyFilters').addEventListener('click', function() {
-            // In a real application, you would filter products based on selected criteria
             alert('Filters would be applied here');
         });
 
-        // Reset filters
         document.getElementById('resetFilters').addEventListener('click', function() {
             document.getElementById('filterCategory').value = '';
             document.getElementById('filterPackaging').value = '';
             document.getElementById('filterFeatured').value = '';
-
-            // In a real application, you would reset the product list
             alert('Filters would be reset here');
-        });
-
-        // Search products
-        document.getElementById('searchProducts').addEventListener('input', function() {
-            const query = this.value.trim();
-
-            // In a real application, you would search products based on the query
-            if (query.length > 0) {
-                console.log(`Searching for: ${query}`);
-            }
-        });
-
-        // Sort products
-        document.getElementById('sortProducts').addEventListener('change', function() {
-            const sortBy = this.value;
-
-            // In a real application, you would sort products based on the selected option
-            if (sortBy) {
-                console.log(`Sorting by: ${sortBy}`);
-            }
-        });
-
-        // Pagination
-        document.querySelectorAll('#pagination-numbers button').forEach(button => {
-            button.addEventListener('click', function() {
-                // In a real application, you would navigate to the selected page
-                console.log(`Navigating to page: ${this.textContent}`);
-            });
-        });
-
-        document.getElementById('prev-page').addEventListener('click', function() {
-            // In a real application, you would navigate to the previous page
-            console.log('Navigating to previous page');
-        });
-
-        document.getElementById('next-page').addEventListener('click', function() {
-            // In a real application, you would navigate to the next page
-            console.log('Navigating to next page');
         });
     });
 </script>

@@ -46,14 +46,6 @@ try {
     die(json_encode(['success' => false, 'errors' => ['Database setup failed']]));
 }
 
-function generateUuidV7()
-{
-    $bytes = random_bytes(16);
-    $bytes[6] = chr((ord($bytes[6]) & 0x0F) | 0x70);
-    $bytes[8] = chr((ord($bytes[8]) & 0x3F) | 0x80);
-    return $bytes;
-}
-
 function generateOTP($length = 6)
 {
     $digits = '0123456789';
