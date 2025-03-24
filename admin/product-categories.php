@@ -57,7 +57,6 @@ ob_start();
                 <thead>
                     <tr class="text-left border-b border-gray-100">
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">#</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Image</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Name</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Status</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Created</th>
@@ -335,7 +334,7 @@ ob_start();
         document.getElementById('removeImage').addEventListener('click', function() {
             document.getElementById('removeImage').value = "1";
             document.getElementById('imagePreviewContainer').classList.add('hidden');
-            document.getElementById('selectedFileName').textContent = 'No file selected';
+            document.getElementById('selectedFileName').textContent = 'Image will be removed';
         });
 
         // Search and filter
@@ -435,6 +434,9 @@ ob_start();
 
         const selectedFileName = document.getElementById('selectedFileName');
         selectedFileName.textContent = file.name;
+
+        // Reset remove flag since we're uploading a new image
+        document.getElementById('removeImage').value = "0";
 
         // Check file type and size
         const fileType = file.type;
@@ -651,6 +653,10 @@ ob_start();
                         document.getElementById('imagePreview').src = category.image_url;
                         document.getElementById('imagePreviewContainer').classList.remove('hidden');
                         document.getElementById('selectedFileName').textContent = 'Current image';
+                        document.getElementById('removeImage').value = "0"; // Reset remove flag
+                    } else {
+                        document.getElementById('imagePreviewContainer').classList.add('hidden');
+                        document.getElementById('selectedFileName').textContent = 'No image selected';
                     }
 
                     document.getElementById('categoryModal').classList.remove('hidden');
@@ -907,16 +913,12 @@ ob_start();
                 </div>
             `;
 
-            const imageCell = category.image_url ?
-                `<div class="w-16 h-9 rounded overflow-hidden bg-gray-100"><img src="${category.image_url}" alt="${escapeHtml(category.name)}" class="w-full h-full object-cover"></div>` :
-                '<div class="w-16 h-9 rounded bg-gray-100 flex items-center justify-center text-gray-400"><i class="fas fa-image"></i></div>';
-
             row.innerHTML = `
                 <td class="px-6 py-4 text-sm text-gray-text">${start + index + 1}</td>
-                <td class="px-6 py-4">${imageCell}</td>
                 <td class="px-6 py-4">
                     <div class="font-medium text-gray-900">${escapeHtml(category.name)}</div>
                     <div class="text-xs text-gray-500 mt-1">${category.description ? escapeHtml(truncateText(category.description, 50)) : ''}</div>
+                    ${category.image_url ? '<div class="text-xs text-blue-500 mt-1"><i class="fas fa-image mr-1"></i>Has image</div>' : ''}
                 </td>
                 <td class="px-6 py-4">${statusToggle}</td>
                 <td class="px-6 py-4 text-sm text-gray-text">${formatDate(category.created_at)}</td>
