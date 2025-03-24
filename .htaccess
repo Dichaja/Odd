@@ -93,40 +93,15 @@ RewriteRule ^request-for-quote$ request-for-quote.php [L]
 RewriteRule ^contact-us$ contact-us.php [L]
 RewriteRule ^products-page$ products-page.php [L]
 
-# Admin section clean URLs
+# Admin section clean URLs - Generic rule for all admin pages
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin/dashboard$ admin/dashboard.php [L]
-RewriteRule ^admin/mapping$ admin/mapping.php [L]
-RewriteRule ^admin/cash-account$ admin/cash-account.php [L]
-RewriteRule ^admin/manage-products$ admin/manage-products.php [L]
-RewriteRule ^admin/manage-vendors$ admin/manage-vendors.php [L]
-RewriteRule ^admin/zzimba-credit$ admin/zzimba-credit.php [L]
-RewriteRule ^admin/fundi$ admin/fundi.php [L]
-RewriteRule ^admin/order-catalogue$ admin/order-catalogue.php [L]
-RewriteRule ^admin/member-subscription$ admin/member-subscription.php [L]
-RewriteRule ^admin/quotations$ admin/quotations.php [L]
-RewriteRule ^admin/search-log$ admin/search-log.php [L]
-RewriteRule ^admin/ads-management$ admin/ads-management.php [L]
-RewriteRule ^admin/page-activity$ admin/page-activity.php [L]
-RewriteRule ^admin/ad-submissions$ admin/ad-submissions.php [L]
-RewriteRule ^admin/schedule-ads$ admin/schedule-ads.php [L]
-RewriteRule ^admin/notifications$ admin/notifications.php [L]
-RewriteRule ^admin/sessions$ admin/sessions.php [L] 
-RewriteRule ^admin/product-package$ admin/product-package.php [L]
-RewriteRule ^admin/vendor-categories$ admin/vendor-categories.php [L]
-RewriteRule ^admin/vendor-profile$ admin/vendor-profile.php [L]
-RewriteRule ^admin/users$ admin/users.php [L]
-RewriteRule ^admin/profile$ admin/profile.php [L]
+RewriteRule ^admin/([^/]+)$ admin/$1.php [L]
 
-# User's section clean URLs
+# User's section clean URLs - Generic rule for all account pages
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^account/dashboard$ account/dashboard.php [L]
-RewriteRule ^account/order-history$ account/order-history.php [L]
-RewriteRule ^account/zzimba-credit$ account/zzimba-credit.php [L]
-RewriteRule ^account/notifications$ account/notifications.php [L]
-RewriteRule ^account/profile$ account/profile.php [L]
+RewriteRule ^account/([^/]+)$ account/$1.php [L]
 
 # Rewrite for admin manageProfile fetch - FIXED RULE
 RewriteRule ^admin/fetch/manageProfile/([^/]+)$ admin/fetch/manageProfile.php?action=$1 [L,QSA]
