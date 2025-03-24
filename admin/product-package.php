@@ -18,7 +18,7 @@ ob_start();
             <p class="text-sm text-gray-text mt-1">Define and manage product packaging and units of measure</p>
         </div>
         <div class="flex flex-col md:flex-row items-center gap-3">
-            <a href="manage-products" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+            <a href="products" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
                 <i class="fas fa-arrow-left"></i>
                 <span>Back to Products</span>
             </a>

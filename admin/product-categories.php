@@ -22,7 +22,7 @@ ob_start();
                 <i class="fas fa-plus"></i>
                 <span>Add Category</span>
             </button>
-            <a href="manage-products" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+            <a href="products" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
                 <i class="fas fa-arrow-left"></i>
                 <span>Back to Products</span>
             </a>
