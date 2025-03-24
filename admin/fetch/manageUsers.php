@@ -1,5 +1,4 @@
 <?php
-// Turn off output buffering to prevent any output before headers
 ob_start();
 
 // Set error reporting to log errors instead of displaying them

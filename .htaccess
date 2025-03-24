@@ -134,6 +134,12 @@ RewriteRule ^admin/fetch/manageProfile/([^/]+)$ admin/fetch/manageProfile.php?ac
 # Rewrite for manageProfile fetch - FIXED RULE
 RewriteRule ^fetch/manageProfile/([^/]+)$ account/fetch/manageProfile.php?action=$1 [L,QSA]
 
+# General Rule for Admin Fetch Folder (For All Files)
+# Rewrite admin/fetch/{filename}/{action} → fetch/{filename}.php?action={action}
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^admin/fetch/([^/]+)/([^/]+)$ admin/fetch/$1.php?action=$2 [L,QSA]
+
 # General Rule for Fetch Folder (For All Files)
 # Rewrite fetch/{filename}/{action} → fetch/{filename}.php?action={action}
 RewriteCond %{REQUEST_FILENAME} !-f
@@ -144,12 +150,6 @@ RewriteRule ^fetch/([^/]+)/([^/]+)$ fetch/$1.php?action=$2 [L,QSA]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^fetch/([^/]+)$ fetch/$1.php [L]
-
-# General Rule for Admin Fetch Folder (For All Files)
-# Rewrite fetch/{filename}/{action} → fetch/{filename}.php?action={action}
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin/fetch/([^/]+)/([^/]+)$ admin/fetch/$1.php?action=$2 [L,QSA]
 
 # Rewrite admin/fetch/{filename} → admin/fetch/{filename}.php
 RewriteCond %{REQUEST_FILENAME} !-f

@@ -20,6 +20,10 @@ ob_start();
                 <i class="fas fa-box"></i>
                 <span>Package Definition</span>
             </a>
+            <a href="product-categories" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                <i class="fas fa-tags"></i>
+                <span>Categories</span>
+            </a>
         </div>
     </div>
 
