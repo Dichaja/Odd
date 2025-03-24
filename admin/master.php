@@ -54,8 +54,8 @@ $menuItems = [
     'management' => [
         'title' => 'Management',
         'items' => [
-            'manage-products' => ['title' => 'Products', 'icon' => 'fa-box', 'notifications' => 0],
-            'manage-vendors' => ['title' => 'Vendors', 'icon' => 'fa-store', 'notifications' => 0],
+            'products' => ['title' => 'Products', 'icon' => 'fa-box', 'notifications' => 0],
+            'vendors' => ['title' => 'Vendors', 'icon' => 'fa-store', 'notifications' => 0],
             'fundi' => ['title' => 'Fundi', 'icon' => 'fa-hard-hat', 'notifications' => 0],
             'order-catalogue' => ['title' => 'Order Catalogue', 'icon' => 'fa-book', 'notifications' => 0],
             'member-subscription' => ['title' => 'Subscriptions', 'icon' => 'fa-users', 'notifications' => 0],
