@@ -268,7 +268,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 content-wrapper">
+        <div class="flex-1 content-wrapper max-h-screen overflow-auto">
             <div class="max-w-4xl mx-auto px-4 py-8 md:px-8">
                 <!-- Step Navigation -->
                 <div class="flex justify-between mb-8">
