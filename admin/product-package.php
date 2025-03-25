@@ -4,7 +4,7 @@ $pageTitle = 'Package Definition';
 $activeNav = 'package-definition';
 
 if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
-    header('Location: ' . BASE_URL . 'login/login.php');
+    header('Location: ' . BASE_URL);
     exit;
 }
 
@@ -25,7 +25,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Add Package Form Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100">
             <h2 class="text-lg font-semibold text-primary" id="formTitle">Add New Package Definition</h2>
@@ -43,7 +42,6 @@ ob_start();
                             <select id="package_name" name="package_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                                 <option value="" selected>Select Package</option>
                                 <option value="add">Create New</option>
-                                <!-- Unique package names will be populated here -->
                             </select>
                             <input type="text" id="new_package_name" name="new_package_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary hidden mt-2" placeholder="Enter new package name">
                         </div>
@@ -67,7 +65,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Package List Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -84,7 +81,6 @@ ob_start();
                 <div class="flex items-center gap-2 w-full md:w-auto">
                     <select id="filterPackage" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
                         <option value="" selected>All Packages</option>
-                        <!-- Unique package names will be populated here -->
                     </select>
                 </div>
             </div>
@@ -101,7 +97,6 @@ ob_start();
                     </tr>
                 </thead>
                 <tbody id="packages-table-body">
-                    <!-- Package rows will be populated dynamically -->
                     <tr>
                         <td colspan="4" class="px-6 py-4 text-center">Loading packages...</td>
                     </tr>
@@ -109,7 +104,6 @@ ob_start();
             </table>
         </div>
 
-        <!-- Pagination -->
         <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="text-sm text-gray-text">
                 Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span id="total-packages">0</span> package definitions
@@ -119,7 +113,6 @@ ob_start();
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 <div id="pagination-numbers" class="flex items-center">
-                    <!-- Pagination numbers will be populated dynamically -->
                 </div>
                 <button id="next-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fas fa-chevron-right"></i>
@@ -129,7 +122,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 <div id="deletePackageModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideDeleteModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -161,7 +153,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Edit Package Modal -->
 <div id="editPackageModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideEditModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -181,7 +172,6 @@ ob_start();
                         <select id="edit-package-name" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                             <option value="" selected>Select Package</option>
                             <option value="add">Create New</option>
-                            <!-- Unique package names will be populated here -->
                         </select>
                         <input type="text" id="edit-new-package-name" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary hidden mt-2" placeholder="Enter new package name">
                     </div>
@@ -204,7 +194,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Session Expired Modal -->
 <div id="sessionExpiredModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -224,7 +213,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Success Notification -->
 <div id="successNotification" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-2"></i>
@@ -232,7 +220,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Error Notification -->
 <div id="errorNotification" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-exclamation-circle mr-2"></i>
@@ -254,12 +241,10 @@ ob_start();
         const packageNameSelect = document.getElementById('package_name');
         const newPackageNameInput = document.getElementById('new_package_name');
 
-        // Package name dropdown change
         packageNameSelect.addEventListener('change', function() {
             const value = this.value;
 
             if (value === 'add') {
-                // Show input field for new package name
                 this.classList.add('hidden');
                 newPackageNameInput.classList.remove('hidden');
                 newPackageNameInput.focus();
@@ -267,7 +252,6 @@ ob_start();
             }
         });
 
-        // Cancel add new package
         cancelFormBtn.addEventListener('click', function() {
             resetPackageNameSelection();
         });
@@ -316,20 +300,17 @@ ob_start();
 
         document.getElementById('confirmDelete').addEventListener('click', confirmDelete);
 
-        // Edit package name dropdown change
         document.getElementById('edit-package-name').addEventListener('change', function() {
             const value = this.value;
             const newPackageInput = document.getElementById('edit-new-package-name');
 
             if (value === 'add') {
-                // Show input field for new package name
                 this.classList.add('hidden');
                 newPackageInput.classList.remove('hidden');
                 newPackageInput.focus();
             }
         });
 
-        // Save edit package
         document.getElementById('saveEditPackage').addEventListener('click', function() {
             const packageId = document.getElementById('edit-package-id').value;
             const packageSelect = document.getElementById('edit-package-name');
@@ -427,13 +408,10 @@ ob_start();
                 if (data.success) {
                     packagesData = data.packages;
 
-                    // Extract unique package names
                     uniquePackageNames = [...new Set(packagesData.map(pkg => pkg.package_name))].sort();
 
-                    // Populate package name dropdowns
                     populatePackageNameDropdowns(uniquePackageNames);
 
-                    // Populate filter dropdown
                     populateFilterDropdown(uniquePackageNames);
 
                     totalPages = Math.ceil(packagesData.length / itemsPerPage);
@@ -457,7 +435,6 @@ ob_start();
         const packageNameSelect = document.getElementById('package_name');
         const editPackageNameSelect = document.getElementById('edit-package-name');
 
-        // Clear existing options except the first two (Select Package and Create New)
         while (packageNameSelect.options.length > 2) {
             packageNameSelect.remove(2);
         }
@@ -466,7 +443,6 @@ ob_start();
             editPackageNameSelect.remove(2);
         }
 
-        // Add unique package names to both dropdowns
         packageNames.forEach(name => {
             const option1 = document.createElement('option');
             option1.value = name;
@@ -725,11 +701,9 @@ ob_start();
         if (pkg) {
             document.getElementById('packageId').value = pkg.uuid_id;
 
-            // Set the package name in the dropdown or input field
             const packageSelect = document.getElementById('package_name');
             const newPackageInput = document.getElementById('new_package_name');
 
-            // Find if the package name exists in the dropdown
             let packageExists = false;
             for (let i = 0; i < packageSelect.options.length; i++) {
                 if (packageSelect.options[i].value === pkg.package_name) {
@@ -739,7 +713,6 @@ ob_start();
                 }
             }
 
-            // If package name doesn't exist in dropdown, show input field
             if (!packageExists) {
                 packageSelect.classList.add('hidden');
                 newPackageInput.classList.remove('hidden');
@@ -753,7 +726,6 @@ ob_start();
             document.getElementById('submitButton').textContent = 'Update Package Definition';
             document.getElementById('cancelForm').classList.remove('hidden');
 
-            // Scroll to the form
             document.querySelector('.bg-white.rounded-lg').scrollIntoView({
                 behavior: 'smooth'
             });
@@ -779,7 +751,6 @@ ob_start();
     function hideEditModal() {
         document.getElementById('editPackageModal').classList.add('hidden');
 
-        // Reset the edit form
         const packageSelect = document.getElementById('edit-package-name');
         const newPackageInput = document.getElementById('edit-new-package-name');
 
