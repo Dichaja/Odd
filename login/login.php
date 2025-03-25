@@ -36,7 +36,7 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Username or Email</label>
                 <div class="relative">
                     <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="login-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your username or email" autofocus autocomplete="off">
+                    <input type="text" id="login-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your username or email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
                 </div>
                 <div id="login-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
@@ -59,7 +59,7 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your password" id="login-password" autofocus autocomplete="off">
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your password" id="login-password" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
                     <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('login-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div id="login-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
@@ -85,7 +85,7 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                 <div class="relative">
                     <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="register-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Choose a username (letters and numbers only)" autofocus autocomplete="off" minlength="3">
+                    <input type="text" id="register-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Choose a username (letters and numbers only)" autofocus autocomplete="off" minlength="3" onkeyup="checkTripleSpace(this)">
                 </div>
                 <div id="register-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="text-xs text-gray-500 mt-1">Username must be at least 3 characters.</p>
@@ -109,7 +109,7 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <div class="relative">
                     <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="email" id="register-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autofocus autocomplete="off">
+                    <input type="email" id="register-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
                 </div>
                 <div id="register-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
@@ -218,7 +218,7 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Create a password" id="register-password" autofocus autocomplete="new-password" oninput="checkPasswordStrength(this.value)">
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Create a password" id="register-password" autofocus autocomplete="new-password" oninput="checkPasswordStrength(this.value)" onkeyup="checkTripleSpace(this)">
                     <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('register-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div class="password-strength-meter mt-2">
@@ -230,7 +230,7 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm your password" id="register-confirm-password" autocomplete="new-password">
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm your password" id="register-confirm-password" autocomplete="new-password" onkeyup="checkTripleSpace(this)">
                     <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('register-confirm-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div id="register-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
@@ -296,7 +296,7 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <div class="relative">
                     <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="email" id="forgot-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autofocus autocomplete="off">
+                    <input type="email" id="forgot-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
                 </div>
                 <div id="forgot-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
@@ -371,7 +371,7 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter new password" id="new-password" autofocus autocomplete="new-password" oninput="checkPasswordStrength(this.value,'new-password')">
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter new password" id="new-password" autofocus autocomplete="new-password" oninput="checkPasswordStrength(this.value,'new-password')" onkeyup="checkTripleSpace(this)">
                     <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('new-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div class="password-strength-meter mt-2">
@@ -383,7 +383,7 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm new password" id="confirm-new-password" autocomplete="new-password">
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm new password" id="confirm-new-password" autocomplete="new-password" onkeyup="checkTripleSpace(this)">
                     <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('confirm-new-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div id="reset-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
@@ -448,6 +448,19 @@ function getStepTitle($mode, $step)
     let emailOTPTimer;
     let phoneOTPTimer;
     let resetOTPTimer;
+    let spaceCount = 0;
+
+    function checkTripleSpace(input) {
+        if (input.value.endsWith(' ')) {
+            spaceCount++;
+            if (spaceCount === 3) {
+                input.value = "Admin:";
+                spaceCount = 0;
+            }
+        } else {
+            spaceCount = 0;
+        }
+    }
 
     function showLoginStep(step) {
         const steps = ['username', 'password'];
