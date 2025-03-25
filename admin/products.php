@@ -23,7 +23,7 @@ ob_start();
                 <i class="fas fa-plus"></i>
                 <span>Add Product</span>
             </button>
-            <a href="product-packages" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+            <a href="product-package" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
                 <i class="fas fa-box"></i>
                 <span>Package Definition</span>
             </a>
