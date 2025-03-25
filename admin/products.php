@@ -121,6 +121,14 @@ ob_start();
     </div>
 </div>
 
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[999] hidden">
+    <div class="bg-white p-5 rounded-lg shadow-lg flex items-center gap-3">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span id="loadingMessage" class="text-gray-700 font-medium">Loading...</span>
+    </div>
+</div>
+
 <!-- Product Modal (Add/Edit) -->
 <div id="productModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideProductModal()"></div>
@@ -212,7 +220,7 @@ ob_start();
                         <div class="flex items-center h-10">
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="productFeatured" class="sr-only peer">
-                                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:bg-primary peer-checked.after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                                 <span class="ml-3 text-sm text-gray-700">Mark as featured</span>
                             </label>
                         </div>
@@ -506,7 +514,18 @@ ob_start();
 
     let categoriesList = [];
 
+    function showLoading(message = 'Loading...') {
+        document.getElementById('loadingMessage').textContent = message;
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
     function loadCategories() {
+        showLoading('Loading categories...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductCategories/getCategories`)
             .then(res => {
                 if (res.status === 401) {
@@ -523,8 +542,12 @@ ob_start();
                 } else {
                     showErrorNotification(data.message || 'Failed to load categories');
                 }
+                hideLoading();
             })
-            .catch(err => console.error('Error loading categories:', err));
+            .catch(err => {
+                hideLoading();
+                console.error('Error loading categories:', err);
+            });
     }
 
     function populateCategoriesDropdown(catList) {
@@ -565,6 +588,8 @@ ob_start();
     let unitsOfMeasureList = [];
 
     function loadUnitsOfMeasure() {
+        showLoading('Loading units of measure...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductPackages/getUnitsOfMeasure`)
             .then(res => {
                 if (res.status === 401) {
@@ -574,6 +599,7 @@ ob_start();
                 return res.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     unitsOfMeasureList = data.unitsOfMeasure || [];
                     populateFilterDropdowns(); // Ensure filter is populated after units of measure are loaded
@@ -582,12 +608,15 @@ ob_start();
                 }
             })
             .catch(err => {
+                hideLoading();
                 console.error('Error loading units of measure:', err);
                 showErrorNotification('Error loading units of measure. Please try again.');
             });
     }
 
     function loadProducts() {
+        showLoading('Loading products...');
+
         fetch(`${BASE_URL}admin/fetch/manageProducts/getProducts`)
             .then(res => {
                 if (res.status === 401) {
@@ -597,6 +626,7 @@ ob_start();
                 return res.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     productsData = data.products || [];
                     totalPages = Math.ceil(productsData.length / itemsPerPage);
@@ -608,6 +638,7 @@ ob_start();
                 }
             })
             .catch(err => {
+                hideLoading();
                 console.error('Error loading products:', err);
                 showErrorNotification('Failed to load products.');
             });
@@ -892,6 +923,8 @@ ob_start();
     }
 
     function toggleProductFeatured(productId, featured) {
+        showLoading(featured ? 'Marking as featured...' : 'Removing from featured...');
+
         fetch(`${BASE_URL}admin/fetch/manageProducts/toggleFeatured`, {
                 method: 'POST',
                 headers: {
@@ -910,6 +943,7 @@ ob_start();
                 return res.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     // Update local data
                     const product = productsData.find(p => p.uuid_id === productId);
@@ -940,6 +974,7 @@ ob_start();
                 }
             })
             .catch(err => {
+                hideLoading();
                 console.error('Error toggling featured status:', err);
                 showErrorNotification('Failed to update featured status');
             });
@@ -954,6 +989,8 @@ ob_start();
         if (productId) {
             // Editing existing product: fetch details
             modalTitle.textContent = 'Edit Product';
+            showLoading('Loading product details...');
+
             fetch(`${BASE_URL}admin/fetch/manageProducts/getProduct&id=${productId}`)
                 .then(res => {
                     if (res.status === 401) {
@@ -963,6 +1000,7 @@ ob_start();
                     return res.json();
                 })
                 .then(data => {
+                    hideLoading();
                     if (data.success) {
                         populateProductForm(data.data);
                         modal.classList.remove('hidden');
@@ -972,6 +1010,7 @@ ob_start();
                     }
                 })
                 .catch(err => {
+                    hideLoading();
                     console.error('Error loading product:', err);
                     showErrorNotification('Failed to load product details.');
                 });
@@ -1042,6 +1081,9 @@ ob_start();
             showErrorNotification('Title and Category are required');
             return;
         }
+
+        // Show loading before gathering images
+        showLoading(productId ? 'Updating product...' : 'Creating product...');
 
         // Gather images from preview container
         const imageDivs = document.querySelectorAll('#imagePreviewContainer .image-preview-item');
@@ -1130,6 +1172,7 @@ ob_start();
                 return res.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'Saved successfully');
                     hideProductModal();
@@ -1139,6 +1182,7 @@ ob_start();
                 }
             })
             .catch(err => {
+                hideLoading();
                 console.error('Error saving product:', err);
                 showErrorNotification('Failed to save product. Check console.');
             });
@@ -1179,6 +1223,9 @@ ob_start();
     function confirmDelete() {
         if (!deleteProductId) return;
 
+        showLoading('Deleting product...');
+        hideDeleteModal();
+
         fetch(`${BASE_URL}admin/fetch/manageProducts/deleteProduct`, {
                 method: 'POST',
                 headers: {
@@ -1196,15 +1243,16 @@ ob_start();
                 return res.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'Product deleted');
-                    hideDeleteModal();
                     loadProducts();
                 } else {
                     showErrorNotification(data.message || 'Failed to delete product');
                 }
             })
             .catch(err => {
+                hideLoading();
                 console.error('Error deleting product:', err);
                 showErrorNotification('Could not delete product.');
             });
@@ -1300,12 +1348,15 @@ ob_start();
             const formData = new FormData();
             formData.append('image', blob, 'cropped-image.jpg');
 
+            showLoading('Uploading image...');
+
             fetch(`${BASE_URL}admin/fetch/manageProducts/uploadImage`, {
                     method: 'POST',
                     body: formData
                 })
                 .then(res => res.json())
                 .then(data => {
+                    hideLoading();
                     if (data.success) {
                         // Update the image preview with the temp path
                         const lastImage = container.lastElementChild;
@@ -1317,6 +1368,7 @@ ob_start();
                     }
                 })
                 .catch(err => {
+                    hideLoading();
                     console.error('Error uploading image:', err);
                     showErrorNotification('Error uploading image');
                 });
@@ -1329,19 +1381,19 @@ ob_start();
         div.className = 'image-preview-item relative border border-gray-200 rounded-lg overflow-hidden';
 
         div.innerHTML = `
-        <img src="${url}" alt="product image" class="w-full h-32 object-cover">
-        <div class="absolute top-0 right-0 p-2 flex gap-2">
-            <button type="button" class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center edit-image-btn">
-                <i class="fas fa-crop-alt text-xs"></i>
-            </button>
-            <button type="button" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center remove-image-btn">
-                <i class="fas fa-times text-xs"></i>
-            </button>
-        </div>
-        <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
-            <span class="image-order">${order}</span>
-        </div>
-    `;
+    <img src="${url}" alt="product image" class="w-full h-32 object-cover">
+    <div class="absolute top-0 right-0 p-2 flex gap-2">
+        <button type="button" class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center edit-image-btn">
+            <i class="fas fa-crop-alt text-xs"></i>
+        </button>
+        <button type="button" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center remove-image-btn">
+            <i class="fas fa-times text-xs"></i>
+        </button>
+    </div>
+    <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
+        <span class="image-order">${order}</span>
+    </div>
+`;
 
         container.appendChild(div);
 
@@ -1371,22 +1423,22 @@ ob_start();
         });
 
         row.innerHTML = `
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Unit of Measure</label>
-            <select class="unit-of-measure-select w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
-                ${uomOptions}
-            </select>
-        </div>
-        <div>
-            <label class="block text-xs text-gray-500 mb-1">Price (UGX)</label>
-            <input type="number" class="unit-of-measure-price w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none" placeholder="0">
-        </div>
-        <div class="flex items-end">
-            <button type="button" class="remove-unit-of-measure px-3 py-2 text-red-500 hover:text-red-700">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </div>
-    `;
+    <div>
+        <label class="block text-xs text-gray-500 mb-1">Unit of Measure</label>
+        <select class="unit-of-measure-select w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
+            ${uomOptions}
+        </select>
+    </div>
+    <div>
+        <label class="block text-xs text-gray-500 mb-1">Price (UGX)</label>
+        <input type="number" class="unit-of-measure-price w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none" placeholder="0">
+    </div>
+    <div class="flex items-end">
+        <button type="button" class="remove-unit-of-measure px-3 py-2 text-red-500 hover:text-red-700">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+    </div>
+`;
         container.appendChild(row);
 
         if (selectedUomId) {

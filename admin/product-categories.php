@@ -291,6 +291,16 @@ ob_start();
     </div>
 </div>
 
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[1000] hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+            <p id="loadingMessage" class="text-gray-700 font-medium text-center">Loading...</p>
+        </div>
+    </div>
+</div>
+
 <!-- Include Cropper.js -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -317,6 +327,16 @@ ob_start();
         // Initialize status toggle
         initializeStatusToggle();
     });
+
+    // Loading overlay functions
+    function showLoading(message = 'Loading...') {
+        document.getElementById('loadingMessage').textContent = message;
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
 
     function initializeEventListeners() {
         // Add category button
@@ -537,6 +557,7 @@ ob_start();
         const uploadProgressBar = document.getElementById('uploadProgressBar');
 
         uploadProgress.classList.remove('hidden');
+        showLoading('Uploading image...');
 
         const xhr = new XMLHttpRequest();
 
@@ -550,6 +571,7 @@ ob_start();
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 uploadProgress.classList.add('hidden');
+                hideLoading();
 
                 if (xhr.status === 200) {
                     try {
@@ -606,15 +628,19 @@ ob_start();
         document.getElementById('submitCategory').textContent = 'Update Category';
 
         // Fetch category details
+        showLoading('Loading category details...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductCategories/getCategory?id=${categoryId}`)
             .then(response => {
                 if (response.status === 401) {
+                    hideLoading();
                     showSessionExpiredModal();
                     throw new Error('Session expired');
                 }
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     const category = data.data;
 
@@ -665,6 +691,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error loading category details:', error);
                     showErrorNotification('Failed to load category details. Please try again.');
@@ -755,6 +782,9 @@ ob_start();
         };
 
         const endpoint = categoryId ? 'updateCategory' : 'createCategory';
+        const actionText = categoryId ? 'Updating' : 'Creating';
+
+        showLoading(`${actionText} category...`);
 
         fetch(`${BASE_URL}admin/fetch/manageProductCategories/${endpoint}`, {
                 method: 'POST',
@@ -765,12 +795,14 @@ ob_start();
             })
             .then(response => {
                 if (response.status === 401) {
+                    hideLoading();
                     showSessionExpiredModal();
                     throw new Error('Session expired');
                 }
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || (categoryId ? 'Category updated successfully!' : 'Category created successfully!'));
                     hideCategoryModal();
@@ -780,6 +812,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error saving category:', error);
                     showErrorNotification('Failed to save category. Please try again.');
@@ -791,10 +824,13 @@ ob_start();
         const tableBody = document.getElementById('categories-table-body');
         tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center">Loading categories...</td></tr>';
 
+        showLoading('Loading categories...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductCategories/getCategories`)
             .then(response => {
                 if (!response.ok) {
                     if (response.status === 401) {
+                        hideLoading();
                         showSessionExpiredModal();
                         throw new Error('Session expired');
                     }
@@ -803,6 +839,7 @@ ob_start();
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     categoriesData = data.categories;
                     totalPages = Math.ceil(categoriesData.length / itemsPerPage);
@@ -814,6 +851,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error loading categories:', error);
                     showErrorNotification('Failed to load categories. Please try again.');
@@ -965,6 +1003,8 @@ ob_start();
         const category = categoriesData.find(c => c.uuid_id === categoryId);
         if (!category) return;
 
+        showLoading('Updating category status...');
+
         const categoryData = {
             id: categoryId,
             name: category.name,
@@ -984,12 +1024,14 @@ ob_start();
             })
             .then(response => {
                 if (response.status === 401) {
+                    hideLoading();
                     showSessionExpiredModal();
                     throw new Error('Session expired');
                 }
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(`Category status updated to ${status}`);
                     loadCategories();
@@ -999,6 +1041,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error updating category status:', error);
                     showErrorNotification('Failed to update category status. Please try again.');
@@ -1040,6 +1083,8 @@ ob_start();
     function confirmDelete() {
         const categoryId = document.getElementById('confirmDelete').getAttribute('data-id');
 
+        showLoading('Deleting category...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductCategories/deleteCategory`, {
                 method: 'POST',
                 headers: {
@@ -1051,12 +1096,14 @@ ob_start();
             })
             .then(response => {
                 if (response.status === 401) {
+                    hideLoading();
                     showSessionExpiredModal();
                     throw new Error('Session expired');
                 }
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'Category deleted successfully!');
                     loadCategories();
@@ -1066,6 +1113,7 @@ ob_start();
                 hideDeleteModal();
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error deleting category:', error);
                     showErrorNotification('Failed to delete category. Please try again.');

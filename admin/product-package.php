@@ -220,6 +220,14 @@ ob_start();
     </div>
 </div>
 
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[999] hidden">
+    <div class="bg-white p-5 rounded-lg shadow-lg flex items-center gap-3">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span id="loadingMessage" class="text-gray-700 font-medium">Loading...</span>
+    </div>
+</div>
+
 <!-- Delete Package Name Modal -->
 <div id="deletePackageNameModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideDeletePackageNameModal()"></div>
@@ -481,6 +489,8 @@ ob_start();
         const tableBody = document.getElementById('package-names-table-body');
         tableBody.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center">Loading package names...</td></tr>';
 
+        showLoading('Loading package names...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductPackages/getPackageNames`)
             .then(response => {
                 if (!response.ok) {
@@ -493,6 +503,7 @@ ob_start();
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     packageNamesData = data.packageNames;
 
@@ -508,6 +519,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error loading package names:', error);
                     showErrorNotification('Failed to load package names. Please try again.');
@@ -652,6 +664,8 @@ ob_start();
     }
 
     function createPackageName(packageName) {
+        showLoading('Creating package name...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductPackages/createPackageName`, {
                 method: 'POST',
                 headers: {
@@ -669,6 +683,7 @@ ob_start();
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'Package name created successfully!');
                     resetPackageNameForm();
@@ -678,6 +693,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error creating package name:', error);
                     showErrorNotification('Failed to create package name. Please try again.');
@@ -686,6 +702,8 @@ ob_start();
     }
 
     function updatePackageName(packageNameId, packageName) {
+        showLoading('Updating package name...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductPackages/updatePackageName`, {
                 method: 'POST',
                 headers: {
@@ -704,6 +722,7 @@ ob_start();
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'Package name updated successfully!');
                     resetPackageNameForm();
@@ -713,6 +732,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error updating package name:', error);
                     showErrorNotification('Failed to update package name. Please try again.');
@@ -756,6 +776,9 @@ ob_start();
     function confirmDeletePackageName() {
         const packageNameId = document.getElementById('confirmDeletePackageName').getAttribute('data-id');
 
+        showLoading('Deleting package name...');
+        hideDeletePackageNameModal();
+
         fetch(`${BASE_URL}admin/fetch/manageProductPackages/deletePackageName`, {
                 method: 'POST',
                 headers: {
@@ -773,6 +796,7 @@ ob_start();
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'Package name deleted successfully!');
                     loadPackageNames();
@@ -780,13 +804,12 @@ ob_start();
                 } else {
                     showErrorNotification(data.message || 'Failed to delete package name');
                 }
-                hideDeletePackageNameModal();
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error deleting package name:', error);
                     showErrorNotification('Failed to delete package name. Please try again.');
-                    hideDeletePackageNameModal();
                 }
             });
     }
@@ -804,6 +827,8 @@ ob_start();
         const tableBody = document.getElementById('si-units-table-body');
         tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">Loading SI units...</td></tr>';
 
+        showLoading('Loading SI units...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductPackages/getSIUnits`)
             .then(response => {
                 if (!response.ok) {
@@ -816,6 +841,7 @@ ob_start();
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     siUnitsData = data.siUnits;
 
@@ -832,6 +858,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error loading SI units:', error);
                     showErrorNotification('Failed to load SI units. Please try again.');
@@ -985,6 +1012,8 @@ ob_start();
     }
 
     function createSIUnit(packageNameId, siUnit) {
+        showLoading('Creating SI unit...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductPackages/createSIUnit`, {
                 method: 'POST',
                 headers: {
@@ -1003,6 +1032,7 @@ ob_start();
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'SI unit created successfully!');
                     resetSIUnitForm();
@@ -1012,6 +1042,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error creating SI unit:', error);
                     showErrorNotification('Failed to create SI unit. Please try again.');
@@ -1020,6 +1051,8 @@ ob_start();
     }
 
     function updateSIUnit(siUnitId, packageNameId, siUnit) {
+        showLoading('Updating SI unit...');
+
         fetch(`${BASE_URL}admin/fetch/manageProductPackages/updateSIUnit`, {
                 method: 'POST',
                 headers: {
@@ -1039,6 +1072,7 @@ ob_start();
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'SI unit updated successfully!');
                     resetSIUnitForm();
@@ -1048,6 +1082,7 @@ ob_start();
                 }
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error updating SI unit:', error);
                     showErrorNotification('Failed to update SI unit. Please try again.');
@@ -1094,6 +1129,9 @@ ob_start();
     function confirmDeleteSIUnit() {
         const siUnitId = document.getElementById('confirmDeleteSIUnit').getAttribute('data-id');
 
+        showLoading('Deleting SI unit...');
+        hideDeleteSIUnitModal();
+
         fetch(`${BASE_URL}admin/fetch/manageProductPackages/deleteSIUnit`, {
                 method: 'POST',
                 headers: {
@@ -1111,19 +1149,19 @@ ob_start();
                 return response.json();
             })
             .then(data => {
+                hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'SI unit deleted successfully!');
                     loadSIUnits();
                 } else {
                     showErrorNotification(data.message || 'Failed to delete SI unit');
                 }
-                hideDeleteSIUnitModal();
             })
             .catch(error => {
+                hideLoading();
                 if (error.message !== 'Session expired') {
                     console.error('Error deleting SI unit:', error);
                     showErrorNotification('Failed to delete SI unit. Please try again.');
-                    hideDeleteSIUnitModal();
                 }
             });
     }
@@ -1141,6 +1179,15 @@ ob_start();
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function showLoading(message = 'Loading...') {
+        document.getElementById('loadingMessage').textContent = message;
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('hidden');
     }
 
     function showSessionExpiredModal() {
