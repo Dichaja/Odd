@@ -25,175 +25,266 @@ ob_start();
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100">
-            <h2 class="text-lg font-semibold text-primary" id="formTitle">Add New Package Definition</h2>
-            <p class="text-sm text-gray-text mt-1">Create a new package type with unit of measure</p>
-        </div>
+    <!-- Tabs -->
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+            <button id="tab-package-names" class="border-primary text-primary hover:text-primary hover:border-primary px-1 py-4 text-sm font-medium border-b-2" aria-current="page">
+                Package Names
+            </button>
+            <button id="tab-si-units" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 px-1 py-4 text-sm font-medium border-b-2">
+                SI Units
+            </button>
+        </nav>
+    </div>
 
-        <div class="p-6">
-            <form id="packageForm" class="space-y-4">
-                <input type="hidden" id="packageId" name="packageId" value="">
+    <!-- Package Names Section -->
+    <div id="package-names-section">
+        <!-- Add Package Name Form Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-lg font-semibold text-primary" id="packageNameFormTitle">Add New Package Name</h2>
+                <p class="text-sm text-gray-text mt-1">Create a new package type (e.g., Bag, Box, Bottle)</p>
+            </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="p-6">
+                <form id="packageNameForm" class="space-y-4">
+                    <input type="hidden" id="packageNameId" name="packageNameId" value="">
+
                     <div>
                         <label for="package_name" class="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
-                        <div id="packageNameContainer">
-                            <select id="package_name" name="package_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                                <option value="" selected>Select Package</option>
-                                <option value="add">Create New</option>
-                            </select>
-                            <input type="text" id="new_package_name" name="new_package_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary hidden mt-2" placeholder="Enter new package name">
-                        </div>
+                        <input type="text" id="package_name" name="package_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="e.g., Bag, Box, Bottle" required>
                     </div>
 
-                    <div>
-                        <label for="unit_of_measure" class="block text-sm font-medium text-gray-700 mb-1">Unit of Measure</label>
-                        <input type="text" id="unit_of_measure" name="unit_of_measure" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="e.g., kg, liter, meter" required>
+                    <div class="flex justify-end mt-4">
+                        <button type="button" id="cancelPackageNameForm" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2 hidden">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submitPackageNameButton" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            Save Package Name
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Package Names List Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
+            <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-secondary">Package Names</h2>
+                    <p class="text-sm text-gray-text mt-1">
+                        <span id="package-name-count">0</span> package names found
+                    </p>
+                </div>
+                <div class="flex flex-col md:flex-row items-center gap-3">
+                    <div class="relative w-full md:w-auto">
+                        <input type="text" id="searchPackageNames" placeholder="Search package names..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     </div>
                 </div>
+            </div>
 
-                <div class="flex justify-end mt-4">
-                    <button type="button" id="cancelForm" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2 hidden">
-                        Cancel
+            <div class="overflow-x-auto">
+                <table class="w-full" id="package-names-table">
+                    <thead>
+                        <tr class="text-left border-b border-gray-100">
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">#</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">Package Name</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text w-32">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="package-names-table-body">
+                        <tr>
+                            <td colspan="3" class="px-6 py-4 text-center">Loading package names...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination for Package Names -->
+            <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-gray-text">
+                    Showing <span id="showing-start-package-names">0</span> to <span id="showing-end-package-names">0</span> of <span id="total-package-names">0</span> package names
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prev-page-package-names" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left"></i>
                     </button>
-                    <button type="submit" id="submitButton" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                        Save Package Definition
+                    <div id="pagination-numbers-package-names" class="flex items-center">
+                    </div>
+                    <button id="next-page-package-names" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-lg font-semibold text-secondary">Package Definitions</h2>
-                <p class="text-sm text-gray-text mt-1">
-                    <span id="package-count">0</span> definitions found
-                </p>
+    <!-- SI Units Section -->
+    <div id="si-units-section" class="hidden">
+        <!-- Add SI Unit Form Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-lg font-semibold text-primary" id="siUnitFormTitle">Add New SI Unit</h2>
+                <p class="text-sm text-gray-text mt-1">Create a new SI unit for a package type (e.g., kg, liter, meter)</p>
             </div>
-            <div class="flex flex-col md:flex-row items-center gap-3">
-                <div class="relative w-full md:w-auto">
-                    <input type="text" id="searchPackages" placeholder="Search packages..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                </div>
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <select id="filterPackage" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
-                        <option value="" selected>All Packages</option>
-                    </select>
-                </div>
+
+            <div class="p-6">
+                <form id="siUnitForm" class="space-y-4">
+                    <input type="hidden" id="siUnitId" name="siUnitId" value="">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="package_name_id" class="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
+                            <select id="package_name_id" name="package_name_id" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" required>
+                                <option value="" selected>Select Package Name</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="si_unit" class="block text-sm font-medium text-gray-700 mb-1">SI Unit</label>
+                            <input type="text" id="si_unit" name="si_unit" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="e.g., kg, liter, meter" required>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mt-4">
+                        <button type="button" id="cancelSIUnitForm" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2 hidden">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submitSIUnitButton" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            Save SI Unit
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full" id="packages-table">
-                <thead>
-                    <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">#</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Package</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Unit of Measure</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text w-32">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="packages-table-body">
-                    <tr>
-                        <td colspan="4" class="px-6 py-4 text-center">Loading packages...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-gray-text">
-                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span id="total-packages">0</span> package definitions
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="prev-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div id="pagination-numbers" class="flex items-center">
+        <!-- SI Units List Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
+            <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-secondary">SI Units</h2>
+                    <p class="text-sm text-gray-text mt-1">
+                        <span id="si-unit-count">0</span> SI units found
+                    </p>
                 </div>
-                <button id="next-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <div class="flex flex-col md:flex-row items-center gap-3">
+                    <div class="relative w-full md:w-auto">
+                        <input type="text" id="searchSIUnits" placeholder="Search SI units..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <select id="filterPackageName" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
+                            <option value="" selected>All Package Names</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full" id="si-units-table">
+                    <thead>
+                        <tr class="text-left border-b border-gray-100">
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">#</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">Package Name</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">SI Unit</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">Unit of Measure</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text w-32">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="si-units-table-body">
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center">Loading SI units...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination for SI Units -->
+            <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-gray-text">
+                    Showing <span id="showing-start-si-units">0</span> to <span id="showing-end-si-units">0</span> of <span id="total-si-units">0</span> SI units
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prev-page-si-units" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div id="pagination-numbers-si-units" class="flex items-center">
+                    </div>
+                    <button id="next-page-si-units" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div id="deletePackageModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideDeleteModal()"></div>
+<!-- Delete Package Name Modal -->
+<div id="deletePackageNameModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/20" onclick="hideDeletePackageNameModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
         <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Delete Package Definition</h3>
-            <button onclick="hideDeleteModal()" class="text-gray-400 hover:text-gray-500">
+            <h3 class="text-lg font-semibold text-secondary">Delete Package Name</h3>
+            <button onclick="hideDeletePackageNameModal()" class="text-gray-400 hover:text-gray-500">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         <div class="p-6">
-            <p class="text-gray-600 mb-4">Are you sure you want to delete this package definition? This action cannot be undone.</p>
+            <p class="text-gray-600 mb-4">Are you sure you want to delete this package name? This action cannot be undone.</p>
             <div class="bg-gray-50 p-4 rounded-lg mb-4">
                 <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div class="text-gray-500">Package:</div>
+                    <div class="text-gray-500">Package Name:</div>
                     <div class="font-medium text-gray-900" id="delete-package-name"></div>
-                    <div class="text-gray-500">Unit of Measure:</div>
-                    <div class="font-medium text-gray-900" id="delete-unit-measure"></div>
                 </div>
             </div>
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideDeleteModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+            <button onclick="hideDeletePackageNameModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
                 Cancel
             </button>
-            <button id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            <button id="confirmDeletePackageName" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
                 Delete
             </button>
         </div>
     </div>
 </div>
 
-<div id="editPackageModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideEditModal()"></div>
+<!-- Delete SI Unit Modal -->
+<div id="deleteSIUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/20" onclick="hideDeleteSIUnitModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
         <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Edit Package Definition</h3>
-            <button onclick="hideEditModal()" class="text-gray-400 hover:text-gray-500">
+            <h3 class="text-lg font-semibold text-secondary">Delete SI Unit</h3>
+            <button onclick="hideDeleteSIUnitModal()" class="text-gray-400 hover:text-gray-500">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         <div class="p-6">
-            <form id="editPackageForm" class="space-y-4">
-                <input type="hidden" id="edit-package-id" value="">
-
-                <div class="mb-4">
-                    <label for="edit-package-name" class="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
-                    <div id="editPackageNameContainer">
-                        <select id="edit-package-name" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            <option value="" selected>Select Package</option>
-                            <option value="add">Create New</option>
-                        </select>
-                        <input type="text" id="edit-new-package-name" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary hidden mt-2" placeholder="Enter new package name">
-                    </div>
+            <p class="text-gray-600 mb-4">Are you sure you want to delete this SI unit? This action cannot be undone.</p>
+            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div class="text-gray-500">Package Name:</div>
+                    <div class="font-medium text-gray-900" id="delete-si-unit-package-name"></div>
+                    <div class="text-gray-500">SI Unit:</div>
+                    <div class="font-medium text-gray-900" id="delete-si-unit"></div>
+                    <div class="text-gray-500">Unit of Measure:</div>
+                    <div class="font-medium text-gray-900" id="delete-unit-of-measure"></div>
                 </div>
-
-                <div class="mb-4">
-                    <label for="edit-unit-measure" class="block text-sm font-medium text-gray-700 mb-1">Unit of Measure</label>
-                    <input type="text" id="edit-unit-measure" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                </div>
-            </form>
+            </div>
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideEditModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+            <button onclick="hideDeleteSIUnitModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
                 Cancel
             </button>
-            <button id="saveEditPackage" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                Save Changes
+            <button id="confirmDeleteSIUnit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                Delete
             </button>
         </div>
     </div>
 </div>
 
+<!-- Session Expired Modal -->
 <div id="sessionExpiredModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -213,6 +304,7 @@ ob_start();
     </div>
 </div>
 
+<!-- Success Notification -->
 <div id="successNotification" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-2"></i>
@@ -220,6 +312,7 @@ ob_start();
     </div>
 </div>
 
+<!-- Error Notification -->
 <div id="errorNotification" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-exclamation-circle mr-2"></i>
@@ -229,171 +322,166 @@ ob_start();
 
 <script>
     const BASE_URL = '<?= BASE_URL ?>';
-    let packagesData = [];
-    let currentPage = 1;
-    let totalPages = 1;
+
+    // Package Names variables
+    let packageNamesData = [];
+    let currentPackageNamesPage = 1;
+    let totalPackageNamesPages = 1;
     let itemsPerPage = 10;
-    let uniquePackageNames = [];
+
+    // SI Units variables
+    let siUnitsData = [];
+    let currentSIUnitsPage = 1;
+    let totalSIUnitsPages = 1;
 
     document.addEventListener('DOMContentLoaded', function() {
-        const packageForm = document.getElementById('packageForm');
-        const cancelFormBtn = document.getElementById('cancelForm');
-        const packageNameSelect = document.getElementById('package_name');
-        const newPackageNameInput = document.getElementById('new_package_name');
+        // Tab switching
+        const tabPackageNames = document.getElementById('tab-package-names');
+        const tabSIUnits = document.getElementById('tab-si-units');
+        const packageNamesSection = document.getElementById('package-names-section');
+        const siUnitsSection = document.getElementById('si-units-section');
 
-        packageNameSelect.addEventListener('change', function() {
-            const value = this.value;
-
-            if (value === 'add') {
-                this.classList.add('hidden');
-                newPackageNameInput.classList.remove('hidden');
-                newPackageNameInput.focus();
-                cancelFormBtn.classList.remove('hidden');
-            }
+        tabPackageNames.addEventListener('click', function() {
+            tabPackageNames.classList.add('border-primary', 'text-primary');
+            tabPackageNames.classList.remove('border-transparent', 'text-gray-500');
+            tabSIUnits.classList.add('border-transparent', 'text-gray-500');
+            tabSIUnits.classList.remove('border-primary', 'text-primary');
+            packageNamesSection.classList.remove('hidden');
+            siUnitsSection.classList.add('hidden');
         });
 
-        cancelFormBtn.addEventListener('click', function() {
-            resetPackageNameSelection();
+        tabSIUnits.addEventListener('click', function() {
+            tabSIUnits.classList.add('border-primary', 'text-primary');
+            tabSIUnits.classList.remove('border-transparent', 'text-gray-500');
+            tabPackageNames.classList.add('border-transparent', 'text-gray-500');
+            tabPackageNames.classList.remove('border-primary', 'text-primary');
+            siUnitsSection.classList.remove('hidden');
+            packageNamesSection.classList.add('hidden');
         });
 
-        packageForm.addEventListener('submit', function(e) {
+        // Package Names Form
+        const packageNameForm = document.getElementById('packageNameForm');
+        const cancelPackageNameFormBtn = document.getElementById('cancelPackageNameForm');
+
+        packageNameForm.addEventListener('submit', function(e) {
             e.preventDefault();
 
-            if (!validateForm()) {
+            const packageNameId = document.getElementById('packageNameId').value;
+            const packageName = document.getElementById('package_name').value.trim();
+
+            if (!packageName) {
+                showErrorNotification('Please enter a package name');
                 return;
             }
 
-            const packageId = document.getElementById('packageId').value;
-
-            if (packageId) {
-                updatePackage();
+            if (packageNameId) {
+                updatePackageName(packageNameId, packageName);
             } else {
-                createPackage();
+                createPackageName(packageName);
             }
         });
 
-        document.getElementById('searchPackages').addEventListener('input', function(e) {
+        cancelPackageNameFormBtn.addEventListener('click', function() {
+            resetPackageNameForm();
+        });
+
+        // SI Units Form
+        const siUnitForm = document.getElementById('siUnitForm');
+        const cancelSIUnitFormBtn = document.getElementById('cancelSIUnitForm');
+
+        siUnitForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const siUnitId = document.getElementById('siUnitId').value;
+            const packageNameId = document.getElementById('package_name_id').value;
+            const siUnit = document.getElementById('si_unit').value.trim();
+
+            if (!packageNameId) {
+                showErrorNotification('Please select a package name');
+                return;
+            }
+
+            if (!siUnit) {
+                showErrorNotification('Please enter an SI unit');
+                return;
+            }
+
+            if (siUnitId) {
+                updateSIUnit(siUnitId, packageNameId, siUnit);
+            } else {
+                createSIUnit(packageNameId, siUnit);
+            }
+        });
+
+        cancelSIUnitFormBtn.addEventListener('click', function() {
+            resetSIUnitForm();
+        });
+
+        // Search and Filter
+        document.getElementById('searchPackageNames').addEventListener('input', function(e) {
             const query = e.target.value.toLowerCase();
-            filterPackages(query, document.getElementById('filterPackage').value);
+            filterPackageNames(query);
         });
 
-        document.getElementById('filterPackage').addEventListener('change', function(e) {
+        document.getElementById('searchSIUnits').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            filterSIUnits(query, document.getElementById('filterPackageName').value);
+        });
+
+        document.getElementById('filterPackageName').addEventListener('change', function(e) {
             const packageName = e.target.value;
-            filterPackages(document.getElementById('searchPackages').value.toLowerCase(), packageName);
+            filterSIUnits(document.getElementById('searchSIUnits').value.toLowerCase(), packageName);
         });
 
-        document.getElementById('prev-page').addEventListener('click', function() {
-            if (currentPage > 1) {
-                currentPage--;
-                renderPagination();
-                renderPackages(packagesData);
+        // Pagination for Package Names
+        document.getElementById('prev-page-package-names').addEventListener('click', function() {
+            if (currentPackageNamesPage > 1) {
+                currentPackageNamesPage--;
+                renderPackageNamesPagination();
+                renderPackageNames(packageNamesData);
             }
         });
 
-        document.getElementById('next-page').addEventListener('click', function() {
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderPagination();
-                renderPackages(packagesData);
+        document.getElementById('next-page-package-names').addEventListener('click', function() {
+            if (currentPackageNamesPage < totalPackageNamesPages) {
+                currentPackageNamesPage++;
+                renderPackageNamesPagination();
+                renderPackageNames(packageNamesData);
             }
         });
 
-        document.getElementById('confirmDelete').addEventListener('click', confirmDelete);
-
-        document.getElementById('edit-package-name').addEventListener('change', function() {
-            const value = this.value;
-            const newPackageInput = document.getElementById('edit-new-package-name');
-
-            if (value === 'add') {
-                this.classList.add('hidden');
-                newPackageInput.classList.remove('hidden');
-                newPackageInput.focus();
+        // Pagination for SI Units
+        document.getElementById('prev-page-si-units').addEventListener('click', function() {
+            if (currentSIUnitsPage > 1) {
+                currentSIUnitsPage--;
+                renderSIUnitsPagination();
+                renderSIUnits(siUnitsData);
             }
         });
 
-        document.getElementById('saveEditPackage').addEventListener('click', function() {
-            const packageId = document.getElementById('edit-package-id').value;
-            const packageSelect = document.getElementById('edit-package-name');
-            const newPackageInput = document.getElementById('edit-new-package-name');
-            const unitOfMeasure = document.getElementById('edit-unit-measure').value;
-
-            let packageName;
-            if (packageSelect.classList.contains('hidden')) {
-                packageName = newPackageInput.value.trim();
-                if (!packageName) {
-                    showErrorNotification('Please enter a package name');
-                    return;
-                }
-            } else {
-                packageName = packageSelect.value;
-                if (packageName === '' || packageName === 'add') {
-                    showErrorNotification('Please select a package name');
-                    return;
-                }
+        document.getElementById('next-page-si-units').addEventListener('click', function() {
+            if (currentSIUnitsPage < totalSIUnitsPages) {
+                currentSIUnitsPage++;
+                renderSIUnitsPagination();
+                renderSIUnits(siUnitsData);
             }
-
-            if (!unitOfMeasure) {
-                showErrorNotification('Please enter a unit of measure');
-                return;
-            }
-
-            const packageData = {
-                id: packageId,
-                package_name: packageName,
-                unit_of_measure: unitOfMeasure
-            };
-
-            fetch(`${BASE_URL}admin/fetch/manageProductPackages/updatePackage`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(packageData)
-                })
-                .then(response => {
-                    if (response.status === 401) {
-                        showSessionExpiredModal();
-                        throw new Error('Session expired');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        showSuccessNotification(data.message || 'Package updated successfully!');
-                        hideEditModal();
-                        loadPackages();
-                    } else {
-                        showErrorNotification(data.message || 'Failed to update package');
-                    }
-                })
-                .catch(error => {
-                    if (error.message !== 'Session expired') {
-                        console.error('Error updating package:', error);
-                        showErrorNotification('Failed to update package. Please try again.');
-                    }
-                });
         });
 
-        loadPackages();
+        // Delete confirmations
+        document.getElementById('confirmDeletePackageName').addEventListener('click', confirmDeletePackageName);
+        document.getElementById('confirmDeleteSIUnit').addEventListener('click', confirmDeleteSIUnit);
+
+        // Load data
+        loadPackageNames();
+        loadSIUnits();
     });
 
-    function resetPackageNameSelection() {
-        const packageSelect = document.getElementById('package_name');
-        const newPackageInput = document.getElementById('new_package_name');
-        const cancelButton = document.getElementById('cancelForm');
+    // Package Names Functions
+    function loadPackageNames() {
+        const tableBody = document.getElementById('package-names-table-body');
+        tableBody.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center">Loading package names...</td></tr>';
 
-        packageSelect.value = '';
-        packageSelect.classList.remove('hidden');
-        newPackageInput.classList.add('hidden');
-        newPackageInput.value = '';
-        cancelButton.classList.add('hidden');
-    }
-
-    function loadPackages() {
-        const tableBody = document.getElementById('packages-table-body');
-        tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center">Loading packages...</td></tr>';
-
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages/getPackages`)
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages/getPackageNames`)
             .then(response => {
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -406,369 +494,171 @@ ob_start();
             })
             .then(data => {
                 if (data.success) {
-                    packagesData = data.packages;
+                    packageNamesData = data.packageNames;
 
-                    uniquePackageNames = [...new Set(packagesData.map(pkg => pkg.package_name))].sort();
+                    totalPackageNamesPages = Math.ceil(packageNamesData.length / itemsPerPage);
+                    renderPackageNamesPagination();
+                    renderPackageNames(packageNamesData);
 
-                    populatePackageNameDropdowns(uniquePackageNames);
-
-                    populateFilterDropdown(uniquePackageNames);
-
-                    totalPages = Math.ceil(packagesData.length / itemsPerPage);
-                    renderPagination();
-                    renderPackages(packagesData);
+                    // Also update the package name dropdown in the SI Units form
+                    populatePackageNameDropdown(packageNamesData);
                 } else {
-                    showErrorNotification(data.message || 'Failed to load packages');
-                    tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error loading packages</td></tr>';
+                    showErrorNotification(data.message || 'Failed to load package names');
+                    tableBody.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-red-500">Error loading package names</td></tr>';
                 }
             })
             .catch(error => {
                 if (error.message !== 'Session expired') {
-                    console.error('Error loading packages:', error);
-                    showErrorNotification('Failed to load packages. Please try again.');
-                    tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Failed to load packages</td></tr>';
+                    console.error('Error loading package names:', error);
+                    showErrorNotification('Failed to load package names. Please try again.');
+                    tableBody.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-red-500">Failed to load package names</td></tr>';
                 }
             });
     }
 
-    function populatePackageNameDropdowns(packageNames) {
-        const packageNameSelect = document.getElementById('package_name');
-        const editPackageNameSelect = document.getElementById('edit-package-name');
+    function renderPackageNames(packageNames) {
+        const tableBody = document.getElementById('package-names-table-body');
+        tableBody.innerHTML = '';
 
-        while (packageNameSelect.options.length > 2) {
-            packageNameSelect.remove(2);
+        document.getElementById('package-name-count').textContent = packageNames.length;
+
+        const start = (currentPackageNamesPage - 1) * itemsPerPage;
+        const end = Math.min(start + itemsPerPage, packageNames.length);
+
+        document.getElementById('showing-start-package-names').textContent = packageNames.length > 0 ? start + 1 : 0;
+        document.getElementById('showing-end-package-names').textContent = end;
+        document.getElementById('total-package-names').textContent = packageNames.length;
+
+        const paginatedPackageNames = packageNames.slice(start, end);
+
+        if (paginatedPackageNames.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center">No package names found</td></tr>';
+            return;
         }
 
-        while (editPackageNameSelect.options.length > 2) {
-            editPackageNameSelect.remove(2);
-        }
+        paginatedPackageNames.forEach((pkg, index) => {
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
 
-        packageNames.forEach(name => {
-            const option1 = document.createElement('option');
-            option1.value = name;
-            option1.textContent = name;
-            packageNameSelect.appendChild(option1);
+            row.innerHTML = `
+    <td class="px-6 py-4 text-sm text-gray-text">${start + index + 1}</td>
+    <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(pkg.package_name)}</td>
+    <td class="px-6 py-4 text-sm">
+        <div class="flex items-center gap-2">
+            <button class="btn-edit-package-name text-blue-600 hover:text-blue-800" data-id="${pkg.uuid_id}" title="Edit">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-delete-package-name text-red-600 hover:text-red-800" data-id="${pkg.uuid_id}" title="Delete">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    </td>
+`;
 
-            const option2 = document.createElement('option');
-            option2.value = name;
-            option2.textContent = name;
-            editPackageNameSelect.appendChild(option2);
+            tableBody.appendChild(row);
+        });
+
+        document.querySelectorAll('.btn-edit-package-name').forEach(button => {
+            button.addEventListener('click', function() {
+                const packageNameId = this.getAttribute('data-id');
+                editPackageName(packageNameId);
+            });
+        });
+
+        document.querySelectorAll('.btn-delete-package-name').forEach(button => {
+            button.addEventListener('click', function() {
+                const packageNameId = this.getAttribute('data-id');
+                showDeletePackageNameModal(packageNameId);
+            });
         });
     }
 
-    function populateFilterDropdown(packageNames) {
-        const filterDropdown = document.getElementById('filterPackage');
-        filterDropdown.innerHTML = '<option value="">All Packages</option>';
-
-        packageNames.forEach(packageName => {
-            const option = document.createElement('option');
-            option.value = packageName;
-            option.textContent = packageName;
-            filterDropdown.appendChild(option);
-        });
-    }
-
-    function renderPagination() {
-        const paginationContainer = document.getElementById('pagination-numbers');
+    function renderPackageNamesPagination() {
+        const paginationContainer = document.getElementById('pagination-numbers-package-names');
         paginationContainer.innerHTML = '';
 
-        const prevButton = document.getElementById('prev-page');
-        const nextButton = document.getElementById('next-page');
+        const prevButton = document.getElementById('prev-page-package-names');
+        const nextButton = document.getElementById('next-page-package-names');
 
-        prevButton.disabled = currentPage === 1;
-        nextButton.disabled = currentPage === totalPages;
+        prevButton.disabled = currentPackageNamesPage === 1;
+        nextButton.disabled = currentPackageNamesPage === totalPackageNamesPages;
 
-        if (totalPages <= 5) {
-            for (let i = 1; i <= totalPages; i++) {
-                paginationContainer.appendChild(createPaginationButton(i));
+        if (totalPackageNamesPages <= 5) {
+            for (let i = 1; i <= totalPackageNamesPages; i++) {
+                paginationContainer.appendChild(createPaginationButton(i, 'package-names'));
             }
         } else {
-            paginationContainer.appendChild(createPaginationButton(1));
+            paginationContainer.appendChild(createPaginationButton(1, 'package-names'));
 
-            if (currentPage > 3) {
+            if (currentPackageNamesPage > 3) {
                 const ellipsis = document.createElement('span');
                 ellipsis.className = 'px-2';
                 ellipsis.textContent = '...';
                 paginationContainer.appendChild(ellipsis);
             }
 
-            for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
-                paginationContainer.appendChild(createPaginationButton(i));
+            for (let i = Math.max(2, currentPackageNamesPage - 1); i <= Math.min(totalPackageNamesPages - 1, currentPackageNamesPage + 1); i++) {
+                paginationContainer.appendChild(createPaginationButton(i, 'package-names'));
             }
 
-            if (currentPage < totalPages - 2) {
+            if (currentPackageNamesPage < totalPackageNamesPages - 2) {
                 const ellipsis = document.createElement('span');
                 ellipsis.className = 'px-2';
                 ellipsis.textContent = '...';
                 paginationContainer.appendChild(ellipsis);
             }
 
-            if (totalPages > 1) {
-                paginationContainer.appendChild(createPaginationButton(totalPages));
+            if (totalPackageNamesPages > 1) {
+                paginationContainer.appendChild(createPaginationButton(totalPackageNamesPages, 'package-names'));
             }
         }
     }
 
-    function createPaginationButton(pageNumber) {
+    function createPaginationButton(pageNumber, type) {
         const button = document.createElement('button');
-        button.className = pageNumber === currentPage ?
+        const isActive = type === 'package-names' ?
+            pageNumber === currentPackageNamesPage :
+            pageNumber === currentSIUnitsPage;
+
+        button.className = isActive ?
             'px-3 py-2 rounded-lg bg-primary text-white' :
             'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
         button.textContent = pageNumber;
 
         button.addEventListener('click', function() {
-            currentPage = pageNumber;
-            renderPagination();
-            renderPackages(packagesData);
+            if (type === 'package-names') {
+                currentPackageNamesPage = pageNumber;
+                renderPackageNamesPagination();
+                renderPackageNames(packageNamesData);
+            } else {
+                currentSIUnitsPage = pageNumber;
+                renderSIUnitsPagination();
+                renderSIUnits(siUnitsData);
+            }
         });
 
         return button;
     }
 
-    function renderPackages(packages) {
-        const tableBody = document.getElementById('packages-table-body');
-        tableBody.innerHTML = '';
-
-        document.getElementById('package-count').textContent = packages.length;
-
-        const start = (currentPage - 1) * itemsPerPage;
-        const end = Math.min(start + itemsPerPage, packages.length);
-
-        document.getElementById('showing-start').textContent = packages.length > 0 ? start + 1 : 0;
-        document.getElementById('showing-end').textContent = end;
-        document.getElementById('total-packages').textContent = packages.length;
-
-        const paginatedPackages = packages.slice(start, end);
-
-        if (paginatedPackages.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center">No packages found</td></tr>';
-            return;
-        }
-
-        paginatedPackages.forEach((pkg, index) => {
-            const row = document.createElement('tr');
-            row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
-
-            row.innerHTML = `
-                <td class="px-6 py-4 text-sm text-gray-text">${start + index + 1}</td>
-                <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(pkg.package_name)}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">${escapeHtml(pkg.unit_of_measure)}</td>
-                <td class="px-6 py-4 text-sm">
-                    <div class="flex items-center gap-2">
-                        <button class="btn-edit text-blue-600 hover:text-blue-800" data-id="${pkg.uuid_id}" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-delete text-red-600 hover:text-red-800" data-id="${pkg.uuid_id}" title="Delete">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-
-            tableBody.appendChild(row);
+    function filterPackageNames(query) {
+        const filteredPackageNames = packageNamesData.filter(pkg => {
+            return pkg.package_name.toLowerCase().includes(query);
         });
 
-        document.querySelectorAll('.btn-edit').forEach(button => {
-            button.addEventListener('click', function() {
-                const packageId = this.getAttribute('data-id');
-                editPackage(packageId);
-            });
-        });
-
-        document.querySelectorAll('.btn-delete').forEach(button => {
-            button.addEventListener('click', function() {
-                const packageId = this.getAttribute('data-id');
-                showDeleteModal(packageId);
-            });
-        });
+        currentPackageNamesPage = 1;
+        totalPackageNamesPages = Math.ceil(filteredPackageNames.length / itemsPerPage);
+        renderPackageNamesPagination();
+        renderPackageNames(filteredPackageNames);
     }
 
-    function filterPackages(query, packageName) {
-        const filteredPackages = packagesData.filter(pkg => {
-            const text = `${pkg.package_name} ${pkg.unit_of_measure}`.toLowerCase();
-            const matchesQuery = text.includes(query);
-            const matchesPackage = !packageName || pkg.package_name === packageName;
-            return matchesQuery && matchesPackage;
-        });
-
-        currentPage = 1;
-        totalPages = Math.ceil(filteredPackages.length / itemsPerPage);
-        renderPagination();
-        renderPackages(filteredPackages);
-    }
-
-    function createPackage() {
-        const packageSelect = document.getElementById('package_name');
-        const newPackageInput = document.getElementById('new_package_name');
-        const unitOfMeasure = document.getElementById('unit_of_measure').value;
-
-        let packageName;
-        if (packageSelect.classList.contains('hidden')) {
-            packageName = newPackageInput.value.trim();
-        } else {
-            packageName = packageSelect.value;
-        }
-
-        const packageData = {
-            package_name: packageName,
-            unit_of_measure: unitOfMeasure
-        };
-
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages/createPackage`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(packageData)
-            })
-            .then(response => {
-                if (response.status === 401) {
-                    showSessionExpiredModal();
-                    throw new Error('Session expired');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    showSuccessNotification(data.message || 'Package created successfully!');
-                    resetForm();
-                    loadPackages();
-                } else {
-                    showErrorNotification(data.message || 'Failed to create package');
-                }
-            })
-            .catch(error => {
-                if (error.message !== 'Session expired') {
-                    console.error('Error creating package:', error);
-                    showErrorNotification('Failed to create package. Please try again.');
-                }
-            });
-    }
-
-    function updatePackage() {
-        const packageId = document.getElementById('packageId').value;
-        const packageSelect = document.getElementById('package_name');
-        const newPackageInput = document.getElementById('new_package_name');
-        const unitOfMeasure = document.getElementById('unit_of_measure').value;
-
-        let packageName;
-        if (packageSelect.classList.contains('hidden')) {
-            packageName = newPackageInput.value.trim();
-        } else {
-            packageName = packageSelect.value;
-        }
-
-        const packageData = {
-            id: packageId,
-            package_name: packageName,
-            unit_of_measure: unitOfMeasure
-        };
-
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages/updatePackage`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(packageData)
-            })
-            .then(response => {
-                if (response.status === 401) {
-                    showSessionExpiredModal();
-                    throw new Error('Session expired');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    showSuccessNotification(data.message || 'Package updated successfully!');
-                    resetForm();
-                    loadPackages();
-                } else {
-                    showErrorNotification(data.message || 'Failed to update package');
-                }
-            })
-            .catch(error => {
-                if (error.message !== 'Session expired') {
-                    console.error('Error updating package:', error);
-                    showErrorNotification('Failed to update package. Please try again.');
-                }
-            });
-    }
-
-    function editPackage(packageId) {
-        const pkg = packagesData.find(p => p.uuid_id === packageId);
-
-        if (pkg) {
-            document.getElementById('packageId').value = pkg.uuid_id;
-
-            const packageSelect = document.getElementById('package_name');
-            const newPackageInput = document.getElementById('new_package_name');
-
-            let packageExists = false;
-            for (let i = 0; i < packageSelect.options.length; i++) {
-                if (packageSelect.options[i].value === pkg.package_name) {
-                    packageSelect.selectedIndex = i;
-                    packageExists = true;
-                    break;
-                }
-            }
-
-            if (!packageExists) {
-                packageSelect.classList.add('hidden');
-                newPackageInput.classList.remove('hidden');
-                newPackageInput.value = pkg.package_name;
-                document.getElementById('cancelForm').classList.remove('hidden');
-            }
-
-            document.getElementById('unit_of_measure').value = pkg.unit_of_measure;
-
-            document.getElementById('formTitle').textContent = 'Edit Package Definition';
-            document.getElementById('submitButton').textContent = 'Update Package Definition';
-            document.getElementById('cancelForm').classList.remove('hidden');
-
-            document.querySelector('.bg-white.rounded-lg').scrollIntoView({
-                behavior: 'smooth'
-            });
-        }
-    }
-
-    function showDeleteModal(packageId) {
-        const pkg = packagesData.find(p => p.uuid_id === packageId);
-
-        if (pkg) {
-            document.getElementById('delete-package-name').textContent = pkg.package_name;
-            document.getElementById('delete-unit-measure').textContent = pkg.unit_of_measure;
-            document.getElementById('confirmDelete').setAttribute('data-id', packageId);
-
-            document.getElementById('deletePackageModal').classList.remove('hidden');
-        }
-    }
-
-    function hideDeleteModal() {
-        document.getElementById('deletePackageModal').classList.add('hidden');
-    }
-
-    function hideEditModal() {
-        document.getElementById('editPackageModal').classList.add('hidden');
-
-        const packageSelect = document.getElementById('edit-package-name');
-        const newPackageInput = document.getElementById('edit-new-package-name');
-
-        packageSelect.classList.remove('hidden');
-        newPackageInput.classList.add('hidden');
-        newPackageInput.value = '';
-    }
-
-    function confirmDelete() {
-        const packageId = document.getElementById('confirmDelete').getAttribute('data-id');
-
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages/deletePackage`, {
+    function createPackageName(packageName) {
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages/createPackageName`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    id: packageId
+                    package_name: packageName
                 })
             })
             .then(response => {
@@ -780,56 +670,473 @@ ob_start();
             })
             .then(data => {
                 if (data.success) {
-                    showSuccessNotification(data.message || 'Package deleted successfully!');
-                    loadPackages();
+                    showSuccessNotification(data.message || 'Package name created successfully!');
+                    resetPackageNameForm();
+                    loadPackageNames();
                 } else {
-                    showErrorNotification(data.message || 'Failed to delete package');
+                    showErrorNotification(data.message || 'Failed to create package name');
                 }
-                hideDeleteModal();
             })
             .catch(error => {
                 if (error.message !== 'Session expired') {
-                    console.error('Error deleting package:', error);
-                    showErrorNotification('Failed to delete package. Please try again.');
-                    hideDeleteModal();
+                    console.error('Error creating package name:', error);
+                    showErrorNotification('Failed to create package name. Please try again.');
                 }
             });
     }
 
-    function resetForm() {
-        document.getElementById('packageForm').reset();
-        document.getElementById('packageId').value = '';
-        resetPackageNameSelection();
-        document.getElementById('formTitle').textContent = 'Add New Package Definition';
-        document.getElementById('submitButton').textContent = 'Save Package Definition';
-        document.getElementById('cancelForm').classList.add('hidden');
+    function updatePackageName(packageNameId, packageName) {
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages/updatePackageName`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: packageNameId,
+                    package_name: packageName
+                })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessNotification(data.message || 'Package name updated successfully!');
+                    resetPackageNameForm();
+                    loadPackageNames();
+                } else {
+                    showErrorNotification(data.message || 'Failed to update package name');
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error updating package name:', error);
+                    showErrorNotification('Failed to update package name. Please try again.');
+                }
+            });
     }
 
-    function validateForm() {
-        const packageSelect = document.getElementById('package_name');
-        const newPackageInput = document.getElementById('new_package_name');
-        const unitOfMeasure = document.getElementById('unit_of_measure').value.trim();
+    function editPackageName(packageNameId) {
+        const pkg = packageNamesData.find(p => p.uuid_id === packageNameId);
 
-        let packageName;
-        if (packageSelect.classList.contains('hidden')) {
-            packageName = newPackageInput.value.trim();
+        if (pkg) {
+            document.getElementById('packageNameId').value = pkg.uuid_id;
+            document.getElementById('package_name').value = pkg.package_name;
+
+            document.getElementById('packageNameFormTitle').textContent = 'Edit Package Name';
+            document.getElementById('submitPackageNameButton').textContent = 'Update Package Name';
+            document.getElementById('cancelPackageNameForm').classList.remove('hidden');
+
+            // Scroll to the form
+            document.querySelector('#package-names-section .bg-white.rounded-lg').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    function showDeletePackageNameModal(packageNameId) {
+        const pkg = packageNamesData.find(p => p.uuid_id === packageNameId);
+
+        if (pkg) {
+            document.getElementById('delete-package-name').textContent = pkg.package_name;
+            document.getElementById('confirmDeletePackageName').setAttribute('data-id', packageNameId);
+
+            document.getElementById('deletePackageNameModal').classList.remove('hidden');
+        }
+    }
+
+    function hideDeletePackageNameModal() {
+        document.getElementById('deletePackageNameModal').classList.add('hidden');
+    }
+
+    function confirmDeletePackageName() {
+        const packageNameId = document.getElementById('confirmDeletePackageName').getAttribute('data-id');
+
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages/deletePackageName`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: packageNameId
+                })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessNotification(data.message || 'Package name deleted successfully!');
+                    loadPackageNames();
+                    loadSIUnits(); // Reload SI units as well since they depend on package names
+                } else {
+                    showErrorNotification(data.message || 'Failed to delete package name');
+                }
+                hideDeletePackageNameModal();
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error deleting package name:', error);
+                    showErrorNotification('Failed to delete package name. Please try again.');
+                    hideDeletePackageNameModal();
+                }
+            });
+    }
+
+    function resetPackageNameForm() {
+        document.getElementById('packageNameForm').reset();
+        document.getElementById('packageNameId').value = '';
+        document.getElementById('packageNameFormTitle').textContent = 'Add New Package Name';
+        document.getElementById('submitPackageNameButton').textContent = 'Save Package Name';
+        document.getElementById('cancelPackageNameForm').classList.add('hidden');
+    }
+
+    // SI Units Functions
+    function loadSIUnits() {
+        const tableBody = document.getElementById('si-units-table-body');
+        tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">Loading SI units...</td></tr>';
+
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages/getSIUnits`)
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showSessionExpiredModal();
+                        throw new Error('Session expired');
+                    }
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    siUnitsData = data.siUnits;
+
+                    // Extract unique package names for filter dropdown
+                    const uniquePackageNames = [...new Set(siUnitsData.map(unit => unit.package_name))].sort();
+                    populateFilterDropdown(uniquePackageNames);
+
+                    totalSIUnitsPages = Math.ceil(siUnitsData.length / itemsPerPage);
+                    renderSIUnitsPagination();
+                    renderSIUnits(siUnitsData);
+                } else {
+                    showErrorNotification(data.message || 'Failed to load SI units');
+                    tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error loading SI units</td></tr>';
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error loading SI units:', error);
+                    showErrorNotification('Failed to load SI units. Please try again.');
+                    tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Failed to load SI units</td></tr>';
+                }
+            });
+    }
+
+    function populatePackageNameDropdown(packageNames) {
+        const packageNameSelect = document.getElementById('package_name_id');
+        const filterDropdown = document.getElementById('filterPackageName');
+
+        // Clear existing options except the first one (Select Package Name)
+        while (packageNameSelect.options.length > 1) {
+            packageNameSelect.remove(1);
+        }
+
+        // Add package names to dropdown
+        packageNames.forEach(pkg => {
+            const option = document.createElement('option');
+            option.value = pkg.uuid_id;
+            option.textContent = pkg.package_name;
+            packageNameSelect.appendChild(option);
+        });
+    }
+
+    function populateFilterDropdown(packageNames) {
+        const filterDropdown = document.getElementById('filterPackageName');
+        filterDropdown.innerHTML = '<option value="">All Package Names</option>';
+
+        packageNames.forEach(packageName => {
+            const option = document.createElement('option');
+            option.value = packageName;
+            option.textContent = packageName;
+            filterDropdown.appendChild(option);
+        });
+    }
+
+    function renderSIUnits(siUnits) {
+        const tableBody = document.getElementById('si-units-table-body');
+        tableBody.innerHTML = '';
+
+        document.getElementById('si-unit-count').textContent = siUnits.length;
+
+        const start = (currentSIUnitsPage - 1) * itemsPerPage;
+        const end = Math.min(start + itemsPerPage, siUnits.length);
+
+        document.getElementById('showing-start-si-units').textContent = siUnits.length > 0 ? start + 1 : 0;
+        document.getElementById('showing-end-si-units').textContent = end;
+        document.getElementById('total-si-units').textContent = siUnits.length;
+
+        const paginatedSIUnits = siUnits.slice(start, end);
+
+        if (paginatedSIUnits.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">No SI units found</td></tr>';
+            return;
+        }
+
+        paginatedSIUnits.forEach((unit, index) => {
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
+
+            row.innerHTML = `
+                <td class="px-6 py-4 text-sm text-gray-text">${start + index + 1}</td>
+                <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(unit.package_name)}</td>
+                <td class="px-6 py-4 text-sm text-gray-text">${escapeHtml(unit.si_unit)}</td>
+                <td class="px-6 py-4 text-sm text-gray-text">${escapeHtml(unit.unit_of_measure)}</td>
+                <td class="px-6 py-4 text-sm">
+                    <div class="flex items-center gap-2">
+                        <button class="btn-edit-si-unit text-blue-600 hover:text-blue-800" data-id="${unit.uuid_id}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-delete-si-unit text-red-600 hover:text-red-800" data-id="${unit.uuid_id}" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+
+        document.querySelectorAll('.btn-edit-si-unit').forEach(button => {
+            button.addEventListener('click', function() {
+                const siUnitId = this.getAttribute('data-id');
+                editSIUnit(siUnitId);
+            });
+        });
+
+        document.querySelectorAll('.btn-delete-si-unit').forEach(button => {
+            button.addEventListener('click', function() {
+                const siUnitId = this.getAttribute('data-id');
+                showDeleteSIUnitModal(siUnitId);
+            });
+        });
+    }
+
+    function renderSIUnitsPagination() {
+        const paginationContainer = document.getElementById('pagination-numbers-si-units');
+        paginationContainer.innerHTML = '';
+
+        const prevButton = document.getElementById('prev-page-si-units');
+        const nextButton = document.getElementById('next-page-si-units');
+
+        prevButton.disabled = currentSIUnitsPage === 1;
+        nextButton.disabled = currentSIUnitsPage === totalSIUnitsPages;
+
+        if (totalSIUnitsPages <= 5) {
+            for (let i = 1; i <= totalSIUnitsPages; i++) {
+                paginationContainer.appendChild(createPaginationButton(i, 'si-units'));
+            }
         } else {
-            packageName = packageSelect.value;
-        }
+            paginationContainer.appendChild(createPaginationButton(1, 'si-units'));
 
-        if (!packageName || packageName === '' || packageName === 'add') {
-            showErrorNotification('Please select or enter a package name');
-            return false;
-        }
+            if (currentSIUnitsPage > 3) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'px-2';
+                ellipsis.textContent = '...';
+                paginationContainer.appendChild(ellipsis);
+            }
 
-        if (!unitOfMeasure) {
-            showErrorNotification('Please enter a unit of measure');
-            return false;
-        }
+            for (let i = Math.max(2, currentSIUnitsPage - 1); i <= Math.min(totalSIUnitsPages - 1, currentSIUnitsPage + 1); i++) {
+                paginationContainer.appendChild(createPaginationButton(i, 'si-units'));
+            }
 
-        return true;
+            if (currentSIUnitsPage < totalSIUnitsPages - 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'px-2';
+                ellipsis.textContent = '...';
+                paginationContainer.appendChild(ellipsis);
+            }
+
+            if (totalSIUnitsPages > 1) {
+                paginationContainer.appendChild(createPaginationButton(totalSIUnitsPages, 'si-units'));
+            }
+        }
     }
 
+    function filterSIUnits(query, packageName) {
+        const filteredSIUnits = siUnitsData.filter(unit => {
+            const text = `${unit.package_name} ${unit.si_unit} ${unit.unit_of_measure}`.toLowerCase();
+            const matchesQuery = text.includes(query);
+            const matchesPackage = !packageName || unit.package_name === packageName;
+            return matchesQuery && matchesPackage;
+        });
+
+        currentSIUnitsPage = 1;
+        totalSIUnitsPages = Math.ceil(filteredSIUnits.length / itemsPerPage);
+        renderSIUnitsPagination();
+        renderSIUnits(filteredSIUnits);
+    }
+
+    function createSIUnit(packageNameId, siUnit) {
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages/createSIUnit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    package_name_id: packageNameId,
+                    si_unit: siUnit
+                })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessNotification(data.message || 'SI unit created successfully!');
+                    resetSIUnitForm();
+                    loadSIUnits();
+                } else {
+                    showErrorNotification(data.message || 'Failed to create SI unit');
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error creating SI unit:', error);
+                    showErrorNotification('Failed to create SI unit. Please try again.');
+                }
+            });
+    }
+
+    function updateSIUnit(siUnitId, packageNameId, siUnit) {
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages/updateSIUnit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: siUnitId,
+                    package_name_id: packageNameId,
+                    si_unit: siUnit
+                })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessNotification(data.message || 'SI unit updated successfully!');
+                    resetSIUnitForm();
+                    loadSIUnits();
+                } else {
+                    showErrorNotification(data.message || 'Failed to update SI unit');
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error updating SI unit:', error);
+                    showErrorNotification('Failed to update SI unit. Please try again.');
+                }
+            });
+    }
+
+    function editSIUnit(siUnitId) {
+        const unit = siUnitsData.find(u => u.uuid_id === siUnitId);
+
+        if (unit) {
+            document.getElementById('siUnitId').value = unit.uuid_id;
+            document.getElementById('package_name_id').value = unit.package_name_uuid_id;
+            document.getElementById('si_unit').value = unit.si_unit;
+
+            document.getElementById('siUnitFormTitle').textContent = 'Edit SI Unit';
+            document.getElementById('submitSIUnitButton').textContent = 'Update SI Unit';
+            document.getElementById('cancelSIUnitForm').classList.remove('hidden');
+
+            // Scroll to the form
+            document.querySelector('#si-units-section .bg-white.rounded-lg').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    function showDeleteSIUnitModal(siUnitId) {
+        const unit = siUnitsData.find(u => u.uuid_id === siUnitId);
+
+        if (unit) {
+            document.getElementById('delete-si-unit-package-name').textContent = unit.package_name;
+            document.getElementById('delete-si-unit').textContent = unit.si_unit;
+            document.getElementById('delete-unit-of-measure').textContent = unit.unit_of_measure;
+            document.getElementById('confirmDeleteSIUnit').setAttribute('data-id', siUnitId);
+
+            document.getElementById('deleteSIUnitModal').classList.remove('hidden');
+        }
+    }
+
+    function hideDeleteSIUnitModal() {
+        document.getElementById('deleteSIUnitModal').classList.add('hidden');
+    }
+
+    function confirmDeleteSIUnit() {
+        const siUnitId = document.getElementById('confirmDeleteSIUnit').getAttribute('data-id');
+
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages/deleteSIUnit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: siUnitId
+                })
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSuccessNotification(data.message || 'SI unit deleted successfully!');
+                    loadSIUnits();
+                } else {
+                    showErrorNotification(data.message || 'Failed to delete SI unit');
+                }
+                hideDeleteSIUnitModal();
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error deleting SI unit:', error);
+                    showErrorNotification('Failed to delete SI unit. Please try again.');
+                    hideDeleteSIUnitModal();
+                }
+            });
+    }
+
+    function resetSIUnitForm() {
+        document.getElementById('siUnitForm').reset();
+        document.getElementById('siUnitId').value = '';
+        document.getElementById('siUnitFormTitle').textContent = 'Add New SI Unit';
+        document.getElementById('submitSIUnitButton').textContent = 'Save SI Unit';
+        document.getElementById('cancelSIUnitForm').classList.add('hidden');
+    }
+
+    // Utility Functions
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
