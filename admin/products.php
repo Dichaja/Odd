@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-// Ensure the user is admin
-if (
-    !isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']
-) {
+if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
     header('Location: ' . BASE_URL);
     exit;
 }
@@ -26,7 +23,7 @@ ob_start();
                 <i class="fas fa-plus"></i>
                 <span>Add Product</span>
             </button>
-            <a href="product-package" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+            <a href="product-packages" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
                 <i class="fas fa-box"></i>
                 <span>Package Definition</span>
             </a>
@@ -67,9 +64,9 @@ ob_start();
                 </select>
             </div>
             <div>
-                <label for="filterPackaging" class="block text-sm font-medium text-gray-700 mb-1">Packaging</label>
-                <select id="filterPackaging" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <option value="">All Packaging</option>
+                <label for="filterUnitOfMeasure" class="block text-sm font-medium text-gray-700 mb-1">Unit of Measure</label>
+                <select id="filterUnitOfMeasure" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                    <option value="">All Units of Measure</option>
                 </select>
             </div>
             <div>
@@ -189,14 +186,14 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- Packages & Pricing -->
+                <!-- Units of Measure & Pricing -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Package & Pricing</label>
-                    <div id="packagePricingContainer" class="space-y-3">
-                        <!-- Each row is (Package Select) + (Price) + remove button -->
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Unit of Measure & Pricing</label>
+                    <div id="unitOfMeasurePricingContainer" class="space-y-3">
+                        <!-- Each row is (Unit of Measure Select) + (Price) + remove button -->
                     </div>
-                    <button type="button" id="addPackageBtn" class="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
-                        <i class="fas fa-plus mr-1"></i> Add Package
+                    <button type="button" id="addUnitOfMeasureBtn" class="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
+                        <i class="fas fa-plus mr-1"></i> Add Unit of Measure
                     </button>
                 </div>
 
@@ -392,13 +389,12 @@ ob_start();
     let currentImageElement = null;
     let filterData = {
         category: '',
-        packaging: '',
+        unitOfMeasure: '',
         featured: '',
         search: '',
         sort: ''
     };
 
-    // Check if required libraries are loaded
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof Sortable === 'undefined') {
             console.error('Sortable library not loaded. Loading it now...');
@@ -425,18 +421,15 @@ ob_start();
             document.head.appendChild(script);
         }
 
-        // Continue with the rest of the initialization
         loadCategories();
-        loadPackages();
+        loadUnitsOfMeasure();
         loadProducts();
 
-        // Event listeners
         document.getElementById('addNewProductBtn').addEventListener('click', () => showProductModal(null));
         document.getElementById('saveProductBtn').addEventListener('click', saveProduct);
         document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
         document.getElementById('cropImageBtn').addEventListener('click', cropAndSaveImage);
 
-        // Pagination
         document.getElementById('prev-page').addEventListener('click', () => {
             if (currentPage > 1) {
                 currentPage--;
@@ -452,16 +445,13 @@ ob_start();
             }
         });
 
-        // Image handling
         document.getElementById('addImageBtn').addEventListener('click', () => {
             document.getElementById('imageUploadInput').click();
         });
         document.getElementById('imageUploadInput').addEventListener('change', handleImageUpload);
 
-        // Add package row
-        document.getElementById('addPackageBtn').addEventListener('click', () => addPackageRow());
+        document.getElementById('addUnitOfMeasureBtn').addEventListener('click', () => addUnitOfMeasureRow());
 
-        // Search and filters
         document.getElementById('searchProducts').addEventListener('input', (e) => {
             filterData.search = e.target.value;
             applyFilters();
@@ -476,8 +466,8 @@ ob_start();
             filterData.category = e.target.value;
         });
 
-        document.getElementById('filterPackaging').addEventListener('change', (e) => {
-            filterData.packaging = e.target.value;
+        document.getElementById('filterUnitOfMeasure').addEventListener('change', (e) => {
+            filterData.unitOfMeasure = e.target.value;
         });
 
         document.getElementById('filterFeatured').addEventListener('change', (e) => {
@@ -487,11 +477,9 @@ ob_start();
         document.getElementById('applyFilters').addEventListener('click', applyFilters);
         document.getElementById('resetFilters').addEventListener('click', resetFilters);
 
-        // Initialize Sortable for image reordering
         initSortable();
     });
 
-    // Initialize Sortable.js for image reordering
     function initSortable() {
         const container = document.getElementById('imagePreviewContainer');
         if (container && typeof Sortable !== 'undefined') {
@@ -516,7 +504,6 @@ ob_start();
         });
     }
 
-    // ========== Loading categories for the dropdown ==========
     let categoriesList = [];
 
     function loadCategories() {
@@ -562,24 +549,23 @@ ob_start();
             catFilter.appendChild(opt);
         });
 
-        // Populate package filter - ensure packagesList is available
-        if (packagesList && packagesList.length > 0) {
-            const pkgFilter = document.getElementById('filterPackaging');
-            pkgFilter.innerHTML = '<option value="">All Packaging</option>';
-            packagesList.forEach(pkg => {
+        // Populate unit of measure filter - ensure unitsOfMeasureList is available
+        if (unitsOfMeasureList && unitsOfMeasureList.length > 0) {
+            const uomFilter = document.getElementById('filterUnitOfMeasure');
+            uomFilter.innerHTML = '<option value="">All Units of Measure</option>';
+            unitsOfMeasureList.forEach(uom => {
                 const opt = document.createElement('option');
-                opt.value = pkg.uuid_id;
-                opt.textContent = `${pkg.package_name} (${pkg.unit_of_measure})`;
-                pkgFilter.appendChild(opt);
+                opt.value = uom.uuid_id;
+                opt.textContent = uom.unit_of_measure;
+                uomFilter.appendChild(opt);
             });
         }
     }
 
-    // ========== Loading packages for usage in package-pricing UI ==========
-    let packagesList = [];
+    let unitsOfMeasureList = [];
 
-    function loadPackages() {
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages/getPackages`)
+    function loadUnitsOfMeasure() {
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages/getUnitsOfMeasure`)
             .then(res => {
                 if (res.status === 401) {
                     showSessionExpiredModal();
@@ -589,23 +575,18 @@ ob_start();
             })
             .then(data => {
                 if (data.success) {
-                    packagesList = data.packages || [];
-                    populateFilterDropdowns(); // Ensure filter is populated after packages are loaded
+                    unitsOfMeasureList = data.unitsOfMeasure || [];
+                    populateFilterDropdowns(); // Ensure filter is populated after units of measure are loaded
                 } else {
-                    showErrorNotification(data.message || 'Failed to load packages');
+                    showErrorNotification(data.message || 'Failed to load units of measure');
                 }
             })
             .catch(err => {
-                console.error('Error loading packages:', err);
-                showErrorNotification('Error loading packages. Please try again.');
+                console.error('Error loading units of measure:', err);
+                showErrorNotification('Error loading units of measure. Please try again.');
             });
     }
 
-    function getPackageDisplayName(pkg) {
-        return `${pkg.package_name} (${pkg.unit_of_measure})`;
-    }
-
-    // ========== Loading products ==========
     function loadProducts() {
         fetch(`${BASE_URL}admin/fetch/manageProducts/getProducts`)
             .then(res => {
@@ -723,8 +704,8 @@ ob_start();
                 return false;
             }
 
-            // Package filter
-            if (filterData.packaging && !prod.packages.some(pkg => pkg.package_id === filterData.packaging)) {
+            // Unit of Measure filter
+            if (filterData.unitOfMeasure && !prod.units_of_measure.some(uom => uom.unit_of_measure_id === filterData.unitOfMeasure)) {
                 return false;
             }
 
@@ -760,14 +741,14 @@ ob_start();
 
     function resetFilters() {
         document.getElementById('filterCategory').value = '';
-        document.getElementById('filterPackaging').value = '';
+        document.getElementById('filterUnitOfMeasure').value = '';
         document.getElementById('filterFeatured').value = '';
         document.getElementById('searchProducts').value = '';
         document.getElementById('sortProducts').value = '';
 
         filterData = {
             category: '',
-            packaging: '',
+            unitOfMeasure: '',
             featured: '',
             search: '',
             sort: ''
@@ -834,27 +815,22 @@ ob_start();
         </div>
     `;
 
-        // Create package info HTML - show all packages with unit of measure
-        let packagesHtml = '';
-        if (prod.packages && prod.packages.length > 0) {
-            packagesHtml = `<div class="mt-2 space-y-1">`;
-            prod.packages.forEach(pkg => {
-                const packageObj = packagesList.find(p => p.uuid_id === pkg.package_id);
-                if (packageObj) {
-                    const packageName = packageObj.package_name;
-                    const unitOfMeasure = packageObj.unit_of_measure;
-                    const price = Number(pkg.price).toLocaleString();
-                    packagesHtml += `
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-600">${packageName} (${unitOfMeasure})</span>
-                        <span class="font-medium text-primary">USh ${price}</span>
-                    </div>
-                `;
-                }
+        // Create unit of measure info HTML
+        let unitsOfMeasureHtml = '';
+        if (prod.units_of_measure && prod.units_of_measure.length > 0) {
+            unitsOfMeasureHtml = `<div class="mt-2 space-y-1">`;
+            prod.units_of_measure.forEach(uom => {
+                const price = Number(uom.price).toLocaleString();
+                unitsOfMeasureHtml += `
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-gray-600">${uom.unit_of_measure}</span>
+                    <span class="font-medium text-primary">USh ${price}</span>
+                </div>
+            `;
             });
-            packagesHtml += `</div>`;
+            unitsOfMeasureHtml += `</div>`;
         } else {
-            packagesHtml = `<div class="mt-2 text-sm text-gray-500">No pricing available</div>`;
+            unitsOfMeasureHtml = `<div class="mt-2 text-sm text-gray-500">No pricing available</div>`;
         }
 
         card.innerHTML = `
@@ -882,7 +858,7 @@ ob_start();
             
             <div class="border-t border-gray-100 pt-2">
                 <div class="text-sm font-medium text-gray-700 mb-1">Pricing:</div>
-                ${packagesHtml}
+                ${unitsOfMeasureHtml}
             </div>
             
             <div class="flex justify-end gap-2 mt-3">
@@ -969,7 +945,6 @@ ob_start();
             });
     }
 
-    // ========== Add/Edit product modal handling ==========
     function showProductModal(productId) {
         resetProductForm();
 
@@ -1017,10 +992,10 @@ ob_start();
 
         // Clear out the image preview container
         document.getElementById('imagePreviewContainer').innerHTML = '';
-        // Clear packages
-        document.getElementById('packagePricingContainer').innerHTML = '';
-        // Add one empty package row
-        addPackageRow();
+        // Clear units of measure
+        document.getElementById('unitOfMeasurePricingContainer').innerHTML = '';
+        // Add one empty unit of measure row
+        addUnitOfMeasureRow();
     }
 
     function populateProductForm(prod) {
@@ -1034,13 +1009,13 @@ ob_start();
         document.getElementById('productStatus').value = prod.status;
         document.getElementById('productFeatured').checked = (prod.featured == 1);
 
-        // packages
-        if (prod.packages && prod.packages.length > 0) {
-            prod.packages.forEach(pkg => {
-                addPackageRow(pkg.package_id, pkg.price);
+        // units of measure
+        if (prod.units_of_measure && prod.units_of_measure.length > 0) {
+            prod.units_of_measure.forEach(uom => {
+                addUnitOfMeasureRow(uom.unit_of_measure_id, uom.price);
             });
         } else {
-            addPackageRow();
+            addUnitOfMeasureRow();
         }
 
         // images
@@ -1108,16 +1083,16 @@ ob_start();
             }
         });
 
-        // Gather packages
-        const pkgRows = document.querySelectorAll('#packagePricingContainer .pkg-row');
-        const packages = [];
-        pkgRows.forEach(row => {
-            const pkgSel = row.querySelector('.package-select');
-            const pkgPrice = row.querySelector('.package-price');
-            if (pkgSel.value && pkgPrice.value) {
-                packages.push({
-                    package_id: pkgSel.value,
-                    price: parseFloat(pkgPrice.value)
+        // Gather units of measure
+        const uomRows = document.querySelectorAll('#unitOfMeasurePricingContainer .uom-row');
+        const unitsOfMeasure = [];
+        uomRows.forEach(row => {
+            const uomSel = row.querySelector('.unit-of-measure-select');
+            const uomPrice = row.querySelector('.unit-of-measure-price');
+            if (uomSel.value && uomPrice.value) {
+                unitsOfMeasure.push({
+                    unit_of_measure_id: uomSel.value,
+                    price: parseFloat(uomPrice.value)
                 });
             }
         });
@@ -1132,7 +1107,7 @@ ob_start();
             meta_keywords: keywords,
             status: status,
             featured: featured,
-            packages: packages,
+            units_of_measure: unitsOfMeasure,
             temp_images: tempImages,
             existing_images: images,
             update_images: imageDivs.length > 0 // Only update images if there are any in the form
@@ -1184,7 +1159,7 @@ ob_start();
         });
     }
 
-    // ========== Deletion ==========
+    // Deletion
     let deleteProductId = null;
 
     function showDeleteModal(productId) {
@@ -1235,7 +1210,7 @@ ob_start();
             });
     }
 
-    // ========== Images Handling ==========
+    // Images Handling
     function handleImageUpload(e) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
@@ -1383,51 +1358,50 @@ ob_start();
         });
     }
 
-    // ========== Packages & Pricing UI ==========
-    function addPackageRow(selectedPkgId = null, priceVal = null) {
-        const container = document.getElementById('packagePricingContainer');
+    // Units of Measure & Pricing UI
+    function addUnitOfMeasureRow(selectedUomId = null, priceVal = null) {
+        const container = document.getElementById('unitOfMeasurePricingContainer');
         const row = document.createElement('div');
-        row.className = 'pkg-row grid grid-cols-1 md:grid-cols-3 gap-4 items-center';
+        row.className = 'uom-row grid grid-cols-1 md:grid-cols-3 gap-4 items-center';
 
-        // Build package dropdown
-        let packageOptions = '<option value="">Select Package</option>';
-        packagesList.forEach(pkg => {
-            const disp = `${pkg.package_name} (${pkg.unit_of_measure})`;
-            packageOptions += `<option value="${pkg.uuid_id}">${disp}</option>`;
+        // Build unit of measure dropdown
+        let uomOptions = '<option value="">Select Unit of Measure</option>';
+        unitsOfMeasureList.forEach(uom => {
+            uomOptions += `<option value="${uom.uuid_id}">${uom.unit_of_measure}</option>`;
         });
 
         row.innerHTML = `
         <div>
-            <label class="block text-xs text-gray-500 mb-1">Package</label>
-            <select class="package-select w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
-                ${packageOptions}
+            <label class="block text-xs text-gray-500 mb-1">Unit of Measure</label>
+            <select class="unit-of-measure-select w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
+                ${uomOptions}
             </select>
         </div>
         <div>
             <label class="block text-xs text-gray-500 mb-1">Price (UGX)</label>
-            <input type="number" class="package-price w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none" placeholder="0">
+            <input type="number" class="unit-of-measure-price w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none" placeholder="0">
         </div>
         <div class="flex items-end">
-            <button type="button" class="remove-package px-3 py-2 text-red-500 hover:text-red-700">
+            <button type="button" class="remove-unit-of-measure px-3 py-2 text-red-500 hover:text-red-700">
                 <i class="fas fa-trash-alt"></i>
             </button>
         </div>
     `;
         container.appendChild(row);
 
-        if (selectedPkgId) {
-            row.querySelector('.package-select').value = selectedPkgId;
+        if (selectedUomId) {
+            row.querySelector('.unit-of-measure-select').value = selectedUomId;
         }
         if (priceVal) {
-            row.querySelector('.package-price').value = priceVal;
+            row.querySelector('.unit-of-measure-price').value = priceVal;
         }
 
-        row.querySelector('.remove-package').addEventListener('click', () => {
+        row.querySelector('.remove-unit-of-measure').addEventListener('click', () => {
             row.remove();
         });
     }
 
-    // ========== Helper functions ==========
+    // Helper functions
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
