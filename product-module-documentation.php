@@ -4,127 +4,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Module Documentation</title>
-
-    <!-- Tailwind CSS CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
-    <!-- Rubik Font -->
+    <title>Products API Documentation</title>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- jQuery -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'rubik': ['Rubik', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        'secondary': '#334155',
+                        'accent': '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             font-family: 'Rubik', sans-serif;
-            color: #333;
-            background-color: #f8f9fa;
         }
 
         .sidebar {
-            background-color: #f8f9fa;
-            border-right: 1px solid #e2e8f0;
-            height: 100vh;
-            position: fixed;
-            overflow-y: auto;
-            transition: all 0.3s;
+            transition: transform 0.3s ease;
         }
 
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
-                z-index: 50;
-                width: 80% !important;
             }
 
-            .sidebar.active {
+            .sidebar.open {
                 transform: translateX(0);
             }
-
-            .overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: rgba(0, 0, 0, 0.5);
-                z-index: 40;
-            }
-
-            .overlay.active {
-                display: block;
-            }
-        }
-
-        .content {
-            min-height: 100vh;
-            transition: margin-left 0.3s;
-        }
-
-        .nav-item {
-            border-left: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background-color: #e2e8f0;
-            border-left-color: #4f46e5;
-        }
-
-        .section {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-
-        .section.active {
-            display: block;
-            opacity: 1;
-        }
-
-        .step {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-
-        .step.active {
-            display: block;
-            opacity: 1;
         }
 
         .code-block {
-            background-color: #f7fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.375rem;
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
             overflow-x: auto;
         }
 
-        code {
-            font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+        .json-key {
+            color: #38bdf8;
         }
 
-        .json .string {
-            color: #d63031;
+        .json-string {
+            color: #4ade80;
         }
 
-        .json .number {
-            color: #0984e3;
+        .json-number {
+            color: #fb923c;
         }
 
-        .json .boolean {
-            color: #8e44ad;
+        .json-boolean {
+            color: #f472b6;
         }
 
-        .json .null {
-            color: #d63031;
+        .json-null {
+            color: #94a3b8;
         }
 
-        .json .key {
-            color: #6c5ce7;
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .nav-link {
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(37, 99, 235, 0.1);
+        }
+
+        .nav-link.active {
+            background-color: rgba(37, 99, 235, 0.1);
+            border-left: 4px solid #2563eb;
         }
 
         table {
@@ -132,1649 +98,1849 @@
             width: 100%;
         }
 
-        table th {
-            background-color: #f7fafc;
+        th,
+        td {
+            padding: 0.75rem;
             text-align: left;
         }
 
-        table th,
-        table td {
-            border: 1px solid #e2e8f0;
-            padding: 0.75rem;
+        th {
+            background-color: #f8fafc;
+            font-weight: 500;
         }
 
-        .mobile-nav-toggle {
+        tr {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:last-child {
+            border-bottom: none;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        /* HTTP Method Badges */
+        .http-method {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .http-method.get {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .http-method.post {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .http-method.put {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .http-method.delete {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Mobile menu button */
+        .menu-button {
             display: none;
         }
 
         @media (max-width: 768px) {
-            .mobile-nav-toggle {
+            .menu-button {
                 display: block;
                 position: fixed;
                 top: 1rem;
                 left: 1rem;
-                z-index: 60;
+                z-index: 50;
+                background-color: #2563eb;
+                color: white;
+                border-radius: 0.5rem;
                 padding: 0.5rem;
-                background-color: white;
-                border-radius: 0.25rem;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             }
 
-            .content-container {
-                padding-top: 4rem !important;
-            }
-
-            .step-navigation {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background-color: white;
-                padding: 0.75rem;
-                box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
-                z-index: 30;
-            }
-
-            .table-container {
-                overflow-x: auto;
+            .content-wrapper {
+                padding-top: 4rem;
             }
         }
     </style>
 </head>
 
-<body class="text-gray-800">
-    <!-- Mobile Navigation Toggle -->
-    <button class="mobile-nav-toggle">
+<body class="bg-gray-50 text-gray-800">
+    <!-- Mobile Menu Button -->
+    <button class="menu-button" id="menuToggle">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
     </button>
 
-    <!-- Overlay for mobile -->
-    <div class="overlay"></div>
-
-    <!-- Sidebar Navigation -->
-    <div class="sidebar w-64 p-4">
-        <h2 class="text-xl font-bold mb-6">Product Module</h2>
-        <nav>
-            <ul>
-                <li class="mb-2">
-                    <a href="#introduction" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Introduction</a>
-                </li>
-                <li class="mb-1">
-                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mt-4 mb-2">Categories</h3>
-                    <ul>
-                        <li><a href="#categories-get" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Get Categories</a></li>
-                        <li><a href="#categories-get-single" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Get Category</a></li>
-                        <li><a href="#categories-create" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Create Category</a></li>
-                        <li><a href="#categories-update" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Update Category</a></li>
-                        <li><a href="#categories-delete" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Delete Category</a></li>
-                    </ul>
-                </li>
-                <li class="mb-1">
-                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mt-4 mb-2">Package Definitions</h3>
-                    <ul>
-                        <li><a href="#packages-get-names" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Get Package Names</a></li>
-                        <li><a href="#packages-get-name" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Get Package Name</a></li>
-                        <li><a href="#packages-create-name" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Create Package Name</a></li>
-                        <li><a href="#packages-update-name" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Update Package Name</a></li>
-                        <li><a href="#packages-delete-name" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Delete Package Name</a></li>
-                        <li><a href="#packages-get-units" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Get SI Units</a></li>
-                        <li><a href="#packages-get-unit" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Get SI Unit</a></li>
-                        <li><a href="#packages-create-unit" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Create SI Unit</a></li>
-                        <li><a href="#packages-update-unit" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Update SI Unit</a></li>
-                        <li><a href="#packages-delete-unit" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Delete SI Unit</a></li>
-                    </ul>
-                </li>
-                <li class="mb-1">
-                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mt-4 mb-2">Products</h3>
-                    <ul>
-                        <li><a href="#products-get" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Get Products</a></li>
-                        <li><a href="#products-get-single" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Get Product</a></li>
-                        <li><a href="#products-create" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Create Product</a></li>
-                        <li><a href="#products-update" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Update Product</a></li>
-                        <li><a href="#products-delete" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Delete Product</a></li>
-                        <li><a href="#products-toggle-featured" class="nav-item block px-3 py-2 rounded-md text-sm font-medium nav-link">Toggle Featured</a></li>
-                    </ul>
-                </li>
-            </ul>
-        </nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="content ml-0 md:ml-64">
-        <div class="content-container max-w-5xl mx-auto p-4 md:p-8">
-            <!-- Introduction Section -->
-            <section id="introduction-section" class="section active">
-                <div id="introduction" class="step active">
-                    <h1 class="text-3xl font-bold mb-6">Product Module Documentation</h1>
-                    <p class="mb-4">This documentation provides a comprehensive guide to the Product Module API, which allows you to manage product categories, package definitions, and products.</p>
-                    <p class="mb-4">The Product Module API is a RESTful API that supports standard HTTP methods like GET, POST, PUT, and DELETE. All requests and responses are in JSON format.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Authentication</h2>
-                    <p class="mb-4">All API endpoints require administrative authentication. You must be logged in as an admin user to access these endpoints.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Base URL</h2>
-                    <p class="mb-4">The base URL for all API endpoints is your site's domain followed by the specific endpoint path.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <code>https://your-domain.com/admin/fetch/</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Error Handling</h2>
-                    <p class="mb-4">All API endpoints return standardized error responses with appropriate HTTP status codes. Error responses include a success flag (set to false) and an error message.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">false</span>,
-    <span class="key">"message"</span>: <span class="string">"Error message description"</span>
-}</code></pre>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Categories Section -->
-            <section id="categories-section" class="section">
-                <!-- Get Categories -->
-                <div id="categories-get" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Get All Categories</h1>
-                    <p class="mb-4">This endpoint retrieves all product categories.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">GET</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductCategories.php?action=getCategories</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns an array of category objects.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"categories"</span>: [
-        {
-            <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3a9s4f6g7h8j9k0l1m2"</span>,
-            <span class="key">"name"</span>: <span class="string">"Electronics"</span>,
-            <span class="key">"description"</span>: <span class="string">"Electronic devices and accessories"</span>,
-            <span class="key">"meta_title"</span>: <span class="string">"Electronics"</span>,
-            <span class="key">"meta_description"</span>: <span class="string">"Browse our electronics collection"</span>,
-            <span class="key">"meta_keywords"</span>: <span class="string">"electronics, devices, gadgets"</span>,
-            <span class="key">"status"</span>: <span class="string">"active"</span>,
-            <span class="key">"created_at"</span>: <span class="string">"2023-06-01 10:00:00"</span>,
-            <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 10:00:00"</span>,
-            <span class="key">"image_url"</span>: <span class="string">"https://your-domain.com/img/product-categories/01h2c5n3a9s4f6g7h8j9k0l1m2/electronics.jpg"</span>
-        }
-    ]
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Get Category -->
-                <div id="categories-get-single" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Get Category</h1>
-                    <p class="mb-4">This endpoint retrieves a specific product category by ID.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">GET</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductCategories.php?action=getCategory&id={category_id}</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the category.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns the requested category object.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"data"</span>: {
-        <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3a9s4f6g7h8j9k0l1m2"</span>,
-        <span class="key">"name"</span>: <span class="string">"Electronics"</span>,
-        <span class="key">"description"</span>: <span class="string">"Electronic devices and accessories"</span>,
-        <span class="key">"meta_title"</span>: <span class="string">"Electronics"</span>,
-        <span class="key">"meta_description"</span>: <span class="string">"Browse our electronics collection"</span>,
-        <span class="key">"meta_keywords"</span>: <span class="string">"electronics, devices, gadgets"</span>,
-        <span class="key">"status"</span>: <span class="string">"active"</span>,
-        <span class="key">"created_at"</span>: <span class="string">"2023-06-01 10:00:00"</span>,
-        <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 10:00:00"</span>,
-        <span class="key">"image_url"</span>: <span class="string">"https://your-domain.com/img/product-categories/01h2c5n3a9s4f6g7h8j9k0l1m2/electronics.jpg"</span>,
-        <span class="key">"has_image"</span>: <span class="boolean">true</span>
-    }
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Create Category -->
-                <div id="categories-create" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Create Category</h1>
-                    <p class="mb-4">This endpoint creates a new product category.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductCategories.php?action=createCategory</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>name</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The name of the category.</td>
-                                </tr>
-                                <tr>
-                                    <td>description</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>A description of the category.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_title</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The meta title for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_description</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The meta description for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_keywords</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The meta keywords for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>status</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The status of the category. Values: "active" or "inactive". Default: "active".</td>
-                                </tr>
-                                <tr>
-                                    <td>temp_image_path</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The path to a temporarily uploaded image file.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"name"</span>: <span class="string">"Electronics"</span>,
-    <span class="key">"description"</span>: <span class="string">"Electronic devices and accessories"</span>,
-    <span class="key">"meta_title"</span>: <span class="string">"Electronics"</span>,
-    <span class="key">"meta_description"</span>: <span class="string">"Browse our electronics collection"</span>,
-    <span class="key">"meta_keywords"</span>: <span class="string">"electronics, devices, gadgets"</span>,
-    <span class="key">"status"</span>: <span class="string">"active"</span>,
-    <span class="key">"temp_image_path"</span>: <span class="string">"uploads/temp/temp_12345.jpg"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns the ID of the newly created category.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Category created successfully"</span>,
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3a9s4f6g7h8j9k0l1m2"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Update Category -->
-                <div id="categories-update" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Update Category</h1>
-                    <p class="mb-4">This endpoint updates an existing product category.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductCategories.php?action=updateCategory</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the category.</td>
-                                </tr>
-                                <tr>
-                                    <td>name</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The name of the category.</td>
-                                </tr>
-                                <tr>
-                                    <td>description</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>A description of the category.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_title</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The meta title for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_description</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The meta description for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_keywords</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The meta keywords for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>status</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The status of the category. Values: "active" or "inactive".</td>
-                                </tr>
-                                <tr>
-                                    <td>temp_image_path</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The path to a temporarily uploaded image file.</td>
-                                </tr>
-                                <tr>
-                                    <td>remove_image</td>
-                                    <td>boolean</td>
-                                    <td>Optional</td>
-                                    <td>Whether to remove the existing image. Default: false.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3a9s4f6g7h8j9k0l1m2"</span>,
-    <span class="key">"name"</span>: <span class="string">"Electronics Updated"</span>,
-    <span class="key">"description"</span>: <span class="string">"Updated description for electronics"</span>,
-    <span class="key">"meta_title"</span>: <span class="string">"Electronics - Updated"</span>,
-    <span class="key">"meta_description"</span>: <span class="string">"Updated meta description"</span>,
-    <span class="key">"meta_keywords"</span>: <span class="string">"electronics, updated, gadgets"</span>,
-    <span class="key">"status"</span>: <span class="string">"active"</span>,
-    <span class="key">"temp_image_path"</span>: <span class="string">"uploads/temp/temp_67890.jpg"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Category updated successfully"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Delete Category -->
-                <div id="categories-delete" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Delete Category</h1>
-                    <p class="mb-4">This endpoint deletes a product category by ID.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductCategories.php?action=deleteCategory</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the category to delete.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3a9s4f6g7h8j9k0l1m2"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Category deleted successfully"</span>
-}</code></pre>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Packages Section -->
-            <section id="packages-section" class="section">
-                <!-- Get Package Names -->
-                <div id="packages-get-names" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Get Package Names</h1>
-                    <p class="mb-4">This endpoint retrieves all package names.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">GET</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=getPackageNames</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns an array of package name objects.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"packageNames"</span>: [
-        {
-            <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3b9s4f6g7h8j9k0l1m3"</span>,
-            <span class="key">"package_name"</span>: <span class="string">"Kilogram"</span>,
-            <span class="key">"created_at"</span>: <span class="string">"2023-06-01 10:00:00"</span>,
-            <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 10:00:00"</span>
-        },
-        {
-            <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3c9s4f6g7h8j9k0l1m4"</span>,
-            <span class="key">"package_name"</span>: <span class="string">"Liter"</span>,
-            <span class="key">"created_at"</span>: <span class="string">"2023-06-01 10:05:00"</span>,
-            <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 10:05:00"</span>
-        }
-    ]
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Get Package Name -->
-                <div id="packages-get-name" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Get Package Name</h1>
-                    <p class="mb-4">This endpoint retrieves a specific package name by ID.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">GET</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=getPackageName&id={package_name_id}</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the package name.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns the requested package name object.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"data"</span>: {
-        <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3b9s4f6g7h8j9k0l1m3"</span>,
-        <span class="key">"package_name"</span>: <span class="string">"Kilogram"</span>,
-        <span class="key">"created_at"</span>: <span class="string">"2023-06-01 10:00:00"</span>,
-        <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 10:00:00"</span>
-    }
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Create Package Name -->
-                <div id="packages-create-name" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Create Package Name</h1>
-                    <p class="mb-4">This endpoint creates a new package name.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=createPackageName</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>package_name</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The name of the package (e.g., "Kilogram", "Liter").</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"package_name"</span>: <span class="string">"Meter"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns the ID of the newly created package name.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Package name created successfully"</span>,
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3d9s4f6g7h8j9k0l1m5"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Update Package Name -->
-                <div id="packages-update-name" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Update Package Name</h1>
-                    <p class="mb-4">This endpoint updates an existing package name.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=updatePackageName</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the package name.</td>
-                                </tr>
-                                <tr>
-                                    <td>package_name</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The updated name of the package.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3d9s4f6g7h8j9k0l1m5"</span>,
-    <span class="key">"package_name"</span>: <span class="string">"Square Meter"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Package name updated successfully"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Delete Package Name -->
-                <div id="packages-delete-name" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Delete Package Name</h1>
-                    <p class="mb-4">This endpoint deletes a package name by ID.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=deletePackageName</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the package name to delete.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3d9s4f6g7h8j9k0l1m5"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Package name deleted successfully"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Get SI Units -->
-                <div id="packages-get-units" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Get SI Units</h1>
-                    <p class="mb-4">This endpoint retrieves all SI units, optionally filtered by package name ID.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">GET</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=getSIUnits</code>
-                    </div>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=getSIUnits&package_name_id={package_name_id}</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>package_name_id</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>Filter SI units by package name ID.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns an array of SI unit objects.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"siUnits"</span>: [
-        {
-            <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3e9s4f6g7h8j9k0l1m6"</span>,
-            <span class="key">"si_unit"</span>: <span class="string">"kg"</span>,
-            <span class="key">"created_at"</span>: <span class="string">"2023-06-01 10:10:00"</span>,
-            <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 10:10:00"</span>,
-            <span class="key">"package_name"</span>: <span class="string">"Kilogram"</span>,
-            <span class="key">"package_name_uuid_id"</span>: <span class="string">"01h2c5n3b9s4f6g7h8j9k0l1m3"</span>,
-            <span class="key">"unit_of_measure"</span>: <span class="string">"Kilogram (kg)"</span>
-        },
-        {
-            <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3f9s4f6g7h8j9k0l1m7"</span>,
-            <span class="key">"si_unit"</span>: <span class="string">"g"</span>,
-            <span class="key">"created_at"</span>: <span class="string">"2023-06-01 10:15:00"</span>,
-            <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 10:15:00"</span>,
-            <span class="key">"package_name"</span>: <span class="string">"Kilogram"</span>,
-            <span class="key">"package_name_uuid_id"</span>: <span class="string">"01h2c5n3b9s4f6g7h8j9k0l1m3"</span>,
-            <span class="key">"unit_of_measure"</span>: <span class="string">"Kilogram (g)"</span>
-        }
-    ]
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Get SI Unit -->
-                <div id="packages-get-unit" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Get SI Unit</h1>
-                    <p class="mb-4">This endpoint retrieves a specific SI unit by ID.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">GET</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=getSIUnit&id={si_unit_id}</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the SI unit.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns the requested SI unit object.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"data"</span>: {
-        <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3e9s4f6g7h8j9k0l1m6"</span>,
-        <span class="key">"si_unit"</span>: <span class="string">"kg"</span>,
-        <span class="key">"created_at"</span>: <span class="string">"2023-06-01 10:10:00"</span>,
-        <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 10:10:00"</span>,
-        <span class="key">"package_name"</span>: <span class="string">"Kilogram"</span>,
-        <span class="key">"package_name_uuid_id"</span>: <span class="string">"01h2c5n3b9s4f6g7h8j9k0l1m3"</span>,
-        <span class="key">"unit_of_measure"</span>: <span class="string">"Kilogram (kg)"</span>
-    }
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Create SI Unit -->
-                <div id="packages-create-unit" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Create SI Unit</h1>
-                    <p class="mb-4">This endpoint creates a new SI unit for a package name.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=createSIUnit</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>package_name_id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the package name.</td>
-                                </tr>
-                                <tr>
-                                    <td>si_unit</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The SI unit symbol (e.g., "kg", "g", "L").</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"package_name_id"</span>: <span class="string">"01h2c5n3b9s4f6g7h8j9k0l1m3"</span>,
-    <span class="key">"si_unit"</span>: <span class="string">"mg"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns the ID of the newly created SI unit.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"SI unit created successfully"</span>,
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3g9s4f6g7h8j9k0l1m8"</span>,
-    <span class="key">"unit_of_measure"</span>: <span class="string">"Kilogram (mg)"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Update SI Unit -->
-                <div id="packages-update-unit" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Update SI Unit</h1>
-                    <p class="mb-4">This endpoint updates an existing SI unit.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=updateSIUnit</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the SI unit.</td>
-                                </tr>
-                                <tr>
-                                    <td>package_name_id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the package name.</td>
-                                </tr>
-                                <tr>
-                                    <td>si_unit</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The updated SI unit symbol.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3g9s4f6g7h8j9k0l1m8"</span>,
-    <span class="key">"package_name_id"</span>: <span class="string">"01h2c5n3b9s4f6g7h8j9k0l1m3"</span>,
-    <span class="key">"si_unit"</span>: <span class="string">"mcg"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"SI unit updated successfully"</span>,
-    <span class="key">"unit_of_measure"</span>: <span class="string">"Kilogram (mcg)"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Delete SI Unit -->
-                <div id="packages-delete-unit" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Delete SI Unit</h1>
-                    <p class="mb-4">This endpoint deletes an SI unit by ID.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProductPackages.php?action=deleteSIUnit</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the SI unit to delete.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3g9s4f6g7h8j9k0l1m8"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"SI unit deleted successfully"</span>
-}</code></pre>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Products Section -->
-            <section id="products-section" class="section">
-                <!-- Get Products -->
-                <div id="products-get" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Get All Products</h1>
-                    <p class="mb-4">This endpoint retrieves all products.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">GET</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProducts.php?action=getProducts</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns an array of product objects with their details, including category, images, and units of measure.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"products"</span>: [
-        {
-            <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3h9s4f6g7h8j9k0l1m9"</span>,
-            <span class="key">"title"</span>: <span class="string">"Smartphone X"</span>,
-            <span class="key">"uuid_category"</span>: <span class="string">"01h2c5n3a9s4f6g7h8j9k0l1m2"</span>,
-            <span class="key">"description"</span>: <span class="string">"A high-end smartphone with advanced features."</span>,
-            <span class="key">"meta_title"</span>: <span class="string">"Smartphone X - Latest Tech"</span>,
-            <span class="key">"meta_description"</span>: <span class="string">"Discover the latest Smartphone X with cutting-edge technology."</span>,
-            <span class="key">"meta_keywords"</span>: <span class="string">"smartphone, technology, mobile"</span>,
-            <span class="key">"views"</span>: <span class="number">0</span>,
-            <span class="key">"status"</span>: <span class="string">"published"</span>,
-            <span class="key">"featured"</span>: <span class="number">1</span>,
-            <span class="key">"created_at"</span>: <span class="string">"2023-06-01 11:00:00"</span>,
-            <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 11:00:00"</span>,
-            <span class="key">"category_name"</span>: <span class="string">"Electronics"</span>,
-            <span class="key">"images"</span>: [
-                <span class="string">"https://your-domain.com/img/products/01h2c5n3h9s4f6g7h8j9k0l1m9/prod_12345.jpg"</span>
-            ],
-            <span class="key">"units_of_measure"</span>: [
-                {
-                    <span class="key">"id"</span>: <span class="string">"01h2c5n3i9s4f6g7h8j9k0l1n0"</span>,
-                    <span class="key">"unit_of_measure_id"</span>: <span class="string">"01h2c5n3e9s4f6g7h8j9k0l1m6"</span>,
-                    <span class="key">"price"</span>: <span class="string">"999.99"</span>,
-                    <span class="key">"si_unit"</span>: <span class="string">"pc"</span>,
-                    <span class="key">"package_name"</span>: <span class="string">"Piece"</span>,
-                    <span class="key">"unit_of_measure"</span>: <span class="string">"Piece (pc)"</span>
-                }
-            ]
-        }
-    ]
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Get Product -->
-                <div id="products-get-single" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Get Product</h1>
-                    <p class="mb-4">This endpoint retrieves a specific product by ID.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">GET</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProducts.php?action=getProduct&id={product_id}</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the product.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns the requested product object with its details.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"data"</span>: {
-        <span class="key">"uuid_id"</span>: <span class="string">"01h2c5n3h9s4f6g7h8j9k0l1m9"</span>,
-        <span class="key">"title"</span>: <span class="string">"Smartphone X"</span>,
-        <span class="key">"uuid_category"</span>: <span class="string">"01h2c5n3a9s4f6g7h8j9k0l1m2"</span>,
-        <span class="key">"description"</span>: <span class="string">"A high-end smartphone with advanced features."</span>,
-        <span class="key">"meta_title"</span>: <span class="string">"Smartphone X - Latest Tech"</span>,
-        <span class="key">"meta_description"</span>: <span class="string">"Discover the latest Smartphone X with cutting-edge technology."</span>,
-        <span class="key">"meta_keywords"</span>: <span class="string">"smartphone, technology, mobile"</span>,
-        <span class="key">"views"</span>: <span class="number">0</span>,
-        <span class="key">"status"</span>: <span class="string">"published"</span>,
-        <span class="key">"featured"</span>: <span class="number">1</span>,
-        <span class="key">"created_at"</span>: <span class="string">"2023-06-01 11:00:00"</span>,
-        <span class="key">"updated_at"</span>: <span class="string">"2023-06-01 11:00:00"</span>,
-        <span class="key">"category_name"</span>: <span class="string">"Electronics"</span>,
-        <span class="key">"images"</span>: [
-            <span class="string">"https://your-domain.com/img/products/01h2c5n3h9s4f6g7h8j9k0l1m9/prod_12345.jpg"</span>
-        ],
-        <span class="key">"units_of_measure"</span>: [
-            {
-                <span class="key">"id"</span>: <span class="string">"01h2c5n3i9s4f6g7h8j9k0l1n0"</span>,
-                <span class="key">"unit_of_measure_id"</span>: <span class="string">"01h2c5n3e9s4f6g7h8j9k0l1m6"</span>,
-                <span class="key">"price"</span>: <span class="string">"999.99"</span>,
-                <span class="key">"si_unit"</span>: <span class="string">"pc"</span>,
-                <span class="key">"package_name"</span>: <span class="string">"Piece"</span>,
-                <span class="key">"unit_of_measure"</span>: <span class="string">"Piece (pc)"</span>
-            }
-        ]
-    }
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Create Product -->
-                <div id="products-create" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Create Product</h1>
-                    <p class="mb-4">This endpoint creates a new product.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProducts.php?action=createProduct</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>title</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The title of the product.</td>
-                                </tr>
-                                <tr>
-                                    <td>category_id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the product category.</td>
-                                </tr>
-                                <tr>
-                                    <td>description</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>A description of the product.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_title</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The meta title for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_description</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The meta description for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_keywords</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The meta keywords for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>status</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The status of the product. Values: "published", "pending", or "draft". Default: "published".</td>
-                                </tr>
-                                <tr>
-                                    <td>featured</td>
-                                    <td>boolean</td>
-                                    <td>Optional</td>
-                                    <td>Whether the product is featured. Default: false.</td>
-                                </tr>
-                                <tr>
-                                    <td>units_of_measure</td>
-                                    <td>array</td>
-                                    <td>Optional</td>
-                                    <td>An array of objects containing unit_of_measure_id (string) and price (number).</td>
-                                </tr>
-                                <tr>
-                                    <td>temp_images</td>
-                                    <td>array</td>
-                                    <td>Optional</td>
-                                    <td>An array of objects containing temp_path (string) for temporarily uploaded images.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"title"</span>: <span class="string">"Smartphone Y"</span>,
-    <span class="key">"category_id"</span>: <span class="string">"01h2c5n3a9s4f6g7h8j9k0l1m2"</span>,
-    <span class="key">"description"</span>: <span class="string">"A mid-range smartphone with great features."</span>,
-    <span class="key">"meta_title"</span>: <span class="string">"Smartphone Y - Affordable Tech"</span>,
-    <span class="key">"meta_description"</span>: <span class="string">"Discover the affordable Smartphone Y with great features."</span>,
-    <span class="key">"meta_keywords"</span>: <span class="string">"smartphone, affordable, mobile"</span>,
-    <span class="key">"status"</span>: <span class="string">"published"</span>,
-    <span class="key">"featured"</span>: <span class="boolean">true</span>,
-    <span class="key">"units_of_measure"</span>: [
-        {
-            <span class="key">"unit_of_measure_id"</span>: <span class="string">"01h2c5n3e9s4f6g7h8j9k0l1m6"</span>,
-            <span class="key">"price"</span>: <span class="number">599.99</span>
-        }
-    ],
-    <span class="key">"temp_images"</span>: [
-        {
-            <span class="key">"temp_path"</span>: <span class="string">"uploads/temp/temp_67890.jpg"</span>
-        }
-    ]
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <p class="mb-4">Returns the ID of the newly created product.</p>
-
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Product created successfully"</span>,
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3j9s4f6g7h8j9k0l1n1"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Update Product -->
-                <div id="products-update" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Update Product</h1>
-                    <p class="mb-4">This endpoint updates an existing product.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProducts.php?action=updateProduct</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the product.</td>
-                                </tr>
-                                <tr>
-                                    <td>title</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The updated title of the product.</td>
-                                </tr>
-                                <tr>
-                                    <td>category_id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the product category.</td>
-                                </tr>
-                                <tr>
-                                    <td>description</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The updated description of the product.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_title</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The updated meta title for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_description</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The updated meta description for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>meta_keywords</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The updated meta keywords for SEO.</td>
-                                </tr>
-                                <tr>
-                                    <td>status</td>
-                                    <td>string</td>
-                                    <td>Optional</td>
-                                    <td>The updated status of the product. Values: "published", "pending", or "draft".</td>
-                                </tr>
-                                <tr>
-                                    <td>featured</td>
-                                    <td>boolean</td>
-                                    <td>Optional</td>
-                                    <td>Whether the product is featured.</td>
-                                </tr>
-                                <tr>
-                                    <td>units_of_measure</td>
-                                    <td>array</td>
-                                    <td>Optional</td>
-                                    <td>An array of objects containing unit_of_measure_id (string) and price (number).</td>
-                                </tr>
-                                <tr>
-                                    <td>update_images</td>
-                                    <td>boolean</td>
-                                    <td>Optional</td>
-                                    <td>Whether to update the product images. Default: false.</td>
-                                </tr>
-                                <tr>
-                                    <td>existing_images</td>
-                                    <td>array</td>
-                                    <td>Optional</td>
-                                    <td>An array of strings containing existing image URLs to keep.</td>
-                                </tr>
-                                <tr>
-                                    <td>temp_images</td>
-                                    <td>array</td>
-                                    <td>Optional</td>
-                                    <td>An array of objects containing temp_path (string) for temporarily uploaded images.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3j9s4f6g7h8j9k0l1n1"</span>,
-    <span class="key">"title"</span>: <span class="string">"Smartphone Y Pro"</span>,
-    <span class="key">"category_id"</span>: <span class="string">"01h2c5n3a9s4f6g7h8j9k0l1m2"</span>,
-    <span class="key">"description"</span>: <span class="string">"A updated mid-range smartphone with enhanced features."</span>,
-    <span class="key">"meta_title"</span>: <span class="string">"Smartphone Y Pro - Enhanced Tech"</span>,
-    <span class="key">"meta_description"</span>: <span class="string">"Discover the enhanced Smartphone Y Pro with great features."</span>,
-    <span class="key">"meta_keywords"</span>: <span class="string">"smartphone, pro, mobile"</span>,
-    <span class="key">"status"</span>: <span class="string">"published"</span>,
-    <span class="key">"featured"</span>: <span class="boolean">true</span>,
-    <span class="key">"units_of_measure"</span>: [
-        {
-            <span class="key">"unit_of_measure_id"</span>: <span class="string">"01h2c5n3e9s4f6g7h8j9k0l1m6"</span>,
-            <span class="key">"price"</span>: <span class="number">699.99</span>
-        }
-    ],
-    <span class="key">"update_images"</span>: <span class="boolean">true</span>,
-    <span class="key">"existing_images"</span>: [
-        <span class="string">"prod_12345.jpg"</span>
-    ],
-    <span class="key">"temp_images"</span>: [
-        {
-            <span class="key">"temp_path"</span>: <span class="string">"uploads/temp/temp_54321.jpg"</span>
-        }
-    ]
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Product updated successfully"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Delete Product -->
-                <div id="products-delete" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Delete Product</h1>
-                    <p class="mb-4">This endpoint deletes a product by ID.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProducts.php?action=deleteProduct</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the product to delete.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3j9s4f6g7h8j9k0l1n1"</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Product deleted successfully"</span>
-}</code></pre>
-                    </div>
-                </div>
-
-                <!-- Toggle Featured -->
-                <div id="products-toggle-featured" class="step">
-                    <h1 class="text-3xl font-bold mb-6">Toggle Featured</h1>
-                    <p class="mb-4">This endpoint toggles the featured status of a product.</p>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">HTTP Request</h2>
-                    <p class="font-semibold text-indigo-600 mb-2">POST</p>
-                    <div class="code-block p-4 mb-6">
-                        <code>/admin/fetch/manageProducts.php?action=toggleFeatured</code>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Arguments</h2>
-                    <div class="table-container mb-6">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th>Parameter</th>
-                                    <th>Type</th>
-                                    <th>Required</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>id</td>
-                                    <td>string</td>
-                                    <td>Required</td>
-                                    <td>The unique identifier (UUID) of the product.</td>
-                                </tr>
-                                <tr>
-                                    <td>featured</td>
-                                    <td>boolean</td>
-                                    <td>Required</td>
-                                    <td>The new featured status of the product. true to feature, false to unfeature.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Sample Request</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"id"</span>: <span class="string">"01h2c5n3h9s4f6g7h8j9k0l1m9"</span>,
-    <span class="key">"featured"</span>: <span class="boolean">false</span>
-}</code></pre>
-                    </div>
-
-                    <h2 class="text-xl font-semibold mt-6 mb-3">Response</h2>
-                    <div class="code-block p-4 mb-6">
-                        <pre class="json"><code>{
-    <span class="key">"success"</span>: <span class="boolean">true</span>,
-    <span class="key">"message"</span>: <span class="string">"Product removed from featured"</span>
-}</code></pre>
-                    </div>
-                </div>
-            </section>
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar fixed md:static w-64 bg-white shadow-lg h-screen overflow-y-auto z-40" id="sidebar">
+            <div class="p-4 border-b border-gray-200">
+                <h1 class="text-xl font-bold text-primary">Products API</h1>
+                <p class="text-sm text-gray-600 mt-1">Documentation</p>
+            </div>
+            <nav class="p-4">
+                <ul>
+                    <li class="mb-1">
+                        <a href="#introduction" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Introduction</a>
+                    </li>
+                    <li class="mb-4">
+                        <div class="px-4 py-2 text-sm font-medium text-gray-500 uppercase">Categories</div>
+                        <ul class="ml-2">
+                            <li>
+                                <a href="#categories-overview" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Overview</a>
+                            </li>
+                            <li>
+                                <a href="#get-categories" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Get Categories</a>
+                            </li>
+                            <li>
+                                <a href="#get-category" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Get Category</a>
+                            </li>
+                            <li>
+                                <a href="#create-category" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Create Category</a>
+                            </li>
+                            <li>
+                                <a href="#update-category" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Update Category</a>
+                            </li>
+                            <li>
+                                <a href="#delete-category" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Delete Category</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="mb-4">
+                        <div class="px-4 py-2 text-sm font-medium text-gray-500 uppercase">Package Definitions</div>
+                        <ul class="ml-2">
+                            <li>
+                                <a href="#package-overview" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Overview</a>
+                            </li>
+                            <li>
+                                <a href="#get-package-names" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Get Package Names</a>
+                            </li>
+                            <li>
+                                <a href="#create-package-name" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Create Package Name</a>
+                            </li>
+                            <li>
+                                <a href="#get-si-units" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Get SI Units</a>
+                            </li>
+                            <li>
+                                <a href="#create-si-unit" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Create SI Unit</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="mb-4">
+                        <div class="px-4 py-2 text-sm font-medium text-gray-500 uppercase">Products</div>
+                        <ul class="ml-2">
+                            <li>
+                                <a href="#products-overview" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Overview</a>
+                            </li>
+                            <li>
+                                <a href="#get-products" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Get Products</a>
+                            </li>
+                            <li>
+                                <a href="#get-product" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Get Product</a>
+                            </li>
+                            <li>
+                                <a href="#create-product" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Create Product</a>
+                            </li>
+                            <li>
+                                <a href="#update-product" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Update Product</a>
+                            </li>
+                            <li>
+                                <a href="#delete-product" class="nav-link block px-4 py-2 rounded-md text-gray-700 hover:text-primary">Delete Product</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
         </div>
 
-        <!-- Step Navigation -->
-        <div class="step-navigation p-4 flex justify-between fixed bottom-0 left-0 md:left-64 right-0 bg-white shadow-lg">
-            <button id="prev-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Previous</button>
-            <div id="step-indicator" class="text-center py-2"></div>
-            <button id="next-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Next</button>
+        <!-- Main Content -->
+        <div class="flex-1 content-wrapper">
+            <div class="max-w-4xl mx-auto px-4 py-8 md:px-8">
+                <!-- Step Navigation -->
+                <div class="flex justify-between mb-8">
+                    <button id="prevBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                    <div id="stepIndicator" class="text-sm text-gray-600">Step <span id="currentStep">1</span> of <span id="totalSteps">15</span></div>
+                    <button id="nextBtn" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                </div>
+
+                <!-- Step Content -->
+                <div id="stepContent">
+                    <!-- Introduction -->
+                    <div class="step-content active" id="introduction">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Products API Documentation</h2>
+                        <p class="mb-4">This documentation provides details on how to interact with the Products API. The API allows you to manage product categories, package definitions, and products.</p>
+                        <p class="mb-4">The API is organized around RESTful principles. It accepts JSON-encoded request bodies, returns JSON-encoded responses, and uses standard HTTP response codes to indicate the success or failure of API requests.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Base URL</h3>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Authentication</h3>
+                        <p class="mb-4">All API requests require authentication through session-based authentication. You must be logged in as an admin user to access these endpoints.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Error Handling</h3>
+                        <p class="mb-4">The API uses conventional HTTP response codes to indicate the success or failure of an API request:</p>
+                        <ul class="list-disc ml-6 mb-6">
+                            <li class="mb-2"><strong>200 OK</strong> - The request was successful.</li>
+                            <li class="mb-2"><strong>400 Bad Request</strong> - The request was invalid or cannot be served.</li>
+                            <li class="mb-2"><strong>401 Unauthorized</strong> - Authentication failed or user doesn't have permissions.</li>
+                            <li class="mb-2"><strong>404 Not Found</strong> - The requested resource doesn't exist.</li>
+                            <li class="mb-2"><strong>409 Conflict</strong> - The request conflicts with the current state of the server.</li>
+                            <li class="mb-2"><strong>500 Internal Server Error</strong> - Something went wrong on the server.</li>
+                        </ul>
+
+                        <p class="mb-4">All error responses include a JSON object with a <code>success</code> field set to <code>false</code> and a <code>message</code> field providing more details about the error.</p>
+                    </div>
+
+                    <!-- Categories Overview -->
+                    <div class="step-content" id="categories-overview">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Categories</h2>
+                        <p class="mb-4">Categories are used to organize products into logical groups. Examples include "Building Materials", "Tools & Equipment", "Safety Gear", etc.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Category Object</h3>
+                        <p class="mb-4">A category object has the following properties:</p>
+
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Property</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>uuid_id</td>
+                                        <td>string</td>
+                                        <td>Unique identifier for the category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>name</td>
+                                        <td>string</td>
+                                        <td>Name of the category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>description</td>
+                                        <td>string</td>
+                                        <td>Description of the category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_title</td>
+                                        <td>string</td>
+                                        <td>SEO meta title</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_description</td>
+                                        <td>string</td>
+                                        <td>SEO meta description</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_keywords</td>
+                                        <td>string</td>
+                                        <td>SEO meta keywords (comma-separated)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>status</td>
+                                        <td>string</td>
+                                        <td>Status of the category (active or inactive)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>image_url</td>
+                                        <td>string</td>
+                                        <td>URL to the category image (if available)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>created_at</td>
+                                        <td>string</td>
+                                        <td>Creation timestamp</td>
+                                    </tr>
+                                    <tr>
+                                        <td>updated_at</td>
+                                        <td>string</td>
+                                        <td>Last update timestamp</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Available Endpoints</h3>
+                        <ul class="list-disc ml-6 mb-6">
+                            <li class="mb-2"><a href="#get-categories" class="text-primary hover:underline">Get all categories</a></li>
+                            <li class="mb-2"><a href="#get-category" class="text-primary hover:underline">Get a specific category</a></li>
+                            <li class="mb-2"><a href="#create-category" class="text-primary hover:underline">Create a new category</a></li>
+                            <li class="mb-2"><a href="#update-category" class="text-primary hover:underline">Update an existing category</a></li>
+                            <li class="mb-2"><a href="#delete-category" class="text-primary hover:underline">Delete a category</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Get Categories -->
+                    <div class="step-content" id="get-categories">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Get All Categories</h2>
+                        <p class="mb-4">This endpoint retrieves all product categories.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method get">GET</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProductCategories/getCategories</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing an array of category objects.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"categories"</span>: [
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+            <span class="json-key">"name"</span>: <span class="json-string">"Building Materials"</span>,
+            <span class="json-key">"description"</span>: <span class="json-string">"Essential materials for building projects"</span>,
+            <span class="json-key">"meta_title"</span>: <span class="json-string">"Building Materials | Supplies"</span>,
+            <span class="json-key">"meta_description"</span>: <span class="json-string">"High-quality building materials for projects"</span>,
+            <span class="json-key">"meta_keywords"</span>: <span class="json-string">"cement, bricks, sand, aggregates, materials"</span>,
+            <span class="json-key">"status"</span>: <span class="json-string">"active"</span>,
+            <span class="json-key">"image_url"</span>: <span class="json-string">"https://your-domain.com/img/product-categories/018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2/building-materials.jpg"</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 10:30:45"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 10:30:45"</span>
+        }</span>,
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e3"</span>,
+            <span class="json-key">"name"</span>: <span class="json-string">"Tools & Equipment"</span>,
+            <span class="json-key">"description"</span>: <span class="json-string">"Professional tools and equipment for construction"</span>,
+            <span class="json-key">"meta_title"</span>: <span class="json-string">"Tools & Equipment"</span>,
+            <span class="json-key">"meta_description"</span>: <span class="json-string">"Professional tools and equipment for builders"</span>,
+            <span class="json-key">"meta_keywords"</span>: <span class="json-string">"tools, power tools, hand tools, equipment"</span>,
+            <span class="json-key">"status"</span>: <span class="json-string">"active"</span>,
+            <span class="json-key">"image_url"</span>: <span class="json-string">"https://your-domain.com/img/product-categories/018d3b4c-5f3e-7c10-b96e-f7e423d7f0e3/tools-equipment.jpg"</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 11:15:22"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 11:15:22"</span>
+        }</span>
+    ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Get Category -->
+                    <div class="step-content" id="get-category">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Get a Specific Category</h2>
+                        <p class="mb-4">This endpoint retrieves a specific product category by its ID.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method get">GET</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProductCategories/getCategory?id={category_id}</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>The UUID of the category to retrieve</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the requested category.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"data"</span>: <span class="json-key">{
+        "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+        <span class="json-key">"name"</span>: <span class="json-string">"Building Materials"</span>,
+        <span class="json-key">"description"</span>: <span class="json-string">"Essential materials for building projects"</span>,
+        <span class="json-key">"meta_title"</span>: <span class="json-string">"Building Materials | Supplies"</span>,
+        <span class="json-key">"meta_description"</span>: <span class="json-string">"High-quality building materials for projects"</span>,
+        <span class="json-key">"meta_keywords"</span>: <span class="json-string">"cement, bricks, sand, aggregates, materials"</span>,
+        <span class="json-key">"status"</span>: <span class="json-string">"active"</span>,
+        <span class="json-key">"image_url"</span>: <span class="json-string">"https://your-domain.com/img/product-categories/018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2/building-materials.jpg"</span>,
+        <span class="json-key">"has_image"</span>: <span class="json-boolean">true</span>,
+        <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 10:30:45"</span>,
+        <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 10:30:45"</span>
+    }</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Category Not Found)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Category not found"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Create Category -->
+                    <div class="step-content" id="create-category">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Create a Category</h2>
+                        <p class="mb-4">This endpoint creates a new product category.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method post">POST</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProductCategories/createCategory</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>name</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>Name of the category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>description</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Description of the category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_title</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta title</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_description</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta description</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_keywords</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta keywords (comma-separated)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>status</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Status of the category (active or inactive). Defaults to active.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>temp_image_path</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Path to a temporary uploaded image</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Sample Request</h3>
+                        <div class="code-block mb-6">
+                            <pre>curl -X POST "https://your-domain.com/admin/fetch/manageProductCategories/createCategory" \
+-H "Content-Type: application/json" \
+-d '{
+    <span class="json-key">"name"</span>: <span class="json-string">"Safety Gear"</span>,
+    <span class="json-key">"description"</span>: <span class="json-string">"Safety equipment and protective gear for workers"</span>,
+    <span class="json-key">"meta_title"</span>: <span class="json-string">"Safety Gear & Equipment"</span>,
+    <span class="json-key">"meta_description"</span>: <span class="json-string">"High-quality safety gear and protective equipment for sites"</span>,
+    <span class="json-key">"meta_keywords"</span>: <span class="json-string">"safety helmets, safety boots, high-vis vests, protective gear"</span>,
+    <span class="json-key">"status"</span>: <span class="json-string">"active"</span>
+}'</pre>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the success status, message, and the ID of the newly created category.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Category created successfully"</span>,
+    <span class="json-key">"id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e4"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Duplicate Category)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"A category with this name already exists"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Update Category -->
+                    <div class="step-content" id="update-category">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Update a Category</h2>
+                        <p class="mb-4">This endpoint updates an existing product category.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method post">POST</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProductCategories/updateCategory</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>The UUID of the category to update</td>
+                                    </tr>
+                                    <tr>
+                                        <td>name</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>Name of the category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>description</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Description of the category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_title</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta title</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_description</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta description</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_keywords</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta keywords (comma-separated)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>status</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Status of the category (active or inactive)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>temp_image_path</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Path to a temporary uploaded image</td>
+                                    </tr>
+                                    <tr>
+                                        <td>remove_image</td>
+                                        <td>boolean</td>
+                                        <td>Optional</td>
+                                        <td>Whether to remove the existing image (true or false)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Sample Request</h3>
+                        <div class="code-block mb-6">
+                            <pre>curl -X POST "https://your-domain.com/admin/fetch/manageProductCategories/updateCategory" \
+-H "Content-Type: application/json" \
+-d '{
+    <span class="json-key">"id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e4"</span>,
+    <span class="json-key">"name"</span>: <span class="json-string">"Safety Equipment"</span>,
+    <span class="json-key">"description"</span>: <span class="json-string">"Safety equipment and protective gear for workers"</span>,
+    <span class="json-key">"meta_title"</span>: <span class="json-string">"Safety Equipment & Gear"</span>,
+    <span class="json-key">"meta_description"</span>: <span class="json-string">"High-quality safety equipment and protective gear for sites"</span>,
+    <span class="json-key">"meta_keywords"</span>: <span class="json-string">"safety helmets, safety boots, high-vis vests, protective gear"</span>,
+    <span class="json-key">"status"</span>: <span class="json-string">"active"</span>
+}'</pre>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the success status and a message.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Category updated successfully"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Category Not Found)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Category not found"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Delete Category -->
+                    <div class="step-content" id="delete-category">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Delete a Category</h2>
+                        <p class="mb-4">This endpoint deletes a product category.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method post">POST</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProductCategories/deleteCategory</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>The UUID of the category to delete</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Sample Request</h3>
+                        <div class="code-block mb-6">
+                            <pre>curl -X POST "https://your-domain.com/admin/fetch/manageProductCategories/deleteCategory" \
+-H "Content-Type: application/json" \
+-d '{
+    <span class="json-key">"id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e4"</span>
+}'</pre>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the success status and a message.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Category deleted successfully"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Category Not Found)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Category not found"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Category In Use)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Cannot delete this category because it is being used by one or more products"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Package Definitions Overview -->
+                    <div class="step-content" id="package-overview">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Package Definitions</h2>
+                        <p class="mb-4">Package definitions define how products are packaged and measured. This includes package names (e.g., Bag, Box, Truck) and SI units (e.g., kg, ton, cubic meter).</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Package Name Object</h3>
+                        <p class="mb-4">A package name object has the following properties:</p>
+
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Property</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>uuid_id</td>
+                                        <td>string</td>
+                                        <td>Unique identifier for the package name</td>
+                                    </tr>
+                                    <tr>
+                                        <td>package_name</td>
+                                        <td>string</td>
+                                        <td>Name of the package (e.g., Bag, Box, Truck)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>created_at</td>
+                                        <td>string</td>
+                                        <td>Creation timestamp</td>
+                                    </tr>
+                                    <tr>
+                                        <td>updated_at</td>
+                                        <td>string</td>
+                                        <td>Last update timestamp</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">SI Unit Object</h3>
+                        <p class="mb-4">An SI unit object has the following properties:</p>
+
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Property</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>uuid_id</td>
+                                        <td>string</td>
+                                        <td>Unique identifier for the SI unit</td>
+                                    </tr>
+                                    <tr>
+                                        <td>package_name_uuid_id</td>
+                                        <td>string</td>
+                                        <td>UUID of the associated package name</td>
+                                    </tr>
+                                    <tr>
+                                        <td>si_unit</td>
+                                        <td>string</td>
+                                        <td>SI unit (e.g., kg, ton, cubic meter)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>package_name</td>
+                                        <td>string</td>
+                                        <td>Name of the associated package</td>
+                                    </tr>
+                                    <tr>
+                                        <td>unit_of_measure</td>
+                                        <td>string</td>
+                                        <td>Combined unit of measure (e.g., "Bag (50kg)")</td>
+                                    </tr>
+                                    <tr>
+                                        <td>created_at</td>
+                                        <td>string</td>
+                                        <td>Creation timestamp</td>
+                                    </tr>
+                                    <tr>
+                                        <td>updated_at</td>
+                                        <td>string</td>
+                                        <td>Last update timestamp</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Available Endpoints</h3>
+                        <ul class="list-disc ml-6 mb-6">
+                            <li class="mb-2"><a href="#get-package-names" class="text-primary hover:underline">Get all package names</a></li>
+                            <li class="mb-2"><a href="#create-package-name" class="text-primary hover:underline">Create a new package name</a></li>
+                            <li class="mb-2"><a href="#get-si-units" class="text-primary hover:underline">Get all SI units</a></li>
+                            <li class="mb-2"><a href="#create-si-unit" class="text-primary hover:underline">Create a new SI unit</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Get Package Names -->
+                    <div class="step-content" id="get-package-names">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Get All Package Names</h2>
+                        <p class="mb-4">This endpoint retrieves all package names for products.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method get">GET</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProductPackages/getPackageNames</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing an array of package name objects.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"packageNames"</span>: [
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e5"</span>,
+            <span class="json-key">"package_name"</span>: <span class="json-string">"Bag"</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 10:30:45"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 10:30:45"</span>
+        }</span>,
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e6"</span>,
+            <span class="json-key">"package_name"</span>: <span class="json-string">"Truck"</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 11:15:22"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 11:15:22"</span>
+        }</span>,
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e7"</span>,
+            <span class="json-key">"package_name"</span>: <span class="json-string">"Pallet"</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 11:30:10"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 11:30:10"</span>
+        }</span>
+    ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Create Package Name -->
+                    <div class="step-content" id="create-package-name">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Create a Package Name</h2>
+                        <p class="mb-4">This endpoint creates a new package name for products.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method post">POST</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProductPackages/createPackageName</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>package_name</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>Name of the package (e.g., Box, Pallet, Truck)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Sample Request</h3>
+                        <div class="code-block mb-6">
+                            <pre>curl -X POST "https://your-domain.com/admin/fetch/manageProductPackages/createPackageName" \
+-H "Content-Type: application/json" \
+-d '{
+    <span class="json-key">"package_name"</span>: <span class="json-string">"Container"</span>
+}'</pre>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the success status, message, and the ID of the newly created package name.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Package name created successfully"</span>,
+    <span class="json-key">"id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e8"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Duplicate Package Name)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"A package with this name already exists"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Get SI Units -->
+                    <div class="step-content" id="get-si-units">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Get All SI Units</h2>
+                        <p class="mb-4">This endpoint retrieves all SI units for product packages.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method get">GET</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProductPackages/getSIUnits</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Query Parameters</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>package_name_id</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Filter SI units by package name ID</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing an array of SI unit objects.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"siUnits"</span>: [
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e9"</span>,
+            <span class="json-key">"package_name_uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e5"</span>,
+            <span class="json-key">"si_unit"</span>: <span class="json-string">"50kg"</span>,
+            <span class="json-key">"package_name"</span>: <span class="json-string">"Bag"</span>,
+            <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Bag (50kg)"</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 10:35:20"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 10:35:20"</span>
+        }</span>,
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ea"</span>,
+            <span class="json-key">"package_name_uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e6"</span>,
+            <span class="json-key">"si_unit"</span>: <span class="json-string">"10ton"</span>,
+            <span class="json-key">"package_name"</span>: <span class="json-string">"Truck"</span>,
+            <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Truck (10ton)"</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 11:20:15"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 11:20:15"</span>
+        }</span>,
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0eb"</span>,
+            <span class="json-key">"package_name_uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e7"</span>,
+            <span class="json-key">"si_unit"</span>: <span class="json-string">"1000kg"</span>,
+            <span class="json-key">"package_name"</span>: <span class="json-string">"Pallet"</span>,
+            <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Pallet (1000kg)"</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 11:35:30"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 11:35:30"</span>
+        }</span>
+    ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Create SI Unit -->
+                    <div class="step-content" id="create-si-unit">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Create an SI Unit</h2>
+                        <p class="mb-4">This endpoint creates a new SI unit for a product package.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method post">POST</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProductPackages/createSIUnit</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>package_name_id</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>UUID of the package name</td>
+                                    </tr>
+                                    <tr>
+                                        <td>si_unit</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>SI unit (e.g., 50kg, 10ton, 1m³)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Sample Request</h3>
+                        <div class="code-block mb-6">
+                            <pre>curl -X POST "https://your-domain.com/admin/fetch/manageProductPackages/createSIUnit" \
+-H "Content-Type: application/json" \
+-d '{
+    <span class="json-key">"package_name_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e8"</span>,
+    <span class="json-key">"si_unit"</span>: <span class="json-string">"20ton"</span>
+}'</pre>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the success status, message, the ID of the newly created SI unit, and the combined unit of measure.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"SI unit created successfully"</span>,
+    <span class="json-key">"id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ec"</span>,
+    <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Container (20ton)"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Duplicate SI Unit)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"This SI unit already exists for the selected package name"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Products Overview -->
+                    <div class="step-content" id="products-overview">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Products</h2>
+                        <p class="mb-4">Products represent materials, tools, and services that can be sold or rented. Each product belongs to a category and can have multiple pricing options based on different units of measure.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Product Object</h3>
+                        <p class="mb-4">A product object has the following properties:</p>
+
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Property</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>uuid_id</td>
+                                        <td>string</td>
+                                        <td>Unique identifier for the product</td>
+                                    </tr>
+                                    <tr>
+                                        <td>title</td>
+                                        <td>string</td>
+                                        <td>Title of the product</td>
+                                    </tr>
+                                    <tr>
+                                        <td>uuid_category</td>
+                                        <td>string</td>
+                                        <td>UUID of the product category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>category_name</td>
+                                        <td>string</td>
+                                        <td>Name of the product category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>description</td>
+                                        <td>string</td>
+                                        <td>Description of the product</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_title</td>
+                                        <td>string</td>
+                                        <td>SEO meta title</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_description</td>
+                                        <td>string</td>
+                                        <td>SEO meta description</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_keywords</td>
+                                        <td>string</td>
+                                        <td>SEO meta keywords (comma-separated)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>status</td>
+                                        <td>string</td>
+                                        <td>Status of the product (published, pending, or draft)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>featured</td>
+                                        <td>boolean</td>
+                                        <td>Whether the product is featured</td>
+                                    </tr>
+                                    <tr>
+                                        <td>images</td>
+                                        <td>array</td>
+                                        <td>Array of image URLs</td>
+                                    </tr>
+                                    <tr>
+                                        <td>units_of_measure</td>
+                                        <td>array</td>
+                                        <td>Array of unit of measure objects with pricing</td>
+                                    </tr>
+                                    <tr>
+                                        <td>created_at</td>
+                                        <td>string</td>
+                                        <td>Creation timestamp</td>
+                                    </tr>
+                                    <tr>
+                                        <td>updated_at</td>
+                                        <td>string</td>
+                                        <td>Last update timestamp</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Unit of Measure Object</h3>
+                        <p class="mb-4">A unit of measure object (within a product) has the following properties:</p>
+
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Property</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>string</td>
+                                        <td>Unique identifier for the pricing record</td>
+                                    </tr>
+                                    <tr>
+                                        <td>unit_of_measure_id</td>
+                                        <td>string</td>
+                                        <td>UUID of the unit of measure</td>
+                                    </tr>
+                                    <tr>
+                                        <td>price</td>
+                                        <td>number</td>
+                                        <td>Price for this unit of measure</td>
+                                    </tr>
+                                    <tr>
+                                        <td>si_unit</td>
+                                        <td>string</td>
+                                        <td>SI unit (e.g., 50kg, 10ton)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>package_name</td>
+                                        <td>string</td>
+                                        <td>Name of the package (e.g., Bag, Truck)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>unit_of_measure</td>
+                                        <td>string</td>
+                                        <td>Combined unit of measure (e.g., "Bag (50kg)")</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Available Endpoints</h3>
+                        <ul class="list-disc ml-6 mb-6">
+                            <li class="mb-2"><a href="#get-products" class="text-primary hover:underline">Get all products</a></li>
+                            <li class="mb-2"><a href="#get-product" class="text-primary hover:underline">Get a specific product</a></li>
+                            <li class="mb-2"><a href="#create-product" class="text-primary hover:underline">Create a new product</a></li>
+                            <li class="mb-2"><a href="#update-product" class="text-primary hover:underline">Update an existing product</a></li>
+                            <li class="mb-2"><a href="#delete-product" class="text-primary hover:underline">Delete a product</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Get Products -->
+                    <div class="step-content" id="get-products">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Get All Products</h2>
+                        <p class="mb-4">This endpoint retrieves all products.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method get">GET</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProducts/getProducts</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing an array of product objects.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"products"</span>: [
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed"</span>,
+            <span class="json-key">"title"</span>: <span class="json-string">"Portland Cement"</span>,
+            <span class="json-key">"uuid_category"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+            <span class="json-key">"description"</span>: <span class="json-string">"High-quality Portland cement for projects"</span>,
+            <span class="json-key">"meta_title"</span>: <span class="json-string">"Portland Cement | Materials"</span>,
+            <span class="json-key">"meta_description"</span>: <span class="json-string">"Premium Portland cement for all your needs"</span>,
+            <span class="json-key">"meta_keywords"</span>: <span class="json-string">"portland cement, cement, building materials"</span>,
+            <span class="json-key">"views"</span>: <span class="json-number">0</span>,
+            <span class="json-key">"status"</span>: <span class="json-string">"published"</span>,
+            <span class="json-key">"featured"</span>: <span class="json-number">1</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 12:30:45"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 12:30:45"</span>,
+            <span class="json-key">"category_name"</span>: <span class="json-string">"Building Materials"</span>,
+            <span class="json-key">"images"</span>: [
+                <span class="json-string">"https://your-domain.com/img/products/018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed/prod_1234567.jpg"</span>
+            ],
+            <span class="json-key">"units_of_measure"</span>: [
+                <span class="json-key">{
+                    "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ee"</span>,
+                    <span class="json-key">"unit_of_measure_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e9"</span>,
+                    <span class="json-key">"price"</span>: <span class="json-number">35000</span>,
+                    <span class="json-key">"si_unit"</span>: <span class="json-string">"50kg"</span>,
+                    <span class="json-key">"package_name"</span>: <span class="json-string">"Bag"</span>,
+                    <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Bag (50kg)"</span>
+                }</span>
+            ]
+        }</span>,
+        <span class="json-key">{
+            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ef"</span>,
+            <span class="json-key">"title"</span>: <span class="json-string">"Sand"</span>,
+            <span class="json-key">"uuid_category"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+            <span class="json-key">"description"</span>: <span class="json-string">"Fine sand for concrete mixing and masonry work"</span>,
+            <span class="json-key">"meta_title"</span>: <span class="json-string">"Sand | Building Materials"</span>,
+            <span class="json-key">"meta_description"</span>: <span class="json-string">"Quality sand for concrete and masonry projects"</span>,
+            <span class="json-key">"meta_keywords"</span>: <span class="json-string">"sand, building sand, masonry sand"</span>,
+            <span class="json-key">"views"</span>: <span class="json-number">0</span>,
+            <span class="json-key">"status"</span>: <span class="json-string">"published"</span>,
+            <span class="json-key">"featured"</span>: <span class="json-number">0</span>,
+            <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 13:15:22"</span>,
+            <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 13:15:22"</span>,
+            <span class="json-key">"category_name"</span>: <span class="json-string">"Building Materials"</span>,
+            <span class="json-key">"images"</span>: [
+                <span class="json-string">"https://your-domain.com/img/products/018d3b4c-5f3e-7c10-b96e-f7e423d7f0ef/prod_7654321.jpg"</span>
+            ],
+            <span class="json-key">"units_of_measure"</span>: [
+                <span class="json-key">{
+                    "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0f0"</span>,
+                    <span class="json-key">"unit_of_measure_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ea"</span>,
+                    <span class="json-key">"price"</span>: <span class="json-number">450000</span>,
+                    <span class="json-key">"si_unit"</span>: <span class="json-string">"10ton"</span>,
+                    <span class="json-key">"package_name"</span>: <span class="json-string">"Truck"</span>,
+                    <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Truck (10ton)"</span>
+                }</span>
+            ]
+        }</span>
+    ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Get Product -->
+                    <div class="step-content" id="get-product">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Get a Specific Product</h2>
+                        <p class="mb-4">This endpoint retrieves a specific product by its ID.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method get">GET</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProducts/getProduct?id={product_id}</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>The UUID of the product to retrieve</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the requested product.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"data"</span>: <span class="json-key">{
+        "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed"</span>,
+        <span class="json-key">"title"</span>: <span class="json-string">"Portland Cement"</span>,
+        <span class="json-key">"uuid_category"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+        <span class="json-key">"description"</span>: <span class="json-string">"High-quality Portland cement for projects"</span>,
+        <span class="json-key">"meta_title"</span>: <span class="json-string">"Portland Cement | Materials"</span>,
+        <span class="json-key">"meta_description"</span>: <span class="json-string">"Premium Portland cement for all your needs"</span>,
+        <span class="json-key">"meta_keywords"</span>: <span class="json-string">"portland cement, cement, building materials"</span>,
+        <span class="json-key">"views"</span>: <span class="json-number">0</span>,
+        <span class="json-key">"status"</span>: <span class="json-string">"published"</span>,
+        <span class="json-key">"featured"</span>: <span class="json-number">1</span>,
+        <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 12:30:45"</span>,
+        <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 12:30:45"</span>,
+        <span class="json-key">"category_name"</span>: <span class="json-string">"Building Materials"</span>,
+        <span class="json-key">"images"</span>: [
+            <span class="json-string">"https://your-domain.com/img/products/018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed/prod_1234567.jpg"</span>
+        ],
+        <span class="json-key">"units_of_measure"</span>: [
+            <span class="json-key">{
+                "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ee"</span>,
+                <span class="json-key">"unit_of_measure_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e9"</span>,
+                <span class="json-key">"price"</span>: <span class="json-number">35000</span>,
+                <span class="json-key">"si_unit"</span>: <span class="json-string">"50kg"</span>,
+                <span class="json-key">"package_name"</span>: <span class="json-string">"Bag"</span>,
+                <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Bag (50kg)"</span>
+            }</span>
+        ]
+    }</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Product Not Found)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Product not found"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Create Product -->
+                    <div class="step-content" id="create-product">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Create a Product</h2>
+                        <p class="mb-4">This endpoint creates a new product.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method post">POST</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProducts/createProduct</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>title</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>Title of the product</td>
+                                    </tr>
+                                    <tr>
+                                        <td>category_id</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>UUID of the product category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>description</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Description of the product</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_title</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta title</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_description</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta description</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_keywords</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta keywords (comma-separated)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>status</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Status of the product (published, pending, or draft). Defaults to published.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>featured</td>
+                                        <td>boolean</td>
+                                        <td>Optional</td>
+                                        <td>Whether the product is featured. Defaults to false.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>units_of_measure</td>
+                                        <td>array</td>
+                                        <td>Optional</td>
+                                        <td>Array of unit of measure objects with pricing</td>
+                                    </tr>
+                                    <tr>
+                                        <td>temp_images</td>
+                                        <td>array</td>
+                                        <td>Optional</td>
+                                        <td>Array of temporary image paths</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Sample Request</h3>
+                        <div class="code-block mb-6">
+                            <pre>curl -X POST "https://your-domain.com/admin/fetch/manageProducts/createProduct" \
+-H "Content-Type: application/json" \
+-d '{
+    <span class="json-key">"title"</span>: <span class="json-string">"Reinforced Steel Bars"</span>,
+    <span class="json-key">"category_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+    <span class="json-key">"description"</span>: <span class="json-string">"High-quality reinforced steel bars for concrete reinforcement"</span>,
+    <span class="json-key">"meta_title"</span>: <span class="json-string">"Reinforced Steel Bars | Materials"</span>,
+    <span class="json-key">"meta_description"</span>: <span class="json-string">"Premium reinforced steel bars for concrete structures"</span>,
+    <span class="json-key">"meta_keywords"</span>: <span class="json-string">"steel bars, rebar, reinforcement, materials"</span>,
+    <span class="json-key">"status"</span>: <span class="json-string">"published"</span>,
+    <span class="json-key">"featured"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"units_of_measure"</span>: [
+        {
+            <span class="json-key">"unit_of_measure_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0eb"</span>,
+            <span class="json-key">"price"</span>: <span class="json-number">750000</span>
+        }
+    ]
+}'</pre>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the success status, message, and the ID of the newly created product.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Product created successfully"</span>,
+    <span class="json-key">"id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0f1"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Invalid Category)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Invalid category selected"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Update Product -->
+                    <div class="step-content" id="update-product">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Update a Product</h2>
+                        <p class="mb-4">This endpoint updates an existing product.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method post">POST</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProducts/updateProduct</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>UUID of the product to update</td>
+                                    </tr>
+                                    <tr>
+                                        <td>title</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>Title of the product</td>
+                                    </tr>
+                                    <tr>
+                                        <td>category_id</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>UUID of the product category</td>
+                                    </tr>
+                                    <tr>
+                                        <td>description</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Description of the product</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_title</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta title</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_description</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta description</td>
+                                    </tr>
+                                    <tr>
+                                        <td>meta_keywords</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>SEO meta keywords (comma-separated)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>status</td>
+                                        <td>string</td>
+                                        <td>Optional</td>
+                                        <td>Status of the product (published, pending, or draft)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>featured</td>
+                                        <td>boolean</td>
+                                        <td>Optional</td>
+                                        <td>Whether the product is featured</td>
+                                    </tr>
+                                    <tr>
+                                        <td>units_of_measure</td>
+                                        <td>array</td>
+                                        <td>Optional</td>
+                                        <td>Array of unit of measure objects with pricing</td>
+                                    </tr>
+                                    <tr>
+                                        <td>update_images</td>
+                                        <td>boolean</td>
+                                        <td>Optional</td>
+                                        <td>Whether to update the product images</td>
+                                    </tr>
+                                    <tr>
+                                        <td>existing_images</td>
+                                        <td>array</td>
+                                        <td>Optional</td>
+                                        <td>Array of existing image URLs to keep</td>
+                                    </tr>
+                                    <tr>
+                                        <td>temp_images</td>
+                                        <td>array</td>
+                                        <td>Optional</td>
+                                        <td>Array of temporary image paths to add</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Sample Request</h3>
+                        <div class="code-block mb-6">
+                            <pre>curl -X POST "https://your-domain.com/admin/fetch/manageProducts/updateProduct" \
+-H "Content-Type: application/json" \
+-d '{
+    <span class="json-key">"id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed"</span>,
+    <span class="json-key">"title"</span>: <span class="json-string">"Premium Portland Cement"</span>,
+    <span class="json-key">"category_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+    <span class="json-key">"description"</span>: <span class="json-string">"High-quality Portland cement for all projects"</span>,
+    <span class="json-key">"meta_title"</span>: <span class="json-string">"Premium Portland Cement | Materials"</span>,
+    <span class="json-key">"meta_description"</span>: <span class="json-string">"Premium Portland cement for all your needs"</span>,
+    <span class="json-key">"meta_keywords"</span>: <span class="json-string">"portland cement, premium cement, cement, building materials"</span>,
+    <span class="json-key">"status"</span>: <span class="json-string">"published"</span>,
+    <span class="json-key">"featured"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"units_of_measure"</span>: [
+        {
+            <span class="json-key">"unit_of_measure_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e9"</span>,
+            <span class="json-key">"price"</span>: <span class="json-number">37500</span>
+        }
+    ]
+}'</pre>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the success status and a message.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Product updated successfully"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Product Not Found)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Product not found"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Delete Product -->
+                    <div class="step-content" id="delete-product">
+                        <h2 class="text-3xl font-bold text-secondary mb-6">Delete a Product</h2>
+                        <p class="mb-4">This endpoint deletes a product.</p>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">HTTP Request</h3>
+                        <div class="mb-2">
+                            <span class="http-method post">POST</span>
+                        </div>
+                        <div class="code-block mb-6">
+                            <code>https://your-domain.com/admin/fetch/manageProducts/deleteProduct</code>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Arguments</h3>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>id</td>
+                                        <td>string</td>
+                                        <td>Required</td>
+                                        <td>The UUID of the product to delete</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Sample Request</h3>
+                        <div class="code-block mb-6">
+                            <pre>curl -X POST "https://your-domain.com/admin/fetch/manageProducts/deleteProduct" \
+-H "Content-Type: application/json" \
+-d '{
+    <span class="json-key">"id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed"</span>
+}'</pre>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-secondary mt-8 mb-4">Response</h3>
+                        <p class="mb-4">Returns a JSON object containing the success status and a message.</p>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Sample Response</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Product deleted successfully"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Product Not Found)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Product not found"</span>
+}</pre>
+                        </div>
+
+                        <h4 class="text-lg font-medium text-secondary mt-6 mb-3">Error Response (Product In Use)</h4>
+                        <div class="code-block mb-6">
+                            <pre><span class="json-key">{
+    "success"</span>: <span class="json-boolean">false</span>,
+    <span class="json-key">"message"</span>: <span class="json-string">"Cannot delete this product because it is used elsewhere"</span>
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        $(document).ready(function() {
-            // Initialize variables
-            let currentSection = 'introduction-section';
-            let currentStep = 'introduction';
-            const sections = {
-                'introduction-section': ['introduction'],
-                'categories-section': ['categories-get', 'categories-get-single', 'categories-create', 'categories-update', 'categories-delete'],
-                'packages-section': ['packages-get-names', 'packages-get-name', 'packages-create-name', 'packages-update-name', 'packages-delete-name', 'packages-get-units', 'packages-get-unit', 'packages-create-unit', 'packages-update-unit', 'packages-delete-unit'],
-                'products-section': ['products-get', 'products-get-single', 'products-create', 'products-update', 'products-delete', 'products-toggle-featured']
-            };
-
-            // All steps in order
-            const allSteps = [].concat(...Object.values(sections));
-
-            // Initialize the UI
-            updateStepIndicator();
-
+        document.addEventListener('DOMContentLoaded', function() {
             // Mobile menu toggle
-            $('.mobile-nav-toggle').click(function() {
-                $('.sidebar').toggleClass('active');
-                $('.overlay').toggleClass('active');
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+
+            menuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('open');
             });
 
-            $('.overlay').click(function() {
-                $('.sidebar').removeClass('active');
-                $('.overlay').removeClass('active');
-            });
-
-            // Navigate to step when clicking on a nav link
-            $('.nav-link').click(function(e) {
-                e.preventDefault();
-                const targetId = $(this).attr('href').substring(1);
-                navigateToStep(targetId);
-
-                // Close mobile menu after navigation
-                $('.sidebar').removeClass('active');
-                $('.overlay').removeClass('active');
-            });
-
-            // Next button action
-            $('#next-btn').click(function() {
-                const currentIndex = allSteps.indexOf(currentStep);
-                if (currentIndex < allSteps.length - 1) {
-                    navigateToStep(allSteps[currentIndex + 1]);
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768 && !sidebar.contains(event.target) && event.target !== menuToggle) {
+                    sidebar.classList.remove('open');
                 }
             });
 
-            // Previous button action
-            $('#prev-btn').click(function() {
-                const currentIndex = allSteps.indexOf(currentStep);
-                if (currentIndex > 0) {
-                    navigateToStep(allSteps[currentIndex - 1]);
-                }
-            });
+            // Navigation links
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
 
-            // Function to navigate to a specific step
-            function navigateToStep(stepId) {
-                // Find which section contains this step
-                let targetSection = '';
-                for (const [section, steps] of Object.entries(sections)) {
-                    if (steps.includes(stepId)) {
-                        targetSection = section;
-                        break;
+                    // Remove active class from all links
+                    navLinks.forEach(l => l.classList.remove('active'));
+
+                    // Add active class to clicked link
+                    this.classList.add('active');
+
+                    // Get the target section ID
+                    const targetId = this.getAttribute('href').substring(1);
+
+                    // Find the index of the target section
+                    const steps = document.querySelectorAll('.step-content');
+                    let targetIndex = 0;
+                    steps.forEach((step, index) => {
+                        if (step.id === targetId) {
+                            targetIndex = index;
+                        }
+                    });
+
+                    // Update current step
+                    currentStep = targetIndex + 1;
+                    updateStepIndicator();
+
+                    // Show the target section
+                    showStep(currentStep);
+
+                    // Close sidebar on mobile
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('open');
                     }
+                });
+            });
+
+            // Step navigation
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const steps = document.querySelectorAll('.step-content');
+            const totalStepsEl = document.getElementById('totalSteps');
+            const currentStepEl = document.getElementById('currentStep');
+
+            let currentStep = 1;
+            totalStepsEl.textContent = steps.length;
+            currentStepEl.textContent = currentStep;
+
+            prevBtn.addEventListener('click', function() {
+                if (currentStep > 1) {
+                    currentStep--;
+                    showStep(currentStep);
+                    updateStepIndicator();
                 }
+            });
 
-                if (!targetSection) return;
-
-                // Update active section if needed
-                if (targetSection !== currentSection) {
-                    $('.section').removeClass('active');
-                    $(`#${targetSection}`).addClass('active');
-                    currentSection = targetSection;
+            nextBtn.addEventListener('click', function() {
+                if (currentStep < steps.length) {
+                    currentStep++;
+                    showStep(currentStep);
+                    updateStepIndicator();
                 }
+            });
 
-                // Update active step
-                $('.step').removeClass('active');
-                $(`#${stepId}`).addClass('active');
-                currentStep = stepId;
+            function showStep(stepNumber) {
+                steps.forEach(step => step.classList.remove('active'));
+                steps[stepNumber - 1].classList.add('active');
 
-                // Update navigation buttons and step indicator
-                updateStepIndicator();
+                // Update navigation buttons
+                prevBtn.disabled = stepNumber === 1;
+                nextBtn.disabled = stepNumber === steps.length;
 
-                // Update active navigation link
-                $('.nav-link').parent().removeClass('active');
-                $(`.nav-link[href="#${stepId}"]`).parent().addClass('active');
+                // Update active nav link
+                const currentStepId = steps[stepNumber - 1].id;
+                navLinks.forEach(link => {
+                    const linkTarget = link.getAttribute('href').substring(1);
+                    if (linkTarget === currentStepId) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
 
                 // Scroll to top
                 window.scrollTo(0, 0);
             }
 
-            // Update step indicator and navigation buttons
             function updateStepIndicator() {
-                const currentIndex = allSteps.indexOf(currentStep);
-                const totalSteps = allSteps.length;
-
-                // Update step indicator
-                $('#step-indicator').text(`Step ${currentIndex + 1} of ${totalSteps}`);
-
-                // Update button states
-                $('#prev-btn').prop('disabled', currentIndex === 0).css('opacity', currentIndex === 0 ? 0.5 : 1);
-                $('#next-btn').prop('disabled', currentIndex === totalSteps - 1).css('opacity', currentIndex === totalSteps - 1 ? 0.5 : 1);
+                currentStepEl.textContent = currentStep;
             }
-
-            // Handle keyboard navigation
-            $(document).keydown(function(e) {
-                // Right arrow key for next, left arrow key for previous
-                if (e.keyCode === 39) { // Right arrow
-                    $('#next-btn').click();
-                } else if (e.keyCode === 37) { // Left arrow
-                    $('#prev-btn').click();
-                }
-            });
-
-            // Format JSON code blocks
-            $('.json').each(function() {
-                // The syntax highlighting is already applied in the HTML
-            });
         });
     </script>
 </body>
