@@ -73,46 +73,60 @@ class Mailer
                     <title>Zzimba Online Email</title>
                     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
                 </head>
-                <body style="margin: 0; padding: 0; font-family: 'Rubik', sans-serif; background-color: #f5f5f5; color: #1f2937;">
-                    <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px;">
-                        <div style="background-color: #D92B13; padding: 24px; text-align: center; border-top-left-radius: 8px; border-top-right-radius: 8px;">
-                            <img src="https://newzzimba.zzimbaonline.com/img/logo.png" alt="Zzimba Online Logo" style="max-width: 200px; height: auto;">
+                <body style="margin: 0; padding: 0; font-family: 'Rubik', sans-serif; background-color: #f8f9fa; color: #1f2937; line-height: 1.6;">
+                    <div style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+                        <!-- Header -->
+                        <div style="background-color: #D92B13; padding: 24px; text-align: center; border-top-left-radius: 4px; border-top-right-radius: 4px;">
+                            <img src="https://newzzimba.zzimbaonline.com/img/logo.png" alt="Zzimba Online Logo" style="max-width: 180px; height: auto;">
                         </div>
-                        <div style="background-color: #ffffff; padding: 32px 24px; color: #4b5563; font-size: 16px; line-height: 1.625; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb;">
+                        
+                        <!-- Content Area -->
+                        <div style="background-color: #ffffff; padding: 40px 30px; color: #4b5563; font-size: 16px; line-height: 1.7; border-left: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6;">
                 HTML;
 
                 $htmlFooter = <<<HTML
                         </div>
-                        <div style="padding: 24px; text-align: center; margin-top: 20px;">
-                            <div style="margin-bottom: 16px;">
-                                <a href="https://facebook.com/zzimbaonline" style="display: inline-block; margin: 0 8px; color: #D92B13; text-decoration: none; font-size: 20px; font-weight: bold;">
-                                    &#xf39e;
+                        
+                        <!-- Call to Action -->
+                        <div style="background-color: #f9fafb; padding: 0 30px; text-align: center; border-top: 1px solid #f3f4f6;">
+                            <a href="https://zzimbaonline.com" style="display: inline-block; padding: 10px 24px; background-color: #D92B13; color: #ffffff; text-decoration: none; font-weight: 500; border-radius: 4px; font-size: 15px;">Visit Our Website</a>
+                        </div>
+                        
+                        <!-- Social Media -->
+                        <div style="padding: 0 30px; text-align: center; background-color: #ffffff; border-bottom: 1px solid #f3f4f6;">
+                            <p style="margin-bottom: 15px; font-size: 15px; color: #6b7280; font-weight: 500;">Connect With Us</p>
+                            <div>
+                                <a href="https://facebook.com/zzimbaonline" style="display: inline-block; margin: 0 10px; color: #4b5563; text-decoration: none;">
+                                    <img src="https://cdn-icons-png.flaticon.com/128/733/733547.png" alt="Facebook" style="width: 24px; height: 24px;">
                                 </a>
-                                <a href="https://twitter.com/zzimbaonline" style="display: inline-block; margin: 0 8px; color: #D92B13; text-decoration: none; font-size: 20px; font-weight: bold;">
-                                    &#x1F426;
+                                <a href="https://twitter.com/zzimbaonline" style="display: inline-block; margin: 0 10px; color: #4b5563; text-decoration: none;">
+                                    <img src="https://cdn-icons-png.flaticon.com/128/733/733579.png" alt="Twitter" style="width: 24px; height: 24px;">
                                 </a>
-                                <a href="https://instagram.com/zzimbaonline" style="display: inline-block; margin: 0 8px; color: #D92B13; text-decoration: none; font-size: 20px; font-weight: bold;">
-                                    &#x1F4F7;
+                                <a href="https://instagram.com/zzimbaonline" style="display: inline-block; margin: 0 10px; color: #4b5563; text-decoration: none;">
+                                    <img src="https://cdn-icons-png.flaticon.com/128/733/733558.png" alt="Instagram" style="width: 24px; height: 24px;">
                                 </a>
-                                <a href="https://linkedin.com/company/zzimbaonline" style="display: inline-block; margin: 0 8px; color: #D92B13; text-decoration: none; font-size: 20px; font-weight: bold;">
-                                    in
+                                <a href="https://linkedin.com/company/zzimbaonline" style="display: inline-block; margin: 0 10px; color: #4b5563; text-decoration: none;">
+                                    <img src="https://cdn-icons-png.flaticon.com/128/3536/3536505.png" alt="LinkedIn" style="width: 24px; height: 24px;">
                                 </a>
                             </div>
-                            <div style="margin-bottom: 16px; font-size: 14px; color: #6b7280;">
-                                <p style="margin: 4px 0;">
-                                    <a href="https://zzimbaonline.com" style="color: #D92B13; text-decoration: none; font-weight: 500;">zzimbaonline.com</a>
-                                </p>
-                                <p style="margin: 4px 0;">Phone: +256 392 003-406</p>
-                                <p style="margin: 4px 0;">Email: info@zzimbaonline.com</p>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div style="padding: 0 30px; text-align: center; background-color: #f9fafb; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;">
+                            <div style="margin-bottom: 15px; font-size: 14px; color: #6b7280; line-height: 1.6;">
+                                <p style="margin: 5px 0;">Phone: +256 392 003-406</p>
+                                <p style="margin: 5px 0;">Email: info@zzimbaonline.com</p>
                             </div>
-                            <div style="font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 16px;">
-                                <p style="margin: 4px 0;">&copy; ${currentYear} Zzimba Online. All rights reserved.</p>
-                                <p style="margin: 4px 0;">
-                                    <a href="https://zzimbaonline.com/privacy-policy" style="color: #D92B13; text-decoration: none;">Privacy Policy</a> | 
-                                    <a href="https://zzimbaonline.com/terms" style="color: #D92B13; text-decoration: none;">Terms of Service</a>
+                            <div style="font-size: 13px; color: #9ca3af; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                                <p style="margin: 5px 0;">&copy; ${currentYear} Zzimba Online. All rights reserved.</p>
+                                <p style="margin: 8px 0;">
+                                    <a href="https://zzimbaonline.com/terms-and-conditions" style="color: #6b7280; text-decoration: none; margin: 0 8px;">Terms of Service</a>
                                 </p>
                             </div>
                         </div>
+                    </div>
+                    <div style="text-align: center; padding: 0 20px; font-size: 12px; color: #9ca3af;">
+                        <p>If you did not request this email, please disregard it or contact our support team.</p>
                     </div>
                 </body>
                 </html>
