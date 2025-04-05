@@ -174,6 +174,43 @@ function sendPasswordResetOTP($email, $otp)
     return Mailer::sendMail($email, $subject, $content);
 }
 
+function sendPasswordChangedEmail($email, $username = null)
+{
+    $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
+    $subject = 'Password Changed - Zzimba Online';
+
+    $greeting = $username ? 'Dear ' . htmlspecialchars($username) . ',' : 'Hello,';
+
+    $content = '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #d32f2f; text-align: center;">Password Changed</h2>
+            
+            <p>' . $greeting . '</p>
+            
+            <p>Your password for Zzimba Online has been successfully changed on ' . $now . ' (East Africa Time).</p>
+            
+            <div style="background-color: #f5f5f5; border-radius: 5px; padding: 15px; margin: 20px 0;">
+                <p><strong>If you made this change:</strong> You can disregard this email. Your account is secure.</p>
+                <p><strong>If you did NOT make this change:</strong> Please contact our support team immediately as your account may have been compromised.</p>
+            </div>
+            
+            <p>For security reasons, we recommend:</p>
+            <ul>
+                <li>Regularly updating your password</li>
+                <li>Not sharing your password with others</li>
+                <li>Using unique passwords for different websites</li>
+            </ul>
+            
+            <p>If you have any questions or concerns, please don\'t hesitate to contact our support team.</p>
+            
+            <p>Best regards,<br>
+            The Zzimba Online Team</p>
+        </div>
+    ';
+
+    return Mailer::sendMail($email, $subject, $content);
+}
+
 function createOTP($type, $account, $pdo)
 {
     // Delete any existing OTP for this account and type
@@ -727,13 +764,13 @@ try {
             }
 
             // Check if email exists in admin_users
-            $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE email = :email");
+            $stmt = $pdo->prepare("SELECT id, username FROM admin_users WHERE email = :email");
             $stmt->bindParam(':email', $contact);
             $stmt->execute();
             $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
             // Check if email exists in zzimba_users
-            $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE email = :email");
+            $stmt = $pdo->prepare("SELECT id, username FROM zzimba_users WHERE email = :email");
             $stmt->bindParam(':email', $contact);
             $stmt->execute();
             $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -747,19 +784,25 @@ try {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
 
+            $username = null;
             if ($adminUser) {
                 $stmt = $pdo->prepare("UPDATE admin_users SET password = :password, updated_at = :updated_at WHERE id = :id");
                 $stmt->bindParam(':password', $hashedPassword);
                 $stmt->bindParam(':updated_at', $now);
                 $stmt->bindParam(':id', $adminUser['id'], PDO::PARAM_LOB);
                 $stmt->execute();
+                $username = $adminUser['username'];
             } else {
                 $stmt = $pdo->prepare("UPDATE zzimba_users SET password = :password, updated_at = :updated_at WHERE id = :id");
                 $stmt->bindParam(':password', $hashedPassword);
                 $stmt->bindParam(':updated_at', $now);
                 $stmt->bindParam(':id', $zzimbaUser['id'], PDO::PARAM_LOB);
                 $stmt->execute();
+                $username = $zzimbaUser['username'];
             }
+
+            // Send password changed notification email
+            sendPasswordChangedEmail($contact, $username);
 
             echo json_encode(['success' => true, 'message' => 'Password reset successfully']);
             break;

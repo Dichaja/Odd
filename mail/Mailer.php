@@ -70,15 +70,10 @@ class Mailer
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Zzimba Online Email</title>
                     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
                 </head>
                 <body style="margin: 0; padding: 0; font-family: 'Rubik', sans-serif; background-color: #f8f9fa; color: #1f2937; line-height: 1.6;">
                     <div style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-                        <!-- Header -->
-                        <div style="background-color: #D92B13; padding: 24px; text-align: center; border-top-left-radius: 4px; border-top-right-radius: 4px;">
-                            <img src="https://newzzimba.zzimbaonline.com/img/logo.png" alt="Zzimba Online Logo" style="max-width: 180px; height: auto;">
-                        </div>
                         
                         <!-- Content Area -->
                         <div style="background-color: #ffffff; padding: 40px 30px; color: #4b5563; font-size: 16px; line-height: 1.7; border-left: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6;">
