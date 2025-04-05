@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../mail/Mailer.php';
+
+use ZzimbaOnline\Mail\Mailer;
 
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
@@ -41,9 +44,39 @@ try {
         created_at DATETIME NOT NULL,
         updated_at DATETIME NOT NULL
     )");
+
+    // Create OTP table if it doesn't exist
+    $pdo->exec("CREATE TABLE IF NOT EXISTS otp_verifications (
+        id BINARY(16) PRIMARY KEY,
+        type ENUM('email', 'phone') NOT NULL,
+        account VARCHAR(100) NOT NULL,
+        otp VARCHAR(255) NOT NULL,
+        created_at DATETIME NOT NULL,
+        expires_at DATETIME NOT NULL,
+        INDEX (account, type)
+    )");
 } catch (PDOException $e) {
     error_log("Table creation error: " . $e->getMessage());
     die(json_encode(['success' => false, 'errors' => ['Database setup failed']]));
+}
+
+function generateUuidV7()
+{
+    $time = microtime(true);
+    $time = floor($time * 1000);
+    $time = dechex($time);
+    $time = str_pad($time, 12, '0', STR_PAD_LEFT);
+
+    $random = bin2hex(random_bytes(10));
+
+    $uuid = $time . $random;
+    $uuid = substr($uuid, 0, 8) . '-' .
+        substr($uuid, 8, 4) . '-' .
+        '7' . substr($uuid, 13, 3) . '-' .
+        dechex(rand(8, 11)) . substr($uuid, 17, 3) . '-' .
+        substr($uuid, 20, 12);
+
+    return hex2bin(str_replace('-', '', $uuid));
 }
 
 function generateOTP($length = 6)
@@ -77,11 +110,127 @@ function isStrongPassword($password)
 
 function sendEmailOTP($email, $otp)
 {
-    return true;
+    $subject = 'Your Verification Code - Zzimba Online';
+    $content = '
+        <div style="text-align: center; padding: 20px 0;">
+            <h2>Email Verification</h2>
+            <p>Thank you for registering with Zzimba Online. Please use the verification code below to complete your registration:</p>
+            <div style="margin: 30px auto; padding: 10px; background-color: #f5f5f5; border-radius: 5px; width: 200px; text-align: center;">
+                <h1 style="letter-spacing: 5px; font-size: 32px; margin: 0;">' . $otp . '</h1>
+            </div>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you did not request this code, please ignore this email.</p>
+        </div>
+    ';
+
+    return Mailer::sendMail($email, $subject, $content);
 }
 
-function sendSMSOTP($phone, $otp)
+function sendWelcomeEmail($username, $email, $phone)
 {
+    $subject = 'Welcome to Zzimba Online!';
+    $content = '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #d32f2f; text-align: center;">Welcome to Zzimba Online!</h2>
+            
+            <p>Dear ' . htmlspecialchars($username) . ',</p>
+            
+            <p>Thank you for creating an account with Zzimba Online. We\'re excited to have you join our community!</p>
+            
+            <div style="background-color: #f5f5f5; border-radius: 5px; padding: 15px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Your Account Information:</h3>
+                <p><strong>Username:</strong> ' . htmlspecialchars($username) . '</p>
+                <p><strong>Email:</strong> ' . htmlspecialchars($email) . '</p>
+                <p><strong>Phone:</strong> ' . htmlspecialchars($phone) . '</p>
+            </div>
+            
+            <p>We recommend updating your profile information after you log in to enhance your experience with our platform.</p>
+            
+            <p>If you have any questions or need assistance, please don\'t hesitate to contact our support team.</p>
+            
+            <p>Best regards,<br>
+            The Zzimba Online Team</p>
+        </div>
+    ';
+
+    return Mailer::sendMail($email, $subject, $content);
+}
+
+function sendPasswordResetOTP($email, $otp)
+{
+    $subject = 'Password Reset Code - Zzimba Online';
+    $content = '
+        <div style="text-align: center; padding: 20px 0;">
+            <h2>Password Reset</h2>
+            <p>You have requested to reset your password. Please use the verification code below to continue:</p>
+            <div style="margin: 30px auto; padding: 10px; background-color: #f5f5f5; border-radius: 5px; width: 200px; text-align: center;">
+                <h1 style="letter-spacing: 5px; font-size: 32px; margin: 0;">' . $otp . '</h1>
+            </div>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you did not request this code, please ignore this email or contact our support team if you believe this is unauthorized activity.</p>
+        </div>
+    ';
+
+    return Mailer::sendMail($email, $subject, $content);
+}
+
+function createOTP($type, $account, $pdo)
+{
+    // Delete any existing OTP for this account and type
+    $stmt = $pdo->prepare("DELETE FROM otp_verifications WHERE account = :account AND type = :type");
+    $stmt->bindParam(':account', $account);
+    $stmt->bindParam(':type', $type);
+    $stmt->execute();
+
+    // Generate a new OTP
+    $otp = generateOTP();
+    $hashedOTP = password_hash($otp, PASSWORD_DEFAULT);
+    $id = generateUuidV7();
+    $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
+    $expires = (new DateTime('now +10 minutes', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
+
+    // Insert the new OTP
+    $stmt = $pdo->prepare("INSERT INTO otp_verifications (id, type, account, otp, created_at, expires_at) VALUES (:id, :type, :account, :otp, :created_at, :expires_at)");
+    $stmt->bindParam(':id', $id, PDO::PARAM_LOB);
+    $stmt->bindParam(':type', $type);
+    $stmt->bindParam(':account', $account);
+    $stmt->bindParam(':otp', $hashedOTP);
+    $stmt->bindParam(':created_at', $now);
+    $stmt->bindParam(':expires_at', $expires);
+    $stmt->execute();
+
+    return $otp;
+}
+
+function verifyOTP($type, $account, $otp, $pdo)
+{
+    $stmt = $pdo->prepare("SELECT otp, expires_at FROM otp_verifications WHERE account = :account AND type = :type");
+    $stmt->bindParam(':account', $account);
+    $stmt->bindParam(':type', $type);
+    $stmt->execute();
+
+    if ($stmt->rowCount() === 0) {
+        return false;
+    }
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $expires = new DateTime($row['expires_at'], new DateTimeZone('+03:00'));
+    $now = new DateTime('now', new DateTimeZone('+03:00'));
+
+    if ($now > $expires) {
+        return false;
+    }
+
+    if (!password_verify($otp, $row['otp'])) {
+        return false;
+    }
+
+    // Delete the OTP after successful verification
+    $stmt = $pdo->prepare("DELETE FROM otp_verifications WHERE account = :account AND type = :type");
+    $stmt->bindParam(':account', $account);
+    $stmt->bindParam(':type', $type);
+    $stmt->execute();
+
     return true;
 }
 
@@ -333,15 +482,26 @@ try {
             }
 
             $email = $data['email'];
-            $otp = generateOTP();
 
-            $_SESSION['email_otp'] = $otp;
-            $_SESSION['email_otp_time'] = time();
-            $_SESSION['email_for_otp'] = $email;
+            if (!isValidEmail($email)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid email format']);
+                break;
+            }
 
-            sendEmailOTP($email, $otp);
+            // Create OTP and store it in the database
+            $otp = createOTP('email', $email, $pdo);
 
-            echo json_encode(['success' => true, 'message' => 'OTP sent to email', 'otp' => $otp]);
+            // Send the OTP via email
+            $emailSent = sendEmailOTP($email, $otp);
+
+            if (!$emailSent) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to send verification code. Please try again.']);
+                break;
+            }
+
+            echo json_encode(['success' => true, 'message' => 'OTP sent to email']);
             break;
 
         case 'verifyEmailOTP':
@@ -353,79 +513,32 @@ try {
             $email = $data['email'];
             $otp = $data['otp'];
 
-            if (!isset($_SESSION['email_otp']) || !isset($_SESSION['email_for_otp']) || $_SESSION['email_for_otp'] !== $email) {
+            if (!isValidEmail($email)) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid verification attempt']);
+                echo json_encode(['success' => false, 'message' => 'Invalid email format']);
                 break;
             }
 
-            if (time() - $_SESSION['email_otp_time'] > 600) {
+            // Verify the OTP
+            $isValid = verifyOTP('email', $email, $otp, $pdo);
+
+            if (!$isValid) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'OTP has expired. Please request a new one.']);
+                echo json_encode(['success' => false, 'message' => 'Invalid or expired verification code']);
                 break;
             }
-
-            if ($_SESSION['email_otp'] !== $otp) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid OTP']);
-                break;
-            }
-
-            unset($_SESSION['email_otp']);
-            unset($_SESSION['email_otp_time']);
 
             echo json_encode(['success' => true, 'message' => 'Email verified successfully']);
             break;
 
         case 'sendPhoneOTP':
-            if (!isset($data['phone'])) {
-                http_response_code(400);
-                die(json_encode(['success' => false, 'message' => 'Missing phone number']));
-            }
-
-            $phone = $data['phone'];
-            $otp = generateOTP();
-
-            $_SESSION['phone_otp'] = $otp;
-            $_SESSION['phone_otp_time'] = time();
-            $_SESSION['phone_for_otp'] = $phone;
-
-            sendSMSOTP($phone, $otp);
-
-            echo json_encode(['success' => true, 'message' => 'OTP sent to phone', 'otp' => $otp]);
+            http_response_code(503);
+            echo json_encode(['success' => false, 'message' => 'Phone verification is currently under maintenance. Please use email verification.']);
             break;
 
         case 'verifyPhoneOTP':
-            if (!isset($data['phone']) || !isset($data['otp'])) {
-                http_response_code(400);
-                die(json_encode(['success' => false, 'message' => 'Missing required fields']));
-            }
-
-            $phone = $data['phone'];
-            $otp = $data['otp'];
-
-            if (!isset($_SESSION['phone_otp']) || !isset($_SESSION['phone_for_otp']) || $_SESSION['phone_for_otp'] !== $phone) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid verification attempt']);
-                break;
-            }
-
-            if (time() - $_SESSION['phone_otp_time'] > 600) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'OTP has expired. Please request a new one.']);
-                break;
-            }
-
-            if ($_SESSION['phone_otp'] !== $otp) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid OTP']);
-                break;
-            }
-
-            unset($_SESSION['phone_otp']);
-            unset($_SESSION['phone_otp_time']);
-
-            echo json_encode(['success' => true, 'message' => 'Phone verified successfully']);
+            http_response_code(503);
+            echo json_encode(['success' => false, 'message' => 'Phone verification is currently under maintenance. Please use email verification.']);
             break;
 
         case 'register':
@@ -489,6 +602,9 @@ try {
             $stmt->bindParam(':updated_at', $now);
             $stmt->execute();
 
+            // Send welcome email to the user
+            sendWelcomeEmail($username, $email, $phone);
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Registration successful! Please login with your new credentials.',
@@ -504,60 +620,48 @@ try {
 
             $email = $data['email'];
 
-            $stmt = $pdo->prepare("SELECT id, 'admin' as type FROM admin_users WHERE email = :email UNION SELECT id, 'user' as type FROM zzimba_users WHERE email = :email");
+            if (!isValidEmail($email)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid email format']);
+                break;
+            }
+
+            // Check if email exists in admin_users
+            $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE email = :email");
             $stmt->bindParam(':email', $email);
             $stmt->execute();
+            $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($stmt->rowCount() === 0) {
+            // Check if email exists in zzimba_users
+            $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE email = :email");
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+            $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$adminUser && !$zzimbaUser) {
                 http_response_code(404);
                 echo json_encode(['success' => false, 'message' => 'Email not found']);
                 break;
             }
 
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            $otp = generateOTP();
+            // Create OTP and store it in the database
+            $otp = createOTP('email', $email, $pdo);
 
-            $_SESSION['reset_otp'] = $otp;
-            $_SESSION['reset_otp_time'] = time();
-            $_SESSION['reset_email'] = $email;
-            $_SESSION['reset_user_type'] = $user['type'];
-            $_SESSION['reset_user_id'] = $user['id'];
+            // Send the OTP via email
+            $emailSent = sendPasswordResetOTP($email, $otp);
 
-            sendEmailOTP($email, $otp);
-
-            echo json_encode(['success' => true, 'message' => 'Reset code sent to email', 'otp' => $otp]);
-            break;
-
-        case 'sendResetPhone':
-            if (!isset($data['phone'])) {
-                http_response_code(400);
-                die(json_encode(['success' => false, 'message' => 'Missing phone number']));
-            }
-
-            $phone = $data['phone'];
-
-            $stmt = $pdo->prepare("SELECT id, 'admin' as type FROM admin_users WHERE phone = :phone UNION SELECT id, 'user' as type FROM zzimba_users WHERE phone = :phone");
-            $stmt->bindParam(':phone', $phone);
-            $stmt->execute();
-
-            if ($stmt->rowCount() === 0) {
-                http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'Phone number not found']);
+            if (!$emailSent) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to send reset code. Please try again.']);
                 break;
             }
 
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            $otp = generateOTP();
+            echo json_encode(['success' => true, 'message' => 'Reset code sent to email']);
+            break;
 
-            $_SESSION['reset_otp'] = $otp;
-            $_SESSION['reset_otp_time'] = time();
-            $_SESSION['reset_phone'] = $phone;
-            $_SESSION['reset_user_type'] = $user['type'];
-            $_SESSION['reset_user_id'] = $user['id'];
-
-            sendSMSOTP($phone, $otp);
-
-            echo json_encode(['success' => true, 'message' => 'Reset code sent to phone', 'otp' => $otp]);
+        case 'sendResetPhone':
+            http_response_code(503);
+            echo json_encode(['success' => false, 'message' => 'Phone verification is currently under maintenance. Please use email verification.']);
             break;
 
         case 'verifyResetOTP':
@@ -570,29 +674,24 @@ try {
             $contactType = $data['contactType'];
             $otp = $data['otp'];
 
-            if ($contactType === 'email') {
-                if (!isset($_SESSION['reset_otp']) || !isset($_SESSION['reset_email']) || $_SESSION['reset_email'] !== $contact) {
-                    http_response_code(400);
-                    echo json_encode(['success' => false, 'message' => 'Invalid verification attempt']);
-                    break;
-                }
-            } else {
-                if (!isset($_SESSION['reset_otp']) || !isset($_SESSION['reset_phone']) || $_SESSION['reset_phone'] !== $contact) {
-                    http_response_code(400);
-                    echo json_encode(['success' => false, 'message' => 'Invalid verification attempt']);
-                    break;
-                }
-            }
-
-            if (time() - $_SESSION['reset_otp_time'] > 600) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'OTP has expired. Please request a new one.']);
+            if ($contactType !== 'email') {
+                http_response_code(503);
+                echo json_encode(['success' => false, 'message' => 'Phone verification is currently under maintenance. Please use email verification.']);
                 break;
             }
 
-            if ($_SESSION['reset_otp'] !== $otp) {
+            if (!isValidEmail($contact)) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid OTP']);
+                echo json_encode(['success' => false, 'message' => 'Invalid email format']);
+                break;
+            }
+
+            // Verify the OTP
+            $isValid = verifyOTP('email', $contact, $otp, $pdo);
+
+            if (!$isValid) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid or expired verification code']);
                 break;
             }
 
@@ -609,23 +708,15 @@ try {
             $contactType = $data['contactType'];
             $password = $data['password'];
 
-            if ($contactType === 'email') {
-                if (!isset($_SESSION['reset_email']) || $_SESSION['reset_email'] !== $contact) {
-                    http_response_code(400);
-                    echo json_encode(['success' => false, 'message' => 'Invalid reset attempt']);
-                    break;
-                }
-            } else {
-                if (!isset($_SESSION['reset_phone']) || $_SESSION['reset_phone'] !== $contact) {
-                    http_response_code(400);
-                    echo json_encode(['success' => false, 'message' => 'Invalid reset attempt']);
-                    break;
-                }
+            if ($contactType !== 'email') {
+                http_response_code(503);
+                echo json_encode(['success' => false, 'message' => 'Phone verification is currently under maintenance. Please use email verification.']);
+                break;
             }
 
-            if (!isset($_SESSION['reset_user_type']) || !isset($_SESSION['reset_user_id'])) {
+            if (!isValidEmail($contact)) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid reset attempt']);
+                echo json_encode(['success' => false, 'message' => 'Invalid email format']);
                 break;
             }
 
@@ -635,22 +726,40 @@ try {
                 break;
             }
 
+            // Check if email exists in admin_users
+            $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE email = :email");
+            $stmt->bindParam(':email', $contact);
+            $stmt->execute();
+            $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Check if email exists in zzimba_users
+            $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE email = :email");
+            $stmt->bindParam(':email', $contact);
+            $stmt->execute();
+            $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$adminUser && !$zzimbaUser) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'User not found']);
+                break;
+            }
+
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
 
-            $table = ($_SESSION['reset_user_type'] === 'admin') ? 'admin_users' : 'zzimba_users';
-            $stmt = $pdo->prepare("UPDATE $table SET password = :password, updated_at = :updated_at WHERE id = :id");
-            $stmt->bindParam(':password', $hashedPassword);
-            $stmt->bindParam(':updated_at', $now);
-            $stmt->bindParam(':id', $_SESSION['reset_user_id'], PDO::PARAM_LOB);
-            $stmt->execute();
-
-            unset($_SESSION['reset_otp']);
-            unset($_SESSION['reset_otp_time']);
-            unset($_SESSION['reset_email']);
-            unset($_SESSION['reset_phone']);
-            unset($_SESSION['reset_user_type']);
-            unset($_SESSION['reset_user_id']);
+            if ($adminUser) {
+                $stmt = $pdo->prepare("UPDATE admin_users SET password = :password, updated_at = :updated_at WHERE id = :id");
+                $stmt->bindParam(':password', $hashedPassword);
+                $stmt->bindParam(':updated_at', $now);
+                $stmt->bindParam(':id', $adminUser['id'], PDO::PARAM_LOB);
+                $stmt->execute();
+            } else {
+                $stmt = $pdo->prepare("UPDATE zzimba_users SET password = :password, updated_at = :updated_at WHERE id = :id");
+                $stmt->bindParam(':password', $hashedPassword);
+                $stmt->bindParam(':updated_at', $now);
+                $stmt->bindParam(':id', $zzimbaUser['id'], PDO::PARAM_LOB);
+                $stmt->execute();
+            }
 
             echo json_encode(['success' => true, 'message' => 'Password reset successfully']);
             break;

@@ -113,7 +113,7 @@ function getStepTitle($mode, $step)
                 </div>
                 <div id="register-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" onclick="handleRegisterEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            <button type="button" id="register-email-submit-btn" onclick="handleRegisterEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
         </form>
     </div>
 </div>
@@ -145,9 +145,8 @@ function getStepTitle($mode, $step)
                     <button type="button" id="resend-email-otp" class="text-primary hover:text-red-700 text-sm">Resend</button>
                     <span id="email-otp-timer" class="text-sm"></span>
                 </p>
-                <p class="mt-2 text-xs text-gray-500 text-center">For demo purposes, the code is: <span id="demo-email-otp"></span></p>
             </div>
-            <button type="button" onclick="handleEmailOTPSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify Email</button>
+            <button type="button" id="email-otp-submit-btn" onclick="handleEmailOTPSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify Email</button>
         </form>
     </div>
 </div>
@@ -157,50 +156,14 @@ function getStepTitle($mode, $step)
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'phone') ?></h2>
             <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
         </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('email-verify')" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
-        </p>
+        <!-- Removed back button as requested -->
         <form id="register-phone-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="phone">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                 <input type="tel" id="phone" name="phone" required placeholder="Phone Number" class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
                 <div id="register-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" onclick="handleRegisterPhoneSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
-        </form>
-    </div>
-</div>
-<div id="register-step-phone-verify" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'phone-verify') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('phone')" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
-        </p>
-        <form id="register-phone-verify-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="phone-verify">
-            <div>
-                <p class="mb-4 text-center">We've sent a verification code to <strong id="register-phone-display"></strong></p>
-                <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-                <div class="flex justify-between gap-2 mb-2">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="phone-otp" autofocus>
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="phone-otp">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="phone-otp">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="phone-otp">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="phone-otp">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="phone-otp">
-                </div>
-                <input type="hidden" id="phone-otp" value="">
-                <div id="phone-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                <p class="mt-2 text-sm text-gray-500 text-center">
-                    Didn't receive the code?
-                    <button type="button" id="resend-phone-otp" class="text-primary hover:text-red-700 text-sm">Resend</button>
-                    <span id="phone-otp-timer" class="text-sm"></span>
-                </p>
-                <p class="mt-2 text-xs text-gray-500 text-center">For demo purposes, the code is: <span id="demo-phone-otp"></span></p>
-            </div>
-            <button type="button" onclick="handlePhoneOTPSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify Phone</button>
+            <button type="button" id="register-phone-submit-btn" onclick="handleRegisterPhoneSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
         </form>
     </div>
 </div>
@@ -211,7 +174,7 @@ function getStepTitle($mode, $step)
             <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('phone-verify')" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+            <a href="javascript:void(0)" onclick="showRegisterStep('phone')" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
         </p>
         <form id="register-password-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="password">
             <div>
@@ -242,7 +205,7 @@ function getStepTitle($mode, $step)
                     <a href="#" class="text-primary hover:text-red-700">Privacy Policy</a>
                 </span>
             </div>
-            <button type="button" onclick="handleRegisterPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Create Account</button>
+            <button type="button" id="register-password-submit-btn" onclick="handleRegisterPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Create Account</button>
         </form>
     </div>
 </div>
@@ -267,10 +230,10 @@ function getStepTitle($mode, $step)
                         </div>
                     </label>
                     <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="reset_method" value="phone" class="mr-3 text-primary focus:ring-primary">
+                        <input type="radio" name="reset_method" value="phone" class="mr-3 text-primary focus:ring-primary" disabled>
                         <div>
-                            <p class="font-medium">Phone</p>
-                            <p class="text-sm text-gray-500">Receive a verification code via SMS</p>
+                            <p class="font-medium text-gray-400">Phone (Currently Unavailable)</p>
+                            <p class="text-sm text-gray-400">Phone verification is under maintenance</p>
                         </div>
                     </label>
                 </div>
@@ -300,26 +263,7 @@ function getStepTitle($mode, $step)
                 </div>
                 <div id="forgot-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" onclick="handleForgotEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset Code</button>
-        </form>
-    </div>
-</div>
-<div id="forgot-password-phone-form" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'phone-form') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showForgotPasswordOptions()" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
-        </p>
-        <form id="forgot-password-phone-form-element" class="space-y-4" autocomplete="off" data-mode="forgot_password" data-step="phone">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input type="tel" id="forgot-phone" name="forgot-phone" required placeholder="Phone Number" class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
-                <div id="forgot-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            </div>
-            <button type="button" onclick="handleForgotPhoneSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset Code</button>
+            <button type="button" id="forgot-email-submit-btn" onclick="handleForgotEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset Code</button>
         </form>
     </div>
 </div>
@@ -351,9 +295,8 @@ function getStepTitle($mode, $step)
                     <button type="button" id="resend-reset-otp" class="text-primary hover:text-red-700 text-sm">Resend</button>
                     <span id="reset-otp-timer" class="text-sm"></span>
                 </p>
-                <p class="mt-2 text-xs text-gray-500 text-center">For demo purposes, the code is: <span id="demo-reset-otp"></span></p>
             </div>
-            <button type="button" onclick="handleResetOTPSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify Code</button>
+            <button type="button" id="reset-otp-submit-btn" onclick="handleResetOTPSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify Code</button>
         </form>
     </div>
 </div>
@@ -388,7 +331,7 @@ function getStepTitle($mode, $step)
                 </div>
                 <div id="reset-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" onclick="handleResetPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Reset Password</button>
+            <button type="button" id="reset-password-submit-btn" onclick="handleResetPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Reset Password</button>
         </form>
     </div>
 </div>
@@ -442,11 +385,7 @@ function getStepTitle($mode, $step)
     let loginData = {};
     let forgotPasswordData = {};
     let resetMethod = '';
-    let emailOTP = '';
-    let phoneOTP = '';
-    let resetOTP = '';
     let emailOTPTimer;
-    let phoneOTPTimer;
     let resetOTPTimer;
     let spaceCount = 0;
 
@@ -463,125 +402,87 @@ function getStepTitle($mode, $step)
     }
 
     function showLoginStep(step) {
-        const steps = ['username', 'password'];
-        steps.forEach(s => {
-            const el = document.getElementById('login-step-' + s);
-            if (s === step) {
-                el.style.display = 'block';
-                el.classList.add('active');
-            } else {
-                el.classList.remove('active');
-                setTimeout(() => {
-                    el.style.display = 'none';
-                }, 300);
-            }
-        });
-        const regSteps = ['username', 'email', 'email-verify', 'phone', 'phone-verify', 'password'];
-        regSteps.forEach(s => {
-            const el = document.getElementById('register-step-' + s);
-            el.classList.remove('active');
+        // Hide all forms first
+        hideAllForms();
+
+        // Show the requested login step
+        const el = document.getElementById('login-step-' + step);
+        if (el) {
+            el.style.display = 'block';
             setTimeout(() => {
-                el.style.display = 'none';
-            }, 300);
-        });
-        const forgotSteps = ['options', 'email-form', 'phone-form'];
-        forgotSteps.forEach(s => {
-            const el = document.getElementById('forgot-password-' + s);
-            if (el) {
-                el.classList.remove('active');
-                setTimeout(() => {
-                    el.style.display = 'none';
-                }, 300);
-            }
-        });
-        document.getElementById('reset-password-verify').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('reset-password-verify').style.display = 'none';
-        }, 300);
-        document.getElementById('reset-password-form').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('reset-password-form').style.display = 'none';
-        }, 300);
+                el.classList.add('active');
+            }, 10);
+        }
     }
 
     function showRegisterStep(step) {
-        const regSteps = ['username', 'email', 'email-verify', 'phone', 'phone-verify', 'password'];
-        regSteps.forEach(s => {
-            const el = document.getElementById('register-step-' + s);
-            if (s === step) {
-                el.style.display = 'block';
+        // Hide all forms first
+        hideAllForms();
+
+        // Show the requested register step
+        const el = document.getElementById('register-step-' + step);
+        if (el) {
+            el.style.display = 'block';
+            setTimeout(() => {
                 el.classList.add('active');
-            } else {
-                el.classList.remove('active');
-                setTimeout(() => {
-                    el.style.display = 'none';
-                }, 300);
-            }
-        });
+            }, 10);
+        }
+    }
+
+    function hideAllForms() {
+        // Hide all login steps
         const loginSteps = ['username', 'password'];
         loginSteps.forEach(s => {
             const el = document.getElementById('login-step-' + s);
-            el.classList.remove('active');
-            setTimeout(() => {
+            if (el) {
+                el.classList.remove('active');
                 el.style.display = 'none';
-            }, 300);
+            }
         });
+
+        // Hide all register steps
+        const regSteps = ['username', 'email', 'email-verify', 'phone', 'phone-verify', 'password'];
+        regSteps.forEach(s => {
+            const el = document.getElementById('register-step-' + s);
+            if (el) {
+                el.classList.remove('active');
+                el.style.display = 'none';
+            }
+        });
+
+        // Hide all forgot password steps
         const forgotSteps = ['options', 'email-form', 'phone-form'];
         forgotSteps.forEach(s => {
             const el = document.getElementById('forgot-password-' + s);
             if (el) {
                 el.classList.remove('active');
-                setTimeout(() => {
-                    el.style.display = 'none';
-                }, 300);
+                el.style.display = 'none';
             }
         });
-        document.getElementById('reset-password-verify').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('reset-password-verify').style.display = 'none';
-        }, 300);
-        document.getElementById('reset-password-form').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('reset-password-form').style.display = 'none';
-        }, 300);
+
+        // Hide reset password steps
+        const resetEl = document.getElementById('reset-password-verify');
+        if (resetEl) {
+            resetEl.classList.remove('active');
+            resetEl.style.display = 'none';
+        }
+
+        const resetFormEl = document.getElementById('reset-password-form');
+        if (resetFormEl) {
+            resetFormEl.classList.remove('active');
+            resetFormEl.style.display = 'none';
+        }
     }
 
     function showForgotPasswordOptions() {
-        const loginSteps = ['username', 'password'];
-        loginSteps.forEach(s => {
-            const el = document.getElementById('login-step-' + s);
-            el.classList.remove('active');
-            setTimeout(() => {
-                el.style.display = 'none';
-            }, 300);
-        });
-        const regSteps = ['username', 'email', 'email-verify', 'phone', 'phone-verify', 'password'];
-        regSteps.forEach(s => {
-            const el = document.getElementById('register-step-' + s);
-            el.classList.remove('active');
-            setTimeout(() => {
-                el.style.display = 'none';
-            }, 300);
-        });
+        hideAllForms();
         const opt = document.getElementById('forgot-password-options');
-        opt.style.display = 'block';
-        opt.classList.add('active');
-        document.getElementById('forgot-password-email-form').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('forgot-password-email-form').style.display = 'none';
-        }, 300);
-        document.getElementById('forgot-password-phone-form').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('forgot-password-phone-form').style.display = 'none';
-        }, 300);
-        document.getElementById('reset-password-verify').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('reset-password-verify').style.display = 'none';
-        }, 300);
-        document.getElementById('reset-password-form').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('reset-password-form').style.display = 'none';
-        }, 300);
+        if (opt) {
+            opt.style.display = 'block';
+            setTimeout(() => {
+                opt.classList.add('active');
+            }, 10);
+        }
     }
 
     function handleForgotPasswordMethodSubmit() {
@@ -596,90 +497,82 @@ function getStepTitle($mode, $step)
         if (selectedMethod === 'email') {
             showForgotPasswordForm('email');
         } else if (selectedMethod === 'phone') {
-            showForgotPasswordForm('phone');
+            notifications.error('Phone verification is currently under maintenance. Please use email verification.');
         }
     }
 
     function showForgotPasswordForm(m) {
         resetMethod = m;
-        document.getElementById('forgot-password-options').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('forgot-password-options').style.display = 'none';
-        }, 300);
+        hideAllForms();
+
         if (m === 'email') {
             const ef = document.getElementById('forgot-password-email-form');
-            ef.style.display = 'block';
-            ef.classList.add('active');
-            document.getElementById('forgot-password-phone-form').classList.remove('active');
-            setTimeout(() => {
-                document.getElementById('forgot-password-phone-form').style.display = 'none';
-            }, 300);
-        } else if (m === 'phone') {
-            const pf = document.getElementById('forgot-password-phone-form');
-            pf.style.display = 'block';
-            pf.classList.add('active');
-            document.getElementById('forgot-password-email-form').classList.remove('active');
-            setTimeout(() => {
-                document.getElementById('forgot-password-email-form').style.display = 'none';
-            }, 300);
+            if (ef) {
+                ef.style.display = 'block';
+                setTimeout(() => {
+                    ef.classList.add('active');
+                }, 10);
+            }
         }
     }
 
     function showResetVerifyForm() {
-        document.getElementById('forgot-password-email-form').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('forgot-password-email-form').style.display = 'none';
-        }, 300);
-        document.getElementById('forgot-password-phone-form').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('forgot-password-phone-form').style.display = 'none';
-        }, 300);
+        hideAllForms();
         const rv = document.getElementById('reset-password-verify');
-        rv.style.display = 'block';
-        rv.classList.add('active');
+        if (rv) {
+            rv.style.display = 'block';
+            setTimeout(() => {
+                rv.classList.add('active');
+            }, 10);
+        }
+
         document.getElementById('reset-back-link').onclick = function() {
             showForgotPasswordForm(resetMethod);
         };
-        document.getElementById('reset-password-form').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('reset-password-form').style.display = 'none';
-        }, 300);
     }
 
     function showResetPasswordForm() {
-        document.getElementById('reset-password-verify').classList.remove('active');
-        setTimeout(() => {
-            document.getElementById('reset-password-verify').style.display = 'none';
-        }, 300);
+        hideAllForms();
         const rf = document.getElementById('reset-password-form');
-        rf.style.display = 'block';
-        rf.classList.add('active');
+        if (rf) {
+            rf.style.display = 'block';
+            setTimeout(() => {
+                rf.classList.add('active');
+            }, 10);
+        }
     }
 
     function startOTPTimer(type, seconds) {
         let r = seconds;
         const te = document.getElementById(type + '-timer');
         const rb = document.getElementById('resend-' + type);
-        rb.disabled = true;
-        rb.classList.add('text-gray-400');
+
+        if (rb) {
+            rb.disabled = true;
+            rb.classList.add('text-gray-400');
+        }
+
         let iv = setInterval(() => {
             r--;
-            const m = Math.floor(r / 60);
-            const s = r % 60;
-            te.textContent = `(${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')})`;
+            if (te) {
+                const m = Math.floor(r / 60);
+                const s = r % 60;
+                te.textContent = `(${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')})`;
+            }
+
             if (r <= 0) {
                 clearInterval(iv);
-                te.textContent = '';
-                rb.disabled = false;
-                rb.classList.remove('text-gray-400');
+                if (te) te.textContent = '';
+                if (rb) {
+                    rb.disabled = false;
+                    rb.classList.remove('text-gray-400');
+                }
             }
         }, 1000);
+
         if (type === 'email-otp') {
             if (emailOTPTimer) clearInterval(emailOTPTimer);
             emailOTPTimer = iv;
-        } else if (type === 'phone-otp') {
-            if (phoneOTPTimer) clearInterval(phoneOTPTimer);
-            phoneOTPTimer = iv;
         } else if (type === 'reset-otp') {
             if (resetOTPTimer) clearInterval(resetOTPTimer);
             resetOTPTimer = iv;
@@ -689,7 +582,10 @@ function getStepTitle($mode, $step)
     function updateOTPValue(t) {
         const ai = document.querySelectorAll(`.otp-input[data-otp-target="${t}"]`);
         const val = Array.from(ai).map(i => i.value).join('');
-        document.getElementById(t).value = val;
+        const otpInput = document.getElementById(t);
+        if (otpInput) {
+            otpInput.value = val;
+        }
     }
 
     function handleLoginUsernameSubmit() {
@@ -862,10 +758,10 @@ function getStepTitle($mode, $step)
 
         hideError('register-email-error');
 
-        const button = document.querySelector('#register-email-form button');
+        const button = document.getElementById('register-email-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending OTP...';
 
         $.ajax({
             url: BASE_URL + 'auth/checkEmail',
@@ -876,9 +772,6 @@ function getStepTitle($mode, $step)
             contentType: 'application/json',
             dataType: 'json',
             success: function(response) {
-                button.disabled = false;
-                button.innerHTML = originalText;
-
                 if (response.success) {
                     registrationData.email = e;
                     document.getElementById('register-email-display').textContent = e;
@@ -892,9 +785,11 @@ function getStepTitle($mode, $step)
                         contentType: 'application/json',
                         dataType: 'json',
                         success: function(otpResponse) {
+                            button.disabled = false;
+                            button.innerHTML = originalText;
+
                             if (otpResponse.success) {
-                                emailOTP = otpResponse.otp;
-                                document.getElementById('demo-email-otp').textContent = emailOTP;
+                                notifications.success('Verification code sent to your email');
                                 startOTPTimer('email-otp', 120);
                                 showRegisterStep('email-verify');
                                 document.querySelectorAll('.otp-input[data-otp-target="email-otp"]').forEach(i => {
@@ -905,11 +800,21 @@ function getStepTitle($mode, $step)
                                 showError('register-email-error', otpResponse.message || 'Failed to send verification code');
                             }
                         },
-                        error: function() {
-                            showError('register-email-error', 'Failed to send verification code. Please try again.');
+                        error: function(xhr) {
+                            button.disabled = false;
+                            button.innerHTML = originalText;
+
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                showError('register-email-error', response.message || 'Failed to send verification code');
+                            } catch (e) {
+                                showError('register-email-error', 'Failed to send verification code. Please try again.');
+                            }
                         }
                     });
                 } else {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
                     showError('register-email-error', response.message || 'Email is already registered');
                 }
             },
@@ -936,7 +841,7 @@ function getStepTitle($mode, $step)
 
         hideError('email-otp-error');
 
-        const button = document.querySelector('#register-email-verify-form button');
+        const button = document.getElementById('email-otp-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
@@ -955,6 +860,7 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
 
                 if (response.success) {
+                    notifications.success('Email verified successfully');
                     registrationData.emailVerified = true;
                     showRegisterStep('phone');
                 } else {
@@ -986,7 +892,7 @@ function getStepTitle($mode, $step)
 
         hideError('register-phone-error');
 
-        const button = document.querySelector('#register-phone-form button');
+        const button = document.getElementById('register-phone-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
@@ -1005,34 +911,7 @@ function getStepTitle($mode, $step)
 
                 if (response.success) {
                     registrationData.phone = pn;
-                    document.getElementById('register-phone-display').textContent = pn;
-
-                    $.ajax({
-                        url: BASE_URL + 'auth/sendPhoneOTP',
-                        type: 'POST',
-                        data: JSON.stringify({
-                            phone: pn
-                        }),
-                        contentType: 'application/json',
-                        dataType: 'json',
-                        success: function(otpResponse) {
-                            if (otpResponse.success) {
-                                phoneOTP = otpResponse.otp;
-                                document.getElementById('demo-phone-otp').textContent = phoneOTP;
-                                startOTPTimer('phone-otp', 120);
-                                showRegisterStep('phone-verify');
-                                document.querySelectorAll('.otp-input[data-otp-target="phone-otp"]').forEach(i => {
-                                    i.value = '';
-                                });
-                                document.getElementById('phone-otp').value = '';
-                            } else {
-                                showError('register-phone-error', otpResponse.message || 'Failed to send verification code');
-                            }
-                        },
-                        error: function() {
-                            showError('register-phone-error', 'Failed to send verification code. Please try again.');
-                        }
-                    });
+                    showRegisterStep('password');
                 } else {
                     showError('register-phone-error', response.message || 'Phone number is already registered');
                 }
@@ -1046,54 +925,6 @@ function getStepTitle($mode, $step)
                     showError('register-phone-error', response.message || 'An error occurred');
                 } catch (e) {
                     showError('register-phone-error', 'Server error. Please try again later.');
-                }
-            }
-        });
-    }
-
-    function handlePhoneOTPSubmit() {
-        const o = document.getElementById('phone-otp').value;
-        if (!o || o.length !== 6) {
-            showError('phone-otp-error', 'Please enter the complete verification code');
-            return;
-        }
-
-        hideError('phone-otp-error');
-
-        const button = document.querySelector('#register-phone-verify-form button');
-        const originalText = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
-
-        $.ajax({
-            url: BASE_URL + 'auth/verifyPhoneOTP',
-            type: 'POST',
-            data: JSON.stringify({
-                phone: registrationData.phone,
-                otp: o
-            }),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function(response) {
-                button.disabled = false;
-                button.innerHTML = originalText;
-
-                if (response.success) {
-                    registrationData.phoneVerified = true;
-                    showRegisterStep('password');
-                } else {
-                    showError('phone-otp-error', response.message || 'Invalid verification code');
-                }
-            },
-            error: function(xhr) {
-                button.disabled = false;
-                button.innerHTML = originalText;
-
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    showError('phone-otp-error', response.message || 'An error occurred');
-                } catch (e) {
-                    showError('phone-otp-error', 'Server error. Please try again later.');
                 }
             }
         });
@@ -1123,7 +954,7 @@ function getStepTitle($mode, $step)
 
         hideError('register-password-error');
 
-        const button = document.querySelector('#register-password-form button');
+        const button = document.getElementById('register-password-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating account...';
@@ -1184,7 +1015,7 @@ function getStepTitle($mode, $step)
 
         hideError('forgot-email-error');
 
-        const button = document.querySelector('#forgot-password-email-form-element button');
+        const button = document.getElementById('forgot-email-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
@@ -1202,10 +1033,9 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
 
                 if (response.success) {
+                    notifications.success('Reset code sent to your email');
                     forgotPasswordData.email = e;
                     forgotPasswordData.contact = e;
-                    resetOTP = response.otp;
-                    document.getElementById('demo-reset-otp').textContent = resetOTP;
                     document.getElementById('reset-contact-display').textContent = e;
                     document.getElementById('reset-back-link').onclick = function() {
                         showForgotPasswordForm('email');
@@ -1234,67 +1064,6 @@ function getStepTitle($mode, $step)
         });
     }
 
-    function handleForgotPhoneSubmit() {
-        const pi = document.querySelector('#forgot-phone');
-        const iti = window.intlTelInputGlobals.getInstance(pi);
-        if (!iti.isValidNumber()) {
-            showError('forgot-phone-error', 'Please enter a valid phone number');
-            return;
-        }
-        const pn = iti.getNumber();
-
-        hideError('forgot-phone-error');
-
-        const button = document.querySelector('#forgot-password-phone-form-element button');
-        const originalText = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
-
-        $.ajax({
-            url: BASE_URL + 'auth/sendResetPhone',
-            type: 'POST',
-            data: JSON.stringify({
-                phone: pn
-            }),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function(response) {
-                button.disabled = false;
-                button.innerHTML = originalText;
-
-                if (response.success) {
-                    forgotPasswordData.phone = pn;
-                    forgotPasswordData.contact = pn;
-                    resetOTP = response.otp;
-                    document.getElementById('demo-reset-otp').textContent = resetOTP;
-                    document.getElementById('reset-contact-display').textContent = pn;
-                    document.getElementById('reset-back-link').onclick = function() {
-                        showForgotPasswordForm('phone');
-                    };
-                    startOTPTimer('reset-otp', 120);
-                    showResetVerifyForm();
-                    document.querySelectorAll('.otp-input[data-otp-target="reset-otp"]').forEach(i => {
-                        i.value = '';
-                    });
-                    document.getElementById('reset-otp').value = '';
-                } else {
-                    showError('forgot-phone-error', response.message || 'Phone number not found');
-                }
-            },
-            error: function(xhr) {
-                button.disabled = false;
-                button.innerHTML = originalText;
-
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    showError('forgot-phone-error', response.message || 'An error occurred');
-                } catch (e) {
-                    showError('forgot-phone-error', 'Server error. Please try again later.');
-                }
-            }
-        });
-    }
-
     function handleResetOTPSubmit() {
         const o = document.getElementById('reset-otp').value;
         if (!o || o.length !== 6) {
@@ -1304,7 +1073,7 @@ function getStepTitle($mode, $step)
 
         hideError('reset-otp-error');
 
-        const button = document.querySelector('#reset-verify-form button');
+        const button = document.getElementById('reset-otp-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
@@ -1324,6 +1093,7 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
 
                 if (response.success) {
+                    notifications.success('Code verified successfully');
                     forgotPasswordData.otpVerified = true;
                     showResetPasswordForm();
                 } else {
@@ -1363,7 +1133,7 @@ function getStepTitle($mode, $step)
 
         hideError('reset-password-error');
 
-        const button = document.querySelector('#reset-password-form-element button');
+        const button = document.getElementById('reset-password-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Resetting password...';
@@ -1408,19 +1178,58 @@ function getStepTitle($mode, $step)
 
     function showError(elementId, message) {
         const errorElement = document.getElementById(elementId);
-        errorElement.textContent = message;
-        errorElement.classList.remove('hidden');
+        if (errorElement) {
+            errorElement.textContent = message;
+            errorElement.classList.remove('hidden');
+        }
     }
 
     function hideError(elementId) {
         const errorElement = document.getElementById(elementId);
-        errorElement.textContent = '';
-        errorElement.classList.add('hidden');
+        if (errorElement) {
+            errorElement.textContent = '';
+            errorElement.classList.add('hidden');
+        }
+    }
+
+    function isValidEmail(email) {
+        const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+    }
+
+    function isStrongPassword(password) {
+        return (password.length >= 8 &&
+            /[A-Z]/.test(password) &&
+            /[a-z]/.test(password) &&
+            /[0-9]/.test(password) &&
+            /[^A-Za-z0-9]/.test(password));
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Set up OTP input behavior
+        document.querySelectorAll('.otp-input').forEach((input, index, inputs) => {
+            input.addEventListener('input', function() {
+                if (this.value.length === 1) {
+                    const nextInput = inputs[index + 1];
+                    if (nextInput) nextInput.focus();
+                }
+                updateOTPValue(this.getAttribute('data-otp-target'));
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && this.value === '') {
+                    const prevInput = inputs[index - 1];
+                    if (prevInput) prevInput.focus();
+                }
+            });
+        });
+
         document.getElementById('resend-email-otp').addEventListener('click', () => {
             if (document.getElementById('resend-email-otp').disabled) return;
+
+            const button = document.getElementById('resend-email-otp');
+            button.disabled = true;
+            button.classList.add('text-gray-400');
 
             $.ajax({
                 url: BASE_URL + 'auth/sendEmailOTP',
@@ -1432,42 +1241,17 @@ function getStepTitle($mode, $step)
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        emailOTP = response.otp;
-                        document.getElementById('demo-email-otp').textContent = emailOTP;
                         startOTPTimer('email-otp', 120);
-                        notifications.info('Verification code resent to your email');
+                        notifications.success('Verification code resent to your email');
                     } else {
+                        button.disabled = false;
+                        button.classList.remove('text-gray-400');
                         notifications.error(response.message || 'Failed to resend code');
                     }
                 },
                 error: function() {
-                    notifications.error('Failed to resend code. Please try again.');
-                }
-            });
-        });
-
-        document.getElementById('resend-phone-otp').addEventListener('click', () => {
-            if (document.getElementById('resend-phone-otp').disabled) return;
-
-            $.ajax({
-                url: BASE_URL + 'auth/sendPhoneOTP',
-                type: 'POST',
-                data: JSON.stringify({
-                    phone: registrationData.phone
-                }),
-                contentType: 'application/json',
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        phoneOTP = response.otp;
-                        document.getElementById('demo-phone-otp').textContent = phoneOTP;
-                        startOTPTimer('phone-otp', 120);
-                        notifications.info('Verification code resent to your phone');
-                    } else {
-                        notifications.error(response.message || 'Failed to resend code');
-                    }
-                },
-                error: function() {
+                    button.disabled = false;
+                    button.classList.remove('text-gray-400');
                     notifications.error('Failed to resend code. Please try again.');
                 }
             });
@@ -1475,6 +1259,10 @@ function getStepTitle($mode, $step)
 
         document.getElementById('resend-reset-otp').addEventListener('click', () => {
             if (document.getElementById('resend-reset-otp').disabled) return;
+
+            const button = document.getElementById('resend-reset-otp');
+            button.disabled = true;
+            button.classList.add('text-gray-400');
 
             const endpoint = resetMethod === 'email' ? 'sendResetEmail' : 'sendResetPhone';
             const data = resetMethod === 'email' ? {
@@ -1491,15 +1279,17 @@ function getStepTitle($mode, $step)
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        resetOTP = response.otp;
-                        document.getElementById('demo-reset-otp').textContent = resetOTP;
                         startOTPTimer('reset-otp', 120);
-                        notifications.info('Verification code resent');
+                        notifications.success('Verification code resent');
                     } else {
+                        button.disabled = false;
+                        button.classList.remove('text-gray-400');
                         notifications.error(response.message || 'Failed to resend code');
                     }
                 },
                 error: function() {
+                    button.disabled = false;
+                    button.classList.remove('text-gray-400');
                     notifications.error('Failed to resend code. Please try again.');
                 }
             });
