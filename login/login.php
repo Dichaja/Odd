@@ -404,8 +404,6 @@ function getStepTitle($mode, $step)
     function showLoginStep(step) {
         // Hide all forms first
         hideAllForms();
-
-        // Show the requested login step
         const el = document.getElementById('login-step-' + step);
         if (el) {
             el.style.display = 'block';
@@ -416,10 +414,7 @@ function getStepTitle($mode, $step)
     }
 
     function showRegisterStep(step) {
-        // Hide all forms first
         hideAllForms();
-
-        // Show the requested register step
         const el = document.getElementById('register-step-' + step);
         if (el) {
             el.style.display = 'block';
@@ -430,43 +425,32 @@ function getStepTitle($mode, $step)
     }
 
     function hideAllForms() {
-        // Hide all login steps
-        const loginSteps = ['username', 'password'];
-        loginSteps.forEach(s => {
+        ['username', 'password'].forEach(s => {
             const el = document.getElementById('login-step-' + s);
             if (el) {
                 el.classList.remove('active');
                 el.style.display = 'none';
             }
         });
-
-        // Hide all register steps
-        const regSteps = ['username', 'email', 'email-verify', 'phone', 'phone-verify', 'password'];
-        regSteps.forEach(s => {
+        ['username', 'email', 'email-verify', 'phone', 'phone-verify', 'password'].forEach(s => {
             const el = document.getElementById('register-step-' + s);
             if (el) {
                 el.classList.remove('active');
                 el.style.display = 'none';
             }
         });
-
-        // Hide all forgot password steps
-        const forgotSteps = ['options', 'email-form', 'phone-form'];
-        forgotSteps.forEach(s => {
+        ['options', 'email-form', 'phone-form'].forEach(s => {
             const el = document.getElementById('forgot-password-' + s);
             if (el) {
                 el.classList.remove('active');
                 el.style.display = 'none';
             }
         });
-
-        // Hide reset password steps
         const resetEl = document.getElementById('reset-password-verify');
         if (resetEl) {
             resetEl.classList.remove('active');
             resetEl.style.display = 'none';
         }
-
         const resetFormEl = document.getElementById('reset-password-form');
         if (resetFormEl) {
             resetFormEl.classList.remove('active');
@@ -504,7 +488,6 @@ function getStepTitle($mode, $step)
     function showForgotPasswordForm(m) {
         resetMethod = m;
         hideAllForms();
-
         if (m === 'email') {
             const ef = document.getElementById('forgot-password-email-form');
             if (ef) {
@@ -525,7 +508,6 @@ function getStepTitle($mode, $step)
                 rv.classList.add('active');
             }, 10);
         }
-
         document.getElementById('reset-back-link').onclick = function() {
             showForgotPasswordForm(resetMethod);
         };
@@ -546,12 +528,10 @@ function getStepTitle($mode, $step)
         let r = seconds;
         const te = document.getElementById(type + '-timer');
         const rb = document.getElementById('resend-' + type);
-
         if (rb) {
             rb.disabled = true;
             rb.classList.add('text-gray-400');
         }
-
         let iv = setInterval(() => {
             r--;
             if (te) {
@@ -559,7 +539,6 @@ function getStepTitle($mode, $step)
                 const s = r % 60;
                 te.textContent = `(${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')})`;
             }
-
             if (r <= 0) {
                 clearInterval(iv);
                 if (te) te.textContent = '';
@@ -569,7 +548,6 @@ function getStepTitle($mode, $step)
                 }
             }
         }, 1000);
-
         if (type === 'email-otp') {
             if (emailOTPTimer) clearInterval(emailOTPTimer);
             emailOTPTimer = iv;
@@ -579,13 +557,11 @@ function getStepTitle($mode, $step)
         }
     }
 
-    function updateOTPValue(t) {
-        const ai = document.querySelectorAll(`.otp-input[data-otp-target="${t}"]`);
-        const val = Array.from(ai).map(i => i.value).join('');
-        const otpInput = document.getElementById(t);
-        if (otpInput) {
-            otpInput.value = val;
-        }
+    function updateOTPValue(target) {
+        const values = $('.otp-input[data-otp-target="' + target + '"]').map(function() {
+            return this.value;
+        }).get().join('');
+        $('#' + target).val(values);
     }
 
     function handleLoginUsernameSubmit() {
@@ -594,14 +570,11 @@ function getStepTitle($mode, $step)
             showError('login-username-error', 'Please enter your username or email');
             return;
         }
-
         hideError('login-username-error');
-
         const button = document.querySelector('#login-username-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
-
         $.ajax({
             url: BASE_URL + 'auth/checkUser',
             type: 'POST',
@@ -613,7 +586,6 @@ function getStepTitle($mode, $step)
             success: function(response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 if (response.success) {
                     loginData.identifier = u;
                     loginData.userType = response.userType;
@@ -626,7 +598,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('login-username-error', response.message || 'An error occurred');
@@ -643,14 +614,11 @@ function getStepTitle($mode, $step)
             showError('login-password-error', 'Please enter your password');
             return;
         }
-
         hideError('login-password-error');
-
         const button = document.querySelector('#login-password-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Logging in...';
-
         $.ajax({
             url: BASE_URL + 'auth/login',
             type: 'POST',
@@ -664,16 +632,11 @@ function getStepTitle($mode, $step)
             success: function(response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 if (response.success) {
                     notifications.success('Login successful! Redirecting...');
                     setTimeout(() => {
                         closeAuthModal();
-                        if (response.redirect) {
-                            window.location.href = response.redirect;
-                        } else {
-                            window.location.reload();
-                        }
+                        response.redirect ? window.location.href = response.redirect : window.location.reload();
                     }, 1500);
                 } else {
                     showError('login-password-error', response.message || 'Invalid password');
@@ -682,7 +645,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('login-password-error', response.message || 'An error occurred');
@@ -703,14 +665,11 @@ function getStepTitle($mode, $step)
             showError('register-username-error', 'Username must be at least 3 characters long');
             return;
         }
-
         hideError('register-username-error');
-
         const button = document.querySelector('#register-username-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
-
         $.ajax({
             url: BASE_URL + 'auth/checkUsername',
             type: 'POST',
@@ -722,7 +681,6 @@ function getStepTitle($mode, $step)
             success: function(response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 if (response.success) {
                     registrationData.username = u;
                     document.getElementById('register-username-display').textContent = u;
@@ -734,7 +692,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('register-username-error', response.message || 'An error occurred');
@@ -755,14 +712,11 @@ function getStepTitle($mode, $step)
             showError('register-email-error', 'Please enter a valid email address');
             return;
         }
-
         hideError('register-email-error');
-
         const button = document.getElementById('register-email-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending OTP...';
-
         $.ajax({
             url: BASE_URL + 'auth/checkEmail',
             type: 'POST',
@@ -775,7 +729,6 @@ function getStepTitle($mode, $step)
                 if (response.success) {
                     registrationData.email = e;
                     document.getElementById('register-email-display').textContent = e;
-
                     $.ajax({
                         url: BASE_URL + 'auth/sendEmailOTP',
                         type: 'POST',
@@ -787,14 +740,11 @@ function getStepTitle($mode, $step)
                         success: function(otpResponse) {
                             button.disabled = false;
                             button.innerHTML = originalText;
-
                             if (otpResponse.success) {
                                 notifications.success('Verification code sent to your email');
                                 startOTPTimer('email-otp', 120);
                                 showRegisterStep('email-verify');
-                                document.querySelectorAll('.otp-input[data-otp-target="email-otp"]').forEach(i => {
-                                    i.value = '';
-                                });
+                                $('.otp-input[data-otp-target="email-otp"]').val('');
                                 document.getElementById('email-otp').value = '';
                             } else {
                                 showError('register-email-error', otpResponse.message || 'Failed to send verification code');
@@ -803,7 +753,6 @@ function getStepTitle($mode, $step)
                         error: function(xhr) {
                             button.disabled = false;
                             button.innerHTML = originalText;
-
                             try {
                                 const response = JSON.parse(xhr.responseText);
                                 showError('register-email-error', response.message || 'Failed to send verification code');
@@ -821,7 +770,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('register-email-error', response.message || 'An error occurred');
@@ -838,14 +786,11 @@ function getStepTitle($mode, $step)
             showError('email-otp-error', 'Please enter the complete verification code');
             return;
         }
-
         hideError('email-otp-error');
-
         const button = document.getElementById('email-otp-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
-
         $.ajax({
             url: BASE_URL + 'auth/verifyEmailOTP',
             type: 'POST',
@@ -858,7 +803,6 @@ function getStepTitle($mode, $step)
             success: function(response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 if (response.success) {
                     notifications.success('Email verified successfully');
                     registrationData.emailVerified = true;
@@ -870,7 +814,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('email-otp-error', response.message || 'An error occurred');
@@ -889,14 +832,11 @@ function getStepTitle($mode, $step)
             return;
         }
         const pn = iti.getNumber();
-
         hideError('register-phone-error');
-
         const button = document.getElementById('register-phone-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
-
         $.ajax({
             url: BASE_URL + 'auth/checkPhone',
             type: 'POST',
@@ -908,7 +848,6 @@ function getStepTitle($mode, $step)
             success: function(response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 if (response.success) {
                     registrationData.phone = pn;
                     showRegisterStep('password');
@@ -919,7 +858,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('register-phone-error', response.message || 'An error occurred');
@@ -934,7 +872,6 @@ function getStepTitle($mode, $step)
         const p = document.getElementById('register-password').value;
         const c = document.getElementById('register-confirm-password').value;
         const termsChecked = document.getElementById('terms-checkbox').checked;
-
         if (!p) {
             showError('register-password-error', 'Please create a password');
             return;
@@ -951,14 +888,11 @@ function getStepTitle($mode, $step)
             showError('register-password-error', 'You must agree to the Terms of Service and Privacy Policy');
             return;
         }
-
         hideError('register-password-error');
-
         const button = document.getElementById('register-password-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating account...';
-
         $.ajax({
             url: BASE_URL + 'auth/register',
             type: 'POST',
@@ -973,16 +907,11 @@ function getStepTitle($mode, $step)
             success: function(response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 if (response.success) {
                     notifications.success('Account created successfully! Redirecting...');
                     setTimeout(() => {
                         closeAuthModal();
-                        if (response.redirect) {
-                            window.location.href = response.redirect;
-                        } else {
-                            window.location.reload();
-                        }
+                        response.redirect ? window.location.href = response.redirect : window.location.reload();
                     }, 1500);
                 } else {
                     showError('register-password-error', response.message || 'Registration failed');
@@ -991,7 +920,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('register-password-error', response.message || 'An error occurred');
@@ -1012,14 +940,11 @@ function getStepTitle($mode, $step)
             showError('forgot-email-error', 'Please enter a valid email address');
             return;
         }
-
         hideError('forgot-email-error');
-
         const button = document.getElementById('forgot-email-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
-
         $.ajax({
             url: BASE_URL + 'auth/sendResetEmail',
             type: 'POST',
@@ -1031,7 +956,6 @@ function getStepTitle($mode, $step)
             success: function(response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 if (response.success) {
                     notifications.success('Reset code sent to your email');
                     forgotPasswordData.email = e;
@@ -1042,9 +966,7 @@ function getStepTitle($mode, $step)
                     };
                     startOTPTimer('reset-otp', 120);
                     showResetVerifyForm();
-                    document.querySelectorAll('.otp-input[data-otp-target="reset-otp"]').forEach(i => {
-                        i.value = '';
-                    });
+                    $('.otp-input[data-otp-target="reset-otp"]').val('');
                     document.getElementById('reset-otp').value = '';
                 } else {
                     showError('forgot-email-error', response.message || 'Email not found');
@@ -1053,7 +975,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('forgot-email-error', response.message || 'An error occurred');
@@ -1070,14 +991,11 @@ function getStepTitle($mode, $step)
             showError('reset-otp-error', 'Please enter the complete verification code');
             return;
         }
-
         hideError('reset-otp-error');
-
         const button = document.getElementById('reset-otp-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
-
         $.ajax({
             url: BASE_URL + 'auth/verifyResetOTP',
             type: 'POST',
@@ -1091,7 +1009,6 @@ function getStepTitle($mode, $step)
             success: function(response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 if (response.success) {
                     notifications.success('Code verified successfully');
                     forgotPasswordData.otpVerified = true;
@@ -1103,7 +1020,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('reset-otp-error', response.message || 'An error occurred');
@@ -1117,7 +1033,6 @@ function getStepTitle($mode, $step)
     function handleResetPasswordSubmit() {
         const np = document.getElementById('new-password').value;
         const cp = document.getElementById('confirm-new-password').value;
-
         if (!np) {
             showError('reset-password-error', 'Please create a new password');
             return;
@@ -1130,14 +1045,11 @@ function getStepTitle($mode, $step)
             showError('reset-password-error', 'Passwords do not match');
             return;
         }
-
         hideError('reset-password-error');
-
         const button = document.getElementById('reset-password-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Resetting password...';
-
         $.ajax({
             url: BASE_URL + 'auth/resetPassword',
             type: 'POST',
@@ -1151,7 +1063,6 @@ function getStepTitle($mode, $step)
             success: function(response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 if (response.success) {
                     notifications.success('Password reset successfully!');
                     setTimeout(() => {
@@ -1165,7 +1076,6 @@ function getStepTitle($mode, $step)
             error: function(xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('reset-password-error', response.message || 'An error occurred');
@@ -1205,94 +1115,74 @@ function getStepTitle($mode, $step)
             /[^A-Za-z0-9]/.test(password));
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // Set up OTP input behavior
-        document.querySelectorAll('.otp-input').forEach((input, index, inputs) => {
-            input.addEventListener('input', function() {
-                if (this.value.length === 1) {
-                    const nextInput = inputs[index + 1];
-                    if (nextInput) nextInput.focus();
+    // Delegated event for Resend Email OTP
+    $(document).on('click', '#resend-email-otp', function() {
+        const button = $(this);
+        if (button.prop('disabled')) return;
+        console.log("Resend email OTP clicked");
+        const originalText = button.html();
+        button.prop('disabled', true).addClass('text-gray-400').html('<i class="fas fa-spinner fa-spin mr-1"></i>Resending...');
+        $.ajax({
+            url: BASE_URL + 'auth/sendEmailOTP',
+            type: 'POST',
+            data: JSON.stringify({
+                email: registrationData.email
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    startOTPTimer('email-otp', 120);
+                    notifications.success('Verification code resent to your email');
+                } else {
+                    button.prop('disabled', false).removeClass('text-gray-400');
+                    notifications.error(response.message || 'Failed to resend code');
                 }
-                updateOTPValue(this.getAttribute('data-otp-target'));
-            });
-
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Backspace' && this.value === '') {
-                    const prevInput = inputs[index - 1];
-                    if (prevInput) prevInput.focus();
-                }
-            });
+                button.html(originalText);
+            },
+            error: function() {
+                button.prop('disabled', false).removeClass('text-gray-400').html(originalText);
+                notifications.error('Failed to resend code. Please try again.');
+            }
         });
+    });
 
-        document.getElementById('resend-email-otp').addEventListener('click', () => {
-            if (document.getElementById('resend-email-otp').disabled) return;
-
-            const button = document.getElementById('resend-email-otp');
-            button.disabled = true;
-            button.classList.add('text-gray-400');
-
-            $.ajax({
-                url: BASE_URL + 'auth/sendEmailOTP',
-                type: 'POST',
-                data: JSON.stringify({
-                    email: registrationData.email
-                }),
-                contentType: 'application/json',
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        startOTPTimer('email-otp', 120);
-                        notifications.success('Verification code resent to your email');
-                    } else {
-                        button.disabled = false;
-                        button.classList.remove('text-gray-400');
-                        notifications.error(response.message || 'Failed to resend code');
-                    }
-                },
-                error: function() {
-                    button.disabled = false;
-                    button.classList.remove('text-gray-400');
-                    notifications.error('Failed to resend code. Please try again.');
+    // Delegated event for Resend Reset OTP
+    $(document).on('click', '#resend-reset-otp', function() {
+        const button = $(this);
+        if (button.prop('disabled')) return;
+        console.log("Resend reset OTP clicked");
+        if (!resetMethod) {
+            resetMethod = 'email';
+        }
+        const originalText = button.html();
+        button.prop('disabled', true).addClass('text-gray-400').html('<i class="fas fa-spinner fa-spin mr-1"></i>Resending...');
+        const endpoint = resetMethod === 'email' ? 'sendResetEmail' : 'sendResetPhone';
+        const dataPayload = resetMethod === 'email' ? {
+            email: forgotPasswordData.email
+        } : {
+            phone: forgotPasswordData.phone
+        };
+        $.ajax({
+            url: BASE_URL + 'auth/' + endpoint,
+            type: 'POST',
+            data: JSON.stringify(dataPayload),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    startOTPTimer('reset-otp', 120);
+                    notifications.success('Verification code resent');
+                } else {
+                    button.prop('disabled', false).removeClass('text-gray-400');
+                    notifications.error(response.message || 'Failed to resend code');
                 }
-            });
-        });
-
-        document.getElementById('resend-reset-otp').addEventListener('click', () => {
-            if (document.getElementById('resend-reset-otp').disabled) return;
-
-            const button = document.getElementById('resend-reset-otp');
-            button.disabled = true;
-            button.classList.add('text-gray-400');
-
-            const endpoint = resetMethod === 'email' ? 'sendResetEmail' : 'sendResetPhone';
-            const data = resetMethod === 'email' ? {
-                email: forgotPasswordData.email
-            } : {
-                phone: forgotPasswordData.phone
-            };
-
-            $.ajax({
-                url: BASE_URL + 'auth/' + endpoint,
-                type: 'POST',
-                data: JSON.stringify(data),
-                contentType: 'application/json',
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        startOTPTimer('reset-otp', 120);
-                        notifications.success('Verification code resent');
-                    } else {
-                        button.disabled = false;
-                        button.classList.remove('text-gray-400');
-                        notifications.error(response.message || 'Failed to resend code');
-                    }
-                },
-                error: function() {
-                    button.disabled = false;
-                    button.classList.remove('text-gray-400');
-                    notifications.error('Failed to resend code. Please try again.');
-                }
-            });
+                button.html(originalText);
+            },
+            error: function() {
+                button.prop('disabled', false).removeClass('text-gray-400').html(originalText);
+                notifications.error('Failed to resend code. Please try again.');
+            }
         });
     });
 </script>

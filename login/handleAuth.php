@@ -211,6 +211,10 @@ function sendPasswordChangedEmail($email, $username = null)
     return Mailer::sendMail($email, $subject, $content);
 }
 
+/**
+ * Creates a new OTP for the given type/account.
+ * This function first deletes any existing OTP for the same account and type.
+ */
 function createOTP($type, $account, $pdo)
 {
     // Delete any existing OTP for this account and type
@@ -526,7 +530,7 @@ try {
                 break;
             }
 
-            // Create OTP and store it in the database
+            // Create OTP and store it in the database (this removes old OTP first)
             $otp = createOTP('email', $email, $pdo);
 
             // Send the OTP via email
@@ -681,7 +685,7 @@ try {
                 break;
             }
 
-            // Create OTP and store it in the database
+            // Create OTP and store it in the database (this removes old OTP first)
             $otp = createOTP('email', $email, $pdo);
 
             // Send the OTP via email
