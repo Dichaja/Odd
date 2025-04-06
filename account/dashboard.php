@@ -74,16 +74,6 @@ ob_start();
                         Last Login: <span class="font-medium text-user-primary"><?= $formattedLastLogin ?></span>
                     </p>
                 </div>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <button id="assignMembership" class="h-10 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors flex items-center gap-2 justify-center">
-                        <i class="fas fa-id-card"></i>
-                        <span>Assign Membership</span>
-                    </button>
-                    <button id="shareLink" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 justify-center">
-                        <i class="fas fa-share-alt"></i>
-                        <span>Share Link</span>
-                    </button>
-                </div>
             </div>
         </div>
     </div>
@@ -114,13 +104,13 @@ ob_start();
                     </div>
                 </a>
 
-                <a href="zzimba-store" class="user-card hover:shadow-md transition-shadow duration-300">
+                <a href="zzimba-stores" class="user-card hover:shadow-md transition-shadow duration-300">
                     <div class="p-6 flex flex-col items-center text-center">
                         <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
                             <i class="fas fa-store text-red-600 text-2xl"></i>
                         </div>
-                        <h3 class="text-lg font-medium text-secondary mb-2">My Zzimba Store</h3>
-                        <p class="text-sm text-gray-text">Manage your store profile and products</p>
+                        <h3 class="text-lg font-medium text-secondary mb-2">My Zzimba Stores</h3>
+                        <p class="text-sm text-gray-text">Manage and create store profiles and products</p>
                     </div>
                 </a>
             </div>
