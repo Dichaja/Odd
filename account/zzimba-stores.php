@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-$pageTitle = 'My Zzimba Stores';
+$pageTitle = 'Manage Stores';
 $activeNav = 'zzimba-stores';
 
 // Sample data for vendor profiles
