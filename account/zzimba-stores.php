@@ -332,10 +332,10 @@ ob_start();
     </div>
 </div>
 
-<!-- Create Store Modal - Multi-step -->
+<!-- Create Store Modal - Two-step -->
 <div id="createStoreModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/20" onclick="hideModal('createStoreModal')"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-secondary">Create New Store</h3>
@@ -350,14 +350,12 @@ ob_start();
                     <div id="step1Indicator" class="step-indicator active flex items-center justify-center w-8 h-8 rounded-full bg-user-primary text-white font-medium">1</div>
                     <div class="w-12 h-1 bg-gray-200" id="step1to2Line"></div>
                     <div id="step2Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">2</div>
-                    <div class="w-12 h-1 bg-gray-200" id="step2to3Line"></div>
-                    <div id="step3Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">3</div>
                 </div>
             </div>
 
-            <!-- Step 1: Vendor Details -->
+            <!-- Step 1: Basic Store Details -->
             <div id="step1" class="step-content">
-                <h4 class="text-center font-medium text-secondary mb-4">Your Vendor Details</h4>
+                <h4 class="text-center font-medium text-secondary mb-4">Basic Store Details</h4>
                 <div class="space-y-4">
                     <div>
                         <label for="businessName" class="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
@@ -370,24 +368,6 @@ ob_start();
                     <div>
                         <label for="contactNumber" class="block text-sm font-medium text-gray-700 mb-1">Main Contact Number *</label>
                         <input type="tel" id="contactNumber" placeholder="Enter contact number" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                    </div>
-                    <div>
-                        <label for="district" class="block text-sm font-medium text-gray-700 mb-1">District *</label>
-                        <select id="district" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                            <option value="">Select District</option>
-                            <!-- Districts will be loaded dynamically -->
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Location on Map *</label>
-                        <div id="mapContainer" class="w-full h-64 rounded-lg border border-gray-200 mb-2"></div>
-                        <p class="text-xs text-gray-500">Click on the map to select your exact location</p>
-                        <input type="hidden" id="latitude" value="">
-                        <input type="hidden" id="longitude" value="">
-                    </div>
-                    <div>
-                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Your Address *</label>
-                        <input type="text" id="address" placeholder="Enter your address" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                     </div>
                     <div>
                         <label for="natureOfOperation" class="block text-sm font-medium text-gray-700 mb-1">Nature of Operation *</label>
@@ -404,71 +384,98 @@ ob_start();
                 </div>
             </div>
 
-            <!-- Step 2: Categories -->
+            <!-- Step 2: Location Selection -->
             <div id="step2" class="step-content hidden">
-                <h4 class="text-center font-medium text-secondary mb-4">Select Store Categories</h4>
-                <p class="text-sm text-gray-text mb-4 text-center">Choose the categories that best describe your products</p>
+                <h4 class="text-center font-medium text-secondary mb-4">Store Location</h4>
 
-                <div class="space-y-3 mb-6">
-                    <?php foreach ($storeCategories as $index => $category): ?>
-                        <div class="flex items-center">
-                            <input type="checkbox" id="category<?= $index ?>" value="<?= htmlspecialchars($category) ?>" class="w-4 h-4 text-user-primary border-gray-300 rounded focus:ring-user-primary">
-                            <label for="category<?= $index ?>" class="ml-2 text-sm text-gray-700"><?= htmlspecialchars($category) ?></label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left column: Map -->
+                    <div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Select Location on Map *</label>
+                            <div id="mapContainer" class="w-full h-64 rounded-lg border border-gray-200 mb-2"></div>
+                            <p class="text-xs text-gray-500">Click within the selected region to drop a pin</p>
                         </div>
-                    <?php endforeach; ?>
-                </div>
 
-                <div class="flex justify-between">
-                    <button type="button" id="step2BackBtn" class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                        BACK
-                    </button>
-                    <button type="button" id="step2NextBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
-                        NEXT
-                    </button>
-                </div>
-            </div>
-
-            <!-- Step 3: Add Products -->
-            <div id="step3" class="step-content hidden">
-                <h4 class="text-center font-medium text-secondary mb-4">Add Products</h4>
-                <p class="text-sm text-gray-text mb-4 text-center">Add your initial products to your store</p>
-
-                <div id="productsList" class="space-y-4 mb-6">
-                    <div class="product-item border border-gray-200 rounded-lg p-4">
-                        <div class="flex justify-between items-center mb-3">
-                            <h5 class="font-medium">Product 1</h5>
-                            <button type="button" class="text-gray-400 hover:text-gray-500">
-                                <i class="fas fa-times"></i>
+                        <div class="flex space-x-2 mb-4">
+                            <button id="locateMeBtn" class="px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition">
+                                Find My Location
                             </button>
+                            <select id="mapStyle" class="text-sm border rounded-md px-2 py-1">
+                                <option value="osm">OpenStreetMap</option>
+                                <option value="satellite">Satellite</option>
+                                <option value="terrain">Terrain</option>
+                            </select>
                         </div>
-                        <div class="space-y-3">
+
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-                                <input type="text" placeholder="Enter product name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                <label for="latitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
+                                <input type="text" id="latitude" readonly class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                <select class="product-category w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                                    <option value="">Select Category</option>
-                                </select>
+                                <label for="longitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
+                                <input type="text" id="longitude" readonly class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column: Administrative regions -->
+                    <div>
+                        <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Price (UGX)</label>
-                                <input type="number" placeholder="Enter price" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                <label for="level1" class="block text-sm font-medium text-gray-700 mb-1">Region/Province *</label>
+                                <div class="relative">
+                                    <select id="level1" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                        <option value="">Select Region/Province</option>
+                                    </select>
+                                    <span id="loading1" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="level2" class="block text-sm font-medium text-gray-700 mb-1">District *</label>
+                                <div class="relative">
+                                    <select id="level2" disabled class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                        <option value="">Select District</option>
+                                    </select>
+                                    <span id="loading2" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="level3" class="block text-sm font-medium text-gray-700 mb-1">Sub-county</label>
+                                <div class="relative">
+                                    <select id="level3" disabled class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                        <option value="">Select Sub-county</option>
+                                    </select>
+                                    <span id="loading3" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="level4" class="block text-sm font-medium text-gray-700 mb-1">Parish/Ward</label>
+                                <div class="relative">
+                                    <select id="level4" disabled class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                        <option value="">Select Parish/Ward</option>
+                                    </select>
+                                    <span id="loading4" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Physical Address *</label>
+                                <input type="text" id="address" placeholder="Enter physical address" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <button type="button" id="addProductBtn" class="w-full h-10 mb-6 border border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-plus mr-2"></i> Add Another Product
-                </button>
-
-                <div class="flex justify-between">
-                    <button type="button" id="step3BackBtn" class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                <div class="flex justify-between mt-6">
+                    <button type="button" id="step2BackBtn" class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                         BACK
                     </button>
-                    <button type="button" id="step3FinishBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                    <button type="button" id="step2FinishBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                         FINISH
                     </button>
                 </div>
@@ -484,14 +491,45 @@ ob_start();
     </div>
 </div>
 
-<!-- Google Maps API -->
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+<!-- Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+<!-- Leaflet plugins for point-in-polygon -->
+<script src="https://unpkg.com/leaflet-pip@1.1.0/leaflet-pip.js"></script>
+
+<style>
+    .location-icon {
+        background-color: #ef4444;
+        border: 2px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .pulse {
+        animation: pulse-animation 2s infinite;
+    }
+
+    @keyframes pulse-animation {
+        0% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        }
+    }
+</style>
 
 <script>
     $(document).ready(function() {
-        // Load districts from API
-        fetchDistricts();
-
         // Tab functionality
         $('.tab-btn').click(function() {
             $('.tab-btn').removeClass('active border-user-primary text-user-primary').addClass('border-transparent text-gray-500');
@@ -510,23 +548,9 @@ ob_start();
             showModal('createStoreModal');
             // Initialize map after modal is shown
             setTimeout(() => {
-                initMap('mapContainer', null, null);
+                initMap();
+                loadRegions();
             }, 300);
-        });
-
-        // District change handler for map update
-        $('#district, #editStoreDistrict').change(function() {
-            const districtId = $(this).val();
-            const districtName = $(this).find('option:selected').text();
-
-            if (!districtId) return;
-
-            // Update map with district boundaries
-            if ($(this).attr('id') === 'district') {
-                updateMapWithDistrict(districtName, 'mapContainer');
-            } else {
-                updateMapWithDistrict(districtName, 'editMapContainer');
-            }
         });
 
         // Multi-step form navigation
@@ -535,14 +559,10 @@ ob_start();
             const businessName = $('#businessName').val();
             const businessEmail = $('#businessEmail').val();
             const contactNumber = $('#contactNumber').val();
-            const district = $('#district').val();
-            const address = $('#address').val();
-            const latitude = $('#latitude').val();
-            const longitude = $('#longitude').val();
             const natureOfOperation = $('#natureOfOperation').val();
 
-            if (!businessName || !businessEmail || !contactNumber || !district || !address || !latitude || !longitude || !natureOfOperation) {
-                alert('Please fill in all required fields and select your location on the map');
+            if (!businessName || !businessEmail || !contactNumber || !natureOfOperation) {
+                alert('Please fill in all required fields');
                 return;
             }
 
@@ -555,6 +575,11 @@ ob_start();
             $('#step1Indicator').html('<i class="fas fa-check"></i>');
             $('#step2Indicator').addClass('bg-user-primary').removeClass('bg-gray-200 text-gray-500').addClass('text-white');
             $('#step1to2Line').addClass('bg-green-500').removeClass('bg-gray-200');
+
+            // Refresh map in case it wasn't properly initialized
+            setTimeout(() => {
+                if (map) map.invalidateSize();
+            }, 100);
         });
 
         $('#step2BackBtn').click(function() {
@@ -568,93 +593,20 @@ ob_start();
             $('#step1to2Line').removeClass('bg-green-500').addClass('bg-gray-200');
         });
 
-        $('#step2NextBtn').click(function() {
+        // Finish button
+        $('#step2FinishBtn').click(function() {
             // Validate step 2
-            const selectedCategories = $('input[type="checkbox"]:checked').length;
+            const latitude = $('#latitude').val();
+            const longitude = $('#longitude').val();
+            const level1 = $('#level1').val();
+            const level2 = $('#level2').val();
+            const address = $('#address').val();
 
-            if (selectedCategories === 0) {
-                alert('Please select at least one category');
+            if (!latitude || !longitude || !level1 || !level2 || !address) {
+                alert('Please select your location on the map and fill in all required fields');
                 return;
             }
 
-            // Populate product categories dropdown
-            $('.product-category').html('<option value="">Select Category</option>');
-            $('input[type="checkbox"]:checked').each(function() {
-                const category = $(this).val();
-                $('.product-category').append(`<option value="${category}">${category}</option>`);
-            });
-
-            // Move to step 3
-            $('#step2').addClass('hidden');
-            $('#step3').removeClass('hidden');
-
-            // Update indicators
-            $('#step2Indicator').addClass('bg-green-500').removeClass('bg-user-primary');
-            $('#step2Indicator').html('<i class="fas fa-check"></i>');
-            $('#step3Indicator').addClass('bg-user-primary').removeClass('bg-gray-200 text-gray-500').addClass('text-white');
-            $('#step2to3Line').addClass('bg-green-500').removeClass('bg-gray-200');
-        });
-
-        $('#step3BackBtn').click(function() {
-            $('#step3').addClass('hidden');
-            $('#step2').removeClass('hidden');
-
-            // Update indicators
-            $('#step2Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
-            $('#step2Indicator').text('2');
-            $('#step3Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
-            $('#step2to3Line').removeClass('bg-green-500').addClass('bg-gray-200');
-        });
-
-        // Add product button
-        $('#addProductBtn').click(function() {
-            const productCount = $('.product-item').length + 1;
-
-            const newProduct = `
-                <div class="product-item border border-gray-200 rounded-lg p-4">
-                    <div class="flex justify-between items-center mb-3">
-                        <h5 class="font-medium">Product ${productCount}</h5>
-                        <button type="button" class="remove-product text-gray-400 hover:text-gray-500">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-                            <input type="text" placeholder="Enter product name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select class="product-category w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                                <option value="">Select Category</option>
-                                ${$('input[type="checkbox"]:checked').map(function() {
-                                    return `<option value="${$(this).val()}">${$(this).val()}</option>`;
-                                }).get().join('')}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Price (UGX)</label>
-                            <input type="number" placeholder="Enter price" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            $('#productsList').append(newProduct);
-
-            // Add event listener for remove button
-            $('.remove-product').off('click').on('click', function() {
-                $(this).closest('.product-item').remove();
-
-                // Renumber products
-                $('.product-item').each(function(index) {
-                    $(this).find('h5').text(`Product ${index + 1}`);
-                });
-            });
-        });
-
-        // Finish button
-        $('#step3FinishBtn').click(function() {
             showLoading();
 
             setTimeout(function() {
@@ -678,481 +630,574 @@ ob_start();
                 showSuccessNotification('Store updated successfully!');
             }, 1500);
         });
+
+        // Map style selector
+        $('#mapStyle').change(function() {
+            changeMapStyle($(this).val());
+        });
+
+        // Locate me button
+        $('#locateMeBtn').click(function() {
+            locateUser();
+        });
     });
 
-    // Fetch districts from API
-    function fetchDistricts() {
-        showLoading();
+    // Map variables
+    let map = null;
+    let marker = null;
+    let baseLayers = {};
+    let currentLocation = null;
+    let geoJSONLayer = null;
+    let currentGeoJSON = null;
+    let locationMarker = null;
 
-        // Using Uganda Bureau of Statistics API (example)
-        // In a real application, replace with actual API endpoint
-        fetch('https://api.example.com/uganda/districts')
-            .then(response => {
-                // For demo purposes, we'll use mock data
-                return {
-                    ok: true,
-                    json: () => Promise.resolve({
-                        districts: [{
-                                id: '0001',
-                                name: 'Kampala'
-                            },
-                            {
-                                id: '4765',
-                                name: 'Jinja'
-                            },
-                            {
-                                id: '5577',
-                                name: 'Manafwa'
-                            },
-                            {
-                                id: '7862',
-                                name: 'Mbale'
-                            },
-                            {
-                                id: '2604',
-                                name: 'Mukono'
-                            },
-                            {
-                                id: '1732',
-                                name: 'Tororo'
-                            },
-                            {
-                                id: '7672',
-                                name: 'Wakiso'
-                            },
-                            {
-                                id: '3301',
-                                name: 'Arua'
-                            },
-                            {
-                                id: '4502',
-                                name: 'Gulu'
-                            },
-                            {
-                                id: '5803',
-                                name: 'Kabale'
-                            },
-                            {
-                                id: '6104',
-                                name: 'Masaka'
-                            },
-                            {
-                                id: '7405',
-                                name: 'Mbarara'
-                            }
-                        ]
-                    })
-                };
+    // Initialize map
+    function initMap() {
+        if (map) return; // Don't initialize if already exists
+
+        // Create map centered on Uganda
+        map = L.map('mapContainer').setView([1.3733, 32.2903], 7);
+
+        // Define base layers
+        baseLayers = {
+            'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }),
+            'satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            }),
+            'terrain': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch districts');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const districts = data.districts;
-
-                // Populate district dropdowns
-                $('#district, #editStoreDistrict').html('<option value="">Select District</option>');
-
-                districts.forEach(district => {
-                    $('#district, #editStoreDistrict').append(`<option value="${district.id}">${district.name}</option>`);
-                });
-
-                hideLoading();
-            })
-            .catch(error => {
-                console.error('Error fetching districts:', error);
-                hideLoading();
-
-                // Fallback to hardcoded districts
-                const fallbackDistricts = [{
-                        id: '0001',
-                        name: 'Kampala'
-                    },
-                    {
-                        id: '4765',
-                        name: 'Jinja'
-                    },
-                    {
-                        id: '5577',
-                        name: 'Manafwa'
-                    },
-                    {
-                        id: '7862',
-                        name: 'Mbale'
-                    },
-                    {
-                        id: '2604',
-                        name: 'Mukono'
-                    },
-                    {
-                        id: '1732',
-                        name: 'Tororo'
-                    },
-                    {
-                        id: '7672',
-                        name: 'Wakiso'
-                    }
-                ];
-
-                $('#district, #editStoreDistrict').html('<option value="">Select District</option>');
-
-                fallbackDistricts.forEach(district => {
-                    $('#district, #editStoreDistrict').append(`<option value="${district.id}">${district.name}</option>`);
-                });
-            });
-    }
-
-    // Initialize Google Map
-    function initMap(containerId, lat, lng) {
-        const mapContainer = document.getElementById(containerId);
-        if (!mapContainer) return;
-
-        // Default to Uganda center if no coordinates provided
-        const center = lat && lng ? {
-            lat,
-            lng
-        } : {
-            lat: 1.3733,
-            lng: 32.2903
         };
 
-        const map = new google.maps.Map(mapContainer, {
-            center: center,
-            zoom: 7,
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false
+        // Add default base layer
+        baseLayers['osm'].addTo(map);
+
+        // Add click event to map
+        map.on('click', function(e) {
+            handleMapClick(e);
         });
 
-        // Add marker if coordinates are provided
-        if (lat && lng) {
-            new google.maps.Marker({
-                position: {
-                    lat,
-                    lng
-                },
-                map: map,
-                draggable: true
-            });
-        }
-
-        // Allow clicking on map to place marker
-        map.addListener('click', function(e) {
-            placeMarker(e.latLng, map, containerId);
-        });
-
-        // Store map instance for later use
-        window[containerId + 'Map'] = map;
+        // Try to get user's location
+        locateUser();
     }
 
-    // Place marker on map
-    function placeMarker(location, map, containerId) {
-        // Remove existing markers
-        if (window[containerId + 'Marker']) {
-            window[containerId + 'Marker'].setMap(null);
-        }
+    // Change map style
+    function changeMapStyle(style) {
+        if (!map) return;
 
-        // Create new marker
-        const marker = new google.maps.Marker({
-            position: location,
-            map: map,
-            draggable: true
-        });
-
-        // Store marker instance
-        window[containerId + 'Marker'] = marker;
-
-        // Update hidden inputs with coordinates
-        const lat = location.lat();
-        const lng = location.lng();
-
-        if (containerId === 'mapContainer') {
-            $('#latitude').val(lat);
-            $('#longitude').val(lng);
-
-            // Reverse geocode to get address
-            reverseGeocode(lat, lng, 'address');
-        } else {
-            $('#editLatitude').val(lat);
-            $('#editLongitude').val(lng);
-
-            // Reverse geocode to get address
-            reverseGeocode(lat, lng, 'editStoreAddress');
-        }
-
-        // Add drag event listener to marker
-        marker.addListener('dragend', function() {
-            const newLat = marker.getPosition().lat();
-            const newLng = marker.getPosition().lng();
-
-            if (containerId === 'mapContainer') {
-                $('#latitude').val(newLat);
-                $('#longitude').val(newLng);
-
-                // Reverse geocode to get address
-                reverseGeocode(newLat, newLng, 'address');
-            } else {
-                $('#editLatitude').val(newLat);
-                $('#editLongitude').val(newLng);
-
-                // Reverse geocode to get address
-                reverseGeocode(newLat, newLng, 'editStoreAddress');
+        // Remove all layers
+        Object.values(baseLayers).forEach(layer => {
+            if (map.hasLayer(layer)) {
+                map.removeLayer(layer);
             }
         });
+
+        // Add selected layer
+        if (baseLayers[style]) {
+            baseLayers[style].addTo(map);
+        }
     }
 
-    // Update map with district boundaries
-    function updateMapWithDistrict(districtName, containerId) {
-        const map = window[containerId + 'Map'];
-        if (!map) {
-            // Initialize map if not already done
-            setTimeout(() => {
-                initMap(containerId, null, null);
-                setTimeout(() => {
-                    updateMapWithDistrict(districtName, containerId);
-                }, 300);
-            }, 300);
+    // Function to check if a point is inside a polygon
+    function isPointInPolygon(point, geoJSON) {
+        if (!geoJSON || !geoJSON.features || geoJSON.features.length === 0) return false;
+
+        // Create a temporary layer for the point-in-polygon check
+        const tempLayer = L.geoJSON(geoJSON);
+        const results = leafletPip.pointInLayer([point.lng, point.lat], tempLayer);
+        return results.length > 0;
+    }
+
+    // Handle map click for pin dropping
+    function handleMapClick(e) {
+        // Only allow pin dropping if a region is selected
+        if (!currentGeoJSON || !currentGeoJSON.features || currentGeoJSON.features.length === 0) {
+            alert('Please select a region first before dropping a pin.');
             return;
         }
 
-        // Clear existing boundaries
-        if (window[containerId + 'Boundary']) {
-            window[containerId + 'Boundary'].setMap(null);
+        const point = e.latlng;
+
+        // Check if the clicked point is inside the selected region
+        if (!isPointInPolygon(point, currentGeoJSON)) {
+            alert('Please click within the selected region to drop a pin.');
+            return;
         }
 
-        // Fetch district boundaries (using mock data for demo)
-        fetchDistrictBoundary(districtName)
-            .then(boundary => {
-                // Create polygon for district boundary
-                const districtPolygon = new google.maps.Polygon({
-                    paths: boundary,
-                    strokeColor: '#FF0000',
-                    strokeOpacity: 0.8,
-                    strokeWeight: 2,
-                    fillColor: '#FF0000',
-                    fillOpacity: 0.1
-                });
-
-                districtPolygon.setMap(map);
-
-                // Store boundary instance
-                window[containerId + 'Boundary'] = districtPolygon;
-
-                // Fit map to boundary
-                const bounds = new google.maps.LatLngBounds();
-                boundary.forEach(point => {
-                    bounds.extend(point);
-                });
-                map.fitBounds(bounds);
-
-                // Restrict marker placement to within boundary
-                map.addListener('click', function(e) {
-                    if (google.maps.geometry.poly.containsLocation(e.latLng, districtPolygon)) {
-                        placeMarker(e.latLng, map, containerId);
-                    } else {
-                        alert('Please select a location within the selected district');
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Error fetching district boundary:', error);
-            });
+        // Place marker at the clicked location
+        placeMarker(point);
     }
 
-    // Fetch district boundary (mock function)
-    function fetchDistrictBoundary(districtName) {
-        // In a real application, this would fetch from a GeoJSON API
-        return new Promise((resolve) => {
-            // Mock boundaries for demo purposes
-            const mockBoundaries = {
-                'Kampala': [{
-                        lat: 0.3476,
-                        lng: 32.5825
-                    },
-                    {
-                        lat: 0.3476,
-                        lng: 32.6525
-                    },
-                    {
-                        lat: 0.2976,
-                        lng: 32.6525
-                    },
-                    {
-                        lat: 0.2976,
-                        lng: 32.5825
-                    }
-                ],
-                'Jinja': [{
-                        lat: 0.4476,
-                        lng: 33.1825
-                    },
-                    {
-                        lat: 0.4476,
-                        lng: 33.2525
-                    },
-                    {
-                        lat: 0.3976,
-                        lng: 33.2525
-                    },
-                    {
-                        lat: 0.3976,
-                        lng: 33.1825
-                    }
-                ],
-                'Mbale': [{
-                        lat: 1.0476,
-                        lng: 34.1825
-                    },
-                    {
-                        lat: 1.0476,
-                        lng: 34.2525
-                    },
-                    {
-                        lat: 0.9976,
-                        lng: 34.2525
-                    },
-                    {
-                        lat: 0.9976,
-                        lng: 34.1825
-                    }
-                ],
-                'Wakiso': [{
-                        lat: 0.4476,
-                        lng: 32.4825
-                    },
-                    {
-                        lat: 0.4476,
-                        lng: 32.5525
-                    },
-                    {
-                        lat: 0.3976,
-                        lng: 32.5525
-                    },
-                    {
-                        lat: 0.3976,
-                        lng: 32.4825
-                    }
-                ]
-            };
+    // Place marker on map
+    function placeMarker(latlng) {
+        // Remove existing marker
+        if (marker) {
+            map.removeLayer(marker);
+        }
 
-            // Return boundary for selected district or default square if not found
-            const boundary = mockBoundaries[districtName] || [{
-                    lat: 1.3733 - 0.5,
-                    lng: 32.2903 - 0.5
-                },
-                {
-                    lat: 1.3733 - 0.5,
-                    lng: 32.2903 + 0.5
-                },
-                {
-                    lat: 1.3733 + 0.5,
-                    lng: 32.2903 + 0.5
-                },
-                {
-                    lat: 1.3733 + 0.5,
-                    lng: 32.2903 - 0.5
-                }
-            ];
+        // Create new marker
+        marker = L.marker(latlng, {
+            draggable: true
+        }).addTo(map);
 
-            resolve(boundary);
+        // Update form fields
+        $('#latitude').val(latlng.lat.toFixed(6));
+        $('#longitude').val(latlng.lng.toFixed(6));
+
+        // Get address from coordinates
+        reverseGeocode(latlng.lat, latlng.lng);
+
+        // Add drag end event
+        marker.on('dragend', function() {
+            const newPos = marker.getLatLng();
+
+            // Check if the new position is within the selected region
+            if (!isPointInPolygon(newPos, currentGeoJSON)) {
+                // If not, move the marker back to its previous position
+                marker.setLatLng(latlng);
+                alert('Please keep the marker within the selected region.');
+                return;
+            }
+
+            // Update form fields with new position
+            $('#latitude').val(newPos.lat.toFixed(6));
+            $('#longitude').val(newPos.lng.toFixed(6));
+            reverseGeocode(newPos.lat, newPos.lng);
         });
     }
 
     // Reverse geocode coordinates to address
-    function reverseGeocode(lat, lng, inputId) {
-        const geocoder = new google.maps.Geocoder();
-        const latlng = {
-            lat,
-            lng
-        };
+    function reverseGeocode(lat, lng) {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
 
-        geocoder.geocode({
-            location: latlng
-        }, function(results, status) {
-            if (status === 'OK') {
-                if (results[0]) {
-                    document.getElementById(inputId).value = results[0].formatted_address;
+        fetch(url, {
+                headers: {
+                    'User-Agent': 'Zzimba Online Store Location Selector'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    $('#address').val(data.display_name);
+
+                    // Try to find and set administrative regions
+                    if (data.address) {
+                        // This is a simplified approach - in a real app you'd need to match
+                        // the returned address components with your specific region data
+                        if (data.address.state || data.address.region) {
+                            const region = data.address.state || data.address.region;
+                            const regionOption = $(`#level1 option`).filter(function() {
+                                return $(this).text().toLowerCase() === region.toLowerCase();
+                            });
+
+                            if (regionOption.length) {
+                                $('#level1').val(regionOption.val()).trigger('change');
+                            }
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error in reverse geocoding:', error);
+            });
+    }
+
+    // Get user's location
+    function locateUser() {
+        if (!map) return;
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    // Save current location
+                    currentLocation = {
+                        lat: lat,
+                        lng: lng
+                    };
+
+                    // Center map on user's location
+                    map.setView([lat, lng], 15);
+
+                    // Create a custom icon for the location marker
+                    const locationIcon = L.divIcon({
+                        className: 'location-icon pulse',
+                        html: '',
+                        iconSize: [16, 16]
+                    });
+
+                    // Create a new marker at the user's location
+                    if (locationMarker) {
+                        map.removeLayer(locationMarker);
+                    }
+
+                    locationMarker = L.marker([lat, lng], {
+                        icon: locationIcon,
+                        zIndexOffset: 1000 // Ensure it's on top of other markers
+                    }).addTo(map);
+
+                    // Get address from coordinates
+                    reverseGeocode(lat, lng);
+                },
+                function(error) {
+                    console.error('Error getting location:', error);
+                    alert('Unable to get your location. Please select your location manually on the map.');
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by your browser');
+        }
+    }
+
+    // Load administrative regions
+    function loadRegions() {
+        // In a real application, you would fetch this data from the server
+        // For this example, we'll use mock data from the GADM dataset
+        fetch('<?= BASE_URL ?>locations/gadm41_UGA_4.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load regions data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Extract unique level 1 regions (provinces)
+                const level1Options = {};
+                data.features.forEach(feature => {
+                    const name = feature.properties.NAME_1;
+                    if (name) {
+                        level1Options[name] = name;
+                    }
+                });
+
+                // Populate level 1 dropdown
+                const level1Select = $('#level1');
+                level1Select.html('<option value="">Select Region/Province</option>');
+
+                Object.keys(level1Options).sort().forEach(region => {
+                    level1Select.append(`<option value="${region}">${region}</option>`);
+                });
+
+                // Store the GeoJSON data for later use
+                window.gadmData = data;
+
+                // Add change event listeners
+                level1Select.change(function() {
+                    const region = $(this).val();
+                    if (region) {
+                        updateLevel2Options(region);
+                        updateMap({
+                            1: region
+                        });
+                    } else {
+                        resetDropdown('level2');
+                        resetDropdown('level3');
+                        resetDropdown('level4');
+                        clearMap();
+                    }
+                });
+
+                $('#level2').change(function() {
+                    const district = $(this).val();
+                    const region = $('#level1').val();
+                    if (district) {
+                        updateLevel3Options(region, district);
+                        updateMap({
+                            1: region,
+                            2: district
+                        });
+                    } else {
+                        resetDropdown('level3');
+                        resetDropdown('level4');
+                        updateMap({
+                            1: region
+                        });
+                    }
+                });
+
+                $('#level3').change(function() {
+                    const subcounty = $(this).val();
+                    const district = $('#level2').val();
+                    const region = $('#level1').val();
+                    if (subcounty) {
+                        updateLevel4Options(region, district, subcounty);
+                        updateMap({
+                            1: region,
+                            2: district,
+                            3: subcounty
+                        });
+                    } else {
+                        resetDropdown('level4');
+                        updateMap({
+                            1: region,
+                            2: district
+                        });
+                    }
+                });
+
+                $('#level4').change(function() {
+                    const parish = $(this).val();
+                    const subcounty = $('#level3').val();
+                    const district = $('#level2').val();
+                    const region = $('#level1').val();
+                    if (parish) {
+                        updateMap({
+                            1: region,
+                            2: district,
+                            3: subcounty,
+                            4: parish
+                        });
+                    } else {
+                        updateMap({
+                            1: region,
+                            2: district,
+                            3: subcounty
+                        });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading regions:', error);
+                alert('Failed to load administrative regions. Please try again later.');
+            });
+    }
+
+    // Update level 2 options based on selected level 1
+    function updateLevel2Options(region) {
+        if (!window.gadmData) return;
+
+        // Show loading indicator
+        $('#loading2').removeClass('hidden');
+
+        // Extract unique level 2 regions for the selected level 1
+        const level2Options = {};
+        window.gadmData.features.forEach(feature => {
+            if (feature.properties.NAME_1 === region) {
+                const name = feature.properties.NAME_2;
+                if (name) {
+                    level2Options[name] = name;
                 }
             }
         });
+
+        // Populate level 2 dropdown
+        const level2Select = $('#level2');
+        level2Select.html('<option value="">Select District</option>');
+
+        Object.keys(level2Options).sort().forEach(district => {
+            level2Select.append(`<option value="${district}">${district}</option>`);
+        });
+
+        // Enable the dropdown
+        level2Select.prop('disabled', false);
+
+        // Hide loading indicator
+        $('#loading2').addClass('hidden');
+
+        // Reset dependent dropdowns
+        resetDropdown('level3');
+        resetDropdown('level4');
     }
 
-    function openEditModal(storeId) {
-        // In a real application, you would fetch the store data from the server
-        // For this example, we'll just populate with dummy data
-        $('#editStoreId').val(storeId);
-        $('#editStoreName').val('Store #' + storeId);
-        $('#editStoreDescription').val('This is a sample store description.');
-        $('#editStoreDistrict').val('0001');
-        $('#editStoreAddress').val('123 Main Street');
-        $('#editStorePhone').val('0772123456');
-        $('#editStoreEmail').val('store' + storeId + '@example.com');
+    // Update level 3 options based on selected level 1 and 2
+    function updateLevel3Options(region, district) {
+        if (!window.gadmData) return;
 
-        showModal('editStoreModal');
+        // Show loading indicator
+        $('#loading3').removeClass('hidden');
 
-        // Initialize map after modal is shown
-        setTimeout(() => {
-            initMap('editMapContainer', 0.3476, 32.5825);
-        }, 300);
+        // Extract unique level 3 regions for the selected level 1 and 2
+        const level3Options = {};
+        window.gadmData.features.forEach(feature => {
+            if (feature.properties.NAME_1 === region && feature.properties.NAME_2 === district) {
+                const name = feature.properties.NAME_3;
+                if (name) {
+                    level3Options[name] = name;
+                }
+            }
+        });
+
+        // Populate level 3 dropdown
+        const level3Select = $('#level3');
+        level3Select.html('<option value="">Select Sub-county</option>');
+
+        Object.keys(level3Options).sort().forEach(subcounty => {
+            level3Select.append(`<option value="${subcounty}">${subcounty}</option>`);
+        });
+
+        // Enable the dropdown
+        level3Select.prop('disabled', false);
+
+        // Hide loading indicator
+        $('#loading3').addClass('hidden');
+
+        // Reset dependent dropdown
+        resetDropdown('level4');
+    }
+
+    // Update level 4 options based on selected level 1, 2, and 3
+    function updateLevel4Options(region, district, subcounty) {
+        if (!window.gadmData) return;
+
+        // Show loading indicator
+        $('#loading4').removeClass('hidden');
+
+        // Extract unique level 4 regions for the selected level 1, 2, and 3
+        const level4Options = {};
+        window.gadmData.features.forEach(feature => {
+            if (feature.properties.NAME_1 === region &&
+                feature.properties.NAME_2 === district &&
+                feature.properties.NAME_3 === subcounty) {
+                const name = feature.properties.NAME_4;
+                if (name) {
+                    level4Options[name] = name;
+                }
+            }
+        });
+
+        // Populate level 4 dropdown
+        const level4Select = $('#level4');
+        level4Select.html('<option value="">Select Parish/Ward</option>');
+
+        Object.keys(level4Options).sort().forEach(parish => {
+            level4Select.append(`<option value="${parish}">${parish}</option>`);
+        });
+
+        // Enable the dropdown
+        level4Select.prop('disabled', false);
+
+        // Hide loading indicator
+        $('#loading4').addClass('hidden');
+    }
+
+    // Update map with selected regions
+    function updateMap(selections) {
+        if (!window.gadmData || !map) return;
+
+        // Remove existing GeoJSON layer if it exists
+        if (geoJSONLayer) {
+            map.removeLayer(geoJSONLayer);
+            geoJSONLayer = null;
+        }
+
+        // Remove existing marker if it exists
+        if (marker) {
+            map.removeLayer(marker);
+            marker = null;
+        }
+
+        // Filter features based on selections
+        const filteredFeatures = window.gadmData.features.filter(feature => {
+            let match = true;
+
+            for (const [level, value] of Object.entries(selections)) {
+                if (feature.properties[`NAME_${level}`] !== value) {
+                    match = false;
+                    break;
+                }
+            }
+
+            return match;
+        });
+
+        if (filteredFeatures.length === 0) {
+            currentGeoJSON = null;
+            return;
+        }
+
+        // Create GeoJSON object with filtered features
+        const filteredGeoJSON = {
+            type: 'FeatureCollection',
+            features: filteredFeatures
+        };
+
+        currentGeoJSON = filteredGeoJSON;
+
+        // Add new GeoJSON layer with a distinct style
+        geoJSONLayer = L.geoJSON(filteredGeoJSON, {
+            style: {
+                color: '#C00000',
+                weight: 2,
+                opacity: 1,
+                fillColor: '#C00000',
+                fillOpacity: 0.2
+            }
+        }).addTo(map);
+
+        // Fit map to the bounds of the selected region
+        map.fitBounds(geoJSONLayer.getBounds());
+
+        // Check if current location is within the selected region
+        if (currentLocation) {
+            const isInRegion = isPointInPolygon(currentLocation, filteredGeoJSON);
+            if (isInRegion) {
+                // If current location is within region, place a marker there
+                placeMarker(L.latLng(currentLocation.lat, currentLocation.lng));
+            }
+        }
+    }
+
+    // Clear map
+    function clearMap() {
+        if (!map) return;
+
+        // Remove existing GeoJSON layer if it exists
+        if (geoJSONLayer) {
+            map.removeLayer(geoJSONLayer);
+            geoJSONLayer = null;
+        }
+
+        // Remove existing marker if it exists
+        if (marker) {
+            map.removeLayer(marker);
+            marker = null;
+        }
+
+        currentGeoJSON = null;
+    }
+
+    // Reset dropdown
+    function resetDropdown(id) {
+        $(`#${id}`).html('<option value="">Select option</option>').prop('disabled', true);
     }
 
     function resetCreateStoreForm() {
         // Reset step 1
-        $('#businessName, #businessEmail, #contactNumber, #address').val('');
-        $('#district, #natureOfOperation').val('');
-        $('#latitude, #longitude').val('');
+        $('#businessName, #businessEmail, #contactNumber').val('');
+        $('#natureOfOperation').val('');
 
         // Reset step 2
-        $('input[type="checkbox"]').prop('checked', false);
-
-        // Reset step 3
-        $('#productsList').html(`
-            <div class="product-item border border-gray-200 rounded-lg p-4">
-                <div class="flex justify-between items-center mb-3">
-                    <h5 class="font-medium">Product 1</h5>
-                    <button type="button" class="text-gray-400 hover:text-gray-500">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-                        <input type="text" placeholder="Enter product name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <select class="product-category w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                            <option value="">Select Category</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Price (UGX)</label>
-                        <input type="number" placeholder="Enter price" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                    </div>
-                </div>
-            </div>
-        `);
+        $('#latitude, #longitude, #address').val('');
+        $('#level1').val('');
+        resetDropdown('level2');
+        resetDropdown('level3');
+        resetDropdown('level4');
 
         // Reset indicators
         $('#step1').removeClass('hidden');
-        $('#step2, #step3').addClass('hidden');
+        $('#step2').addClass('hidden');
 
         $('#step1Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
         $('#step1Indicator').text('1');
-        $('#step2Indicator, #step3Indicator').removeClass('bg-user-primary bg-green-500 text-white').addClass('bg-gray-200 text-gray-500');
+        $('#step2Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
         $('#step2Indicator').text('2');
-        $('#step3Indicator').text('3');
-        $('#step1to2Line, #step2to3Line').removeClass('bg-green-500').addClass('bg-gray-200');
+        $('#step1to2Line').removeClass('bg-green-500').addClass('bg-gray-200');
 
         // Clear map
-        if (window.mapContainerMarker) {
-            window.mapContainerMarker.setMap(null);
-        }
-        if (window.mapContainerBoundary) {
-            window.mapContainerBoundary.setMap(null);
+        clearMap();
+
+        // Remove location marker
+        if (locationMarker && map) {
+            map.removeLayer(locationMarker);
+            locationMarker = null;
         }
     }
 
