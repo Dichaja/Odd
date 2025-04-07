@@ -571,7 +571,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
     <div class="mobile-menu-overlay"></div>
     <div class="mobile-menu bg-white p-4">
         <div class="flex justify-between items-center mb-4">
-            <img src="img/logo_alt.png?height=40&width=150" alt="Logo" class="h-8">
+            <img src="<?= BASE_URL ?>img/logo_alt.png?height=40&width=150" alt="Logo" class="h-8">
             <button id="close-mobile-menu" class="text-secondary hover:text-primary">
                 <i class="fas fa-times text-2xl"></i>
             </button>
