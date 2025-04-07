@@ -2,7 +2,9 @@
 require_once __DIR__ . '/../config/config.php';
 
 if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in']) {
-    header('HTTP/1.1 403 Forbidden');
+    session_unset();
+    session_destroy();
+    header('Location: ' . BASE_URL);
     exit;
 }
 
@@ -57,7 +59,7 @@ $menuItems = [
     'shopping' => [
         'title' => 'Shopping',
         'items' => [
-            'zzimba-store' => ['title' => 'Zzimba Store', 'icon' => 'fa-shopping-cart', 'notifications' => 0],
+            'zzimba-stores' => ['title' => 'Zzimba Store', 'icon' => 'fa-shopping-cart', 'notifications' => 0],
             'wishlist' => ['title' => 'Wishlist', 'icon' => 'fa-heart', 'notifications' => 0],
             'saved-items' => ['title' => 'Saved Items', 'icon' => 'fa-bookmark', 'notifications' => 0],
         ]
