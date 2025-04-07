@@ -131,6 +131,9 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^admin/fetch/([^/]+)$ admin/fetch/$1.php [L]
 
+# Vendor profile by UUID
+RewriteRule ^view/profile/vendor/([0-9a-fA-F\-]{36})/?$ vendor-profile.php?id=$1 [L,QSA]
+
 # General rule for other files to work without .php extension
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
