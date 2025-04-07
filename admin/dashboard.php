@@ -2,137 +2,133 @@
 require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Dashboard';
 $activeNav = 'dashboard';
+
+if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
+    header('Location: ' . BASE_URL . 'login/login.php');
+    exit;
+}
+
 ob_start();
 ?>
 
-<div class="space-y-6">
-    <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">Total Users</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-users">2,458</h3>
-                    <p class="text-xs text-green-600"><i class="fas fa-arrow-up mr-1"></i>12% from last month</p>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
-                    <i class="fas fa-users text-blue-500"></i>
-                </div>
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div class="space-y-1">
+                <p class="text-sm text-gray-text">Total Users</p>
+                <h3 class="text-2xl font-semibold text-secondary" id="stat-users">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
+                <i class="fas fa-users text-blue-500"></i>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">Active Users</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-active">1,893</h3>
-                    <p class="text-xs text-green-600"><i class="fas fa-arrow-up mr-1"></i>8% from last month</p>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
-                    <i class="fas fa-user-check text-green-500"></i>
-                </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div class="space-y-1">
+                <p class="text-sm text-gray-text">Active Users</p>
+                <h3 class="text-2xl font-semibold text-secondary" id="stat-active">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
+                <i class="fas fa-user-check text-green-500"></i>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">New Users (30d)</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-new">246</h3>
-                    <p class="text-xs text-green-600"><i class="fas fa-arrow-up mr-1"></i>24% from last month</p>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center">
-                    <i class="fas fa-user-plus text-purple-500"></i>
-                </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div class="space-y-1">
+                <p class="text-sm text-gray-text">New Users (30d)</p>
+                <h3 class="text-2xl font-semibold text-secondary" id="stat-new">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center">
+                <i class="fas fa-user-plus text-purple-500"></i>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">Inactive Users</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-inactive">565</h3>
-                    <p class="text-xs text-red-500"><i class="fas fa-arrow-up mr-1"></i>3% from last month</p>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center">
-                    <i class="fas fa-user-slash text-red-500"></i>
-                </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div class="space-y-1">
+                <p class="text-sm text-gray-text">Inactive Users</p>
+                <h3 class="text-2xl font-semibold text-secondary" id="stat-inactive">0</h3>
+            </div>
+            <div class="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center">
+                <i class="fas fa-user-slash text-red-500"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Management -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-100">
+    <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-lg font-semibold text-secondary">User Management</h2>
+            <p class="text-sm text-gray-text mt-1">Manage and monitor user accounts</p>
+        </div>
+        <div class="flex flex-col md:flex-row items-center gap-3">
+            <div class="relative w-full md:w-auto">
+                <input type="text" id="searchUsers" placeholder="Search users..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <select id="sortUsers" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
+                    <option value="created_at" selected>Sort by Registration Date</option>
+                    <option value="current_login">Sort by Last Login</option>
+                    <option value="username">Sort by Username</option>
+                    <option value="status">Sort by Status</option>
+                </select>
             </div>
         </div>
     </div>
 
-    <!-- User Management -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-lg font-semibold text-secondary">User Management</h2>
-                <p class="text-sm text-gray-text mt-1">Manage and monitor user accounts</p>
-            </div>
-            <div class="flex flex-col md:flex-row items-center gap-3">
-                <div class="relative w-full md:w-auto">
-                    <input type="text" id="searchUsers" placeholder="Search users..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                </div>
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <select id="sortUsers" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
-                        <option value="register_date" selected>Sort by Registration Date</option>
-                        <option value="last_login">Sort by Last Login</option>
-                        <option value="username">Sort by Username</option>
-                        <option value="status">Sort by Status</option>
-                    </select>
-                </div>
-            </div>
-        </div>
+    <!-- Desktop Table -->
+    <div class="responsive-table-desktop overflow-x-auto">
+        <table class="w-full" id="users-table">
+            <thead>
+                <tr class="text-left border-b border-gray-100">
+                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Username</th>
+                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Phone</th>
+                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Email</th>
+                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Registration Date</th>
+                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Status</th>
+                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Last Login</th>
+                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body">
+                <!-- Table rows will be populated by JavaScript -->
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center">Loading users...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-        <!-- Desktop Table -->
-        <div class="responsive-table-desktop overflow-x-auto">
-            <table class="w-full" id="users-table">
-                <thead>
-                    <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" id="selectAllUsers" class="rounded border-gray-300 text-primary focus:ring-primary">
-                                <span>Username</span>
-                            </div>
-                        </th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Phone</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Email</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Registration Date</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">In Use</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Last Login</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="users-table-body">
-                    <!-- Table rows will be populated by JavaScript -->
-                </tbody>
-            </table>
-        </div>
+    <!-- Mobile View -->
+    <div class="responsive-table-mobile p-4" id="users-mobile">
+        <!-- Mobile cards will be populated by JavaScript -->
+        <div class="text-center py-4">Loading users...</div>
+    </div>
 
-        <!-- Mobile View -->
-        <div class="responsive-table-mobile p-4" id="users-mobile">
-            <!-- Mobile cards will be populated by JavaScript -->
+    <!-- Pagination -->
+    <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="text-sm text-gray-text">
+            Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span id="total-users">0</span> users
         </div>
-
-        <!-- Pagination -->
-        <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-gray-text">
-                Showing <span id="showing-start">1</span> to <span id="showing-end">10</span> of <span id="total-users">100</span> users
+        <div class="flex items-center gap-2">
+            <button id="prev-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div id="pagination-numbers" class="flex items-center">
+                <!-- Pagination numbers will be populated by JavaScript -->
             </div>
-            <div class="flex items-center gap-2">
-                <button id="prev-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div id="pagination-numbers" class="flex items-center">
-                    <button class="px-3 py-2 rounded-lg bg-primary text-white">1</button>
-                    <button class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">2</button>
-                    <button class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">3</button>
-                    <span class="px-2">...</span>
-                    <button class="px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50">10</button>
-                </div>
-                <button id="next-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
+            <button id="next-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
     </div>
+</div>
 </div>
 
 <!-- User Details Modal -->
@@ -146,13 +142,34 @@ ob_start();
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="flex-1 overflow-y-auto p-6" id="userDetailsContent"></div>
+            <div class="flex-1 overflow-y-auto p-6" id="userDetailsContent">
+                <div class="flex items-center justify-center h-full">
+                    <div class="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                </div>
+            </div>
             <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
                 <button onclick="hideUserDetails()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
                     Close
                 </button>
-                <button id="editUserBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                    Edit User
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Expired Modal -->
+<div id="sessionExpiredModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
+        <div class="p-6">
+            <div class="text-center mb-4">
+                <i class="fas fa-clock text-4xl text-amber-600 mb-4"></i>
+                <h3 class="text-lg font-semibold text-gray-900">Session Expired</h3>
+                <p class="text-sm text-gray-500 mt-2">Your session has expired due to inactivity.</p>
+                <p class="text-sm text-gray-500 mt-1">Redirecting in <span id="countdown">10</span> seconds...</p>
+            </div>
+            <div class="flex justify-center mt-6">
+                <button onclick="redirectToLogin()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                    Login Now
                 </button>
             </div>
         </div>
@@ -244,114 +261,25 @@ ob_start();
         background-color: #fee2e2;
         color: #991b1b;
     }
+
+    .status-suspended {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
 </style>
 
 <script>
-    // Sample user data - in a real application, this would come from an API
-    const users = [{
-            id: 1,
-            username: "johndoe",
-            phone: "+256 701 234 567",
-            email: "john.doe@example.com",
-            registerDate: "2024-12-15T08:30:00",
-            inUse: true,
-            lastLogin: "2025-03-07T14:22:10",
-            avatar: null
-        },
-        {
-            id: 2,
-            username: "janesmith",
-            phone: "+256 702 345 678",
-            email: "jane.smith@example.com",
-            registerDate: "2024-11-20T10:15:00",
-            inUse: true,
-            lastLogin: "2025-03-08T09:45:30",
-            avatar: null
-        },
-        {
-            id: 3,
-            username: "robertjohnson",
-            phone: "+256 703 456 789",
-            email: "robert.j@example.com",
-            registerDate: "2025-01-05T15:45:00",
-            inUse: true,
-            lastLogin: "2025-03-06T16:10:45",
-            avatar: null
-        },
-        {
-            id: 4,
-            username: "michaelbrown",
-            phone: "+256 704 567 890",
-            email: "michael.b@example.com",
-            registerDate: "2024-10-10T09:20:00",
-            inUse: false,
-            lastLogin: "2025-02-15T11:30:20",
-            avatar: null
-        },
-        {
-            id: 5,
-            username: "sarahwilliams",
-            phone: "+256 705 678 901",
-            email: "sarah.w@example.com",
-            registerDate: "2025-02-18T13:10:00",
-            inUse: true,
-            lastLogin: "2025-03-08T08:15:40",
-            avatar: null
-        },
-        {
-            id: 6,
-            username: "davidmiller",
-            phone: "+256 706 789 012",
-            email: "david.m@example.com",
-            registerDate: "2024-09-25T11:05:00",
-            inUse: false,
-            lastLogin: "2025-01-20T14:50:15",
-            avatar: null
-        },
-        {
-            id: 7,
-            username: "jenniferlee",
-            phone: "+256 707 890 123",
-            email: "jennifer.l@example.com",
-            registerDate: "2025-01-30T16:40:00",
-            inUse: true,
-            lastLogin: "2025-03-07T17:25:30",
-            avatar: null
-        },
-        {
-            id: 8,
-            username: "williamtaylor",
-            phone: "+256 708 901 234",
-            email: "william.t@example.com",
-            registerDate: "2024-12-05T10:30:00",
-            inUse: true,
-            lastLogin: "2025-03-05T09:10:50",
-            avatar: null
-        },
-        {
-            id: 9,
-            username: "elizabethmoore",
-            phone: "+256 709 012 345",
-            email: "elizabeth.m@example.com",
-            registerDate: "2025-02-10T14:15:00",
-            inUse: true,
-            lastLogin: "2025-03-08T10:40:25",
-            avatar: null
-        },
-        {
-            id: 10,
-            username: "jamesanderson",
-            phone: "+256 710 123 456",
-            email: "james.a@example.com",
-            registerDate: "2024-11-15T09:50:00",
-            inUse: false,
-            lastLogin: "2025-02-28T13:05:35",
-            avatar: null
-        }
-    ];
+    const BASE_URL = '<?= BASE_URL ?>';
+    let currentPage = 1;
+    let totalPages = 1;
+    let itemsPerPage = 10;
+    let currentSort = 'created_at';
+    let currentOrder = 'desc';
+    let currentSearch = '';
 
     // Format date to a readable format
     function formatDate(dateString) {
+        if (!dateString) return '-';
         const date = new Date(dateString);
         const options = {
             year: 'numeric',
@@ -363,20 +291,22 @@ ob_start();
 
     // Format date and time to a readable format
     function formatDateTime(dateString) {
+        if (!dateString) return '-';
         const date = new Date(dateString);
         const options = {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
+            minute: '2-digit'
         };
         return date.toLocaleDateString('en-US', options);
     }
 
     // Calculate time ago
     function timeAgo(dateString) {
+        if (!dateString) return '-';
+
         const date = new Date(dateString);
         const now = new Date();
         const diffInSeconds = Math.floor((now - date) / 1000);
@@ -431,56 +361,149 @@ ob_start();
         return initials;
     }
 
-    // Render user table
-    function renderUserTable(userList) {
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Load dashboard statistics
+    function loadStats() {
+        fetch(`${BASE_URL}admin/fetch/manageDashboard/getStats`)
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showSessionExpiredModal();
+                        throw new Error('Session expired');
+                    }
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const stats = data.stats;
+
+                    // Update stats in the UI
+                    document.getElementById('stat-users').textContent = stats.total_users.toLocaleString();
+                    document.getElementById('stat-active').textContent = stats.active_users.toLocaleString();
+                    document.getElementById('stat-inactive').textContent = stats.inactive_users.toLocaleString();
+                    document.getElementById('stat-new').textContent = stats.new_users.toLocaleString();
+
+                } else {
+                    console.error('Error loading stats:', data.error);
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error loading stats:', error);
+                }
+            });
+    }
+
+    // Load users with pagination, sorting, and filtering
+    function loadUsers() {
+        const tableBody = document.getElementById('users-table-body');
+        const mobileContainer = document.getElementById('users-mobile');
+
+        // Show loading indicators
+        tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center">Loading users...</td></tr>';
+        mobileContainer.innerHTML = '<div class="text-center py-4">Loading users...</div>';
+
+        const url = new URL(`${BASE_URL}admin/fetch/manageDashboard/getUsers`);
+        url.searchParams.append('page', currentPage);
+        url.searchParams.append('limit', itemsPerPage);
+        url.searchParams.append('sort', currentSort);
+        url.searchParams.append('order', currentOrder);
+
+        if (currentSearch) {
+            url.searchParams.append('search', currentSearch);
+        }
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showSessionExpiredModal();
+                        throw new Error('Session expired');
+                    }
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    renderUsers(data.users);
+                    renderPagination(data.pagination);
+                } else {
+                    console.error('Error loading users:', data.error);
+                    tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Error loading users</td></tr>';
+                    mobileContainer.innerHTML = '<div class="text-center py-4 text-red-500">Error loading users</div>';
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error loading users:', error);
+                    tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Failed to load users</td></tr>';
+                    mobileContainer.innerHTML = '<div class="text-center py-4 text-red-500">Failed to load users</div>';
+                }
+            });
+    }
+
+    // Render users table and mobile cards
+    function renderUsers(users) {
         const tableBody = document.getElementById('users-table-body');
         const mobileContainer = document.getElementById('users-mobile');
 
         tableBody.innerHTML = '';
         mobileContainer.innerHTML = '';
 
-        userList.forEach(user => {
+        if (users.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center">No users found</td></tr>';
+            mobileContainer.innerHTML = '<div class="text-center py-4">No users found</div>';
+            return;
+        }
+
+        users.forEach(user => {
             // Desktop row
             const tr = document.createElement('tr');
             tr.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
 
             const initials = getUserInitials(user.username);
-            const statusBadge = user.inUse ?
-                '<span class="status-badge status-active"><span class="w-1.5 h-1.5 rounded-full bg-green-600 mr-1"></span>Active</span>' :
-                '<span class="status-badge status-inactive"><span class="w-1.5 h-1.5 rounded-full bg-red-600 mr-1"></span>Inactive</span>';
+
+            let statusBadge = '';
+            if (user.status === 'active') {
+                statusBadge = '<span class="status-badge status-active"><span class="w-1.5 h-1.5 rounded-full bg-green-600 mr-1"></span>Active</span>';
+            } else if (user.status === 'inactive') {
+                statusBadge = '<span class="status-badge status-inactive"><span class="w-1.5 h-1.5 rounded-full bg-red-600 mr-1"></span>Inactive</span>';
+            } else {
+                statusBadge = '<span class="status-badge status-suspended"><span class="w-1.5 h-1.5 rounded-full bg-amber-600 mr-1"></span>Suspended</span>';
+            }
 
             tr.innerHTML = `
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-3">
-                        <input type="checkbox" class="user-checkbox rounded border-gray-300 text-primary focus:ring-primary">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
-                                ${initials}
-                            </div>
-                            <span class="font-medium text-gray-900">${user.username}</span>
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
+                            ${initials}
                         </div>
+                        <span class="font-medium text-gray-900">${escapeHtml(user.username)}</span>
                     </div>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-text">${user.phone}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">${user.email}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">${formatDateTime(user.registerDate)}</td>
+                <td class="px-6 py-4 text-sm text-gray-text">${escapeHtml(user.phone || '-')}</td>
+                <td class="px-6 py-4 text-sm text-gray-text">${escapeHtml(user.email)}</td>
+                <td class="px-6 py-4 text-sm text-gray-text">${formatDateTime(user.created_at)}</td>
                 <td class="px-6 py-4 text-sm text-gray-text">${statusBadge}</td>
                 <td class="px-6 py-4 text-sm text-gray-text">
                     <div class="flex flex-col">
-                        <span>${formatDateTime(user.lastLogin)}</span>
-                        <span class="text-xs text-gray-400">${timeAgo(user.lastLogin)}</span>
+                        <span>${formatDateTime(user.current_login)}</span>
+                        <span class="text-xs text-gray-400">${timeAgo(user.current_login)}</span>
                     </div>
                 </td>
                 <td class="px-6 py-4 text-sm">
                     <div class="flex items-center gap-2">
-                        <button onclick="showUserDetails(${user.id})" class="text-blue-600 hover:text-blue-800">
+                        <button onclick="showUserDetails('${user.uuid_id}')" class="text-blue-600 hover:text-blue-800">
                             <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="text-gray-600 hover:text-gray-800">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="text-red-600 hover:text-red-800">
-                            <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 </td>
@@ -499,8 +522,8 @@ ob_start();
                             ${initials}
                         </div>
                         <div>
-                            <div class="font-medium text-gray-900">${user.username}</div>
-                            <div class="text-xs text-gray-500">${user.email}</div>
+                            <div class="font-medium text-gray-900">${escapeHtml(user.username)}</div>
+                            <div class="text-xs text-gray-500">${escapeHtml(user.email)}</div>
                         </div>
                     </div>
                     <div>
@@ -511,30 +534,24 @@ ob_start();
                     <div class="mobile-grid">
                         <div class="mobile-grid-item">
                             <span class="mobile-label">Phone</span>
-                            <span class="mobile-value">${user.phone}</span>
+                            <span class="mobile-value">${escapeHtml(user.phone || '-')}</span>
                         </div>
                         <div class="mobile-grid-item">
                             <span class="mobile-label">Registration</span>
-                            <span class="mobile-value">${formatDateTime(user.registerDate)}</span>
+                            <span class="mobile-value">${formatDateTime(user.created_at)}</span>
                         </div>
                         <div class="mobile-grid-item">
                             <span class="mobile-label">Last Login</span>
-                            <span class="mobile-value">${formatDateTime(user.lastLogin)}</span>
+                            <span class="mobile-value">${formatDateTime(user.current_login)}</span>
                         </div>
                         <div class="mobile-grid-item">
                             <span class="mobile-label">Last Seen</span>
-                            <span class="mobile-value">${timeAgo(user.lastLogin)}</span>
+                            <span class="mobile-value">${timeAgo(user.current_login)}</span>
                         </div>
                     </div>
                     <div class="mobile-actions">
-                        <button onclick="showUserDetails(${user.id})" class="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
+                        <button onclick="showUserDetails('${user.uuid_id}')" class="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
                             <i class="fas fa-eye mr-1"></i> View
-                        </button>
-                        <button class="px-3 py-1.5 text-xs bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100">
-                            <i class="fas fa-edit mr-1"></i> Edit
-                        </button>
-                        <button class="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100">
-                            <i class="fas fa-trash-alt mr-1"></i> Delete
                         </button>
                     </div>
                 </div>
@@ -542,24 +559,155 @@ ob_start();
 
             mobileContainer.appendChild(mobileCard);
         });
+    }
+
+    // Render pagination controls
+    function renderPagination(pagination) {
+        const paginationContainer = document.getElementById('pagination-numbers');
+        const prevButton = document.getElementById('prev-page');
+        const nextButton = document.getElementById('next-page');
 
         // Update pagination info
-        document.getElementById('showing-start').textContent = '1';
-        document.getElementById('showing-end').textContent = userList.length;
-        document.getElementById('total-users').textContent = userList.length;
+        document.getElementById('showing-start').textContent = pagination.total > 0 ? ((pagination.page - 1) * pagination.limit) + 1 : 0;
+        document.getElementById('showing-end').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
+        document.getElementById('total-users').textContent = pagination.total;
+
+        // Update current page and total pages
+        currentPage = pagination.page;
+        totalPages = pagination.pages;
+
+        // Enable/disable prev/next buttons
+        prevButton.disabled = currentPage === 1;
+        nextButton.disabled = currentPage === totalPages;
+
+        // Clear pagination container
+        paginationContainer.innerHTML = '';
+
+        // Generate pagination numbers
+        if (totalPages <= 5) {
+            // Show all pages if 5 or fewer
+            for (let i = 1; i <= totalPages; i++) {
+                paginationContainer.appendChild(createPaginationButton(i));
+            }
+        } else {
+            // Show first page
+            paginationContainer.appendChild(createPaginationButton(1));
+
+            // Show ellipsis if current page is more than 3
+            if (currentPage > 3) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'px-2';
+                ellipsis.textContent = '...';
+                paginationContainer.appendChild(ellipsis);
+            }
+
+            // Show pages around current page
+            for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                paginationContainer.appendChild(createPaginationButton(i));
+            }
+
+            // Show ellipsis if current page is less than totalPages - 2
+            if (currentPage < totalPages - 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'px-2';
+                ellipsis.textContent = '...';
+                paginationContainer.appendChild(ellipsis);
+            }
+
+            // Show last page
+            paginationContainer.appendChild(createPaginationButton(totalPages));
+        }
+    }
+
+    // Create pagination button
+    function createPaginationButton(pageNumber) {
+        const button = document.createElement('button');
+        button.className = pageNumber === currentPage ?
+            'px-3 py-2 rounded-lg bg-primary text-white' :
+            'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
+        button.textContent = pageNumber;
+
+        button.addEventListener('click', function() {
+            if (pageNumber !== currentPage) {
+                currentPage = pageNumber;
+                loadUsers();
+            }
+        });
+
+        return button;
     }
 
     // Show user details in modal
     function showUserDetails(userId) {
-        const user = users.find(u => u.id === userId);
-        if (!user) return;
+        const modal = document.getElementById('userDetailsModal');
+        const contentContainer = document.getElementById('userDetailsContent');
 
+        // Show loading indicator
+        contentContainer.innerHTML = `
+            <div class="flex items-center justify-center h-full">
+                <div class="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+        `;
+
+        // Show modal
+        modal.classList.remove('hidden');
+        setTimeout(function() {
+            modal.querySelector('.transform').classList.remove('translate-x-full');
+        }, 10);
+
+        // Fetch user details
+        fetch(`${BASE_URL}admin/fetch/manageDashboard/getUserDetails?id=${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        hideUserDetails();
+                        showSessionExpiredModal();
+                        throw new Error('Session expired');
+                    }
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const user = data.data;
+                    renderUserDetails(user);
+                } else {
+                    contentContainer.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full">
+                            <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                            <p class="text-gray-700">Error loading user details: ${data.error || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                if (error.message !== 'Session expired') {
+                    console.error('Error fetching user details:', error);
+                    contentContainer.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full">
+                            <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                            <p class="text-gray-700">Failed to load user details. Please try again.</p>
+                        </div>
+                    `;
+                }
+            });
+    }
+
+    // Render user details in modal
+    function renderUserDetails(user) {
         document.getElementById('modal-user-title').textContent = `User: ${user.username}`;
 
         const initials = getUserInitials(user.username);
-        const statusBadge = user.inUse ?
-            '<span class="status-badge status-active"><span class="w-1.5 h-1.5 rounded-full bg-green-600 mr-1"></span>Active</span>' :
-            '<span class="status-badge status-inactive"><span class="w-1.5 h-1.5 rounded-full bg-red-600 mr-1"></span>Inactive</span>';
+
+        let statusBadge = '';
+        if (user.status === 'active') {
+            statusBadge = '<span class="status-badge status-active"><span class="w-1.5 h-1.5 rounded-full bg-green-600 mr-1"></span>Active</span>';
+        } else if (user.status === 'inactive') {
+            statusBadge = '<span class="status-badge status-inactive"><span class="w-1.5 h-1.5 rounded-full bg-red-600 mr-1"></span>Inactive</span>';
+        } else {
+            statusBadge = '<span class="status-badge status-suspended"><span class="w-1.5 h-1.5 rounded-full bg-amber-600 mr-1"></span>Suspended</span>';
+        }
 
         const content = `
             <div class="space-y-6">
@@ -568,8 +716,8 @@ ob_start();
                         ${initials}
                     </div>
                     <div class="text-center sm:text-left">
-                        <h4 class="text-xl font-semibold text-gray-900">${user.username}</h4>
-                        <p class="text-gray-500">${user.email}</p>
+                        <h4 class="text-xl font-semibold text-gray-900">${escapeHtml(user.username)}</h4>
+                        <p class="text-gray-500">${escapeHtml(user.email)}</p>
                         <div class="mt-2">${statusBadge}</div>
                     </div>
                 </div>
@@ -579,19 +727,19 @@ ob_start();
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <p class="text-sm text-gray-500">Phone Number</p>
-                            <p class="text-sm font-medium text-gray-900">${user.phone}</p>
+                            <p class="text-sm font-medium text-gray-900">${escapeHtml(user.phone || '-')}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500">Registration Date</p>
-                            <p class="text-sm font-medium text-gray-900">${formatDateTime(user.registerDate)}</p>
+                            <p class="text-sm font-medium text-gray-900">${formatDateTime(user.created_at)}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500">Last Login</p>
-                            <p class="text-sm font-medium text-gray-900">${formatDateTime(user.lastLogin)}</p>
+                            <p class="text-sm font-medium text-gray-900">${formatDateTime(user.current_login)}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500">Account Status</p>
-                            <p class="text-sm font-medium text-gray-900">${user.inUse ? 'Active' : 'Inactive'}</p>
+                            <p class="text-sm font-medium text-gray-900">${user.status.charAt(0).toUpperCase() + user.status.slice(1)}</p>
                         </div>
                     </div>
                 </div>
@@ -600,29 +748,21 @@ ob_start();
                     <h5 class="font-medium text-gray-900 mb-4">Login History</h5>
                     <div class="space-y-4">
                         <div class="bg-gray-50 p-3 rounded-lg">
-                            <p class="text-sm text-gray-700">Logged in from Chrome on Windows</p>
-                            <p class="text-xs text-gray-500 mt-1">${formatDateTime(user.lastLogin)} (${timeAgo(user.lastLogin)})</p>
+                            <p class="text-sm text-gray-700">Current Login</p>
+                            <p class="text-xs text-gray-500 mt-1">${formatDateTime(user.current_login)} (${timeAgo(user.current_login)})</p>
                         </div>
+                        ${user.last_login ? `
                         <div class="bg-gray-50 p-3 rounded-lg">
-                            <p class="text-sm text-gray-700">Logged in from Firefox on macOS</p>
-                            <p class="text-xs text-gray-500 mt-1">Mar 5, 2025, 09:45:12 AM (3 days ago)</p>
+                            <p class="text-sm text-gray-700">Previous Login</p>
+                            <p class="text-xs text-gray-500 mt-1">${formatDateTime(user.last_login)} (${timeAgo(user.last_login)})</p>
                         </div>
-                        <div class="bg-gray-50 p-3 rounded-lg">
-                            <p class="text-sm text-gray-700">Logged in from Safari on iPhone</p>
-                            <p class="text-xs text-gray-500 mt-1">Mar 2, 2025, 07:22:30 PM (6 days ago)</p>
-                        </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>
         `;
 
         document.getElementById('userDetailsContent').innerHTML = content;
-
-        const modal = document.getElementById('userDetailsModal');
-        modal.classList.remove('hidden');
-        setTimeout(function() {
-            modal.querySelector('.transform').classList.remove('translate-x-full');
-        }, 10);
     }
 
     // Hide user details modal
@@ -634,96 +774,66 @@ ob_start();
         }, 300);
     }
 
-    // Sort users
-    function sortUsers(field) {
-        let sortedUsers = [...users];
+    // Show session expired modal
+    function showSessionExpiredModal() {
+        const modal = document.getElementById('sessionExpiredModal');
+        modal.classList.remove('hidden');
 
-        switch (field) {
-            case 'username':
-                sortedUsers.sort((a, b) => a.username.localeCompare(b.username));
-                break;
-            case 'register_date':
-                sortedUsers.sort((a, b) => new Date(b.registerDate) - new Date(a.registerDate));
-                break;
-            case 'last_login':
-                sortedUsers.sort((a, b) => new Date(b.lastLogin) - new Date(a.lastLogin));
-                break;
-            case 'status':
-                sortedUsers.sort((a, b) => {
-                    if (a.inUse === b.inUse) return 0;
-                    return a.inUse ? -1 : 1;
-                });
-                break;
-        }
+        let countdown = 10;
+        const countdownElement = document.getElementById('countdown');
+        countdownElement.textContent = countdown;
 
-        return sortedUsers;
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+
+            if (countdown <= 0) {
+                clearInterval(timer);
+                redirectToLogin();
+            }
+        }, 1000);
     }
 
-    // Search users
-    function searchUsers(query) {
-        if (!query) return users;
-
-        query = query.toLowerCase();
-        return users.filter(user =>
-            user.username.toLowerCase().includes(query) ||
-            user.email.toLowerCase().includes(query) ||
-            user.phone.toLowerCase().includes(query)
-        );
+    // Redirect to login page
+    function redirectToLogin() {
+        window.location.href = BASE_URL;
     }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
-        // Initial render with default sort by registration date
-        const sortedUsers = sortUsers('register_date');
-        renderUserTable(sortedUsers);
+        // Load initial data
+        loadStats();
+        loadUsers();
 
-        // Search functionality
-        const searchInput = document.getElementById('searchUsers');
-        searchInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            const filteredUsers = searchUsers(query);
-            const sortField = document.getElementById('sortUsers').value;
-            const sortedFilteredUsers = sortUsers(sortField);
-
-            // Apply search filter to sorted users
-            const finalUsers = query ?
-                sortedFilteredUsers.filter(user =>
-                    user.username.toLowerCase().includes(query) ||
-                    user.email.toLowerCase().includes(query) ||
-                    user.phone.toLowerCase().includes(query)
-                ) : sortedFilteredUsers;
-
-            renderUserTable(finalUsers);
+        // Set up event listeners
+        document.getElementById('searchUsers').addEventListener('input', function() {
+            currentSearch = this.value.trim();
+            currentPage = 1;
+            loadUsers();
         });
 
-        // Sort functionality
-        const sortSelect = document.getElementById('sortUsers');
-        sortSelect.addEventListener('change', function() {
-            const sortField = this.value;
-            const sortedUsers = sortUsers(sortField);
-
-            // Apply search filter if there's a search query
-            const searchQuery = document.getElementById('searchUsers').value.trim();
-            const filteredUsers = searchQuery ? searchUsers(searchQuery) : sortedUsers;
-
-            renderUserTable(filteredUsers);
+        document.getElementById('sortUsers').addEventListener('change', function() {
+            currentSort = this.value;
+            currentPage = 1;
+            loadUsers();
         });
 
-        // Select all checkbox
-        const selectAllCheckbox = document.getElementById('selectAllUsers');
-        selectAllCheckbox.addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.user-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
+        document.getElementById('prev-page').addEventListener('click', function() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadUsers();
+            }
         });
 
-        // Edit user button
-        document.getElementById('editUserBtn').addEventListener('click', function() {
-            alert('Edit user functionality would be implemented here');
+        document.getElementById('next-page').addEventListener('click', function() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadUsers();
+            }
         });
     });
 </script>
+
 <?php
 $mainContent = ob_get_clean();
 include __DIR__ . '/master.php';
