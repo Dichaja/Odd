@@ -350,6 +350,8 @@ ob_start();
                     <div id="step1Indicator" class="step-indicator active flex items-center justify-center w-8 h-8 rounded-full bg-user-primary text-white font-medium">1</div>
                     <div class="w-12 h-1 bg-gray-200" id="step1to2Line"></div>
                     <div id="step2Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">2</div>
+                    <div class="w-12 h-1 bg-gray-200" id="step2to3Line"></div>
+                    <div id="step3Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">3</div>
                 </div>
             </div>
 
@@ -475,7 +477,53 @@ ob_start();
                     <button type="button" id="step2BackBtn" class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                         BACK
                     </button>
-                    <button type="button" id="step2FinishBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                    <button type="button" id="step2NextBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                        NEXT
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Store Details -->
+            <div id="step3" class="step-content hidden">
+                <h4 class="text-center font-medium text-secondary mb-4">Store Details</h4>
+
+                <div class="space-y-6">
+                    <div>
+                        <label for="storeDescription" class="block text-sm font-medium text-gray-700 mb-1">Store Description</label>
+                        <textarea id="storeDescription" rows="4" placeholder="Brief description of your store" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Store Logo</label>
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <i id="logoPlaceholder" class="fas fa-store text-gray-400 text-xl"></i>
+                                <img id="logoPreview" class="w-full h-full object-cover rounded-lg hidden" src="#" alt="Logo preview">
+                            </div>
+                            <label for="storeLogo" class="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                Upload Logo
+                            </label>
+                            <input type="file" id="storeLogo" accept="image/*" class="hidden">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Recommended size: 512×512 pixels. Max 2MB.</p>
+                    </div>
+
+                    <div>
+                        <label for="storeWebsite" class="block text-sm font-medium text-gray-700 mb-1">Website (Optional)</label>
+                        <input type="url" id="storeWebsite" placeholder="https://example.com" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                    </div>
+
+                    <div>
+                        <label for="storeSocialMedia" class="block text-sm font-medium text-gray-700 mb-1">Social Media (Optional)</label>
+                        <input type="text" id="storeSocialMedia" placeholder="Facebook, Instagram, etc." class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <button type="button" id="step3BackBtn" class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        BACK
+                    </button>
+                    <button type="button" id="step3FinishBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                         FINISH
                     </button>
                 </div>
@@ -593,8 +641,7 @@ ob_start();
             $('#step1to2Line').removeClass('bg-green-500').addClass('bg-gray-200');
         });
 
-        // Finish button
-        $('#step2FinishBtn').click(function() {
+        $('#step2NextBtn').click(function() {
             // Validate step 2
             const latitude = $('#latitude').val();
             const longitude = $('#longitude').val();
@@ -606,6 +653,37 @@ ob_start();
                 alert('Please select your location on the map and fill in all required fields');
                 return;
             }
+
+            // Move to step 3
+            $('#step2').addClass('hidden');
+            $('#step3').removeClass('hidden');
+
+            // Update indicators
+            $('#step2Indicator').addClass('bg-green-500').removeClass('bg-user-primary');
+            $('#step2Indicator').html('<i class="fas fa-check"></i>');
+            $('#step3Indicator').addClass('bg-user-primary').removeClass('bg-gray-200 text-gray-500').addClass('text-white');
+            $('#step2to3Line').addClass('bg-green-500').removeClass('bg-gray-200');
+        });
+
+        $('#step3BackBtn').click(function() {
+            $('#step3').addClass('hidden');
+            $('#step2').removeClass('hidden');
+
+            // Update indicators
+            $('#step2Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
+            $('#step2Indicator').text('2');
+            $('#step3Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
+            $('#step2to3Line').removeClass('bg-green-500').addClass('bg-gray-200');
+
+            // Refresh map in case it wasn't properly initialized
+            setTimeout(() => {
+                if (map) map.invalidateSize();
+            }, 100);
+        });
+
+        $('#step3FinishBtn').click(function() {
+            // Validate step 3 if needed
+            // For now, we'll just proceed with submission
 
             showLoading();
 
@@ -619,26 +697,19 @@ ob_start();
             }, 1500);
         });
 
-        // Edit store form submission
-        $('#editStoreForm').submit(function(e) {
-            e.preventDefault();
-            showLoading();
+        // Add logo preview functionality
+        $('#storeLogo').change(function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
 
-            setTimeout(function() {
-                hideLoading();
-                hideModal('editStoreModal');
-                showSuccessNotification('Store updated successfully!');
-            }, 1500);
-        });
+                reader.onload = function(e) {
+                    $('#logoPreview').attr('src', e.target.result);
+                    $('#logoPreview').removeClass('hidden');
+                    $('#logoPlaceholder').addClass('hidden');
+                }
 
-        // Map style selector
-        $('#mapStyle').change(function() {
-            changeMapStyle($(this).val());
-        });
-
-        // Locate me button
-        $('#locateMeBtn').click(function() {
-            locateUser();
+                reader.readAsDataURL(e.target.files[0]);
+            }
         });
     });
 
@@ -1181,15 +1252,25 @@ ob_start();
         resetDropdown('level3');
         resetDropdown('level4');
 
+        // Reset step 3
+        $('#storeDescription').val('');
+        $('#storeWebsite').val('');
+        $('#storeSocialMedia').val('');
+        $('#storeLogo').val('');
+        $('#logoPreview').addClass('hidden').attr('src', '#');
+        $('#logoPlaceholder').removeClass('hidden');
+
         // Reset indicators
         $('#step1').removeClass('hidden');
-        $('#step2').addClass('hidden');
+        $('#step2, #step3').addClass('hidden');
 
         $('#step1Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
         $('#step1Indicator').text('1');
-        $('#step2Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
+        $('#step2Indicator').removeClass('bg-green-500 bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
         $('#step2Indicator').text('2');
-        $('#step1to2Line').removeClass('bg-green-500').addClass('bg-gray-200');
+        $('#step3Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
+        $('#step3Indicator').text('3');
+        $('#step1to2Line, #step2to3Line').removeClass('bg-green-500').addClass('bg-gray-200');
 
         // Clear map
         clearMap();
