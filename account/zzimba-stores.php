@@ -27,7 +27,11 @@ ob_start();
                         Manage your vendor profiles and store listings
                     </p>
                 </div>
-                <button id="createStoreBtn" class="h-10 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors flex items-center gap-2 justify-center">
+                <!-- Single Create Button; we’ll open one universal modal in “create” mode -->
+                <button
+                    id="createStoreBtn"
+                    class="h-10 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors flex items-center gap-2 justify-center"
+                    onclick="openStoreModal('create')">
                     <i class="fas fa-plus"></i>
                     <span>Create New Store</span>
                 </button>
@@ -39,10 +43,14 @@ ob_start();
     <div class="content-section">
         <div class="border-b border-gray-200">
             <div class="flex overflow-x-auto">
-                <button id="ownedTabBtn" class="tab-btn active px-6 py-4 text-sm font-medium border-b-2 border-user-primary text-user-primary">
+                <button
+                    id="ownedTabBtn"
+                    class="tab-btn active px-6 py-4 text-sm font-medium border-b-2 border-user-primary text-user-primary">
                     My Owned Profiles
                 </button>
-                <button id="managedTabBtn" class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                <button
+                    id="managedTabBtn"
+                    class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                     Profiles I Manage
                 </button>
             </div>
@@ -51,7 +59,7 @@ ob_start();
         <!-- Owned Stores Tab Content -->
         <div id="ownedTabContent" class="tab-content p-6">
             <div id="owned-stores-container">
-                <!-- Stores will be loaded dynamically via AJAX -->
+                <!-- Stores loaded dynamically via AJAX -->
                 <div class="flex justify-center items-center py-12">
                     <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
@@ -61,7 +69,7 @@ ob_start();
         <!-- Managed Stores Tab Content -->
         <div id="managedTabContent" class="tab-content p-6 hidden">
             <div id="managed-stores-container">
-                <!-- Managed stores will be loaded dynamically via AJAX -->
+                <!-- Managed stores loaded dynamically via AJAX -->
                 <div class="flex justify-center items-center py-12">
                     <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
@@ -70,65 +78,86 @@ ob_start();
     </div>
 </div>
 
-<!-- Edit Store Modal - Multi-step -->
-<div id="editStoreModal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/20" onclick="hideModal('editStoreModal')"></div>
+<!-- Universal Store Modal (used for both CREATE and EDIT) -->
+<div id="storeModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/20" onclick="closeStoreModal()"></div>
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-secondary">Edit Store</h3>
-                <button onclick="hideModal('editStoreModal')" class="text-gray-400 hover:text-gray-500">
+                <h3 id="storeModalTitle" class="text-lg font-semibold text-secondary">
+                    <!-- We'll set this text dynamically: "Create New Store" or "Edit Store" -->
+                </h3>
+                <button onclick="closeStoreModal()" class="text-gray-400 hover:text-gray-500">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
-            <!-- Step indicators -->
+            <!-- Step Indicators -->
             <div class="flex items-center justify-center mb-6">
                 <div class="flex items-center">
-                    <div id="editStep1Indicator" class="step-indicator active flex items-center justify-center w-8 h-8 rounded-full bg-user-primary text-white font-medium">1</div>
-                    <div class="w-12 h-1 bg-gray-200" id="editStep1to2Line"></div>
-                    <div id="editStep2Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">2</div>
-                    <div class="w-12 h-1 bg-gray-200" id="editStep2to3Line"></div>
-                    <div id="editStep3Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">3</div>
+                    <div id="storeStep1Indicator" class="step-indicator active flex items-center justify-center w-8 h-8 rounded-full bg-user-primary text-white font-medium">1</div>
+                    <div class="w-12 h-1 bg-gray-200" id="storeStep1to2Line"></div>
+                    <div id="storeStep2Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">2</div>
+                    <div class="w-12 h-1 bg-gray-200" id="storeStep2to3Line"></div>
+                    <div id="storeStep3Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">3</div>
                 </div>
             </div>
 
-            <form id="editStoreForm">
-                <input type="hidden" id="editStoreId" value="">
+            <form id="storeForm">
+                <!-- Hidden fields to track mode (create/edit) and storeId (if editing) -->
+                <input type="hidden" id="storeMode" value="">
+                <input type="hidden" id="storeId" value="">
 
                 <!-- Step 1: Basic Store Details -->
-                <div id="editStep1" class="step-content">
+                <div id="storeStep1" class="step-content">
                     <h4 class="text-center font-medium text-secondary mb-4">Basic Store Details</h4>
                     <div class="space-y-4">
                         <div>
-                            <label for="editBusinessName" class="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
-                            <input type="text" id="editBusinessName" placeholder="Enter business name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                            <label for="storeBusinessName" class="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
+                            <input
+                                type="text"
+                                id="storeBusinessName"
+                                placeholder="Enter business name"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                         <div>
-                            <label for="editBusinessEmail" class="block text-sm font-medium text-gray-700 mb-1">Business Email *</label>
-                            <input type="email" id="editBusinessEmail" placeholder="Enter business email" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                            <label for="storeBusinessEmail" class="block text-sm font-medium text-gray-700 mb-1">Business Email *</label>
+                            <input
+                                type="email"
+                                id="storeBusinessEmail"
+                                placeholder="Enter business email"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                         <div>
-                            <label for="editContactNumber" class="block text-sm font-medium text-gray-700 mb-1">Main Contact Number *</label>
-                            <input type="tel" id="editContactNumber" placeholder="Enter contact number" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                            <label for="storeContactNumber" class="block text-sm font-medium text-gray-700 mb-1">Main Contact Number *</label>
+                            <input
+                                type="tel"
+                                id="storeContactNumber"
+                                placeholder="Enter contact number"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                         <div>
-                            <label for="editNatureOfOperation" class="block text-sm font-medium text-gray-700 mb-1">Nature of Operation *</label>
-                            <select id="editNatureOfOperation" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                            <label for="storeNatureOfOperation" class="block text-sm font-medium text-gray-700 mb-1">Nature of Operation *</label>
+                            <select
+                                id="storeNatureOfOperation"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                 <option value="">Select Nature of Operation</option>
                                 <?php foreach ($natureOfOperations as $operation): ?>
                                     <option value="<?= htmlspecialchars($operation) ?>"><?= htmlspecialchars($operation) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <button type="button" id="editStep1NextBtn" class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                        <button
+                            type="button"
+                            id="storeStep1NextBtn"
+                            class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                             NEXT
                         </button>
                     </div>
                 </div>
 
                 <!-- Step 2: Location Selection -->
-                <div id="editStep2" class="step-content hidden">
+                <div id="storeStep2" class="step-content hidden">
                     <h4 class="text-center font-medium text-secondary mb-4">Store Location</h4>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -136,15 +165,20 @@ ob_start();
                         <div>
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Select Location on Map *</label>
-                                <div id="editMapContainer" class="w-full h-64 rounded-lg border border-gray-200 mb-2"></div>
+                                <div id="storeMapContainer" class="w-full h-64 rounded-lg border border-gray-200 mb-2"></div>
                                 <p class="text-xs text-gray-500">Click within the selected region to drop a pin</p>
                             </div>
 
                             <div class="flex space-x-2 mb-4">
-                                <button id="editLocateMeBtn" class="px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition">
+                                <button
+                                    id="storeLocateMeBtn"
+                                    type="button"
+                                    class="px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition">
                                     Find My Location
                                 </button>
-                                <select id="editMapStyle" class="text-sm border rounded-md px-2 py-1">
+                                <select
+                                    id="storeMapStyle"
+                                    class="text-sm border rounded-md px-2 py-1">
                                     <option value="osm">OpenStreetMap</option>
                                     <option value="satellite">Satellite</option>
                                     <option value="terrain">Terrain</option>
@@ -153,12 +187,20 @@ ob_start();
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label for="editLatitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
-                                    <input type="text" id="editLatitude" readonly class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
+                                    <label for="storeLatitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
+                                    <input
+                                        type="text"
+                                        id="storeLatitude"
+                                        readonly
+                                        class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
                                 </div>
                                 <div>
-                                    <label for="editLongitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
-                                    <input type="text" id="editLongitude" readonly class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
+                                    <label for="storeLongitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
+                                    <input
+                                        type="text"
+                                        id="storeLongitude"
+                                        readonly
+                                        class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
                                 </div>
                             </div>
                         </div>
@@ -167,306 +209,170 @@ ob_start();
                         <div>
                             <div class="space-y-4">
                                 <div>
-                                    <label for="editLevel1" class="block text-sm font-medium text-gray-700 mb-1">Region/Province *</label>
+                                    <label for="storeLevel1" class="block text-sm font-medium text-gray-700 mb-1">Region/Province *</label>
                                     <div class="relative">
-                                        <select id="editLevel1" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                        <select
+                                            id="storeLevel1"
+                                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                             <option value="">Select Region/Province</option>
                                         </select>
-                                        <span id="editLoading1" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
+                                        <span
+                                            id="storeLoading1"
+                                            class="hidden absolute right-2 top-2 text-sm text-gray-500">
+                                            Loading...
+                                        </span>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label for="editLevel2" class="block text-sm font-medium text-gray-700 mb-1">District *</label>
+                                    <label for="storeLevel2" class="block text-sm font-medium text-gray-700 mb-1">District *</label>
                                     <div class="relative">
-                                        <select id="editLevel2" disabled class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                        <select
+                                            id="storeLevel2"
+                                            disabled
+                                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                             <option value="">Select District</option>
                                         </select>
-                                        <span id="editLoading2" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
+                                        <span
+                                            id="storeLoading2"
+                                            class="hidden absolute right-2 top-2 text-sm text-gray-500">
+                                            Loading...
+                                        </span>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label for="editLevel3" class="block text-sm font-medium text-gray-700 mb-1">Sub-county</label>
+                                    <label for="storeLevel3" class="block text-sm font-medium text-gray-700 mb-1">Sub-county</label>
                                     <div class="relative">
-                                        <select id="editLevel3" disabled class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                        <select
+                                            id="storeLevel3"
+                                            disabled
+                                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                             <option value="">Select Sub-county</option>
                                         </select>
-                                        <span id="editLoading3" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
+                                        <span
+                                            id="storeLoading3"
+                                            class="hidden absolute right-2 top-2 text-sm text-gray-500">
+                                            Loading...
+                                        </span>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label for="editLevel4" class="block text-sm font-medium text-gray-700 mb-1">Parish/Ward</label>
+                                    <label for="storeLevel4" class="block text-sm font-medium text-gray-700 mb-1">Parish/Ward</label>
                                     <div class="relative">
-                                        <select id="editLevel4" disabled class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                                        <select
+                                            id="storeLevel4"
+                                            disabled
+                                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                             <option value="">Select Parish/Ward</option>
                                         </select>
-                                        <span id="editLoading4" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
+                                        <span
+                                            id="storeLoading4"
+                                            class="hidden absolute right-2 top-2 text-sm text-gray-500">
+                                            Loading...
+                                        </span>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label for="editAddress" class="block text-sm font-medium text-gray-700 mb-1">Physical Address *</label>
-                                    <input type="text" id="editAddress" placeholder="Enter physical address" readonly class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
+                                    <label for="storeAddress" class="block text-sm font-medium text-gray-700 mb-1">Physical Address *</label>
+                                    <input
+                                        type="text"
+                                        id="storeAddress"
+                                        placeholder="Enter physical address"
+                                        readonly
+                                        class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex justify-between mt-6">
-                        <button type="button" id="editStep2BackBtn" class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        <button
+                            type="button"
+                            id="storeStep2BackBtn"
+                            class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                             BACK
                         </button>
-                        <button type="button" id="editStep2NextBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                        <button
+                            type="button"
+                            id="storeStep2NextBtn"
+                            class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                             NEXT
                         </button>
                     </div>
                 </div>
 
                 <!-- Step 3: Store Details -->
-                <div id="editStep3" class="step-content hidden">
-                    <h4 class="text-center font-medium text-secondary mb-4">Store Details</h4>
-
-                    <div class="space-y-6">
-                        <div>
-                            <label for="editStoreDescription" class="block text-sm font-medium text-gray-700 mb-1">Store Description</label>
-                            <textarea id="editStoreDescription" rows="4" placeholder="Brief description of your store" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"></textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Store Logo</label>
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                                    <i id="editLogoPlaceholder" class="fas fa-store text-gray-400 text-xl"></i>
-                                    <img id="editLogoPreview" class="w-full h-full object-cover rounded-lg hidden" src="#" alt="Logo preview">
-                                </div>
-                                <label for="editStoreLogo" class="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                                    Upload Logo
-                                </label>
-                                <input type="file" id="editStoreLogo" accept="image/*" class="hidden">
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Recommended size: 512×512 pixels. Max 2MB.</p>
-                        </div>
-
-                        <div>
-                            <label for="editStoreWebsite" class="block text-sm font-medium text-gray-700 mb-1">Website (Optional)</label>
-                            <input type="url" id="editStoreWebsite" placeholder="https://example.com" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        </div>
-
-                        <div>
-                            <label for="editStoreSocialMedia" class="block text-sm font-medium text-gray-700 mb-1">Social Media (Optional)</label>
-                            <input type="text" id="editStoreSocialMedia" placeholder="Facebook, Instagram, etc." class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        </div>
-                    </div>
-
-                    <div class="flex justify-between mt-6">
-                        <button type="button" id="editStep3BackBtn" class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                            BACK
-                        </button>
-                        <button type="button" id="editStep3FinishBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
-                            SAVE
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Create Store Modal - Multi-step -->
-<div id="createStoreModal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/20" onclick="hideModal('createStoreModal')"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-secondary">Create New Store</h3>
-                <button onclick="hideModal('createStoreModal')" class="text-gray-400 hover:text-gray-500">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <!-- Step indicators -->
-            <div class="flex items-center justify-center mb-6">
-                <div class="flex items-center">
-                    <div id="step1Indicator" class="step-indicator active flex items-center justify-center w-8 h-8 rounded-full bg-user-primary text-white font-medium">1</div>
-                    <div class="w-12 h-1 bg-gray-200" id="step1to2Line"></div>
-                    <div id="step2Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">2</div>
-                    <div class="w-12 h-1 bg-gray-200" id="step2to3Line"></div>
-                    <div id="step3Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">3</div>
-                </div>
-            </div>
-
-            <form id="createStoreForm">
-                <!-- Step 1: Basic Store Details -->
-                <div id="step1" class="step-content">
-                    <h4 class="text-center font-medium text-secondary mb-4">Basic Store Details</h4>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="businessName" class="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
-                            <input type="text" id="businessName" placeholder="Enter business name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        </div>
-                        <div>
-                            <label for="businessEmail" class="block text-sm font-medium text-gray-700 mb-1">Business Email *</label>
-                            <input type="email" id="businessEmail" placeholder="Enter business email" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        </div>
-                        <div>
-                            <label for="contactNumber" class="block text-sm font-medium text-gray-700 mb-1">Main Contact Number *</label>
-                            <input type="tel" id="contactNumber" placeholder="Enter contact number" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        </div>
-                        <div>
-                            <label for="natureOfOperation" class="block text-sm font-medium text-gray-700 mb-1">Nature of Operation *</label>
-                            <select id="natureOfOperation" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                                <option value="">Select Nature of Operation</option>
-                                <?php foreach ($natureOfOperations as $operation): ?>
-                                    <option value="<?= htmlspecialchars($operation) ?>"><?= htmlspecialchars($operation) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <button type="button" id="step1NextBtn" class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
-                            NEXT
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 2: Location Selection -->
-                <div id="step2" class="step-content hidden">
-                    <h4 class="text-center font-medium text-secondary mb-4">Store Location</h4>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Left column: Map -->
-                        <div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Select Location on Map *</label>
-                                <div id="mapContainer" class="w-full h-64 rounded-lg border border-gray-200 mb-2"></div>
-                                <p class="text-xs text-gray-500">Click within the selected region to drop a pin</p>
-                            </div>
-
-                            <div class="flex space-x-2 mb-4">
-                                <button id="locateMeBtn" class="px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition">
-                                    Find My Location
-                                </button>
-                                <select id="mapStyle" class="text-sm border rounded-md px-2 py-1">
-                                    <option value="osm">OpenStreetMap</option>
-                                    <option value="satellite">Satellite</option>
-                                    <option value="terrain">Terrain</option>
-                                </select>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label for="latitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
-                                    <input type="text" id="latitude" readonly class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
-                                </div>
-                                <div>
-                                    <label for="longitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
-                                    <input type="text" id="longitude" readonly class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right column: Administrative regions -->
-                        <div>
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="level1" class="block text-sm font-medium text-gray-700 mb-1">Region/Province *</label>
-                                    <div class="relative">
-                                        <select id="level1" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                                            <option value="">Select Region/Province</option>
-                                        </select>
-                                        <span id="loading1" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label for="level2" class="block text-sm font-medium text-gray-700 mb-1">District *</label>
-                                    <div class="relative">
-                                        <select id="level2" disabled class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                                            <option value="">Select District</option>
-                                        </select>
-                                        <span id="loading2" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label for="level3" class="block text-sm font-medium text-gray-700 mb-1">Sub-county</label>
-                                    <div class="relative">
-                                        <select id="level3" disabled class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                                            <option value="">Select Sub-county</option>
-                                        </select>
-                                        <span id="loading3" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label for="level4" class="block text-sm font-medium text-gray-700 mb-1">Parish/Ward</label>
-                                    <div class="relative">
-                                        <select id="level4" disabled class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                                            <option value="">Select Parish/Ward</option>
-                                        </select>
-                                        <span id="loading4" class="hidden absolute right-2 top-2 text-sm text-gray-500">Loading...</span>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Physical Address *</label>
-                                    <input type="text" id="address" placeholder="Enter physical address" readonly class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-between mt-6">
-                        <button type="button" id="step2BackBtn" class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                            BACK
-                        </button>
-                        <button type="button" id="step2NextBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
-                            NEXT
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 3: Store Details -->
-                <div id="step3" class="step-content hidden">
+                <div id="storeStep3" class="step-content hidden">
                     <h4 class="text-center font-medium text-secondary mb-4">Store Details</h4>
 
                     <div class="space-y-6">
                         <div>
                             <label for="storeDescription" class="block text-sm font-medium text-gray-700 mb-1">Store Description</label>
-                            <textarea id="storeDescription" rows="4" placeholder="Brief description of your store" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"></textarea>
+                            <textarea
+                                id="storeDescription"
+                                rows="4"
+                                placeholder="Brief description of your store"
+                                class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"></textarea>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Store Logo</label>
                             <div class="flex items-center gap-4">
                                 <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                                    <i id="logoPlaceholder" class="fas fa-store text-gray-400 text-xl"></i>
-                                    <img id="logoPreview" class="w-full h-full object-cover rounded-lg hidden" src="#" alt="Logo preview">
+                                    <i id="storeLogoPlaceholder" class="fas fa-store text-gray-400 text-xl"></i>
+                                    <img
+                                        id="storeLogoPreview"
+                                        class="w-full h-full object-cover rounded-lg hidden"
+                                        src="#"
+                                        alt="Logo preview">
                                 </div>
-                                <label for="storeLogo" class="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                <label
+                                    for="storeLogo"
+                                    class="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                                     Upload Logo
                                 </label>
-                                <input type="file" id="storeLogo" accept="image/*" class="hidden">
+                                <input
+                                    type="file"
+                                    id="storeLogo"
+                                    accept="image/*"
+                                    class="hidden">
                             </div>
                             <p class="text-xs text-gray-500 mt-1">Recommended size: 512×512 pixels. Max 2MB.</p>
                         </div>
 
                         <div>
                             <label for="storeWebsite" class="block text-sm font-medium text-gray-700 mb-1">Website (Optional)</label>
-                            <input type="url" id="storeWebsite" placeholder="https://example.com" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                            <input
+                                type="url"
+                                id="storeWebsite"
+                                placeholder="https://example.com"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
 
                         <div>
                             <label for="storeSocialMedia" class="block text-sm font-medium text-gray-700 mb-1">Social Media (Optional)</label>
-                            <input type="text" id="storeSocialMedia" placeholder="Facebook, Instagram, etc." class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                            <input
+                                type="text"
+                                id="storeSocialMedia"
+                                placeholder="Facebook, Instagram, etc."
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                     </div>
 
                     <div class="flex justify-between mt-6">
-                        <button type="button" id="step3BackBtn" class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        <button
+                            type="button"
+                            id="storeStep3BackBtn"
+                            class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                             BACK
                         </button>
-                        <button type="button" id="step3FinishBtn" class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                        <button
+                            type="button"
+                            id="storeStep3FinishBtn"
+                            class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                             SAVE
                         </button>
                     </div>
@@ -476,7 +382,10 @@ ob_start();
     </div>
 </div>
 
-<div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+<!-- Loading Overlay -->
+<div
+    id="loadingOverlay"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
         <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin mb-4"></div>
         <p class="text-gray-700">Processing...</p>
@@ -484,18 +393,24 @@ ob_start();
 </div>
 
 <!-- Leaflet CSS and JS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
     crossorigin="" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""></script>
 <!-- Leaflet plugins for point-in-polygon -->
 <script src="https://unpkg.com/leaflet-pip@1.1.0/leaflet-pip.js"></script>
 
-<!-- Add Cloudflare country code script -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css">
+<!-- intl-tel-input for phone -->
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" />
 
 <style>
     .location-icon {
@@ -525,11 +440,25 @@ ob_start();
 </style>
 
 <script>
+    // Global constants
+    const STORE_API_BASE = BASE_URL + 'account/fetch/manageZzimbaStores.php';
+    let storeMap = null;
+    let storeMarker = null;
+    let storeGeoJSONLayer = null;
+    let storeCurrentGeoJSON = null;
+    let storeBaseLayers = {};
+    let storePhoneInput = null;
+
+    // On document ready
     $(document).ready(function() {
-        // Tab functionality
+        // Tab switching
         $('.tab-btn').click(function() {
-            $('.tab-btn').removeClass('active border-user-primary text-user-primary').addClass('border-transparent text-gray-500');
-            $(this).addClass('active border-user-primary text-user-primary').removeClass('border-transparent text-gray-500');
+            $('.tab-btn')
+                .removeClass('active border-user-primary text-user-primary')
+                .addClass('border-transparent text-gray-500');
+            $(this)
+                .addClass('active border-user-primary text-user-primary')
+                .removeClass('border-transparent text-gray-500');
 
             $('.tab-content').addClass('hidden');
             if ($(this).attr('id') === 'ownedTabBtn') {
@@ -539,704 +468,81 @@ ob_start();
             }
         });
 
-        // Create store button handlers
-        $('#createStoreBtn, #createFirstStoreBtn').click(function() {
-            showModal('createStoreModal');
-            // Initialize map after modal is shown
-            setTimeout(() => {
-                initMap();
-                loadRegions();
-            }, 300);
+        // Fetch Owned stores right away
+        loadOwnedStores();
+
+        // Fetch Managed stores only when user clicks the “Profiles I Manage” tab
+        $('#managedTabBtn').click(function() {
+            loadManagedStores();
         });
 
-        // Multi-step form navigation
-        $('#step1NextBtn').click(function() {
-            // Validate step 1
-            const businessName = $('#businessName').val();
-            const businessEmail = $('#businessEmail').val();
-            const contactNumber = $('#contactNumber').val();
-            const natureOfOperation = $('#natureOfOperation').val();
+        // Initialize phone input
+        initializePhoneInput();
 
-            if (!businessName || !businessEmail || !contactNumber || !natureOfOperation) {
-                alert('Please fill in all required fields');
-                return;
-            }
+        // Step navigation
+        $('#storeStep1NextBtn').click(() => goToStep2());
+        $('#storeStep2BackBtn').click(() => backToStep1());
+        $('#storeStep2NextBtn').click(() => goToStep3());
+        $('#storeStep3BackBtn').click(() => backToStep2());
+        $('#storeStep3FinishBtn').click(() => saveStoreData());
 
-            // Move to step 2
-            $('#step1').addClass('hidden');
-            $('#step2').removeClass('hidden');
-
-            // Update indicators
-            $('#step1Indicator').addClass('bg-green-500').removeClass('bg-user-primary');
-            $('#step1Indicator').html('<i class="fas fa-check"></i>');
-            $('#step2Indicator').addClass('bg-user-primary').removeClass('bg-gray-200 text-gray-500').addClass('text-white');
-            $('#step1to2Line').addClass('bg-green-500').removeClass('bg-gray-200');
-
-            // Refresh map in case it wasn't properly initialized
-            setTimeout(() => {
-                if (map) map.invalidateSize();
-            }, 100);
-        });
-
-        $('#step2BackBtn').click(function() {
-            $('#step2').addClass('hidden');
-            $('#step1').removeClass('hidden');
-
-            // Update indicators
-            $('#step1Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
-            $('#step1Indicator').text('1');
-            $('#step2Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
-            $('#step1to2Line').removeClass('bg-green-500').addClass('bg-gray-200');
-        });
-
-        $('#step2NextBtn').click(function() {
-            // Validate step 2
-            const latitude = $('#latitude').val();
-            const longitude = $('#longitude').val();
-            const level1 = $('#level1').val();
-            const level2 = $('#level2').val();
-            const address = $('#address').val();
-
-            if (!latitude || !longitude || !level1 || !level2 || !address) {
-                alert('Please select your location on the map and fill in all required fields');
-                return;
-            }
-
-            // Move to step 3
-            $('#step2').addClass('hidden');
-            $('#step3').removeClass('hidden');
-
-            // Update indicators
-            $('#step2Indicator').addClass('bg-green-500').removeClass('bg-user-primary');
-            $('#step2Indicator').html('<i class="fas fa-check"></i>');
-            $('#step3Indicator').addClass('bg-user-primary').removeClass('bg-gray-200 text-gray-500').addClass('text-white');
-            $('#step2to3Line').addClass('bg-green-500').removeClass('bg-gray-200');
-        });
-
-        $('#step3BackBtn').click(function() {
-            $('#step3').addClass('hidden');
-            $('#step2').removeClass('hidden');
-
-            // Update indicators
-            $('#step2Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
-            $('#step2Indicator').text('2');
-            $('#step3Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
-            $('#step2to3Line').removeClass('bg-green-500').addClass('bg-gray-200');
-
-            // Refresh map in case it wasn't properly initialized
-            setTimeout(() => {
-                if (map) map.invalidateSize();
-            }, 100);
-        });
-
-        // Add logo preview functionality
+        // Logo preview
         $('#storeLogo').change(function(e) {
             if (e.target.files && e.target.files[0]) {
                 const reader = new FileReader();
-
                 reader.onload = function(e) {
-                    $('#logoPreview').attr('src', e.target.result);
-                    $('#logoPreview').removeClass('hidden');
-                    $('#logoPlaceholder').addClass('hidden');
-                }
-
+                    $('#storeLogoPreview').attr('src', e.target.result).removeClass('hidden');
+                    $('#storeLogoPlaceholder').addClass('hidden');
+                };
                 reader.readAsDataURL(e.target.files[0]);
             }
         });
     });
 
-    // Map variables
-    let map = null;
-    let marker = null;
-    let baseLayers = {};
-    let currentLocation = null;
-    let geoJSONLayer = null;
-    let currentGeoJSON = null;
-    let locationMarker = null;
-
-    // Initialize map
-    function initMap() {
-        if (map) return; // Don't initialize if already exists
-
-        // Create map centered on Uganda
-        map = L.map('mapContainer').setView([1.3733, 32.2903], 7);
-
-        // Define base layers
-        baseLayers = {
-            'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }),
-            'satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-            }),
-            'terrain': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-                attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-            })
-        };
-
-        // Add default base layer
-        baseLayers['osm'].addTo(map);
-
-        // Add click event to map
-        map.on('click', function(e) {
-            handleMapClick(e);
-        });
-
-        // Try to get user's location
-        locateUser();
-    }
-
-    // Change map style
-    function changeMapStyle(style) {
-        if (!map) return;
-
-        // Remove all layers
-        Object.values(baseLayers).forEach(layer => {
-            if (map.hasLayer(layer)) {
-                map.removeLayer(layer);
-            }
-        });
-
-        // Add selected layer
-        if (baseLayers[style]) {
-            baseLayers[style].addTo(map);
-        }
-    }
-
-    // Function to check if a point is inside a polygon
-    function isPointInPolygon(point, geoJSON) {
-        if (!geoJSON || !geoJSON.features || geoJSON.features.length === 0) return false;
-
-        // Create a temporary layer for the point-in-polygon check
-        const tempLayer = L.geoJSON(geoJSON);
-        const results = leafletPip.pointInLayer([point.lng, point.lat], tempLayer);
-        return results.length > 0;
-    }
-
-    // Handle map click for pin dropping
-    function handleMapClick(e) {
-        // Only allow pin dropping if a region is selected
-        if (!currentGeoJSON || !currentGeoJSON.features || currentGeoJSON.features.length === 0) {
-            alert('Please select a region first before dropping a pin.');
-            return;
-        }
-
-        const point = e.latlng;
-
-        // Check if the clicked point is inside the selected region
-        if (!isPointInPolygon(point, currentGeoJSON)) {
-            alert('Please click within the selected region to drop a pin.');
-            return;
-        }
-
-        // Place marker at the clicked location
-        placeMarker(point);
-    }
-
-    // Place marker on map
-    function placeMarker(latlng) {
-        // Remove existing marker
-        if (marker) {
-            map.removeLayer(marker);
-        }
-
-        // Create new marker
-        marker = L.marker(latlng, {
-            draggable: true
-        }).addTo(map);
-
-        // Update form fields
-        $('#latitude').val(latlng.lat.toFixed(6));
-        $('#longitude').val(latlng.lng.toFixed(6));
-
-        // Get address from coordinates
-        reverseGeocode(latlng.lat, latlng.lng);
-
-        // Add drag end event
-        marker.on('dragend', function() {
-            const newPos = marker.getLatLng();
-
-            // Check if the new position is within the selected region
-            if (!isPointInPolygon(newPos, currentGeoJSON)) {
-                // If not, move the marker back to its previous position
-                marker.setLatLng(latlng);
-                alert('Please keep the marker within the selected region.');
-                return;
-            }
-
-            // Update form fields with new position
-            $('#latitude').val(newPos.lat.toFixed(6));
-            $('#longitude').val(newPos.lng.toFixed(6));
-            reverseGeocode(newPos.lat, newPos.lng);
-        });
-    }
-
-    // Reverse geocode coordinates to address
-    function reverseGeocode(lat, lng) {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-
-        fetch(url, {
-                headers: {
-                    'User-Agent': 'Zzimba Online Store Location Selector'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.display_name) {
-                    $('#address').val(data.display_name);
-
-                    // Try to find and set administrative regions
-                    if (data.address) {
-                        // This is a simplified approach - in a real app you'd need to match
-                        // the returned address components with your specific region data
-                        if (data.address.state || data.address.region) {
-                            const region = data.address.state || data.address.region;
-                            const regionOption = $(`#level1 option`).filter(function() {
-                                return $(this).text().toLowerCase() === region.toLowerCase();
-                            });
-
-                            if (regionOption.length) {
-                                $('#level1').val(regionOption.val()).trigger('change');
-                            }
-                        }
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error in reverse geocoding:', error);
-            });
-    }
-
-    // Get user's location
-    function locateUser() {
-        if (!map) return;
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-
-                    // Save current location
-                    currentLocation = {
-                        lat: lat,
-                        lng: lng
-                    };
-
-                    // Center map on user's location
-                    map.setView([lat, lng], 15);
-
-                    // Create a custom icon for the location marker
-                    const locationIcon = L.divIcon({
-                        className: 'location-icon pulse',
-                        html: '',
-                        iconSize: [16, 16]
-                    });
-
-                    // Create a new marker at the user's location
-                    if (locationMarker) {
-                        map.removeLayer(locationMarker);
-                    }
-
-                    locationMarker = L.marker([lat, lng], {
-                        icon: locationIcon,
-                        zIndexOffset: 1000 // Ensure it's on top of other markers
-                    }).addTo(map);
-
-                    // Get address from coordinates
-                    reverseGeocode(lat, lng);
-                },
-                function(error) {
-                    console.error('Error getting location:', error);
-                    alert('Unable to get your location. Please select your location manually on the map.');
-                }, {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
-            );
-        } else {
-            alert('Geolocation is not supported by your browser');
-        }
-    }
-
-    // Load administrative regions
-    function loadRegions() {
-        // In a real application, you would fetch this data from the server
-        // For this example, we'll use mock data from the GADM dataset
-        fetch('<?= BASE_URL ?>locations/gadm41_UGA_4.json')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load regions data');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Extract unique level 1 regions (provinces)
-                const level1Options = {};
-                data.features.forEach(feature => {
-                    const name = feature.properties.NAME_1;
-                    if (name) {
-                        level1Options[name] = name;
-                    }
-                });
-
-                // Populate level 1 dropdown
-                const level1Select = $('#level1');
-                level1Select.html('<option value="">Select Region/Province</option>');
-
-                Object.keys(level1Options).sort().forEach(region => {
-                    level1Select.append(`<option value="${region}">${region}</option>`);
-                });
-
-                // Store the GeoJSON data for later use
-                window.gadmData = data;
-
-                // Add change event listeners
-                level1Select.change(function() {
-                    const region = $(this).val();
-                    if (region) {
-                        updateLevel2Options(region);
-                        updateMap({
-                            1: region
-                        });
-                    } else {
-                        resetDropdown('level2');
-                        resetDropdown('level3');
-                        resetDropdown('level4');
-                        clearMap();
-                    }
-                });
-
-                $('#level2').change(function() {
-                    const district = $(this).val();
-                    const region = $('#level1').val();
-                    if (district) {
-                        updateLevel3Options(region, district);
-                        updateMap({
-                            1: region,
-                            2: district
-                        });
-                    } else {
-                        resetDropdown('level3');
-                        resetDropdown('level4');
-                        updateMap({
-                            1: region
-                        });
-                    }
-                });
-
-                $('#level3').change(function() {
-                    const subcounty = $(this).val();
-                    const district = $('#level2').val();
-                    const region = $('#level1').val();
-                    if (subcounty) {
-                        updateLevel4Options(region, district, subcounty);
-                        updateMap({
-                            1: region,
-                            2: district,
-                            3: subcounty
-                        });
-                    } else {
-                        resetDropdown('level4');
-                        updateMap({
-                            1: region,
-                            2: district
-                        });
-                    }
-                });
-
-                $('#level4').change(function() {
-                    const parish = $(this).val();
-                    const subcounty = $('#level3').val();
-                    const district = $('#level2').val();
-                    const region = $('#level1').val();
-                    if (parish) {
-                        updateMap({
-                            1: region,
-                            2: district,
-                            3: subcounty,
-                            4: parish
-                        });
-                    } else {
-                        updateMap({
-                            1: region,
-                            2: district,
-                            3: subcounty
-                        });
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Error loading regions:', error);
-                alert('Failed to load administrative regions. Please try again later.');
-            });
-    }
-
-    // Update level 2 options based on selected level 1
-    function updateLevel2Options(region) {
-        if (!window.gadmData) return;
-
-        // Show loading indicator
-        $('#loading2').removeClass('hidden');
-
-        // Extract unique level 2 regions for the selected level 1
-        const level2Options = {};
-        window.gadmData.features.forEach(feature => {
-            if (feature.properties.NAME_1 === region) {
-                const name = feature.properties.NAME_2;
-                if (name) {
-                    level2Options[name] = name;
-                }
-            }
-        });
-
-        // Populate level 2 dropdown
-        const level2Select = $('#level2');
-        level2Select.html('<option value="">Select District</option>');
-
-        Object.keys(level2Options).sort().forEach(district => {
-            level2Select.append(`<option value="${district}">${district}</option>`);
-        });
-
-        // Enable the dropdown
-        level2Select.prop('disabled', false);
-
-        // Hide loading indicator
-        $('#loading2').addClass('hidden');
-
-        // Reset dependent dropdowns
-        resetDropdown('level3');
-        resetDropdown('level4');
-    }
-
-    // Update level 3 options based on selected level 1 and 2
-    function updateLevel3Options(region, district) {
-        if (!window.gadmData) return;
-
-        // Show loading indicator
-        $('#loading3').removeClass('hidden');
-
-        // Extract unique level 3 regions for the selected level 1 and 2
-        const level3Options = {};
-        window.gadmData.features.forEach(feature => {
-            if (feature.properties.NAME_1 === region && feature.properties.NAME_2 === district) {
-                const name = feature.properties.NAME_3;
-                if (name) {
-                    level3Options[name] = name;
-                }
-            }
-        });
-
-        // Populate level 3 dropdown
-        const level3Select = $('#level3');
-        level3Select.html('<option value="">Select Sub-county</option>');
-
-        Object.keys(level3Options).sort().forEach(subcounty => {
-            level3Select.append(`<option value="${subcounty}">${subcounty}</option>`);
-        });
-
-        // Enable the dropdown
-        level3Select.prop('disabled', false);
-
-        // Hide loading indicator
-        $('#loading3').addClass('hidden');
-
-        // Reset dependent dropdown
-        resetDropdown('level4');
-    }
-
-    // Update level 4 options based on selected level 1, 2, and 3
-    function updateLevel4Options(region, district, subcounty) {
-        if (!window.gadmData) return;
-
-        // Show loading indicator
-        $('#loading4').removeClass('hidden');
-
-        // Extract unique level 4 regions for the selected level 1, 2, and 3
-        const level4Options = {};
-        window.gadmData.features.forEach(feature => {
-            if (feature.properties.NAME_1 === region &&
-                feature.properties.NAME_2 === district &&
-                feature.properties.NAME_3 === subcounty) {
-                const name = feature.properties.NAME_4;
-                if (name) {
-                    level4Options[name] = name;
-                }
-            }
-        });
-
-        // Populate level 4 dropdown
-        const level4Select = $('#level4');
-        level4Select.html('<option value="">Select Parish/Ward</option>');
-
-        Object.keys(level4Options).sort().forEach(parish => {
-            level4Select.append(`<option value="${parish}">${parish}</option>`);
-        });
-
-        // Enable the dropdown
-        level4Select.prop('disabled', false);
-
-        // Hide loading indicator
-        $('#loading4').addClass('hidden');
-    }
-
-    // Update map with selected regions
-    function updateMap(selections) {
-        if (!window.gadmData || !map) return;
-
-        // Remove existing GeoJSON layer if it exists
-        if (geoJSONLayer) {
-            map.removeLayer(geoJSONLayer);
-            geoJSONLayer = null;
-        }
-
-        // Remove existing marker if it exists
-        if (marker) {
-            map.removeLayer(marker);
-            marker = null;
-        }
-
-        // Filter features based on selections
-        const filteredFeatures = window.gadmData.features.filter(feature => {
-            let match = true;
-
-            for (const [level, value] of Object.entries(selections)) {
-                if (feature.properties[`NAME_${level}`] !== value) {
-                    match = false;
-                    break;
-                }
-            }
-
-            return match;
-        });
-
-        if (filteredFeatures.length === 0) {
-            currentGeoJSON = null;
-            return;
-        }
-
-        // Create GeoJSON object with filtered features
-        const filteredGeoJSON = {
-            type: 'FeatureCollection',
-            features: filteredFeatures
-        };
-
-        currentGeoJSON = filteredGeoJSON;
-
-        // Add new GeoJSON layer with a distinct style
-        geoJSONLayer = L.geoJSON(filteredGeoJSON, {
-            style: {
-                color: '#C00000',
-                weight: 2,
-                opacity: 1,
-                fillColor: '#C00000',
-                fillOpacity: 0.2
-            }
-        }).addTo(map);
-
-        // Fit map to the bounds of the selected region
-        map.fitBounds(geoJSONLayer.getBounds());
-
-        // Check if current location is within the selected region
-        if (currentLocation) {
-            const isInRegion = isPointInPolygon(currentLocation, filteredGeoJSON);
-            if (isInRegion) {
-                // If current location is within region, place a marker there
-                placeMarker(L.latLng(currentLocation.lat, currentLocation.lng));
-            }
-        }
-    }
-
-    // Clear map
-    function clearMap() {
-        if (!map) return;
-
-        // Remove existing GeoJSON layer if it exists
-        if (geoJSONLayer) {
-            map.removeLayer(geoJSONLayer);
-            geoJSONLayer = null;
-        }
-
-        // Remove existing marker if it exists
-        if (marker) {
-            map.removeLayer(marker);
-            marker = null;
-        }
-
-        currentGeoJSON = null;
-    }
-
-    // Reset dropdown
-    function resetDropdown(id) {
-        $(`#${id}`).html('<option value="">Select option</option>').prop('disabled', true);
-    }
-
-    function resetCreateStoreForm() {
-        // Reset step 1
-        $('#businessName, #businessEmail, #contactNumber').val('');
-        $('#natureOfOperation').val('');
-
-        // Reset step 2
-        $('#latitude, #longitude, #address').val('');
-        $('#level1').val('');
-        resetDropdown('level2');
-        resetDropdown('level3');
-        resetDropdown('level4');
-
-        // Reset step 3
-        $('#storeDescription').val('');
-        $('#storeWebsite').val('');
-        $('#storeSocialMedia').val('');
-        $('#storeLogo').val('');
-        $('#logoPreview').addClass('hidden').attr('src', '#');
-        $('#logoPlaceholder').removeClass('hidden');
-
-        // Reset indicators
-        $('#step1').removeClass('hidden');
-        $('#step2, #step3').addClass('hidden');
-
-        $('#step1Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
-        $('#step1Indicator').text('1');
-        $('#step2Indicator').removeClass('bg-green-500 bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
-        $('#step2Indicator').text('2');
-        $('#step3Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
-        $('#step3Indicator').text('3');
-        $('#step1to2Line, #step2to3Line').removeClass('bg-green-500').addClass('bg-gray-200');
-
-        // Clear map
-        clearMap();
-
-        // Remove location marker
-        if (locationMarker && map) {
-            map.removeLayer(locationMarker);
-            locationMarker = null;
-        }
-    }
-
-    function showModal(modalId) {
-        document.getElementById(modalId).classList.remove('hidden');
-    }
-
-    function hideModal(modalId) {
-        document.getElementById(modalId).classList.add('hidden');
-    }
-
+    /**
+     * --------------------------------------------------
+     * Common Functions
+     * --------------------------------------------------
+     */
+
+    // Show/hide loading
     function showLoading() {
-        document.getElementById('loadingOverlay').classList.remove('hidden');
+        $('#loadingOverlay').removeClass('hidden');
     }
 
     function hideLoading() {
-        document.getElementById('loadingOverlay').classList.add('hidden');
+        $('#loadingOverlay').addClass('hidden');
+    }
+
+    function showErrorNotification(message) {
+        let notification = document.getElementById('errorNotification');
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'errorNotification';
+            notification.className =
+                'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50';
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span id="errorMessage"></span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+        }
+        document.getElementById('errorMessage').textContent = message;
+        notification.classList.remove('hidden');
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 3000);
     }
 
     function showSuccessNotification(message) {
         let notification = document.getElementById('successNotification');
-
         if (!notification) {
             notification = document.createElement('div');
             notification.id = 'successNotification';
-            notification.className = 'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50';
+            notification.className =
+                'fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50';
             notification.innerHTML = `
                 <div class="flex items-center">
                     <i class="fas fa-check-circle mr-2"></i>
@@ -1245,20 +551,18 @@ ob_start();
             `;
             document.body.appendChild(notification);
         }
-
         document.getElementById('successMessage').textContent = message;
         notification.classList.remove('hidden');
-
         setTimeout(() => {
             notification.classList.add('hidden');
         }, 3000);
     }
 
-    // Load stores from the server
+    // “Owned” stores
     function loadOwnedStores() {
         showLoading();
         $.ajax({
-            url: BASE_URL + 'account/fetch/manageZzimbaStores.php?action=getOwnedStores',
+            url: STORE_API_BASE + '?action=getOwnedStores',
             type: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -1276,10 +580,105 @@ ob_start();
         });
     }
 
+    function renderOwnedStores(stores) {
+        const container = $('#owned-stores-container');
+        if (!stores || stores.length === 0) {
+            container.html(`
+                <div class="bg-gray-50 rounded-lg p-8 text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="fas fa-store text-gray-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-secondary mb-2">No Stores Yet</h3>
+                    <p class="text-sm text-gray-text mb-4">
+                        You haven't created any stores yet. Create your first store to start selling on Zzimba Online.
+                    </p>
+                    <button 
+                        id="createFirstStoreBtn" 
+                        class="h-10 px-6 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors"
+                        onclick="openStoreModal('create')"
+                    >
+                        Create Your First Store
+                    </button>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">';
+        stores.forEach((store) => {
+            const statusBadge = getStatusBadge(store.status);
+            const logoUrl = store.logo_url ?
+                BASE_URL + store.logo_url :
+                `https://placehold.co/100x100/f0f0f0/808080?text=${store.name.substring(0, 2)}`;
+            const categoriesList = store.categories && store.categories.length > 0 ?
+                store.categories.join(', ') :
+                'No categories';
+
+            html += `
+                <div class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+                    <div class="flex flex-col sm:flex-row">
+                        <div class="w-full sm:w-32 h-32 bg-gray-50 flex items-center justify-center flex-shrink-0">
+                            <img src="${logoUrl}" alt="${escapeHtml(store.name)}" class="w-20 h-20 object-cover rounded-lg">
+                        </div>
+                        <div class="p-4 sm:p-6 flex-grow">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                <h3 class="font-semibold text-secondary">${escapeHtml(store.name)}</h3>
+                                <div class="inline-flex items-center">
+                                    ${statusBadge}
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-text mb-3">
+                                <i class="fas fa-map-marker-alt mr-1 text-user-primary"></i>
+                                ${escapeHtml(store.location)}
+                            </p>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p class="text-xs text-gray-text">Active Products</p>
+                                    <p class="font-medium">${store.product_count || 0}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-text">Active Categories</p>
+                                    <p class="font-medium">${store.categories ? store.categories.length : 0}</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <p class="text-xs text-gray-text">
+                                    <i class="fas fa-tag mr-1"></i>
+                                    ${categoriesList}
+                                </p>
+                                <div class="flex gap-2">
+                                    <button 
+                                        onclick="openStoreModal('edit','${store.uuid_id}')" 
+                                        class="h-8 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 text-sm"
+                                    >
+                                        <i class="fas fa-edit"></i>
+                                        <span>Edit</span>
+                                    </button>
+                                    <a 
+                                        href="../view/profile/vendor/${store.uuid_id}" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm"
+                                    >
+                                        <i class="fas fa-cog"></i>
+                                        <span>Manage</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.html(html);
+    }
+
+    // “Managed” stores
     function loadManagedStores() {
         showLoading();
         $.ajax({
-            url: BASE_URL + 'account/fetch/manageZzimbaStores.php?action=getManagedStores',
+            url: STORE_API_BASE + '?action=getManagedStores',
             type: 'GET',
             dataType: 'json',
             success: function(response) {
@@ -1297,91 +696,331 @@ ob_start();
         });
     }
 
-    // Initialize phone inputs with country codes
-    let phoneInput, editPhoneInput;
-
-    function initializePhoneInputs() {
-        // Initialize phone input for create form
-        const phoneInputField = document.querySelector("#contactNumber");
-        if (phoneInputField) {
-            phoneInput = window.intlTelInput(phoneInputField, {
-                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
-                preferredCountries: ["ug", "ke", "tz", "rw"],
-                initialCountry: "ug",
-                separateDialCode: true,
-                autoPlaceholder: "polite"
-            });
+    function renderManagedStores(stores) {
+        const container = $('#managed-stores-container');
+        if (!stores || stores.length === 0) {
+            container.html(`
+                <div class="bg-gray-50 rounded-lg p-8 text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="fas fa-user-tie text-gray-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-secondary mb-2">No Managed Stores</h3>
+                    <p class="text-sm text-gray-text">You haven't been added as a manager to any stores yet.</p>
+                </div>
+            `);
+            return;
         }
 
-        // Initialize phone input for edit form
-        const editPhoneInputField = document.querySelector("#editContactNumber");
-        if (editPhoneInputField) {
-            editPhoneInput = window.intlTelInput(editPhoneInputField, {
-                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
-                preferredCountries: ["ug", "ke", "tz", "rw"],
-                initialCountry: "ug",
-                separateDialCode: true,
-                autoPlaceholder: "polite"
-            });
-        }
+        let html = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">';
+        stores.forEach((store) => {
+            const statusBadge = getStatusBadge(store.status);
+            const logoUrl = store.logo_url ?
+                BASE_URL + store.logo_url :
+                `https://placehold.co/100x100/f0f0f0/808080?text=${store.name.substring(0, 2)}`;
+            const categoriesList = store.categories && store.categories.length > 0 ?
+                store.categories.join(', ') :
+                'No categories';
 
-        // Add class to fix the container width
-        $('.iti').addClass('w-full');
+            html += `
+                <div class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+                    <div class="flex flex-col sm:flex-row">
+                        <div class="w-full sm:w-32 h-32 bg-gray-50 flex items-center justify-center flex-shrink-0">
+                            <img src="${logoUrl}" alt="${escapeHtml(store.name)}" class="w-20 h-20 object-cover rounded-lg">
+                        </div>
+                        <div class="p-4 sm:p-6 flex-grow">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                <h3 class="font-semibold text-secondary">${escapeHtml(store.name)}</h3>
+                                <div class="inline-flex items-center">
+                                    ${statusBadge}
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-text mb-1">
+                                <i class="fas fa-map-marker-alt mr-1 text-user-primary"></i>
+                                ${escapeHtml(store.location)}
+                            </p>
+                            <p class="text-sm text-gray-text mb-3">
+                                <i class="fas fa-user mr-1 text-user-primary"></i>
+                                Owner: ${escapeHtml(store.owner)}
+                            </p>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p class="text-xs text-gray-text">Active Products</p>
+                                    <p class="font-medium">${store.product_count || 0}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-text">Role</p>
+                                    <p class="font-medium">${store.role || 'Manager'}</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
+                                <a 
+                                    href="store-manage-${store.uuid_id}" 
+                                    class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm"
+                                >
+                                    <i class="fas fa-cog"></i>
+                                    <span>Manage</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.html(html);
     }
 
-    // Edit store modal navigation
-    function editStore(storeId) {
-        // Reset form and show first step
-        resetEditStoreForm();
+    // Helper
+    function getStatusBadge(status) {
+        switch (status) {
+            case 'active':
+                return `
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-green-500"></span>
+                        Active
+                    </span>
+                `;
+            case 'pending':
+                return `
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-yellow-500"></span>
+                        Pending
+                    </span>
+                `;
+            case 'inactive':
+                return `
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-red-500"></span>
+                        Inactive
+                    </span>
+                `;
+            case 'suspended':
+                return `
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-gray-500"></span>
+                        Suspended
+                    </span>
+                `;
+            default:
+                return `
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-gray-500"></span>
+                        ${status.charAt(0).toUpperCase() + status.slice(1)}
+                    </span>
+                `;
+        }
+    }
 
-        // Fetch store details and populate the edit form
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * --------------------------------------------------
+     * Modal & Form
+     * --------------------------------------------------
+     */
+
+    // Open modal in create or edit mode
+    function openStoreModal(mode, storeId = null) {
+        $('#storeModal').removeClass('hidden');
+        $('#storeMode').val(mode);
+
+        if (mode === 'create') {
+            $('#storeModalTitle').text('Create New Store');
+            resetStoreForm(); // brand new form
+        } else {
+            $('#storeModalTitle').text('Edit Store');
+            resetStoreForm();
+            populateStoreForm(storeId);
+        }
+    }
+
+    function closeStoreModal() {
+        $('#storeModal').addClass('hidden');
+    }
+
+    // Step transitions
+    function goToStep2() {
+        // Validate step 1
+        const name = $('#storeBusinessName').val();
+        const email = $('#storeBusinessEmail').val();
+        const phone = storePhoneInput.getNumber();
+        const nature = $('#storeNatureOfOperation').val();
+        if (!name || !email || !phone || !nature) {
+            alert('Please fill in all required fields');
+            return;
+        }
+        if (!storePhoneInput.isValidNumber()) {
+            alert('Please enter a valid phone number');
+            return;
+        }
+        // Step indicator update
+        $('#storeStep1').addClass('hidden');
+        $('#storeStep2').removeClass('hidden');
+        $('#storeStep1Indicator')
+            .addClass('bg-green-500')
+            .removeClass('bg-user-primary')
+            .html('<i class="fas fa-check"></i>');
+        $('#storeStep2Indicator')
+            .addClass('bg-user-primary text-white')
+            .removeClass('bg-gray-200 text-gray-500');
+        $('#storeStep1to2Line').addClass('bg-green-500').removeClass('bg-gray-200');
+
+        setTimeout(() => {
+            if (storeMap) storeMap.invalidateSize();
+        }, 100);
+    }
+
+    function backToStep1() {
+        $('#storeStep2').addClass('hidden');
+        $('#storeStep1').removeClass('hidden');
+        $('#storeStep1Indicator')
+            .removeClass('bg-green-500')
+            .addClass('bg-user-primary')
+            .text('1');
+        $('#storeStep2Indicator')
+            .removeClass('bg-user-primary text-white')
+            .addClass('bg-gray-200 text-gray-500')
+            .text('2');
+        $('#storeStep1to2Line').removeClass('bg-green-500').addClass('bg-gray-200');
+    }
+
+    function goToStep3() {
+        // Validate step 2
+        const lat = $('#storeLatitude').val();
+        const lng = $('#storeLongitude').val();
+        const lvl1 = $('#storeLevel1').val();
+        const lvl2 = $('#storeLevel2').val();
+        const addr = $('#storeAddress').val();
+        if (!lat || !lng || !lvl1 || !lvl2 || !addr) {
+            alert('Please select your location on the map and fill in all required fields');
+            return;
+        }
+        // Step indicator update
+        $('#storeStep2').addClass('hidden');
+        $('#storeStep3').removeClass('hidden');
+        $('#storeStep2Indicator')
+            .addClass('bg-green-500')
+            .removeClass('bg-user-primary')
+            .html('<i class="fas fa-check"></i>');
+        $('#storeStep3Indicator')
+            .addClass('bg-user-primary text-white')
+            .removeClass('bg-gray-200 text-gray-500');
+        $('#storeStep2to3Line').addClass('bg-green-500').removeClass('bg-gray-200');
+    }
+
+    function backToStep2() {
+        $('#storeStep3').addClass('hidden');
+        $('#storeStep2').removeClass('hidden');
+        $('#storeStep2Indicator')
+            .removeClass('bg-green-500')
+            .addClass('bg-user-primary')
+            .text('2');
+        $('#storeStep3Indicator')
+            .removeClass('bg-user-primary text-white')
+            .addClass('bg-gray-200 text-gray-500')
+            .text('3');
+        $('#storeStep2to3Line').removeClass('bg-green-500').addClass('bg-gray-200');
+        setTimeout(() => {
+            if (storeMap) storeMap.invalidateSize();
+        }, 100);
+    }
+
+    // Clear form
+    function resetStoreForm() {
+        $('#storeId').val('');
+        $('#storeMode').val('create');
+        // Step 1 fields
+        $('#storeBusinessName').val('');
+        $('#storeBusinessEmail').val('');
+        $('#storeContactNumber').val('');
+        $('#storeNatureOfOperation').val('');
+        // Step 2 fields
+        $('#storeLatitude').val('');
+        $('#storeLongitude').val('');
+        $('#storeAddress').val('');
+        $('#storeLevel1').html('<option value="">Select Region/Province</option>');
+        $('#storeLevel2').html('<option value="">Select District</option>').prop('disabled', true);
+        $('#storeLevel3').html('<option value="">Select Sub-county</option>').prop('disabled', true);
+        $('#storeLevel4').html('<option value="">Select Parish/Ward</option>').prop('disabled', true);
+        // Step 3 fields
+        $('#storeDescription').val('');
+        $('#storeWebsite').val('');
+        $('#storeSocialMedia').val('');
+        $('#storeLogo').val('');
+        $('#storeLogoPreview').attr('src', '#').addClass('hidden');
+        $('#storeLogoPlaceholder').removeClass('hidden');
+
+        // Step indicators
+        $('#storeStep1').removeClass('hidden');
+        $('#storeStep2, #storeStep3').addClass('hidden');
+        $('#storeStep1Indicator')
+            .removeClass('bg-green-500')
+            .addClass('bg-user-primary')
+            .text('1');
+        $('#storeStep2Indicator, #storeStep3Indicator')
+            .removeClass('bg-user-primary bg-green-500 text-white')
+            .addClass('bg-gray-200 text-gray-500');
+        $('#storeStep2Indicator').text('2');
+        $('#storeStep3Indicator').text('3');
+        $('#storeStep1to2Line, #storeStep2to3Line')
+            .removeClass('bg-green-500')
+            .addClass('bg-gray-200');
+
+        // Re-init map
+        destroyMap();
+        initStoreMap();
+
+        // Load UG regions fresh
+        loadRegions();
+    }
+
+    // Populate form in “edit” mode
+    function populateStoreForm(storeId) {
+        $('#storeId').val(storeId);
         showLoading();
         $.ajax({
-            url: BASE_URL + 'account/fetch/manageZzimbaStores.php?action=getStoreDetails&id=' + storeId,
+            url: STORE_API_BASE + '?action=getStoreDetails&id=' + storeId,
             type: 'GET',
             dataType: 'json',
             success: function(response) {
                 hideLoading();
-                if (response.success) {
-                    const store = response.store;
-
-                    // Populate form fields - Step 1
-                    $('#editStoreId').val(store.uuid_id);
-                    $('#editBusinessName').val(store.name);
-                    $('#editBusinessEmail').val(store.business_email);
-                    editPhoneInput.setNumber(store.business_phone);
-                    $('#editNatureOfOperation').val(store.nature_of_operation);
-
-                    // Populate form fields - Step 2
-                    $('#editLatitude').val(store.latitude);
-                    $('#editLongitude').val(store.longitude);
-                    $('#editAddress').val(store.address);
-
-                    // Load regions and set selected values
-                    loadEditRegions(store.region, store.district, store.subcounty, store.parish);
-
-                    // Populate form fields - Step 3
-                    $('#editStoreDescription').val(store.description);
-                    $('#editStoreWebsite').val(store.website_url);
-                    $('#editStoreSocialMedia').val(store.social_media);
-
-                    // Set logo if exists
-                    if (store.logo_url) {
-                        $('#editLogoPreview').attr('src', BASE_URL + store.logo_url);
-                        $('#editLogoPreview').removeClass('hidden');
-                        $('#editLogoPlaceholder').addClass('hidden');
-                    }
-
-                    // Show the modal
-                    showModal('editStoreModal');
-
-                    // Initialize map after modal is shown
-                    setTimeout(() => {
-                        initEditMap(store.latitude, store.longitude, store.region);
-                    }, 300);
-                } else {
+                if (!response.success) {
                     showErrorNotification(response.error || 'Failed to load store details');
+                    return;
                 }
+                const store = response.store;
+                $('#storeId').val(store.uuid_id);
+                // Step 1
+                $('#storeBusinessName').val(store.name);
+                $('#storeBusinessEmail').val(store.business_email);
+                storePhoneInput.setNumber(store.business_phone); // phone
+                $('#storeNatureOfOperation').val(store.nature_of_operation);
+                // Step 2
+                $('#storeLatitude').val(store.latitude);
+                $('#storeLongitude').val(store.longitude);
+                $('#storeAddress').val(store.address);
+                // Step 3
+                $('#storeDescription').val(store.description);
+                $('#storeWebsite').val(store.website_url);
+                $('#storeSocialMedia').val(store.social_media);
+
+                // Logo
+                if (store.logo_url) {
+                    $('#storeLogoPreview')
+                        .attr('src', BASE_URL + store.logo_url)
+                        .removeClass('hidden');
+                    $('#storeLogoPlaceholder').addClass('hidden');
+                }
+
+                // Now init map with that location
+                destroyMap();
+                initStoreMap(store.latitude, store.longitude);
+                // Load & set UG regions
+                loadRegions(store.region, store.district, store.subcounty, store.parish);
             },
             error: function() {
                 hideLoading();
@@ -1390,584 +1029,52 @@ ob_start();
         });
     }
 
-    function resetEditStoreForm() {
-        // Reset form fields
-        $('#editStoreForm')[0].reset();
-
-        // Reset step indicators
-        $('#editStep1').removeClass('hidden');
-        $('#editStep2, #editStep3').addClass('hidden');
-
-        $('#editStep1Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
-        $('#editStep1Indicator').text('1');
-        $('#editStep2Indicator, #editStep3Indicator').removeClass('bg-user-primary bg-green-500 text-white').addClass('bg-gray-200 text-gray-500');
-        $('#editStep2Indicator').text('2');
-        $('#editStep3Indicator').text('3');
-        $('#editStep1to2Line, #editStep2to3Line').removeClass('bg-green-500').addClass('bg-gray-200');
-
-        // Reset logo preview
-        $('#editLogoPreview').addClass('hidden').attr('src', '#');
-        $('#editLogoPlaceholder').removeClass('hidden');
-
-        // Reset map
-        if (editMap) {
-            editMap.remove();
-            editMap = null;
-        }
-
-        // Reset regions
-        $('#editLevel1').html('<option value="">Select Region/Province</option>');
-        resetDropdown('editLevel2');
-        resetDropdown('editLevel3');
-        resetDropdown('editLevel4');
-    }
-
-    // Edit modal step navigation
-    $('#editStep1NextBtn').click(function() {
-        // Validate step 1
-        const businessName = $('#editBusinessName').val();
-        const businessEmail = $('#editBusinessEmail').val();
-        const contactNumber = editPhoneInput.getNumber();
-        const natureOfOperation = $('#editNatureOfOperation').val();
-
-        if (!businessName || !businessEmail || !contactNumber || !natureOfOperation) {
-            alert('Please fill in all required fields');
-            return;
-        }
-
-        if (!editPhoneInput.isValidNumber()) {
-            alert('Please enter a valid phone number');
-            return;
-        }
-
-        // Move to step 2
-        $('#editStep1').addClass('hidden');
-        $('#editStep2').removeClass('hidden');
-
-        // Update indicators
-        $('#editStep1Indicator').addClass('bg-green-500').removeClass('bg-user-primary');
-        $('#editStep1Indicator').html('<i class="fas fa-check"></i>');
-        $('#editStep2Indicator').addClass('bg-user-primary').removeClass('bg-gray-200 text-gray-500').addClass('text-white');
-        $('#editStep1to2Line').addClass('bg-green-500').removeClass('bg-gray-200');
-
-        // Refresh map in case it wasn't properly initialized
-        setTimeout(() => {
-            if (editMap) editMap.invalidateSize();
-        }, 100);
-    });
-
-    $('#editStep2BackBtn').click(function() {
-        $('#editStep2').addClass('hidden');
-        $('#editStep1').removeClass('hidden');
-
-        // Update indicators
-        $('#editStep1Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
-        $('#editStep1Indicator').text('1');
-        $('#editStep2Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
-        $('#editStep1to2Line').removeClass('bg-green-500').addClass('bg-gray-200');
-    });
-
-    $('#editStep2NextBtn').click(function() {
-        // Validate step 2
-        const latitude = $('#editLatitude').val();
-        const longitude = $('#editLongitude').val();
-        const level1 = $('#editLevel1').val();
-        const level2 = $('#editLevel2').val();
-        const address = $('#editAddress').val();
-
-        if (!latitude || !longitude || !level1 || !level2 || !address) {
-            alert('Please select your location on the map and fill in all required fields');
-            return;
-        }
-
-        // Move to step 3
-        $('#editStep2').addClass('hidden');
-        $('#editStep3').removeClass('hidden');
-
-        // Update indicators
-        $('#editStep2Indicator').addClass('bg-green-500').removeClass('bg-user-primary');
-        $('#editStep2Indicator').html('<i class="fas fa-check"></i>');
-        $('#editStep3Indicator').addClass('bg-user-primary').removeClass('bg-gray-200 text-gray-500').addClass('text-white');
-        $('#editStep2to3Line').addClass('bg-green-500').removeClass('bg-gray-200');
-    });
-
-    $('#editStep3BackBtn').click(function() {
-        $('#editStep3').addClass('hidden');
-        $('#editStep2').removeClass('hidden');
-
-        // Update indicators
-        $('#editStep2Indicator').removeClass('bg-green-500').addClass('bg-user-primary');
-        $('#editStep2Indicator').text('2');
-        $('#editStep3Indicator').removeClass('bg-user-primary text-white').addClass('bg-gray-200 text-gray-500');
-        $('#editStep2to3Line').removeClass('bg-green-500').addClass('bg-gray-200');
-
-        // Refresh map in case it wasn't properly initialized
-        setTimeout(() => {
-            if (editMap) editMap.invalidateSize();
-        }, 100);
-    });
-
-    // Edit logo preview functionality
-    $('#editStoreLogo').change(function(e) {
-        if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-
-            reader.onload = function(e) {
-                $('#editLogoPreview').attr('src', e.target.result);
-                $('#editLogoPreview').removeClass('hidden');
-                $('#editLogoPlaceholder').addClass('hidden');
-            }
-
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    });
-
-    // Edit map variables
-    let editMap = null;
-    let editMarker = null;
-    let editBaseLayers = {};
-    let editCurrentLocation = null;
-    let editGeoJSONLayer = null;
-    let editCurrentGeoJSON = null;
-
-    function initEditMap(lat, lng, region) {
-        // Create map centered on the store location
-        editMap = L.map('editMapContainer').setView([lat, lng], 15);
-
-        // Define base layers
-        editBaseLayers = {
-            'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }),
-            'satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-            }),
-            'terrain': L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-                attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-            })
-        };
-
-        // Add default base layer
-        editBaseLayers['osm'].addTo(editMap);
-
-        // Add marker at the store location
-        editMarker = L.marker([lat, lng], {
-            draggable: true
-        }).addTo(editMap);
-
-        // Add drag end event
-        editMarker.on('dragend', function() {
-            const newPos = editMarker.getLatLng();
-            $('#editLatitude').val(newPos.lat.toFixed(6));
-            $('#editLongitude').val(newPos.lng.toFixed(6));
-            reverseGeocode(newPos.lat, newPos.lng, 'edit');
-        });
-
-        // Add click event to map
-        editMap.on('click', function(e) {
-            const point = e.latlng;
-
-            // Update marker position
-            editMarker.setLatLng(point);
-
-            // Update form fields
-            $('#editLatitude').val(point.lat.toFixed(6));
-            $('#editLongitude').val(point.lng.toFixed(6));
-
-            // Get address from coordinates
-            reverseGeocode(point.lat, point.lng, 'edit');
-        });
-
-        // Load regions for the selected region
-        loadEditRegionsForMap(region);
-    }
-
-    // Load regions for edit form
-    function loadEditRegions(region, district, subcounty, parish) {
-        fetch('<?= BASE_URL ?>locations/gadm41_UGA_4.json')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load regions data');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Extract unique level 1 regions (provinces)
-                const level1Options = {};
-                data.features.forEach(feature => {
-                    const name = feature.properties.NAME_1;
-                    if (name) {
-                        level1Options[name] = name;
-                    }
-                });
-
-                // Populate level 1 dropdown
-                const level1Select = $('#editLevel1');
-                level1Select.html('<option value="">Select Region/Province</option>');
-
-                Object.keys(level1Options).sort().forEach(regionName => {
-                    level1Select.append(`<option value="${regionName}" ${regionName === region ? 'selected' : ''}>${regionName}</option>`);
-                });
-
-                // Store the GeoJSON data for later use
-                window.editGadmData = data;
-
-                // Add change event listeners
-                level1Select.change(function() {
-                    const selectedRegion = $(this).val();
-                    if (selectedRegion) {
-                        updateEditLevel2Options(selectedRegion);
-                        updateEditMap({
-                            1: selectedRegion
-                        });
-                    } else {
-                        resetDropdown('editLevel2');
-                        resetDropdown('editLevel3');
-                        resetDropdown('editLevel4');
-                        clearEditMap();
-                    }
-                });
-
-                $('#editLevel2').change(function() {
-                    const selectedDistrict = $(this).val();
-                    const selectedRegion = $('#editLevel1').val();
-                    if (selectedDistrict) {
-                        updateEditLevel3Options(selectedRegion, selectedDistrict);
-                        updateEditMap({
-                            1: selectedRegion,
-                            2: selectedDistrict
-                        });
-                    } else {
-                        resetDropdown('editLevel3');
-                        resetDropdown('editLevel4');
-                        updateEditMap({
-                            1: selectedRegion
-                        });
-                    }
-                });
-
-                $('#editLevel3').change(function() {
-                    const selectedSubcounty = $(this).val();
-                    const selectedDistrict = $('#editLevel2').val();
-                    const selectedRegion = $('#editLevel1').val();
-                    if (selectedSubcounty) {
-                        updateEditLevel4Options(selectedRegion, selectedDistrict, selectedSubcounty);
-                        updateEditMap({
-                            1: selectedRegion,
-                            2: selectedDistrict,
-                            3: selectedSubcounty
-                        });
-                    } else {
-                        resetDropdown('editLevel4');
-                        updateEditMap({
-                            1: selectedRegion,
-                            2: selectedDistrict
-                        });
-                    }
-                });
-
-                $('#editLevel4').change(function() {
-                    const selectedParish = $(this).val();
-                    const selectedSubcounty = $('#editLevel3').val();
-                    const selectedDistrict = $('#editLevel2').val();
-                    const selectedRegion = $('#editLevel1').val();
-                    if (selectedParish) {
-                        updateEditMap({
-                            1: selectedRegion,
-                            2: selectedDistrict,
-                            3: selectedSubcounty,
-                            4: selectedParish
-                        });
-                    } else {
-                        updateEditMap({
-                            1: selectedRegion,
-                            2: selectedDistrict,
-                            3: selectedSubcounty
-                        });
-                    }
-                });
-
-                // Set initial values if provided
-                if (region) {
-                    updateEditLevel2Options(region, district);
-                    if (district && subcounty) {
-                        updateEditLevel3Options(region, district, subcounty);
-                        if (subcounty && parish) {
-                            updateEditLevel4Options(region, district, subcounty, parish);
-                        }
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error loading regions:', error);
-                showErrorNotification('Failed to load administrative regions. Please try again later.');
-            });
-    }
-
-    // Update level 2 options for edit form
-    function updateEditLevel2Options(region, selectedDistrict = null) {
-        if (!window.editGadmData) return;
-
-        // Show loading indicator
-        $('#editLoading2').removeClass('hidden');
-
-        // Extract unique level 2 regions for the selected level 1
-        const level2Options = {};
-        window.editGadmData.features.forEach(feature => {
-            if (feature.properties.NAME_1 === region) {
-                const name = feature.properties.NAME_2;
-                if (name) {
-                    level2Options[name] = name;
-                }
-            }
-        });
-
-        // Populate level 2 dropdown
-        const level2Select = $('#editLevel2');
-        level2Select.html('<option value="">Select District</option>');
-
-        Object.keys(level2Options).sort().forEach(district => {
-            level2Select.append(`<option value="${district}" ${district === selectedDistrict ? 'selected' : ''}>${district}</option>`);
-        });
-
-        // Enable the dropdown
-        level2Select.prop('disabled', false);
-
-        // Hide loading indicator
-        $('#editLoading2').addClass('hidden');
-
-        // Reset dependent dropdowns if no selected district
-        if (!selectedDistrict) {
-            resetDropdown('editLevel3');
-            resetDropdown('editLevel4');
-        }
-    }
-
-    // Update level 3 options for edit form
-    function updateEditLevel3Options(region, district, selectedSubcounty = null) {
-        if (!window.editGadmData) return;
-
-        // Show loading indicator
-        $('#editLoading3').removeClass('hidden');
-
-        // Extract unique level 3 regions for the selected level 1 and 2
-        const level3Options = {};
-        window.editGadmData.features.forEach(feature => {
-            if (feature.properties.NAME_1 === region && feature.properties.NAME_2 === district) {
-                const name = feature.properties.NAME_3;
-                if (name) {
-                    level3Options[name] = name;
-                }
-            }
-        });
-
-        // Populate level 3 dropdown
-        const level3Select = $('#editLevel3');
-        level3Select.html('<option value="">Select Sub-county</option>');
-
-        Object.keys(level3Options).sort().forEach(subcounty => {
-            level3Select.append(`<option value="${subcounty}" ${subcounty === selectedSubcounty ? 'selected' : ''}>${subcounty}</option>`);
-        });
-
-        // Enable the dropdown
-        level3Select.prop('disabled', false);
-
-        // Hide loading indicator
-        $('#editLoading3').addClass('hidden');
-
-        // Reset dependent dropdown if no selected subcounty
-        if (!selectedSubcounty) {
-            resetDropdown('editLevel4');
-        }
-    }
-
-    // Update level 4 options for edit form
-    function updateEditLevel4Options(region, district, subcounty, selectedParish = null) {
-        if (!window.editGadmData) return;
-
-        // Show loading indicator
-        $('#editLoading4').removeClass('hidden');
-
-        // Extract unique level 4 regions for the selected level 1, 2, and 3
-        const level4Options = {};
-        window.editGadmData.features.forEach(feature => {
-            if (feature.properties.NAME_1 === region &&
-                feature.properties.NAME_2 === district &&
-                feature.properties.NAME_3 === subcounty) {
-                const name = feature.properties.NAME_4;
-                if (name) {
-                    level4Options[name] = name;
-                }
-            }
-        });
-
-        // Populate level 4 dropdown
-        const level4Select = $('#editLevel4');
-        level4Select.html('<option value="">Select Parish/Ward</option>');
-
-        Object.keys(level4Options).sort().forEach(parish => {
-            level4Select.append(`<option value="${parish}" ${parish === selectedParish ? 'selected' : ''}>${parish}</option>`);
-        });
-
-        // Enable the dropdown
-        level4Select.prop('disabled', false);
-
-        // Hide loading indicator
-        $('#editLoading4').addClass('hidden');
-    }
-
-    // Update map for edit form
-    function updateEditMap(selections) {
-        if (!window.editGadmData || !editMap) return;
-
-        // Remove existing GeoJSON layer if it exists
-        if (editGeoJSONLayer) {
-            editMap.removeLayer(editGeoJSONLayer);
-            editGeoJSONLayer = null;
-        }
-
-        // Filter features based on selections
-        const filteredFeatures = window.editGadmData.features.filter(feature => {
-            let match = true;
-
-            for (const [level, value] of Object.entries(selections)) {
-                if (feature.properties[`NAME_${level}`] !== value) {
-                    match = false;
-                    break;
-                }
-            }
-
-            return match;
-        });
-
-        if (filteredFeatures.length === 0) {
-            editCurrentGeoJSON = null;
-            return;
-        }
-
-        // Create GeoJSON object with filtered features
-        const filteredGeoJSON = {
-            type: 'FeatureCollection',
-            features: filteredFeatures
-        };
-
-        editCurrentGeoJSON = filteredGeoJSON;
-
-        // Add new GeoJSON layer with a distinct style
-        editGeoJSONLayer = L.geoJSON(filteredGeoJSON, {
-            style: {
-                color: '#C00000',
-                weight: 2,
-                opacity: 1,
-                fillColor: '#C00000',
-                fillOpacity: 0.2
-            }
-        }).addTo(editMap);
-
-        // Fit map to the bounds of the selected region
-        editMap.fitBounds(editGeoJSONLayer.getBounds());
-    }
-
-    // Clear map for edit form
-    function clearEditMap() {
-        if (!editMap) return;
-
-        // Remove existing GeoJSON layer if it exists
-        if (editGeoJSONLayer) {
-            editMap.removeLayer(editGeoJSONLayer);
-            editGeoJSONLayer = null;
-        }
-
-        editCurrentGeoJSON = null;
-    }
-
-    // Function to handle reverse geocoding for both create and edit forms
-    function reverseGeocode(lat, lng, formType = 'create') {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-
-        fetch(url, {
-                headers: {
-                    'User-Agent': 'Zzimba Online Store Location Selector'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.display_name) {
-                    // Set address field based on form type
-                    if (formType === 'edit') {
-                        $('#editAddress').val(data.display_name);
-                    } else {
-                        $('#address').val(data.display_name);
-                    }
-
-                    // Try to find and set administrative regions
-                    if (data.address) {
-                        // This is a simplified approach - in a real app you'd need to match
-                        // the returned address components with your specific region data
-                        if (data.address.state || data.address.region) {
-                            const region = data.address.state || data.address.region;
-                            const selector = formType === 'edit' ? '#editLevel1' : '#level1';
-                            const regionOption = $(`${selector} option`).filter(function() {
-                                return $(this).text().toLowerCase() === region.toLowerCase();
-                            });
-
-                            if (regionOption.length) {
-                                $(selector).val(regionOption.val()).trigger('change');
-                            }
-                        }
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error in reverse geocoding:', error);
-            });
-    }
-
-    // Handle edit form submission
-    $('#editStep3FinishBtn').click(function() {
-        // Collect all form data from all steps
+    // Final submission
+    function saveStoreData() {
+        const mode = $('#storeMode').val();
+        const storeId = $('#storeId').val();
+
+        // Gather form data
         const formData = {
-            id: $('#editStoreId').val(),
-            name: $('#editBusinessName').val(),
-            business_email: $('#editBusinessEmail').val(),
-            business_phone: editPhoneInput.getNumber(),
-            nature_of_operation: $('#editNatureOfOperation').val(),
-            region: $('#editLevel1').val(),
-            district: $('#editLevel2').val(),
-            subcounty: $('#editLevel3').val(),
-            parish: $('#editLevel4').val(),
-            address: $('#editAddress').val(),
-            latitude: $('#editLatitude').val(),
-            longitude: $('#editLongitude').val(),
-            description: $('#editStoreDescription').val(),
-            website_url: $('#editStoreWebsite').val(),
-            social_media: $('#editStoreSocialMedia').val()
+            id: storeId,
+            name: $('#storeBusinessName').val(),
+            business_email: $('#storeBusinessEmail').val(),
+            business_phone: storePhoneInput.getNumber(),
+            nature_of_operation: $('#storeNatureOfOperation').val(),
+            region: $('#storeLevel1').val(),
+            district: $('#storeLevel2').val(),
+            subcounty: $('#storeLevel3').val(),
+            parish: $('#storeLevel4').val(),
+            address: $('#storeAddress').val(),
+            latitude: $('#storeLatitude').val(),
+            longitude: $('#storeLongitude').val(),
+            description: $('#storeDescription').val(),
+            website_url: $('#storeWebsite').val(),
+            social_media: $('#storeSocialMedia').val()
         };
 
-        // Check if logo was changed
-        const logoFile = $('#editStoreLogo')[0].files[0];
+        // If user uploaded a new logo, we must first upload to temp
+        const logoFile = $('#storeLogo')[0].files[0];
+
         if (logoFile) {
-            // Upload logo first
             const logoFormData = new FormData();
             logoFormData.append('logo', logoFile);
-
             showLoading();
-
             $.ajax({
-                url: BASE_URL + 'account/fetch/manageZzimbaStores.php?action=uploadLogo',
+                url: STORE_API_BASE + '?action=uploadLogo',
                 type: 'POST',
                 data: logoFormData,
                 processData: false,
                 contentType: false,
-                success: function(response) {
-                    if (response.success) {
-                        // Add temp logo path to form data
-                        formData.temp_logo_path = response.temp_path;
-                        // Submit the form
-                        submitEditForm(formData);
+                dataType: 'json',
+                success: function(resp) {
+                    if (resp.success) {
+                        formData.temp_logo_path = resp.temp_path;
+                        // Now call create or update
+                        finishSave(mode, formData);
                     } else {
                         hideLoading();
-                        showErrorNotification(response.message || 'Failed to upload logo');
+                        showErrorNotification(resp.message || 'Failed to upload logo');
                     }
                 },
                 error: function() {
@@ -1976,16 +1083,20 @@ ob_start();
                 }
             });
         } else {
-            // Submit the form without logo
-            submitEditForm(formData);
+            // No new logo
+            finishSave(mode, formData);
         }
-    });
+    }
 
-    function submitEditForm(formData) {
+    function finishSave(mode, formData) {
+        const actionUrl =
+            mode === 'create' ?
+            STORE_API_BASE + '?action=createStore' :
+            STORE_API_BASE + '?action=updateStore';
+
         showLoading();
-
         $.ajax({
-            url: BASE_URL + 'account/fetch/manageZzimbaStores.php?action=updateStore',
+            url: actionUrl,
             type: 'POST',
             data: JSON.stringify(formData),
             contentType: 'application/json',
@@ -1993,494 +1104,404 @@ ob_start();
             success: function(response) {
                 hideLoading();
                 if (response.success) {
-                    hideModal('editStoreModal');
-                    showSuccessNotification(response.message || 'Store updated successfully!');
-                    loadOwnedStores(); // Reload the stores list
+                    closeStoreModal();
+                    showSuccessNotification(response.message || 'Store saved successfully!');
+                    resetStoreForm();
+                    loadOwnedStores(); // refresh list
                 } else {
-                    showErrorNotification(response.error || 'Failed to update store');
+                    showErrorNotification(response.error || 'Failed to save store');
                 }
             },
             error: function() {
                 hideLoading();
-                showErrorNotification('Failed to update store. Please try again.');
+                showErrorNotification('Failed to save store. Please try again.');
             }
         });
     }
 
-    // Add event listener for the edit locate me button
-    $('#editLocateMeBtn').click(function() {
-        if (navigator.geolocation) {
+    /**
+     * --------------------------------------------------
+     * Map & Regions
+     * --------------------------------------------------
+     */
+    function initStoreMap(lat = 1.3733, lng = 32.2903) {
+        // If map already exists, do nothing
+        if (storeMap) return;
+        storeMap = L.map('storeMapContainer').setView([lat, lng], 7);
+
+        storeBaseLayers = {
+            osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }),
+            satellite: L.tileLayer(
+                'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping,' +
+                        ' Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                }
+            ),
+            terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' +
+                    ' contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style:' +
+                    ' &copy; <a href="https://opentopomap.org">OpenTopoMap</a>' +
+                    ' (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+            })
+        };
+        storeBaseLayers.osm.addTo(storeMap);
+
+        // Switch style
+        $('#storeMapStyle').change(function() {
+            const style = $(this).val();
+            Object.values(storeBaseLayers).forEach(layer => {
+                if (storeMap.hasLayer(layer)) {
+                    storeMap.removeLayer(layer);
+                }
+            });
+            if (storeBaseLayers[style]) {
+                storeBaseLayers[style].addTo(storeMap);
+            }
+        });
+
+        // Map clicks
+        storeMap.on('click', function(e) {
+            dropStoreMarker(e.latlng);
+        });
+
+        // Try locate
+        locateUser('#storeLocateMeBtn', storeMap, 'create');
+    }
+
+    function destroyMap() {
+        if (storeMap) {
+            storeMap.remove();
+            storeMap = null;
+        }
+        storeMarker = null;
+        storeGeoJSONLayer = null;
+        storeCurrentGeoJSON = null;
+        storeBaseLayers = {};
+    }
+
+    function dropStoreMarker(latlng) {
+        // If no region has been selected, we can allow it but prompt user
+        if (!storeCurrentGeoJSON) {
+            alert('Please select a region from the dropdowns to limit where you place the pin.');
+        }
+
+        // If storeMarker exists, remove it
+        if (storeMarker) storeMap.removeLayer(storeMarker);
+        // Create marker
+        storeMarker = L.marker(latlng, {
+            draggable: true
+        }).addTo(storeMap);
+        $('#storeLatitude').val(latlng.lat.toFixed(6));
+        $('#storeLongitude').val(latlng.lng.toFixed(6));
+        reverseGeocode(latlng.lat, latlng.lng);
+
+        storeMarker.on('dragend', function() {
+            const newPos = storeMarker.getLatLng();
+            $('#storeLatitude').val(newPos.lat.toFixed(6));
+            $('#storeLongitude').val(newPos.lng.toFixed(6));
+            reverseGeocode(newPos.lat, newPos.lng);
+        });
+    }
+
+    function locateUser(btnSelector, mapObj, usage) {
+        $(btnSelector).click(function() {
+            if (!navigator.geolocation) {
+                showErrorNotification('Geolocation is not supported by your browser');
+                return;
+            }
             navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-
-                    // Center map on user's location
-                    editMap.setView([lat, lng], 15);
-
-                    // Update marker position
-                    editMarker.setLatLng([lat, lng]);
-
-                    // Update form fields
-                    $('#editLatitude').val(lat.toFixed(6));
-                    $('#editLongitude').val(lng.toFixed(6));
-
-                    // Get address from coordinates
-                    reverseGeocode(lat, lng, 'edit');
+                function(pos) {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    mapObj.setView([lat, lng], 15);
+                    dropStoreMarker(L.latLng(lat, lng));
                 },
                 function(error) {
-                    console.error('Error getting location:', error);
-                    showErrorNotification('Unable to get your location. Please select your location manually on the map.');
+                    console.error(error);
+                    showErrorNotification(
+                        'Unable to get your location. Please select your location manually on the map.'
+                    );
                 }, {
                     enableHighAccuracy: true,
                     timeout: 10000,
                     maximumAge: 0
                 }
             );
-        } else {
-            showErrorNotification('Geolocation is not supported by your browser');
-        }
-    });
-
-    // Add event listener for the edit map style selector
-    $('#editMapStyle').change(function() {
-        const style = $(this).val();
-
-        // Remove all layers
-        Object.values(editBaseLayers).forEach(layer => {
-            if (editMap.hasLayer(layer)) {
-                editMap.removeLayer(layer);
-            }
         });
+    }
 
-        // Add selected layer
-        if (editBaseLayers[style]) {
-            editBaseLayers[style].addTo(editMap);
-        }
-    });
-
-    // Initialize phone inputs when document is ready
-    $(document).ready(function() {
-        // Initialize phone inputs
-        initializePhoneInputs();
-
-        // Other existing document ready code...
-
-        // Load stores on page load
-        loadOwnedStores();
-
-        // Load managed stores when tab is clicked
-        $('#managedTabBtn').click(function() {
-            loadManagedStores();
-        });
-
-        // Initialize phone inputs after a short delay to ensure modals are properly rendered
-        setTimeout(function() {
-            initializePhoneInputs();
-        }, 100);
-
-        // Add this to the document ready function
-        $('#editStoreForm').submit(function(e) {
-            e.preventDefault();
-
-            const storeId = $('#editStoreId').val();
-            const formData = {
-                id: storeId,
-                name: $('#editStoreName').val(),
-                description: $('#editStoreDescription').val(),
-                district: $('#editStoreDistrict').val(),
-                address: $('#editStoreAddress').val(),
-                latitude: $('#editLatitude').val(),
-                longitude: $('#editLongitude').val(),
-                business_phone: $('#editStorePhone').val(),
-                business_email: $('#editStoreEmail').val()
-            };
-
-            showLoading();
-
-            $.ajax({
-                url: BASE_URL + 'account/fetch/manageZzimbaStores.php?action=updateStore',
-                type: 'POST',
-                data: JSON.stringify(formData),
-                contentType: 'application/json',
-                dataType: 'json',
-                success: function(response) {
-                    hideLoading();
-                    if (response.success) {
-                        hideModal('editStoreModal');
-                        showSuccessNotification(response.message || 'Store updated successfully!');
-                        loadOwnedStores(); // Reload the stores list
-                    } else {
-                        showErrorNotification(response.error || 'Failed to update store');
-                    }
-                },
-                error: function() {
-                    hideLoading();
-                    showErrorNotification('Failed to update store. Please try again.');
+    // Reverse geocode
+    function reverseGeocode(lat, lng) {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+        fetch(url, {
+                headers: {
+                    'User-Agent': 'Zzimba Online Store Location Selector'
                 }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    $('#storeAddress').val(data.display_name);
+                }
+            })
+            .catch(err => {
+                console.error(err);
             });
-        });
+    }
 
-        // Add logo upload functionality for the edit form
-        function addLogoUploadToEditForm() {
-            // Create file input
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.id = 'editStoreLogo';
-            fileInput.accept = 'image/*';
-            fileInput.classList.add('hidden');
-            document.body.appendChild(fileInput);
-
-            // Add logo upload button to edit form
-            const logoField = `
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Store Logo</label>
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <i id="editLogoPlaceholder" class="fas fa-store text-gray-400 text-xl"></i>
-                    <img id="editLogoPreview" class="w-full h-full object-cover rounded-lg hidden" src="#" alt="Logo preview">
-                </div>
-                <button type="button" id="editLogoButton" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                    Upload Logo
-                </button>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">Recommended size: 512×512 pixels. Max 2MB.</p>
-        </div>
-    `;
-
-            // Insert after email field
-            $(logoField).insertAfter('#editStoreEmail').parent();
-
-            // Add click event to button
-            $('#editLogoButton').click(function() {
-                $('#editStoreLogo').click();
-            });
-
-            // Handle file selection
-            $('#editStoreLogo').change(function(e) {
-                if (e.target.files && e.target.files[0]) {
-                    const file = e.target.files[0];
-
-                    // Create FormData
-                    const formData = new FormData();
-                    formData.append('logo', file);
-
-                    // Upload logo
-                    $.ajax({
-                        url: BASE_URL + 'account/fetch/manageZzimbaStores.php?action=uploadLogo',
-                        type: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        success: function(response) {
-                            if (response.success) {
-                                // Show preview
-                                $('#editLogoPreview').attr('src', response.url);
-                                $('#editLogoPreview').removeClass('hidden');
-                                $('#editLogoPlaceholder').addClass('hidden');
-
-                                // Store temp path
-                                $('#editStoreForm').append(`<input type="hidden" name="temp_logo_path" value="${response.temp_path}">`);
-                            } else {
-                                showErrorNotification(response.message || 'Failed to upload logo');
-                            }
-                        },
-                        error: function() {
-                            showErrorNotification('Failed to upload logo. Please try again.');
-                        }
+    // Load regions
+    function loadRegions(selectedRegion = null, selectedDistrict = null, selectedSubcounty = null, selectedParish = null) {
+        fetch('<?= BASE_URL ?>locations/gadm41_UGA_4.json')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.features) return;
+                // Unique level1
+                const level1Options = {};
+                data.features.forEach(f => {
+                    const name = f.properties.NAME_1;
+                    if (name) level1Options[name] = name;
+                });
+                const storeLevel1 = $('#storeLevel1');
+                storeLevel1.html('<option value="">Select Region/Province</option>');
+                Object.keys(level1Options)
+                    .sort()
+                    .forEach(r => {
+                        storeLevel1.append(
+                            `<option value="${r}" ${r === selectedRegion ? 'selected' : ''}>${r}</option>`
+                        );
                     });
+
+                window.ugGeoData = data; // keep globally
+                storeLevel1.change(function() {
+                    const region = $(this).val();
+                    if (region) {
+                        updateDistricts(region);
+                        updateMapGeoJSON({
+                            1: region
+                        });
+                    } else {
+                        resetDropdown('#storeLevel2');
+                        resetDropdown('#storeLevel3');
+                        resetDropdown('#storeLevel4');
+                        clearGeoJSON();
+                    }
+                });
+                $('#storeLevel2').change(function() {
+                    const dist = $(this).val();
+                    const reg = $('#storeLevel1').val();
+                    if (dist) {
+                        updateSubcounties(reg, dist);
+                        updateMapGeoJSON({
+                            1: reg,
+                            2: dist
+                        });
+                    } else {
+                        resetDropdown('#storeLevel3');
+                        resetDropdown('#storeLevel4');
+                        updateMapGeoJSON({
+                            1: reg
+                        });
+                    }
+                });
+                $('#storeLevel3').change(function() {
+                    const sub = $(this).val();
+                    const dist = $('#storeLevel2').val();
+                    const reg = $('#storeLevel1').val();
+                    if (sub) {
+                        updateParishes(reg, dist, sub);
+                        updateMapGeoJSON({
+                            1: reg,
+                            2: dist,
+                            3: sub
+                        });
+                    } else {
+                        resetDropdown('#storeLevel4');
+                        updateMapGeoJSON({
+                            1: reg,
+                            2: dist
+                        });
+                    }
+                });
+                $('#storeLevel4').change(function() {
+                    const parish = $(this).val();
+                    const sub = $('#storeLevel3').val();
+                    const dist = $('#storeLevel2').val();
+                    const reg = $('#storeLevel1').val();
+                    if (parish) {
+                        updateMapGeoJSON({
+                            1: reg,
+                            2: dist,
+                            3: sub,
+                            4: parish
+                        });
+                    } else {
+                        updateMapGeoJSON({
+                            1: reg,
+                            2: dist,
+                            3: sub
+                        });
+                    }
+                });
+
+                if (selectedRegion) {
+                    updateDistricts(selectedRegion, selectedDistrict, selectedSubcounty, selectedParish);
                 }
+            })
+            .catch(err => {
+                console.error(err);
+                showErrorNotification('Failed to load administrative regions. Please try again later.');
             });
-        }
+    }
 
-        // Call this function in document ready
-        $(document).ready(function() {
-            // Existing code...
-
-            // Add logo upload to edit form
-            addLogoUploadToEditForm();
-        });
-    });
-
-    // Update the step3FinishBtn click handler to submit the form to our backend
-    $('#step3FinishBtn').click(function() {
-        // Collect all form data from all steps
-        const formData = {
-            name: $('#businessName').val(),
-            business_email: $('#businessEmail').val(),
-            business_phone: $('#contactNumber').val(),
-            nature_of_operation: $('#natureOfOperation').val(),
-            region: $('#level1').val(),
-            district: $('#level2').val(),
-            subcounty: $('#level3').val(),
-            parish: $('#level4').val(),
-            address: $('#address').val(),
-            latitude: $('#latitude').val(),
-            longitude: $('#longitude').val(),
-            description: $('#storeDescription').val(),
-            website_url: $('#storeWebsite').val(),
-            social_media: $('#storeSocialMedia').val(),
-            temp_logo_path: $('#logoPreview').hasClass('hidden') ? null : $('#logoPreview').attr('src')
-        };
-
-        showLoading();
-
-        $.ajax({
-            url: BASE_URL + 'account/fetch/manageZzimbaStores.php?action=createStore',
-            type: 'POST',
-            data: JSON.stringify(formData),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function(response) {
-                hideLoading();
-                if (response.success) {
-                    hideModal('createStoreModal');
-                    showSuccessNotification(response.message || 'Store created successfully!');
-                    resetCreateStoreForm();
-                    loadOwnedStores(); // Reload the stores list
-                } else {
-                    showErrorNotification(response.error || 'Failed to create store');
-                }
-            },
-            error: function() {
-                hideLoading();
-                showErrorNotification('Failed to create store. Please try again.');
+    function updateDistricts(region, selDistrict = null, selSub = null, selParish = null) {
+        if (!window.ugGeoData) return;
+        $('#storeLoading2').removeClass('hidden');
+        const level2Options = {};
+        window.ugGeoData.features.forEach(f => {
+            if (f.properties.NAME_1 === region) {
+                level2Options[f.properties.NAME_2] = f.properties.NAME_2;
             }
         });
-    });
-
-    // Add function to show error notifications
-    function showErrorNotification(message) {
-        let notification = document.getElementById('errorNotification');
-
-        if (!notification) {
-            notification = document.createElement('div');
-            notification.id = 'errorNotification';
-            notification.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50';
-            notification.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                <span id="errorMessage"></span>
-            </div>
-        `;
-            document.body.appendChild(notification);
-        }
-
-        document.getElementById('errorMessage').textContent = message;
-        notification.classList.remove('hidden');
-
-        setTimeout(() => {
-            notification.classList.add('hidden');
-        }, 3000);
-    }
-
-    function renderOwnedStores(stores) {
-        const container = $('#owned-stores-container');
-
-        if (stores.length === 0) {
-            container.html(`
-            <div class="bg-gray-50 rounded-lg p-8 text-center">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <i class="fas fa-store text-gray-400 text-2xl"></i>
-                </div>
-                <h3 class="text-lg font-medium text-secondary mb-2">No Stores Yet</h3>
-                <p class="text-sm text-gray-text mb-4">You haven't created any stores yet. Create your first store to start selling on Zzimba Online.</p>
-                <button id="createFirstStoreBtn" class="h-10 px-6 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
-                    Create Your First Store
-                </button>
-            </div>
-        `);
-
-            // Add event listener to the new button
-            $('#createFirstStoreBtn').click(function() {
-                showModal('createStoreModal');
-                setTimeout(() => {
-                    initMap();
-                    loadRegions();
-                }, 300);
+        const storeLevel2 = $('#storeLevel2');
+        storeLevel2.html('<option value="">Select District</option>');
+        Object.keys(level2Options)
+            .sort()
+            .forEach(dist => {
+                storeLevel2.append(
+                    `<option value="${dist}" ${dist === selDistrict ? 'selected' : ''}>${dist}</option>`
+                );
             });
+        storeLevel2.prop('disabled', false);
+        $('#storeLoading2').addClass('hidden');
 
+        if (selDistrict) {
+            updateSubcounties(region, selDistrict, selSub, selParish);
+        } else {
+            resetDropdown('#storeLevel3');
+            resetDropdown('#storeLevel4');
+        }
+    }
+
+    function updateSubcounties(region, dist, selSub = null, selParish = null) {
+        if (!window.ugGeoData) return;
+        $('#storeLoading3').removeClass('hidden');
+        const level3Options = {};
+        window.ugGeoData.features.forEach(f => {
+            if (f.properties.NAME_1 === region && f.properties.NAME_2 === dist) {
+                level3Options[f.properties.NAME_3] = f.properties.NAME_3;
+            }
+        });
+        const storeLevel3 = $('#storeLevel3');
+        storeLevel3.html('<option value="">Select Sub-county</option>');
+        Object.keys(level3Options)
+            .sort()
+            .forEach(sc => {
+                storeLevel3.append(
+                    `<option value="${sc}" ${sc === selSub ? 'selected' : ''}>${sc}</option>`
+                );
+            });
+        storeLevel3.prop('disabled', false);
+        $('#storeLoading3').addClass('hidden');
+        if (selSub) {
+            updateParishes(region, dist, selSub, selParish);
+        } else {
+            resetDropdown('#storeLevel4');
+        }
+    }
+
+    function updateParishes(region, dist, sub, selParish = null) {
+        if (!window.ugGeoData) return;
+        $('#storeLoading4').removeClass('hidden');
+        const level4Options = {};
+        window.ugGeoData.features.forEach(f => {
+            if (
+                f.properties.NAME_1 === region &&
+                f.properties.NAME_2 === dist &&
+                f.properties.NAME_3 === sub
+            ) {
+                if (f.properties.NAME_4) {
+                    level4Options[f.properties.NAME_4] = f.properties.NAME_4;
+                }
+            }
+        });
+        const storeLevel4 = $('#storeLevel4');
+        storeLevel4.html('<option value="">Select Parish/Ward</option>');
+        Object.keys(level4Options)
+            .sort()
+            .forEach(p => {
+                storeLevel4.append(
+                    `<option value="${p}" ${p === selParish ? 'selected' : ''}>${p}</option>`
+                );
+            });
+        storeLevel4.prop('disabled', false);
+        $('#storeLoading4').addClass('hidden');
+    }
+
+    function updateMapGeoJSON(selections) {
+        if (!window.ugGeoData || !storeMap) return;
+        // Remove existing geojson layer
+        if (storeGeoJSONLayer) {
+            storeMap.removeLayer(storeGeoJSONLayer);
+            storeGeoJSONLayer = null;
+        }
+        const filtered = window.ugGeoData.features.filter(ft => {
+            let match = true;
+            for (const [level, val] of Object.entries(selections)) {
+                if (ft.properties[`NAME_${level}`] !== val) {
+                    match = false;
+                    break;
+                }
+            }
+            return match;
+        });
+        if (filtered.length === 0) {
+            storeCurrentGeoJSON = null;
             return;
         }
-
-        let html = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">';
-
-        stores.forEach(store => {
-            const statusBadge = getStatusBadge(store.status);
-            const logoUrl = store.logo_url ? BASE_URL + store.logo_url : `https://placehold.co/100x100/f0f0f0/808080?text=${store.name.substring(0, 2)}`;
-            const categoriesList = store.categories && store.categories.length > 0 ?
-                store.categories.join(', ') :
-                'No categories';
-
-            html += `
-            <div class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
-                <div class="flex flex-col sm:flex-row">
-                    <div class="w-full sm:w-32 h-32 bg-gray-50 flex items-center justify-center flex-shrink-0">
-                        <img src="${logoUrl}" alt="${escapeHtml(store.name)}" class="w-20 h-20 object-cover rounded-lg">
-                    </div>
-                    <div class="p-4 sm:p-6 flex-grow">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                            <h3 class="font-semibold text-secondary">${escapeHtml(store.name)}</h3>
-                            <div class="inline-flex items-center">
-                                ${statusBadge}
-                            </div>
-                        </div>
-                        <p class="text-sm text-gray-text mb-3">
-                            <i class="fas fa-map-marker-alt mr-1 text-user-primary"></i>
-                            ${escapeHtml(store.location)}
-                        </p>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <p class="text-xs text-gray-text">Active Products</p>
-                                <p class="font-medium">${store.product_count || 0}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-text">Active Categories</p>
-                                <p class="font-medium">${store.categories ? store.categories.length : 0}</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                            <p class="text-xs text-gray-text">
-                                <i class="fas fa-tag mr-1"></i>
-                                ${categoriesList}
-                            </p>
-                            <div class="flex gap-2">
-                                <button onclick="editStore('${store.uuid_id}')" class="h-8 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 text-sm">
-                                    <i class="fas fa-edit"></i>
-                                    <span>Edit</span>
-                                </button>
-                                    <a href="../view/profile/vendor/${store.uuid_id}" target="_blank" rel="noopener noreferrer" class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm">
-                                    <i class="fas fa-cog"></i>
-                                    <span>Manage</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        });
-
-        html += '</div>';
-        container.html(html);
+        const newGeoJSON = {
+            type: 'FeatureCollection',
+            features: filtered
+        };
+        storeCurrentGeoJSON = newGeoJSON;
+        storeGeoJSONLayer = L.geoJSON(newGeoJSON, {
+            style: {
+                color: '#C00000',
+                weight: 2,
+                opacity: 1,
+                fillColor: '#C00000',
+                fillOpacity: 0.2
+            }
+        }).addTo(storeMap);
+        storeMap.fitBounds(storeGeoJSONLayer.getBounds());
     }
 
-    function renderManagedStores(stores) {
-        const container = $('#managed-stores-container');
-
-        if (stores.length === 0) {
-            container.html(`
-            <div class="bg-gray-50 rounded-lg p-8 text-center">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <i class="fas fa-user-tie text-gray-400 text-2xl"></i>
-                </div>
-                <h3 class="text-lg font-medium text-secondary mb-2">No Managed Stores</h3>
-                <p class="text-sm text-gray-text">You haven't been added as a manager to any stores yet.</p>
-            </div>
-        `);
-            return;
+    function clearGeoJSON() {
+        if (storeGeoJSONLayer) {
+            storeMap.removeLayer(storeGeoJSONLayer);
+            storeGeoJSONLayer = null;
         }
-
-        let html = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">';
-
-        stores.forEach(store => {
-            const statusBadge = getStatusBadge(store.status);
-            const logoUrl = store.logo_url ? BASE_URL + store.logo_url : `https://placehold.co/100x100/f0f0f0/808080?text=${store.name.substring(0, 2)}`;
-            const categoriesList = store.categories && store.categories.length > 0 ?
-                store.categories.join(', ') :
-                'No categories';
-
-            html += `
-            <div class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
-                <div class="flex flex-col sm:flex-row">
-                    <div class="w-full sm:w-32 h-32 bg-gray-50 flex items-center justify-center flex-shrink-0">
-                        <img src="${logoUrl}" alt="${escapeHtml(store.name)}" class="w-20 h-20 object-cover rounded-lg">
-                    </div>
-                    <div class="p-4 sm:p-6 flex-grow">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                            <h3 class="font-semibold text-secondary">${escapeHtml(store.name)}</h3>
-                            <div class="inline-flex items-center">
-                                ${statusBadge}
-                            </div>
-                        </div>
-                        <p class="text-sm text-gray-text mb-1">
-                            <i class="fas fa-map-marker-alt mr-1 text-user-primary"></i>
-                            ${escapeHtml(store.location)}
-                        </p>
-                        <p class="text-sm text-gray-text mb-3">
-                            <i class="fas fa-user mr-1 text-user-primary"></i>
-                            Owner: ${escapeHtml(store.owner)}
-                        </p>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <p class="text-xs text-gray-text">Active Products</p>
-                                <p class="font-medium">${store.product_count || 0}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-text">Role</p>
-                                <p class="font-medium">${store.role || 'Manager'}</p>
-                            </div>
-                        </div>
-                        <div class="flex justify-end">
-                            <a href="store-manage-${store.uuid_id}" class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm">
-                                <i class="fas fa-cog"></i>
-                                <span>Manage</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        });
-
-        html += '</div>';
-        container.html(html);
+        storeCurrentGeoJSON = null;
     }
 
-    function getStatusBadge(status) {
-        switch (status) {
-            case 'active':
-                return `
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-green-500"></span>
-                    Active
-                </span>
-            `;
-            case 'pending':
-                return `
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-yellow-500"></span>
-                    Pending
-                </span>
-            `;
-            case 'inactive':
-                return `
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-red-500"></span>
-                    Inactive
-                </span>
-            `;
-            case 'suspended':
-                return `
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-gray-500"></span>
-                    Suspended
-                </span>
-            `;
-            default:
-                return `
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-gray-500"></span>
-                    ${status.charAt(0).toUpperCase() + status.slice(1)}
-                </span>
-            `;
+    function resetDropdown(selector) {
+        $(selector).html('<option value="">Select option</option>').prop('disabled', true);
+    }
+
+    // Initialize phone input
+    function initializePhoneInput() {
+        const phoneInputField = document.querySelector('#storeContactNumber');
+        if (phoneInputField) {
+            storePhoneInput = window.intlTelInput(phoneInputField, {
+                utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js',
+                preferredCountries: ['ug', 'ke', 'tz', 'rw'],
+                initialCountry: 'ug',
+                separateDialCode: true,
+                autoPlaceholder: 'polite'
+            });
+            $('.iti').addClass('w-full');
         }
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 </script>
 

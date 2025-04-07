@@ -19,7 +19,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SE
     exit;
 }
 
-// Get current user ID
+// Current user
 $currentUserId = $_SESSION['user']['user_id'] ?? null;
 if (!$currentUserId) {
     http_response_code(401);
@@ -27,9 +27,10 @@ if (!$currentUserId) {
     exit;
 }
 
-// Initialize database tables if they don't exist
+// Initialize tables
 initializeTables($pdo);
 
+// Determine action
 $action = $_GET['action'] ?? '';
 
 try {
@@ -88,23 +89,69 @@ try {
             break;
     }
 } catch (Exception $e) {
-    // Log the error
     error_log('Error in manageZzimbaStores.php: ' . $e->getMessage());
-    // Return a proper JSON response
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
 }
 
-// Flush the output buffer
 ob_end_flush();
 
 /**
- * Initialize database tables if they don't exist
+ * ------------------------------------------------------------------
+ * Helper Functions
+ * ------------------------------------------------------------------
+ */
+
+/**
+ * Check if user is the store owner
+ */
+function isOwner($pdo, $binaryStoreId, $binaryUserId)
+{
+    $stmt = $pdo->prepare("SELECT owner_id FROM vendor_stores WHERE id = ?");
+    $stmt->execute([$binaryStoreId]);
+    $store = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$store) {
+        return false;
+    }
+    return $store['owner_id'] === $binaryUserId;
+}
+
+/**
+ * Check if user can access store as manager or owner
+ */
+function canAccessStore($pdo, $binaryStoreId, $binaryUserId)
+{
+    if (isOwner($pdo, $binaryStoreId, $binaryUserId)) {
+        return true;
+    }
+    $stmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ? LIMIT 1");
+    $stmt->execute([$binaryStoreId, $binaryUserId]);
+    return $stmt->rowCount() > 0;
+}
+
+/**
+ * Check if a store field (name/email/phone) already exists
+ */
+function storeFieldExists($pdo, $field, $value, $excludeBinaryStoreId = null)
+{
+    $query = "SELECT COUNT(*) FROM vendor_stores WHERE $field = ?";
+    $params = [$value];
+    if ($excludeBinaryStoreId) {
+        $query .= " AND id != ?";
+        $params[] = $excludeBinaryStoreId;
+    }
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    return $stmt->fetchColumn() > 0;
+}
+
+/**
+ * Generate all needed tables
  */
 function initializeTables($pdo)
 {
     try {
-        // Create vendor_stores table
+        // vendor_stores
         $pdo->exec("CREATE TABLE IF NOT EXISTS vendor_stores (
             id BINARY(16) PRIMARY KEY,
             owner_id BINARY(16) NOT NULL,
@@ -112,7 +159,7 @@ function initializeTables($pdo)
             description TEXT,
             business_email VARCHAR(100) NOT NULL,
             business_phone VARCHAR(20) NOT NULL,
-            nature_of_operation ENUM('Manufacturer', 'Hardware Store', 'Earth materials', 'Plant & Equipment', 'Transporter', 'Wholesale Store', 'Distributor') NOT NULL,
+            nature_of_operation ENUM('Manufacturer','Hardware Store','Earth materials','Plant & Equipment','Transporter','Wholesale Store','Distributor') NOT NULL,
             region VARCHAR(100) NOT NULL,
             district VARCHAR(100) NOT NULL,
             subcounty VARCHAR(100),
@@ -123,7 +170,7 @@ function initializeTables($pdo)
             logo_url VARCHAR(255),
             website_url VARCHAR(255),
             social_media TEXT,
-            status ENUM('active', 'pending', 'inactive', 'suspended') NOT NULL DEFAULT 'pending',
+            status ENUM('active','pending','inactive','suspended') NOT NULL DEFAULT 'pending',
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             FOREIGN KEY (owner_id) REFERENCES zzimba_users(id) ON DELETE CASCADE,
@@ -132,12 +179,12 @@ function initializeTables($pdo)
             UNIQUE KEY store_phone_unique (business_phone)
         )");
 
-        // Create store_categories table with status column
+        // store_categories
         $pdo->exec("CREATE TABLE IF NOT EXISTS store_categories (
             id BINARY(16) PRIMARY KEY,
             store_id BINARY(16) NOT NULL,
             category_id BINARY(16) NOT NULL,
-            status ENUM('active', 'inactive', 'deleted') NOT NULL DEFAULT 'active',
+            status ENUM('active','inactive','deleted') NOT NULL DEFAULT 'active',
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             FOREIGN KEY (store_id) REFERENCES vendor_stores(id) ON DELETE CASCADE,
@@ -145,12 +192,12 @@ function initializeTables($pdo)
             UNIQUE KEY store_category_unique (store_id, category_id)
         )");
 
-        // Create store_products table with status column
+        // store_products
         $pdo->exec("CREATE TABLE IF NOT EXISTS store_products (
             id BINARY(16) PRIMARY KEY,
             store_category_id BINARY(16) NOT NULL,
             product_id BINARY(16) NOT NULL,
-            status ENUM('active', 'inactive', 'deleted') NOT NULL DEFAULT 'active',
+            status ENUM('active','inactive','deleted') NOT NULL DEFAULT 'active',
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             FOREIGN KEY (store_category_id) REFERENCES store_categories(id) ON DELETE CASCADE,
@@ -158,13 +205,13 @@ function initializeTables($pdo)
             UNIQUE KEY store_product_unique (store_category_id, product_id)
         )");
 
-        // Create store_managers table with status column
+        // store_managers
         $pdo->exec("CREATE TABLE IF NOT EXISTS store_managers (
             id BINARY(16) PRIMARY KEY,
             store_id BINARY(16) NOT NULL,
             user_id BINARY(16) NOT NULL,
-            role ENUM('manager', 'inventory_manager', 'sales_manager', 'content_manager') NOT NULL DEFAULT 'manager',
-            status ENUM('active', 'inactive', 'removed') NOT NULL DEFAULT 'active',
+            role ENUM('manager','inventory_manager','sales_manager','content_manager') NOT NULL DEFAULT 'manager',
+            status ENUM('active','inactive','removed') NOT NULL DEFAULT 'active',
             added_by BINARY(16) NOT NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
@@ -180,13 +227,17 @@ function initializeTables($pdo)
 }
 
 /**
- * Get stores owned by the current user
+ * -----------------------------------------------------------------------------
+ * Endpoints
+ * -----------------------------------------------------------------------------
+ */
+
+/**
+ * Get stores owned by this user
  */
 function getOwnedStores($pdo, $userId)
 {
     try {
-        $binaryUserId = $userId;
-
         $stmt = $pdo->prepare("
             SELECT 
                 vs.id,
@@ -201,32 +252,21 @@ function getOwnedStores($pdo, $userId)
                 vs.logo_url,
                 vs.status,
                 vs.created_at,
-                (SELECT COUNT(*) FROM store_categories sc 
-                 JOIN store_products sp ON sc.id = sp.store_category_id 
-                 WHERE sc.store_id = vs.id AND sp.status = 'active') as product_count,
-                (SELECT COUNT(*) FROM store_categories WHERE store_id = vs.id AND status = 'active') as category_count
-            FROM 
-                vendor_stores vs
-            WHERE 
-                vs.owner_id = ?
-            ORDER BY 
-                vs.created_at DESC
+                (
+                    SELECT COUNT(*) FROM store_categories sc 
+                    JOIN store_products sp ON sc.id = sp.store_category_id 
+                    WHERE sc.store_id = vs.id AND sp.status = 'active'
+                ) as product_count
+            FROM vendor_stores vs
+            WHERE vs.owner_id = ?
+            ORDER BY vs.created_at DESC
         ");
-
-        $stmt->execute([$binaryUserId]);
+        $stmt->execute([$userId]);
         $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Convert binary IDs to UUID strings
         foreach ($stores as &$store) {
             $store['uuid_id'] = binToUuid($store['id']);
-
-            // Format location for display
             $store['location'] = $store['district'] . ', ' . $store['address'];
-
-            // Set status message
-            $store['subscription'] = $store['status'] === 'pending' ? 'Awaiting approval' : 'Active store';
-
-            // Get store categories by joining with product_categories table
+            $store['subscription'] = ($store['status'] === 'pending') ? 'Awaiting approval' : 'Active store';
             $catStmt = $pdo->prepare("
                 SELECT pc.name 
                 FROM store_categories sc
@@ -235,13 +275,9 @@ function getOwnedStores($pdo, $userId)
                 LIMIT 5
             ");
             $catStmt->execute([$store['id']]);
-            $categories = $catStmt->fetchAll(PDO::FETCH_COLUMN);
-            $store['categories'] = $categories;
-
-            // Remove binary ID and other unnecessary fields
+            $store['categories'] = $catStmt->fetchAll(PDO::FETCH_COLUMN);
             unset($store['id']);
         }
-
         echo json_encode(['success' => true, 'stores' => $stores]);
     } catch (Exception $e) {
         error_log("Error getting owned stores: " . $e->getMessage());
@@ -251,13 +287,11 @@ function getOwnedStores($pdo, $userId)
 }
 
 /**
- * Get stores managed by the current user
+ * Get stores this user manages (but does not own)
  */
 function getManagedStores($pdo, $userId)
 {
     try {
-        $binaryUserId = $userId;
-
         $stmt = $pdo->prepare("
             SELECT 
                 vs.id,
@@ -275,52 +309,35 @@ function getManagedStores($pdo, $userId)
                 u.username as owner_username,
                 u.id as owner_id,
                 vs.created_at,
-                (SELECT COUNT(*) FROM store_categories sc 
-                 JOIN store_products sp ON sc.id = sp.store_category_id 
-                 WHERE sc.store_id = vs.id AND sp.status = 'active') as product_count,
-                (SELECT COUNT(*) FROM store_categories WHERE store_id = vs.id AND status = 'active') as category_count
-            FROM 
-                vendor_stores vs
-            JOIN 
-                store_managers sm ON vs.id = sm.store_id
-            JOIN 
-                zzimba_users u ON vs.owner_id = u.id
-            WHERE 
-                sm.user_id = ? AND vs.owner_id != ?
-            ORDER BY 
-                vs.created_at DESC
+                (
+                    SELECT COUNT(*) FROM store_categories sc 
+                    JOIN store_products sp ON sc.id = sp.store_category_id 
+                    WHERE sc.store_id = vs.id AND sp.status = 'active'
+                ) as product_count
+            FROM vendor_stores vs
+            JOIN store_managers sm ON vs.id = sm.store_id
+            JOIN zzimba_users u ON vs.owner_id = u.id
+            WHERE sm.user_id = ? AND vs.owner_id != ?
+            ORDER BY vs.created_at DESC
         ");
-
-        $stmt->execute([$binaryUserId, $binaryUserId]);
+        $stmt->execute([$userId, $userId]);
         $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Convert binary IDs to UUID strings
         foreach ($stores as &$store) {
             $store['uuid_id'] = binToUuid($store['id']);
             $store['owner'] = $store['owner_username'];
-
-            // Format location for display
             $store['location'] = $store['district'] . ', ' . $store['address'];
-
-            // Get store categories by joining with product_categories table
             $catStmt = $pdo->prepare("
                 SELECT pc.name 
                 FROM store_categories sc
                 JOIN product_categories pc ON sc.category_id = pc.id
-                WHERE sc.store_id = ? AND sc.status = 'active' 
+                WHERE sc.store_id = ? AND sc.status = 'active'
                 LIMIT 5
             ");
             $catStmt->execute([$store['id']]);
-            $categories = $catStmt->fetchAll(PDO::FETCH_COLUMN);
-            $store['categories'] = $categories;
-
-            // Format role for display
+            $store['categories'] = $catStmt->fetchAll(PDO::FETCH_COLUMN);
             $store['role'] = ucwords(str_replace('_', ' ', $store['role']));
-
-            // Remove binary ID and other unnecessary fields
             unset($store['id'], $store['owner_id'], $store['owner_username']);
         }
-
         echo json_encode(['success' => true, 'stores' => $stores]);
     } catch (Exception $e) {
         error_log("Error getting managed stores: " . $e->getMessage());
@@ -330,7 +347,7 @@ function getManagedStores($pdo, $userId)
 }
 
 /**
- * Get detailed information about a specific store
+ * Get detailed store info
  */
 function getStoreDetails($pdo, $storeId, $userId)
 {
@@ -339,65 +356,39 @@ function getStoreDetails($pdo, $storeId, $userId)
         echo json_encode(['success' => false, 'error' => 'Store ID is required']);
         return;
     }
-
     try {
         $binaryStoreId = uuidToBin($storeId);
-        $binaryUserId = $userId;
-
-        // Check if user owns or manages this store
-        $stmt = $pdo->prepare("
-            SELECT 1 FROM vendor_stores WHERE id = ? AND owner_id = ?
-            UNION
-            SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ?
-            LIMIT 1
-        ");
-        $stmt->execute([$binaryStoreId, $binaryUserId, $binaryStoreId, $binaryUserId]);
-
-        if ($stmt->rowCount() === 0) {
+        if (!canAccessStore($pdo, $binaryStoreId, $userId)) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'You do not have permission to access this store']);
             return;
         }
-
-        // Get store details
         $stmt = $pdo->prepare("
             SELECT 
                 vs.*,
                 u.username as owner_username,
                 u.email as owner_email,
                 u.phone as owner_phone
-            FROM 
-                vendor_stores vs
-            JOIN 
-                zzimba_users u ON vs.owner_id = u.id
-            WHERE 
-                vs.id = ?
+            FROM vendor_stores vs
+            JOIN zzimba_users u ON vs.owner_id = u.id
+            WHERE vs.id = ?
         ");
         $stmt->execute([$binaryStoreId]);
         $store = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$store) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Store not found']);
             return;
         }
-
-        // Convert binary ID to UUID string
         $store['uuid_id'] = binToUuid($store['id']);
         $store['owner_id'] = binToUuid($store['owner_id']);
-
-        // Check if current user is the owner
-        $store['is_owner'] = ($userId === $store['owner_id']);
-
-        // Get user's role if they are a manager
+        $store['is_owner'] = (binToUuid($store['owner_id']) === binToUuid($userId));
         if (!$store['is_owner']) {
             $roleStmt = $pdo->prepare("SELECT role FROM store_managers WHERE store_id = ? AND user_id = ?");
-            $roleStmt->execute([$binaryStoreId, $binaryUserId]);
+            $roleStmt->execute([$binaryStoreId, $userId]);
             $role = $roleStmt->fetchColumn();
             $store['manager_role'] = $role ?: null;
         }
-
-        // Get store categories with product_categories join
         $catStmt = $pdo->prepare("
             SELECT 
                 sc.id, 
@@ -405,58 +396,41 @@ function getStoreDetails($pdo, $storeId, $userId)
                 pc.description, 
                 sc.status, 
                 sc.created_at 
-            FROM 
-                store_categories sc
-            JOIN 
-                product_categories pc ON sc.category_id = pc.id
-            WHERE 
-                sc.store_id = ?
+            FROM store_categories sc
+            JOIN product_categories pc ON sc.category_id = pc.id
+            WHERE sc.store_id = ?
         ");
         $catStmt->execute([$binaryStoreId]);
         $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($categories as &$category) {
-            $category['uuid_id'] = binToUuid($category['id']);
-            unset($category['id']);
+        foreach ($categories as &$cat) {
+            $cat['uuid_id'] = binToUuid($cat['id']);
+            unset($cat['id']);
         }
-
         $store['categories'] = $categories;
-
-        // Get store managers
-        $managerStmt = $pdo->prepare("
+        $mgrStmt = $pdo->prepare("
             SELECT 
                 sm.id, sm.user_id, sm.role, sm.created_at,
                 u.username, u.email, u.phone
-            FROM 
-                store_managers sm
-            JOIN 
-                zzimba_users u ON sm.user_id = u.id
-            WHERE 
-                sm.store_id = ?
+            FROM store_managers sm
+            JOIN zzimba_users u ON sm.user_id = u.id
+            WHERE sm.store_id = ?
         ");
-        $managerStmt->execute([$binaryStoreId]);
-        $managers = $managerStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($managers as &$manager) {
-            $manager['uuid_id'] = binToUuid($manager['id']);
-            $manager['user_uuid_id'] = binToUuid($manager['user_id']);
-            unset($manager['id'], $manager['user_id']);
+        $mgrStmt->execute([$binaryStoreId]);
+        $managers = $mgrStmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($managers as &$mgr) {
+            $mgr['uuid_id'] = binToUuid($mgr['id']);
+            $mgr['user_uuid_id'] = binToUuid($mgr['user_id']);
+            unset($mgr['id'], $mgr['user_id']);
         }
-
         $store['managers'] = $managers;
-
-        // Get product count
-        $productStmt = $pdo->prepare("
+        $prodStmt = $pdo->prepare("
             SELECT COUNT(*) FROM store_categories sc 
             JOIN store_products sp ON sc.id = sp.store_category_id 
             WHERE sc.store_id = ?
         ");
-        $productStmt->execute([$binaryStoreId]);
-        $store['product_count'] = $productStmt->fetchColumn();
-
-        // Remove binary ID
+        $prodStmt->execute([$binaryStoreId]);
+        $store['product_count'] = $prodStmt->fetchColumn();
         unset($store['id']);
-
         echo json_encode(['success' => true, 'store' => $store]);
     } catch (Exception $e) {
         error_log("Error getting store details: " . $e->getMessage());
@@ -466,84 +440,50 @@ function getStoreDetails($pdo, $storeId, $userId)
 }
 
 /**
- * Create a new store
+ * Create store
  */
 function createStore($pdo, $userId)
 {
     $data = json_decode(file_get_contents('php://input'), true);
-
     if (!$data) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid data']);
         return;
     }
-
-    // Validate required fields
-    $requiredFields = [
-        'name',
-        'business_email',
-        'business_phone',
-        'nature_of_operation',
-        'region',
-        'district',
-        'address',
-        'latitude',
-        'longitude'
-    ];
-
-    foreach ($requiredFields as $field) {
-        if (empty($data[$field])) {
+    $required = ['name', 'business_email', 'business_phone', 'nature_of_operation', 'region', 'district', 'address', 'latitude', 'longitude'];
+    foreach ($required as $f) {
+        if (empty($data[$f])) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'error' => "Field '$field' is required"]);
+            echo json_encode(['success' => false, 'error' => "Field '$f' is required"]);
             return;
         }
     }
-
     try {
-        $binaryUserId = $userId;
-
-        // Check if store name already exists
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM vendor_stores WHERE name = ?");
-        $stmt->execute([$data['name']]);
-        if ($stmt->fetchColumn() > 0) {
+        if (storeFieldExists($pdo, 'name', $data['name'])) {
             http_response_code(409);
             echo json_encode(['success' => false, 'error' => 'A store with this name already exists']);
             return;
         }
-
-        // Check if store email already exists
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM vendor_stores WHERE business_email = ?");
-        $stmt->execute([$data['business_email']]);
-        if ($stmt->fetchColumn() > 0) {
+        if (storeFieldExists($pdo, 'business_email', $data['business_email'])) {
             http_response_code(409);
             echo json_encode(['success' => false, 'error' => 'A store with this email already exists']);
             return;
         }
-
-        // Check if store phone already exists
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM vendor_stores WHERE business_phone = ?");
-        $stmt->execute([$data['business_phone']]);
-        if ($stmt->fetchColumn() > 0) {
+        if (storeFieldExists($pdo, 'business_phone', $data['business_phone'])) {
             http_response_code(409);
             echo json_encode(['success' => false, 'error' => 'A store with this phone number already exists']);
             return;
         }
-
-        // Generate UUID for the new store
         $storeId = generateUUIDv7();
-        $binaryStoreId = uuidToBin($storeId);
-
-        // Set default values for optional fields
+        $binStoreId = uuidToBin($storeId);
+        $binUserId = $userId;
         $description = $data['description'] ?? '';
         $subcounty = $data['subcounty'] ?? null;
         $parish = $data['parish'] ?? null;
         $logoUrl = $data['logo_url'] ?? null;
         $websiteUrl = $data['website_url'] ?? null;
         $socialMedia = $data['social_media'] ?? null;
-
         $now = date('Y-m-d H:i:s');
-
-        // Insert the new store
         $stmt = $pdo->prepare("
             INSERT INTO vendor_stores (
                 id, owner_id, name, description, business_email, business_phone,
@@ -554,10 +494,9 @@ function createStore($pdo, $userId)
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?
             )
         ");
-
         $stmt->execute([
-            $binaryStoreId,
-            $binaryUserId,
+            $binStoreId,
+            $binUserId,
             $data['name'],
             $description,
             $data['business_email'],
@@ -576,30 +515,19 @@ function createStore($pdo, $userId)
             $now,
             $now
         ]);
-
-        // Move temp logo to permanent location if it exists
         if (!empty($data['temp_logo_path']) && file_exists(__DIR__ . '/../../' . $data['temp_logo_path'])) {
             $fileExt = pathinfo($data['temp_logo_path'], PATHINFO_EXTENSION);
             $storeDirPath = __DIR__ . '/../../img/stores/' . $storeId . '/logo';
-
-            // Create store directory if it doesn't exist
             if (!file_exists($storeDirPath)) {
                 mkdir($storeDirPath, 0755, true);
             }
-
-            // Sanitize store name for filename
             $safeFileName = 'logo.' . $fileExt;
             $newLogoPath = $storeDirPath . '/' . $safeFileName;
-
-            // Move the file
             rename(__DIR__ . '/../../' . $data['temp_logo_path'], $newLogoPath);
-
-            // Update the logo URL in the database
             $logoUrl = 'img/stores/' . $storeId . '/logo/' . $safeFileName;
-            $updateStmt = $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?");
-            $updateStmt->execute([$logoUrl, $binaryStoreId]);
+            $upd = $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?");
+            $upd->execute([$logoUrl, $binStoreId]);
         }
-
         echo json_encode([
             'success' => true,
             'message' => 'Store created successfully! It is now pending approval.',
@@ -613,76 +541,39 @@ function createStore($pdo, $userId)
 }
 
 /**
- * Update an existing store
+ * Update store
  */
 function updateStore($pdo, $userId)
 {
     $data = json_decode(file_get_contents('php://input'), true);
-
     if (!$data || empty($data['id'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid data or missing store ID']);
         return;
     }
-
     try {
-        $binaryStoreId = uuidToBin($data['id']);
-        $binaryUserId = $userId;
-
-        // Check if user owns this store
-        $stmt = $pdo->prepare("SELECT owner_id FROM vendor_stores WHERE id = ?");
-        $stmt->execute([$binaryStoreId]);
-        $store = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$store) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Store not found']);
-            return;
-        }
-
-        if ($store['owner_id'] !== $binaryUserId) {
+        $binStoreId = uuidToBin($data['id']);
+        if (!isOwner($pdo, $binStoreId, $userId)) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'You do not have permission to update this store']);
             return;
         }
-
-        // Check if new store name already exists (if name is being changed)
-        if (isset($data['name'])) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM vendor_stores WHERE name = ? AND id != ?");
-            $stmt->execute([$data['name'], $binaryStoreId]);
-            if ($stmt->fetchColumn() > 0) {
-                http_response_code(409);
-                echo json_encode(['success' => false, 'error' => 'A store with this name already exists']);
-                return;
-            }
+        if (!empty($data['name']) && storeFieldExists($pdo, 'name', $data['name'], $binStoreId)) {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'error' => 'A store with this name already exists']);
+            return;
         }
-
-        // Check if new store email or phone already exists (if being changed)
-        if (isset($data['business_email'])) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM vendor_stores WHERE business_email = ? AND id != ?");
-            $stmt->execute([$data['business_email'], $binaryStoreId]);
-            if ($stmt->fetchColumn() > 0) {
-                http_response_code(409);
-                echo json_encode(['success' => false, 'error' => 'A store with this email already exists']);
-                return;
-            }
+        if (!empty($data['business_email']) && storeFieldExists($pdo, 'business_email', $data['business_email'], $binStoreId)) {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'error' => 'A store with this email already exists']);
+            return;
         }
-
-        if (isset($data['business_phone'])) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM vendor_stores WHERE business_phone = ? AND id != ?");
-            $stmt->execute([$data['business_phone'], $binaryStoreId]);
-            if ($stmt->fetchColumn() > 0) {
-                http_response_code(409);
-                echo json_encode(['success' => false, 'error' => 'A store with this phone number already exists']);
-                return;
-            }
+        if (!empty($data['business_phone']) && storeFieldExists($pdo, 'business_phone', $data['business_phone'], $binStoreId)) {
+            http_response_code(409);
+            echo json_encode(['success' => false, 'error' => 'A store with this phone number already exists']);
+            return;
         }
-
-        // Build update query dynamically based on provided fields
-        $updateFields = [];
-        $params = [];
-
-        $allowedFields = [
+        $allowed = [
             'name',
             'description',
             'business_email',
@@ -698,75 +589,50 @@ function updateStore($pdo, $userId)
             'website_url',
             'social_media'
         ];
-
-        foreach ($allowedFields as $field) {
-            if (isset($data[$field])) {
-                $updateFields[] = "$field = ?";
-                $params[] = $data[$field];
+        $updateFields = [];
+        $params = [];
+        foreach ($allowed as $fld) {
+            if (isset($data[$fld])) {
+                $updateFields[] = "$fld = ?";
+                $params[] = $data[$fld];
             }
         }
-
-        // Always update the updated_at timestamp
         $updateFields[] = "updated_at = ?";
         $params[] = date('Y-m-d H:i:s');
-
-        // Add store ID as the last parameter
-        $params[] = $binaryStoreId;
-
-        // Execute update query
-        $stmt = $pdo->prepare("UPDATE vendor_stores SET " . implode(", ", $updateFields) . " WHERE id = ?");
-        $stmt->execute($params);
-
-        // Handle logo update if provided
+        $params[] = $binStoreId;
+        if ($updateFields) {
+            $sql = "UPDATE vendor_stores SET " . implode(', ', $updateFields) . " WHERE id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+        }
         if (!empty($data['temp_logo_path']) && file_exists(__DIR__ . '/../../' . $data['temp_logo_path'])) {
             $fileExt = pathinfo($data['temp_logo_path'], PATHINFO_EXTENSION);
             $storeDirPath = __DIR__ . '/../../img/stores/' . $data['id'] . '/logo';
-
-            // Create store directory if it doesn't exist
             if (!file_exists($storeDirPath)) {
                 mkdir($storeDirPath, 0755, true);
             }
-
-            // Remove old logo files
             $oldFiles = glob($storeDirPath . '/*');
-            foreach ($oldFiles as $file) {
-                if (is_file($file)) {
-                    unlink($file);
-                }
+            foreach ($oldFiles as $f) {
+                if (is_file($f)) unlink($f);
             }
-
-            // Set logo filename
             $safeFileName = 'logo.' . $fileExt;
             $newLogoPath = $storeDirPath . '/' . $safeFileName;
-
-            // Move the file
             rename(__DIR__ . '/../../' . $data['temp_logo_path'], $newLogoPath);
-
-            // Update the logo URL in the database
             $logoUrl = 'img/stores/' . $data['id'] . '/logo/' . $safeFileName;
-            $updateStmt = $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?");
-            $updateStmt->execute([$logoUrl, $binaryStoreId]);
-        } else if (isset($data['remove_logo']) && $data['remove_logo']) {
-            // Remove logo if requested
+            $upd = $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?");
+            $upd->execute([$logoUrl, $binStoreId]);
+        } elseif (isset($data['remove_logo']) && $data['remove_logo']) {
             $storeDirPath = __DIR__ . '/../../img/stores/' . $data['id'] . '/logo';
             if (file_exists($storeDirPath)) {
                 $oldFiles = glob($storeDirPath . '/*');
                 foreach ($oldFiles as $file) {
-                    if (is_file($file)) {
-                        unlink($file);
-                    }
+                    if (is_file($file)) unlink($file);
                 }
             }
-
-            // Update the database to remove logo URL
-            $updateStmt = $pdo->prepare("UPDATE vendor_stores SET logo_url = NULL WHERE id = ?");
-            $updateStmt->execute([$binaryStoreId]);
+            $upd = $pdo->prepare("UPDATE vendor_stores SET logo_url = NULL WHERE id = ?");
+            $upd->execute([$binStoreId]);
         }
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'Store updated successfully'
-        ]);
+        echo json_encode(['success' => true, 'message' => 'Store updated successfully']);
     } catch (Exception $e) {
         error_log("Error updating store: " . $e->getMessage());
         http_response_code(500);
@@ -775,7 +641,7 @@ function updateStore($pdo, $userId)
 }
 
 /**
- * Delete a store
+ * Delete store
  */
 function deleteStore($pdo, $storeId, $userId)
 {
@@ -784,42 +650,20 @@ function deleteStore($pdo, $storeId, $userId)
         echo json_encode(['success' => false, 'error' => 'Store ID is required']);
         return;
     }
-
     try {
-        $binaryStoreId = uuidToBin($storeId);
-        $binaryUserId = $userId;
-
-        // Check if user owns this store
-        $stmt = $pdo->prepare("SELECT owner_id FROM vendor_stores WHERE id = ?");
-        $stmt->execute([$binaryStoreId]);
-        $store = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$store) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Store not found']);
-            return;
-        }
-
-        if ($store['owner_id'] !== $binaryUserId) {
+        $binStoreId = uuidToBin($storeId);
+        if (!isOwner($pdo, $binStoreId, $userId)) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'You do not have permission to delete this store']);
             return;
         }
-
-        // Delete the store (foreign key constraints will handle related records)
         $stmt = $pdo->prepare("DELETE FROM vendor_stores WHERE id = ?");
-        $stmt->execute([$binaryStoreId]);
-
-        // Delete store logo directory
+        $stmt->execute([$binStoreId]);
         $storeDirPath = __DIR__ . '/../../img/stores/' . $storeId;
         if (file_exists($storeDirPath)) {
             deleteDirectory($storeDirPath);
         }
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'Store deleted successfully'
-        ]);
+        echo json_encode(['success' => true, 'message' => 'Store deleted successfully']);
     } catch (Exception $e) {
         error_log("Error deleting store: " . $e->getMessage());
         http_response_code(500);
@@ -828,7 +672,7 @@ function deleteStore($pdo, $storeId, $userId)
 }
 
 /**
- * Upload store logo
+ * Upload store logo (temp)
  */
 function uploadLogo()
 {
@@ -837,71 +681,56 @@ function uploadLogo()
         echo json_encode(['success' => false, 'message' => 'No logo uploaded or upload error']);
         return;
     }
-
     try {
         $file = $_FILES['logo'];
         $fileName = $file['name'];
-        $fileTmpName = $file['tmp_name'];
+        $fileTmp = $file['tmp_name'];
         $fileSize = $file['size'];
-        $fileError = $file['error'];
-        $fileType = $file['type'];
-
         $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-
-        if (!in_array($fileExt, $allowedExtensions)) {
+        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        if (!in_array($fileExt, $allowed)) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Invalid file type. Only JPG, JPEG, PNG, WebP, and GIF files are allowed.']);
+            echo json_encode(['success' => false, 'message' => 'Invalid file type. Only JPG, JPEG, PNG, WebP, GIF allowed.']);
             return;
         }
-
-        if ($fileSize > 2000000) { // 2MB
+        if ($fileSize > 2000000) {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'File size too large. Maximum 2MB allowed.']);
+            echo json_encode(['success' => false, 'message' => 'File size too large. Max 2MB.']);
             return;
         }
-
-        // Create temp directory if it doesn't exist
         $uploadDir = __DIR__ . '/../../uploads/temp/';
         if (!file_exists($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
-
         $newFileName = uniqid('temp_') . '.' . $fileExt;
         $uploadPath = $uploadDir . $newFileName;
         $relativePath = 'uploads/temp/' . $newFileName;
-
-        // Process and resize image to a square (512x512)
-        list($width, $height) = getimagesize($fileTmpName);
+        list($width, $height) = getimagesize($fileTmp);
         $targetSize = 512;
-
-        $sourceImage = null;
         switch ($fileExt) {
             case 'jpg':
             case 'jpeg':
-                $sourceImage = imagecreatefromjpeg($fileTmpName);
+                $source = imagecreatefromjpeg($fileTmp);
                 break;
             case 'png':
-                $sourceImage = imagecreatefrompng($fileTmpName);
+                $source = imagecreatefrompng($fileTmp);
                 break;
             case 'webp':
-                $sourceImage = imagecreatefromwebp($fileTmpName);
+                $source = imagecreatefromwebp($fileTmp);
                 break;
             case 'gif':
-                $sourceImage = imagecreatefromgif($fileTmpName);
+                $source = imagecreatefromgif($fileTmp);
                 break;
+            default:
+                $source = null;
         }
-
-        if (!$sourceImage) {
+        if (!$source) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Failed to process image']);
             return;
         }
-
         $targetImage = imagecreatetruecolor($targetSize, $targetSize);
-
-        // Preserve transparency for PNG and GIF
-        if ($fileExt == 'png' || $fileExt == 'gif') {
+        if ($fileExt === 'png' || $fileExt === 'gif') {
             imagealphablending($targetImage, false);
             imagesavealpha($targetImage, true);
             $transparent = imagecolorallocatealpha($targetImage, 255, 255, 255, 127);
@@ -909,33 +738,27 @@ function uploadLogo()
         } else {
             imagefill($targetImage, 0, 0, imagecolorallocate($targetImage, 255, 255, 255));
         }
-
-        // Calculate dimensions to maintain aspect ratio and crop to square
         if ($width > $height) {
-            $sourceX = ($width - $height) / 2;
-            $sourceY = 0;
-            $sourceSize = $height;
+            $srcX = ($width - $height) / 2;
+            $srcY = 0;
+            $srcSize = $height;
         } else {
-            $sourceX = 0;
-            $sourceY = ($height - $width) / 2;
-            $sourceSize = $width;
+            $srcX = 0;
+            $srcY = ($height - $width) / 2;
+            $srcSize = $width;
         }
-
-        // Copy and resize the image to a square
         imagecopyresampled(
             $targetImage,
-            $sourceImage,
+            $source,
             0,
             0,
-            $sourceX,
-            $sourceY,
+            $srcX,
+            $srcY,
             $targetSize,
             $targetSize,
-            $sourceSize,
-            $sourceSize
+            $srcSize,
+            $srcSize
         );
-
-        // Save the image
         switch ($fileExt) {
             case 'jpg':
             case 'jpeg':
@@ -951,10 +774,8 @@ function uploadLogo()
                 imagegif($targetImage, $uploadPath);
                 break;
         }
-
-        imagedestroy($sourceImage);
+        imagedestroy($source);
         imagedestroy($targetImage);
-
         echo json_encode([
             'success' => true,
             'message' => 'Logo uploaded successfully',
@@ -969,7 +790,7 @@ function uploadLogo()
 }
 
 /**
- * Get categories for a specific store
+ * Get categories for a given store
  */
 function getStoreCategories($pdo, $storeId)
 {
@@ -978,37 +799,21 @@ function getStoreCategories($pdo, $storeId)
         echo json_encode(['success' => false, 'error' => 'Store ID is required']);
         return;
     }
-
     try {
-        $binaryStoreId = uuidToBin($storeId);
-
+        $binStoreId = uuidToBin($storeId);
         $stmt = $pdo->prepare("
-            SELECT 
-                sc.id, 
-                pc.name, 
-                pc.description, 
-                sc.status, 
-                sc.created_at, 
-                sc.updated_at
-            FROM 
-                store_categories sc
-            JOIN 
-                product_categories pc ON sc.category_id = pc.id
-            WHERE 
-                sc.store_id = ?
-            ORDER BY 
-                pc.name ASC
+            SELECT sc.id, pc.name, pc.description, sc.status, sc.created_at, sc.updated_at
+            FROM store_categories sc
+            JOIN product_categories pc ON sc.category_id = pc.id
+            WHERE sc.store_id = ?
+            ORDER BY pc.name ASC
         ");
-
-        $stmt->execute([$binaryStoreId]);
+        $stmt->execute([$binStoreId]);
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Convert binary IDs to UUID strings
         foreach ($categories as &$category) {
             $category['uuid_id'] = binToUuid($category['id']);
             unset($category['id']);
         }
-
         echo json_encode(['success' => true, 'categories' => $categories]);
     } catch (Exception $e) {
         error_log("Error getting store categories: " . $e->getMessage());
@@ -1018,7 +823,7 @@ function getStoreCategories($pdo, $storeId)
 }
 
 /**
- * Get managers for a specific store
+ * Get managers for a given store
  */
 function getStoreManagers($pdo, $storeId, $userId)
 {
@@ -1027,51 +832,24 @@ function getStoreManagers($pdo, $storeId, $userId)
         echo json_encode(['success' => false, 'error' => 'Store ID is required']);
         return;
     }
-
     try {
-        $binaryStoreId = uuidToBin($storeId);
-        $binaryUserId = $userId;
-
-        // Check if user owns or manages this store
-        $stmt = $pdo->prepare("
-            SELECT owner_id FROM vendor_stores WHERE id = ?
-            UNION
-            SELECT user_id FROM store_managers WHERE store_id = ? AND user_id = ?
-            LIMIT 1
-        ");
-        $stmt->execute([$binaryStoreId, $binaryStoreId, $binaryUserId]);
-
-        if ($stmt->rowCount() === 0) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'You do not have permission to access this store']);
-            return;
-        }
-
-        // Get store managers
+        $binStoreId = uuidToBin($storeId);
         $stmt = $pdo->prepare("
             SELECT 
                 sm.id, sm.user_id, sm.role, sm.created_at,
                 u.username, u.email, u.phone
-            FROM 
-                store_managers sm
-            JOIN 
-                zzimba_users u ON sm.user_id = u.id
-            WHERE 
-                sm.store_id = ?
-            ORDER BY 
-                sm.created_at DESC
+            FROM store_managers sm
+            JOIN zzimba_users u ON sm.user_id = u.id
+            WHERE sm.store_id = ?
+            ORDER BY sm.created_at DESC
         ");
-
-        $stmt->execute([$binaryStoreId]);
+        $stmt->execute([$binStoreId]);
         $managers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Convert binary IDs to UUID strings
         foreach ($managers as &$manager) {
             $manager['uuid_id'] = binToUuid($manager['id']);
             $manager['user_uuid_id'] = binToUuid($manager['user_id']);
             unset($manager['id'], $manager['user_id']);
         }
-
         echo json_encode(['success' => true, 'managers' => $managers]);
     } catch (Exception $e) {
         error_log("Error getting store managers: " . $e->getMessage());
@@ -1090,53 +868,41 @@ function addStoreManager($pdo, $storeId, $managerId, $userId)
         echo json_encode(['success' => false, 'error' => 'Store ID and manager user ID are required']);
         return;
     }
-
     try {
-        $binaryStoreId = uuidToBin($storeId);
-        $binaryManagerId = uuidToBin($managerId);
-        $binaryUserId = $userId;
-
-        // Check if user owns this store
+        $binStoreId = uuidToBin($storeId);
+        $binManagerId = uuidToBin($managerId);
+        $binUserId = $userId;
         $stmt = $pdo->prepare("SELECT owner_id FROM vendor_stores WHERE id = ?");
-        $stmt->execute([$binaryStoreId]);
+        $stmt->execute([$binStoreId]);
         $store = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$store) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Store not found']);
             return;
         }
-
-        if ($store['owner_id'] !== $binaryUserId) {
+        if ($store['owner_id'] !== $binUserId) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'You do not have permission to add managers to this store']);
             return;
         }
-
-        // Check if the manager user exists
         $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE id = ?");
-        $stmt->execute([$binaryManagerId]);
+        $stmt->execute([$binManagerId]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'User not found']);
             return;
         }
-
-        // Check if user is already a manager
         $stmt = $pdo->prepare("SELECT id FROM store_managers WHERE store_id = ? AND user_id = ?");
-        $stmt->execute([$binaryStoreId, $binaryManagerId]);
+        $stmt->execute([$binStoreId, $binManagerId]);
         if ($stmt->rowCount() > 0) {
             http_response_code(409);
             echo json_encode(['success' => false, 'error' => 'User is already a manager for this store']);
             return;
         }
-
-        // Add the manager
-        $managerId = generateUUIDv7();
-        $binaryManagerEntryId = uuidToBin($managerId);
+        $managerEntryId = generateUUIDv7();
+        $binManagerEntryId = uuidToBin($managerEntryId);
         $role = $_POST['role'] ?? 'manager';
         $now = date('Y-m-d H:i:s');
-
         $stmt = $pdo->prepare("
             INSERT INTO store_managers (
                 id, store_id, user_id, role, added_by, created_at, updated_at
@@ -1144,21 +910,19 @@ function addStoreManager($pdo, $storeId, $managerId, $userId)
                 ?, ?, ?, ?, ?, ?, ?
             )
         ");
-
         $stmt->execute([
-            $binaryManagerEntryId,
-            $binaryStoreId,
-            $binaryManagerId,
+            $binManagerEntryId,
+            $binStoreId,
+            $binManagerId,
             $role,
-            $binaryUserId,
+            $binUserId,
             $now,
             $now
         ]);
-
         echo json_encode([
             'success' => true,
             'message' => 'Manager added successfully',
-            'manager_id' => $managerId
+            'manager_id' => $managerEntryId
         ]);
     } catch (Exception $e) {
         error_log("Error adding store manager: " . $e->getMessage());
@@ -1177,43 +941,31 @@ function removeStoreManager($pdo, $storeId, $managerId, $userId)
         echo json_encode(['success' => false, 'error' => 'Store ID and manager ID are required']);
         return;
     }
-
     try {
-        $binaryStoreId = uuidToBin($storeId);
-        $binaryManagerId = uuidToBin($managerId);
-        $binaryUserId = $userId;
-
-        // Check if user owns this store
+        $binStoreId = uuidToBin($storeId);
+        $binManagerId = uuidToBin($managerId);
+        $binUserId = $userId;
         $stmt = $pdo->prepare("SELECT owner_id FROM vendor_stores WHERE id = ?");
-        $stmt->execute([$binaryStoreId]);
+        $stmt->execute([$binStoreId]);
         $store = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$store) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Store not found']);
             return;
         }
-
-        if ($store['owner_id'] !== $binaryUserId) {
+        if ($store['owner_id'] !== $binUserId) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'You do not have permission to remove managers from this store']);
             return;
         }
-
-        // Remove the manager
         $stmt = $pdo->prepare("DELETE FROM store_managers WHERE id = ? AND store_id = ?");
-        $stmt->execute([$binaryManagerId, $binaryStoreId]);
-
+        $stmt->execute([$binManagerId, $binStoreId]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Manager not found for this store']);
             return;
         }
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'Manager removed successfully'
-        ]);
+        echo json_encode(['success' => true, 'message' => 'Manager removed successfully']);
     } catch (Exception $e) {
         error_log("Error removing store manager: " . $e->getMessage());
         http_response_code(500);
@@ -1227,22 +979,17 @@ function removeStoreManager($pdo, $storeId, $managerId, $userId)
 function getRegions()
 {
     $jsonFile = __DIR__ . '/../../locations/gadm41_UGA_4.json';
-
     if (!file_exists($jsonFile)) {
         http_response_code(404);
         echo json_encode(['success' => false, 'error' => 'Regions data file not found']);
         return;
     }
-
     try {
         $jsonContent = file_get_contents($jsonFile);
         $data = json_decode($jsonContent, true);
-
         if (!$data) {
             throw new Exception('Failed to parse regions data');
         }
-
-        // Extract unique level 1 regions (provinces)
         $level1Options = [];
         foreach ($data['features'] as $feature) {
             $name = $feature['properties']['NAME_1'] ?? null;
@@ -1250,10 +997,7 @@ function getRegions()
                 $level1Options[$name] = $name;
             }
         }
-
-        // Sort alphabetically
         asort($level1Options);
-
         echo json_encode([
             'success' => true,
             'regions' => array_values($level1Options)
@@ -1266,49 +1010,23 @@ function getRegions()
 }
 
 /**
- * Helper function to sanitize filenames
+ * Recursively delete a directory
  */
-function sanitizeFileName($name)
-{
-    // Replace spaces with hyphens
-    $name = str_replace(' ', '-', $name);
-    // Remove any non-alphanumeric characters except hyphens and underscores
-    $name = preg_replace('/[^A-Za-z0-9\-_]/', '', $name);
-    // Convert to lowercase
-    $name = strtolower($name);
-    return $name;
-}
-
-/**
- * Helper function to get store name by ID
- */
-function getStoreName($pdo, $binaryStoreId)
-{
-    $stmt = $pdo->prepare("SELECT name FROM vendor_stores WHERE id = ?");
-    $stmt->execute([$binaryStoreId]);
-    return $stmt->fetchColumn() ?: 'store';
-}
-
-// Add helper function to recursively delete directories
 function deleteDirectory($dir)
 {
     if (!file_exists($dir)) {
         return true;
     }
-
     if (!is_dir($dir)) {
         return unlink($dir);
     }
-
     foreach (scandir($dir) as $item) {
         if ($item == '.' || $item == '..') {
             continue;
         }
-
         if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
             return false;
         }
     }
-
     return rmdir($dir);
 }
