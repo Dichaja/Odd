@@ -27,7 +27,7 @@ ob_start();
                         Manage your vendor profiles and store listings
                     </p>
                 </div>
-                <!-- Single Create Button; we’ll open one universal modal in “create” mode -->
+                <!-- Create Button -->
                 <button
                     id="createStoreBtn"
                     class="h-10 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors flex items-center gap-2 justify-center"
@@ -39,37 +39,15 @@ ob_start();
         </div>
     </div>
 
-    <!-- Tabs Section -->
+    <!-- Combined Stores Section -->
     <div class="content-section">
-        <div class="border-b border-gray-200">
-            <div class="flex overflow-x-auto">
-                <button
-                    id="ownedTabBtn"
-                    class="tab-btn active px-6 py-4 text-sm font-medium border-b-2 border-user-primary text-user-primary">
-                    My Owned Profiles
-                </button>
-                <button
-                    id="managedTabBtn"
-                    class="tab-btn px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                    Profiles I Manage
-                </button>
+        <div class="p-6">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold text-secondary">All Store Profiles</h2>
             </div>
-        </div>
 
-        <!-- Owned Stores Tab Content -->
-        <div id="ownedTabContent" class="tab-content p-6">
-            <div id="owned-stores-container">
+            <div id="all-stores-container">
                 <!-- Stores loaded dynamically via AJAX -->
-                <div class="flex justify-center items-center py-12">
-                    <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Managed Stores Tab Content -->
-        <div id="managedTabContent" class="tab-content p-6 hidden">
-            <div id="managed-stores-container">
-                <!-- Managed stores loaded dynamically via AJAX -->
                 <div class="flex justify-center items-center py-12">
                     <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin"></div>
                 </div>
@@ -437,6 +415,33 @@ ob_start();
             box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
         }
     }
+
+    .store-card {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .store-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .store-type-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 2px 8px;
+        font-size: 0.7rem;
+        border-radius: 0 0.375rem 0 0.375rem;
+    }
+
+    .store-type-owned {
+        background-color: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+    }
+
+    .store-type-managed {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
 </style>
 
 <script>
@@ -448,33 +453,13 @@ ob_start();
     let storeCurrentGeoJSON = null;
     let storeBaseLayers = {};
     let storePhoneInput = null;
+    let allStores = [];
+    let currentFilter = 'owned'; // Default filter
 
     // On document ready
     $(document).ready(function() {
-        // Tab switching
-        $('.tab-btn').click(function() {
-            $('.tab-btn')
-                .removeClass('active border-user-primary text-user-primary')
-                .addClass('border-transparent text-gray-500');
-            $(this)
-                .addClass('active border-user-primary text-user-primary')
-                .removeClass('border-transparent text-gray-500');
-
-            $('.tab-content').addClass('hidden');
-            if ($(this).attr('id') === 'ownedTabBtn') {
-                $('#ownedTabContent').removeClass('hidden');
-            } else {
-                $('#managedTabContent').removeClass('hidden');
-            }
-        });
-
-        // Fetch Owned stores right away
-        loadOwnedStores();
-
-        // Fetch Managed stores only when user clicks the “Profiles I Manage” tab
-        $('#managedTabBtn').click(function() {
-            loadManagedStores();
-        });
+        // Load all stores initially
+        loadAllStores();
 
         // Initialize phone input
         initializePhoneInput();
@@ -558,18 +543,56 @@ ob_start();
         }, 3000);
     }
 
-    // “Owned” stores
-    function loadOwnedStores() {
+    // Load all stores
+    function loadAllStores() {
         showLoading();
+
+        // First load owned stores
         $.ajax({
             url: STORE_API_BASE + '?action=getOwnedStores',
             type: 'GET',
             dataType: 'json',
             success: function(response) {
-                hideLoading();
                 if (response.success) {
-                    renderOwnedStores(response.stores);
+                    const ownedStores = response.stores || [];
+                    // Add type property to each store
+                    ownedStores.forEach(store => {
+                        store.type = 'owned';
+                    });
+
+                    // Now load managed stores
+                    $.ajax({
+                        url: STORE_API_BASE + '?action=getManagedStores',
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(response) {
+                            hideLoading();
+                            if (response.success) {
+                                const managedStores = response.stores || [];
+                                // Add type property to each store
+                                managedStores.forEach(store => {
+                                    store.type = 'managed';
+                                });
+
+                                // Combine both types of stores
+                                allStores = [...ownedStores, ...managedStores];
+                                renderStores(allStores);
+                            } else {
+                                // If managed stores fail, still show owned stores
+                                allStores = ownedStores;
+                                renderStores(allStores);
+                                showErrorNotification(response.error || 'Failed to load managed stores');
+                            }
+                        },
+                        error: function() {
+                            hideLoading();
+                            allStores = ownedStores;
+                            renderStores(allStores);
+                            showErrorNotification('Failed to load managed stores. Please try again.');
+                        }
+                    });
                 } else {
+                    hideLoading();
                     showErrorNotification(response.error || 'Failed to load stores');
                 }
             },
@@ -580,25 +603,34 @@ ob_start();
         });
     }
 
-    function renderOwnedStores(stores) {
-        const container = $('#owned-stores-container');
+    // Filter stores based on current filter
+    function filterStores() {
+        renderStores(allStores);
+    }
+
+    function renderStores(stores) {
+        const container = $('#all-stores-container');
         if (!stores || stores.length === 0) {
             container.html(`
                 <div class="bg-gray-50 rounded-lg p-8 text-center">
                     <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                         <i class="fas fa-store text-gray-400 text-2xl"></i>
                     </div>
-                    <h3 class="text-lg font-medium text-secondary mb-2">No Stores Yet</h3>
+                    <h3 class="text-lg font-medium text-secondary mb-2">No Stores Found</h3>
                     <p class="text-sm text-gray-text mb-4">
-                        You haven't created any stores yet. Create your first store to start selling on Zzimba Online.
+                        ${currentFilter === 'owned' ? 'You haven\'t created any stores yet.' : 
+                          currentFilter === 'managed' ? 'You don\'t manage any stores yet.' : 
+                          'No stores found.'}
                     </p>
-                    <button 
-                        id="createFirstStoreBtn" 
-                        class="h-10 px-6 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors"
-                        onclick="openStoreModal('create')"
-                    >
-                        Create Your First Store
-                    </button>
+                    ${currentFilter === 'owned' || currentFilter === 'all' ? `
+                        <button 
+                            id="createFirstStoreBtn" 
+                            class="h-10 px-6 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors"
+                            onclick="openStoreModal('create')"
+                        >
+                            Create Your First Store
+                        </button>
+                    ` : ''}
                 </div>
             `);
             return;
@@ -610,12 +642,14 @@ ob_start();
             const logoUrl = store.logo_url ?
                 BASE_URL + store.logo_url :
                 `https://placehold.co/100x100/f0f0f0/808080?text=${store.name.substring(0, 2)}`;
-            const categoriesList = store.categories && store.categories.length > 0 ?
-                store.categories.join(', ') :
-                'No categories';
+
+            const storeTypeBadge = store.type === 'owned' ?
+                '<span class="store-type-badge store-type-owned">Owned</span>' :
+                '<span class="store-type-badge store-type-managed">Managed</span>';
 
             html += `
-                <div class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+                <div class="store-card bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 relative">
+                    ${storeTypeBadge}
                     <div class="flex flex-col sm:flex-row">
                         <div class="w-full sm:w-32 h-32 bg-gray-50 flex items-center justify-center flex-shrink-0">
                             <img src="${logoUrl}" alt="${escapeHtml(store.name)}" class="w-20 h-20 object-cover rounded-lg">
@@ -641,120 +675,20 @@ ob_start();
                                     <p class="font-medium">${store.categories ? store.categories.length : 0}</p>
                                 </div>
                             </div>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                <p class="text-xs text-gray-text">
-                                    <i class="fas fa-tag mr-1"></i>
-                                    ${categoriesList}
-                                </p>
-                                <div class="flex gap-2">
+                            <div class="flex justify-end">
+                                ${store.type === 'owned' ? `
                                     <button 
                                         onclick="openStoreModal('edit','${store.uuid_id}')" 
-                                        class="h-8 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 text-sm"
+                                        class="h-8 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 text-sm mr-2"
                                     >
                                         <i class="fas fa-edit"></i>
                                         <span>Edit</span>
                                     </button>
-                                    <a 
-                                        href="../view/profile/vendor/${store.uuid_id}" 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
-                                        class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm"
-                                    >
-                                        <i class="fas fa-cog"></i>
-                                        <span>Manage</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        html += '</div>';
-        container.html(html);
-    }
-
-    // “Managed” stores
-    function loadManagedStores() {
-        showLoading();
-        $.ajax({
-            url: STORE_API_BASE + '?action=getManagedStores',
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                hideLoading();
-                if (response.success) {
-                    renderManagedStores(response.stores);
-                } else {
-                    showErrorNotification(response.error || 'Failed to load managed stores');
-                }
-            },
-            error: function() {
-                hideLoading();
-                showErrorNotification('Failed to load managed stores. Please try again.');
-            }
-        });
-    }
-
-    function renderManagedStores(stores) {
-        const container = $('#managed-stores-container');
-        if (!stores || stores.length === 0) {
-            container.html(`
-                <div class="bg-gray-50 rounded-lg p-8 text-center">
-                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                        <i class="fas fa-user-tie text-gray-400 text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-medium text-secondary mb-2">No Managed Stores</h3>
-                    <p class="text-sm text-gray-text">You haven't been added as a manager to any stores yet.</p>
-                </div>
-            `);
-            return;
-        }
-
-        let html = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">';
-        stores.forEach((store) => {
-            const statusBadge = getStatusBadge(store.status);
-            const logoUrl = store.logo_url ?
-                BASE_URL + store.logo_url :
-                `https://placehold.co/100x100/f0f0f0/808080?text=${store.name.substring(0, 2)}`;
-            const categoriesList = store.categories && store.categories.length > 0 ?
-                store.categories.join(', ') :
-                'No categories';
-
-            html += `
-                <div class="bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
-                    <div class="flex flex-col sm:flex-row">
-                        <div class="w-full sm:w-32 h-32 bg-gray-50 flex items-center justify-center flex-shrink-0">
-                            <img src="${logoUrl}" alt="${escapeHtml(store.name)}" class="w-20 h-20 object-cover rounded-lg">
-                        </div>
-                        <div class="p-4 sm:p-6 flex-grow">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                                <h3 class="font-semibold text-secondary">${escapeHtml(store.name)}</h3>
-                                <div class="inline-flex items-center">
-                                    ${statusBadge}
-                                </div>
-                            </div>
-                            <p class="text-sm text-gray-text mb-1">
-                                <i class="fas fa-map-marker-alt mr-1 text-user-primary"></i>
-                                ${escapeHtml(store.location)}
-                            </p>
-                            <p class="text-sm text-gray-text mb-3">
-                                <i class="fas fa-user mr-1 text-user-primary"></i>
-                                Owner: ${escapeHtml(store.owner)}
-                            </p>
-                            <div class="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <p class="text-xs text-gray-text">Active Products</p>
-                                    <p class="font-medium">${store.product_count || 0}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-text">Role</p>
-                                    <p class="font-medium">${store.role || 'Manager'}</p>
-                                </div>
-                            </div>
-                            <div class="flex justify-end">
+                                ` : ''}
                                 <a 
-                                    href="store-manage-${store.uuid_id}" 
+                                    href="../view/profile/vendor/${store.uuid_id}" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
                                     class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm"
                                 >
                                     <i class="fas fa-cog"></i>
@@ -931,8 +865,10 @@ ob_start();
 
     // Clear form
     function resetStoreForm() {
+        // IMPORTANT: Removed the line that forced 'create' mode here!
+        // We only clear form fields; the actual mode is set in openStoreModal(...).
+
         $('#storeId').val('');
-        $('#storeMode').val('create');
         // Step 1 fields
         $('#storeBusinessName').val('');
         $('#storeBusinessEmail').val('');
@@ -978,7 +914,7 @@ ob_start();
         loadRegions();
     }
 
-    // Populate form in “edit” mode
+    // Populate form in "edit" mode
     function populateStoreForm(storeId) {
         $('#storeId').val(storeId);
         showLoading();
@@ -1089,8 +1025,7 @@ ob_start();
     }
 
     function finishSave(mode, formData) {
-        const actionUrl =
-            mode === 'create' ?
+        const actionUrl = mode === 'create' ?
             STORE_API_BASE + '?action=createStore' :
             STORE_API_BASE + '?action=updateStore';
 
@@ -1107,7 +1042,7 @@ ob_start();
                     closeStoreModal();
                     showSuccessNotification(response.message || 'Store saved successfully!');
                     resetStoreForm();
-                    loadOwnedStores(); // refresh list
+                    loadAllStores(); // refresh list
                 } else {
                     showErrorNotification(response.error || 'Failed to save store');
                 }
@@ -1163,8 +1098,36 @@ ob_start();
 
         // Map clicks
         storeMap.on('click', function(e) {
-            dropStoreMarker(e.latlng);
+            // Only allow dropping pin if within selected region
+            if (storeCurrentGeoJSON) {
+                const point = {
+                    type: 'Point',
+                    coordinates: [e.latlng.lng, e.latlng.lat]
+                };
+
+                // Check if point is within any of the polygons in the current GeoJSON
+                let isWithinBounds = false;
+                for (const feature of storeCurrentGeoJSON.features) {
+                    if (leafletPip.pointInLayer([e.latlng.lng, e.latlng.lat], L.geoJSON(feature), true).length > 0) {
+                        isWithinBounds = true;
+                        break;
+                    }
+                }
+
+                if (isWithinBounds) {
+                    dropStoreMarker(e.latlng);
+                } else {
+                    showErrorNotification('Please place the pin within the highlighted region');
+                }
+            } else {
+                showErrorNotification('Please select a region from the dropdowns first');
+            }
         });
+
+        // If we have coordinates, add a marker
+        if (lat && lng && lat !== 1.3733 && lng !== 32.2903) {
+            dropStoreMarker(L.latLng(lat, lng));
+        }
 
         // Try locate
         locateUser('#storeLocateMeBtn', storeMap, 'create');
@@ -1182,26 +1145,49 @@ ob_start();
     }
 
     function dropStoreMarker(latlng) {
-        // If no region has been selected, we can allow it but prompt user
-        if (!storeCurrentGeoJSON) {
-            alert('Please select a region from the dropdowns to limit where you place the pin.');
-        }
-
         // If storeMarker exists, remove it
         if (storeMarker) storeMap.removeLayer(storeMarker);
+
+        // Create custom icon with pulse effect
+        const icon = L.divIcon({
+            className: 'location-icon pulse',
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+
         // Create marker
         storeMarker = L.marker(latlng, {
-            draggable: true
+            draggable: true,
+            icon: icon
         }).addTo(storeMap);
+
         $('#storeLatitude').val(latlng.lat.toFixed(6));
         $('#storeLongitude').val(latlng.lng.toFixed(6));
         reverseGeocode(latlng.lat, latlng.lng);
 
         storeMarker.on('dragend', function() {
             const newPos = storeMarker.getLatLng();
-            $('#storeLatitude').val(newPos.lat.toFixed(6));
-            $('#storeLongitude').val(newPos.lng.toFixed(6));
-            reverseGeocode(newPos.lat, newPos.lng);
+
+            // Check if new position is within bounds
+            let isWithinBounds = false;
+            if (storeCurrentGeoJSON) {
+                for (const feature of storeCurrentGeoJSON.features) {
+                    if (leafletPip.pointInLayer([newPos.lng, newPos.lat], L.geoJSON(feature), true).length > 0) {
+                        isWithinBounds = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isWithinBounds || !storeCurrentGeoJSON) {
+                $('#storeLatitude').val(newPos.lat.toFixed(6));
+                $('#storeLongitude').val(newPos.lng.toFixed(6));
+                reverseGeocode(newPos.lat, newPos.lng);
+            } else {
+                // Reset to previous position
+                storeMarker.setLatLng(latlng);
+                showErrorNotification('Please keep the pin within the highlighted region');
+            }
         });
     }
 
@@ -1216,7 +1202,25 @@ ob_start();
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
                     mapObj.setView([lat, lng], 15);
-                    dropStoreMarker(L.latLng(lat, lng));
+
+                    // Check if location is within bounds
+                    let isWithinBounds = false;
+                    if (storeCurrentGeoJSON) {
+                        for (const feature of storeCurrentGeoJSON.features) {
+                            if (leafletPip.pointInLayer([lng, lat], L.geoJSON(feature), true).length > 0) {
+                                isWithinBounds = true;
+                                break;
+                            }
+                        }
+
+                        if (isWithinBounds) {
+                            dropStoreMarker(L.latLng(lat, lng));
+                        } else {
+                            showErrorNotification('Your location is outside the selected region. Please select a location manually.');
+                        }
+                    } else {
+                        dropStoreMarker(L.latLng(lat, lng));
+                    }
                 },
                 function(error) {
                     console.error(error);
@@ -1347,6 +1351,14 @@ ob_start();
 
                 if (selectedRegion) {
                     updateDistricts(selectedRegion, selectedDistrict, selectedSubcounty, selectedParish);
+                    // Trigger map update with saved location
+                    let selections = {
+                        1: selectedRegion
+                    };
+                    if (selectedDistrict) selections[2] = selectedDistrict;
+                    if (selectedSubcounty) selections[3] = selectedSubcounty;
+                    if (selectedParish) selections[4] = selectedParish;
+                    updateMapGeoJSON(selections);
                 }
             })
             .catch(err => {
@@ -1474,7 +1486,35 @@ ob_start();
                 fillOpacity: 0.2
             }
         }).addTo(storeMap);
-        storeMap.fitBounds(storeGeoJSONLayer.getBounds());
+
+        // Ensure the map zooms to fit the bounds
+        storeMap.fitBounds(storeGeoJSONLayer.getBounds(), {
+            padding: [20, 20],
+            maxZoom: 12,
+            animate: true
+        });
+
+        // If we have a marker, check if it's still within bounds
+        if (storeMarker) {
+            const markerPos = storeMarker.getLatLng();
+            let isWithinBounds = false;
+
+            for (const feature of storeCurrentGeoJSON.features) {
+                if (leafletPip.pointInLayer([markerPos.lng, markerPos.lat], L.geoJSON(feature), true).length > 0) {
+                    isWithinBounds = true;
+                    break;
+                }
+            }
+
+            if (!isWithinBounds) {
+                storeMap.removeLayer(storeMarker);
+                storeMarker = null;
+                $('#storeLatitude').val('');
+                $('#storeLongitude').val('');
+                $('#storeAddress').val('');
+                showErrorNotification('Your marker was outside the new selected region and has been removed');
+            }
+        }
     }
 
     function clearGeoJSON() {
