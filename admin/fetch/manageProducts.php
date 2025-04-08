@@ -27,7 +27,6 @@ try {
         meta_title VARCHAR(100),
         meta_description TEXT,
         meta_keywords VARCHAR(255),
-        views INT UNSIGNED NOT NULL DEFAULT 0,
         status ENUM('published', 'pending', 'draft') NOT NULL DEFAULT 'published',
         featured BOOLEAN NOT NULL DEFAULT 0,
         created_at DATETIME NOT NULL,

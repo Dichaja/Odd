@@ -1032,7 +1032,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                         initializePhoneInputs();
                     }
                 };
-                xhr.open('GET', 'login/login.php', true);
+                xhr.open('GET', BASE_URL + 'login/login.php', true);
                 xhr.send();
             }
         });
