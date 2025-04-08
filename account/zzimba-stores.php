@@ -784,11 +784,11 @@ ob_start();
         const phone = storePhoneInput.getNumber();
         const nature = $('#storeNatureOfOperation').val();
         if (!name || !email || !phone || !nature) {
-            alert('Please fill in all required fields');
+            showErrorNotification('Please fill in all required fields');
             return;
         }
         if (!storePhoneInput.isValidNumber()) {
-            alert('Please enter a valid phone number');
+            showErrorNotification('Please enter a valid phone number');
             return;
         }
         // Step indicator update
@@ -830,7 +830,7 @@ ob_start();
         const lvl2 = $('#storeLevel2').val();
         const addr = $('#storeAddress').val();
         if (!lat || !lng || !lvl1 || !lvl2 || !addr) {
-            alert('Please select your location on the map and fill in all required fields');
+            showErrorNotification('Please select your location on the map and fill in all required fields');
             return;
         }
         // Step indicator update
