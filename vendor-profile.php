@@ -194,6 +194,7 @@ ob_start();
         display: block;
     }
 
+    /* Category grids: 2 columns max in the modal */
     .category-grid {
         display: grid;
         grid-template-columns: repeat(1, 1fr);
@@ -203,12 +204,6 @@ ob_start();
     @media (min-width: 640px) {
         .category-grid {
             grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    @media (min-width: 1024px) {
-        .category-grid {
-            grid-template-columns: repeat(3, 1fr);
         }
     }
 
@@ -256,6 +251,25 @@ ob_start();
     .badge-danger {
         background-color: #EF4444;
         color: white;
+    }
+
+    /* 4 columns for products at large screens */
+    #products-container {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+        #products-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        #products-container {
+            grid-template-columns: repeat(3, 1fr);
+        }
     }
 
     @media (max-width: 640px) {
@@ -501,7 +515,8 @@ ob_start();
             </div>
         </div>
 
-        <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- 4 columns in large screens (see CSS above) -->
+        <div id="products-container">
             <!-- Products will be loaded here -->
             <div class="col-span-full text-center py-8 text-gray-500">
                 No products found for this vendor.
@@ -562,28 +577,35 @@ ob_start();
             <span class="close" onclick="closeModal('addProductModal')">&times;</span>
         </div>
         <form id="addProductForm">
+            <!-- Category selection -->
             <div class="mb-4">
                 <label for="productCategory" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                 <select id="productCategory" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
                     <option value="">Select a category</option>
                 </select>
             </div>
+
+            <!-- Product selection -->
             <div class="mb-4" id="productListContainer">
                 <label for="productSelect" class="block text-sm font-medium text-gray-700 mb-1">Select Product *</label>
                 <select id="productSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required disabled>
                     <option value="">Select a product</option>
                 </select>
-                <p class="text-xs text-gray-500 mt-1">First select a category to see available products</p>
+                <p class="text-xs text-gray-500 mt-1">
+                    Products shown here are those in that category, but <strong>not</strong> already in your store.
+                </p>
             </div>
-            <div class="mb-4">
-                <label for="productPrice" class="block text-sm font-medium text-gray-700 mb-1">Price (UGX) *</label>
-                <input type="number" id="productPrice" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+
+            <!-- Unit/Price line items -->
+            <div id="unitPricingContainer" class="mt-4 hidden">
+                <p class="font-semibold text-sm mb-2">Add one or more unit/price entries:</p>
+                <div id="lineItemsWrapper" class="space-y-4"></div>
+                <button type="button" id="addLineItemBtn" class="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded">
+                    + Add Another Unit
+                </button>
             </div>
-            <div class="mb-4">
-                <label for="productQuantity" class="block text-sm font-medium text-gray-700 mb-1">Available Quantity *</label>
-                <input type="number" id="productQuantity" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
-            </div>
-            <div class="flex justify-end">
+
+            <div class="flex justify-end mt-6">
                 <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg mr-2" onclick="closeModal('addProductModal')">Cancel</button>
                 <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg">Add Product</button>
             </div>
@@ -592,7 +614,6 @@ ob_start();
 </div>
 
 <script>
-    // Define modal functions globally so they are available in inline event handlers.
     window.openModal = function(modalId) {
         document.getElementById(modalId).style.display = 'block';
     };
@@ -609,29 +630,26 @@ ob_start();
         let currentPage = 1;
         let totalPages = 1;
         let selectedCategories = [];
-        let availableProducts = {};
         let allProducts = [];
         let categoryStatusChanges = {};
 
-        // Initialize
+        // For "Add Product" flow
+        let availableUnits = [];
+        let lineItemCount = 0;
+
         if (vendorId) {
             loadVendorProfile(vendorId);
         } else {
             showError("No vendor ID provided");
         }
 
-        // Tab functionality
+        // Manage Category tabs
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', function() {
                 const tabId = this.getAttribute('data-tab');
-
-                // Update active tab button
-                document.querySelectorAll('.tab-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                 this.classList.add('active');
 
-                // Show the selected tab content
                 document.querySelectorAll('.tab-content').forEach(content => {
                     content.classList.remove('active');
                 });
@@ -691,60 +709,43 @@ ob_start();
 
         function populateCategoryFilter(categories) {
             if (!categories || categories.length === 0) return;
-
             const filterSelect = document.getElementById('filter-category');
             filterSelect.innerHTML = '<option value="">All Categories</option>';
-
-            // Only include active categories
-            const activeCategories = categories.filter(category => category.status === 'active');
-
-            activeCategories.forEach(category => {
+            const activeCats = categories.filter(cat => cat.status === 'active');
+            activeCats.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category.category_uuid_id;
                 option.textContent = category.name;
                 filterSelect.appendChild(option);
             });
-
             filterSelect.addEventListener('change', filterProductsByCategory);
         }
 
         function filterProductsByCategory() {
             const categoryId = document.getElementById('filter-category').value;
             const searchTerm = document.getElementById('search-products').value.toLowerCase();
-
             filterProducts(categoryId, searchTerm);
         }
 
         function filterProducts(categoryId = '', searchTerm = '') {
             const container = document.getElementById('products-container');
             container.innerHTML = '';
-
-            let filteredProducts = [...allProducts];
-
-            // Filter by category if selected
+            let filtered = [...allProducts];
             if (categoryId) {
-                filteredProducts = filteredProducts.filter(product =>
-                    product.store_category_uuid_id === categoryId
-                );
+                filtered = filtered.filter(p => p.store_category_uuid_id === categoryId);
             }
-
-            // Filter by search term if provided
             if (searchTerm) {
-                filteredProducts = filteredProducts.filter(product =>
-                    product.name.toLowerCase().includes(searchTerm)
-                );
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm));
             }
-
-            if (filteredProducts.length === 0) {
+            if (filtered.length === 0) {
                 container.innerHTML = `
-                <div class="col-span-full text-center py-8 text-gray-500">
-                    No products found matching your criteria.
-                </div>
-            `;
+                    <div class="col-span-full text-center py-8 text-gray-500">
+                        No products found matching your criteria.
+                    </div>
+                `;
                 return;
             }
-
-            renderProducts(filteredProducts, true);
+            renderProducts(filtered, true);
         }
 
         function renderVendorProfile(store) {
@@ -797,10 +798,11 @@ ob_start();
                 avatarContainer.innerHTML = '';
                 avatarContainer.appendChild(logoImg);
             }
-            document.getElementById('vendor-cover').style.backgroundImage = 'linear-gradient(45deg, #f3f4f6 25%, #e5e7eb 25%, #e5e7eb 50%, #f3f4f6 50%, #f3f4f6 75%, #e5e7eb 75%, #e5e7eb 100%)';
+            document.getElementById('vendor-cover').style.backgroundImage =
+                'linear-gradient(45deg, #f3f4f6 25%, #e5e7eb 25%, #e5e7eb 50%, #f3f4f6 50%, #f3f4f6 75%, #e5e7eb 75%, #e5e7eb 100%)';
             document.getElementById('vendor-cover').style.backgroundSize = '20px 20px';
 
-            // Count only active products and categories
+            // active categories
             const activeCategories = store.categories ? store.categories.filter(cat => cat.status === 'active') : [];
             const activeCategoriesCount = activeCategories.length;
             const activeProductsCount = store.product_count || 0;
@@ -808,16 +810,19 @@ ob_start();
             document.getElementById('product-count').textContent = activeProductsCount;
             document.getElementById('products-heading-count').textContent = activeProductsCount;
             document.getElementById('category-count').textContent = activeCategoriesCount;
-            document.getElementById('view-count').textContent = store.view_count || '0';
+            document.getElementById('view-count').textContent = '0'; // no 'views' column in DB
             const createdYear = new Date(store.created_at).getFullYear();
             document.getElementById('member-since').textContent = createdYear;
-            document.getElementById('store-description').textContent = store.description ? store.description : 'No description provided.';
+            document.getElementById('store-description').textContent = store.description || 'No description provided.';
             if (store.website_url) {
                 document.getElementById('store-website').textContent = store.website_url;
-                document.getElementById('store-website').href = store.website_url.startsWith('http') ? store.website_url : 'https://' + store.website_url;
+                document.getElementById('store-website').href = store.website_url.startsWith('http') ?
+                    store.website_url :
+                    'https://' + store.website_url;
             } else {
                 document.getElementById('website-section').classList.add('hidden');
             }
+
             isOwner = store.is_owner;
             if (isOwner) {
                 document.getElementById('owner-actions').classList.remove('hidden');
@@ -828,6 +833,7 @@ ob_start();
         function updateVerificationProgress(store) {
             let completedSteps = 0;
             let totalSteps = 4;
+
             const hasBasicDetails = store.name && store.business_email && store.business_phone && store.nature_of_operation;
             if (hasBasicDetails) {
                 completedSteps++;
@@ -843,22 +849,21 @@ ob_start();
                 updateStepStatus('location-details', false);
             }
 
-            // Only count active categories
-            const activeCategories = store.categories ? store.categories.filter(cat => cat.status === 'active') : [];
-            const hasCategories = activeCategories.length > 0;
-            if (hasCategories) {
+            const activeCats = store.categories ? store.categories.filter(cat => cat.status === 'active') : [];
+            if (activeCats.length > 0) {
                 completedSteps++;
                 updateStepStatus('categories', true);
             } else {
                 updateStepStatus('categories', false);
             }
-            const hasProducts = store.product_count && store.product_count > 0;
-            if (hasProducts) {
+
+            if (store.product_count && store.product_count > 0) {
                 completedSteps++;
                 updateStepStatus('products', true);
             } else {
                 updateStepStatus('products', false);
             }
+
             const percentage = Math.round((completedSteps / totalSteps) * 100);
             document.getElementById('completion-percentage').textContent = percentage;
             document.getElementById('completion-steps').textContent = completedSteps;
@@ -893,6 +898,11 @@ ob_start();
             }
         }
 
+        /**
+         * Display products:
+         *  - Each product has .pricing array of { unit_name, price, price_category, delivery_capacity }.
+         *  - We'll just show the first price or all prices in a loop.
+         */
         function renderProducts(products, clearExisting = true) {
             const container = document.getElementById('products-container');
             if (clearExisting) {
@@ -900,36 +910,47 @@ ob_start();
             }
             if (!products || products.length === 0) {
                 container.innerHTML = `
-                <div class="col-span-full text-center py-8 text-gray-500">
-                    No products found for this vendor.
-                </div>
-            `;
+                    <div class="col-span-full text-center py-8 text-gray-500">
+                        No products found for this vendor.
+                    </div>
+                `;
                 return;
             }
+
             products.forEach(product => {
                 const productCard = document.createElement('div');
-                productCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform hover:-translate-y-1';
-                productCard.dataset.categoryId = product.store_category_uuid_id;
+                productCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform hover:-translate-y-1 flex flex-col';
 
-                // Use placehold.co for images instead of trying to load from product_images table
+                // placeholder image
                 const productName = encodeURIComponent(product.name.substring(0, 2));
                 const imageUrl = `https://placehold.co/400x200/f0f0f0/808080?text=${productName}`;
 
+                const pricingLines = (product.pricing && product.pricing.length > 0) ?
+                    product.pricing.map(pr => `
+                        <div class="text-sm text-gray-700 my-1">
+                            <strong>${escapeHtml(pr.unit_name)}</strong>:
+                            UGX ${formatNumber(pr.price)} 
+                            <em class="text-xs text-gray-500">(${escapeHtml(pr.price_category)})</em>
+                            ${pr.delivery_capacity ? `<span class="ml-2 text-xs text-gray-400">Cap: ${pr.delivery_capacity}</span>` : ''}
+                        </div>
+                      `).join('') :
+                    `<div class="text-sm text-gray-600 italic">No price data</div>`;
+
                 productCard.innerHTML = `
-                <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover">
-                <div class="p-4 flex flex-col">
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">${escapeHtml(product.name)}</h3>
-                    <p class="text-gray-500 text-sm mb-4">Per ${escapeHtml(product.unit || 'Unit')}</p>
-                    <p class="text-xl font-bold text-red-600 mb-2">UGX ${formatNumber(product.price)}</p>
-                    <p class="text-gray-500 text-sm mb-4">Max Capacity: ${product.max_capacity || 'N/A'}</p>
-                    <div class="flex justify-between items-center pt-4 border-t border-gray-200 mt-auto">
-                        <span class="text-gray-500 text-sm">
-                            <i class="fas fa-eye"></i> ${product.views || 0} Views
-                        </span>
-                        <a href="#" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors">View Details</a>
+                    <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-40 object-cover">
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">${escapeHtml(product.name)}</h3>
+                        <p class="text-gray-500 text-sm mb-4 flex-grow">
+                            ${escapeHtml(product.description || '').substring(0,100)}...
+                        </p>
+                        <div class="border-t border-gray-200 pt-2">
+                            ${pricingLines}
+                        </div>
+                        <div class="flex justify-end items-center pt-4 mt-auto">
+                            <a href="#" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors">View Details</a>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
                 container.appendChild(productCard);
             });
         }
@@ -1013,7 +1034,6 @@ ob_start();
         document.getElementById('search-products').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
             const categoryId = document.getElementById('filter-category').value;
-
             filterProducts(categoryId, searchTerm);
         });
 
@@ -1021,18 +1041,22 @@ ob_start();
             const sortValue = e.target.value;
             const container = document.getElementById('products-container');
             const productCards = Array.from(container.children);
+            // if only "No products" div, skip
             if (productCards.length <= 1) return;
+
             productCards.sort((a, b) => {
+                const aPrices = a.querySelectorAll('.verification-indicator');
                 if (sortValue === 'latest') {
-                    return 0;
+                    return 0; // or your custom logic
                 } else if (sortValue === 'price-low') {
-                    const priceA = parseInt(a.querySelector('.text-red-600').textContent.replace(/[^\d]/g, '')) || 0;
-                    const priceB = parseInt(b.querySelector('.text-red-600').textContent.replace(/[^\d]/g, '')) || 0;
-                    return priceA - priceB;
+                    // Very naive example: parse first price from each card
+                    const aPrice = parseInt((a.querySelector('.border-t')?.textContent || '0').replace(/\D+/g, '')) || 0;
+                    const bPrice = parseInt((b.querySelector('.border-t')?.textContent || '0').replace(/\D+/g, '')) || 0;
+                    return aPrice - bPrice;
                 } else if (sortValue === 'price-high') {
-                    const priceA = parseInt(a.querySelector('.text-red-600').textContent.replace(/[^\d]/g, '')) || 0;
-                    const priceB = parseInt(b.querySelector('.text-red-600').textContent.replace(/[^\d]/g, '')) || 0;
-                    return priceB - priceA;
+                    const aPrice = parseInt((a.querySelector('.border-t')?.textContent || '0').replace(/\D+/g, '')) || 0;
+                    const bPrice = parseInt((b.querySelector('.border-t')?.textContent || '0').replace(/\D+/g, '')) || 0;
+                    return bPrice - aPrice;
                 }
                 return 0;
             });
@@ -1040,15 +1064,11 @@ ob_start();
             productCards.forEach(card => container.appendChild(card));
         });
 
+        // Manage Categories
         document.getElementById('manage-categories-btn').addEventListener('click', function() {
             openModal('manageCategoriesModal');
             loadStoreCategoriesForManagement();
             loadAvailableCategories();
-        });
-
-        document.getElementById('add-product-btn').addEventListener('click', function() {
-            openModal('addProductModal');
-            loadStoreCategories();
         });
 
         function loadStoreCategoriesForManagement() {
@@ -1070,35 +1090,34 @@ ob_start();
                 const statusText = category.status === 'active' ? 'Active' : 'Inactive';
 
                 categoryCard.innerHTML = `
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="font-bold text-lg">${escapeHtml(category.name)}</h3>
-                    <span class="badge ${statusClass}">${statusText}</span>
-                </div>
-                <p class="text-gray-600 text-sm category-description mb-3">${escapeHtml(category.description || 'No description available')}</p>
-                <div class="flex justify-between items-center mt-auto">
-                    <span class="text-sm text-gray-500">
-                        <i class="fas fa-box"></i> ${category.product_count || 0} Products
-                    </span>
-                    <select class="category-status-select px-2 py-1 border border-gray-300 rounded text-sm" data-id="${category.uuid_id}" data-original="${category.status}">
-                        <option value="active" ${category.status === 'active' ? 'selected' : ''}>Active</option>
-                        <option value="inactive" ${category.status === 'inactive' ? 'selected' : ''}>Inactive</option>
-                    </select>
-                </div>
-            `;
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg">${escapeHtml(category.name)}</h3>
+                        <span class="badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm category-description mb-3">
+                        ${escapeHtml(category.description || 'No description available')}
+                    </p>
+                    <div class="flex justify-between items-center mt-auto">
+                        <span class="text-sm text-gray-500">
+                            <i class="fas fa-box"></i> ${category.product_count || 0} Products
+                        </span>
+                        <select class="category-status-select px-2 py-1 border border-gray-300 rounded text-sm"
+                            data-id="${category.uuid_id}" data-original="${category.status}">
+                            <option value="active" ${category.status === 'active' ? 'selected' : ''}>Active</option>
+                            <option value="inactive" ${category.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                        </select>
+                    </div>
+                `;
                 container.appendChild(categoryCard);
             });
 
-            // Add event listeners to status selects
             document.querySelectorAll('.category-status-select').forEach(select => {
                 select.addEventListener('change', function() {
                     const categoryId = this.dataset.id;
                     const newStatus = this.value;
                     const originalStatus = this.dataset.original;
-
                     if (newStatus !== originalStatus) {
                         categoryStatusChanges[categoryId] = newStatus;
-
-                        // Update the badge
                         const card = this.closest('.category-card');
                         const badge = card.querySelector('.badge');
                         badge.className = `badge ${newStatus === 'active' ? 'badge-success' : 'badge-warning'}`;
@@ -1118,48 +1137,38 @@ ob_start();
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.categories && data.categories.length > 0) {
-                        // Filter to only show active categories
                         const activeCategories = data.categories.filter(cat => cat.status === 'active');
-
                         if (activeCategories.length === 0) {
                             container.innerHTML = '<p class="text-center text-gray-500 py-4 col-span-full">No additional active categories available.</p>';
                             return;
                         }
-
                         container.innerHTML = '';
-
-                        // Get product counts for each category
                         fetch(`${BASE_URL}fetch/manageProfile.php?action=getCategoryProductCounts`)
-                            .then(response => response.json())
+                            .then(r => r.json())
                             .then(countData => {
                                 const productCounts = countData.success ? countData.counts : {};
-
                                 activeCategories.forEach(category => {
                                     const categoryCard = document.createElement('div');
                                     categoryCard.className = 'category-card';
-
                                     const productCount = productCounts[category.uuid_id] || 0;
-
                                     categoryCard.innerHTML = `
-                                    <div class="flex items-start mb-2">
-                                        <input type="checkbox" id="cat-${category.uuid_id}" 
-                                               class="category-checkbox mr-2 mt-1" 
-                                               value="${category.uuid_id}">
-                                        <div>
-                                            <label for="cat-${category.uuid_id}" class="font-bold text-lg cursor-pointer">
-                                                ${escapeHtml(category.name)}
-                                            </label>
-                                            <p class="text-gray-600 text-sm category-description">
-                                                ${escapeHtml(category.description || 'No description available')}
-                                            </p>
-                                            <p class="text-sm text-gray-500 mt-2">
-                                                <i class="fas fa-box"></i> ${productCount} Products
-                                            </p>
+                                        <div class="flex items-start mb-2">
+                                            <input type="checkbox" id="cat-${category.uuid_id}" 
+                                                class="category-checkbox mr-2 mt-1" value="${category.uuid_id}">
+                                            <div>
+                                                <label for="cat-${category.uuid_id}" class="font-bold text-lg cursor-pointer">
+                                                    ${escapeHtml(category.name)}
+                                                </label>
+                                                <p class="text-gray-600 text-sm category-description">
+                                                    ${escapeHtml(category.description || 'No description available')}
+                                                </p>
+                                                <p class="text-sm text-gray-500 mt-2">
+                                                    <i class="fas fa-box"></i> ${productCount} Products
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                `;
+                                    `;
                                     container.appendChild(categoryCard);
-
                                     const checkbox = categoryCard.querySelector('input');
                                     checkbox.addEventListener('change', function() {
                                         if (this.checked) {
@@ -1174,29 +1183,24 @@ ob_start();
                             })
                             .catch(error => {
                                 console.error('Error loading category product counts:', error);
-
-                                // Fallback if product counts can't be loaded
                                 activeCategories.forEach(category => {
                                     const categoryCard = document.createElement('div');
                                     categoryCard.className = 'category-card';
-
                                     categoryCard.innerHTML = `
-                                    <div class="flex items-start mb-2">
-                                        <input type="checkbox" id="cat-${category.uuid_id}" 
-                                               class="category-checkbox mr-2 mt-1" 
-                                               value="${category.uuid_id}">
-                                        <div>
-                                            <label for="cat-${category.uuid_id}" class="font-bold text-lg cursor-pointer">
-                                                ${escapeHtml(category.name)}
-                                            </label>
-                                            <p class="text-gray-600 text-sm category-description">
-                                                ${escapeHtml(category.description || 'No description available')}
-                                            </p>
+                                        <div class="flex items-start mb-2">
+                                            <input type="checkbox" id="cat-${category.uuid_id}" 
+                                                class="category-checkbox mr-2 mt-1" value="${category.uuid_id}">
+                                            <div>
+                                                <label for="cat-${category.uuid_id}" class="font-bold text-lg cursor-pointer">
+                                                    ${escapeHtml(category.name)}
+                                                </label>
+                                                <p class="text-gray-600 text-sm category-description">
+                                                    ${escapeHtml(category.description || 'No description available')}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                `;
+                                    `;
                                     container.appendChild(categoryCard);
-
                                     const checkbox = categoryCard.querySelector('input');
                                     checkbox.addEventListener('change', function() {
                                         if (this.checked) {
@@ -1219,89 +1223,22 @@ ob_start();
                 });
         }
 
-        function loadStoreCategories() {
-            const categorySelect = document.getElementById('productCategory');
-            categorySelect.innerHTML = '<option value="">Select a category</option>';
-            if (storeData.categories && storeData.categories.length > 0) {
-                const activeCategories = storeData.categories.filter(cat => cat.status === 'active');
-                activeCategories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.uuid_id;
-                    option.textContent = category.name;
-                    categorySelect.appendChild(option);
-                });
-                categorySelect.disabled = false;
-                categorySelect.addEventListener('change', function() {
-                    const categoryId = this.value;
-                    if (categoryId) {
-                        loadProductsForCategory(categoryId);
-                    } else {
-                        const productSelect = document.getElementById('productSelect');
-                        productSelect.innerHTML = '<option value="">Select a product</option>';
-                        productSelect.disabled = true;
-                    }
-                });
-            } else {
-                categorySelect.innerHTML = '<option value="">No categories available</option>';
-                categorySelect.disabled = true;
-            }
-        }
-
-        function loadProductsForCategory(categoryId) {
-            const productSelect = document.getElementById('productSelect');
-            productSelect.innerHTML = '<option value="">Loading products...</option>';
-            productSelect.disabled = true;
-            fetch(`${BASE_URL}fetch/manageProfile.php?action=getProductsForCategory&store_id=${vendorId}&category_id=${categoryId}`)
-                .then(response => response.json())
-                .then(data => {
-                    productSelect.innerHTML = '<option value="">Select a product</option>';
-                    if (data.success && data.products && data.products.length > 0) {
-                        data.products.forEach(product => {
-                            const option = document.createElement('option');
-                            option.value = product.uuid_id;
-                            option.textContent = product.name;
-                            option.dataset.price = product.price || 0;
-                            productSelect.appendChild(option);
-                        });
-                        productSelect.disabled = false;
-                        productSelect.addEventListener('change', function() {
-                            const selectedOption = this.options[this.selectedIndex];
-                            if (selectedOption && selectedOption.dataset.price) {
-                                document.getElementById('productPrice').value = selectedOption.dataset.price;
-                            }
-                        });
-                    } else {
-                        productSelect.innerHTML = '<option value="">No products available for this category</option>';
-                        productSelect.disabled = true;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading products for category:', error);
-                    productSelect.innerHTML = '<option value="">Error loading products</option>';
-                    productSelect.disabled = true;
-                });
-        }
-
         document.getElementById('saveCategoriesBtn').addEventListener('click', function() {
             const activeTab = document.querySelector('.tab-button.active').dataset.tab;
-
             if (activeTab === 'add-tab' && selectedCategories.length === 0) {
                 alert('Please select at least one category to add');
                 return;
             }
-
             if (activeTab === 'manage-tab' && Object.keys(categoryStatusChanges).length === 0) {
                 alert('No changes detected');
                 return;
             }
-
             const button = this;
             const originalText = button.textContent;
             button.disabled = true;
             button.textContent = 'Saving...';
 
             let endpoint, payload;
-
             if (activeTab === 'add-tab') {
                 endpoint = `${BASE_URL}fetch/manageProfile.php?action=updateStoreCategories`;
                 payload = {
@@ -1343,37 +1280,226 @@ ob_start();
                 });
         });
 
+        // Add Product
+        document.getElementById('add-product-btn').addEventListener('click', function() {
+            openModal('addProductModal');
+            loadStoreCategories();
+        });
+
+        function loadStoreCategories() {
+            const categorySelect = document.getElementById('productCategory');
+            categorySelect.innerHTML = '<option value="">Select a category</option>';
+            if (storeData.categories && storeData.categories.length > 0) {
+                const activeCats = storeData.categories.filter(cat => cat.status === 'active');
+                activeCats.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.category_uuid_id;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+                categorySelect.disabled = false;
+                categorySelect.addEventListener('change', function() {
+                    const catId = this.value;
+                    if (catId) {
+                        loadProductsForCategory(catId);
+                    } else {
+                        const productSelect = document.getElementById('productSelect');
+                        productSelect.innerHTML = '<option value="">Select a product</option>';
+                        productSelect.disabled = true;
+                        document.getElementById('unitPricingContainer').classList.add('hidden');
+                    }
+                });
+            } else {
+                categorySelect.innerHTML = '<option value="">No categories available</option>';
+                categorySelect.disabled = true;
+            }
+        }
+
+        function loadProductsForCategory(categoryId) {
+            const productSelect = document.getElementById('productSelect');
+            productSelect.innerHTML = '<option value="">Loading products...</option>';
+            productSelect.disabled = true;
+            fetch(`${BASE_URL}fetch/manageProfile.php?action=getProductsForCategory&store_id=${vendorId}&category_id=${categoryId}`)
+                .then(r => r.json())
+                .then(data => {
+                    productSelect.innerHTML = '<option value="">Select a product</option>';
+                    if (data.success && data.products && data.products.length > 0) {
+                        data.products.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p.uuid_id;
+                            opt.textContent = p.name;
+                            productSelect.appendChild(opt);
+                        });
+                        productSelect.disabled = false;
+                        productSelect.addEventListener('change', function() {
+                            const prodId = this.value;
+                            if (prodId) {
+                                fetchUnitsForProduct(prodId);
+                            } else {
+                                document.getElementById('unitPricingContainer').classList.add('hidden');
+                            }
+                        });
+                    } else {
+                        productSelect.innerHTML = '<option value="">No products available for this category</option>';
+                        productSelect.disabled = true;
+                        document.getElementById('unitPricingContainer').classList.add('hidden');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading products for category:', err);
+                    productSelect.innerHTML = '<option value="">Error loading products</option>';
+                    productSelect.disabled = true;
+                });
+        }
+
+        function fetchUnitsForProduct(productId) {
+            fetch(`${BASE_URL}fetch/manageProfile.php?action=getUnitsForProduct&product_id=${productId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        availableUnits = data.units;
+                        prepareUnitPricingUI();
+                    } else {
+                        availableUnits = [];
+                        document.getElementById('unitPricingContainer').classList.add('hidden');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching units:', err);
+                    availableUnits = [];
+                    document.getElementById('unitPricingContainer').classList.add('hidden');
+                });
+        }
+
+        function prepareUnitPricingUI() {
+            const container = document.getElementById('unitPricingContainer');
+            container.classList.remove('hidden');
+            const wrapper = document.getElementById('lineItemsWrapper');
+            wrapper.innerHTML = '';
+            lineItemCount = 0;
+            addLineItemRow();
+        }
+
+        function addLineItemRow() {
+            lineItemCount++;
+            const wrapper = document.getElementById('lineItemsWrapper');
+            const rowId = `line-item-${lineItemCount}`;
+
+            const row = document.createElement('div');
+            row.classList.add('flex', 'gap-2', 'items-center', 'flex-wrap');
+            row.id = rowId;
+
+            const unitSelect = document.createElement('select');
+            unitSelect.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
+            unitSelect.required = true;
+            availableUnits.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.uuid_id;
+                opt.textContent = `${u.package_name} (${u.si_unit})`;
+                unitSelect.appendChild(opt);
+            });
+
+            const priceCatSelect = document.createElement('select');
+            priceCatSelect.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
+            ['retail', 'wholesale', 'factory'].forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat[0].toUpperCase() + cat.slice(1);
+                priceCatSelect.appendChild(opt);
+            });
+
+            const priceInput = document.createElement('input');
+            priceInput.type = 'number';
+            priceInput.min = '0';
+            priceInput.step = 'any';
+            priceInput.placeholder = 'Price';
+            priceInput.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
+            priceInput.required = true;
+
+            const capacityInput = document.createElement('input');
+            capacityInput.type = 'number';
+            capacityInput.min = '0';
+            capacityInput.placeholder = 'Capacity';
+            capacityInput.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.classList.add('px-2', 'py-1', 'text-xs', 'bg-red-200', 'text-red-800', 'rounded');
+            removeBtn.textContent = 'Remove';
+            removeBtn.addEventListener('click', () => {
+                wrapper.removeChild(row);
+            });
+
+            row.appendChild(unitSelect);
+            row.appendChild(priceCatSelect);
+            row.appendChild(priceInput);
+            row.appendChild(capacityInput);
+            row.appendChild(removeBtn);
+
+            wrapper.appendChild(row);
+        }
+
+        document.getElementById('addLineItemBtn').addEventListener('click', function() {
+            addLineItemRow();
+        });
+
         document.getElementById('addProductForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const categoryId = document.getElementById('productCategory').value;
             const productId = document.getElementById('productSelect').value;
-            const price = document.getElementById('productPrice').value;
-            const quantity = document.getElementById('productQuantity').value;
-            if (!categoryId || !productId || !price || !quantity) {
-                alert('Please fill in all required fields');
+            if (!categoryId || !productId) {
+                alert('Please select Category and Product');
                 return;
             }
+            const rows = document.querySelectorAll('#lineItemsWrapper > div');
+            if (rows.length === 0) {
+                alert('Please add at least one pricing entry');
+                return;
+            }
+            const lineItems = [];
+            rows.forEach(row => {
+                const selects = row.querySelectorAll('select');
+                const inputs = row.querySelectorAll('input');
+                if (selects.length < 2 || inputs.length < 2) return;
+                const unitUuid = selects[0].value;
+                const priceCategory = selects[1].value;
+                const priceVal = inputs[0].value;
+                const capacityVal = inputs[1].value || null;
+                if (!unitUuid || !priceVal) return;
+                lineItems.push({
+                    unit_uuid_id: unitUuid,
+                    price_category: priceCategory,
+                    price: priceVal,
+                    delivery_capacity: capacityVal
+                });
+            });
+            if (lineItems.length === 0) {
+                alert('Please ensure you have filled the price for at least one line item');
+                return;
+            }
+
             const formData = new FormData();
             formData.append('store_id', vendorId);
             formData.append('category_id', categoryId);
             formData.append('product_id', productId);
-            formData.append('price', price);
-            formData.append('quantity', quantity);
+            formData.append('line_items', JSON.stringify(lineItems));
+
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.disabled = true;
             submitBtn.textContent = 'Adding...';
+
             fetch(`${BASE_URL}fetch/manageProfile.php?action=addStoreProduct`, {
                     method: 'POST',
                     body: formData
                 })
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalText;
                     if (data.success) {
                         closeModal('addProductModal');
-                        notifications.success('Product added successfully');
+                        notifications.success('Product & pricing added successfully');
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
                         alert(data.error || 'Failed to add product');

@@ -9,12 +9,14 @@ ini_set('error_log', __DIR__ . '/../logs/php-errors.log');
 
 require_once __DIR__ . '/../config/config.php';
 
-// Ensure we're sending JSON response
 header('Content-Type: application/json');
 
 // Check if user is logged in (but don't require login for public profile view)
 $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 $currentUserId = $isLoggedIn ? $_SESSION['user']['user_id'] : null;
+
+// 1) Ensure the product_pricing table (and required columns) exist
+ensureProductPricingTable($pdo);
 
 // Determine action
 $action = $_GET['action'] ?? '';
@@ -70,66 +72,19 @@ try {
             reportStore($pdo, $_POST['id'] ?? '', $_POST['reason'] ?? '', $currentUserId);
             break;
 
+        // 2) GET UNITS FOR A PRODUCT
+        case 'getUnitsForProduct':
+            getUnitsForProduct($pdo);
+            break;
+
+        // 3) Return only products for a category that are NOT already in store_products
         case 'getProductsForCategory':
-            if (empty($_GET['store_id'])) {
+            if (empty($_GET['store_id']) || empty($_GET['category_id'])) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'error' => 'Store ID is required']);
+                echo json_encode(['success' => false, 'error' => 'Store ID and Category ID are required']);
                 break;
             }
-            if (empty($_GET['category_id'])) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'error' => 'Category ID is required']);
-                break;
-            }
-            $storeIdParam = $_GET['store_id'];
-            $categoryId = $_GET['category_id'];
-            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $storeIdParam)) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
-                break;
-            }
-            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $categoryId)) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'error' => 'Invalid category ID format']);
-                break;
-            }
-            $binaryStoreId = uuidToBin($storeIdParam);
-            $binaryCategoryId = uuidToBin($categoryId);
-            $stmt = $pdo->prepare("
-            SELECT 
-                p.id,
-                p.title as name,
-                p.description,
-                p.views,
-                p.featured,
-                pp.price,
-                ppn.package_name as unit,
-                pc.name as category_name,
-                sc.id as store_category_id,
-                sp.id as store_product_id
-            FROM store_products sp
-            JOIN store_categories sc ON sp.store_category_id = sc.id
-            JOIN products p ON sp.product_id = p.id
-            JOIN product_categories pc ON p.category_id = pc.id
-            LEFT JOIN product_pricing pp ON p.id = pp.product_id
-            LEFT JOIN product_unit_of_measure pum ON pp.unit_of_measure_id = pum.id
-            LEFT JOIN product_package_name ppn ON pum.product_package_name_id = ppn.id
-            WHERE sc.store_id = ? AND sc.category_id = ? AND sp.status = 'active' AND p.status = 'published'
-            ORDER BY p.created_at DESC
-        ");
-            $stmt->execute([$binaryStoreId, $binaryCategoryId]);
-            $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($products as &$product) {
-                $product['uuid_id'] = binToUuid($product['id']);
-                $product['store_category_uuid_id'] = binToUuid($product['store_category_id']);
-                $product['store_product_uuid_id'] = binToUuid($product['store_product_id']);
-                $product['price'] = floatval($product['price'] ?? 0);
-                $product['max_capacity'] = null;
-                $product['views'] = intval($product['views'] ?? 0);
-                $product['featured'] = (bool)$product['featured'];
-                unset($product['id'], $product['store_category_id'], $product['store_product_id']);
-            }
-            echo json_encode(['success' => true, 'products' => $products]);
+            getProductsNotInStore($pdo, $_GET['store_id'], $_GET['category_id']);
             break;
 
         default:
@@ -144,6 +99,64 @@ try {
 }
 
 ob_end_flush();
+
+/**
+ * Ensure product_pricing table and columns exist.
+ */
+function ensureProductPricingTable(PDO $pdo)
+{
+    // 1) Create table if not exists
+    $createTable = <<<SQL
+    CREATE TABLE IF NOT EXISTS `product_pricing` (
+      `id` BINARY(16) NOT NULL,
+      `store_id` BINARY(16) NOT NULL,
+      `product_unit_id` BINARY(16) NOT NULL,
+      `created_by` BINARY(16) NOT NULL,
+      `price` DECIMAL(10,2) NOT NULL,
+      `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail',
+      `delivery_capacity` INT DEFAULT NULL,
+      `created_at` DATETIME NOT NULL,
+      `updated_at` DATETIME NOT NULL,
+      PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+    SQL;
+
+    try {
+        $pdo->exec($createTable);
+    } catch (Exception $ex) {
+        error_log("Failed to create product_pricing: " . $ex->getMessage());
+        throw $ex;
+    }
+
+    // 2) Make sure columns exist if the table was partially created
+    $columns = [
+        'product_unit_id' => "ADD COLUMN `product_unit_id` BINARY(16) NOT NULL AFTER `store_id`",
+        'created_by' => "ADD COLUMN `created_by` BINARY(16) NOT NULL AFTER `product_unit_id`",
+        'price' => "ADD COLUMN `price` DECIMAL(10,2) NOT NULL AFTER `created_by`",
+        'price_category' => "ADD COLUMN `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail' AFTER `price`",
+        'delivery_capacity' => "ADD COLUMN `delivery_capacity` INT DEFAULT NULL AFTER `price_category`",
+        'created_at' => "ADD COLUMN `created_at` DATETIME NOT NULL AFTER `delivery_capacity`",
+        'updated_at' => "ADD COLUMN `updated_at` DATETIME NOT NULL AFTER `created_at`",
+    ];
+
+    try {
+        $res = $pdo->query("DESCRIBE `product_pricing`");
+        $existingCols = $res->fetchAll(PDO::FETCH_COLUMN);
+        $existingCols = array_map('strtolower', $existingCols);
+
+        foreach ($columns as $colName => $alterSql) {
+            if (!in_array(strtolower($colName), $existingCols)) {
+                try {
+                    $pdo->exec("ALTER TABLE `product_pricing` $alterSql");
+                } catch (Exception $e) {
+                    error_log("Error adding column `$colName` in product_pricing: " . $e->getMessage());
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log("Failed to DESCRIBE product_pricing: " . $e->getMessage());
+    }
+}
 
 function requireLogin()
 {
@@ -191,32 +204,38 @@ function getStoreDetails($pdo, $storeId, $currentUserId)
         echo json_encode(['success' => false, 'error' => 'Store ID is required']);
         return;
     }
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $storeId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
+        return;
+    }
+
+    $binaryStoreId = uuidToBin($storeId);
+    $binaryUserId = $currentUserId;
+
     try {
-        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $storeId)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
-            return;
-        }
-        $binaryStoreId = uuidToBin($storeId);
-        $binaryUserId = $currentUserId;
         $stmt = $pdo->prepare("
-        SELECT 
-            v.*,
-            u.username as owner_username,
-            u.email as owner_email,
-            u.phone as owner_phone,
-            u.current_login as owner_current_login,
-            (SELECT COUNT(*) FROM store_categories sc
-             WHERE sc.store_id = v.id AND sc.status = 'active') as category_count,
-            (SELECT COUNT(*) FROM store_products sp
-             JOIN store_categories sc ON sc.id = sp.store_category_id
-             WHERE sc.store_id = v.id AND sp.status = 'active' AND sc.status = 'active') as product_count
-        FROM vendor_stores v
-        JOIN zzimba_users u ON v.owner_id = u.id
-        WHERE v.id = ?
-    ");
+            SELECT 
+                v.*,
+                u.username as owner_username,
+                u.email as owner_email,
+                u.phone as owner_phone,
+                u.current_login as owner_current_login,
+                (SELECT COUNT(*) FROM store_categories sc
+                 WHERE sc.store_id = v.id AND sc.status = 'active') as category_count,
+                (SELECT COUNT(*) FROM store_products sp
+                 JOIN store_categories sc ON sc.id = sp.store_category_id
+                 WHERE sc.store_id = v.id 
+                   AND sp.status = 'active' 
+                   AND sc.status = 'active') as product_count
+            FROM vendor_stores v
+            JOIN zzimba_users u ON v.owner_id = u.id
+            WHERE v.id = ?
+        ");
         $stmt->execute([$binaryStoreId]);
         $store = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // fallback "demo" if not found
         if (!$store) {
             $store = [
                 'id' => $binaryStoreId,
@@ -247,29 +266,35 @@ function getStoreDetails($pdo, $storeId, $currentUserId)
                 'product_count' => 12
             ];
         }
-        $store['view_count'] = 150;
+
+        // Additional fields
+        $store['view_count'] = 0; // no 'views' in DB
         $store['is_owner'] = $binaryUserId && isStoreOwner($pdo, $binaryStoreId, $binaryUserId);
         $store['role'] = getUserStoreRole($pdo, $binaryStoreId, $binaryUserId);
         $store['can_manage'] = $binaryUserId && canManageStore($pdo, $binaryStoreId, $binaryUserId);
+
+        // Load categories
         try {
             $catStmt = $pdo->prepare("
-            SELECT 
-                sc.id,
-                sc.status,
-                sc.created_at,
-                sc.updated_at,
-                pc.id as category_id,
-                pc.name,
-                pc.description,
-                (SELECT COUNT(*) FROM store_products sp WHERE sp.store_category_id = sc.id AND sp.status = 'active') as product_count
-            FROM store_categories sc
-            JOIN product_categories pc ON sc.category_id = pc.id
-            WHERE sc.store_id = ? AND sc.status != 'deleted'
-            ORDER BY pc.name ASC
-        ");
+                SELECT 
+                    sc.id,
+                    sc.status,
+                    sc.created_at,
+                    sc.updated_at,
+                    pc.id as category_id,
+                    pc.name,
+                    pc.description,
+                    (SELECT COUNT(*) FROM store_products sp 
+                     WHERE sp.store_category_id = sc.id AND sp.status = 'active') as product_count
+                FROM store_categories sc
+                JOIN product_categories pc ON sc.category_id = pc.id
+                WHERE sc.store_id = ? AND sc.status != 'deleted'
+                ORDER BY pc.name ASC
+            ");
             $catStmt->execute([$binaryStoreId]);
             $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
+            // fallback
             $categories = [
                 [
                     'id' => generateRandomBinary(),
@@ -293,23 +318,25 @@ function getStoreDetails($pdo, $storeId, $currentUserId)
                 ]
             ];
         }
-        foreach ($categories as &$category) {
-            $category['uuid_id'] = binToUuid($category['id']);
-            $category['category_uuid_id'] = binToUuid($category['category_id']);
-            unset($category['id'], $category['category_id']);
+        foreach ($categories as &$cat) {
+            $cat['uuid_id'] = binToUuid($cat['id']);
+            $cat['category_uuid_id'] = binToUuid($cat['category_id']);
+            unset($cat['id'], $cat['category_id']);
         }
         $store['categories'] = $categories;
+
+        // If store owner, load managers
         if ($store['is_owner']) {
             try {
                 $mgrStmt = $pdo->prepare("
-                SELECT 
-                    sm.id, sm.user_id, sm.role, sm.status, sm.created_at, sm.updated_at,
-                    u.username, u.email, u.phone, u.status as user_status
-                FROM store_managers sm
-                JOIN zzimba_users u ON sm.user_id = u.id
-                WHERE sm.store_id = ? AND sm.status != 'removed'
-                ORDER BY sm.created_at DESC
-            ");
+                    SELECT 
+                        sm.id, sm.user_id, sm.role, sm.status, sm.created_at, sm.updated_at,
+                        u.username, u.email, u.phone, u.status as user_status
+                    FROM store_managers sm
+                    JOIN zzimba_users u ON sm.user_id = u.id
+                    WHERE sm.store_id = ? AND sm.status != 'removed'
+                    ORDER BY sm.created_at DESC
+                ");
                 $mgrStmt->execute([$binaryStoreId]);
                 $managers = $mgrStmt->fetchAll(PDO::FETCH_ASSOC);
             } catch (Exception $e) {
@@ -335,9 +362,11 @@ function getStoreDetails($pdo, $storeId, $currentUserId)
             }
             $store['managers'] = $managers;
         }
+
         $store['uuid_id'] = binToUuid($store['id']);
         $store['owner_uuid_id'] = binToUuid($store['owner_id']);
         unset($store['id'], $store['owner_id']);
+
         echo json_encode(['success' => true, 'store' => $store]);
     } catch (Exception $e) {
         error_log("Error getting store details: " . $e->getMessage());
@@ -346,6 +375,9 @@ function getStoreDetails($pdo, $storeId, $currentUserId)
     }
 }
 
+/**
+ * Modified to gather multiple pricing lines in an array for each product
+ */
 function getStoreProducts($pdo, $storeId, $page = 1, $limit = 12)
 {
     if (empty($storeId)) {
@@ -353,73 +385,112 @@ function getStoreProducts($pdo, $storeId, $page = 1, $limit = 12)
         echo json_encode(['success' => false, 'error' => 'Store ID is required']);
         return;
     }
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $storeId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
+        return;
+    }
+
+    $binaryStoreId = uuidToBin($storeId);
+    $page = max(1, intval($page));
+    $limit = max(1, min(50, intval($limit)));
+    $offset = ($page - 1) * $limit;
+
     try {
-        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $storeId)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
-            return;
-        }
-        $binaryStoreId = uuidToBin($storeId);
-        $page = max(1, intval($page));
-        $limit = max(1, min(50, intval($limit)));
-        $offset = ($page - 1) * $limit;
+        // Count total
         $countStmt = $pdo->prepare("
-        SELECT COUNT(*) 
-        FROM store_products sp
-        JOIN store_categories sc ON sp.store_category_id = sc.id
-        JOIN products p ON sp.product_id = p.id
-        WHERE sc.store_id = ? AND sp.status = 'active' AND p.status = 'published' AND sc.status = 'active'
-    ");
+            SELECT COUNT(*)
+            FROM store_products sp
+            JOIN store_categories sc ON sp.store_category_id = sc.id
+            JOIN products p ON sp.product_id = p.id
+            WHERE sc.store_id = ? 
+              AND sp.status = 'active' 
+              AND p.status = 'published' 
+              AND sc.status = 'active'
+        ");
         $countStmt->execute([$binaryStoreId]);
         $totalProducts = $countStmt->fetchColumn();
-        $totalPages = ceil($totalProducts / $limit);
-        $stmt = $pdo->prepare("
-        SELECT 
-            p.id,
-            p.title as name,
-            p.description,
-            p.views,
-            p.featured,
-            pp.price,
-            ppn.package_name as unit,
-            pc.name as category_name,
-            sc.id as store_category_id,
-            sp.id as store_product_id
-        FROM store_products sp
-        JOIN store_categories sc ON sp.store_category_id = sc.id
-        JOIN products p ON sp.product_id = p.id
-        JOIN product_categories pc ON p.category_id = pc.id
-        LEFT JOIN product_pricing pp ON p.id = pp.product_id
-        LEFT JOIN product_unit_of_measure pum ON pp.unit_of_measure_id = pum.id
-        LEFT JOIN product_package_name ppn ON pum.product_package_name_id = ppn.id
-        WHERE sc.store_id = ? AND sp.status = 'active' AND p.status = 'published' AND sc.status = 'active'
-        ORDER BY p.featured DESC, p.created_at DESC
-        LIMIT ? OFFSET ?
-    ");
+        $totalPages = max(1, ceil($totalProducts / $limit));
+
+        // Query all rows
+        $sql = "
+            SELECT 
+                p.id as product_id,
+                p.title as name,
+                p.description,
+                p.featured,
+                pc.name as category_name,
+                sc.id as store_category_id,
+                sp.id as store_product_id,
+                pp.id as pricing_id,
+                pp.price,
+                pp.price_category,
+                pp.delivery_capacity,
+                ppn.package_name,
+                pum.si_unit
+            FROM store_products sp
+            JOIN store_categories sc ON sp.store_category_id = sc.id
+            JOIN products p ON sp.product_id = p.id
+            JOIN product_categories pc ON p.category_id = pc.id
+            LEFT JOIN product_units pu ON p.id = pu.product_id
+            LEFT JOIN product_pricing pp 
+                ON pu.id = pp.product_unit_id
+                AND pp.store_id = sc.store_id
+            LEFT JOIN product_unit_of_measure pum ON pu.unit_of_measure_id = pum.id
+            LEFT JOIN product_package_name ppn ON pum.product_package_name_id = ppn.id
+            WHERE sc.store_id = ?
+              AND sp.status = 'active'
+              AND p.status = 'published'
+              AND sc.status = 'active'
+            ORDER BY p.featured DESC, p.created_at DESC
+            LIMIT ? OFFSET ?
+        ";
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([$binaryStoreId, $limit, $offset]);
-        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($products as &$product) {
-            $product['uuid_id'] = binToUuid($product['id']);
-            $product['store_category_uuid_id'] = binToUuid($product['store_category_id']);
-            $product['store_product_uuid_id'] = binToUuid($product['store_product_id']);
-            $product['price'] = floatval($product['price'] ?? 0);
-            $product['max_capacity'] = null;
-            $product['views'] = intval($product['views'] ?? 0);
-            $product['featured'] = (bool)$product['featured'];
-            unset($product['id'], $product['store_category_id'], $product['store_product_id']);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Group by product_id
+        $productsById = [];
+        foreach ($rows as $row) {
+            $pid = binToUuid($row['product_id']);
+            if (!isset($productsById[$pid])) {
+                $productsById[$pid] = [
+                    'uuid_id' => $pid,
+                    'name' => $row['name'],
+                    'description' => $row['description'],
+                    'featured' => (bool)$row['featured'],
+                    'category_name' => $row['category_name'],
+                    'store_category_uuid_id' => binToUuid($row['store_category_id']),
+                    'store_product_uuid_id' => binToUuid($row['store_product_id']),
+                    'pricing' => []
+                ];
+            }
+            if ($row['pricing_id']) {
+                // build a pricing entry
+                $productsById[$pid]['pricing'][] = [
+                    'unit_name' => $row['package_name'] . ($row['si_unit'] ? " ({$row['si_unit']})" : ''),
+                    'price' => floatval($row['price'] ?? 0),
+                    'price_category' => $row['price_category'] ?? 'retail',
+                    'delivery_capacity' => $row['delivery_capacity'] ? intval($row['delivery_capacity']) : null
+                ];
+            }
         }
+
+        // Flatten
+        $products = array_values($productsById);
+
         echo json_encode([
             'success' => true,
             'products' => $products,
             'pagination' => [
-                'total' => $totalProducts,
-                'page' => $page,
-                'limit' => $limit,
-                'pages' => $totalPages
+                'total' => (int)$totalProducts,
+                'page' => (int)$page,
+                'limit' => (int)$limit,
+                'pages' => (int)$totalPages
             ]
         ]);
     } catch (Exception $e) {
-        error_log("Error getting store products: " . $e->getMessage());
+        error_log("Error retrieving store products: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Error retrieving store products: ' . $e->getMessage()]);
     }
@@ -432,27 +503,43 @@ function getAvailableCategories($pdo, $storeId)
         echo json_encode(['success' => false, 'error' => 'Store ID is required']);
         return;
     }
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $storeId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
+        return;
+    }
+
+    $binaryStoreId = uuidToBin($storeId);
+
     try {
-        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $storeId)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
-            return;
-        }
-        $binaryStoreId = uuidToBin($storeId);
         $stmt = $pdo->prepare("
-        SELECT id, name, description, status, meta_title, meta_description, meta_keywords
-        FROM product_categories
-        WHERE status = 'active'
-        AND id NOT IN (SELECT category_id FROM store_categories WHERE store_id = ? AND status != 'deleted')
-        ORDER BY name ASC
-    ");
+            SELECT 
+                id, 
+                name, 
+                description, 
+                status, 
+                meta_title, 
+                meta_description, 
+                meta_keywords
+            FROM product_categories
+            WHERE status = 'active'
+              AND id NOT IN (
+                SELECT category_id 
+                FROM store_categories 
+                WHERE store_id = ?
+                  AND status != 'deleted'
+              )
+            ORDER BY name ASC
+        ");
         $stmt->execute([$binaryStoreId]);
-        $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        foreach ($categories as &$category) {
-            $category['uuid_id'] = binToUuid($category['id']);
-            unset($category['id']);
+        $cats = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($cats as &$c) {
+            $c['uuid_id'] = binToUuid($c['id']);
+            unset($c['id']);
         }
-        echo json_encode(['success' => true, 'categories' => $categories]);
+
+        echo json_encode(['success' => true, 'categories' => $cats]);
     } catch (Exception $e) {
         error_log("Error getting available categories: " . $e->getMessage());
         http_response_code(500);
@@ -464,19 +551,19 @@ function getCategoryProductCounts($pdo)
 {
     try {
         $stmt = $pdo->prepare("
-        SELECT 
-            pc.id as category_id,
-            COUNT(p.id) as product_count
-        FROM product_categories pc
-        LEFT JOIN products p ON pc.id = p.category_id AND p.status = 'published'
-        WHERE pc.status = 'active'
-        GROUP BY pc.id
-    ");
+            SELECT 
+                pc.id as category_id,
+                COUNT(p.id) as product_count
+            FROM product_categories pc
+            LEFT JOIN products p ON pc.id = p.category_id AND p.status = 'published'
+            WHERE pc.status = 'active'
+            GROUP BY pc.id
+        ");
         $stmt->execute();
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $counts = [];
-        foreach ($results as $row) {
+        foreach ($rows as $row) {
             $counts[binToUuid($row['category_id'])] = intval($row['product_count']);
         }
 
@@ -496,56 +583,53 @@ function updateStoreCategories($pdo, $currentUserId)
         echo json_encode(['success' => false, 'error' => 'Missing required data']);
         return;
     }
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $data['store_id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
+        return;
+    }
+
+    $binaryStoreId = uuidToBin($data['store_id']);
+    $binaryUserId = $currentUserId;
+    if (!canManageStore($pdo, $binaryStoreId, $binaryUserId)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'You do not have permission to manage this store']);
+        return;
+    }
+
     try {
-        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $data['store_id'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
-            return;
-        }
-        $binaryStoreId = uuidToBin($data['store_id']);
-        $binaryUserId = $currentUserId;
-        if (!canManageStore($pdo, $binaryStoreId, $binaryUserId)) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'You do not have permission to manage this store']);
-            return;
-        }
         $pdo->beginTransaction();
 
-        $insertStmt = $pdo->prepare("
-        INSERT INTO store_categories (id, store_id, category_id, status, created_at, updated_at)
-        VALUES (?, ?, ?, 'active', NOW(), NOW())
-    ");
+        $ins = $pdo->prepare("
+            INSERT INTO store_categories (id, store_id, category_id, status, created_at, updated_at)
+            VALUES (?, ?, ?, 'active', NOW(), NOW())
+        ");
 
-        foreach ($data['categories'] as $categoryId) {
-            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $categoryId)) {
+        foreach ($data['categories'] as $catId) {
+            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $catId)) {
                 $pdo->rollBack();
                 http_response_code(400);
                 echo json_encode(['success' => false, 'error' => 'Invalid category ID format']);
                 return;
             }
-            $binaryCategoryId = uuidToBin($categoryId);
+            $binCatId = uuidToBin($catId);
 
-            // Check if this category already exists for this store
-            $checkStmt = $pdo->prepare("SELECT id, status FROM store_categories WHERE store_id = ? AND category_id = ?");
-            $checkStmt->execute([$binaryStoreId, $binaryCategoryId]);
-            $existingCategory = $checkStmt->fetch(PDO::FETCH_ASSOC);
+            // check existing
+            $chk = $pdo->prepare("SELECT id, status FROM store_categories WHERE store_id = ? AND category_id = ?");
+            $chk->execute([$binaryStoreId, $binCatId]);
+            $existing = $chk->fetch(PDO::FETCH_ASSOC);
 
-            if ($existingCategory) {
-                // If it exists but is deleted, update it to active
-                if ($existingCategory['status'] === 'deleted') {
-                    $updateStmt = $pdo->prepare("
-                    UPDATE store_categories 
-                    SET status = 'active', updated_at = NOW()
-                    WHERE id = ?
-                ");
-                    $updateStmt->execute([$existingCategory['id']]);
+            if ($existing) {
+                if ($existing['status'] === 'deleted') {
+                    $upd = $pdo->prepare("
+                        UPDATE store_categories SET status = 'active', updated_at = NOW() WHERE id = ?
+                    ");
+                    $upd->execute([$existing['id']]);
                 }
-                // If it's already active or inactive, do nothing
             } else {
-                // If it doesn't exist, insert it
-                $storeCategoryId = generateUUIDv7();
-                $binaryStoreCategoryId = uuidToBin($storeCategoryId);
-                $insertStmt->execute([$binaryStoreCategoryId, $binaryStoreId, $binaryCategoryId]);
+                $scId = generateUUIDv7();
+                $binScId = uuidToBin($scId);
+                $ins->execute([$binScId, $binaryStoreId, $binCatId]);
             }
         }
 
@@ -569,35 +653,33 @@ function updateCategoryStatus($pdo, $currentUserId)
         echo json_encode(['success' => false, 'error' => 'Missing required data']);
         return;
     }
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $data['store_id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
+        return;
+    }
+
+    $binaryStoreId = uuidToBin($data['store_id']);
+    $binaryUserId = $currentUserId;
+    if (!canManageStore($pdo, $binaryStoreId, $binaryUserId)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'You do not have permission to manage this store']);
+        return;
+    }
+
     try {
-        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $data['store_id'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
-            return;
-        }
-        $binaryStoreId = uuidToBin($data['store_id']);
-        $binaryUserId = $currentUserId;
-        if (!canManageStore($pdo, $binaryStoreId, $binaryUserId)) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'You do not have permission to manage this store']);
-            return;
-        }
-
         $pdo->beginTransaction();
-        $updateStmt = $pdo->prepare("
-        UPDATE store_categories 
-        SET status = ?, updated_at = NOW()
-        WHERE id = ? AND store_id = ?
-    ");
+        $upd = $pdo->prepare("
+            UPDATE store_categories SET status = ?, updated_at = NOW() WHERE id = ? AND store_id = ?
+        ");
 
-        foreach ($data['category_updates'] as $categoryId => $newStatus) {
-            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $categoryId)) {
+        foreach ($data['category_updates'] as $catId => $newStatus) {
+            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $catId)) {
                 $pdo->rollBack();
                 http_response_code(400);
                 echo json_encode(['success' => false, 'error' => 'Invalid category ID format']);
                 return;
             }
-
             if (!in_array($newStatus, ['active', 'inactive'])) {
                 $pdo->rollBack();
                 http_response_code(400);
@@ -605,19 +687,16 @@ function updateCategoryStatus($pdo, $currentUserId)
                 return;
             }
 
-            $binaryCategoryId = uuidToBin($categoryId);
-
-            // Verify this category belongs to the store
-            $checkStmt = $pdo->prepare("SELECT 1 FROM store_categories WHERE id = ? AND store_id = ?");
-            $checkStmt->execute([$binaryCategoryId, $binaryStoreId]);
-            if ($checkStmt->rowCount() === 0) {
+            $binCatId = uuidToBin($catId);
+            $chk = $pdo->prepare("SELECT 1 FROM store_categories WHERE id = ? AND store_id = ?");
+            $chk->execute([$binCatId, $binaryStoreId]);
+            if ($chk->rowCount() === 0) {
                 $pdo->rollBack();
                 http_response_code(404);
                 echo json_encode(['success' => false, 'error' => 'Category not found in this store']);
                 return;
             }
-
-            $updateStmt->execute([$newStatus, $binaryCategoryId, $binaryStoreId]);
+            $upd->execute([$newStatus, $binCatId, $binaryStoreId]);
         }
 
         $pdo->commit();
@@ -632,38 +711,150 @@ function updateCategoryStatus($pdo, $currentUserId)
     }
 }
 
+function getUnitsForProduct($pdo)
+{
+    $productId = $_GET['product_id'] ?? '';
+    if (empty($productId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'product_id is required']);
+        return;
+    }
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $productId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid product ID format']);
+        return;
+    }
+
+    try {
+        $binProdId = uuidToBin($productId);
+        $sql = "
+            SELECT 
+                pum.id AS product_unit_id,
+                ppn.package_name,
+                pum.si_unit
+            FROM product_units pu
+            JOIN product_unit_of_measure pum ON pu.unit_of_measure_id = pum.id
+            JOIN product_package_name ppn ON pum.product_package_name_id = ppn.id
+            WHERE pu.product_id = ?
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$binProdId]);
+        $units = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($units as &$u) {
+            $u['uuid_id'] = binToUuid($u['product_unit_id']);
+            unset($u['product_unit_id']);
+        }
+
+        echo json_encode(['success' => true, 'units' => $units]);
+    } catch (Exception $e) {
+        error_log("Error in getUnitsForProduct: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Server error fetching product units']);
+    }
+}
+
+function getProductsNotInStore($pdo, $storeIdParam, $categoryIdParam)
+{
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $storeIdParam)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid store ID format']);
+        return;
+    }
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $categoryIdParam)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid category ID format']);
+        return;
+    }
+
+    $binStoreId = uuidToBin($storeIdParam);
+    $binCatId = uuidToBin($categoryIdParam);
+
+    try {
+        $storeCatCheck = $pdo->prepare("
+            SELECT id
+            FROM store_categories
+            WHERE store_id = ?
+              AND category_id = ?
+              AND status != 'deleted'
+            LIMIT 1
+        ");
+        $storeCatCheck->execute([$binStoreId, $binCatId]);
+        $scRow = $storeCatCheck->fetch(PDO::FETCH_ASSOC);
+        if (!$scRow) {
+            echo json_encode(['success' => true, 'products' => []]);
+            return;
+        }
+
+        // Return products in that category not in store_products
+        $stmt = $pdo->prepare("
+            SELECT 
+                p.id, 
+                p.title as name, 
+                p.description
+            FROM products p
+            WHERE p.category_id = ?
+              AND p.status = 'published'
+              AND p.id NOT IN (
+                SELECT sp.product_id
+                FROM store_products sp
+                JOIN store_categories sc ON sc.id = sp.store_category_id
+                WHERE sc.store_id = ?
+                  AND sc.category_id = ?
+                  AND sp.status != 'deleted'
+              )
+            ORDER BY p.created_at DESC
+        ");
+        $stmt->execute([$binCatId, $binStoreId, $binCatId]);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($products as &$prd) {
+            $prd['uuid_id'] = binToUuid($prd['id']);
+            unset($prd['id']);
+        }
+
+        echo json_encode(['success' => true, 'products' => $products]);
+    } catch (Exception $ex) {
+        error_log("Error in getProductsForCategory: " . $ex->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Server error fetching products']);
+    }
+}
+
 function addStoreProduct($pdo, $currentUserId)
 {
-    if (
-        !isset($_POST['store_id']) || !isset($_POST['category_id']) ||
-        !isset($_POST['product_id']) || !isset($_POST['price']) || !isset($_POST['quantity'])
-    ) {
+    /*
+      Expect:
+        store_id
+        category_id
+        product_id
+        line_items => array of { unit_uuid_id, price_category, price, delivery_capacity }
+    */
+    if (!isset($_POST['store_id']) || !isset($_POST['category_id']) || !isset($_POST['product_id'])) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Missing required fields']);
+        echo json_encode(['success' => false, 'error' => 'Missing required fields (store_id, category_id, product_id)']);
         return;
     }
     $storeId = $_POST['store_id'];
     $categoryId = $_POST['category_id'];
     $productId = $_POST['product_id'];
-    $price = floatval($_POST['price']);
-    $quantity = intval($_POST['quantity']);
+    $lineItems = isset($_POST['line_items'])
+        ? json_decode($_POST['line_items'], true)
+        : [];
 
-    if (
-        !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $storeId) ||
-        !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $categoryId) ||
-        !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $productId)
-    ) {
+    $uuidRegex = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
+    if (!preg_match($uuidRegex, $storeId) || !preg_match($uuidRegex, $categoryId) || !preg_match($uuidRegex, $productId)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid ID format']);
+        echo json_encode(['success' => false, 'error' => 'Invalid store/category/product ID format']);
         return;
     }
 
-    $binaryStoreId = uuidToBin($storeId);
-    $binaryCategoryId = uuidToBin($categoryId);
-    $binaryProductId = uuidToBin($productId);
-    $binaryUserId = $currentUserId;
+    $binStoreId = uuidToBin($storeId);
+    $binCatId = uuidToBin($categoryId);
+    $binProdId = uuidToBin($productId);
+    $binUserId = $currentUserId;
 
-    if (!canManageStore($pdo, $binaryStoreId, $binaryUserId)) {
+    if (!canManageStore($pdo, $binStoreId, $binUserId)) {
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'You do not have permission to manage this store']);
         return;
@@ -672,129 +863,98 @@ function addStoreProduct($pdo, $currentUserId)
     try {
         $pdo->beginTransaction();
 
-        // Verify the category belongs to this store
-        $storeCategoryStmt = $pdo->prepare("
-            SELECT id FROM store_categories 
-            WHERE store_id = ? AND category_id = ? AND status = 'active'
+        // Verify the store_category is active
+        $scStmt = $pdo->prepare("
+            SELECT id 
+            FROM store_categories
+            WHERE store_id = ? 
+              AND category_id = ?
+              AND status = 'active'
         ");
-        $storeCategoryStmt->execute([$binaryStoreId, $binaryCategoryId]);
-        $storeCategoryId = $storeCategoryStmt->fetchColumn();
-
-        if (!$storeCategoryId) {
+        $scStmt->execute([$binStoreId, $binCatId]);
+        $scId = $scStmt->fetchColumn();
+        if (!$scId) {
             $pdo->rollBack();
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Store category not found or inactive']);
             return;
         }
 
-        // Check if product already exists in this store category
+        // Check if product already in store_products
         $checkStmt = $pdo->prepare("
-            SELECT id FROM store_products 
-            WHERE store_category_id = ? AND product_id = ?
+            SELECT id, status 
+            FROM store_products
+            WHERE store_category_id = ? 
+              AND product_id = ?
         ");
-        $checkStmt->execute([$storeCategoryId, $binaryProductId]);
-        $existingProductId = $checkStmt->fetchColumn();
+        $checkStmt->execute([$scId, $binProdId]);
+        $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($existingProductId) {
-            // Update existing product
-            $updateStmt = $pdo->prepare("
-                UPDATE store_products 
-                SET status = 'active', updated_at = NOW() 
-                WHERE id = ?
-            ");
-            $updateStmt->execute([$existingProductId]);
-
-            // Update price
-            $updatePriceStmt = $pdo->prepare("
-                UPDATE product_pricing 
-                SET price = ?, updated_at = NOW() 
-                WHERE product_id = ?
-            ");
-            $updatePriceStmt->execute([$price, $binaryProductId]);
-        } else {
-            // Add new product to store
-            $storeProductId = generateUUIDv7();
-            $binaryStoreProductId = uuidToBin($storeProductId);
-
-            $insertStmt = $pdo->prepare("
-                INSERT INTO store_products (id, store_category_id, product_id, status, created_at, updated_at)
-                VALUES (?, ?, ?, 'active', NOW(), NOW())
-            ");
-            $insertStmt->execute([$binaryStoreProductId, $storeCategoryId, $binaryProductId]);
-
-            // Check if pricing exists
-            $checkPriceStmt = $pdo->prepare("
-                SELECT id FROM product_pricing WHERE product_id = ?
-            ");
-            $checkPriceStmt->execute([$binaryProductId]);
-            $pricingId = $checkPriceStmt->fetchColumn();
-
-            if ($pricingId) {
-                // Update existing price
-                $updatePriceStmt = $pdo->prepare("
-                    UPDATE product_pricing 
-                    SET price = ?, updated_at = NOW() 
+        if ($existing) {
+            if ($existing['status'] !== 'active') {
+                $upd = $pdo->prepare("
+                    UPDATE store_products
+                    SET status = 'active', updated_at = NOW()
                     WHERE id = ?
                 ");
-                $updatePriceStmt->execute([$price, $pricingId]);
-            } else {
-                // Get unit of measure
-                $uomStmt = $pdo->prepare("
-                    SELECT id FROM product_unit_of_measure 
-                    WHERE si_unit = 'unit' 
-                    LIMIT 1
-                ");
-                $uomStmt->execute();
-                $uomId = $uomStmt->fetchColumn();
+                $upd->execute([$existing['id']]);
+            }
+        } else {
+            // Insert new store_products row
+            $newSpId = generateUUIDv7();
+            $binSpId = uuidToBin($newSpId);
+            $ins = $pdo->prepare("
+                INSERT INTO store_products 
+                    (id, store_category_id, product_id, status, created_at, updated_at)
+                VALUES (?, ?, ?, 'active', NOW(), NOW())
+            ");
+            $ins->execute([$binSpId, $scId, $binProdId]);
+        }
 
-                if (!$uomId) {
-                    // Create default unit of measure if none exists
-                    $packageStmt = $pdo->prepare("
-                        SELECT id FROM product_package_name 
-                        WHERE package_name = 'Piece' 
-                        LIMIT 1
-                    ");
-                    $packageStmt->execute();
-                    $packageId = $packageStmt->fetchColumn();
+        // Insert line_items => product_pricing
+        if (!empty($lineItems) && is_array($lineItems)) {
+            $pi = $pdo->prepare("
+                INSERT INTO product_pricing
+                    (id, store_id, product_unit_id, created_by, price, price_category, delivery_capacity, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ");
+            foreach ($lineItems as $item) {
+                $unitUuid = $item['unit_uuid_id'] ?? '';
+                $priceCat = $item['price_category'] ?? 'retail';
+                $priceVal = isset($item['price']) ? floatval($item['price']) : 0;
+                $capVal = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
 
-                    if (!$packageId) {
-                        $packageId = generateUUIDv7();
-                        $binaryPackageId = uuidToBin($packageId);
-                        $packageInsertStmt = $pdo->prepare("
-                            INSERT INTO product_package_name (id, package_name, created_at, updated_at, package_id)
-                            VALUES (?, 'Piece', NOW(), NOW(), 'PCE')
-                        ");
-                        $packageInsertStmt->execute([$binaryPackageId]);
-                    } else {
-                        $binaryPackageId = $packageId;
-                    }
-
-                    $uomId = generateUUIDv7();
-                    $binaryUomId = uuidToBin($uomId);
-                    $uomInsertStmt = $pdo->prepare("
-                        INSERT INTO product_unit_of_measure (id, product_package_name_id, si_unit, created_at, updated_at)
-                        VALUES (?, ?, 'unit', NOW(), NOW())
-                    ");
-                    $uomInsertStmt->execute([$binaryUomId, $binaryPackageId]);
+                if (!preg_match($uuidRegex, $unitUuid)) {
+                    $pdo->rollBack();
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Invalid unit UUID in line_items']);
+                    return;
+                }
+                if (!in_array($priceCat, ['retail', 'wholesale', 'factory'])) {
+                    $pdo->rollBack();
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Invalid price_category in line_items']);
+                    return;
                 }
 
-                // Add new pricing
-                $pricingId = generateUUIDv7();
-                $binaryPricingId = uuidToBin($pricingId);
-                $pricingStmt = $pdo->prepare("
-                    INSERT INTO product_pricing (id, product_id, unit_of_measure_id, price, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, NOW(), NOW())
-                ");
-                $pricingStmt->execute([$binaryPricingId, $binaryProductId, $uomId, $price]);
+                $binUnitId = uuidToBin($unitUuid);
+                $ppId = generateUUIDv7();
+                $binPpId = uuidToBin($ppId);
+
+                $pi->execute([
+                    $binPpId,
+                    $binStoreId,
+                    $binUnitId,
+                    $binUserId,
+                    $priceVal,
+                    $priceCat,
+                    $capVal
+                ]);
             }
         }
 
         $pdo->commit();
-        echo json_encode([
-            'success' => true,
-            'message' => 'Product added successfully',
-            'product_id' => binToUuid($binaryProductId)
-        ]);
+        echo json_encode(['success' => true, 'message' => 'Product & pricing added successfully']);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
@@ -812,14 +972,15 @@ function deleteProduct($pdo, $productId, $currentUserId)
         echo json_encode(['success' => false, 'error' => 'Product ID is required']);
         return;
     }
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $productId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid product ID format']);
+        return;
+    }
+    $binProdId = uuidToBin($productId);
+    $binUserId = $currentUserId;
+
     try {
-        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $productId)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => 'Invalid product ID format']);
-            return;
-        }
-        $binaryProductId = uuidToBin($productId);
-        $binaryUserId = $currentUserId;
         $stmtCheck = $pdo->prepare("
             SELECT vs.id as store_id
             FROM store_products sp
@@ -827,26 +988,28 @@ function deleteProduct($pdo, $productId, $currentUserId)
             JOIN vendor_stores vs ON sc.store_id = vs.id
             WHERE sp.product_id = ?
         ");
-        $stmtCheck->execute([$binaryProductId]);
-        $result = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-        if (!$result) {
+        $stmtCheck->execute([$binProdId]);
+        $res = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+        if (!$res) {
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Product not found']);
             return;
         }
-        if (!canManageStore($pdo, $result['store_id'], $binaryUserId)) {
+        if (!canManageStore($pdo, $res['store_id'], $binUserId)) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'You do not have permission to delete this product']);
             return;
         }
+
         $pdo->beginTransaction();
-        $stmt = $pdo->prepare("
-            UPDATE store_products 
-            SET status = 'deleted', updated_at = NOW() 
+        $upd = $pdo->prepare("
+            UPDATE store_products
+            SET status = 'deleted', updated_at = NOW()
             WHERE product_id = ?
         ");
-        $stmt->execute([$binaryProductId]);
+        $upd->execute([$binProdId]);
         $pdo->commit();
+
         echo json_encode(['success' => true, 'message' => 'Product deleted successfully']);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
@@ -865,30 +1028,8 @@ function getStoreStats($pdo, $storeId, $currentUserId)
         'stats' => [
             'product_count' => 12,
             'category_count' => 3,
-            'total_views' => 1250,
-            'top_products' => [
-                [
-                    'uuid_id' => generateUUIDv7(),
-                    'name' => 'Popular Product 1',
-                    'views' => 450,
-                    'price' => 25000,
-                    'unit' => 'Piece'
-                ],
-                [
-                    'uuid_id' => generateUUIDv7(),
-                    'name' => 'Popular Product 2',
-                    'views' => 320,
-                    'price' => 15000,
-                    'unit' => 'Kg'
-                ],
-                [
-                    'uuid_id' => generateUUIDv7(),
-                    'name' => 'Popular Product 3',
-                    'views' => 280,
-                    'price' => 35000,
-                    'unit' => 'Box'
-                ]
-            ]
+            'total_views' => 0,
+            'top_products' => []
         ]
     ]);
 }
@@ -905,25 +1046,17 @@ function reportStore($pdo, $storeId, $reason, $currentUserId)
 
 function generateUUIDv7()
 {
-    // Get current Unix timestamp in milliseconds
-    $timestamp = floor(microtime(true) * 1000);
-
-    // Convert to binary and take the most significant 48 bits
-    $timestampHex = str_pad(dechex($timestamp), 12, '0', STR_PAD_LEFT);
-
-    // Generate 74 random bits (using openssl_random_pseudo_bytes)
-    $random = bin2hex(openssl_random_pseudo_bytes(10)); // 80 bits, we'll use 74
-
-    // Format as UUID version 7
+    $ts = floor(microtime(true) * 1000);
+    $tsHex = str_pad(dechex($ts), 12, '0', STR_PAD_LEFT);
+    $rand = bin2hex(openssl_random_pseudo_bytes(10));
     $uuid = sprintf(
         '%s-%s-%s-%s-%s',
-        substr($timestampHex, 0, 8),
-        substr($timestampHex, 8, 4),
-        '7' . substr($random, 0, 3), // Version 7
-        dechex(8 + (hexdec(substr($random, 3, 1)) & 0x3)) . substr($random, 4, 3), // Variant bits
-        substr($random, 7, 12)
+        substr($tsHex, 0, 8),
+        substr($tsHex, 8, 4),
+        '7' . substr($rand, 0, 3),
+        dechex(8 + (hexdec(substr($rand, 3, 1)) & 0x3)) . substr($rand, 4, 3),
+        substr($rand, 7, 12)
     );
-
     return $uuid;
 }
 
