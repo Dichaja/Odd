@@ -147,9 +147,6 @@ function sendWelcomeEmail($username, $email, $phone)
             <p>We recommend updating your profile information after you log in to enhance your experience with our platform.</p>
             
             <p>If you have any questions or need assistance, please don\'t hesitate to contact our support team.</p>
-            
-            <p>Best regards,<br>
-            The Zzimba Online Team</p>
         </div>
     ';
 
@@ -392,12 +389,13 @@ try {
             $stmt->execute();
 
             $_SESSION['user'] = [
-                'logged_in' => true,
-                'user_id' => $user['id'],
-                'username' => $user['username'],
-                'email' => $user['email'],
-                'is_admin' => ($table === 'admin_users'),
-                'last_login' => $user['last_login']
+                'logged_in'   => true,
+                'user_id'     => $user['id'],
+                'uuid_user_id' => binToUuid($user['id']),
+                'username'    => $user['username'],
+                'email'       => $user['email'],
+                'is_admin'    => ($table === 'admin_users'),
+                'last_login'  => $user['last_login']
             ];
 
             $redirect = ($table === 'admin_users') ? 'admin/dashboard' : 'account/dashboard';
