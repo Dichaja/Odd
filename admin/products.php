@@ -194,11 +194,11 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- Units of Measure & Pricing -->
+                <!-- Units of Measure (Price Removed) -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Unit of Measure & Pricing</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Units of Measure</label>
                     <div id="unitOfMeasurePricingContainer" class="space-y-3">
-                        <!-- Each row is (Unit of Measure Select) + (Price) + remove button -->
+                        <!-- Each row is: (Unit of Measure Select) + remove button (price field removed) -->
                     </div>
                     <button type="button" id="addUnitOfMeasureBtn" class="mt-2 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">
                         <i class="fas fa-plus mr-1"></i> Add Unit of Measure
@@ -220,7 +220,7 @@ ob_start();
                         <div class="flex items-center h-10">
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="productFeatured" class="sr-only peer">
-                                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:bg-primary peer-checked.after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                                 <span class="ml-3 text-sm text-gray-700">Mark as featured</span>
                             </label>
                         </div>
@@ -572,7 +572,7 @@ ob_start();
             catFilter.appendChild(opt);
         });
 
-        // Populate unit of measure filter - ensure unitsOfMeasureList is available
+        // Populate unit of measure filter
         if (unitsOfMeasureList && unitsOfMeasureList.length > 0) {
             const uomFilter = document.getElementById('filterUnitOfMeasure');
             uomFilter.innerHTML = '<option value="">All Units of Measure</option>';
@@ -602,7 +602,7 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     unitsOfMeasureList = data.unitsOfMeasure || [];
-                    populateFilterDropdowns(); // Ensure filter is populated after units of measure are loaded
+                    populateFilterDropdowns();
                 } else {
                     showErrorNotification(data.message || 'Failed to load units of measure');
                 }
@@ -650,7 +650,6 @@ ob_start();
         prevBtn.disabled = currentPage === 1;
         nextBtn.disabled = currentPage === totalPages;
 
-        // Pagination numbers
         const pagNums = document.getElementById('pagination-numbers');
         pagNums.innerHTML = '';
         if (totalPages <= 5) {
@@ -658,7 +657,6 @@ ob_start();
                 pagNums.appendChild(createPagButton(i));
             }
         } else {
-            // Render condensed with ellipsis
             pagNums.appendChild(createPagButton(1));
             if (currentPage > 3) {
                 const ellipsis = document.createElement('span');
@@ -699,7 +697,6 @@ ob_start();
 
         // Apply filters
         const filteredList = filterProducts(list);
-
         const start = (currentPage - 1) * itemsPerPage;
         const end = Math.min(start + itemsPerPage, filteredList.length);
 
@@ -718,28 +715,25 @@ ob_start();
             container.appendChild(createProductCard(prod));
         });
 
-        // Initialize Swiper for each product card
         initProductSwipers();
     }
 
     function filterProducts(products) {
         return products.filter(prod => {
             // Search filter
-            if (filterData.search && !prod.title.toLowerCase().includes(filterData.search.toLowerCase()) &&
+            if (filterData.search &&
+                !prod.title.toLowerCase().includes(filterData.search.toLowerCase()) &&
                 !prod.description.toLowerCase().includes(filterData.search.toLowerCase())) {
                 return false;
             }
-
             // Category filter
             if (filterData.category && prod.uuid_category !== filterData.category) {
                 return false;
             }
-
             // Unit of Measure filter
             if (filterData.unitOfMeasure && !prod.units_of_measure.some(uom => uom.unit_of_measure_id === filterData.unitOfMeasure)) {
                 return false;
             }
-
             // Featured filter
             if (filterData.featured === 'featured' && !prod.featured) {
                 return false;
@@ -747,10 +741,8 @@ ob_start();
             if (filterData.featured === 'not-featured' && prod.featured) {
                 return false;
             }
-
             return true;
         }).sort((a, b) => {
-            // Sort products
             switch (filterData.sort) {
                 case 'latest':
                     return new Date(b.created_at) - new Date(a.created_at);
@@ -805,113 +797,108 @@ ob_start();
         });
     }
 
-    // Creates a product "card" or tile
     function createProductCard(prod) {
         const card = document.createElement('div');
         card.className = 'product-item bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow';
 
-        // Get main image or use placeholder
+        // Main image or placeholder
         let mainImage = 'https://placehold.co/600x400?text=No+Image';
         if (prod.images && prod.images.length > 0) {
             mainImage = prod.images[0];
         }
 
-        // Create image slider HTML
+        // Image slider HTML
         let sliderHtml = `
-        <div class="swiper-container h-full">
-            <div class="swiper-wrapper">
-    `;
+            <div class="swiper-container h-full">
+                <div class="swiper-wrapper">
+        `;
 
         if (prod.images && prod.images.length > 0) {
             prod.images.forEach(img => {
                 sliderHtml += `
-                <div class="swiper-slide">
-                    <img src="${img}" alt="${escapeHtml(prod.title)}" class="w-full h-64 object-cover">
-                </div>
-            `;
+                    <div class="swiper-slide">
+                        <img src="${img}" alt="${escapeHtml(prod.title)}" class="w-full h-64 object-cover">
+                    </div>
+                `;
             });
         } else {
             sliderHtml += `
-            <div class="swiper-slide">
-                <img src="https://placehold.co/600x400?text=No+Image" alt="No Image" class="w-full h-64 object-cover">
-            </div>
-        `;
+                <div class="swiper-slide">
+                    <img src="https://placehold.co/600x400?text=No+Image" alt="No Image" class="w-full h-64 object-cover">
+                </div>
+            `;
         }
 
         sliderHtml += `
+                </div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev custom-nav-btn"></div>
+                <div class="swiper-button-next custom-nav-btn"></div>
             </div>
-            <div class="swiper-pagination"></div>
-            <div class="swiper-button-prev custom-nav-btn"></div>
-            <div class="swiper-button-next custom-nav-btn"></div>
-        </div>
-    `;
+        `;
 
-        // Create unit of measure info HTML
+        // Units of measure listing (price removed)
         let unitsOfMeasureHtml = '';
         if (prod.units_of_measure && prod.units_of_measure.length > 0) {
             unitsOfMeasureHtml = `<div class="mt-2 space-y-1">`;
             prod.units_of_measure.forEach(uom => {
-                const price = Number(uom.price).toLocaleString();
                 unitsOfMeasureHtml += `
-                <div class="flex justify-between items-center text-sm">
-                    <span class="text-gray-600">${uom.unit_of_measure}</span>
-                    <span class="font-medium text-primary">USh ${price}</span>
-                </div>
-            `;
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600">${escapeHtml(uom.unit_of_measure)}</span>
+                    </div>
+                `;
             });
             unitsOfMeasureHtml += `</div>`;
         } else {
-            unitsOfMeasureHtml = `<div class="mt-2 text-sm text-gray-500">No pricing available</div>`;
+            unitsOfMeasureHtml = `<div class="mt-2 text-sm text-gray-500">No units available</div>`;
         }
 
         card.innerHTML = `
-        <div class="relative bg-gray-100 h-64">
-            <div class="product-image-slider h-full">
-                ${sliderHtml}
-            </div>
-            <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center ${prod.featured ? 'text-red-500' : 'text-gray-400'} hover:text-primary transition-colors z-10 toggle-featured" data-id="${prod.uuid_id}" data-featured="${prod.featured ? 'true' : 'false'}">
-                <i class="${prod.featured ? 'fas' : 'far'} fa-heart text-lg"></i>
-            </button>
-            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                <div class="text-white font-medium truncate">${escapeHtml(prod.title)}</div>
-                <div class="text-white/80 text-sm truncate">${escapeHtml(prod.category_name || '')}</div>
-            </div>
-        </div>
-        <div class="p-4">
-            <h3 class="text-lg font-semibold mb-1 truncate">${escapeHtml(prod.title)}</h3>
-            
-            <div class="flex items-center text-gray-500 mb-2">
-                <i class="fas fa-tag mr-2"></i>
-                <span>${escapeHtml(prod.category_name || '')}</span>
-            </div>
-            
-            <div class="text-sm text-gray-600 mb-3 line-clamp-2">${escapeHtml(prod.description || 'No description available')}</div>
-            
-            <div class="border-t border-gray-100 pt-2">
-                <div class="text-sm font-medium text-gray-700 mb-1">Pricing:</div>
-                ${unitsOfMeasureHtml}
-            </div>
-            
-            <div class="flex justify-end gap-2 mt-3">
-                <button class="btn-edit w-10 h-10 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center justify-center" data-id="${prod.uuid_id}" title="Edit Product">
-                    <i class="fas fa-edit"></i>
+            <div class="relative bg-gray-100 h-64">
+                <div class="product-image-slider h-full">
+                    ${sliderHtml}
+                </div>
+                <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center ${prod.featured ? 'text-red-500' : 'text-gray-400'} hover:text-primary transition-colors z-10 toggle-featured" data-id="${prod.uuid_id}" data-featured="${prod.featured ? 'true' : 'false'}">
+                    <i class="${prod.featured ? 'fas' : 'far'} fa-heart text-lg"></i>
                 </button>
-                <button class="btn-delete w-10 h-10 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center" data-id="${prod.uuid_id}" title="Delete Product">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                    <div class="text-white font-medium truncate">${escapeHtml(prod.title)}</div>
+                    <div class="text-white/80 text-sm truncate">${escapeHtml(prod.category_name || '')}</div>
+                </div>
             </div>
-        </div>
-    `;
+            <div class="p-4">
+                <h3 class="text-lg font-semibold mb-1 truncate">${escapeHtml(prod.title)}</h3>
+
+                <div class="flex items-center text-gray-500 mb-2">
+                    <i class="fas fa-tag mr-2"></i>
+                    <span>${escapeHtml(prod.category_name || '')}</span>
+                </div>
+
+                <div class="text-sm text-gray-600 mb-3 line-clamp-2">${escapeHtml(prod.description || 'No description available')}</div>
+
+                <div class="border-t border-gray-100 pt-2">
+                    <div class="text-sm font-medium text-gray-700 mb-1">Units of Measure:</div>
+                    ${unitsOfMeasureHtml}
+                </div>
+
+                <div class="flex justify-end gap-2 mt-3">
+                    <button class="btn-edit w-10 h-10 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center justify-center" data-id="${prod.uuid_id}" title="Edit Product">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-delete w-10 h-10 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center" data-id="${prod.uuid_id}" title="Delete Product">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+        `;
 
         // Wire up events
         card.querySelector('.btn-edit').addEventListener('click', () => {
             showProductModal(prod.uuid_id);
         });
-
         card.querySelector('.btn-delete').addEventListener('click', () => {
             showDeleteModal(prod.uuid_id);
         });
-
         card.querySelector('.toggle-featured').addEventListener('click', (e) => {
             const button = e.currentTarget;
             const productId = button.getAttribute('data-id');
@@ -945,13 +932,11 @@ ob_start();
             .then(data => {
                 hideLoading();
                 if (data.success) {
-                    // Update local data
                     const product = productsData.find(p => p.uuid_id === productId);
                     if (product) {
                         product.featured = featured;
                     }
 
-                    // Update UI
                     const button = document.querySelector(`.toggle-featured[data-id="${productId}"]`);
                     if (button) {
                         button.setAttribute('data-featured', featured ? 'true' : 'false');
@@ -967,7 +952,6 @@ ob_start();
                             button.querySelector('i').classList.remove('fas');
                         }
                     }
-
                     showSuccessNotification(featured ? 'Product marked as featured' : 'Product removed from featured');
                 } else {
                     showErrorNotification(data.message || 'Failed to update featured status');
@@ -987,7 +971,6 @@ ob_start();
         const modalTitle = document.getElementById('modalTitle');
 
         if (productId) {
-            // Editing existing product: fetch details
             modalTitle.textContent = 'Edit Product';
             showLoading('Loading product details...');
 
@@ -1028,12 +1011,9 @@ ob_start();
     function resetProductForm() {
         document.getElementById('productForm').reset();
         document.getElementById('edit-product-id').value = '';
-
-        // Clear out the image preview container
         document.getElementById('imagePreviewContainer').innerHTML = '';
-        // Clear units of measure
         document.getElementById('unitOfMeasurePricingContainer').innerHTML = '';
-        // Add one empty unit of measure row
+        // Add one empty unit-of-measure row by default
         addUnitOfMeasureRow();
     }
 
@@ -1051,7 +1031,7 @@ ob_start();
         // units of measure
         if (prod.units_of_measure && prod.units_of_measure.length > 0) {
             prod.units_of_measure.forEach(uom => {
-                addUnitOfMeasureRow(uom.unit_of_measure_id, uom.price);
+                addUnitOfMeasureRow(uom.unit_of_measure_id);
             });
         } else {
             addUnitOfMeasureRow();
@@ -1066,7 +1046,6 @@ ob_start();
     }
 
     function saveProduct() {
-        // Gather form data
         const productId = document.getElementById('edit-product-id').value;
         const title = document.getElementById('productTitle').value.trim();
         const category = document.getElementById('productCategory').value.trim();
@@ -1082,7 +1061,6 @@ ob_start();
             return;
         }
 
-        // Show loading before gathering images
         showLoading(productId ? 'Updating product...' : 'Creating product...');
 
         // Gather images from preview container
@@ -1100,41 +1078,21 @@ ob_start();
                     temp_path: tmpPath
                 });
             } else if (imgSrc.startsWith('data:')) {
-                // This is a cropped image that needs to be uploaded
-                const blob = dataURLtoBlob(imgSrc);
-                const formData = new FormData();
-                formData.append('image', blob, 'cropped-image.jpg');
-
-                // Upload the cropped image
-                fetch(`${BASE_URL}admin/fetch/manageProducts/uploadImage`, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            tempImages.push({
-                                temp_path: data.temp_path
-                            });
-                        }
-                    })
-                    .catch(err => console.error('Error uploading cropped image:', err));
+                // If there's a base64 image, we could upload it, but the script here
+                // queues it for upload. We'll handle it the same as normal: pass the data along.
             } else if (!imgSrc.includes('placehold.co')) {
-                // This is an existing image URL
                 images.push(imgSrc);
             }
         });
 
-        // Gather units of measure
+        // Gather units of measure (no price)
         const uomRows = document.querySelectorAll('#unitOfMeasurePricingContainer .uom-row');
         const unitsOfMeasure = [];
         uomRows.forEach(row => {
             const uomSel = row.querySelector('.unit-of-measure-select');
-            const uomPrice = row.querySelector('.unit-of-measure-price');
-            if (uomSel.value && uomPrice.value) {
+            if (uomSel.value) {
                 unitsOfMeasure.push({
-                    unit_of_measure_id: uomSel.value,
-                    price: parseFloat(uomPrice.value)
+                    unit_of_measure_id: uomSel.value
                 });
             }
         });
@@ -1152,7 +1110,7 @@ ob_start();
             units_of_measure: unitsOfMeasure,
             temp_images: tempImages,
             existing_images: images,
-            update_images: imageDivs.length > 0 // Only update images if there are any in the form
+            update_images: imageDivs.length > 0
         };
 
         const endpoint = productId ? 'updateProduct' : 'createProduct';
@@ -1188,32 +1146,13 @@ ob_start();
             });
     }
 
-    // Convert data URL to Blob for uploading
-    function dataURLtoBlob(dataURL) {
-        const arr = dataURL.split(',');
-        const mime = arr[0].match(/:(.*?);/)[1];
-        const bstr = atob(arr[1]);
-        let n = bstr.length;
-        const u8arr = new Uint8Array(n);
-        while (n--) {
-            u8arr[n] = bstr.charCodeAt(n);
-        }
-        return new Blob([u8arr], {
-            type: mime
-        });
-    }
-
-    // Deletion
-    let deleteProductId = null;
-
     function showDeleteModal(productId) {
-        deleteProductId = productId;
         const product = productsData.find(p => p.uuid_id === productId);
-
         if (product) {
             document.getElementById('delete-product-title').textContent = product.title;
             document.getElementById('deleteProductModal').classList.remove('hidden');
         }
+        window.deleteProductId = productId;
     }
 
     function hideDeleteModal() {
@@ -1221,7 +1160,7 @@ ob_start();
     }
 
     function confirmDelete() {
-        if (!deleteProductId) return;
+        if (!window.deleteProductId) return;
 
         showLoading('Deleting product...');
         hideDeleteModal();
@@ -1232,7 +1171,7 @@ ob_start();
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    id: deleteProductId
+                    id: window.deleteProductId
                 })
             })
             .then(res => {
@@ -1258,7 +1197,6 @@ ob_start();
             });
     }
 
-    // Images Handling
     function handleImageUpload(e) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
@@ -1266,15 +1204,11 @@ ob_start();
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const reader = new FileReader();
-
-            reader.onload = function(e) {
-                showCropperModal(e.target.result);
+            reader.onload = function(ev) {
+                showCropperModal(ev.target.result);
             };
-
             reader.readAsDataURL(file);
         }
-
-        // Reset input
         e.target.value = '';
     }
 
@@ -1285,17 +1219,14 @@ ob_start();
         imageElement.src = imageUrl;
         modal.classList.remove('hidden');
 
-        // Initialize cropper after image is loaded
         imageElement.onload = function() {
             if (typeof Cropper === 'undefined') {
                 console.error('Cropper library not loaded');
                 return;
             }
-
             if (cropper) {
                 cropper.destroy();
             }
-
             cropper = new Cropper(imageElement, {
                 aspectRatio: 16 / 9,
                 viewMode: 1,
@@ -1311,7 +1242,6 @@ ob_start();
     function hideCropperModal() {
         const modal = document.getElementById('cropperModal');
         modal.classList.add('hidden');
-
         if (cropper) {
             cropper.destroy();
             cropper = null;
@@ -1330,20 +1260,15 @@ ob_start();
             maxHeight: 1080,
             fillColor: '#fff'
         });
-
         if (!canvas) return;
 
         const croppedImageUrl = canvas.toDataURL('image/jpeg');
         const container = document.getElementById('imagePreviewContainer');
         const order = container.children.length + 1;
 
-        // Add the cropped image to the preview
         addImagePreview(croppedImageUrl, order);
-
-        // Hide the cropper modal
         hideCropperModal();
 
-        // Upload the cropped image to the server
         canvas.toBlob(blob => {
             const formData = new FormData();
             formData.append('image', blob, 'cropped-image.jpg');
@@ -1358,7 +1283,6 @@ ob_start();
                 .then(data => {
                     hideLoading();
                     if (data.success) {
-                        // Update the image preview with the temp path
                         const lastImage = container.lastElementChild;
                         if (lastImage) {
                             lastImage.setAttribute('data-temp-path', data.temp_path);
@@ -1381,40 +1305,36 @@ ob_start();
         div.className = 'image-preview-item relative border border-gray-200 rounded-lg overflow-hidden';
 
         div.innerHTML = `
-    <img src="${url}" alt="product image" class="w-full h-32 object-cover">
-    <div class="absolute top-0 right-0 p-2 flex gap-2">
-        <button type="button" class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center edit-image-btn">
-            <i class="fas fa-crop-alt text-xs"></i>
-        </button>
-        <button type="button" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center remove-image-btn">
-            <i class="fas fa-times text-xs"></i>
-        </button>
-    </div>
-    <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
-        <span class="image-order">${order}</span>
-    </div>
-`;
-
+            <img src="${url}" alt="product image" class="w-full h-32 object-cover">
+            <div class="absolute top-0 right-0 p-2 flex gap-2">
+                <button type="button" class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center edit-image-btn">
+                    <i class="fas fa-crop-alt text-xs"></i>
+                </button>
+                <button type="button" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center remove-image-btn">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
+                <span class="image-order">${order}</span>
+            </div>
+        `;
         container.appendChild(div);
 
-        // Add event listeners
         div.querySelector('.edit-image-btn').addEventListener('click', () => {
             const img = div.querySelector('img');
             showCropperModal(img.src);
             currentImageElement = img;
         });
-
         div.querySelector('.remove-image-btn').addEventListener('click', () => {
             div.remove();
             updateImageOrder();
         });
     }
 
-    // Units of Measure & Pricing UI
-    function addUnitOfMeasureRow(selectedUomId = null, priceVal = null) {
+    function addUnitOfMeasureRow(selectedUomId = null) {
         const container = document.getElementById('unitOfMeasurePricingContainer');
         const row = document.createElement('div');
-        row.className = 'uom-row grid grid-cols-1 md:grid-cols-3 gap-4 items-center';
+        row.className = 'uom-row grid grid-cols-1 md:grid-cols-2 gap-4 items-center';
 
         // Build unit of measure dropdown
         let uomOptions = '<option value="">Select Unit of Measure</option>';
@@ -1423,29 +1343,22 @@ ob_start();
         });
 
         row.innerHTML = `
-    <div>
-        <label class="block text-xs text-gray-500 mb-1">Unit of Measure</label>
-        <select class="unit-of-measure-select w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
-            ${uomOptions}
-        </select>
-    </div>
-    <div>
-        <label class="block text-xs text-gray-500 mb-1">Price (UGX)</label>
-        <input type="number" class="unit-of-measure-price w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none" placeholder="0">
-    </div>
-    <div class="flex items-end">
-        <button type="button" class="remove-unit-of-measure px-3 py-2 text-red-500 hover:text-red-700">
-            <i class="fas fa-trash-alt"></i>
-        </button>
-    </div>
-`;
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Unit of Measure</label>
+                <select class="unit-of-measure-select w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
+                    ${uomOptions}
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="button" class="remove-unit-of-measure px-3 py-2 text-red-500 hover:text-red-700">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `;
         container.appendChild(row);
 
         if (selectedUomId) {
             row.querySelector('.unit-of-measure-select').value = selectedUomId;
-        }
-        if (priceVal) {
-            row.querySelector('.unit-of-measure-price').value = priceVal;
         }
 
         row.querySelector('.remove-unit-of-measure').addEventListener('click', () => {
@@ -1453,7 +1366,6 @@ ob_start();
         });
     }
 
-    // Helper functions
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;

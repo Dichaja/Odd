@@ -19,6 +19,9 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SE
 date_default_timezone_set('Africa/Kampala');
 
 try {
+    // Remove 'views' column from products, remove 'price' column, rename table from product_pricing to product_units
+    // Below are new table definitions without 'views' or 'price', and with the renamed table 'product_units'
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS products (
         id BINARY(16) PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -27,7 +30,6 @@ try {
         meta_title VARCHAR(100),
         meta_description TEXT,
         meta_keywords VARCHAR(255),
-        views INT UNSIGNED NOT NULL DEFAULT 0,
         status ENUM('published', 'pending', 'draft') NOT NULL DEFAULT 'published',
         featured BOOLEAN NOT NULL DEFAULT 0,
         created_at DATETIME NOT NULL,
@@ -35,11 +37,10 @@ try {
         FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT
     )");
 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS product_pricing (
+    $pdo->exec("CREATE TABLE IF NOT EXISTS product_units (
         id BINARY(16) PRIMARY KEY,
         product_id BINARY(16) NOT NULL,
         unit_of_measure_id BINARY(16) NOT NULL,
-        price DECIMAL(12, 2) NOT NULL,
         created_at DATETIME NOT NULL,
         updated_at DATETIME NOT NULL,
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
@@ -99,10 +100,10 @@ try {
 function getProducts($pdo)
 {
     try {
-        $stmt = $pdo->prepare("SELECT 
-                p.id, p.title, p.category_id, p.description, 
+        $stmt = $pdo->prepare("SELECT
+                p.id, p.title, p.category_id, p.description,
                 p.meta_title, p.meta_description, p.meta_keywords,
-                p.views, p.status, p.featured,
+                p.status, p.featured,
                 p.created_at, p.updated_at,
                 c.name AS category_name
             FROM products p
@@ -120,7 +121,6 @@ function getProducts($pdo)
             unset($prod['category_id']);
 
             $prod['images'] = getProductImages($prod['uuid_id']);
-
             $prod['units_of_measure'] = getProductUnitsOfMeasure($pdo, $prod['uuid_id']);
 
             $prod['category_name'] = $prod['category_name'] ?? '(Unknown)';
@@ -146,10 +146,10 @@ function getProduct($pdo)
     $binaryId = uuidToBin($productId);
 
     try {
-        $stmt = $pdo->prepare("SELECT 
-                p.id, p.title, p.category_id, p.description, 
+        $stmt = $pdo->prepare("SELECT
+                p.id, p.title, p.category_id, p.description,
                 p.meta_title, p.meta_description, p.meta_keywords,
-                p.views, p.status, p.featured,
+                p.status, p.featured,
                 p.created_at, p.updated_at,
                 c.name AS category_name
             FROM products p
@@ -173,7 +173,6 @@ function getProduct($pdo)
         unset($product['category_id']);
 
         $product['images'] = getProductImages($product['uuid_id']);
-
         $product['units_of_measure'] = getProductUnitsOfMeasure($pdo, $product['uuid_id']);
 
         echo json_encode(['success' => true, 'data' => $product]);
@@ -195,17 +194,18 @@ function createProduct($pdo)
             return;
         }
 
-        $title           = trim($data['title']);
-        $categoryIdStr   = trim($data['category_id']);
-        $description     = isset($data['description']) ? trim($data['description']) : '';
-        $metaTitle       = isset($data['meta_title']) ? trim($data['meta_title']) : '';
-        $metaDesc        = isset($data['meta_description']) ? trim($data['meta_description']) : '';
-        $metaKeywords    = isset($data['meta_keywords']) ? trim($data['meta_keywords']) : '';
-        $status          = !empty($data['status']) ? $data['status'] : 'published';
-        $featured        = !empty($data['featured']) ? 1 : 0;
+        $title         = trim($data['title']);
+        $categoryIdStr = trim($data['category_id']);
+        $description   = isset($data['description']) ? trim($data['description']) : '';
+        $metaTitle     = isset($data['meta_title']) ? trim($data['meta_title']) : '';
+        $metaDesc      = isset($data['meta_description']) ? trim($data['meta_description']) : '';
+        $metaKeywords  = isset($data['meta_keywords']) ? trim($data['meta_keywords']) : '';
+        $status        = !empty($data['status']) ? $data['status'] : 'published';
+        $featured      = !empty($data['featured']) ? 1 : 0;
 
         $binaryCategoryId = uuidToBin($categoryIdStr);
 
+        // Validate category
         $stmt = $pdo->prepare("SELECT id FROM product_categories WHERE id = :cat_id");
         $stmt->bindParam(':cat_id', $binaryCategoryId, PDO::PARAM_LOB);
         $stmt->execute();
@@ -245,31 +245,30 @@ function createProduct($pdo)
         $insert->bindParam(':updated_at', $now);
         $insert->execute();
 
+        // Insert unit_of_measure references
         if (!empty($data['units_of_measure']) && is_array($data['units_of_measure'])) {
             foreach ($data['units_of_measure'] as $uom) {
                 $uomIdStr = $uom['unit_of_measure_id'] ?? '';
-                $price    = $uom['price'] ?? 0;
-                if (!$uomIdStr || !$price) {
+                if (!$uomIdStr) {
                     continue;
                 }
 
                 $binaryUomId = uuidToBin($uomIdStr);
 
-                $priceId = generateUUIDv7();
-                $binaryPriceId = uuidToBin($priceId);
+                $unitId = generateUUIDv7();
+                $binaryUnitId = uuidToBin($unitId);
                 $stmt2 = $pdo->prepare("
-                    INSERT INTO product_pricing (
-                        id, product_id, unit_of_measure_id, price,
+                    INSERT INTO product_units (
+                        id, product_id, unit_of_measure_id,
                         created_at, updated_at
                     ) VALUES (
-                        :id, :product_id, :unit_of_measure_id, :price,
+                        :id, :product_id, :unit_of_measure_id,
                         :created_at, :updated_at
                     )
                 ");
-                $stmt2->bindParam(':id', $binaryPriceId, PDO::PARAM_LOB);
+                $stmt2->bindParam(':id', $binaryUnitId, PDO::PARAM_LOB);
                 $stmt2->bindParam(':product_id', $binaryProductId, PDO::PARAM_LOB);
                 $stmt2->bindParam(':unit_of_measure_id', $binaryUomId, PDO::PARAM_LOB);
-                $stmt2->bindParam(':price', $price);
                 $stmt2->bindParam(':created_at', $now);
                 $stmt2->bindParam(':updated_at', $now);
                 $stmt2->execute();
@@ -346,7 +345,7 @@ function updateProduct($pdo)
 
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-        $stmt = $pdo->prepare("UPDATE products 
+        $stmt = $pdo->prepare("UPDATE products
             SET title = :title,
                 category_id = :cat_id,
                 description = :description,
@@ -358,7 +357,6 @@ function updateProduct($pdo)
                 updated_at = :updated_at
             WHERE id = :id
         ");
-
         $stmt->bindParam(':title', $title);
         $stmt->bindParam(':cat_id', $binaryCategoryId, PDO::PARAM_LOB);
         $stmt->bindParam(':description', $description);
@@ -371,41 +369,41 @@ function updateProduct($pdo)
         $stmt->bindParam(':id', $binaryProdId, PDO::PARAM_LOB);
         $stmt->execute();
 
-        $stmtDel = $pdo->prepare("DELETE FROM product_pricing WHERE product_id = :prod_id");
+        // Clear out old unit-of-measure references
+        $stmtDel = $pdo->prepare("DELETE FROM product_units WHERE product_id = :prod_id");
         $stmtDel->bindParam(':prod_id', $binaryProdId, PDO::PARAM_LOB);
         $stmtDel->execute();
 
+        // Re-insert any updated units_of_measure
         if (!empty($data['units_of_measure']) && is_array($data['units_of_measure'])) {
             foreach ($data['units_of_measure'] as $uom) {
                 $uomIdStr = $uom['unit_of_measure_id'] ?? '';
-                $price    = $uom['price'] ?? 0;
-                if (!$uomIdStr || !$price) {
+                if (!$uomIdStr) {
                     continue;
                 }
 
                 $binaryUomId = uuidToBin($uomIdStr);
-
-                $priceId = generateUUIDv7();
-                $binaryPriceId = uuidToBin($priceId);
+                $unitRowId = generateUUIDv7();
+                $binaryUnitRowId = uuidToBin($unitRowId);
                 $stmt2 = $pdo->prepare("
-                    INSERT INTO product_pricing (
-                        id, product_id, unit_of_measure_id, price,
+                    INSERT INTO product_units (
+                        id, product_id, unit_of_measure_id,
                         created_at, updated_at
                     ) VALUES (
-                        :id, :product_id, :unit_of_measure_id, :price,
+                        :id, :product_id, :unit_of_measure_id,
                         :created_at, :updated_at
                     )
                 ");
-                $stmt2->bindParam(':id', $binaryPriceId, PDO::PARAM_LOB);
+                $stmt2->bindParam(':id', $binaryUnitRowId, PDO::PARAM_LOB);
                 $stmt2->bindParam(':product_id', $binaryProdId, PDO::PARAM_LOB);
                 $stmt2->bindParam(':unit_of_measure_id', $binaryUomId, PDO::PARAM_LOB);
-                $stmt2->bindParam(':price', $price);
                 $stmt2->bindParam(':created_at', $now);
                 $stmt2->bindParam(':updated_at', $now);
                 $stmt2->execute();
             }
         }
 
+        // Update images if requested
         if (isset($data['update_images']) && $data['update_images']) {
             $existingImages = $data['existing_images'] ?? [];
             $tempImages = $data['temp_images'] ?? [];
@@ -416,7 +414,6 @@ function updateProduct($pdo)
                 if (!empty($existingImages)) {
                     saveExistingImages($prodIdStr, $existingImages);
                 }
-
                 if (!empty($tempImages)) {
                     moveProductImages($prodIdStr, $tempImages);
                 }
@@ -462,6 +459,7 @@ function deleteProduct($pdo)
         $stmtDel->bindParam(':id', $binaryProdId, PDO::PARAM_LOB);
         $stmtDel->execute();
 
+        // Remove product images from disk
         deleteAllProductImages($prodIdStr, true);
 
         echo json_encode(['success' => true, 'message' => 'Product deleted successfully']);
@@ -538,7 +536,6 @@ function uploadImage()
         $fileName = $file['name'];
         $fileTmpName = $file['tmp_name'];
         $fileSize = $file['size'];
-        $fileType = $file['type'];
 
         $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
@@ -563,6 +560,7 @@ function uploadImage()
         $uploadPath = $tempDir . $newFileName;
         $relativePath = 'uploads/temp/' . $newFileName;
 
+        // Crop/resize image to 16:9 if needed
         cropAndResizeImage($fileTmpName, $uploadPath, 1600, 900);
 
         echo json_encode([
@@ -600,7 +598,6 @@ function cropAndResizeImage($sourcePath, $destPath, $width, $height)
     }
 
     $imageType = exif_imagetype($sourcePath);
-
     switch ($imageType) {
         case IMAGETYPE_JPEG:
             $source = imagecreatefromjpeg($sourcePath);
@@ -619,7 +616,6 @@ function cropAndResizeImage($sourcePath, $destPath, $width, $height)
     }
 
     $destination = imagecreatetruecolor($width, $height);
-
     if ($imageType === IMAGETYPE_PNG || $imageType === IMAGETYPE_GIF) {
         imagealphablending($destination, false);
         imagesavealpha($destination, true);
@@ -693,14 +689,14 @@ function getProductUnitsOfMeasure($pdo, $productUuid)
 {
     $binaryProdId = uuidToBin($productUuid);
     $stmt = $pdo->prepare("
-        SELECT pp.id, pp.unit_of_measure_id, pp.price,
+        SELECT pu.id, pu.unit_of_measure_id,
                uom.si_unit,
                pn.package_name,
                CONCAT(pn.package_name, ' (', uom.si_unit, ')') as unit_of_measure
-        FROM product_pricing pp
-        JOIN product_unit_of_measure uom ON pp.unit_of_measure_id = uom.id
+        FROM product_units pu
+        JOIN product_unit_of_measure uom ON pu.unit_of_measure_id = uom.id
         JOIN product_package_name pn ON uom.product_package_name_id = pn.id
-        WHERE pp.product_id = :pid
+        WHERE pu.product_id = :pid
     ");
     $stmt->bindParam(':pid', $binaryProdId, PDO::PARAM_LOB);
     $stmt->execute();
@@ -708,13 +704,11 @@ function getProductUnitsOfMeasure($pdo, $productUuid)
 
     $result = [];
     foreach ($rows as $row) {
-        $priceId = binToUuid($row['id']);
+        $unitId = binToUuid($row['id']);
         $uomUuid = binToUuid($row['unit_of_measure_id']);
-        $price   = $row['price'];
         $result[] = [
-            'id'                => $priceId,
+            'id'                => $unitId,
             'unit_of_measure_id' => $uomUuid,
-            'price'             => $price,
             'si_unit'           => $row['si_unit'],
             'package_name'      => $row['package_name'],
             'unit_of_measure'   => $row['unit_of_measure']
