@@ -8,7 +8,12 @@ $vendorId = isset($_GET['id']) ? $_GET['id'] : null;
 
 if ($vendorId) {
     try {
-        $binaryStoreId = uuidToBin($vendorId);
+        // If vendorId is a valid UUID string, convert to binary; otherwise assume it's already binary.
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $vendorId)) {
+            $binaryStoreId = uuidToBin($vendorId);
+        } else {
+            $binaryStoreId = $vendorId;
+        }
         $stmt = $pdo->prepare("SELECT name FROM vendor_stores WHERE id = ?");
         $stmt->execute([$binaryStoreId]);
         $store = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -473,6 +478,14 @@ ob_start();
 </div>
 
 <script>
+    // Define modal functions globally so they are available in inline event handlers.
+    window.openModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'block';
+    };
+    window.closeModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         const vendorId = '<?= $vendorId ?>';
         let storeData = null;
@@ -491,7 +504,6 @@ ob_start();
             showError("No vendor ID provided");
         }
 
-        // Load vendor profile data
         function loadVendorProfile(id) {
             fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreDetails&id=${id}`)
                 .then(response => {
@@ -515,7 +527,6 @@ ob_start();
                 });
         }
 
-        // Load products for this vendor
         function loadProducts(id, page = 1) {
             fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreProducts&id=${id}&page=${page}`)
                 .then(response => response.json())
@@ -524,8 +535,6 @@ ob_start();
                         renderProducts(data.products, page === 1);
                         currentPage = data.pagination?.page || 1;
                         totalPages = data.pagination?.pages || 1;
-
-                        // Show/hide load more button
                         const loadMoreBtn = document.getElementById('loadMoreBtn');
                         if (currentPage < totalPages) {
                             loadMoreBtn.classList.remove('hidden');
@@ -539,17 +548,11 @@ ob_start();
                 });
         }
 
-        // Render the vendor profile with the fetched data
         function renderVendorProfile(store) {
-            // Hide loading, show content
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('content-state').classList.remove('hidden');
-
-            // Basic info
             document.getElementById('vendor-name').textContent = store.name;
             document.getElementById('vendor-operation-type').textContent = store.nature_of_operation;
-
-            // Set status badge
             const statusBadge = document.getElementById('vendor-status');
             const accountStatus = document.getElementById('account-status');
 
@@ -570,87 +573,56 @@ ob_start();
                 accountStatus.textContent = store.status.charAt(0).toUpperCase() + store.status.slice(1);
             }
 
-            // Contact info
             document.getElementById('vendor-location').textContent = `${store.district}, ${store.address}`;
             document.getElementById('vendor-owner').textContent = store.owner_username;
-
-            // Store the email and phone for the toggle buttons
             storeEmail = store.business_email;
             storePhone = store.business_phone;
-
-            // Registration date
             const regDate = new Date(store.created_at);
             document.getElementById('vendor-registered').textContent = regDate.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
-
-            // Last seen (owner's current login)
             if (store.owner_current_login) {
                 const lastSeen = new Date(store.owner_current_login);
                 document.getElementById('vendor-last-seen').textContent = formatTimeAgo(lastSeen);
             } else {
                 document.getElementById('vendor-last-seen').textContent = 'Not available';
             }
-
-            // Store logo
             if (store.logo_url) {
                 const logoImg = document.createElement('img');
                 logoImg.src = BASE_URL + store.logo_url;
                 logoImg.alt = store.name;
                 logoImg.className = 'w-full h-full object-cover rounded-full';
-
                 const avatarContainer = document.getElementById('vendor-avatar');
                 avatarContainer.innerHTML = '';
                 avatarContainer.appendChild(logoImg);
             }
-
-            // Cover image (placeholder for now)
             document.getElementById('vendor-cover').style.backgroundImage = 'linear-gradient(45deg, #f3f4f6 25%, #e5e7eb 25%, #e5e7eb 50%, #f3f4f6 50%, #f3f4f6 75%, #e5e7eb 75%, #e5e7eb 100%)';
             document.getElementById('vendor-cover').style.backgroundSize = '20px 20px';
-
-            // Account summary
             document.getElementById('product-count').textContent = store.product_count || '0';
             document.getElementById('products-heading-count').textContent = store.product_count || '0';
             document.getElementById('category-count').textContent = store.categories?.length || '0';
             document.getElementById('view-count').textContent = store.view_count || '0';
-
             const createdYear = new Date(store.created_at).getFullYear();
             document.getElementById('member-since').textContent = createdYear;
-
-            // Store description
-            if (store.description) {
-                document.getElementById('store-description').textContent = store.description;
-            } else {
-                document.getElementById('store-description').textContent = 'No description provided.';
-            }
-
-            // Website
+            document.getElementById('store-description').textContent = store.description ? store.description : 'No description provided.';
             if (store.website_url) {
                 document.getElementById('store-website').textContent = store.website_url;
-                document.getElementById('store-website').href = store.website_url.startsWith('http') ?
-                    store.website_url : 'https://' + store.website_url;
+                document.getElementById('store-website').href = store.website_url.startsWith('http') ? store.website_url : 'https://' + store.website_url;
             } else {
                 document.getElementById('website-section').classList.add('hidden');
             }
-
-            // Check if current user is the owner
             isOwner = store.is_owner;
             if (isOwner) {
                 document.getElementById('owner-actions').classList.remove('hidden');
             }
-
-            // Calculate verification progress
             updateVerificationProgress(store);
         }
 
-        // Update verification progress based on store data
         function updateVerificationProgress(store) {
             let completedSteps = 0;
             let totalSteps = 4;
-
-            // Step 1: Basic Store Details
             const hasBasicDetails = store.name && store.business_email && store.business_phone && store.nature_of_operation;
             if (hasBasicDetails) {
                 completedSteps++;
@@ -658,18 +630,13 @@ ob_start();
             } else {
                 updateStepStatus('basic-details', false);
             }
-
-            // Step 2: Location Details
-            const hasLocationDetails = store.region && store.district && store.address &&
-                store.latitude && store.longitude;
+            const hasLocationDetails = store.region && store.district && store.address && store.latitude && store.longitude;
             if (hasLocationDetails) {
                 completedSteps++;
                 updateStepStatus('location-details', true);
             } else {
                 updateStepStatus('location-details', false);
             }
-
-            // Step 3: Product Categories
             const hasCategories = store.categories && store.categories.length > 0;
             if (hasCategories) {
                 completedSteps++;
@@ -677,8 +644,6 @@ ob_start();
             } else {
                 updateStepStatus('categories', false);
             }
-
-            // Step 4: Products
             const hasProducts = store.product_count && store.product_count > 0;
             if (hasProducts) {
                 completedSteps++;
@@ -686,20 +651,16 @@ ob_start();
             } else {
                 updateStepStatus('products', false);
             }
-
-            // Update progress bar and text
             const percentage = Math.round((completedSteps / totalSteps) * 100);
             document.getElementById('completion-percentage').textContent = percentage;
             document.getElementById('completion-steps').textContent = completedSteps;
             document.getElementById('verification-progress').style.width = `${percentage}%`;
         }
 
-        // Update individual step status
         function updateStepStatus(stepId, isCompleted) {
             const stepElement = document.getElementById(`step-${stepId}`);
             const statusElement = document.getElementById(`${stepId}-status`);
             const iconElement = stepElement.querySelector('.step-icon');
-
             if (isCompleted) {
                 stepElement.classList.remove('bg-gray-50');
                 stepElement.classList.add('bg-green-50');
@@ -717,8 +678,6 @@ ob_start();
                 statusElement.classList.add('text-gray-600');
                 iconElement.classList.remove('completed');
                 iconElement.classList.add('pending');
-
-                // Set the step number
                 if (stepId === 'basic-details') iconElement.innerHTML = '1';
                 else if (stepId === 'location-details') iconElement.innerHTML = '2';
                 else if (stepId === 'categories') iconElement.innerHTML = '3';
@@ -726,14 +685,11 @@ ob_start();
             }
         }
 
-        // Render products
         function renderProducts(products, clearExisting = true) {
             const container = document.getElementById('products-container');
-
             if (clearExisting) {
                 container.innerHTML = '';
             }
-
             if (!products || products.length === 0) {
                 container.innerHTML = `
                     <div class="col-span-full text-center py-8 text-gray-500">
@@ -742,15 +698,10 @@ ob_start();
                 `;
                 return;
             }
-
             products.forEach(product => {
                 const productCard = document.createElement('div');
                 productCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform hover:-translate-y-1';
-
-                const imageUrl = product.image_url ?
-                    BASE_URL + product.image_url :
-                    `https://placehold.co/400x200/f0f0f0/808080?text=${encodeURIComponent(product.name.substring(0, 2))}`;
-
+                const imageUrl = product.image_url ? BASE_URL + product.image_url : `https://placehold.co/400x200/f0f0f0/808080?text=${encodeURIComponent(product.name.substring(0, 2))}`;
                 productCard.innerHTML = `
                     <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover">
                     <div class="p-4 flex flex-col">
@@ -766,68 +717,55 @@ ob_start();
                         </div>
                     </div>
                 `;
-
                 container.appendChild(productCard);
             });
         }
 
-        // Show error state
         function showError(message) {
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('error-state').classList.remove('hidden');
             console.error(message);
         }
 
-        // Format number with commas
         function formatNumber(num) {
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
 
-        // Format time ago
         function formatTimeAgo(date) {
             const now = new Date();
             const diffInSeconds = Math.floor((now - date) / 1000);
-
             if (diffInSeconds < 60) {
                 return `${diffInSeconds} seconds ago`;
             }
-
             const diffInMinutes = Math.floor(diffInSeconds / 60);
             if (diffInMinutes < 60) {
                 return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
             }
-
             const diffInHours = Math.floor(diffInMinutes / 60);
             if (diffInHours < 24) {
                 return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
             }
-
             const diffInDays = Math.floor(diffInHours / 24);
             if (diffInDays < 30) {
                 return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
             }
-
             const diffInMonths = Math.floor(diffInDays / 30);
             if (diffInMonths < 12) {
                 return `${diffInMonths} month${diffInMonths > 1 ? 's' : ''} ago`;
             }
-
             const diffInYears = Math.floor(diffInMonths / 12);
             return `${diffInYears} year${diffInYears > 1 ? 's' : ''} ago`;
         }
 
-        // Escape HTML to prevent XSS
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Toggle email visibility
         const toggleEmail = document.getElementById('toggle-email');
         const emailDisplay = document.getElementById('email-display');
         let emailVisible = false;
-
         toggleEmail.addEventListener('click', function() {
             if (emailVisible) {
                 emailDisplay.textContent = '••••••••••';
@@ -839,11 +777,9 @@ ob_start();
             emailVisible = !emailVisible;
         });
 
-        // Toggle phone visibility
         const togglePhone = document.getElementById('toggle-phone');
         const phoneDisplay = document.getElementById('phone-display');
         let phoneVisible = false;
-
         togglePhone.addEventListener('click', function() {
             if (phoneVisible) {
                 phoneDisplay.textContent = '••••••••••';
@@ -855,18 +791,15 @@ ob_start();
             phoneVisible = !phoneVisible;
         });
 
-        // Load more products
         document.getElementById('loadMoreBtn').addEventListener('click', function() {
             if (currentPage < totalPages) {
                 loadProducts(vendorId, currentPage + 1);
             }
         });
 
-        // Search products
         document.getElementById('search-products').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
             const productCards = document.querySelectorAll('#products-container > div');
-
             productCards.forEach(card => {
                 const productName = card.querySelector('h3')?.textContent.toLowerCase() || '';
                 if (productName.includes(searchTerm)) {
@@ -877,17 +810,13 @@ ob_start();
             });
         });
 
-        // Sort products
         document.getElementById('sort-products').addEventListener('change', function(e) {
             const sortValue = e.target.value;
             const container = document.getElementById('products-container');
             const productCards = Array.from(container.children);
-
             if (productCards.length <= 1) return;
-
             productCards.sort((a, b) => {
                 if (sortValue === 'latest') {
-                    // This would require additional data, using default for now
                     return 0;
                 } else if (sortValue === 'price-low') {
                     const priceA = parseInt(a.querySelector('.text-red-600').textContent.replace(/[^\d]/g, '')) || 0;
@@ -900,56 +829,43 @@ ob_start();
                 }
                 return 0;
             });
-
-            // Clear and re-append sorted cards
             container.innerHTML = '';
             productCards.forEach(card => container.appendChild(card));
         });
 
-        // Add Category Modal
         document.getElementById('add-category-btn').addEventListener('click', function() {
             openModal('addCategoryModal');
             loadAvailableCategories();
         });
 
-        // Add Product Modal
         document.getElementById('add-product-btn').addEventListener('click', function() {
             openModal('addProductModal');
             loadStoreCategories();
         });
 
-        // Load available categories for the Add Category modal
+        // Updated: Pass store_id to getAvailableCategories
         function loadAvailableCategories() {
             const container = document.getElementById('categories-container');
-
-            fetch(`${BASE_URL}fetch/manageProfile.php?action=getAvailableCategories`)
+            fetch(`${BASE_URL}fetch/manageProfile.php?action=getAvailableCategories&store_id=${vendorId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.categories) {
                         container.innerHTML = '';
-
-                        // Get store's existing categories
                         const existingCategoryIds = storeData.categories.map(cat => cat.category_uuid_id);
                         selectedCategories = [...existingCategoryIds];
-
                         data.categories.forEach(category => {
                             const isSelected = existingCategoryIds.includes(category.uuid_id);
-
                             const categoryItem = document.createElement('div');
                             categoryItem.className = 'flex items-center mb-2';
                             categoryItem.innerHTML = `
                                 <input type="checkbox" id="cat-${category.uuid_id}" 
                                        class="category-checkbox mr-2" 
-                                       value="${category.uuid_id}" 
-                                       ${isSelected ? 'checked' : ''}>
+                                       value="${category.uuid_id}" ${isSelected ? 'checked' : ''}>
                                 <label for="cat-${category.uuid_id}" class="cursor-pointer">
                                     ${escapeHtml(category.name)}
                                 </label>
                             `;
-
                             container.appendChild(categoryItem);
-
-                            // Add event listener to update selectedCategories array
                             const checkbox = categoryItem.querySelector('input');
                             checkbox.addEventListener('change', function() {
                                 if (this.checked) {
@@ -971,11 +887,9 @@ ob_start();
                 });
         }
 
-        // Load store categories for the Add Product modal
         function loadStoreCategories() {
             const categorySelect = document.getElementById('productCategory');
             categorySelect.innerHTML = '<option value="">Select a category</option>';
-
             if (storeData.categories && storeData.categories.length > 0) {
                 storeData.categories.forEach(category => {
                     const option = document.createElement('option');
@@ -983,11 +897,7 @@ ob_start();
                     option.textContent = category.name;
                     categorySelect.appendChild(option);
                 });
-
-                // Enable category selection
                 categorySelect.disabled = false;
-
-                // Add event listener to load products when category changes
                 categorySelect.addEventListener('change', function() {
                     const categoryId = this.value;
                     if (categoryId) {
@@ -1004,17 +914,14 @@ ob_start();
             }
         }
 
-        // Load products for a specific category
         function loadProductsForCategory(categoryId) {
             const productSelect = document.getElementById('productSelect');
             productSelect.innerHTML = '<option value="">Loading products...</option>';
             productSelect.disabled = true;
-
-            fetch(`${BASE_URL}fetch/manageProfile.php?action=getProductsForCategory&category_id=${categoryId}`)
+            fetch(`${BASE_URL}fetch/manageProfile.php?action=getProductsForCategory&store_id=${vendorId}&category_id=${categoryId}`)
                 .then(response => response.json())
                 .then(data => {
                     productSelect.innerHTML = '<option value="">Select a product</option>';
-
                     if (data.success && data.products && data.products.length > 0) {
                         data.products.forEach(product => {
                             const option = document.createElement('option');
@@ -1023,10 +930,7 @@ ob_start();
                             option.dataset.price = product.price || 0;
                             productSelect.appendChild(option);
                         });
-
                         productSelect.disabled = false;
-
-                        // Add event listener to set price when product is selected
                         productSelect.addEventListener('change', function() {
                             const selectedOption = this.options[this.selectedIndex];
                             if (selectedOption && selectedOption.dataset.price) {
@@ -1045,22 +949,19 @@ ob_start();
                 });
         }
 
-        // Save selected categories
         document.getElementById('saveCategoriesBtn').addEventListener('click', function() {
             if (selectedCategories.length === 0) {
                 alert('Please select at least one category');
                 return;
             }
-
             const button = this;
             const originalText = button.textContent;
             button.disabled = true;
             button.textContent = 'Saving...';
-
             fetch(`${BASE_URL}fetch/manageProfile.php?action=updateStoreCategories`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         store_id: vendorId,
@@ -1071,11 +972,9 @@ ob_start();
                 .then(data => {
                     button.disabled = false;
                     button.textContent = originalText;
-
                     if (data.success) {
                         closeModal('addCategoryModal');
                         notifications.success('Categories updated successfully');
-                        // Reload the page to reflect changes
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
                         alert(data.error || 'Failed to update categories');
@@ -1089,32 +988,26 @@ ob_start();
                 });
         });
 
-        // Add product form submission
         document.getElementById('addProductForm').addEventListener('submit', function(e) {
             e.preventDefault();
-
             const categoryId = document.getElementById('productCategory').value;
             const productId = document.getElementById('productSelect').value;
             const price = document.getElementById('productPrice').value;
             const quantity = document.getElementById('productQuantity').value;
-
             if (!categoryId || !productId || !price || !quantity) {
                 alert('Please fill in all required fields');
                 return;
             }
-
             const formData = new FormData();
             formData.append('store_id', vendorId);
             formData.append('category_id', categoryId);
             formData.append('product_id', productId);
             formData.append('price', price);
             formData.append('quantity', quantity);
-
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
             submitBtn.disabled = true;
             submitBtn.textContent = 'Adding...';
-
             fetch(`${BASE_URL}fetch/manageProfile.php?action=addStoreProduct`, {
                     method: 'POST',
                     body: formData
@@ -1123,11 +1016,9 @@ ob_start();
                 .then(data => {
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalText;
-
                     if (data.success) {
                         closeModal('addProductModal');
                         notifications.success('Product added successfully');
-                        // Reload the page to reflect changes
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
                         alert(data.error || 'Failed to add product');
@@ -1141,16 +1032,6 @@ ob_start();
                 });
         });
 
-        // Modal functions
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // Close modals when clicking outside
         window.addEventListener('click', function(event) {
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
