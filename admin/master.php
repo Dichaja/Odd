@@ -226,15 +226,6 @@ $menuItems = [
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <div class="relative">
-                            <a href="<?= BASE_URL ?>admin/notifications">
-                                <button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 relative">
-                                    <i class="fas fa-bell text-gray-500"></i>
-                                    <span class="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
-                                </button>
-                            </a>
-                        </div>
-
                         <div class="relative" id="userDropdown">
                             <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2" title="Last login: <?= htmlspecialchars($formattedLastLogin) ?>">
                                 <div class="user-initials"><?= htmlspecialchars($userInitials) ?></div>
