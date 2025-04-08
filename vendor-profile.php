@@ -144,11 +144,11 @@ ob_start();
 
     .modal-content {
         background-color: #fefefe;
-        margin: 10% auto;
+        margin: 5% auto;
         padding: 20px;
         border: 1px solid #888;
-        width: 80%;
-        max-width: 600px;
+        width: 90%;
+        max-width: 800px;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
@@ -165,6 +165,97 @@ ob_start();
     .close:focus {
         color: black;
         text-decoration: none;
+    }
+
+    .tab-container {
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 1rem;
+    }
+
+    .tab-button {
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        background: none;
+        position: relative;
+    }
+
+    .tab-button.active {
+        color: #C00000;
+        border-bottom: 2px solid #C00000;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+        .category-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .category-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    .category-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        transition: all 0.2s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .category-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .category-description {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .badge-success {
+        background-color: #10B981;
+        color: white;
+    }
+
+    .badge-warning {
+        background-color: #F59E0B;
+        color: white;
+    }
+
+    .badge-danger {
+        background-color: #EF4444;
+        color: white;
     }
 
     @media (max-width: 640px) {
@@ -287,8 +378,8 @@ ob_start();
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl text-red-600 font-bold">Verification Status</h2>
                     <div id="owner-actions" class="hidden">
-                        <button id="add-category-btn" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition mr-2">
-                            <i class="fas fa-plus-circle mr-1"></i> Add Category
+                        <button id="manage-categories-btn" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition mr-2">
+                            <i class="fas fa-tags mr-1"></i> Manage Categories
                         </button>
                         <button id="add-product-btn" class="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition">
                             <i class="fas fa-plus-circle mr-1"></i> Add Product
@@ -398,6 +489,9 @@ ob_start();
             <h2 class="text-xl text-red-600 font-bold">Products (<span id="products-heading-count">0</span>)</h2>
             <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <input type="text" id="search-products" placeholder="Search products..." class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full">
+                <select id="filter-category" class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full">
+                    <option value="">All Categories</option>
+                </select>
                 <select id="sort-products" class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full">
                     <option value="default">Default Sorting</option>
                     <option value="latest">Latest</option>
@@ -420,22 +514,42 @@ ob_start();
     </div>
 </div>
 
-<!-- Add Category Modal -->
-<div id="addCategoryModal" class="modal">
+<!-- Manage Categories Modal -->
+<div id="manageCategoriesModal" class="modal">
     <div class="modal-content">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold">Add Categories</h2>
-            <span class="close" onclick="closeModal('addCategoryModal')">&times;</span>
+            <h2 class="text-xl font-bold">Manage Categories</h2>
+            <span class="close" onclick="closeModal('manageCategoriesModal')">&times;</span>
         </div>
-        <p class="text-gray-600 mb-4">Select categories for your store:</p>
-        <div id="categories-container" class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4">
-            <div class="flex justify-center items-center py-8">
-                <div class="loader"></div>
+
+        <div class="tab-container">
+            <button class="tab-button active" data-tab="manage-tab">Manage Store Categories</button>
+            <button class="tab-button" data-tab="add-tab">Add New Categories</button>
+        </div>
+
+        <!-- Manage Tab -->
+        <div id="manage-tab" class="tab-content active">
+            <p class="text-gray-600 mb-4">Manage your store's existing categories:</p>
+            <div id="store-categories-container" class="category-grid max-h-96 overflow-y-auto mb-4">
+                <div class="flex justify-center items-center py-8 col-span-full">
+                    <div class="loader"></div>
+                </div>
             </div>
         </div>
+
+        <!-- Add Tab -->
+        <div id="add-tab" class="tab-content">
+            <p class="text-gray-600 mb-4">Add new categories to your store:</p>
+            <div id="available-categories-container" class="category-grid max-h-96 overflow-y-auto mb-4">
+                <div class="flex justify-center items-center py-8 col-span-full">
+                    <div class="loader"></div>
+                </div>
+            </div>
+        </div>
+
         <div class="flex justify-end">
-            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg mr-2" onclick="closeModal('addCategoryModal')">Cancel</button>
-            <button type="button" id="saveCategoriesBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg">Save Categories</button>
+            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg mr-2" onclick="closeModal('manageCategoriesModal')">Cancel</button>
+            <button type="button" id="saveCategoriesBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg">Save Changes</button>
         </div>
     </div>
 </div>
@@ -496,6 +610,8 @@ ob_start();
         let totalPages = 1;
         let selectedCategories = [];
         let availableProducts = {};
+        let allProducts = [];
+        let categoryStatusChanges = {};
 
         // Initialize
         if (vendorId) {
@@ -503,6 +619,25 @@ ob_start();
         } else {
             showError("No vendor ID provided");
         }
+
+        // Tab functionality
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+
+                // Update active tab button
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+
+                // Show the selected tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
 
         function loadVendorProfile(id) {
             fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreDetails&id=${id}`)
@@ -517,6 +652,7 @@ ob_start();
                         storeData = data.store;
                         renderVendorProfile(storeData);
                         loadProducts(id);
+                        populateCategoryFilter(storeData.categories);
                     } else {
                         showError(data.error || "Failed to load vendor profile");
                     }
@@ -533,6 +669,11 @@ ob_start();
                 .then(data => {
                     if (data.success) {
                         renderProducts(data.products, page === 1);
+                        if (page === 1) {
+                            allProducts = data.products;
+                        } else {
+                            allProducts = [...allProducts, ...data.products];
+                        }
                         currentPage = data.pagination?.page || 1;
                         totalPages = data.pagination?.pages || 1;
                         const loadMoreBtn = document.getElementById('loadMoreBtn');
@@ -546,6 +687,64 @@ ob_start();
                 .catch(error => {
                     console.error('Error loading products:', error);
                 });
+        }
+
+        function populateCategoryFilter(categories) {
+            if (!categories || categories.length === 0) return;
+
+            const filterSelect = document.getElementById('filter-category');
+            filterSelect.innerHTML = '<option value="">All Categories</option>';
+
+            // Only include active categories
+            const activeCategories = categories.filter(category => category.status === 'active');
+
+            activeCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.category_uuid_id;
+                option.textContent = category.name;
+                filterSelect.appendChild(option);
+            });
+
+            filterSelect.addEventListener('change', filterProductsByCategory);
+        }
+
+        function filterProductsByCategory() {
+            const categoryId = document.getElementById('filter-category').value;
+            const searchTerm = document.getElementById('search-products').value.toLowerCase();
+
+            filterProducts(categoryId, searchTerm);
+        }
+
+        function filterProducts(categoryId = '', searchTerm = '') {
+            const container = document.getElementById('products-container');
+            container.innerHTML = '';
+
+            let filteredProducts = [...allProducts];
+
+            // Filter by category if selected
+            if (categoryId) {
+                filteredProducts = filteredProducts.filter(product =>
+                    product.store_category_uuid_id === categoryId
+                );
+            }
+
+            // Filter by search term if provided
+            if (searchTerm) {
+                filteredProducts = filteredProducts.filter(product =>
+                    product.name.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (filteredProducts.length === 0) {
+                container.innerHTML = `
+                <div class="col-span-full text-center py-8 text-gray-500">
+                    No products found matching your criteria.
+                </div>
+            `;
+                return;
+            }
+
+            renderProducts(filteredProducts, true);
         }
 
         function renderVendorProfile(store) {
@@ -600,9 +799,15 @@ ob_start();
             }
             document.getElementById('vendor-cover').style.backgroundImage = 'linear-gradient(45deg, #f3f4f6 25%, #e5e7eb 25%, #e5e7eb 50%, #f3f4f6 50%, #f3f4f6 75%, #e5e7eb 75%, #e5e7eb 100%)';
             document.getElementById('vendor-cover').style.backgroundSize = '20px 20px';
-            document.getElementById('product-count').textContent = store.product_count || '0';
-            document.getElementById('products-heading-count').textContent = store.product_count || '0';
-            document.getElementById('category-count').textContent = store.categories?.length || '0';
+
+            // Count only active products and categories
+            const activeCategories = store.categories ? store.categories.filter(cat => cat.status === 'active') : [];
+            const activeCategoriesCount = activeCategories.length;
+            const activeProductsCount = store.product_count || 0;
+
+            document.getElementById('product-count').textContent = activeProductsCount;
+            document.getElementById('products-heading-count').textContent = activeProductsCount;
+            document.getElementById('category-count').textContent = activeCategoriesCount;
             document.getElementById('view-count').textContent = store.view_count || '0';
             const createdYear = new Date(store.created_at).getFullYear();
             document.getElementById('member-since').textContent = createdYear;
@@ -637,7 +842,10 @@ ob_start();
             } else {
                 updateStepStatus('location-details', false);
             }
-            const hasCategories = store.categories && store.categories.length > 0;
+
+            // Only count active categories
+            const activeCategories = store.categories ? store.categories.filter(cat => cat.status === 'active') : [];
+            const hasCategories = activeCategories.length > 0;
             if (hasCategories) {
                 completedSteps++;
                 updateStepStatus('categories', true);
@@ -692,31 +900,36 @@ ob_start();
             }
             if (!products || products.length === 0) {
                 container.innerHTML = `
-                    <div class="col-span-full text-center py-8 text-gray-500">
-                        No products found for this vendor.
-                    </div>
-                `;
+                <div class="col-span-full text-center py-8 text-gray-500">
+                    No products found for this vendor.
+                </div>
+            `;
                 return;
             }
             products.forEach(product => {
                 const productCard = document.createElement('div');
                 productCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform hover:-translate-y-1';
-                const imageUrl = product.image_url ? BASE_URL + product.image_url : `https://placehold.co/400x200/f0f0f0/808080?text=${encodeURIComponent(product.name.substring(0, 2))}`;
+                productCard.dataset.categoryId = product.store_category_uuid_id;
+
+                // Use placehold.co for images instead of trying to load from product_images table
+                const productName = encodeURIComponent(product.name.substring(0, 2));
+                const imageUrl = `https://placehold.co/400x200/f0f0f0/808080?text=${productName}`;
+
                 productCard.innerHTML = `
-                    <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover">
-                    <div class="p-4 flex flex-col">
-                        <h3 class="text-lg font-bold text-gray-800 mb-2">${escapeHtml(product.name)}</h3>
-                        <p class="text-gray-500 text-sm mb-4">Per ${escapeHtml(product.unit)}</p>
-                        <p class="text-xl font-bold text-red-600 mb-2">UGX ${formatNumber(product.price)}</p>
-                        <p class="text-gray-500 text-sm mb-4">Max Capacity: ${product.max_capacity || 'N/A'}</p>
-                        <div class="flex justify-between items-center pt-4 border-t border-gray-200 mt-auto">
-                            <span class="text-gray-500 text-sm">
-                                <i class="fas fa-eye"></i> ${product.views || 0} Views
-                            </span>
-                            <a href="#" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors">View Details</a>
-                        </div>
+                <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover">
+                <div class="p-4 flex flex-col">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">${escapeHtml(product.name)}</h3>
+                    <p class="text-gray-500 text-sm mb-4">Per ${escapeHtml(product.unit || 'Unit')}</p>
+                    <p class="text-xl font-bold text-red-600 mb-2">UGX ${formatNumber(product.price)}</p>
+                    <p class="text-gray-500 text-sm mb-4">Max Capacity: ${product.max_capacity || 'N/A'}</p>
+                    <div class="flex justify-between items-center pt-4 border-t border-gray-200 mt-auto">
+                        <span class="text-gray-500 text-sm">
+                            <i class="fas fa-eye"></i> ${product.views || 0} Views
+                        </span>
+                        <a href="#" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors">View Details</a>
                     </div>
-                `;
+                </div>
+            `;
                 container.appendChild(productCard);
             });
         }
@@ -799,15 +1012,9 @@ ob_start();
 
         document.getElementById('search-products').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-            const productCards = document.querySelectorAll('#products-container > div');
-            productCards.forEach(card => {
-                const productName = card.querySelector('h3')?.textContent.toLowerCase() || '';
-                if (productName.includes(searchTerm)) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
+            const categoryId = document.getElementById('filter-category').value;
+
+            filterProducts(categoryId, searchTerm);
         });
 
         document.getElementById('sort-products').addEventListener('change', function(e) {
@@ -833,8 +1040,9 @@ ob_start();
             productCards.forEach(card => container.appendChild(card));
         });
 
-        document.getElementById('add-category-btn').addEventListener('click', function() {
-            openModal('addCategoryModal');
+        document.getElementById('manage-categories-btn').addEventListener('click', function() {
+            openModal('manageCategoriesModal');
+            loadStoreCategoriesForManagement();
             loadAvailableCategories();
         });
 
@@ -843,47 +1051,171 @@ ob_start();
             loadStoreCategories();
         });
 
-        // Updated: Pass store_id to getAvailableCategories
+        function loadStoreCategoriesForManagement() {
+            const container = document.getElementById('store-categories-container');
+            container.innerHTML = '<div class="flex justify-center items-center py-8 col-span-full"><div class="loader"></div></div>';
+
+            if (!storeData || !storeData.categories || storeData.categories.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-4 col-span-full">No categories added to this store yet.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            storeData.categories.forEach(category => {
+                const categoryCard = document.createElement('div');
+                categoryCard.className = 'category-card';
+                categoryCard.dataset.id = category.uuid_id;
+
+                const statusClass = category.status === 'active' ? 'badge-success' : 'badge-warning';
+                const statusText = category.status === 'active' ? 'Active' : 'Inactive';
+
+                categoryCard.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-lg">${escapeHtml(category.name)}</h3>
+                    <span class="badge ${statusClass}">${statusText}</span>
+                </div>
+                <p class="text-gray-600 text-sm category-description mb-3">${escapeHtml(category.description || 'No description available')}</p>
+                <div class="flex justify-between items-center mt-auto">
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-box"></i> ${category.product_count || 0} Products
+                    </span>
+                    <select class="category-status-select px-2 py-1 border border-gray-300 rounded text-sm" data-id="${category.uuid_id}" data-original="${category.status}">
+                        <option value="active" ${category.status === 'active' ? 'selected' : ''}>Active</option>
+                        <option value="inactive" ${category.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                    </select>
+                </div>
+            `;
+                container.appendChild(categoryCard);
+            });
+
+            // Add event listeners to status selects
+            document.querySelectorAll('.category-status-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const categoryId = this.dataset.id;
+                    const newStatus = this.value;
+                    const originalStatus = this.dataset.original;
+
+                    if (newStatus !== originalStatus) {
+                        categoryStatusChanges[categoryId] = newStatus;
+
+                        // Update the badge
+                        const card = this.closest('.category-card');
+                        const badge = card.querySelector('.badge');
+                        badge.className = `badge ${newStatus === 'active' ? 'badge-success' : 'badge-warning'}`;
+                        badge.textContent = newStatus === 'active' ? 'Active' : 'Inactive';
+                    } else {
+                        delete categoryStatusChanges[categoryId];
+                    }
+                });
+            });
+        }
+
         function loadAvailableCategories() {
-            const container = document.getElementById('categories-container');
+            const container = document.getElementById('available-categories-container');
+            container.innerHTML = '<div class="flex justify-center items-center py-8 col-span-full"><div class="loader"></div></div>';
+
             fetch(`${BASE_URL}fetch/manageProfile.php?action=getAvailableCategories&store_id=${vendorId}`)
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success && data.categories) {
+                    if (data.success && data.categories && data.categories.length > 0) {
+                        // Filter to only show active categories
+                        const activeCategories = data.categories.filter(cat => cat.status === 'active');
+
+                        if (activeCategories.length === 0) {
+                            container.innerHTML = '<p class="text-center text-gray-500 py-4 col-span-full">No additional active categories available.</p>';
+                            return;
+                        }
+
                         container.innerHTML = '';
-                        const existingCategoryIds = storeData.categories.map(cat => cat.category_uuid_id);
-                        selectedCategories = [...existingCategoryIds];
-                        data.categories.forEach(category => {
-                            const isSelected = existingCategoryIds.includes(category.uuid_id);
-                            const categoryItem = document.createElement('div');
-                            categoryItem.className = 'flex items-center mb-2';
-                            categoryItem.innerHTML = `
-                                <input type="checkbox" id="cat-${category.uuid_id}" 
-                                       class="category-checkbox mr-2" 
-                                       value="${category.uuid_id}" ${isSelected ? 'checked' : ''}>
-                                <label for="cat-${category.uuid_id}" class="cursor-pointer">
-                                    ${escapeHtml(category.name)}
-                                </label>
-                            `;
-                            container.appendChild(categoryItem);
-                            const checkbox = categoryItem.querySelector('input');
-                            checkbox.addEventListener('change', function() {
-                                if (this.checked) {
-                                    if (!selectedCategories.includes(this.value)) {
-                                        selectedCategories.push(this.value);
-                                    }
-                                } else {
-                                    selectedCategories = selectedCategories.filter(id => id !== this.value);
-                                }
+
+                        // Get product counts for each category
+                        fetch(`${BASE_URL}fetch/manageProfile.php?action=getCategoryProductCounts`)
+                            .then(response => response.json())
+                            .then(countData => {
+                                const productCounts = countData.success ? countData.counts : {};
+
+                                activeCategories.forEach(category => {
+                                    const categoryCard = document.createElement('div');
+                                    categoryCard.className = 'category-card';
+
+                                    const productCount = productCounts[category.uuid_id] || 0;
+
+                                    categoryCard.innerHTML = `
+                                    <div class="flex items-start mb-2">
+                                        <input type="checkbox" id="cat-${category.uuid_id}" 
+                                               class="category-checkbox mr-2 mt-1" 
+                                               value="${category.uuid_id}">
+                                        <div>
+                                            <label for="cat-${category.uuid_id}" class="font-bold text-lg cursor-pointer">
+                                                ${escapeHtml(category.name)}
+                                            </label>
+                                            <p class="text-gray-600 text-sm category-description">
+                                                ${escapeHtml(category.description || 'No description available')}
+                                            </p>
+                                            <p class="text-sm text-gray-500 mt-2">
+                                                <i class="fas fa-box"></i> ${productCount} Products
+                                            </p>
+                                        </div>
+                                    </div>
+                                `;
+                                    container.appendChild(categoryCard);
+
+                                    const checkbox = categoryCard.querySelector('input');
+                                    checkbox.addEventListener('change', function() {
+                                        if (this.checked) {
+                                            if (!selectedCategories.includes(this.value)) {
+                                                selectedCategories.push(this.value);
+                                            }
+                                        } else {
+                                            selectedCategories = selectedCategories.filter(id => id !== this.value);
+                                        }
+                                    });
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Error loading category product counts:', error);
+
+                                // Fallback if product counts can't be loaded
+                                activeCategories.forEach(category => {
+                                    const categoryCard = document.createElement('div');
+                                    categoryCard.className = 'category-card';
+
+                                    categoryCard.innerHTML = `
+                                    <div class="flex items-start mb-2">
+                                        <input type="checkbox" id="cat-${category.uuid_id}" 
+                                               class="category-checkbox mr-2 mt-1" 
+                                               value="${category.uuid_id}">
+                                        <div>
+                                            <label for="cat-${category.uuid_id}" class="font-bold text-lg cursor-pointer">
+                                                ${escapeHtml(category.name)}
+                                            </label>
+                                            <p class="text-gray-600 text-sm category-description">
+                                                ${escapeHtml(category.description || 'No description available')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                `;
+                                    container.appendChild(categoryCard);
+
+                                    const checkbox = categoryCard.querySelector('input');
+                                    checkbox.addEventListener('change', function() {
+                                        if (this.checked) {
+                                            if (!selectedCategories.includes(this.value)) {
+                                                selectedCategories.push(this.value);
+                                            }
+                                        } else {
+                                            selectedCategories = selectedCategories.filter(id => id !== this.value);
+                                        }
+                                    });
+                                });
                             });
-                        });
                     } else {
-                        container.innerHTML = '<p class="text-center text-gray-500">No categories available</p>';
+                        container.innerHTML = '<p class="text-center text-gray-500 py-4 col-span-full">No additional categories available.</p>';
                     }
                 })
                 .catch(error => {
                     console.error('Error loading categories:', error);
-                    container.innerHTML = '<p class="text-center text-red-500">Failed to load categories</p>';
+                    container.innerHTML = '<p class="text-center text-red-500 py-4 col-span-full">Failed to load categories.</p>';
                 });
         }
 
@@ -891,7 +1223,8 @@ ob_start();
             const categorySelect = document.getElementById('productCategory');
             categorySelect.innerHTML = '<option value="">Select a category</option>';
             if (storeData.categories && storeData.categories.length > 0) {
-                storeData.categories.forEach(category => {
+                const activeCategories = storeData.categories.filter(cat => cat.status === 'active');
+                activeCategories.forEach(category => {
                     const option = document.createElement('option');
                     option.value = category.uuid_id;
                     option.textContent = category.name;
@@ -950,30 +1283,52 @@ ob_start();
         }
 
         document.getElementById('saveCategoriesBtn').addEventListener('click', function() {
-            if (selectedCategories.length === 0) {
-                alert('Please select at least one category');
+            const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+
+            if (activeTab === 'add-tab' && selectedCategories.length === 0) {
+                alert('Please select at least one category to add');
                 return;
             }
+
+            if (activeTab === 'manage-tab' && Object.keys(categoryStatusChanges).length === 0) {
+                alert('No changes detected');
+                return;
+            }
+
             const button = this;
             const originalText = button.textContent;
             button.disabled = true;
             button.textContent = 'Saving...';
-            fetch(`${BASE_URL}fetch/manageProfile.php?action=updateStoreCategories`, {
+
+            let endpoint, payload;
+
+            if (activeTab === 'add-tab') {
+                endpoint = `${BASE_URL}fetch/manageProfile.php?action=updateStoreCategories`;
+                payload = {
+                    store_id: vendorId,
+                    categories: selectedCategories
+                };
+            } else {
+                endpoint = `${BASE_URL}fetch/manageProfile.php?action=updateCategoryStatus`;
+                payload = {
+                    store_id: vendorId,
+                    category_updates: categoryStatusChanges
+                };
+            }
+
+            fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        store_id: vendorId,
-                        categories: selectedCategories
-                    })
+                    body: JSON.stringify(payload)
                 })
                 .then(response => response.json())
                 .then(data => {
                     button.disabled = false;
                     button.textContent = originalText;
                     if (data.success) {
-                        closeModal('addCategoryModal');
+                        closeModal('manageCategoriesModal');
                         notifications.success('Categories updated successfully');
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
