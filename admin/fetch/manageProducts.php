@@ -688,16 +688,20 @@ function getProductImages($productUuid)
 function getProductUnitsOfMeasure($pdo, $productUuid)
 {
     $binaryProdId = uuidToBin($productUuid);
+    
+    // Fixe the SQL query to properly join with product_si_units table
     $stmt = $pdo->prepare("
         SELECT pu.id, pu.unit_of_measure_id,
-               uom.si_unit,
+               si.si_unit,
                pn.package_name,
-               CONCAT(pn.package_name, ' (', uom.si_unit, ')') as unit_of_measure
+               CONCAT(si.si_unit, ' ', pn.package_name) as unit_of_measure
         FROM product_units pu
         JOIN product_unit_of_measure uom ON pu.unit_of_measure_id = uom.id
+        JOIN product_si_units si ON uom.product_si_unit_id = si.id
         JOIN product_package_name pn ON uom.product_package_name_id = pn.id
         WHERE pu.product_id = :pid
     ");
+    
     $stmt->bindParam(':pid', $binaryProdId, PDO::PARAM_LOB);
     $stmt->execute();
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -778,4 +782,43 @@ function deleteAllProductImages($productUuid, $removeDir = false)
     if ($removeDir) {
         rmdir($dir);
     }
+}
+
+// Helper function to convert binary UUID to string
+function binToUuid($binary)
+{
+    $hex = bin2hex($binary);
+    return sprintf(
+        '%s-%s-%s-%s-%s',
+        substr($hex, 0, 8),
+        substr($hex, 8, 4),
+        substr($hex, 12, 4),
+        substr($hex, 16, 4),
+        substr($hex, 20, 12)
+    );
+}
+
+// Helper function to convert string UUID to binary
+function uuidToBin($uuid)
+{
+    error_log("uuidToBin called with UUID: " . $uuid);
+    return hex2bin(str_replace('-', '', $uuid));
+}
+
+// Helper function to generate UUIDv7
+function generateUUIDv7()
+{
+    $time = microtime(true) * 1000;
+    $time = sprintf('%016x', (int)$time);
+
+    $uuid = sprintf(
+        '%s-%s-%s-%s-%s',
+        substr($time, 0, 8),
+        substr($time, 8, 4),
+        '7' . substr($time, 13, 3),
+        sprintf('%04x', mt_rand(0, 0x0fff) | 0x8000),
+        sprintf('%012x', mt_rand(0, 0xffffffffffff))
+    );
+
+    return $uuid;
 }
