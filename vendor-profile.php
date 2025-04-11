@@ -1045,7 +1045,6 @@ ob_start();
             if (productCards.length <= 1) return;
 
             productCards.sort((a, b) => {
-                const aPrices = a.querySelectorAll('.verification-indicator');
                 if (sortValue === 'latest') {
                     return 0; // or your custom logic
                 } else if (sortValue === 'price-low') {

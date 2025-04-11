@@ -437,7 +437,8 @@ function getStoreProducts($pdo, $storeId, $page = 1, $limit = 12)
         $totalProducts = $countStmt->fetchColumn();
         $totalPages = max(1, ceil($totalProducts / $limit));
 
-        // Query all rows with new join on `product_pricing.store_products_id`
+        // Query all rows
+        // Note the extra LEFT JOIN for product_si_units (psu) to get the si_unit column
         $sql = "
             SELECT 
                 p.id as product_id,
@@ -454,24 +455,24 @@ function getStoreProducts($pdo, $storeId, $page = 1, $limit = 12)
                 pp.price_category,
                 pp.delivery_capacity,
                 
-                -- For referencing the package/unit
+                -- unit references
                 ppn.package_name,
-                pum.si_unit
+                psu.si_unit
 
             FROM store_products sp
             JOIN store_categories sc ON sp.store_category_id = sc.id
             JOIN products p ON sp.product_id = p.id
             JOIN product_categories pc ON p.category_id = pc.id
 
-            -- Link to product_pricing by store_products_id
             LEFT JOIN product_pricing pp 
                 ON pp.store_products_id = sp.id
 
-            -- Then link from product_pricing.product_unit_id -> product_units.id -> unit_of_measure
             LEFT JOIN product_units pu
                 ON pp.product_unit_id = pu.id
             LEFT JOIN product_unit_of_measure pum 
                 ON pu.unit_of_measure_id = pum.id
+            LEFT JOIN product_si_units psu
+                ON pum.product_si_unit_id = psu.id
             LEFT JOIN product_package_name ppn 
                 ON pum.product_package_name_id = ppn.id
 
@@ -1041,9 +1042,10 @@ function getUnitsForProduct($pdo)
             SELECT 
                 pum.id AS product_unit_id,
                 ppn.package_name,
-                pum.si_unit
+                psu.si_unit
             FROM product_units pu
             JOIN product_unit_of_measure pum ON pu.unit_of_measure_id = pum.id
+            JOIN product_si_units psu ON pum.product_si_unit_id = psu.id
             JOIN product_package_name ppn ON pum.product_package_name_id = ppn.id
             WHERE pu.product_id = ?
         ";
