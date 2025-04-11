@@ -403,6 +403,71 @@ ob_start();
         sort: ''
     };
 
+    let packageNamesData = [];
+    let siUnitsData = [];
+
+    function loadPackageNames() {
+        showLoading('Loading package names...');
+
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=getPackageNames`)
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showSessionExpiredModal();
+                        throw new Error('Session expired');
+                    }
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    packageNamesData = data.packageNames;
+                } else {
+                    showErrorNotification(data.message || 'Failed to load package names');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                if (error.message !== 'Session expired') {
+                    console.error('Error loading package names:', error);
+                    showErrorNotification('Failed to load package names. Please try again.');
+                }
+            });
+    }
+
+    function loadSIUnits() {
+        showLoading('Loading SI units...');
+
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=getSIUnits`)
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showSessionExpiredModal();
+                        throw new Error('Session expired');
+                    }
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    siUnitsData = data.siUnits;
+                } else {
+                    showErrorNotification(data.message || 'Failed to load SI units');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                if (error.message !== 'Session expired') {
+                    console.error('Error loading SI units:', error);
+                    showErrorNotification('Failed to load SI units. Please try again.');
+                }
+            });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof Sortable === 'undefined') {
             console.error('Sortable library not loaded. Loading it now...');
@@ -430,6 +495,8 @@ ob_start();
         }
 
         loadCategories();
+        loadPackageNames();
+        loadSIUnits();
         loadUnitsOfMeasure();
         loadProducts();
 
@@ -1045,6 +1112,119 @@ ob_start();
         }
     }
 
+    function addUnitOfMeasureRow(selectedUomId = null) {
+        const container = document.getElementById('unitOfMeasurePricingContainer');
+        const row = document.createElement('div');
+        row.className = 'uom-row grid grid-cols-1 md:grid-cols-2 gap-4 items-center';
+
+        // Initial step - show unit of measure dropdown with option to create new
+        row.innerHTML = `
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Unit of Measure</label>
+                <select class="unit-of-measure-select w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
+                    <option value="">Select Unit of Measure</option>
+                    <option value="create_new">Create New</option>
+                    ${unitsOfMeasureList.map(uom => `<option value="${uom.uuid_id}">${uom.unit_of_measure}</option>`).join('')}
+                </select>
+                
+                <!-- Hidden section for creating new unit of measure -->
+                <div class="create-new-uom-section hidden mt-3 border-t pt-3 border-gray-200">
+                    <div class="grid grid-cols-1 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">Package Name</label>
+                            <select class="package-name-select w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none">
+                                <option value="">Select Package Name</option>
+                                <option value="create_new">Create New</option>
+                            </select>
+                            <div class="new-package-name-container hidden mt-2">
+                                <input type="text" class="new-package-name w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none" placeholder="Enter new package name">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">SI Unit</label>
+                            <select class="si-unit-select w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none">
+                                <option value="">Select SI Unit</option>
+                                <option value="create_new">Create New</option>
+                            </select>
+                            <div class="new-si-unit-container hidden mt-2">
+                                <input type="text" class="new-si-unit w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none" placeholder="Enter new SI unit">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-end">
+                <button type="button" class="remove-unit-of-measure px-3 py-2 text-red-500 hover:text-red-700">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(row);
+
+        // Set up package name and SI unit selects
+        const packageSelect = row.querySelector('.package-name-select');
+        const siUnitSelect = row.querySelector('.si-unit-select');
+
+        // Populate package names dropdown
+        if (packageNamesData && packageNamesData.length > 0) {
+            packageNamesData.forEach(pkg => {
+                const opt = document.createElement('option');
+                opt.value = pkg.uuid_id;
+                opt.textContent = pkg.package_name;
+                packageSelect.appendChild(opt);
+            });
+        }
+
+        // Populate SI units dropdown
+        if (siUnitsData && siUnitsData.length > 0) {
+            siUnitsData.forEach(unit => {
+                const opt = document.createElement('option');
+                opt.value = unit.uuid_id;
+                opt.textContent = unit.si_unit;
+                siUnitSelect.appendChild(opt);
+            });
+        }
+
+        // Event handler for "Create new" selection
+        const uomSelect = row.querySelector('.unit-of-measure-select');
+        const createNewSection = row.querySelector('.create-new-uom-section');
+
+        uomSelect.addEventListener('change', function() {
+            if (this.value === 'create_new') {
+                createNewSection.classList.remove('hidden');
+            } else {
+                createNewSection.classList.add('hidden');
+            }
+        });
+
+        // Event handlers for package name and SI unit create new options
+        packageSelect.addEventListener('change', function() {
+            const newPackageContainer = row.querySelector('.new-package-name-container');
+            if (this.value === 'create_new') {
+                newPackageContainer.classList.remove('hidden');
+            } else {
+                newPackageContainer.classList.add('hidden');
+            }
+        });
+
+        siUnitSelect.addEventListener('change', function() {
+            const newSiUnitContainer = row.querySelector('.new-si-unit-container');
+            if (this.value === 'create_new') {
+                newSiUnitContainer.classList.remove('hidden');
+            } else {
+                newSiUnitContainer.classList.add('hidden');
+            }
+        });
+
+        if (selectedUomId) {
+            uomSelect.value = selectedUomId;
+        }
+
+        row.querySelector('.remove-unit-of-measure').addEventListener('click', () => {
+            row.remove();
+        });
+    }
+
     function saveProduct() {
         const productId = document.getElementById('edit-product-id').value;
         const title = document.getElementById('productTitle').value.trim();
@@ -1085,65 +1265,174 @@ ob_start();
             }
         });
 
-        // Gather units of measure (no price)
-        const uomRows = document.querySelectorAll('#unitOfMeasurePricingContainer .uom-row');
-        const unitsOfMeasure = [];
-        uomRows.forEach(row => {
-            const uomSel = row.querySelector('.unit-of-measure-select');
-            if (uomSel.value) {
-                unitsOfMeasure.push({
-                    unit_of_measure_id: uomSel.value
-                });
-            }
-        });
+        // Process units of measure
+        const collectUnitsOfMeasure = async () => {
+            const uomRows = document.querySelectorAll('#unitOfMeasurePricingContainer .uom-row');
+            const unitsOfMeasure = [];
 
-        const payload = {
-            id: productId,
-            title: title,
-            category_id: category,
-            description: desc,
-            meta_title: metaTitle,
-            meta_description: metaDesc,
-            meta_keywords: keywords,
-            status: status,
-            featured: featured,
-            units_of_measure: unitsOfMeasure,
-            temp_images: tempImages,
-            existing_images: images,
-            update_images: imageDivs.length > 0
+            // Process each row sequentially to handle potential API calls for new UOMs
+            for (const row of uomRows) {
+                const uomSelect = row.querySelector('.unit-of-measure-select');
+
+                if (!uomSelect.value) {
+                    continue; // Skip empty selections
+                }
+
+                if (uomSelect.value !== 'create_new') {
+                    // Using an existing unit of measure
+                    unitsOfMeasure.push({
+                        unit_of_measure_id: uomSelect.value
+                    });
+                } else {
+                    // Creating a new unit of measure
+                    const packageSelect = row.querySelector('.package-name-select');
+                    const siUnitSelect = row.querySelector('.si-unit-select');
+
+                    let packageNameId = packageSelect.value;
+                    let siUnitId = siUnitSelect.value;
+
+                    // Handle new package name if needed
+                    if (packageSelect.value === 'create_new') {
+                        const newPackageInput = row.querySelector('.new-package-name');
+                        if (newPackageInput.value.trim()) {
+                            try {
+                                // Use the existing API to create or get package name
+                                const packageResponse = await fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createPackageName`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        package_name: newPackageInput.value.trim()
+                                    })
+                                });
+
+                                if (packageResponse.ok) {
+                                    const packageData = await packageResponse.json();
+                                    if (packageData.success) {
+                                        packageNameId = packageData.id;
+                                    }
+                                }
+                            } catch (err) {
+                                console.error('Error creating package name:', err);
+                            }
+                        } else {
+                            continue; // Skip if no package name provided
+                        }
+                    }
+
+                    // Handle new SI unit if needed
+                    if (siUnitSelect.value === 'create_new') {
+                        const newSiUnitInput = row.querySelector('.new-si-unit');
+                        if (newSiUnitInput.value.trim()) {
+                            try {
+                                // Use the existing API to create or get SI unit
+                                const siUnitResponse = await fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createSIUnit`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        si_unit: newSiUnitInput.value.trim()
+                                    })
+                                });
+
+                                if (siUnitResponse.ok) {
+                                    const siUnitData = await siUnitResponse.json();
+                                    if (siUnitData.success) {
+                                        siUnitId = siUnitData.id;
+                                    }
+                                }
+                            } catch (err) {
+                                console.error('Error creating SI unit:', err);
+                            }
+                        } else {
+                            continue; // Skip if no SI unit provided
+                        }
+                    }
+
+                    // Create the unit of measure
+                    if (packageNameId && siUnitId) {
+                        try {
+                            const uomResponse = await fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createUnitOfMeasure`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    package_name_id: packageNameId,
+                                    si_unit_id: siUnitId
+                                })
+                            });
+
+                            if (uomResponse.ok) {
+                                const uomData = await uomResponse.json();
+                                if (uomData.success) {
+                                    unitsOfMeasure.push({
+                                        unit_of_measure_id: uomData.id
+                                    });
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Error creating unit of measure:', err);
+                        }
+                    }
+                }
+            }
+
+            return unitsOfMeasure;
         };
 
-        const endpoint = productId ? 'updateProduct' : 'createProduct';
+        // Use async function to handle the UOM processing
+        collectUnitsOfMeasure().then(unitsOfMeasure => {
+            const payload = {
+                id: productId,
+                title: title,
+                category_id: category,
+                description: desc,
+                meta_title: metaTitle,
+                meta_description: metaDesc,
+                meta_keywords: keywords,
+                status: status,
+                featured: featured,
+                units_of_measure: unitsOfMeasure,
+                temp_images: tempImages,
+                existing_images: images,
+                update_images: imageDivs.length > 0
+            };
 
-        fetch(`${BASE_URL}admin/fetch/manageProducts/${endpoint}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => {
-                if (res.status === 401) {
-                    showSessionExpiredModal();
-                    throw new Error('Session expired');
-                }
-                return res.json();
-            })
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    showSuccessNotification(data.message || 'Saved successfully');
-                    hideProductModal();
-                    loadProducts();
-                } else {
-                    showErrorNotification(data.message || 'Failed to save product');
-                }
-            })
-            .catch(err => {
-                hideLoading();
-                console.error('Error saving product:', err);
-                showErrorNotification('Failed to save product. Check console.');
-            });
+            const endpoint = productId ? 'updateProduct' : 'createProduct';
+
+            fetch(`${BASE_URL}admin/fetch/manageProducts/${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(res => {
+                    if (res.status === 401) {
+                        showSessionExpiredModal();
+                        throw new Error('Session expired');
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    hideLoading();
+                    if (data.success) {
+                        showSuccessNotification(data.message || 'Saved successfully');
+                        hideProductModal();
+                        loadProducts();
+                    } else {
+                        showErrorNotification(data.message || 'Failed to save product');
+                    }
+                })
+                .catch(err => {
+                    hideLoading();
+                    console.error('Error saving product:', err);
+                    showErrorNotification('Failed to save product. Check console.');
+                });
+        });
     }
 
     function showDeleteModal(productId) {
@@ -1328,41 +1617,6 @@ ob_start();
         div.querySelector('.remove-image-btn').addEventListener('click', () => {
             div.remove();
             updateImageOrder();
-        });
-    }
-
-    function addUnitOfMeasureRow(selectedUomId = null) {
-        const container = document.getElementById('unitOfMeasurePricingContainer');
-        const row = document.createElement('div');
-        row.className = 'uom-row grid grid-cols-1 md:grid-cols-2 gap-4 items-center';
-
-        // Build unit of measure dropdown
-        let uomOptions = '<option value="">Select Unit of Measure</option>';
-        unitsOfMeasureList.forEach(uom => {
-            uomOptions += `<option value="${uom.uuid_id}">${uom.unit_of_measure}</option>`;
-        });
-
-        row.innerHTML = `
-            <div>
-                <label class="block text-xs text-gray-500 mb-1">Unit of Measure</label>
-                <select class="unit-of-measure-select w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
-                    ${uomOptions}
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button type="button" class="remove-unit-of-measure px-3 py-2 text-red-500 hover:text-red-700">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
-        `;
-        container.appendChild(row);
-
-        if (selectedUomId) {
-            row.querySelector('.unit-of-measure-select').value = selectedUomId;
-        }
-
-        row.querySelector('.remove-unit-of-measure').addEventListener('click', () => {
-            row.remove();
         });
     }
 
