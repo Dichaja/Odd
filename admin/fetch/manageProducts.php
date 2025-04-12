@@ -19,9 +19,6 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SE
 date_default_timezone_set('Africa/Kampala');
 
 try {
-    // Remove 'views' column from products, remove 'price' column, rename table from product_pricing to product_units
-    // Below are new table definitions without 'views' or 'price', and with the renamed table 'product_units'
-
     $pdo->exec("CREATE TABLE IF NOT EXISTS products (
         id BINARY(16) PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -35,17 +32,6 @@ try {
         created_at DATETIME NOT NULL,
         updated_at DATETIME NOT NULL,
         FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT
-    )");
-
-    $pdo->exec("CREATE TABLE IF NOT EXISTS product_units (
-        id BINARY(16) PRIMARY KEY,
-        product_id BINARY(16) NOT NULL,
-        unit_of_measure_id BINARY(16) NOT NULL,
-        created_at DATETIME NOT NULL,
-        updated_at DATETIME NOT NULL,
-        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-        FOREIGN KEY (unit_of_measure_id) REFERENCES product_unit_of_measure(id) ON DELETE RESTRICT,
-        UNIQUE KEY product_uom_unique (product_id, unit_of_measure_id)
     )");
 } catch (PDOException $e) {
     error_log("Table creation error: " . $e->getMessage());
@@ -121,7 +107,6 @@ function getProducts($pdo)
             unset($prod['category_id']);
 
             $prod['images'] = getProductImages($prod['uuid_id']);
-            $prod['units_of_measure'] = getProductUnitsOfMeasure($pdo, $prod['uuid_id']);
 
             $prod['category_name'] = $prod['category_name'] ?? '(Unknown)';
         }
@@ -173,7 +158,6 @@ function getProduct($pdo)
         unset($product['category_id']);
 
         $product['images'] = getProductImages($product['uuid_id']);
-        $product['units_of_measure'] = getProductUnitsOfMeasure($pdo, $product['uuid_id']);
 
         echo json_encode(['success' => true, 'data' => $product]);
     } catch (Exception $e) {
@@ -205,7 +189,6 @@ function createProduct($pdo)
 
         $binaryCategoryId = uuidToBin($categoryIdStr);
 
-        // Validate category
         $stmt = $pdo->prepare("SELECT id FROM product_categories WHERE id = :cat_id");
         $stmt->bindParam(':cat_id', $binaryCategoryId, PDO::PARAM_LOB);
         $stmt->execute();
@@ -244,36 +227,6 @@ function createProduct($pdo)
         $insert->bindParam(':created_at', $now);
         $insert->bindParam(':updated_at', $now);
         $insert->execute();
-
-        // Insert unit_of_measure references
-        if (!empty($data['units_of_measure']) && is_array($data['units_of_measure'])) {
-            foreach ($data['units_of_measure'] as $uom) {
-                $uomIdStr = $uom['unit_of_measure_id'] ?? '';
-                if (!$uomIdStr) {
-                    continue;
-                }
-
-                $binaryUomId = uuidToBin($uomIdStr);
-
-                $unitId = generateUUIDv7();
-                $binaryUnitId = uuidToBin($unitId);
-                $stmt2 = $pdo->prepare("
-                    INSERT INTO product_units (
-                        id, product_id, unit_of_measure_id,
-                        created_at, updated_at
-                    ) VALUES (
-                        :id, :product_id, :unit_of_measure_id,
-                        :created_at, :updated_at
-                    )
-                ");
-                $stmt2->bindParam(':id', $binaryUnitId, PDO::PARAM_LOB);
-                $stmt2->bindParam(':product_id', $binaryProductId, PDO::PARAM_LOB);
-                $stmt2->bindParam(':unit_of_measure_id', $binaryUomId, PDO::PARAM_LOB);
-                $stmt2->bindParam(':created_at', $now);
-                $stmt2->bindParam(':updated_at', $now);
-                $stmt2->execute();
-            }
-        }
 
         if (!empty($data['temp_images']) && is_array($data['temp_images'])) {
             moveProductImages($productId, $data['temp_images']);
@@ -369,41 +322,6 @@ function updateProduct($pdo)
         $stmt->bindParam(':id', $binaryProdId, PDO::PARAM_LOB);
         $stmt->execute();
 
-        // Clear out old unit-of-measure references
-        $stmtDel = $pdo->prepare("DELETE FROM product_units WHERE product_id = :prod_id");
-        $stmtDel->bindParam(':prod_id', $binaryProdId, PDO::PARAM_LOB);
-        $stmtDel->execute();
-
-        // Re-insert any updated units_of_measure
-        if (!empty($data['units_of_measure']) && is_array($data['units_of_measure'])) {
-            foreach ($data['units_of_measure'] as $uom) {
-                $uomIdStr = $uom['unit_of_measure_id'] ?? '';
-                if (!$uomIdStr) {
-                    continue;
-                }
-
-                $binaryUomId = uuidToBin($uomIdStr);
-                $unitRowId = generateUUIDv7();
-                $binaryUnitRowId = uuidToBin($unitRowId);
-                $stmt2 = $pdo->prepare("
-                    INSERT INTO product_units (
-                        id, product_id, unit_of_measure_id,
-                        created_at, updated_at
-                    ) VALUES (
-                        :id, :product_id, :unit_of_measure_id,
-                        :created_at, :updated_at
-                    )
-                ");
-                $stmt2->bindParam(':id', $binaryUnitRowId, PDO::PARAM_LOB);
-                $stmt2->bindParam(':product_id', $binaryProdId, PDO::PARAM_LOB);
-                $stmt2->bindParam(':unit_of_measure_id', $binaryUomId, PDO::PARAM_LOB);
-                $stmt2->bindParam(':created_at', $now);
-                $stmt2->bindParam(':updated_at', $now);
-                $stmt2->execute();
-            }
-        }
-
-        // Update images if requested
         if (isset($data['update_images']) && $data['update_images']) {
             $existingImages = $data['existing_images'] ?? [];
             $tempImages = $data['temp_images'] ?? [];
@@ -459,7 +377,6 @@ function deleteProduct($pdo)
         $stmtDel->bindParam(':id', $binaryProdId, PDO::PARAM_LOB);
         $stmtDel->execute();
 
-        // Remove product images from disk
         deleteAllProductImages($prodIdStr, true);
 
         echo json_encode(['success' => true, 'message' => 'Product deleted successfully']);
@@ -560,7 +477,6 @@ function uploadImage()
         $uploadPath = $tempDir . $newFileName;
         $relativePath = 'uploads/temp/' . $newFileName;
 
-        // Crop/resize image to 16:9 if needed
         cropAndResizeImage($fileTmpName, $uploadPath, 1600, 900);
 
         echo json_encode([
@@ -685,42 +601,6 @@ function getProductImages($productUuid)
     return $images;
 }
 
-function getProductUnitsOfMeasure($pdo, $productUuid)
-{
-    $binaryProdId = uuidToBin($productUuid);
-    
-    // Fixe the SQL query to properly join with product_si_units table
-    $stmt = $pdo->prepare("
-        SELECT pu.id, pu.unit_of_measure_id,
-               si.si_unit,
-               pn.package_name,
-               CONCAT(si.si_unit, ' ', pn.package_name) as unit_of_measure
-        FROM product_units pu
-        JOIN product_unit_of_measure uom ON pu.unit_of_measure_id = uom.id
-        JOIN product_si_units si ON uom.product_si_unit_id = si.id
-        JOIN product_package_name pn ON uom.product_package_name_id = pn.id
-        WHERE pu.product_id = :pid
-    ");
-    
-    $stmt->bindParam(':pid', $binaryProdId, PDO::PARAM_LOB);
-    $stmt->execute();
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $result = [];
-    foreach ($rows as $row) {
-        $unitId = binToUuid($row['id']);
-        $uomUuid = binToUuid($row['unit_of_measure_id']);
-        $result[] = [
-            'id'                => $unitId,
-            'unit_of_measure_id' => $uomUuid,
-            'si_unit'           => $row['si_unit'],
-            'package_name'      => $row['package_name'],
-            'unit_of_measure'   => $row['unit_of_measure']
-        ];
-    }
-    return $result;
-}
-
 function moveProductImages($productUuid, array $tempImages)
 {
     $productDir = __DIR__ . '/../../img/products/' . $productUuid;
@@ -784,7 +664,6 @@ function deleteAllProductImages($productUuid, $removeDir = false)
     }
 }
 
-// Helper function to convert binary UUID to string
 function binToUuid($binary)
 {
     $hex = bin2hex($binary);
@@ -798,14 +677,12 @@ function binToUuid($binary)
     );
 }
 
-// Helper function to convert string UUID to binary
 function uuidToBin($uuid)
 {
     error_log("uuidToBin called with UUID: " . $uuid);
     return hex2bin(str_replace('-', '', $uuid));
 }
 
-// Helper function to generate UUIDv7
 function generateUUIDv7()
 {
     $time = microtime(true) * 1000;
