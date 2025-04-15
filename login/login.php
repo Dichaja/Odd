@@ -22,13 +22,17 @@ function getStepTitle($mode, $step)
     return 'Authentication';
 }
 ?>
+<!-- Login: Username Step -->
 <div id="login-step-username" class="auth-form active">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'username') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
-        <p class="mb-4 text-center text-sm text-gray-600">Don't have an account?
+        <p class="mb-4 text-center text-sm text-gray-600">
+            Don't have an account?
             <a href="javascript:void(0)" onclick="showRegisterStep('username')" class="text-primary hover:text-red-700 font-medium">Create Account</a>
         </p>
         <form id="login-username-form" class="space-y-4" autocomplete="off" data-mode="login" data-step="username">
@@ -36,22 +40,30 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Username or Email</label>
                 <div class="relative">
                     <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="login-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your username or email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
+                    <input type="text" id="login-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                        placeholder="Enter your username or email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
                 </div>
                 <div id="login-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" onclick="handleLoginUsernameSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            <button type="button" onclick="handleLoginUsernameSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Continue
+            </button>
         </form>
     </div>
 </div>
+<!-- Login: Password Step -->
 <div id="login-step-password" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'password') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showLoginStep('username')" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+            <a href="javascript:void(0)" onclick="showLoginStep('username')" class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
         </p>
         <form id="login-password-form" class="space-y-4" autocomplete="off" data-mode="login" data-step="password">
             <div class="relative">
@@ -59,25 +71,72 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your password" id="login-password" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
-                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('login-password')"><i class="fas fa-eye"></i></button>
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                        placeholder="Enter your password" id="login-password" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
+                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onclick="togglePasswordVisibility('login-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div id="login-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
             <div class="flex items-center justify-end">
-                <a href="javascript:void(0)" onclick="showForgotPasswordOptions()" class="text-sm text-primary hover:text-red-700">Forgot Password?</a>
+                <a href="javascript:void(0)" onclick="showForgotPasswordOptions()" class="text-sm text-primary hover:text-red-700">
+                    Forgot Password?
+                </a>
             </div>
-            <button type="button" onclick="handleLoginPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Login</button>
+            <button type="button" onclick="handleLoginPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Login
+            </button>
         </form>
     </div>
 </div>
+<!-- New: Empty Password (OTP Verification) Options -->
+<div id="empty-password-options" class="auth-form" style="display:none">
+    <div class="p-6 border-b">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-secondary">Verify Account</h2>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <p class="mb-4 text-center text-sm text-gray-600">
+            <a href="javascript:void(0)" onclick="showLoginStep('password')" class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
+        </p>
+        <form id="empty-password-options-form" class="space-y-4" autocomplete="off" data-mode="empty_password" data-step="options">
+            <div>
+                <p class="mb-4 text-sm text-gray-600">Please select how you would like to verify your account ownership:</p>
+                <div class="space-y-3">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="verify_method" value="email" class="mr-3 text-primary focus:ring-primary" checked>
+                        <div>
+                            <p class="font-medium">Email</p>
+                            <p class="text-sm text-gray-500">Receive a verification code via email</p>
+                        </div>
+                    </label>
+                    <!-- Optionally add additional methods here -->
+                </div>
+            </div>
+            <button type="button" onclick="handleEmptyPasswordVerification()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Continue
+            </button>
+        </form>
+        <p class="mt-4 text-center text-sm text-gray-600">Need assistance?
+            <a href="javascript:void(0)" onclick="showLoginStep('username')" class="text-primary hover:text-red-700 font-medium">Contact Support</a>
+        </p>
+    </div>
+</div>
+<!-- Register: Username Step -->
 <div id="register-step-username" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'username') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
-        <p class="mb-4 text-center text-sm text-gray-600">Already have an account?
+        <p class="mb-4 text-center text-sm text-gray-600">
+            Already have an account?
             <a href="javascript:void(0)" onclick="showLoginStep('username')" class="text-primary hover:text-red-700 font-medium">Sign In</a>
         </p>
         <form id="register-username-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="username">
@@ -85,23 +144,31 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                 <div class="relative">
                     <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="register-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Choose a username (letters and numbers only)" autofocus autocomplete="off" minlength="3" onkeyup="checkTripleSpace(this)">
+                    <input type="text" id="register-username" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                        placeholder="Choose a username (letters and numbers only)" autofocus autocomplete="off" minlength="3" onkeyup="checkTripleSpace(this)">
                 </div>
                 <div id="register-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="text-xs text-gray-500 mt-1">Username must be at least 3 characters.</p>
             </div>
-            <button type="button" onclick="handleRegisterUsernameSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            <button type="button" onclick="handleRegisterUsernameSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Continue
+            </button>
         </form>
     </div>
 </div>
+<!-- Register: Email Step -->
 <div id="register-step-email" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'email') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('username')" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+            <a href="javascript:void(0)" onclick="showRegisterStep('username')" class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
         </p>
         <form id="register-email-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="email">
             <div>
@@ -109,22 +176,30 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <div class="relative">
                     <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="email" id="register-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
+                    <input type="email" id="register-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                        placeholder="Enter your email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
                 </div>
                 <div id="register-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" id="register-email-submit-btn" onclick="handleRegisterEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            <button type="button" id="register-email-submit-btn" onclick="handleRegisterEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Continue
+            </button>
         </form>
     </div>
 </div>
+<!-- Register: Email Verify Step -->
 <div id="register-step-email-verify" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'email-verify') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('email')" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+            <a href="javascript:void(0)" onclick="showRegisterStep('email')" class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
         </p>
         <form id="register-email-verify-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="email-verify">
             <div>
@@ -146,15 +221,20 @@ function getStepTitle($mode, $step)
                     <span id="email-otp-timer" class="text-sm"></span>
                 </p>
             </div>
-            <button type="button" id="email-otp-submit-btn" onclick="handleEmailOTPSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify Email</button>
+            <button type="button" id="email-otp-submit-btn" onclick="handleEmailOTPSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Verify Email
+            </button>
         </form>
     </div>
 </div>
+<!-- Register: Phone Step -->
 <div id="register-step-phone" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'phone') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         <!-- Removed back button as requested -->
         <form id="register-phone-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="phone">
@@ -163,26 +243,35 @@ function getStepTitle($mode, $step)
                 <input type="tel" id="phone" name="phone" required placeholder="Phone Number" class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
                 <div id="register-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" id="register-phone-submit-btn" onclick="handleRegisterPhoneSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            <button type="button" id="register-phone-submit-btn" onclick="handleRegisterPhoneSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Continue
+            </button>
         </form>
     </div>
 </div>
+<!-- Register: Password Step -->
 <div id="register-step-password" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'password') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('phone')" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+            <a href="javascript:void(0)" onclick="showRegisterStep('phone')" class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
         </p>
         <form id="register-password-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="password">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Create a password" id="register-password" autofocus autocomplete="new-password" oninput="checkPasswordStrength(this.value)" onkeyup="checkTripleSpace(this)">
-                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('register-password')"><i class="fas fa-eye"></i></button>
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                        placeholder="Create a password" id="register-password" autofocus autocomplete="new-password" oninput="checkPasswordStrength(this.value)" onkeyup="checkTripleSpace(this)">
+                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onclick="togglePasswordVisibility('register-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div class="password-strength-meter mt-2">
                     <div class="password-strength-meter-fill"></div>
@@ -193,8 +282,10 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm your password" id="register-confirm-password" autocomplete="new-password" onkeyup="checkTripleSpace(this)">
-                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('register-confirm-password')"><i class="fas fa-eye"></i></button>
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                        placeholder="Confirm your password" id="register-confirm-password" autocomplete="new-password" onkeyup="checkTripleSpace(this)">
+                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onclick="togglePasswordVisibility('register-confirm-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div id="register-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
@@ -205,18 +296,25 @@ function getStepTitle($mode, $step)
                     <a href="#" class="text-primary hover:text-red-700">Privacy Policy</a>
                 </span>
             </div>
-            <button type="button" id="register-password-submit-btn" onclick="handleRegisterPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Create Account</button>
+            <button type="button" id="register-password-submit-btn" onclick="handleRegisterPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Create Account
+            </button>
         </form>
     </div>
 </div>
+<!-- Forgot Password: Options -->
 <div id="forgot-password-options" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'options') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showLoginStep('password')" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+            <a href="javascript:void(0)" onclick="showLoginStep('password')" class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
         </p>
         <form id="forgot-password-options-form" class="space-y-4" autocomplete="off" data-mode="forgot_password" data-step="options">
             <div>
@@ -238,55 +336,76 @@ function getStepTitle($mode, $step)
                     </label>
                 </div>
             </div>
-            <button type="button" onclick="handleForgotPasswordMethodSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            <button type="button" onclick="handleForgotPasswordMethodSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Continue
+            </button>
         </form>
         <p class="mt-4 text-center text-sm text-gray-600">Remember your password?
             <a href="javascript:void(0)" onclick="showLoginStep('username')" class="text-primary hover:text-red-700 font-medium">Back to Sign In</a>
         </p>
     </div>
 </div>
+<!-- Forgot Password: Email Form -->
 <div id="forgot-password-email-form" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'email-form') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showForgotPasswordOptions()" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+            <a href="javascript:void(0)" onclick="showForgotPasswordOptions()" class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
         </p>
         <form id="forgot-password-email-form-element" class="space-y-4" autocomplete="off" data-mode="forgot_password" data-step="email">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <div class="relative">
                     <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="email" id="forgot-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter your email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
+                    <input type="email" id="forgot-email" required class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                        placeholder="Enter your email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
                 </div>
                 <div id="forgot-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" id="forgot-email-submit-btn" onclick="handleForgotEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset Code</button>
+            <button type="button" id="forgot-email-submit-btn" onclick="handleForgotEmailSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Send Reset Code
+            </button>
         </form>
     </div>
 </div>
+<!-- Reset Password: OTP Verification -->
 <div id="reset-password-verify" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('reset_password', 'verify') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" id="reset-back-link" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+            <a href="javascript:void(0)" id="reset-back-link" class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
         </p>
         <form id="reset-verify-form" class="space-y-4" autocomplete="off" data-mode="reset_password" data-step="verify_otp">
             <div>
                 <p class="mb-4 text-center">We've sent a verification code to <strong id="reset-contact-display"></strong></p>
                 <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
                 <div class="flex justify-between gap-2 mb-2">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="reset-otp" autofocus>
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="reset-otp">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="reset-otp">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="reset-otp">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="reset-otp">
-                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="reset-otp">
+                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                        data-otp-target="reset-otp" autofocus>
+                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                        data-otp-target="reset-otp">
+                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                        data-otp-target="reset-otp">
+                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                        data-otp-target="reset-otp">
+                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                        data-otp-target="reset-otp">
+                    <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                        data-otp-target="reset-otp">
                 </div>
                 <input type="hidden" id="reset-otp" value="">
                 <div id="reset-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
@@ -296,26 +415,35 @@ function getStepTitle($mode, $step)
                     <span id="reset-otp-timer" class="text-sm"></span>
                 </p>
             </div>
-            <button type="button" id="reset-otp-submit-btn" onclick="handleResetOTPSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify Code</button>
+            <button type="button" id="reset-otp-submit-btn" onclick="handleResetOTPSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Verify Code
+            </button>
         </form>
     </div>
 </div>
+<!-- Reset Password: New Password Form -->
 <div id="reset-password-form" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('reset_password', 'form') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showResetVerifyForm()" class="text-primary hover:text-red-700 font-medium"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+            <a href="javascript:void(0)" onclick="showResetVerifyForm()" class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
         </p>
         <form id="reset-password-form-element" class="space-y-4" autocomplete="off" data-mode="reset_password" data-step="new_password">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Enter new password" id="new-password" autofocus autocomplete="new-password" oninput="checkPasswordStrength(this.value,'new-password')" onkeyup="checkTripleSpace(this)">
-                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('new-password')"><i class="fas fa-eye"></i></button>
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                        placeholder="Enter new password" id="new-password" autofocus autocomplete="new-password" oninput="checkPasswordStrength(this.value,'new-password')" onkeyup="checkTripleSpace(this)">
+                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onclick="togglePasswordVisibility('new-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div class="password-strength-meter mt-2">
                     <div class="password-strength-meter-fill"></div>
@@ -326,12 +454,16 @@ function getStepTitle($mode, $step)
                 <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="Confirm new password" id="confirm-new-password" autocomplete="new-password" onkeyup="checkTripleSpace(this)">
-                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600" onclick="togglePasswordVisibility('confirm-new-password')"><i class="fas fa-eye"></i></button>
+                    <input type="password" required class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                        placeholder="Confirm new password" id="confirm-new-password" autocomplete="new-password" onkeyup="checkTripleSpace(this)">
+                    <button type="button" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onclick="togglePasswordVisibility('confirm-new-password')"><i class="fas fa-eye"></i></button>
                 </div>
                 <div id="reset-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" id="reset-password-submit-btn" onclick="handleResetPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Reset Password</button>
+            <button type="button" id="reset-password-submit-btn" onclick="handleResetPasswordSubmit()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Reset Password
+            </button>
         </form>
     </div>
 </div>
@@ -375,6 +507,11 @@ function getStepTitle($mode, $step)
                         } else if (step === 'new_password') {
                             handleResetPasswordSubmit();
                         }
+                    } else if (mode === 'empty_password') {
+                        // For empty password verification flow, Enter triggers the empty verification handler.
+                        if (step === 'options') {
+                            handleEmptyPasswordVerification();
+                        }
                     }
                 }
             });
@@ -402,7 +539,6 @@ function getStepTitle($mode, $step)
     }
 
     function showLoginStep(step) {
-        // Hide all forms first
         hideAllForms();
         const el = document.getElementById('login-step-' + step);
         if (el) {
@@ -456,11 +592,27 @@ function getStepTitle($mode, $step)
             resetFormEl.classList.remove('active');
             resetFormEl.style.display = 'none';
         }
+        const emptyOptEl = document.getElementById('empty-password-options');
+        if (emptyOptEl) {
+            emptyOptEl.classList.remove('active');
+            emptyOptEl.style.display = 'none';
+        }
     }
 
     function showForgotPasswordOptions() {
         hideAllForms();
         const opt = document.getElementById('forgot-password-options');
+        if (opt) {
+            opt.style.display = 'block';
+            setTimeout(() => {
+                opt.classList.add('active');
+            }, 10);
+        }
+    }
+
+    function showEmptyPasswordOptions() {
+        hideAllForms();
+        const opt = document.getElementById('empty-password-options');
         if (opt) {
             opt.style.display = 'block';
             setTimeout(() => {
@@ -537,7 +689,7 @@ function getStepTitle($mode, $step)
             if (te) {
                 const m = Math.floor(r / 60);
                 const s = r % 60;
-                te.textContent = `(${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')})`;
+                te.textContent = `(${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')})`;
             }
             if (r <= 0) {
                 clearInterval(iv);
@@ -600,9 +752,16 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    showError('login-username-error', response.message || 'An error occurred');
+                    if (response.errorCode && response.errorCode === 'EMPTY_PASSWORD') {
+                        // Store email from response for later use
+                        loginData.email = response.email;
+                        hideError('login-password-error');
+                        showEmptyPasswordOptions();
+                    } else {
+                        showError('login-password-error', response.message || 'An error occurred');
+                    }
                 } catch (e) {
-                    showError('login-username-error', 'Server error. Please try again later.');
+                    showError('login-password-error', 'Server error. Please try again later.');
                 }
             }
         });
@@ -647,12 +806,31 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    showError('login-password-error', response.message || 'An error occurred');
+                    // Check for the EMPTY_PASSWORD error code
+                    if (response.errorCode && response.errorCode === 'EMPTY_PASSWORD') {
+                        loginData.email = response.email;
+                        hideError('login-password-error');
+                        showEmptyPasswordOptions();
+                    } else {
+                        showError('login-password-error', response.message || 'An error occurred');
+                    }
                 } catch (e) {
                     showError('login-password-error', 'Server error. Please try again later.');
                 }
             }
         });
+    }
+
+    function handleEmptyPasswordVerification() {
+        // Since the only method available is email, we set it as such.
+        forgotPasswordData.contact = loginData.email;
+        resetMethod = 'email';
+        // Now show the OTP verification form (reuse the reset-password-verify form)
+        showResetVerifyForm();
+        // Optionally clear previous OTP inputs
+        $('.otp-input[data-otp-target="reset-otp"]').val('');
+        document.getElementById('reset-otp').value = '';
+        startOTPTimer('reset-otp', 120);
     }
 
     function handleRegisterUsernameSubmit() {

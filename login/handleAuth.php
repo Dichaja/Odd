@@ -126,6 +126,27 @@ function sendEmailOTP($email, $otp)
     return Mailer::sendMail($email, $subject, $content);
 }
 
+/**
+ * New function to send an OTP for a login attempt when the account’s password is empty.
+ */
+function sendLoginOTP($email, $otp)
+{
+    $subject = 'Your OTP Verification Code - Zzimba Online';
+    $content = '
+        <div style="text-align: center; padding: 20px 0;">
+            <h2>OTP Verification</h2>
+            <p>Please use the following OTP to verify your account ownership and set up a new password:</p>
+            <div style="margin: 30px auto; padding: 10px; background-color: #f5f5f5; border-radius: 5px; width: 200px; text-align: center;">
+                <h1 style="letter-spacing: 5px; font-size: 32px; margin: 0;">' . $otp . '</h1>
+            </div>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you did not initiate this request, please ignore this email.</p>
+        </div>
+    ';
+
+    return Mailer::sendMail($email, $subject, $content);
+}
+
 function sendWelcomeEmail($username, $email, $phone)
 {
     $subject = 'Welcome to Zzimba Online!';
@@ -287,7 +308,6 @@ try {
             $isEmail = isValidEmail($identifier);
 
             $isAdmin = false;
-            $originalIdentifier = $identifier;
             if (!$isEmail && strpos($identifier, 'Admin:') === 0) {
                 $isAdmin = true;
                 $identifier = substr($identifier, 6);
@@ -342,7 +362,6 @@ try {
             $isEmail = isValidEmail($identifier);
 
             $isAdmin = false;
-            $originalIdentifier = $identifier;
             if (!$isEmail && strpos($identifier, 'Admin:') === 0) {
                 $isAdmin = true;
                 $identifier = substr($identifier, 6);
@@ -360,11 +379,7 @@ try {
 
             if ($stmt->rowCount() === 0) {
                 http_response_code(404);
-                if ($isAdmin) {
-                    echo json_encode(['success' => false, 'message' => 'Admin user not found. Please check your credentials.']);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'User not found. Please check your credentials or register a new account.']);
-                }
+                echo json_encode(['success' => false, 'message' => ($isAdmin ? 'Admin user not found. Please check your credentials.' : 'User not found. Please check your credentials or register a new account.')]);
                 break;
             }
 
@@ -373,6 +388,20 @@ try {
             if ($user['status'] !== 'active') {
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Your account is ' . $user['status'] . '. Please contact support.']);
+                break;
+            }
+
+            // Check if the stored password is empty. If so, trigger OTP verification silently.
+            if (trim($user['password']) === '') {
+                $otp = createOTP('email', $user['email'], $pdo);
+                $emailSent = sendLoginOTP($user['email'], $otp);
+                if (!$emailSent) {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Failed to send OTP. Please try again.']);
+                    break;
+                }
+                http_response_code(401);
+                echo json_encode(['success' => false, 'errorCode' => 'EMPTY_PASSWORD', 'email' => $user['email']]);
                 break;
             }
 
