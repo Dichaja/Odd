@@ -45,6 +45,18 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                     },
                     fontFamily: {
                         rubik: ['Rubik', 'sans-serif']
+                    },
+                    zIndex: {
+                        10: '10',
+                        20: '20',
+                        30: '30',
+                        40: '40',
+                        50: '50',
+                        60: '60',
+                        70: '70',
+                        80: '80',
+                        90: '90',
+                        100: '100'
                     }
                 }
             }
@@ -495,7 +507,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             </div>
         </div>
     </div>
-    <nav class="bg-white shadow-lg sticky top-0 z-10">
+    <nav class="bg-white shadow-lg sticky top-0 z-100">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center">
