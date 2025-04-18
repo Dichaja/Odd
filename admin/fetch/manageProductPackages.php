@@ -10,7 +10,11 @@ require_once __DIR__ . '/../../config/config.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
+if (
+    !isset($_SESSION['user']) ||
+    !$_SESSION['user']['logged_in'] ||
+    !$_SESSION['user']['is_admin']
+) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit;
@@ -19,38 +23,41 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SE
 date_default_timezone_set('Africa/Kampala');
 
 try {
-    // Create product_package_name table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS product_package_name (
-        id BINARY(16) PRIMARY KEY,
-        package_name VARCHAR(100) NOT NULL,
-        created_at DATETIME NOT NULL,
-        updated_at DATETIME NOT NULL,
-        UNIQUE KEY package_name_unique (package_name)
-    )");
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS product_package_name (
+            id VARCHAR(26) PRIMARY KEY,
+            package_name VARCHAR(100) NOT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            UNIQUE KEY package_name_unique (package_name)
+        )"
+    );
 
-    // Create product_si_units table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS product_si_units (
-        id BINARY(16) PRIMARY KEY,
-        si_unit VARCHAR(50) NOT NULL,
-        created_at DATETIME NOT NULL,
-        updated_at DATETIME NOT NULL,
-        UNIQUE KEY si_unit_unique (si_unit)
-    )");
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS product_si_units (
+            id VARCHAR(26) PRIMARY KEY,
+            si_unit VARCHAR(50) NOT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            UNIQUE KEY si_unit_unique (si_unit)
+        )"
+    );
 
-    // Create product_unit_of_measure table with foreign keys to both tables
-    $pdo->exec("CREATE TABLE IF NOT EXISTS product_unit_of_measure (
-        id BINARY(16) PRIMARY KEY,
-        product_package_name_id BINARY(16) NOT NULL,
-        product_si_unit_id BINARY(16) NOT NULL,
-        status ENUM('Approved', 'Pending') NOT NULL DEFAULT 'Approved',
-        created_at DATETIME NOT NULL,
-        updated_at DATETIME NOT NULL,
-        FOREIGN KEY (product_package_name_id) REFERENCES product_package_name(id) ON DELETE CASCADE,
-        FOREIGN KEY (product_si_unit_id) REFERENCES product_si_units(id) ON DELETE CASCADE,
-        UNIQUE KEY package_si_unit_unique (product_package_name_id, product_si_unit_id)
-    )");
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS product_unit_of_measure (
+            id VARCHAR(26) PRIMARY KEY,
+            product_package_name_id VARCHAR(26) NOT NULL,
+            product_si_unit_id VARCHAR(26) NOT NULL,
+            status ENUM('Approved','Pending') NOT NULL DEFAULT 'Approved',
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            FOREIGN KEY (product_package_name_id) REFERENCES product_package_name(id) ON DELETE CASCADE,
+            FOREIGN KEY (product_si_unit_id) REFERENCES product_si_units(id) ON DELETE CASCADE,
+            UNIQUE KEY package_si_unit_unique (product_package_name_id, product_si_unit_id)
+        )"
+    );
 } catch (PDOException $e) {
-    error_log("Table creation error: " . $e->getMessage());
+    error_log('Table creation error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database setup failed']);
     exit;
@@ -60,7 +67,6 @@ $action = $_GET['action'] ?? '';
 
 try {
     switch ($action) {
-        // Package Name endpoints
         case 'getPackageNames':
             getPackageNames($pdo);
             break;
@@ -81,7 +87,6 @@ try {
             deletePackageName($pdo);
             break;
 
-        // SI Unit endpoints
         case 'getSIUnits':
             getSIUnits($pdo);
             break;
@@ -102,7 +107,6 @@ try {
             deleteSIUnit($pdo);
             break;
 
-        // Combined Unit of Measure endpoints
         case 'getUnitsOfMeasure':
             getUnitsOfMeasure($pdo);
             break;
@@ -125,35 +129,28 @@ try {
             break;
     }
 } catch (Exception $e) {
-    error_log("Error in manageProductPackages: " . $e->getMessage());
+    error_log('Error in manageProductPackages: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }
 
-// Package Name Functions
-function getPackageNames($pdo)
+function getPackageNames(PDO $pdo)
 {
     try {
-        $stmt = $pdo->prepare("SELECT id, package_name, created_at, updated_at FROM product_package_name ORDER BY package_name");
-        $stmt->execute();
-
-        $packageNames = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($packageNames as &$packageName) {
-            $packageName['uuid_id'] = binToUuid($packageName['id']);
-            unset($packageName['id']);
-        }
-
-        $response = ['success' => true, 'packageNames' => $packageNames];
-        echo json_encode($response);
+        $stmt = $pdo->query(
+            'SELECT id, package_name, created_at, updated_at
+             FROM product_package_name
+             ORDER BY package_name'
+        );
+        echo json_encode(['success' => true, 'packageNames' => $stmt->fetchAll()]);
     } catch (Exception $e) {
-        error_log("Error in getPackageNames: " . $e->getMessage());
+        error_log('Error in getPackageNames: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error retrieving package names: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error retrieving package names']);
     }
 }
 
-function getPackageName($pdo)
+function getPackageName(PDO $pdo)
 {
     if (!isset($_GET['id'])) {
         http_response_code(400);
@@ -162,131 +159,113 @@ function getPackageName($pdo)
     }
 
     try {
-        $packageNameId = $_GET['id'];
-        $binaryId = uuidToBin($packageNameId);
-
-        $stmt = $pdo->prepare("SELECT id, package_name, created_at, updated_at FROM product_package_name WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-
-        $packageName = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$packageName) {
+        $stmt = $pdo->prepare(
+            'SELECT id, package_name, created_at, updated_at
+             FROM product_package_name
+             WHERE id = :id'
+        );
+        $stmt->execute([':id' => $_GET['id']]);
+        $row = $stmt->fetch();
+        if (!$row) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Package name not found']);
             return;
         }
 
-        $packageName['uuid_id'] = binToUuid($packageName['id']);
-        unset($packageName['id']);
-
-        echo json_encode(['success' => true, 'data' => $packageName]);
+        echo json_encode(['success' => true, 'data' => $row]);
     } catch (Exception $e) {
-        error_log("Error in getPackageName: " . $e->getMessage());
+        error_log('Error in getPackageName: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error retrieving package name: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error retrieving package name']);
     }
 }
 
-function createPackageName($pdo)
+function createPackageName(PDO $pdo)
 {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($data['package_name'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+        return;
+    }
+
+    $packageName = trim($data['package_name']);
+
+    if ($packageName === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Package name cannot be empty']);
+        return;
+    }
+
     try {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['package_name'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Missing required fields']);
-            return;
-        }
-
-        $packageName = trim($data['package_name']);
-
-        if (empty($packageName)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Package name cannot be empty']);
-            return;
-        }
-
-        $stmt = $pdo->prepare("SELECT id FROM product_package_name WHERE package_name = :package_name");
-        $stmt->bindParam(':package_name', $packageName);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare(
+            'SELECT id FROM product_package_name WHERE package_name = :package_name'
+        );
+        $stmt->execute([':package_name' => $packageName]);
         if ($stmt->rowCount() > 0) {
             http_response_code(409);
             echo json_encode(['success' => false, 'message' => 'A package with this name already exists']);
             return;
         }
 
-        $packageId = uuidToBin(generateUUIDv7());
+        $id  = generateUlid();
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-        $stmt = $pdo->prepare("INSERT INTO product_package_name (id, package_name, created_at, updated_at) VALUES (:id, :package_name, :created_at, :updated_at)");
-        $stmt->bindParam(':id', $packageId, PDO::PARAM_LOB);
-        $stmt->bindParam(':package_name', $packageName);
-        $stmt->bindParam(':created_at', $now);
-        $stmt->bindParam(':updated_at', $now);
-        $stmt->execute();
+        $stmt = $pdo->prepare(
+            'INSERT INTO product_package_name (id, package_name, created_at, updated_at)
+             VALUES (:id, :package_name, :created_at, :updated_at)'
+        );
+        $stmt->execute([
+            ':id'          => $id,
+            ':package_name' => $packageName,
+            ':created_at'  => $now,
+            ':updated_at'  => $now
+        ]);
 
-        $response = [
-            'success' => true,
-            'message' => 'Package name created successfully',
-            'id' => binToUuid($packageId)
-        ];
-
-        echo json_encode($response);
-    } catch (PDOException $e) {
-        error_log("Error in createPackageName: " . $e->getMessage());
-        if ($e->getCode() == 23000) {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'A package with this name already exists']);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error creating package name: ' . $e->getMessage()]);
-        }
+        echo json_encode(['success' => true, 'message' => 'Package name created', 'id' => $id]);
     } catch (Exception $e) {
-        error_log("Error in createPackageName: " . $e->getMessage());
+        error_log('Error in createPackageName: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error creating package name: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error creating package name']);
     }
 }
 
-function updatePackageName($pdo)
+function updatePackageName(PDO $pdo)
 {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($data['id'], $data['package_name'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+        return;
+    }
+
+    $id          = $data['id'];
+    $packageName = trim($data['package_name']);
+
+    if ($packageName === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Package name cannot be empty']);
+        return;
+    }
+
     try {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['id']) || !isset($data['package_name'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Missing required fields']);
-            return;
-        }
-
-        $packageId = $data['id'];
-        $packageName = trim($data['package_name']);
-
-        if (empty($packageName)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Package name cannot be empty']);
-            return;
-        }
-
-        $binaryId = uuidToBin($packageId);
-
-        $stmt = $pdo->prepare("SELECT id FROM product_package_name WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare(
+            'SELECT id FROM product_package_name WHERE id = :id'
+        );
+        $stmt->execute([':id' => $id]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Package name not found']);
             return;
         }
 
-        $stmt = $pdo->prepare("SELECT id FROM product_package_name WHERE package_name = :package_name AND id != :id");
-        $stmt->bindParam(':package_name', $packageName);
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare(
+            'SELECT id FROM product_package_name
+             WHERE package_name = :package_name AND id != :id'
+        );
+        $stmt->execute([':package_name' => $packageName, ':id' => $id]);
         if ($stmt->rowCount() > 0) {
             http_response_code(409);
             echo json_encode(['success' => false, 'message' => 'A package with this name already exists']);
@@ -295,116 +274,82 @@ function updatePackageName($pdo)
 
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-        $stmt = $pdo->prepare("UPDATE product_package_name SET package_name = :package_name, updated_at = :updated_at WHERE id = :id");
-        $stmt->bindParam(':package_name', $packageName);
-        $stmt->bindParam(':updated_at', $now);
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
+        $stmt = $pdo->prepare(
+            'UPDATE product_package_name
+             SET package_name = :package_name, updated_at = :updated_at
+             WHERE id = :id'
+        );
+        $stmt->execute([':package_name' => $packageName, ':updated_at' => $now, ':id' => $id]);
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'Package name updated successfully'
-        ]);
-    } catch (PDOException $e) {
-        error_log("Error in updatePackageName: " . $e->getMessage());
-        if ($e->getCode() == 23000) {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'A package with this name already exists']);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error updating package name: ' . $e->getMessage()]);
-        }
+        echo json_encode(['success' => true, 'message' => 'Package name updated']);
     } catch (Exception $e) {
-        error_log("Error in updatePackageName: " . $e->getMessage());
+        error_log('Error in updatePackageName: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error updating package name: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error updating package name']);
     }
 }
 
-function deletePackageName($pdo)
+function deletePackageName(PDO $pdo)
 {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($data['id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing package name ID']);
+        return;
+    }
+
+    $id = $data['id'];
+
     try {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['id'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Missing package name ID']);
-            return;
-        }
-
-        $packageId = $data['id'];
-        $binaryId = uuidToBin($packageId);
-
-        $stmt = $pdo->prepare("SELECT id FROM product_package_name WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare(
+            'SELECT id FROM product_package_name WHERE id = :id'
+        );
+        $stmt->execute([':id' => $id]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Package name not found']);
             return;
         }
 
-        // Check if there are any units of measure using this package name
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM product_unit_of_measure WHERE product_package_name_id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-        $count = $stmt->fetchColumn();
-
-        if ($count > 0) {
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM product_unit_of_measure WHERE product_package_name_id = :id'
+        );
+        $stmt->execute([':id' => $id]);
+        if ($stmt->fetchColumn() > 0) {
             http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'Cannot delete this package name because it is being used by one or more SI units']);
+            echo json_encode(['success' => false, 'message' => 'Cannot delete – in use']);
             return;
         }
 
-        $stmt = $pdo->prepare("DELETE FROM product_package_name WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
+        $stmt = $pdo->prepare('DELETE FROM product_package_name WHERE id = :id');
+        $stmt->execute([':id' => $id]);
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'Package name deleted successfully'
-        ]);
-    } catch (PDOException $e) {
-        error_log("Error in deletePackageName: " . $e->getMessage());
-        if ($e->getCode() == '23000') {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'Cannot delete this package name because it is being used by one or more SI units']);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error deleting package name: ' . $e->getMessage()]);
-        }
+        echo json_encode(['success' => true, 'message' => 'Package name deleted']);
     } catch (Exception $e) {
-        error_log("Error in deletePackageName: " . $e->getMessage());
+        error_log('Error in deletePackageName: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error deleting package name: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error deleting package name']);
     }
 }
 
-// SI Unit Functions
-function getSIUnits($pdo)
+function getSIUnits(PDO $pdo)
 {
     try {
-        // Get all SI units from product_si_units table
-        $stmt = $pdo->prepare("SELECT id, si_unit, created_at, updated_at FROM product_si_units ORDER BY si_unit");
-        $stmt->execute();
-        $siUnits = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($siUnits as &$unit) {
-            $unit['uuid_id'] = binToUuid($unit['id']);
-            unset($unit['id']);
-        }
-
-        $response = ['success' => true, 'siUnits' => $siUnits];
-        echo json_encode($response);
+        $stmt = $pdo->query(
+            'SELECT id, si_unit, created_at, updated_at
+             FROM product_si_units
+             ORDER BY si_unit'
+        );
+        echo json_encode(['success' => true, 'siUnits' => $stmt->fetchAll()]);
     } catch (Exception $e) {
-        error_log("Error in getSIUnits: " . $e->getMessage());
+        error_log('Error in getSIUnits: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error retrieving SI units: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error retrieving SI units']);
     }
 }
 
-function getSIUnit($pdo)
+function getSIUnit(PDO $pdo)
 {
     if (!isset($_GET['id'])) {
         http_response_code(400);
@@ -413,137 +358,111 @@ function getSIUnit($pdo)
     }
 
     try {
-        $unitId = $_GET['id'];
-        $binaryId = uuidToBin($unitId);
-
-        $stmt = $pdo->prepare("SELECT id, si_unit, created_at, updated_at FROM product_si_units WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-
-        $unit = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$unit) {
+        $stmt = $pdo->prepare(
+            'SELECT id, si_unit, created_at, updated_at
+             FROM product_si_units
+             WHERE id = :id'
+        );
+        $stmt->execute([':id' => $_GET['id']]);
+        $row = $stmt->fetch();
+        if (!$row) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'SI unit not found']);
             return;
         }
 
-        $unit['uuid_id'] = binToUuid($unit['id']);
-        unset($unit['id']);
-
-        echo json_encode(['success' => true, 'data' => $unit]);
+        echo json_encode(['success' => true, 'data' => $row]);
     } catch (Exception $e) {
-        error_log("Error in getSIUnit: " . $e->getMessage());
+        error_log('Error in getSIUnit: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error retrieving SI unit: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error retrieving SI unit']);
     }
 }
 
-function createSIUnit($pdo)
+function createSIUnit(PDO $pdo)
 {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($data['si_unit'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+        return;
+    }
+
+    $siUnit = trim($data['si_unit']);
+
+    if ($siUnit === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'SI unit cannot be empty']);
+        return;
+    }
+
     try {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['si_unit'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Missing required fields']);
-            return;
-        }
-
-        $siUnit = trim($data['si_unit']);
-
-        if (empty($siUnit)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'SI unit cannot be empty']);
-            return;
-        }
-
-        $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE si_unit = :si_unit");
-        $stmt->bindParam(':si_unit', $siUnit);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare(
+            'SELECT id FROM product_si_units WHERE si_unit = :si_unit'
+        );
+        $stmt->execute([':si_unit' => $siUnit]);
         if ($stmt->rowCount() > 0) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $siUnitId = binToUuid($row['id']);
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'SI unit already exists',
-                'id' => $siUnitId
-            ]);
+            $row = $stmt->fetch();
+            echo json_encode(['success' => true, 'message' => 'SI unit already exists', 'id' => $row['id']]);
             return;
         }
 
-        $siUnitId = uuidToBin(generateUUIDv7());
+        $id  = generateUlid();
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-        $stmt = $pdo->prepare("INSERT INTO product_si_units (id, si_unit, created_at, updated_at) VALUES (:id, :si_unit, :created_at, :updated_at)");
-        $stmt->bindParam(':id', $siUnitId, PDO::PARAM_LOB);
-        $stmt->bindParam(':si_unit', $siUnit);
-        $stmt->bindParam(':created_at', $now);
-        $stmt->bindParam(':updated_at', $now);
-        $stmt->execute();
+        $stmt = $pdo->prepare(
+            'INSERT INTO product_si_units (id, si_unit, created_at, updated_at)
+             VALUES (:id, :si_unit, :created_at, :updated_at)'
+        );
+        $stmt->execute([
+            ':id'         => $id,
+            ':si_unit'    => $siUnit,
+            ':created_at' => $now,
+            ':updated_at' => $now
+        ]);
 
-        $response = [
-            'success' => true,
-            'message' => 'SI unit created successfully',
-            'id' => binToUuid($siUnitId)
-        ];
-
-        echo json_encode($response);
-    } catch (PDOException $e) {
-        error_log("Error in createSIUnit: " . $e->getMessage());
-        if ($e->getCode() == 23000) {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'An SI unit with this name already exists']);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error creating SI unit: ' . $e->getMessage()]);
-        }
+        echo json_encode(['success' => true, 'message' => 'SI unit created', 'id' => $id]);
     } catch (Exception $e) {
-        error_log("Error in createSIUnit: " . $e->getMessage());
+        error_log('Error in createSIUnit: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error creating SI unit: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error creating SI unit']);
     }
 }
 
-function updateSIUnit($pdo)
+function updateSIUnit(PDO $pdo)
 {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($data['id'], $data['si_unit'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+        return;
+    }
+
+    $id     = $data['id'];
+    $siUnit = trim($data['si_unit']);
+
+    if ($siUnit === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'SI unit cannot be empty']);
+        return;
+    }
+
     try {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['id']) || !isset($data['si_unit'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Missing required fields']);
-            return;
-        }
-
-        $siUnitId = $data['id'];
-        $siUnit = trim($data['si_unit']);
-
-        if (empty($siUnit)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'SI unit cannot be empty']);
-            return;
-        }
-
-        $binaryId = uuidToBin($siUnitId);
-
-        $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare('SELECT id FROM product_si_units WHERE id = :id');
+        $stmt->execute([':id' => $id]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'SI unit not found']);
             return;
         }
 
-        $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE si_unit = :si_unit AND id != :id");
-        $stmt->bindParam(':si_unit', $siUnit);
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare(
+            'SELECT id FROM product_si_units
+             WHERE si_unit = :si_unit AND id != :id'
+        );
+        $stmt->execute([':si_unit' => $siUnit, ':id' => $id]);
         if ($stmt->rowCount() > 0) {
             http_response_code(409);
             echo json_encode(['success' => false, 'message' => 'An SI unit with this name already exists']);
@@ -552,532 +471,343 @@ function updateSIUnit($pdo)
 
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-        $stmt = $pdo->prepare("UPDATE product_si_units SET si_unit = :si_unit, updated_at = :updated_at WHERE id = :id");
-        $stmt->bindParam(':si_unit', $siUnit);
-        $stmt->bindParam(':updated_at', $now);
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
+        $stmt = $pdo->prepare(
+            'UPDATE product_si_units
+             SET si_unit = :si_unit, updated_at = :updated_at
+             WHERE id = :id'
+        );
+        $stmt->execute([':si_unit' => $siUnit, ':updated_at' => $now, ':id' => $id]);
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'SI unit updated successfully'
-        ]);
-    } catch (PDOException $e) {
-        error_log("Error in updateSIUnit: " . $e->getMessage());
-        if ($e->getCode() == 23000) {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'An SI unit with this name already exists']);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error updating SI unit: ' . $e->getMessage()]);
-        }
+        echo json_encode(['success' => true, 'message' => 'SI unit updated']);
     } catch (Exception $e) {
-        error_log("Error in updateSIUnit: " . $e->getMessage());
+        error_log('Error in updateSIUnit: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error updating SI unit: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error updating SI unit']);
     }
 }
 
-function deleteSIUnit($pdo)
+function deleteSIUnit(PDO $pdo)
 {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($data['id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing SI unit ID']);
+        return;
+    }
+
+    $id = $data['id'];
+
     try {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['id'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Missing SI unit ID']);
-            return;
-        }
-
-        $siUnitId = $data['id'];
-        $binaryId = uuidToBin($siUnitId);
-
-        $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare(
+            'SELECT id FROM product_si_units WHERE id = :id'
+        );
+        $stmt->execute([':id' => $id]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'SI unit not found']);
             return;
         }
 
-        // Check if this SI unit is being used by any units of measure
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM product_unit_of_measure WHERE product_si_unit_id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-        $count = $stmt->fetchColumn();
-
-        if ($count > 0) {
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM product_unit_of_measure WHERE product_si_unit_id = :id'
+        );
+        $stmt->execute([':id' => $id]);
+        if ($stmt->fetchColumn() > 0) {
             http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'Cannot delete this SI unit because it is being used by one or more units of measure']);
+            echo json_encode(['success' => false, 'message' => 'Cannot delete – in use']);
             return;
         }
 
-        $stmt = $pdo->prepare("DELETE FROM product_si_units WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
+        $stmt = $pdo->prepare('DELETE FROM product_si_units WHERE id = :id');
+        $stmt->execute([':id' => $id]);
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'SI unit deleted successfully'
-        ]);
-    } catch (PDOException $e) {
-        error_log("Error in deleteSIUnit: " . $e->getMessage());
-        if ($e->getCode() == '23000') {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'Cannot delete this SI unit because it is being used by one or more units of measure']);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error deleting SI unit: ' . $e->getMessage()]);
-        }
+        echo json_encode(['success' => true, 'message' => 'SI unit deleted']);
     } catch (Exception $e) {
-        error_log("Error in deleteSIUnit: " . $e->getMessage());
+        error_log('Error in deleteSIUnit: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error deleting SI unit: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error deleting SI unit']);
     }
 }
 
-// Combined Unit of Measure Functions
-function getUnitsOfMeasure($pdo)
+function getUnitsOfMeasure(PDO $pdo)
 {
     try {
-        $stmt = $pdo->prepare("
-            SELECT uom.id, si.id as si_unit_id, si.si_unit, p.id as package_name_id, p.package_name, 
-                   CONCAT(si.si_unit, ' ', p.package_name) as unit_of_measure,
-                   uom.status, uom.created_at, uom.updated_at
-            FROM product_unit_of_measure uom
-            JOIN product_package_name p ON uom.product_package_name_id = p.id
-            JOIN product_si_units si ON uom.product_si_unit_id = si.id
-            ORDER BY uom.created_at DESC
-        ");
-        $stmt->execute();
-        $unitsOfMeasure = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($unitsOfMeasure as &$unit) {
-            $unit['uuid_id'] = binToUuid($unit['id']);
-            $unit['si_unit_uuid_id'] = binToUuid($unit['si_unit_id']);
-            $unit['package_name_uuid_id'] = binToUuid($unit['package_name_id']);
-            unset($unit['id']);
-            unset($unit['si_unit_id']);
-            unset($unit['package_name_id']);
-        }
-
-        $response = ['success' => true, 'unitsOfMeasure' => $unitsOfMeasure];
-        echo json_encode($response);
+        $stmt = $pdo->query(
+            'SELECT
+                 uom.id,
+                 si.id   AS si_unit_id,
+                 si.si_unit,
+                 p.id    AS package_name_id,
+                 p.package_name,
+                 CONCAT(si.si_unit, " ", p.package_name) AS unit_of_measure,
+                 uom.status,
+                 uom.created_at,
+                 uom.updated_at
+             FROM product_unit_of_measure uom
+             JOIN product_package_name p ON uom.product_package_name_id = p.id
+             JOIN product_si_units si     ON uom.product_si_unit_id     = si.id
+             ORDER BY uom.created_at DESC'
+        );
+        echo json_encode(['success' => true, 'unitsOfMeasure' => $stmt->fetchAll()]);
     } catch (Exception $e) {
-        error_log("Error in getUnitsOfMeasure: " . $e->getMessage());
+        error_log('Error in getUnitsOfMeasure: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error retrieving units of measure: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error retrieving units of measure']);
     }
 }
 
-function createUnitOfMeasure($pdo)
+function createUnitOfMeasure(PDO $pdo)
 {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($data['package_name_id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing package name ID']);
+        return;
+    }
+
+    $packageId    = $data['package_name_id'];
+    $siUnitId     = $data['si_unit_id']       ?? null;
+    $siUnitName   = $data['si_unit_name']     ?? null;
+    $status       = $data['status']           ?? 'Approved';
+
+    if (!in_array($status, ['Approved', 'Pending'])) {
+        $status = 'Approved';
+    }
+
     try {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['package_name_id'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Missing package name ID']);
-            return;
-        }
-
-        $packageNameId = $data['package_name_id'];
-        $siUnitId = $data['si_unit_id'] ?? null;
-        $siUnitName = isset($data['si_unit_name']) ? trim($data['si_unit_name']) : null;
-        $status = isset($data['status']) ? $data['status'] : 'Approved';
-
-        if (!in_array($status, ['Approved', 'Pending'])) {
-            $status = 'Approved';
-        }
-
-        $binaryPackageNameId = uuidToBin($packageNameId);
-
-        // Check if package name exists
-        $stmt = $pdo->prepare("SELECT id FROM product_package_name WHERE id = :id");
-        $stmt->bindParam(':id', $binaryPackageNameId, PDO::PARAM_LOB);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare('SELECT id FROM product_package_name WHERE id = :id');
+        $stmt->execute([':id' => $packageId]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Package name not found']);
             return;
         }
 
-        // Handle SI unit - either use existing or create new
-        $binarySiUnitId = null;
+        $siId = $siUnitId;
 
-        if ($siUnitId) {
-            // Try to use existing SI unit by ID
-            $binarySiUnitId = uuidToBin($siUnitId);
-
-            $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE id = :id");
-            $stmt->bindParam(':id', $binarySiUnitId, PDO::PARAM_LOB);
-            $stmt->execute();
-
-            if ($stmt->rowCount() === 0 && !$siUnitName) {
-                http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'SI unit not found']);
-                return;
-            }
-        }
-
-        // If we have a name but no valid ID, try to find by name or create new
-        if ($siUnitName) {
-            $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE si_unit = :si_unit");
-            $stmt->bindParam(':si_unit', $siUnitName);
-            $stmt->execute();
-
+        if (!$siId && $siUnitName) {
+            $stmt = $pdo->prepare('SELECT id FROM product_si_units WHERE si_unit = :si_unit');
+            $stmt->execute([':si_unit' => trim($siUnitName)]);
             if ($stmt->rowCount() > 0) {
-                // Use existing SI unit with this name
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                $binarySiUnitId = $row['id'];
+                $row  = $stmt->fetch();
+                $siId = $row['id'];
             } else {
-                // Create new SI unit
-                $newSiUnitId = generateUUIDv7();
-                $binarySiUnitId = uuidToBin($newSiUnitId);
-                $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-
-                $stmt = $pdo->prepare("INSERT INTO product_si_units (id, si_unit, created_at, updated_at) VALUES (:id, :si_unit, :created_at, :updated_at)");
-                $stmt->bindParam(':id', $binarySiUnitId, PDO::PARAM_LOB);
-                $stmt->bindParam(':si_unit', $siUnitName);
-                $stmt->bindParam(':created_at', $now);
-                $stmt->bindParam(':updated_at', $now);
-                $stmt->execute();
+                $siId = generateUlid();
+                $now  = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+                $stmt = $pdo->prepare(
+                    'INSERT INTO product_si_units (id, si_unit, created_at, updated_at)
+                     VALUES (:id, :si_unit, :created_at, :updated_at)'
+                );
+                $stmt->execute([
+                    ':id'         => $siId,
+                    ':si_unit'    => trim($siUnitName),
+                    ':created_at' => $now,
+                    ':updated_at' => $now
+                ]);
             }
         }
 
-        if (!$binarySiUnitId) {
+        if (!$siId) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'SI unit not provided']);
             return;
         }
 
-        // Check if combination already exists
-        $stmt = $pdo->prepare("SELECT id FROM product_unit_of_measure WHERE product_package_name_id = :package_name_id AND product_si_unit_id = :si_unit_id");
-        $stmt->bindParam(':package_name_id', $binaryPackageNameId, PDO::PARAM_LOB);
-        $stmt->bindParam(':si_unit_id', $binarySiUnitId, PDO::PARAM_LOB);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare(
+            'SELECT id FROM product_unit_of_measure
+             WHERE product_package_name_id = :package_id AND product_si_unit_id = :si_id'
+        );
+        $stmt->execute([':package_id' => $packageId, ':si_id' => $siId]);
         if ($stmt->rowCount() > 0) {
             http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'This combination of package name and SI unit already exists']);
+            echo json_encode(['success' => false, 'message' => 'Combination already exists']);
             return;
         }
 
-        $uomId = uuidToBin(generateUUIDv7());
-        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+        $uomId = generateUlid();
+        $now   = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-        $stmt = $pdo->prepare("INSERT INTO product_unit_of_measure (id, product_package_name_id, product_si_unit_id, status, created_at, updated_at) VALUES (:id, :package_name_id, :si_unit_id, :status, :created_at, :updated_at)");
-        $stmt->bindParam(':id', $uomId, PDO::PARAM_LOB);
-        $stmt->bindParam(':package_name_id', $binaryPackageNameId, PDO::PARAM_LOB);
-        $stmt->bindParam(':si_unit_id', $binarySiUnitId, PDO::PARAM_LOB);
-        $stmt->bindParam(':status', $status);
-        $stmt->bindParam(':created_at', $now);
-        $stmt->bindParam(':updated_at', $now);
-        $stmt->execute();
+        $stmt = $pdo->prepare(
+            'INSERT INTO product_unit_of_measure
+             (id, product_package_name_id, product_si_unit_id, status, created_at, updated_at)
+             VALUES (:id, :package_id, :si_id, :status, :created_at, :updated_at)'
+        );
+        $stmt->execute([
+            ':id'         => $uomId,
+            ':package_id' => $packageId,
+            ':si_id'      => $siId,
+            ':status'     => $status,
+            ':created_at' => $now,
+            ':updated_at' => $now
+        ]);
 
-        // Get the package name and SI unit for the response
-        $stmt = $pdo->prepare("
-            SELECT p.package_name, si.si_unit
-            FROM product_package_name p, product_si_units si
-            WHERE p.id = :package_name_id AND si.id = :si_unit_id
-        ");
-        $stmt->bindParam(':package_name_id', $binaryPackageNameId, PDO::PARAM_LOB);
-        $stmt->bindParam(':si_unit_id', $binarySiUnitId, PDO::PARAM_LOB);
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = $pdo->prepare(
+            'SELECT si.si_unit, p.package_name
+             FROM product_si_units si, product_package_name p
+             WHERE si.id = :si_id AND p.id = :package_id'
+        );
+        $stmt->execute([':si_id' => $siId, ':package_id' => $packageId]);
+        $row = $stmt->fetch();
 
-        $response = [
-            'success' => true,
-            'message' => 'Unit of measure created successfully',
-            'id' => binToUuid($uomId),
-            'unit_of_measure' => $result['si_unit'] . ' ' . $result['package_name'],
-            'status' => $status
-        ];
-
-        echo json_encode($response);
-    } catch (PDOException $e) {
-        error_log("Error in createUnitOfMeasure: " . $e->getMessage());
-        if ($e->getCode() == 23000) {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'This combination of package name and SI unit already exists']);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error creating unit of measure: ' . $e->getMessage()]);
-        }
+        echo json_encode([
+            'success'         => true,
+            'message'         => 'Unit of measure created',
+            'id'              => $uomId,
+            'unit_of_measure' => $row['si_unit'] . ' ' . $row['package_name'],
+            'status'          => $status
+        ]);
     } catch (Exception $e) {
-        error_log("Error in createUnitOfMeasure: " . $e->getMessage());
+        error_log('Error in createUnitOfMeasure: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error creating unit of measure: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error creating unit of measure']);
     }
 }
 
-function updateUnitOfMeasure($pdo)
+function updateUnitOfMeasure(PDO $pdo)
 {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($data['id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing unit of measure ID']);
+        return;
+    }
+
+    $id = $data['id'];
+
     try {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['id'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Missing unit of measure ID']);
-            return;
-        }
-
-        $uomId = $data['id'];
-        $binaryId = uuidToBin($uomId);
-
-        // Check if unit of measure exists
-        $stmt = $pdo->prepare("SELECT id FROM product_unit_of_measure WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-
+        $stmt = $pdo->prepare('SELECT id FROM product_unit_of_measure WHERE id = :id');
+        $stmt->execute([':id' => $id]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Unit of measure not found']);
             return;
         }
 
-        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-        $updateFields = [];
-        $params = [':id' => $binaryId, ':updated_at' => $now];
+        $updates = [];
+        $params  = [':id' => $id];
+        $now     = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-        // Update status if provided
-        if (isset($data['status'])) {
-            $status = $data['status'];
-            if (!in_array($status, ['Approved', 'Pending'])) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid status value']);
-                return;
-            }
-            $updateFields[] = "status = :status";
-            $params[':status'] = $status;
+        if (isset($data['status']) && in_array($data['status'], ['Approved', 'Pending'])) {
+            $updates[]          = 'status = :status';
+            $params[':status']  = $data['status'];
         }
 
-        // Update package name if provided
         if (isset($data['package_name_id'])) {
-            $packageNameId = $data['package_name_id'];
-            $binaryPackageNameId = uuidToBin($packageNameId);
-
-            // Check if package name exists
-            $stmt = $pdo->prepare("SELECT id FROM product_package_name WHERE id = :id");
-            $stmt->bindParam(':id', $binaryPackageNameId, PDO::PARAM_LOB);
-            $stmt->execute();
-
+            $pkgId = $data['package_name_id'];
+            $stmt  = $pdo->prepare('SELECT id FROM product_package_name WHERE id = :id');
+            $stmt->execute([':id' => $pkgId]);
             if ($stmt->rowCount() === 0) {
                 http_response_code(404);
                 echo json_encode(['success' => false, 'message' => 'Package name not found']);
                 return;
             }
-
-            $updateFields[] = "product_package_name_id = :package_name_id";
-            $params[':package_name_id'] = $binaryPackageNameId;
+            $updates[]               = 'product_package_name_id = :pkg_id';
+            $params[':pkg_id']       = $pkgId;
         }
 
-        // Update SI unit if provided
         if (isset($data['si_unit_id']) || isset($data['si_unit_name'])) {
-            $binarySiUnitId = null;
-
-            if (isset($data['si_unit_id'])) {
-                $siUnitId = $data['si_unit_id'];
-                $binarySiUnitId = uuidToBin($siUnitId);
-
-                // Check if SI unit exists
-                $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE id = :id");
-                $stmt->bindParam(':id', $binarySiUnitId, PDO::PARAM_LOB);
-                $stmt->execute();
-
-                if ($stmt->rowCount() === 0 && !isset($data['si_unit_name'])) {
-                    http_response_code(404);
-                    echo json_encode(['success' => false, 'message' => 'SI unit not found']);
-                    return;
-                }
-            }
-
-            // If we have a name, try to find by name or create new
-            if (isset($data['si_unit_name'])) {
-                $siUnitName = trim($data['si_unit_name']);
-
-                if (!empty($siUnitName)) {
-                    $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE si_unit = :si_unit");
-                    $stmt->bindParam(':si_unit', $siUnitName);
-                    $stmt->execute();
-
+            $siId = $data['si_unit_id'] ?? null;
+            if (!$siId && isset($data['si_unit_name'])) {
+                $name = trim($data['si_unit_name']);
+                if ($name !== '') {
+                    $stmt = $pdo->prepare('SELECT id FROM product_si_units WHERE si_unit = :name');
+                    $stmt->execute([':name' => $name]);
                     if ($stmt->rowCount() > 0) {
-                        // Use existing SI unit with this name
-                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                        $binarySiUnitId = $row['id'];
+                        $row  = $stmt->fetch();
+                        $siId = $row['id'];
                     } else {
-                        // Create new SI unit
-                        $newSiUnitId = generateUUIDv7();
-                        $binarySiUnitId = uuidToBin($newSiUnitId);
-                        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-
-                        $stmt = $pdo->prepare("INSERT INTO product_si_units (id, si_unit, created_at, updated_at) VALUES (:id, :si_unit, :created_at, :updated_at)");
-                        $stmt->bindParam(':id', $binarySiUnitId, PDO::PARAM_LOB);
-                        $stmt->bindParam(':si_unit', $siUnitName);
-                        $stmt->bindParam(':created_at', $now);
-                        $stmt->bindParam(':updated_at', $now);
-                        $stmt->execute();
+                        $siId = generateUlid();
+                        $stmt = $pdo->prepare(
+                            'INSERT INTO product_si_units (id, si_unit, created_at, updated_at)
+                             VALUES (:id, :name, :now, :now)'
+                        );
+                        $stmt->execute([':id' => $siId, ':name' => $name, ':now' => $now]);
                     }
                 }
             }
-
-            if ($binarySiUnitId) {
-                $updateFields[] = "product_si_unit_id = :si_unit_id";
-                $params[':si_unit_id'] = $binarySiUnitId;
+            if ($siId) {
+                $updates[]           = 'product_si_unit_id = :si_id';
+                $params[':si_id']    = $siId;
             }
         }
 
-        // If there are fields to update
-        if (!empty($updateFields)) {
-            // Check for duplicate combination if both package name and SI unit are being updated
-            if (isset($params[':package_name_id']) && isset($params[':si_unit_id'])) {
-                $stmt = $pdo->prepare("SELECT id FROM product_unit_of_measure WHERE product_package_name_id = :package_name_id AND product_si_unit_id = :si_unit_id AND id != :id");
-                $stmt->bindParam(':package_name_id', $params[':package_name_id'], PDO::PARAM_LOB);
-                $stmt->bindParam(':si_unit_id', $params[':si_unit_id'], PDO::PARAM_LOB);
-                $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-                $stmt->execute();
-
-                if ($stmt->rowCount() > 0) {
-                    http_response_code(409);
-                    echo json_encode(['success' => false, 'message' => 'This combination of package name and SI unit already exists']);
-                    return;
-                }
-            }
-
-            $sql = "UPDATE product_unit_of_measure SET " . implode(", ", $updateFields) . ", updated_at = :updated_at WHERE id = :id";
-            $stmt = $pdo->prepare($sql);
-
-            foreach ($params as $key => $value) {
-                if (in_array($key, [':id', ':package_name_id', ':si_unit_id'])) {
-                    $stmt->bindParam($key, $value, PDO::PARAM_LOB);
-                } else {
-                    $stmt->bindParam($key, $value);
-                }
-            }
-
-            $stmt->execute();
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'Unit of measure updated successfully'
-            ]);
-        } else {
+        if (empty($updates)) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'No fields to update']);
-        }
-    } catch (PDOException $e) {
-        error_log("Error in updateUnitOfMeasure: " . $e->getMessage());
-        if ($e->getCode() == 23000) {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'This combination of package name and SI unit already exists']);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error updating unit of measure: ' . $e->getMessage()]);
-        }
-    } catch (Exception $e) {
-        error_log("Error in updateUnitOfMeasure: " . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error updating unit of measure: ' . $e->getMessage()]);
-    }
-}
-
-function deleteUnitOfMeasure($pdo)
-{
-    try {
-        $data = json_decode(file_get_contents('php://input'), true);
-
-        if (!isset($data['id'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Missing unit of measure ID']);
             return;
         }
 
-        $uomId = $data['id'];
-        $binaryId = uuidToBin($uomId);
+        if (isset($params[':pkg_id'], $params[':si_id'])) {
+            $stmt = $pdo->prepare(
+                'SELECT id FROM product_unit_of_measure
+                 WHERE product_package_name_id = :pkg AND product_si_unit_id = :si AND id != :id'
+            );
+            $stmt->execute([':pkg' => $params[':pkg_id'], ':si' => $params[':si_id'], ':id' => $id]);
+            if ($stmt->rowCount() > 0) {
+                http_response_code(409);
+                echo json_encode(['success' => false, 'message' => 'Combination already exists']);
+                return;
+            }
+        }
 
-        $stmt = $pdo->prepare("SELECT id FROM product_unit_of_measure WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
+        $updates[]            = 'updated_at = :updated_at';
+        $params[':updated_at'] = $now;
 
+        $sql = 'UPDATE product_unit_of_measure SET ' . implode(', ', $updates) . ' WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+
+        echo json_encode(['success' => true, 'message' => 'Unit of measure updated']);
+    } catch (Exception $e) {
+        error_log('Error in updateUnitOfMeasure: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error updating unit of measure']);
+    }
+}
+
+function deleteUnitOfMeasure(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!isset($data['id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing unit of measure ID']);
+        return;
+    }
+
+    $id = $data['id'];
+
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT id FROM product_unit_of_measure WHERE id = :id'
+        );
+        $stmt->execute([':id' => $id]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Unit of measure not found']);
             return;
         }
 
-        // Check if this unit of measure is being used by any products
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM product_units WHERE unit_of_measure_id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
-        $count = $stmt->fetchColumn();
-
-        if ($count > 0) {
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM product_units WHERE unit_of_measure_id = :id'
+        );
+        $stmt->execute([':id' => $id]);
+        if ($stmt->fetchColumn() > 0) {
             http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'Cannot delete this unit of measure because it is being used by one or more products']);
+            echo json_encode(['success' => false, 'message' => 'Cannot delete – in use']);
             return;
         }
 
-        $stmt = $pdo->prepare("DELETE FROM product_unit_of_measure WHERE id = :id");
-        $stmt->bindParam(':id', $binaryId, PDO::PARAM_LOB);
-        $stmt->execute();
+        $stmt = $pdo->prepare('DELETE FROM product_unit_of_measure WHERE id = :id');
+        $stmt->execute([':id' => $id]);
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'Unit of measure deleted successfully'
-        ]);
-    } catch (PDOException $e) {
-        error_log("Error in deleteUnitOfMeasure: " . $e->getMessage());
-        if ($e->getCode() == '23000') {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'message' => 'Cannot delete this unit of measure because it is being used by one or more products']);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error deleting unit of measure: ' . $e->getMessage()]);
-        }
+        echo json_encode(['success' => true, 'message' => 'Unit of measure deleted']);
     } catch (Exception $e) {
-        error_log("Error in deleteUnitOfMeasure: " . $e->getMessage());
+        error_log('Error in deleteUnitOfMeasure: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Error deleting unit of measure: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Error deleting unit of measure']);
     }
-}
-
-// Helper function to convert binary UUID to string
-function binToUuid($binary)
-{
-    $hex = bin2hex($binary);
-    return sprintf(
-        '%s-%s-%s-%s-%s',
-        substr($hex, 0, 8),
-        substr($hex, 8, 4),
-        substr($hex, 12, 4),
-        substr($hex, 16, 4),
-        substr($hex, 20, 12)
-    );
-}
-
-// Helper function to convert string UUID to binary
-function uuidToBin($uuid)
-{
-    return hex2bin(str_replace('-', '', $uuid));
-}
-
-// Helper function to generate UUIDv7
-function generateUUIDv7()
-{
-    $time = microtime(true) * 1000;
-    $time = sprintf('%016x', (int)$time);
-
-    $uuid = sprintf(
-        '%s-%s-%s-%s-%s',
-        substr($time, 0, 8),
-        substr($time, 8, 4),
-        '7' . substr($time, 13, 3),
-        sprintf('%04x', mt_rand(0, 0x0fff) | 0x8000),
-        sprintf('%012x', mt_rand(0, 0xffffffffffff))
-    );
-
-    return $uuid;
 }
