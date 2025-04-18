@@ -1,25 +1,20 @@
 <?php
-$pageTitle = 'Vendor Profile';
-$activeNav = 'vendors';
+$pageTitle  = 'Vendor Profile';
+$activeNav  = 'vendors';
 require_once __DIR__ . '/config/config.php';
 
-// Get the vendor/store ID from URL
-$vendorId = isset($_GET['id']) ? $_GET['id'] : null;
+$vendorId = $_GET['id'] ?? null;
 
 if ($vendorId) {
     try {
-        // If vendorId is a valid UUID string, convert to binary; otherwise assume it's already binary.
-        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $vendorId)) {
-            $binaryStoreId = uuidToBin($vendorId);
-        } else {
-            $binaryStoreId = $vendorId;
-        }
+        $storeId = $vendorId;
+
         $stmt = $pdo->prepare("SELECT name FROM vendor_stores WHERE id = ?");
-        $stmt->execute([$binaryStoreId]);
+        $stmt->execute([$storeId]);
         $store = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($store) {
-            $pageTitle = htmlspecialchars($store['name']); // Set page title to vendor name
+            $pageTitle = htmlspecialchars($store['name']);
         }
     } catch (Exception $e) {
         error_log("Error fetching vendor name: " . $e->getMessage());
