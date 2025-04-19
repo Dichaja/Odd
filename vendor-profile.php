@@ -1260,7 +1260,7 @@ ob_start();
             unitSelect.required = true;
             availableUnits.forEach(u => {
                 const opt = document.createElement('option');
-                opt.value = u.id;
+                opt.value = u.product_unit_of_measure_id;
                 opt.textContent = `${u.si_unit} ${u.package_name}`;
                 unitSelect.appendChild(opt);
             });
@@ -1359,7 +1359,7 @@ ob_start();
             unitSelect.required = true;
             availableUnits.forEach(u => {
                 const opt = document.createElement('option');
-                opt.value = u.id;
+                opt.value = u.product_unit_of_measure_id;
                 opt.textContent = `${u.si_unit} ${u.package_name}`;
                 unitSelect.appendChild(opt);
             });
