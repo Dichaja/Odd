@@ -644,7 +644,7 @@ ob_start();
                 if (data.success) {
                     const category = data.data;
 
-                    document.getElementById('categoryId').value = category.uuid_id;
+                    document.getElementById('categoryId').value = category.id;
                     document.getElementById('name').value = category.name;
                     document.getElementById('description').value = category.description || '';
                     document.getElementById('meta_title').value = category.meta_title || '';
@@ -944,7 +944,7 @@ ob_start();
             const statusToggle = `
                 <div class="flex items-center">
                     <div class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                        <input type="checkbox" class="status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary" data-id="${category.uuid_id}" ${category.status === 'active' ? 'checked' : ''}>
+                        <input type="checkbox" class="status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary" data-id="${category.id}" ${category.status === 'active' ? 'checked' : ''}>
                         <label class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
                     </div>
                     <span class="ml-2 text-xs font-medium ${category.status === 'active' ? 'text-green-600' : 'text-gray-500'}">${category.status === 'active' ? 'Active' : 'Inactive'}</span>
@@ -962,10 +962,10 @@ ob_start();
                 <td class="px-6 py-4 text-sm text-gray-text">${formatDate(category.created_at)}</td>
                 <td class="px-6 py-4 text-sm">
                     <div class="flex items-center gap-2">
-                        <button class="btn-edit text-blue-600 hover:text-blue-800" data-id="${category.uuid_id}" title="Edit">
+                        <button class="btn-edit text-blue-600 hover:text-blue-800" data-id="${category.id}" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn-delete text-red-600 hover:text-red-800" data-id="${category.uuid_id}" title="Delete">
+                        <button class="btn-delete text-red-600 hover:text-red-800" data-id="${category.id}" title="Delete">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -1000,7 +1000,7 @@ ob_start();
     }
 
     function updateCategoryStatus(categoryId, status) {
-        const category = categoriesData.find(c => c.uuid_id === categoryId);
+        const category = categoriesData.find(c => c.id === categoryId);
         if (!category) return;
 
         showLoading('Updating category status...');
@@ -1065,7 +1065,7 @@ ob_start();
     }
 
     function showDeleteModal(categoryId) {
-        const category = categoriesData.find(c => c.uuid_id === categoryId);
+        const category = categoriesData.find(c => c.id === categoryId);
 
         if (category) {
             document.getElementById('delete-category-name').textContent = category.name;

@@ -601,14 +601,14 @@ ob_start();
                         <button
                             class="action-btn text-blue-600 hover:text-blue-800"
                             data-tippy-content="Edit User"
-                            onclick="editUser('${user.uuid_id}')">
+                            onclick="editUser('${user.id}')">
                             <i class="fas fa-edit"></i>
                         </button>
 
                         <button
                             class="action-btn text-red-600 hover:text-red-800"
                             data-tippy-content="Delete User"
-                            onclick="deleteUser('${user.uuid_id}')">
+                            onclick="deleteUser('${user.id}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -662,13 +662,13 @@ ob_start();
                     <div class="mt-4 flex justify-end space-x-2">
                         <button
                             class="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            onclick="editUser('${user.uuid_id}')">
+                            onclick="editUser('${user.id}')">
                             <i class="fas fa-edit mr-1"></i> Edit
                         </button>
 
                         <button
                             class="px-3 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            onclick="deleteUser('${user.uuid_id}')">
+                            onclick="deleteUser('${user.id}')">
                             <i class="fas fa-trash mr-1"></i> Delete
                         </button>
                     </div>
@@ -754,7 +754,7 @@ ob_start();
                 const user = response.data;
 
                 // Populate the form fields
-                document.getElementById('userId').value = user.uuid_id;
+                document.getElementById('userId').value = user.id;
                 document.getElementById('username').value = user.username;
                 document.getElementById('email').value = user.email;
 

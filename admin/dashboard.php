@@ -502,7 +502,7 @@ ob_start();
                 </td>
                 <td class="px-6 py-4 text-sm">
                     <div class="flex items-center gap-2">
-                        <button onclick="showUserDetails('${user.uuid_id}')" class="text-blue-600 hover:text-blue-800">
+                        <button onclick="showUserDetails('${user.id}')" class="text-blue-600 hover:text-blue-800">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
@@ -550,7 +550,7 @@ ob_start();
                         </div>
                     </div>
                     <div class="mobile-actions">
-                        <button onclick="showUserDetails('${user.uuid_id}')" class="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
+                        <button onclick="showUserDetails('${user.id}')" class="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
                             <i class="fas fa-eye mr-1"></i> View
                         </button>
                     </div>

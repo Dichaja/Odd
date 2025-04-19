@@ -530,7 +530,7 @@ ob_start();
         dropdown.innerHTML = '<option value="">Select Category</option>';
         catList.forEach(cat => {
             const opt = document.createElement('option');
-            opt.value = cat.uuid_id;
+            opt.value = cat.id;
             opt.textContent = cat.name;
             dropdown.appendChild(opt);
         });
@@ -542,7 +542,7 @@ ob_start();
         catFilter.innerHTML = '<option value="">All Categories</option>';
         categoriesList.forEach(cat => {
             const opt = document.createElement('option');
-            opt.value = cat.uuid_id;
+            opt.value = cat.id;
             opt.textContent = cat.name;
             catFilter.appendChild(opt);
         });
@@ -661,7 +661,7 @@ ob_start();
                 return false;
             }
             // Category filter
-            if (filterData.category && prod.uuid_category !== filterData.category) {
+            if (filterData.category && prod.category !== filterData.category) {
                 return false;
             }
             // Featured filter
@@ -770,7 +770,7 @@ ob_start();
                 <div class="product-image-slider h-full">
                     ${sliderHtml}
                 </div>
-                <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center ${prod.featured ? 'text-red-500' : 'text-gray-400'} hover:text-primary transition-colors z-10 toggle-featured" data-id="${prod.uuid_id}" data-featured="${prod.featured ? 'true' : 'false'}">
+                <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center ${prod.featured ? 'text-red-500' : 'text-gray-400'} hover:text-primary transition-colors z-10 toggle-featured" data-id="${prod.id}" data-featured="${prod.featured ? 'true' : 'false'}">
                     <i class="${prod.featured ? 'fas' : 'far'} fa-heart text-lg"></i>
                 </button>
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
@@ -789,10 +789,10 @@ ob_start();
                 <div class="text-sm text-gray-600 mb-3 line-clamp-2">${escapeHtml(prod.description || 'No description available')}</div>
 
                 <div class="flex justify-end gap-2 mt-3">
-                    <button class="btn-edit w-10 h-10 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center justify-center" data-id="${prod.uuid_id}" title="Edit Product">
+                    <button class="btn-edit w-10 h-10 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center justify-center" data-id="${prod.id}" title="Edit Product">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-delete w-10 h-10 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center" data-id="${prod.uuid_id}" title="Delete Product">
+                    <button class="btn-delete w-10 h-10 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center" data-id="${prod.id}" title="Delete Product">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
@@ -801,10 +801,10 @@ ob_start();
 
         // Wire up events
         card.querySelector('.btn-edit').addEventListener('click', () => {
-            showProductModal(prod.uuid_id);
+            showProductModal(prod.id);
         });
         card.querySelector('.btn-delete').addEventListener('click', () => {
-            showDeleteModal(prod.uuid_id);
+            showDeleteModal(prod.id);
         });
         card.querySelector('.toggle-featured').addEventListener('click', (e) => {
             const button = e.currentTarget;
@@ -839,7 +839,7 @@ ob_start();
             .then(data => {
                 hideLoading();
                 if (data.success) {
-                    const product = productsData.find(p => p.uuid_id === productId);
+                    const product = productsData.find(p => p.id === productId);
                     if (product) {
                         product.featured = featured;
                     }
@@ -922,9 +922,9 @@ ob_start();
     }
 
     function populateProductForm(prod) {
-        document.getElementById('edit-product-id').value = prod.uuid_id;
+        document.getElementById('edit-product-id').value = prod.id;
         document.getElementById('productTitle').value = prod.title;
-        document.getElementById('productCategory').value = prod.uuid_category;
+        document.getElementById('productCategory').value = prod.category;
         document.getElementById('productDescription').value = prod.description || '';
         document.getElementById('productMetaTitle').value = prod.meta_title || '';
         document.getElementById('productMetaDescription').value = prod.meta_description || '';
@@ -1029,7 +1029,7 @@ ob_start();
     }
 
     function showDeleteModal(productId) {
-        const product = productsData.find(p => p.uuid_id === productId);
+        const product = productsData.find(p => p.id === productId);
         if (product) {
             document.getElementById('delete-product-title').textContent = product.title;
             document.getElementById('deleteProductModal').classList.remove('hidden');

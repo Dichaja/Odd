@@ -326,7 +326,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>uuid_id</td>
+                                        <td>id</td>
                                         <td>string</td>
                                         <td>Unique identifier for the category</td>
                                     </tr>
@@ -411,7 +411,7 @@
     "success"</span>: <span class="json-boolean">true</span>,
     <span class="json-key">"categories"</span>: [
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
             <span class="json-key">"name"</span>: <span class="json-string">"Building Materials"</span>,
             <span class="json-key">"description"</span>: <span class="json-string">"Essential materials for building projects"</span>,
             <span class="json-key">"meta_title"</span>: <span class="json-string">"Building Materials | Supplies"</span>,
@@ -423,7 +423,7 @@
             <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 10:30:45"</span>
         }</span>,
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e3"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e3"</span>,
             <span class="json-key">"name"</span>: <span class="json-string">"Tools & Equipment"</span>,
             <span class="json-key">"description"</span>: <span class="json-string">"Professional tools and equipment for construction"</span>,
             <span class="json-key">"meta_title"</span>: <span class="json-string">"Tools & Equipment"</span>,
@@ -482,7 +482,7 @@
                             <pre><span class="json-key">{
     "success"</span>: <span class="json-boolean">true</span>,
     <span class="json-key">"data"</span>: <span class="json-key">{
-        "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+        "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
         <span class="json-key">"name"</span>: <span class="json-string">"Building Materials"</span>,
         <span class="json-key">"description"</span>: <span class="json-string">"Essential materials for building projects"</span>,
         <span class="json-key">"meta_title"</span>: <span class="json-string">"Building Materials | Supplies"</span>,
@@ -821,7 +821,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>uuid_id</td>
+                                        <td>id</td>
                                         <td>string</td>
                                         <td>Unique identifier for the package name</td>
                                     </tr>
@@ -858,12 +858,12 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>uuid_id</td>
+                                        <td>id</td>
                                         <td>string</td>
                                         <td>Unique identifier for the SI unit</td>
                                     </tr>
                                     <tr>
-                                        <td>package_name_uuid_id</td>
+                                        <td>package_name_id</td>
                                         <td>string</td>
                                         <td>UUID of the associated package name</td>
                                     </tr>
@@ -927,19 +927,19 @@
     "success"</span>: <span class="json-boolean">true</span>,
     <span class="json-key">"packageNames"</span>: [
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e5"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e5"</span>,
             <span class="json-key">"package_name"</span>: <span class="json-string">"Bag"</span>,
             <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 10:30:45"</span>,
             <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 10:30:45"</span>
         }</span>,
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e6"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e6"</span>,
             <span class="json-key">"package_name"</span>: <span class="json-string">"Truck"</span>,
             <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 11:15:22"</span>,
             <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 11:15:22"</span>
         }</span>,
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e7"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e7"</span>,
             <span class="json-key">"package_name"</span>: <span class="json-string">"Pallet"</span>,
             <span class="json-key">"created_at"</span>: <span class="json-string">"2023-06-15 11:30:10"</span>,
             <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 11:30:10"</span>
@@ -1058,8 +1058,8 @@
     "success"</span>: <span class="json-boolean">true</span>,
     <span class="json-key">"siUnits"</span>: [
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e9"</span>,
-            <span class="json-key">"package_name_uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e5"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e9"</span>,
+            <span class="json-key">"package_name_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e5"</span>,
             <span class="json-key">"si_unit"</span>: <span class="json-string">"50kg"</span>,
             <span class="json-key">"package_name"</span>: <span class="json-string">"Bag"</span>,
             <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Bag (50kg)"</span>,
@@ -1067,8 +1067,8 @@
             <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 10:35:20"</span>
         }</span>,
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ea"</span>,
-            <span class="json-key">"package_name_uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e6"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ea"</span>,
+            <span class="json-key">"package_name_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e6"</span>,
             <span class="json-key">"si_unit"</span>: <span class="json-string">"10ton"</span>,
             <span class="json-key">"package_name"</span>: <span class="json-string">"Truck"</span>,
             <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Truck (10ton)"</span>,
@@ -1076,8 +1076,8 @@
             <span class="json-key">"updated_at"</span>: <span class="json-string">"2023-06-15 11:20:15"</span>
         }</span>,
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0eb"</span>,
-            <span class="json-key">"package_name_uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e7"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0eb"</span>,
+            <span class="json-key">"package_name_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e7"</span>,
             <span class="json-key">"si_unit"</span>: <span class="json-string">"1000kg"</span>,
             <span class="json-key">"package_name"</span>: <span class="json-string">"Pallet"</span>,
             <span class="json-key">"unit_of_measure"</span>: <span class="json-string">"Pallet (1000kg)"</span>,
@@ -1181,7 +1181,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>uuid_id</td>
+                                        <td>id</td>
                                         <td>string</td>
                                         <td>Unique identifier for the product</td>
                                     </tr>
@@ -1191,7 +1191,7 @@
                                         <td>Title of the product</td>
                                     </tr>
                                     <tr>
-                                        <td>uuid_category</td>
+                                        <td>category</td>
                                         <td>string</td>
                                         <td>UUID of the product category</td>
                                     </tr>
@@ -1333,9 +1333,9 @@
     "success"</span>: <span class="json-boolean">true</span>,
     <span class="json-key">"products"</span>: [
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed"</span>,
             <span class="json-key">"title"</span>: <span class="json-string">"Portland Cement"</span>,
-            <span class="json-key">"uuid_category"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+            <span class="json-key">"category"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
             <span class="json-key">"description"</span>: <span class="json-string">"High-quality Portland cement for projects"</span>,
             <span class="json-key">"meta_title"</span>: <span class="json-string">"Portland Cement | Materials"</span>,
             <span class="json-key">"meta_description"</span>: <span class="json-string">"Premium Portland cement for all your needs"</span>,
@@ -1361,9 +1361,9 @@
             ]
         }</span>,
         <span class="json-key">{
-            "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ef"</span>,
+            "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ef"</span>,
             <span class="json-key">"title"</span>: <span class="json-string">"Sand"</span>,
-            <span class="json-key">"uuid_category"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+            <span class="json-key">"category"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
             <span class="json-key">"description"</span>: <span class="json-string">"Fine sand for concrete mixing and masonry work"</span>,
             <span class="json-key">"meta_title"</span>: <span class="json-string">"Sand | Building Materials"</span>,
             <span class="json-key">"meta_description"</span>: <span class="json-string">"Quality sand for concrete and masonry projects"</span>,
@@ -1436,9 +1436,9 @@
                             <pre><span class="json-key">{
     "success"</span>: <span class="json-boolean">true</span>,
     <span class="json-key">"data"</span>: <span class="json-key">{
-        "uuid_id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed"</span>,
+        "id"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0ed"</span>,
         <span class="json-key">"title"</span>: <span class="json-string">"Portland Cement"</span>,
-        <span class="json-key">"uuid_category"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
+        <span class="json-key">"category"</span>: <span class="json-string">"018d3b4c-5f3e-7c10-b96e-f7e423d7f0e2"</span>,
         <span class="json-key">"description"</span>: <span class="json-string">"High-quality Portland cement for projects"</span>,
         <span class="json-key">"meta_title"</span>: <span class="json-string">"Portland Cement | Materials"</span>,
         <span class="json-key">"meta_description"</span>: <span class="json-string">"Premium Portland cement for all your needs"</span>,

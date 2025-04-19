@@ -630,7 +630,7 @@ function addStoreProduct(PDO $pdo, string $currentUser)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             foreach ($lineItems as $item) {
-                $unitId = $item['unit_uuid_id']      ?? '';
+                $unitId = $item['unit_id']      ?? '';
                 $price   = floatval($item['price']   ?? 0);
                 $cat     = $item['price_category']     ?? 'retail';
                 $cap     = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
@@ -698,7 +698,7 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             foreach ($lineItems as $item) {
-                $unitId = $item['unit_uuid_id']      ?? '';
+                $unitId = $item['unit_id']      ?? '';
                 $price   = floatval($item['price']   ?? 0);
                 $cat     = $item['price_category']     ?? 'retail';
                 $cap     = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;

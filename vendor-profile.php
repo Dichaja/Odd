@@ -663,7 +663,7 @@ ob_start();
             const activeCats = categories.filter(cat => cat.status === 'active');
             activeCats.forEach(category => {
                 const option = document.createElement('option');
-                option.value = category.category_uuid_id;
+                option.value = category.category_id;
                 option.textContent = category.name;
                 filterSelect.appendChild(option);
             });
@@ -681,7 +681,7 @@ ob_start();
             container.innerHTML = '';
             let filtered = [...allProducts];
             if (categoryId) {
-                filtered = filtered.filter(p => p.store_category_uuid_id === categoryId);
+                filtered = filtered.filter(p => p.store_category_id === categoryId);
             }
             if (searchTerm) {
                 filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm));
@@ -846,8 +846,8 @@ ob_start();
                             ${pricingLines}
                         </div>
                         <div class="flex justify-end items-center pt-4 mt-auto space-x-2">
-                            <button onclick="openEditProductModal('${product.store_product_uuid_id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">Edit</button>
-                            <button onclick="initiateDeleteProduct('${product.store_product_uuid_id}')" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors">Delete</button>
+                            <button onclick="openEditProductModal('${product.store_product_id}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">Edit</button>
+                            <button onclick="initiateDeleteProduct('${product.store_product_id}')" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors">Delete</button>
                         </div>
                     </div>
                 `;
@@ -978,7 +978,7 @@ ob_start();
             storeData.categories.forEach(category => {
                 const categoryCard = document.createElement('div');
                 categoryCard.className = 'category-card';
-                categoryCard.dataset.id = category.uuid_id;
+                categoryCard.dataset.id = category.id;
                 const statusClass = category.status === 'active' ? 'badge-success' : 'badge-warning';
                 const statusText = category.status === 'active' ? 'Active' : 'Inactive';
                 categoryCard.innerHTML = `
@@ -991,7 +991,7 @@ ob_start();
                     </p>
                     <div class="flex justify-between items-center mt-auto">
                         <span class="text-sm text-gray-500"><i class="fas fa-box"></i> ${category.product_count || 0} Products</span>
-                        <select class="category-status-select px-2 py-1 border border-gray-300 rounded text-sm" data-id="${category.uuid_id}" data-original="${category.status}">
+                        <select class="category-status-select px-2 py-1 border border-gray-300 rounded text-sm" data-id="${category.id}" data-original="${category.status}">
                             <option value="active" ${category.status === 'active' ? 'selected' : ''}>Active</option>
                             <option value="inactive" ${category.status === 'inactive' ? 'selected' : ''}>Inactive</option>
                         </select>
@@ -1037,12 +1037,12 @@ ob_start();
                                 activeCategories.forEach(category => {
                                     const categoryCard = document.createElement('div');
                                     categoryCard.className = 'category-card';
-                                    const productCount = productCounts[category.uuid_id] || 0;
+                                    const productCount = productCounts[category.id] || 0;
                                     categoryCard.innerHTML = `
                                         <div class="flex items-start mb-2">
-                                            <input type="checkbox" id="cat-${category.uuid_id}" class="category-checkbox mr-2 mt-1" value="${category.uuid_id}">
+                                            <input type="checkbox" id="cat-${category.id}" class="category-checkbox mr-2 mt-1" value="${category.id}">
                                             <div>
-                                                <label for="cat-${category.uuid_id}" class="font-bold text-lg cursor-pointer">${escapeHtml(category.name)}</label>
+                                                <label for="cat-${category.id}" class="font-bold text-lg cursor-pointer">${escapeHtml(category.name)}</label>
                                                 <p class="text-gray-600 text-sm category-description">${escapeHtml(category.description || 'No description available')}</p>
                                                 <p class="text-sm text-gray-500 mt-2"><i class="fas fa-box"></i> ${productCount} Products</p>
                                             </div>
@@ -1068,9 +1068,9 @@ ob_start();
                                     categoryCard.className = 'category-card';
                                     categoryCard.innerHTML = `
                                         <div class="flex items-start mb-2">
-                                            <input type="checkbox" id="cat-${category.uuid_id}" class="category-checkbox mr-2 mt-1" value="${category.uuid_id}">
+                                            <input type="checkbox" id="cat-${category.id}" class="category-checkbox mr-2 mt-1" value="${category.id}">
                                             <div>
-                                                <label for="cat-${category.uuid_id}" class="font-bold text-lg cursor-pointer">${escapeHtml(category.name)}</label>
+                                                <label for="cat-${category.id}" class="font-bold text-lg cursor-pointer">${escapeHtml(category.name)}</label>
                                                 <p class="text-gray-600 text-sm category-description">${escapeHtml(category.description || 'No description available')}</p>
                                             </div>
                                         </div>
@@ -1166,7 +1166,7 @@ ob_start();
                 const activeCats = storeData.categories.filter(cat => cat.status === 'active');
                 activeCats.forEach(category => {
                     const option = document.createElement('option');
-                    option.value = category.category_uuid_id;
+                    option.value = category.category_id;
                     option.textContent = category.name;
                     categorySelect.appendChild(option);
                 });
@@ -1199,7 +1199,7 @@ ob_start();
                     if (data.success && data.products && data.products.length > 0) {
                         data.products.forEach(p => {
                             const opt = document.createElement('option');
-                            opt.value = p.uuid_id;
+                            opt.value = p.id;
                             opt.textContent = p.name;
                             productSelect.appendChild(opt);
                         });
@@ -1260,7 +1260,7 @@ ob_start();
             unitSelect.required = true;
             availableUnits.forEach(u => {
                 const opt = document.createElement('option');
-                opt.value = u.uuid_id;
+                opt.value = u.id;
                 opt.textContent = `${u.si_unit} ${u.package_name}`;
                 unitSelect.appendChild(opt);
             });
@@ -1309,7 +1309,7 @@ ob_start();
 
         // ---------- Edit Product Functions ----------
         function openEditProductModal(storeProductUuid) {
-            const product = allProducts.find(p => p.store_product_uuid_id === storeProductUuid);
+            const product = allProducts.find(p => p.store_product_id === storeProductUuid);
             if (!product) {
                 notifications.error("Product not found.");
                 return;
@@ -1337,7 +1337,7 @@ ob_start();
         }
 
         function populateEditModal(product) {
-            document.getElementById('editStoreProductId').value = product.store_product_uuid_id;
+            document.getElementById('editStoreProductId').value = product.store_product_id;
             const wrapper = document.getElementById('editLineItemsWrapper');
             wrapper.innerHTML = '';
             if (product.pricing && product.pricing.length > 0) {
@@ -1359,7 +1359,7 @@ ob_start();
             unitSelect.required = true;
             availableUnits.forEach(u => {
                 const opt = document.createElement('option');
-                opt.value = u.uuid_id;
+                opt.value = u.id;
                 opt.textContent = `${u.si_unit} ${u.package_name}`;
                 unitSelect.appendChild(opt);
             });
@@ -1455,7 +1455,7 @@ ob_start();
                 const capacityVal = inputs[1].value || null;
                 if (!unitUuid || !priceVal) return;
                 lineItems.push({
-                    unit_uuid_id: unitUuid,
+                    unit_id: unitUuid,
                     price_category: priceCategory,
                     price: priceVal,
                     delivery_capacity: capacityVal
@@ -1518,7 +1518,7 @@ ob_start();
                 const capacityVal = inputs[1].value || null;
                 if (!unitUuid || !priceVal) return;
                 lineItems.push({
-                    unit_uuid_id: unitUuid,
+                    unit_id: unitUuid,
                     price_category: priceCategory,
                     price: priceVal,
                     delivery_capacity: capacityVal

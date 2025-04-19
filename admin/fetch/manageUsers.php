@@ -29,7 +29,7 @@ try {
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             foreach ($users as &$user) {
-                $user['uuid_id'] = $user['id'];
+                $user['id'] = $user['id'];
                 unset($user['id']);
             }
 
@@ -53,7 +53,7 @@ try {
                 exit;
             }
 
-            $user['uuid_id'] = $id;
+            $user['id'] = $id;
             unset($user['id']);
 
             echo json_encode(['success' => true, 'data' => $user]);

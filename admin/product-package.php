@@ -580,7 +580,7 @@ ob_start();
         packageNames.forEach(pkg => {
             // Add to form select
             const option1 = document.createElement('option');
-            option1.value = pkg.uuid_id;
+            option1.value = pkg.id;
             option1.textContent = pkg.package_name;
             packageNameSelect.appendChild(option1);
 
@@ -592,7 +592,7 @@ ob_start();
 
             // Add to edit select
             const option3 = document.createElement('option');
-            option3.value = pkg.uuid_id;
+            option3.value = pkg.id;
             option3.textContent = pkg.package_name;
             editPackageNameSelect.appendChild(option3);
         });
@@ -623,7 +623,7 @@ ob_start();
             if (data.success) {
                 // Add to packageNamesData
                 packageNamesData.push({
-                    uuid_id: data.id,
+                    id: data.id,
                     package_name: packageName,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
@@ -703,7 +703,7 @@ ob_start();
         siUnits.forEach(unit => {
             // Add to form select
             const option1 = document.createElement('option');
-            option1.value = unit.uuid_id;
+            option1.value = unit.id;
             option1.textContent = unit.si_unit;
             siUnitSelect.appendChild(option1);
 
@@ -715,7 +715,7 @@ ob_start();
 
             // Add to edit select
             const option3 = document.createElement('option');
-            option3.value = unit.uuid_id;
+            option3.value = unit.id;
             option3.textContent = unit.si_unit;
             editSIUnitSelect.appendChild(option3);
         });
@@ -746,7 +746,7 @@ ob_start();
             if (data.success) {
                 // Add to siUnitsData
                 siUnitsData.push({
-                    uuid_id: data.id,
+                    id: data.id,
                     si_unit: siUnit,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
@@ -989,16 +989,16 @@ ob_start();
                 </td>
                 <td class="px-6 py-4 text-sm">
                     <div class="flex items-center gap-2">
-                        <button class="btn-edit-package-name text-blue-600 hover:text-blue-800" data-id="${unit.uuid_id}" title="Edit Package Name">
+                        <button class="btn-edit-package-name text-blue-600 hover:text-blue-800" data-id="${unit.id}" title="Edit Package Name">
                             <i class="fas fa-box"></i>
                         </button>
-                        <button class="btn-edit-si-unit text-green-600 hover:text-green-800" data-id="${unit.uuid_id}" title="Edit SI Unit">
+                        <button class="btn-edit-si-unit text-green-600 hover:text-green-800" data-id="${unit.id}" title="Edit SI Unit">
                             <i class="fas fa-ruler"></i>
                         </button>
-                        <button class="btn-change-status text-blue-600 hover:text-blue-800" data-id="${unit.uuid_id}" title="Change Status">
+                        <button class="btn-change-status text-blue-600 hover:text-blue-800" data-id="${unit.id}" title="Change Status">
                             <i class="fas fa-exchange-alt"></i>
                         </button>
-                        <button class="btn-delete-unit-of-measure text-red-600 hover:text-red-800" data-id="${unit.uuid_id}" title="Delete">
+                        <button class="btn-delete-unit-of-measure text-red-600 hover:text-red-800" data-id="${unit.id}" title="Delete">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -1080,7 +1080,7 @@ ob_start();
     }
 
     function showChangeStatusModal(unitOfMeasureId) {
-        const unit = unitsOfMeasureData.find(u => u.uuid_id === unitOfMeasureId);
+        const unit = unitsOfMeasureData.find(u => u.id === unitOfMeasureId);
 
         if (unit) {
             document.getElementById('status-package-name').textContent = unit.package_name;
@@ -1094,14 +1094,14 @@ ob_start();
     }
 
     function showEditPackageNameModal(unitOfMeasureId) {
-        const unit = unitsOfMeasureData.find(u => u.uuid_id === unitOfMeasureId);
+        const unit = unitsOfMeasureData.find(u => u.id === unitOfMeasureId);
 
         if (unit) {
             document.getElementById('current-package-name').textContent = unit.package_name;
             document.getElementById('edit-package-si-unit').textContent = unit.si_unit;
             document.getElementById('confirmEditPackageName').setAttribute('data-id', unitOfMeasureId);
-            document.getElementById('confirmEditPackageName').setAttribute('data-si-unit-id', unit.si_unit_uuid_id);
-            document.getElementById('confirmEditPackageName').setAttribute('data-package-name-id', unit.package_name_uuid_id);
+            document.getElementById('confirmEditPackageName').setAttribute('data-si-unit-id', unit.si_unit_id);
+            document.getElementById('confirmEditPackageName').setAttribute('data-package-name-id', unit.package_name_id);
 
             // Reset the select to default
             document.getElementById('edit-package-name-select').value = '';
@@ -1113,14 +1113,14 @@ ob_start();
     }
 
     function showEditSIUnitModal(unitOfMeasureId) {
-        const unit = unitsOfMeasureData.find(u => u.uuid_id === unitOfMeasureId);
+        const unit = unitsOfMeasureData.find(u => u.id === unitOfMeasureId);
 
         if (unit) {
             document.getElementById('edit-si-package-name').textContent = unit.package_name;
             document.getElementById('current-si-unit').textContent = unit.si_unit;
             document.getElementById('confirmEditSIUnit').setAttribute('data-id', unitOfMeasureId);
-            document.getElementById('confirmEditSIUnit').setAttribute('data-si-unit-id', unit.si_unit_uuid_id);
-            document.getElementById('confirmEditSIUnit').setAttribute('data-package-name-id', unit.package_name_uuid_id);
+            document.getElementById('confirmEditSIUnit').setAttribute('data-si-unit-id', unit.si_unit_id);
+            document.getElementById('confirmEditSIUnit').setAttribute('data-package-name-id', unit.package_name_id);
 
             // Reset the select to default
             document.getElementById('edit-si-unit-select').value = '';
@@ -1132,7 +1132,7 @@ ob_start();
     }
 
     function showDeleteUnitOfMeasureModal(unitOfMeasureId) {
-        const unit = unitsOfMeasureData.find(u => u.uuid_id === unitOfMeasureId);
+        const unit = unitsOfMeasureData.find(u => u.id === unitOfMeasureId);
 
         if (unit) {
             document.getElementById('delete-package-name').textContent = unit.package_name;

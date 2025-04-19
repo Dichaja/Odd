@@ -106,13 +106,13 @@ function getProducts(PDO $pdo)
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($products as &$prod) {
-        $prod['uuid_id']       = $prod['id'];
+        $prod['id']       = $prod['id'];
         unset($prod['id']);
 
-        $prod['uuid_category'] = $prod['category_id'];
+        $prod['category'] = $prod['category_id'];
         unset($prod['category_id']);
 
-        $prod['images']        = getProductImages($prod['uuid_id']);
+        $prod['images']        = getProductImages($prod['id']);
         $prod['category_name'] = $prod['category_name'] ?? '(Unknown)';
     }
 
@@ -149,13 +149,13 @@ function getProduct(PDO $pdo)
         return;
     }
 
-    $product['uuid_id']       = $product['id'];
+    $product['id']       = $product['id'];
     unset($product['id']);
 
-    $product['uuid_category'] = $product['category_id'];
+    $product['category'] = $product['category_id'];
     unset($product['category_id']);
 
-    $product['images']        = getProductImages($product['uuid_id']);
+    $product['images']        = getProductImages($product['id']);
 
     echo json_encode(['success' => true, 'data' => $product]);
 }

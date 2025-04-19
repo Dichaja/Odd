@@ -87,7 +87,7 @@ function getCategories(PDO $pdo)
         );
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($categories as &$c) {
-            $c['uuid_id']   = $c['id'];
+            $c['id']   = $c['id'];
             $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
             unset($c['id']);
         }
@@ -119,7 +119,7 @@ function getCategory(PDO $pdo)
             echo json_encode(['success' => false, 'message' => 'Category not found']);
             return;
         }
-        $c['uuid_id']   = $c['id'];
+        $c['id']   = $c['id'];
         $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
         $c['has_image'] = doesCategoryImageExist($c['id'], $c['name']);
         unset($c['id']);
