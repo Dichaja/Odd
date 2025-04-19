@@ -678,7 +678,7 @@ ob_start();
                             <div class="flex justify-end">
                                 ${store.type === 'owned' ? `
                                     <button 
-                                        onclick="openStoreModal('edit','${store.id}')" 
+                                        onclick="openStoreModal('edit','${store.uuid_id}')" 
                                         class="h-8 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 text-sm mr-2"
                                     >
                                         <i class="fas fa-edit"></i>
@@ -686,7 +686,7 @@ ob_start();
                                     </button>
                                 ` : ''}
                                 <a 
-                                    href="../view/profile/vendor/${store.id}" 
+                                    href="../view/profile/vendor/${store.uuid_id}" 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
                                     class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm"
@@ -929,7 +929,7 @@ ob_start();
                     return;
                 }
                 const store = response.store;
-                $('#storeId').val(store.id);
+                $('#storeId').val(store.uuid_id);
                 // Step 1
                 $('#storeBusinessName').val(store.name);
                 $('#storeBusinessEmail').val(store.business_email);

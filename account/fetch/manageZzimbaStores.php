@@ -266,7 +266,7 @@ function getOwnedStores(PDO $pdo, string $userId): void
     $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($stores as &$s) {
-        $s['id']      = $s['id'];
+        $s['uuid_id']      = $s['id'];
         $s['location']     = $s['district'] . ', ' . $s['address'];
         $s['subscription'] = $s['status'] === 'pending'
             ? 'Awaiting approval'
@@ -313,7 +313,7 @@ function getManagedStores(PDO $pdo, string $userId): void
     $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($stores as &$s) {
-        $s['id']   = $s['id'];
+        $s['uuid_id']   = $s['id'];
         $s['role']      = ucwords(str_replace('_', ' ', $s['role']));
         $s['location']  = $s['district'] . ', ' . $s['address'];
         unset($s['id'], $s['district'], $s['address']);
@@ -350,7 +350,7 @@ function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
         return;
     }
 
-    $store['id']   = $store['id'];
+    $store['uuid_id']   = $store['id'];
     $store['is_owner']  = $store['owner_id'] === $userId;
 
     $catStmt = $pdo->prepare("
@@ -362,7 +362,7 @@ function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
     $catStmt->execute([$storeId]);
     $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($categories as &$c) {
-        $c['id'] = $c['id'];
+        $c['uuid_id'] = $c['id'];
         unset($c['id']);
     }
     $store['categories'] = $categories;
@@ -376,8 +376,8 @@ function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
     $mgrStmt->execute([$storeId]);
     $managers = $mgrStmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($managers as &$m) {
-        $m['id']      = $m['id'];
-        $m['user_id'] = $m['user_id'];
+        $m['uuid_id']      = $m['id'];
+        $m['user_uuid_id'] = $m['user_id'];
         unset($m['id'], $m['user_id']);
     }
     $store['managers'] = $managers;
@@ -691,7 +691,7 @@ function getStoreCategories(PDO $pdo, string $storeId): void
     $cats = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($cats as &$c) {
-        $c['id'] = $c['id'];
+        $c['uuid_id'] = $c['id'];
         unset($c['id']);
     }
 
@@ -717,8 +717,8 @@ function getStoreManagers(PDO $pdo, string $storeId, string $userId): void
     $mgrs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($mgrs as &$m) {
-        $m['id']      = $m['id'];
-        $m['user_id'] = $m['user_id'];
+        $m['uuid_id']      = $m['id'];
+        $m['user_uuid_id'] = $m['user_id'];
         unset($m['id'], $m['user_id']);
     }
 
