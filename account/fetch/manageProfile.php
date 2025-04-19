@@ -112,7 +112,7 @@ function updateProfile(PDO $pdo, string $userId, array $data): void
     $stmt = $pdo->prepare("
         SELECT id
         FROM zzimba_users
-        WHERE email != :email AND id != :user_id
+        WHERE email = :email AND id != :user_id
     ");
     $stmt->execute([':email' => $email, ':user_id' => $userId]);
     if ($stmt->rowCount() > 0) {
@@ -125,7 +125,7 @@ function updateProfile(PDO $pdo, string $userId, array $data): void
     $stmt = $pdo->prepare("
         SELECT id
         FROM zzimba_users
-        WHERE phone != :phone AND id != :user_id
+        WHERE phone = :phone AND id != :user_id
     ");
     $stmt->execute([':phone'   => $phone, ':user_id' => $userId]);
     if ($stmt->rowCount() > 0) {
