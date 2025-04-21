@@ -109,7 +109,8 @@ function deleteDirectory(string $dir): bool
         return unlink($dir);
     }
     foreach (scandir($dir) as $item) {
-        if ($item === '.' || $item === '..') continue;
+        if ($item === '.' || $item === '..')
+            continue;
         if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
             return false;
         }
@@ -139,10 +140,14 @@ function canAccessStore(PDO $pdo, string $storeId, string $userId): bool
     return $stmt->rowCount() > 0;
 }
 
-function storeFieldExists(PDO $pdo, string $field, string $value, string $excludeId = null): bool
+function storeFieldExists(PDO $pdo, string $field, string $value, string $excludeId = null, string $ownerId = null): bool
 {
     $sql = "SELECT COUNT(*) FROM vendor_stores WHERE $field = ?";
     $params = [$value];
+    if ($ownerId !== null) {
+        $sql .= " AND owner_id != ?";
+        $params[] = $ownerId;
+    }
     if ($excludeId) {
         $sql .= " AND id != ?";
         $params[] = $excludeId;
@@ -266,8 +271,8 @@ function getOwnedStores(PDO $pdo, string $userId): void
     $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($stores as &$s) {
-        $s['uuid_id']      = $s['id'];
-        $s['location']     = $s['district'] . ', ' . $s['address'];
+        $s['uuid_id'] = $s['id'];
+        $s['location'] = $s['district'] . ', ' . $s['address'];
         $s['subscription'] = $s['status'] === 'pending'
             ? 'Awaiting approval'
             : 'Active store';
@@ -313,9 +318,9 @@ function getManagedStores(PDO $pdo, string $userId): void
     $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($stores as &$s) {
-        $s['uuid_id']   = $s['id'];
-        $s['role']      = ucwords(str_replace('_', ' ', $s['role']));
-        $s['location']  = $s['district'] . ', ' . $s['address'];
+        $s['uuid_id'] = $s['id'];
+        $s['role'] = ucwords(str_replace('_', ' ', $s['role']));
+        $s['location'] = $s['district'] . ', ' . $s['address'];
         unset($s['id'], $s['district'], $s['address']);
     }
 
@@ -350,8 +355,8 @@ function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
         return;
     }
 
-    $store['uuid_id']   = $store['id'];
-    $store['is_owner']  = $store['owner_id'] === $userId;
+    $store['uuid_id'] = $store['id'];
+    $store['is_owner'] = $store['owner_id'] === $userId;
 
     $catStmt = $pdo->prepare("
         SELECT sc.id, pc.name, pc.description, sc.status, sc.created_at
@@ -376,7 +381,7 @@ function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
     $mgrStmt->execute([$storeId]);
     $managers = $mgrStmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($managers as &$m) {
-        $m['uuid_id']      = $m['id'];
+        $m['uuid_id'] = $m['id'];
         $m['user_uuid_id'] = $m['user_id'];
         unset($m['id'], $m['user_id']);
     }
@@ -390,18 +395,8 @@ function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
 function createStore(PDO $pdo, string $userId): void
 {
     $data = json_decode(file_get_contents('php://input'), true);
-    $required = [
-        'name',
-        'business_email',
-        'business_phone',
-        'nature_of_operation',
-        'region',
-        'district',
-        'address',
-        'latitude',
-        'longitude'
-    ];
-    foreach ($required as $f) {
+
+    foreach (['name', 'business_email', 'business_phone', 'nature_of_operation', 'region', 'district', 'address', 'latitude', 'longitude'] as $f) {
         if (empty($data[$f])) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => "Field '$f' is required"]);
@@ -420,14 +415,14 @@ function createStore(PDO $pdo, string $userId): void
             echo json_encode(['success' => false, 'error' => 'Email in use']);
             return;
         }
-        if (storeFieldExists($pdo, 'business_phone', $data['business_phone'])) {
+        if (storeFieldExists($pdo, 'business_phone', $data['business_phone'], null, $userId)) {
             http_response_code(409);
-            echo json_encode(['success' => false, 'error' => 'Phone in use']);
+            echo json_encode(['success' => false, 'error' => 'Business_phone in use']);
             return;
         }
 
-        $storeId   = generateUlid();
-        $now       = date('Y-m-d H:i:s');
+        $storeId = generateUlid();
+        $now = date('Y-m-d H:i:s');
 
         $stmt = $pdo->prepare("
             INSERT INTO vendor_stores (
@@ -443,20 +438,20 @@ function createStore(PDO $pdo, string $userId): void
             $storeId,
             $userId,
             $data['name'],
-            $data['description']   ?? '',
+            $data['description'] ?? '',
             $data['business_email'],
             $data['business_phone'],
             $data['nature_of_operation'],
             $data['region'],
             $data['district'],
-            $data['subcounty']     ?? null,
-            $data['parish']        ?? null,
+            $data['subcounty'] ?? null,
+            $data['parish'] ?? null,
             $data['address'],
             $data['latitude'],
             $data['longitude'],
-            $data['logo_url']      ?? null,
-            $data['website_url']   ?? null,
-            $data['social_media']  ?? null,
+            $data['logo_url'] ?? null,
+            $data['website_url'] ?? null,
+            $data['social_media'] ?? null,
             $now,
             $now
         ]);
@@ -465,10 +460,10 @@ function createStore(PDO $pdo, string $userId): void
             !empty($data['temp_logo_path'])
             && file_exists(__DIR__ . '/../../' . $data['temp_logo_path'])
         ) {
-            $ext        = pathinfo($data['temp_logo_path'], PATHINFO_EXTENSION);
-            $dir        = __DIR__ . '/../../img/stores/' . $storeId . '/logo';
+            $ext = pathinfo($data['temp_logo_path'], PATHINFO_EXTENSION);
+            $dir = __DIR__ . '/../../img/stores/' . $storeId . '/logo';
             mkdir($dir, 0755, true);
-            $name       = 'logo.' . $ext;
+            $name = 'logo.' . $ext;
             rename(
                 __DIR__ . '/../../' . $data['temp_logo_path'],
                 "$dir/$name"
@@ -479,8 +474,8 @@ function createStore(PDO $pdo, string $userId): void
         }
 
         echo json_encode([
-            'success'  => true,
-            'message'  => 'Store created, pending approval',
+            'success' => true,
+            'message' => 'Store created, pending approval',
             'store_id' => $storeId
         ]);
     } catch (Exception $e) {
@@ -493,11 +488,13 @@ function createStore(PDO $pdo, string $userId): void
 function updateStore(PDO $pdo, string $userId): void
 {
     $data = json_decode(file_get_contents('php://input'), true);
+
     if (empty($data['id']) || !isValidUlid($data['id'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Missing or invalid store ID']);
         return;
     }
+
     $storeId = $data['id'];
 
     if (!isOwner($pdo, $storeId, $userId)) {
@@ -505,6 +502,10 @@ function updateStore(PDO $pdo, string $userId): void
         echo json_encode(['success' => false, 'error' => 'Permission denied']);
         return;
     }
+
+    $stmt = $pdo->prepare("SELECT name, business_email, business_phone FROM vendor_stores WHERE id = ?");
+    $stmt->execute([$storeId]);
+    $current = $stmt->fetch(PDO::FETCH_ASSOC);
 
     $fields = [
         'name',
@@ -522,27 +523,31 @@ function updateStore(PDO $pdo, string $userId): void
         'website_url',
         'social_media'
     ];
+
     $updates = [];
-    $params  = [];
+    $params = [];
 
     foreach ($fields as $f) {
         if (isset($data[$f])) {
             if (in_array($f, ['name', 'business_email', 'business_phone'])) {
-                if (storeFieldExists($pdo, $f, $data[$f], $storeId)) {
+                if (
+                    $data[$f] !== $current[$f]
+                    && storeFieldExists($pdo, $f, $data[$f], $storeId, $userId)
+                ) {
                     http_response_code(409);
                     echo json_encode(['success' => false, 'error' => ucfirst($f) . ' in use']);
                     return;
                 }
             }
             $updates[] = "$f = ?";
-            $params[]  = $data[$f];
+            $params[] = $data[$f];
         }
     }
 
     if ($updates) {
         $updates[] = "updated_at = ?";
-        $params[]  = date('Y-m-d H:i:s');
-        $params[]  = $storeId;
+        $params[] = date('Y-m-d H:i:s');
+        $params[] = $storeId;
 
         $sql = "UPDATE vendor_stores SET " . implode(', ', $updates) . " WHERE id = ?";
         $stmt = $pdo->prepare($sql);
@@ -553,8 +558,8 @@ function updateStore(PDO $pdo, string $userId): void
         !empty($data['temp_logo_path'])
         && file_exists(__DIR__ . '/../../' . $data['temp_logo_path'])
     ) {
-        $ext  = pathinfo($data['temp_logo_path'], PATHINFO_EXTENSION);
-        $dir  = __DIR__ . '/../../img/stores/' . $storeId . '/logo';
+        $ext = pathinfo($data['temp_logo_path'], PATHINFO_EXTENSION);
+        $dir = __DIR__ . '/../../img/stores/' . $storeId . '/logo';
         $files = glob("$dir/*");
         foreach ($files as $f) {
             is_file($f) && unlink($f);
@@ -605,7 +610,7 @@ function uploadLogo(): void
     }
 
     $file = $_FILES['logo'];
-    $ext  = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
     if (!in_array($ext, $allowed) || $file['size'] > 2_000_000) {
         http_response_code(400);
@@ -619,12 +624,12 @@ function uploadLogo(): void
     $path = $tmpDir . $name;
 
     $imgInfo = getimagesize($file['tmp_name']);
-    $src     = match ($ext) {
+    $src = match ($ext) {
         'jpg', 'jpeg' => imagecreatefromjpeg($file['tmp_name']),
-        'png'        => imagecreatefrompng($file['tmp_name']),
-        'webp'       => imagecreatefromwebp($file['tmp_name']),
-        'gif'        => imagecreatefromgif($file['tmp_name']),
-        default      => null
+        'png' => imagecreatefrompng($file['tmp_name']),
+        'webp' => imagecreatefromwebp($file['tmp_name']),
+        'gif' => imagecreatefromgif($file['tmp_name']),
+        default => null
     };
     if (!$src) {
         http_response_code(500);
@@ -633,7 +638,7 @@ function uploadLogo(): void
     }
 
     $size = 512;
-    $dst  = imagecreatetruecolor($size, $size);
+    $dst = imagecreatetruecolor($size, $size);
     if (in_array($ext, ['png', 'gif'])) {
         imagealphablending($dst, false);
         imagesavealpha($dst, true);
@@ -658,18 +663,18 @@ function uploadLogo(): void
 
     match ($ext) {
         'jpg', 'jpeg' => imagejpeg($dst, $path, 90),
-        'png'        => imagepng($dst, $path, 9),
-        'webp'       => imagewebp($dst, $path, 90),
-        'gif'        => imagegif($dst, $path),
+        'png' => imagepng($dst, $path, 9),
+        'webp' => imagewebp($dst, $path, 90),
+        'gif' => imagegif($dst, $path),
     };
 
     imagedestroy($src);
     imagedestroy($dst);
 
     echo json_encode([
-        'success'  => true,
+        'success' => true,
         'temp_path' => 'uploads/temp/' . $name,
-        'url'      => BASE_URL . 'uploads/temp/' . $name
+        'url' => BASE_URL . 'uploads/temp/' . $name
     ]);
 }
 
@@ -717,7 +722,7 @@ function getStoreManagers(PDO $pdo, string $storeId, string $userId): void
     $mgrs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($mgrs as &$m) {
-        $m['uuid_id']      = $m['id'];
+        $m['uuid_id'] = $m['id'];
         $m['user_uuid_id'] = $m['user_id'];
         unset($m['id'], $m['user_id']);
     }
@@ -752,22 +757,22 @@ function addStoreManager(PDO $pdo, string $storeId, string $managerId, string $u
         return;
     }
     $entryId = generateUlid();
-    $role    = $_POST['role'] ?? 'manager';
-    $now     = date('Y-m-d H:i:s');
+    $role = $_POST['role'] ?? 'manager';
+    $now = date('Y-m-d H:i:s');
 
     $pdo->prepare("
         INSERT INTO store_managers
           (id, store_id, user_id, role, added_by, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     ")->execute([
-        $entryId,
-        $storeId,
-        $managerId,
-        $role,
-        $userId,
-        $now,
-        $now
-    ]);
+                $entryId,
+                $storeId,
+                $managerId,
+                $role,
+                $userId,
+                $now,
+                $now
+            ]);
 
     echo json_encode(['success' => true, 'manager_id' => $entryId]);
 }
@@ -806,7 +811,8 @@ function getRegions(): void
     $options = [];
     foreach ($data['features'] as $f) {
         $name = $f['properties']['NAME_1'] ?? null;
-        if ($name) $options[] = $name;
+        if ($name)
+            $options[] = $name;
     }
     sort($options);
     echo json_encode(['success' => true, 'regions' => $options]);
