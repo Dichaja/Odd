@@ -273,6 +273,11 @@ ob_start();
     }
 </style>
 
+<!-- Cover Photo -->
+<div class="relative h-64 w-full bg-gray-200 overflow-hidden" id="vendor-cover-photo">
+    <div class="vendor-cover" id="vendor-cover"></div>
+</div>
+
 <!-- Loading State -->
 <div id="loading-state" class="flex flex-col items-center justify-center py-12">
     <div class="loader mb-4"></div>
@@ -290,167 +295,268 @@ ob_start();
 </div>
 
 <!-- Content State -->
-<div id="content-state" class="hidden vendor-container">
-    <!-- Vendor Header -->
-    <div class="vendor-header">
-        <div class="vendor-cover" id="vendor-cover"></div>
-        <div class="vendor-profile-info">
-            <div class="vendor-avatar" id="vendor-avatar">
-                <i class="fas fa-store text-gray-400 text-4xl"></i>
-            </div>
-            <div>
-                <h1 class="text-2xl md:text-3xl font-bold mb-2" id="vendor-name">Store Name</h1>
-                <div>
-                    <span id="vendor-operation-type" class="bg-red-600 text-white px-3 py-1 rounded-full text-sm mr-2">Operation Type</span>
-                    <span id="vendor-status" class="bg-yellow-300 text-yellow-800 px-3 py-1 rounded-full text-sm">Status</span>
+<div id="content-state" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10">
+    <!-- Profile Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex flex-col md:flex-row">
+            <!-- Profile Picture -->
+            <div class="flex-shrink-0">
+                <div id="vendor-avatar" class="h-32 w-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
+                    <i class="fas fa-store text-gray-400 text-4xl"></i>
                 </div>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="mt-6 md:mt-0 md:ml-6 flex-grow">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center">
+                    <div>
+                        <h1 id="vendor-name" class="text-3xl font-bold text-secondary">Store Name</h1>
+                        <p id="vendor-description" class="text-gray-600 mt-1">Premium Construction Materials & Services</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex space-x-3">
+                        <button class="bg-primary hover:bg-red-700 text-white font-medium py-2 px-6 rounded-md transition duration-150 ease-in-out flex items-center">
+                            <i class="fa-solid fa-user-plus mr-2"></i> Follow
+                        </button>
+                        <button class="border border-gray-300 hover:bg-gray-50 text-secondary font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">
+                            <i class="fa-solid fa-envelope"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Bar -->
+                <div class="mt-6 flex flex-wrap gap-y-4">
+                    <div class="mr-8 flex items-center">
+                        <i class="fa-solid fa-calendar-days text-gray-500 mr-2"></i>
+                        <span id="vendor-registered" class="text-gray-700">Joined March 2008</span>
+                    </div>
+                    <div class="mr-8 flex items-center">
+                        <i class="fa-solid fa-location-dot text-gray-500 mr-2"></i>
+                        <span id="vendor-location" class="text-gray-700">Building City, BC 12345</span>
+                    </div>
+                    <div class="mr-8 flex items-center">
+                        <i class="fa-solid fa-box text-gray-500 mr-2"></i>
+                        <span id="product-count" class="text-gray-700">0 Products</span>
+                    </div>
+                    <div class="mr-8 flex items-center">
+                        <i class="fa-solid fa-tags text-gray-500 mr-2"></i>
+                        <span id="category-count" class="text-gray-700">0 Categories</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Stats -->
+        <div class="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-x-8 gap-y-4">
+            <div class="flex items-center">
+                <div id="vendor-status" class="bg-yellow-300 text-yellow-800 px-3 py-1 rounded-full text-sm">Status</div>
+                <div id="vendor-operation-type" class="ml-2 bg-red-600 text-white px-3 py-1 rounded-full text-sm">Operation Type</div>
+            </div>
+            <div class="flex items-center">
+                <div class="text-xl font-bold text-secondary">4.8</div>
+                <div class="ml-2 flex">
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <i class="fa-solid fa-star-half-stroke text-yellow-400"></i>
+                    <span class="ml-1 text-sm text-gray-600">(128 reviews)</span>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="text-xl font-bold text-secondary">1.2K</div>
+                <div class="ml-2 text-gray-600">Followers</div>
+            </div>
+            <div class="flex items-center">
+                <div class="text-xl font-bold text-secondary">100+</div>
+                <div class="ml-2 text-gray-600">Orders Completed</div>
             </div>
         </div>
     </div>
 
-    <!-- Vendor Details -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div class="bg-white rounded-lg shadow-md p-6 md:col-span-2">
-            <h2 class="text-xl text-red-600 font-bold mb-6">Contact Information</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="flex items-start">
-                    <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-map-marker-alt text-lg"></i></div>
-                    <div>
-                        <h3 class="font-bold mb-1">Location</h3>
-                        <p class="text-gray-600" id="vendor-location">Loading...</p>
-                    </div>
-                </div>
-                <div class="flex items-start">
-                    <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-envelope text-lg"></i></div>
-                    <div>
-                        <h3 class="font-bold mb-1">Email</h3>
-                        <p id="email-display" class="text-gray-600">••••••••••</p>
-                        <button id="toggle-email" class="text-sm text-blue-600 hover:underline">Show Email</button>
-                    </div>
-                </div>
-                <div class="flex items-start">
-                    <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-phone-alt text-lg"></i></div>
-                    <div>
-                        <h3 class="font-bold mb-1">Contact</h3>
-                        <p id="phone-display" class="text-gray-600">••••••••••</p>
-                        <button id="toggle-phone" class="text-sm text-blue-600 hover:underline">Show Contact</button>
-                    </div>
-                </div>
-                <div class="flex items-start">
-                    <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-user text-lg"></i></div>
-                    <div>
-                        <h3 class="font-bold mb-1">Owner</h3>
-                        <p class="text-gray-600" id="vendor-owner">Loading...</p>
-                    </div>
-                </div>
-                <div class="flex items-start">
-                    <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-calendar-alt text-lg"></i></div>
-                    <div>
-                        <h3 class="font-bold mb-1">Registered</h3>
-                        <p class="text-gray-600" id="vendor-registered">Loading...</p>
-                    </div>
-                </div>
-                <div class="flex items-start">
-                    <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-clock text-lg"></i></div>
-                    <div>
-                        <h3 class="font-bold mb-1">Last Seen</h3>
-                        <p class="text-gray-600" id="vendor-last-seen">Loading...</p>
-                    </div>
-                </div>
+    <!-- Main Content -->
+    <main class="py-8">
+        <!-- Navigation Tabs -->
+        <div class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 overflow-x-auto">
+                    <button class="border-primary text-primary font-medium py-4 px-1 border-b-2 whitespace-nowrap" data-tab="products">
+                        <i class="fa-solid fa-box-open mr-2"></i> Products
+                    </button>
+                    <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap" data-tab="about">
+                        <i class="fa-solid fa-circle-info mr-2"></i> About
+                    </button>
+                    <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap" data-tab="verification">
+                        <i class="fa-solid fa-check-circle mr-2"></i> Verification
+                    </button>
+                    <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap" data-tab="contact">
+                        <i class="fa-solid fa-address-card mr-2"></i> Contact
+                    </button>
+                </nav>
             </div>
-            <div class="verification-wrapper">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl text-red-600 font-bold">Verification Status</h2>
-                    <div id="owner-actions" class="hidden">
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-content">
+            <!-- Products Tab (Default Active) -->
+            <div id="products-tab" class="tab-pane active">
+                <!-- Filter and Sort -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                    <div id="owner-actions" class="hidden mb-4 sm:mb-0">
                         <button id="manage-categories-btn" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition mr-2"><i class="fas fa-tags mr-1"></i> Manage Categories</button>
                         <button id="add-product-btn" class="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition"><i class="fas fa-plus-circle mr-1"></i> Add Product</button>
                     </div>
-                </div>
-                <div class="mb-6">
-                    <div class="flex justify-between items-center mb-2"><span class="text-sm font-medium text-gray-700"><span id="completion-percentage">0</span>% Complete</span><span class="text-sm font-medium text-gray-700"><span id="completion-steps">0</span>/4 Steps</span></div>
-                    <div class="verification-track">
-                        <div class="verification-indicator" id="verification-progress" style="width: 0%"></div>
+                    <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <select id="filter-category" class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full">
+                            <option value="">All Categories</option>
+                        </select>
+                        <select id="sort-products" class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full">
+                            <option value="default">Default Sorting</option>
+                            <option value="latest">Latest</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                        </select>
+                        <input type="text" id="search-products" placeholder="Search products..." class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full">
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div id="step-basic-details" class="flex items-center p-4 rounded-lg bg-gray-50">
-                        <div class="step-icon pending"><span>1</span></div>
-                        <div>
-                            <div class="font-bold">Basic Store Details</div>
-                            <div class="text-gray-600 text-sm" id="basic-details-status">Pending</div>
-                        </div>
-                    </div>
-                    <div id="step-location-details" class="flex items-center p-4 rounded-lg bg-gray-50">
-                        <div class="step-icon pending"><span>2</span></div>
-                        <div>
-                            <div class="font-bold">Location Details</div>
-                            <div class="text-gray-600 text-sm" id="location-details-status">Pending</div>
-                        </div>
-                    </div>
-                    <div id="step-categories" class="flex items-center p-4 rounded-lg bg-gray-50">
-                        <div class="step-icon pending"><span>3</span></div>
-                        <div>
-                            <div class="font-bold">Product Categories</div>
-                            <div class="text-gray-600 text-sm" id="categories-status">Pending</div>
-                        </div>
-                    </div>
-                    <div id="step-products" class="flex items-center p-4 rounded-lg bg-gray-50">
-                        <div class="step-icon pending"><span>4</span></div>
-                        <div>
-                            <div class="font-bold">Products For Sale</div>
-                            <div class="text-gray-600 text-sm" id="products-status">Pending</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Account Summary -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl text-red-600 font-bold mb-6">Account Summary</h2>
-            <div class="space-y-4">
-                <div class="flex justify-between items-center pb-3 border-b border-gray-200"><span class="font-medium">Products</span><span class="text-lg font-bold" id="product-count">0</span></div>
-                <div class="flex justify-between items-center pb-3 border-b border-gray-200"><span class="font-medium">Categories</span><span class="text-lg font-bold" id="category-count">0</span></div>
-                <div class="flex justify-between items-center pb-3 border-b border-gray-200"><span class="font-medium">Total Views</span><span class="text-lg font-bold" id="view-count">0</span></div>
-                <div class="flex justify-between items-center pb-3 border-b border-gray-200"><span class="font-medium">Member Since</span><span class="text-lg font-bold" id="member-since">2024</span></div>
-                <div class="flex justify-between items-center"><span class="font-medium">Account Status</span><span id="account-status" class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm font-medium">Pending</span></div>
-            </div>
-            <div class="mt-6 pt-6 border-t border-gray-200">
-                <h3 class="font-semibold mb-3">Store Description</h3>
-                <p id="store-description" class="text-gray-600 text-sm">Loading...</p>
-            </div>
-            <div class="mt-6 pt-6 border-t border-gray-200" id="website-section">
-                <h3 class="font-semibold mb-3">Website</h3>
-                <a id="store-website" href="#" target="_blank" class="text-blue-600 hover:underline text-sm break-all">Loading...</a>
-            </div>
-        </div>
-    </div>
 
-    <!-- Products Section -->
-    <div class="mt-12">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <h2 class="text-xl text-red-600 font-bold">Products (<span id="products-heading-count">0</span>)</h2>
-            <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <input type="text" id="search-products" placeholder="Search products..." class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full">
-                <select id="filter-category" class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full">
-                    <option value="">All Categories</option>
-                </select>
-                <select id="sort-products" class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full">
-                    <option value="default">Default Sorting</option>
-                    <option value="latest">Latest</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                </select>
+                <!-- Products Grid -->
+                <div id="products-container">
+                    <div class="col-span-full text-center py-8 text-gray-500">
+                        No products found for this vendor.
+                    </div>
+                </div>
+                <button id="loadMoreBtn" class="mx-auto mt-8 block bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors hidden">
+                    Load More Products
+                </button>
+            </div>
+
+            <!-- About Tab -->
+            <div id="about-tab" class="tab-pane hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-lg shadow-md p-6 md:col-span-2">
+                        <h2 class="text-xl text-red-600 font-bold mb-6">About Us</h2>
+                        <div id="store-about" class="text-gray-600">
+                            <p id="store-description" class="mb-4">Loading...</p>
+                        </div>
+                        <div id="website-section" class="mt-6 pt-6 border-t border-gray-200">
+                            <h3 class="font-semibold mb-3">Website</h3>
+                            <a id="store-website" href="#" target="_blank" class="text-blue-600 hover:underline text-sm break-all">Loading...</a>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl text-red-600 font-bold mb-6">Account Summary</h2>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center pb-3 border-b border-gray-200"><span class="font-medium">Products</span><span class="text-lg font-bold" id="product-count-summary">0</span></div>
+                            <div class="flex justify-between items-center pb-3 border-b border-gray-200"><span class="font-medium">Categories</span><span class="text-lg font-bold" id="category-count-summary">0</span></div>
+                            <div class="flex justify-between items-center pb-3 border-b border-gray-200"><span class="font-medium">Total Views</span><span class="text-lg font-bold" id="view-count">0</span></div>
+                            <div class="flex justify-between items-center pb-3 border-b border-gray-200"><span class="font-medium">Member Since</span><span class="text-lg font-bold" id="member-since">2024</span></div>
+                            <div class="flex justify-between items-center"><span class="font-medium">Account Status</span><span id="account-status" class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm font-medium">Pending</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verification Tab -->
+            <div id="verification-tab" class="tab-pane hidden">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="verification-wrapper">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl text-red-600 font-bold">Verification Status</h2>
+                        </div>
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2"><span class="text-sm font-medium text-gray-700"><span id="completion-percentage">0</span>% Complete</span><span class="text-sm font-medium text-gray-700"><span id="completion-steps">0</span>/4 Steps</span></div>
+                            <div class="verification-track">
+                                <div class="verification-indicator" id="verification-progress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div id="step-basic-details" class="flex items-center p-4 rounded-lg bg-gray-50">
+                                <div class="step-icon pending"><span>1</span></div>
+                                <div>
+                                    <div class="font-bold">Basic Store Details</div>
+                                    <div class="text-gray-600 text-sm" id="basic-details-status">Pending</div>
+                                </div>
+                            </div>
+                            <div id="step-location-details" class="flex items-center p-4 rounded-lg bg-gray-50">
+                                <div class="step-icon pending"><span>2</span></div>
+                                <div>
+                                    <div class="font-bold">Location Details</div>
+                                    <div class="text-gray-600 text-sm" id="location-details-status">Pending</div>
+                                </div>
+                            </div>
+                            <div id="step-categories" class="flex items-center p-4 rounded-lg bg-gray-50">
+                                <div class="step-icon pending"><span>3</span></div>
+                                <div>
+                                    <div class="font-bold">Product Categories</div>
+                                    <div class="text-gray-600 text-sm" id="categories-status">Pending</div>
+                                </div>
+                            </div>
+                            <div id="step-products" class="flex items-center p-4 rounded-lg bg-gray-50">
+                                <div class="step-icon pending"><span>4</span></div>
+                                <div>
+                                    <div class="font-bold">Products For Sale</div>
+                                    <div class="text-gray-600 text-sm" id="products-status">Pending</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Tab -->
+            <div id="contact-tab" class="tab-pane hidden">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl text-red-600 font-bold mb-6">Contact Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex items-start">
+                            <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-map-marker-alt text-lg"></i></div>
+                            <div>
+                                <h3 class="font-bold mb-1">Location</h3>
+                                <p class="text-gray-600" id="vendor-location-contact">Loading...</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-envelope text-lg"></i></div>
+                            <div>
+                                <h3 class="font-bold mb-1">Email</h3>
+                                <p id="email-display" class="text-gray-600">••••••••••</p>
+                                <button id="toggle-email" class="text-sm text-blue-600 hover:underline">Show Email</button>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-phone-alt text-lg"></i></div>
+                            <div>
+                                <h3 class="font-bold mb-1">Contact</h3>
+                                <p id="phone-display" class="text-gray-600">••••••••••</p>
+                                <button id="toggle-phone" class="text-sm text-blue-600 hover:underline">Show Contact</button>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-user text-lg"></i></div>
+                            <div>
+                                <h3 class="font-bold mb-1">Owner</h3>
+                                <p class="text-gray-600" id="vendor-owner">Loading...</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-calendar-alt text-lg"></i></div>
+                            <div>
+                                <h3 class="font-bold mb-1">Registered</h3>
+                                <p class="text-gray-600" id="vendor-registered-contact">Loading...</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="text-red-600 mr-3 mt-0.5"><i class="fas fa-clock text-lg"></i></div>
+                            <div>
+                                <h3 class="font-bold mb-1">Last Seen</h3>
+                                <p class="text-gray-600" id="vendor-last-seen">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div id="products-container">
-            <div class="col-span-full text-center py-8 text-gray-500">
-                No products found for this vendor.
-            </div>
-        </div>
-        <button id="loadMoreBtn" class="mx-auto mt-8 block bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors hidden">
-            Load More Products
-        </button>
-    </div>
+    </main>
 </div>
 
 <!-- Manage Categories Modal -->
@@ -566,6 +672,9 @@ ob_start();
     </div>
 </div>
 
+<!-- Toast Notifications -->
+<div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-4"></div>
+
 <script>
     window.openModal = function(modalId) {
         document.getElementById(modalId).style.display = 'block';
@@ -594,6 +703,33 @@ ob_start();
         } else {
             showError("No vendor ID provided");
         }
+
+        // Tab switching
+        const tabs = document.querySelectorAll('nav button');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                tabs.forEach(t => {
+                    t.classList.remove('border-primary', 'text-primary');
+                    t.classList.add('border-transparent', 'text-gray-500');
+                });
+
+                // Add active class to clicked tab
+                this.classList.remove('border-transparent', 'text-gray-500');
+                this.classList.add('border-primary', 'text-primary');
+
+                // Hide all tab panes
+                tabPanes.forEach(pane => {
+                    pane.classList.add('hidden');
+                });
+
+                // Show the selected tab pane
+                const tabName = this.getAttribute('data-tab');
+                document.getElementById(tabName + '-tab').classList.remove('hidden');
+            });
+        });
 
         // Manage Category tabs
         document.querySelectorAll('.tab-button').forEach(button => {
@@ -717,15 +853,19 @@ ob_start();
                 accountStatus.textContent = store.status.charAt(0).toUpperCase() + store.status.slice(1);
             }
             document.getElementById('vendor-location').textContent = `${store.district}, ${store.address}`;
+            document.getElementById('vendor-location-contact').textContent = `${store.district}, ${store.address}`;
             document.getElementById('vendor-owner').textContent = store.owner_username;
+            document.getElementById('vendor-description').textContent = store.description || 'No description provided.';
             storeEmail = store.business_email;
             storePhone = store.business_phone;
             const regDate = new Date(store.created_at);
-            document.getElementById('vendor-registered').textContent = regDate.toLocaleDateString('en-US', {
+            const formattedDate = regDate.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
+            document.getElementById('vendor-registered').textContent = `Joined ${formattedDate}`;
+            document.getElementById('vendor-registered-contact').textContent = formattedDate;
             if (store.owner_current_login) {
                 const lastSeen = new Date(store.owner_current_login);
                 document.getElementById('vendor-last-seen').textContent = formatTimeAgo(lastSeen);
@@ -745,9 +885,10 @@ ob_start();
             document.getElementById('vendor-cover').style.backgroundSize = '20px 20px';
             const activeCategories = store.categories ? store.categories.filter(cat => cat.status === 'active') : [];
             const activeProductsCount = store.product_count || 0;
-            document.getElementById('product-count').textContent = activeProductsCount;
-            document.getElementById('products-heading-count').textContent = activeProductsCount;
-            document.getElementById('category-count').textContent = activeCategories.length;
+            document.getElementById('product-count').textContent = `${activeProductsCount} Products`;
+            document.getElementById('product-count-summary').textContent = activeProductsCount;
+            document.getElementById('category-count').textContent = `${activeCategories.length} Categories`;
+            document.getElementById('category-count-summary').textContent = activeCategories.length;
             document.getElementById('view-count').textContent = '0';
             const createdYear = new Date(store.created_at).getFullYear();
             document.getElementById('member-since').textContent = createdYear;
@@ -1139,7 +1280,7 @@ ob_start();
                     button.textContent = originalText;
                     if (data.success) {
                         closeModal('manageCategoriesModal');
-                        notifications.success('Categories updated successfully');
+                        showToast('Categories updated successfully', 'success');
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
                         alert(data.error || 'Failed to update categories');
@@ -1311,7 +1452,7 @@ ob_start();
         function openEditProductModal(storeProductUuid) {
             const product = allProducts.find(p => p.store_product_id === storeProductUuid);
             if (!product) {
-                notifications.error("Product not found.");
+                showToast("Product not found.", "error");
                 return;
             }
             // Ensure availableUnits are populated for edit modal
@@ -1484,7 +1625,7 @@ ob_start();
                     submitBtn.textContent = originalText;
                     if (data.success) {
                         closeModal('addProductModal');
-                        notifications.success('Product & pricing added successfully');
+                        showToast('Product & pricing added successfully', 'success');
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
                         alert(data.error || 'Failed to add product');
@@ -1546,7 +1687,7 @@ ob_start();
                     submitBtn.textContent = originalText;
                     if (data.success) {
                         closeModal('editProductModal');
-                        notifications.success('Product pricing updated successfully');
+                        showToast('Product pricing updated successfully', 'success');
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
                         alert(data.error || 'Update failed');
@@ -1587,7 +1728,7 @@ ob_start();
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        notifications.success('Product deleted successfully');
+                        showToast('Product deleted successfully', 'success');
                         setTimeout(() => window.location.reload(), 1000);
                     } else {
                         alert(data.error || "Failed to delete product");
@@ -1602,6 +1743,32 @@ ob_start();
                     closeModal('deleteConfirmModal');
                 });
         });
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `flex items-center p-4 mb-4 w-full max-w-xs rounded-lg shadow ${type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'} transition-opacity duration-300`;
+
+            toast.innerHTML = `
+                <div class="inline-flex flex-shrink-0 justify-center items-center w-8 h-8 ${type === 'success' ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'} rounded-lg">
+                    <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
+                </div>
+                <div class="ml-3 text-sm font-normal">${message}</div>
+                <button type="button" class="ml-auto -mx-1.5 -my-1.5 ${type === 'success' ? 'bg-green-50 text-green-500 hover:text-green-700' : 'bg-red-50 text-red-500 hover:text-red-700'} rounded-lg p-1.5 inline-flex h-8 w-8" onclick="this.parentElement.remove()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            document.getElementById('toast-container').appendChild(toast);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        }
 
         window.openEditProductModal = openEditProductModal;
         window.initiateDeleteProduct = initiateDeleteProduct;
