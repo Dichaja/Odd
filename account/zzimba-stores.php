@@ -28,13 +28,30 @@ ob_start();
                     </p>
                 </div>
                 <!-- Create Button -->
-                <button
-                    id="createStoreBtn"
+                <button id="createStoreBtn"
                     class="h-10 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors flex items-center gap-2 justify-center"
                     onclick="openStoreModal('create')">
                     <i class="fas fa-plus"></i>
                     <span>Create New Store</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Invitations Section -->
+    <div id="pending-invitations-section" class="content-section hidden">
+        <div class="p-6">
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold text-secondary">Pending Store Manager Invitations</h2>
+                <p class="text-sm text-gray-text mt-1">Review and respond to invitations to manage stores</p>
+            </div>
+
+            <div id="pending-invitations-container">
+                <!-- Invitations loaded dynamically via AJAX -->
+                <div class="flex justify-center items-center py-6">
+                    <div class="w-8 h-8 border-4 border-user-primary border-t-transparent rounded-full animate-spin">
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -49,7 +66,8 @@ ob_start();
             <div id="all-stores-container">
                 <!-- Stores loaded dynamically via AJAX -->
                 <div class="flex justify-center items-center py-12">
-                    <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin"></div>
+                    <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin">
+                    </div>
                 </div>
             </div>
         </div>
@@ -59,7 +77,8 @@ ob_start();
 <!-- Universal Store Modal (used for both CREATE and EDIT) -->
 <div id="storeModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/20" onclick="closeStoreModal()"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="storeModalTitle" class="text-lg font-semibold text-secondary">
@@ -73,11 +92,17 @@ ob_start();
             <!-- Step Indicators -->
             <div class="flex items-center justify-center mb-6">
                 <div class="flex items-center">
-                    <div id="storeStep1Indicator" class="step-indicator active flex items-center justify-center w-8 h-8 rounded-full bg-user-primary text-white font-medium">1</div>
+                    <div id="storeStep1Indicator"
+                        class="step-indicator active flex items-center justify-center w-8 h-8 rounded-full bg-user-primary text-white font-medium">
+                        1</div>
                     <div class="w-12 h-1 bg-gray-200" id="storeStep1to2Line"></div>
-                    <div id="storeStep2Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">2</div>
+                    <div id="storeStep2Indicator"
+                        class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">
+                        2</div>
                     <div class="w-12 h-1 bg-gray-200" id="storeStep2to3Line"></div>
-                    <div id="storeStep3Indicator" class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">3</div>
+                    <div id="storeStep3Indicator"
+                        class="step-indicator flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-500 font-medium">
+                        3</div>
                 </div>
             </div>
 
@@ -91,43 +116,36 @@ ob_start();
                     <h4 class="text-center font-medium text-secondary mb-4">Basic Store Details</h4>
                     <div class="space-y-4">
                         <div>
-                            <label for="storeBusinessName" class="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
-                            <input
-                                type="text"
-                                id="storeBusinessName"
-                                placeholder="Enter business name"
+                            <label for="storeBusinessName" class="block text-sm font-medium text-gray-700 mb-1">Business
+                                Name *</label>
+                            <input type="text" id="storeBusinessName" placeholder="Enter business name"
                                 class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                         <div>
-                            <label for="storeBusinessEmail" class="block text-sm font-medium text-gray-700 mb-1">Business Email *</label>
-                            <input
-                                type="email"
-                                id="storeBusinessEmail"
-                                placeholder="Enter business email"
+                            <label for="storeBusinessEmail"
+                                class="block text-sm font-medium text-gray-700 mb-1">Business Email *</label>
+                            <input type="email" id="storeBusinessEmail" placeholder="Enter business email"
                                 class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                         <div>
-                            <label for="storeContactNumber" class="block text-sm font-medium text-gray-700 mb-1">Main Contact Number *</label>
-                            <input
-                                type="tel"
-                                id="storeContactNumber"
-                                placeholder="Enter contact number"
+                            <label for="storeContactNumber" class="block text-sm font-medium text-gray-700 mb-1">Main
+                                Contact Number *</label>
+                            <input type="tel" id="storeContactNumber" placeholder="Enter contact number"
                                 class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                         <div>
-                            <label for="storeNatureOfOperation" class="block text-sm font-medium text-gray-700 mb-1">Nature of Operation *</label>
-                            <select
-                                id="storeNatureOfOperation"
+                            <label for="storeNatureOfOperation"
+                                class="block text-sm font-medium text-gray-700 mb-1">Nature of Operation *</label>
+                            <select id="storeNatureOfOperation"
                                 class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                 <option value="">Select Nature of Operation</option>
                                 <?php foreach ($natureOfOperations as $operation): ?>
-                                    <option value="<?= htmlspecialchars($operation) ?>"><?= htmlspecialchars($operation) ?></option>
+                                    <option value="<?= htmlspecialchars($operation) ?>"><?= htmlspecialchars($operation) ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <button
-                            type="button"
-                            id="storeStep1NextBtn"
+                        <button type="button" id="storeStep1NextBtn"
                             class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                             NEXT
                         </button>
@@ -142,21 +160,19 @@ ob_start();
                         <!-- Left column: Map -->
                         <div>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Select Location on Map *</label>
-                                <div id="storeMapContainer" class="w-full h-64 rounded-lg border border-gray-200 mb-2"></div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Select Location on Map
+                                    *</label>
+                                <div id="storeMapContainer" class="w-full h-64 rounded-lg border border-gray-200 mb-2">
+                                </div>
                                 <p class="text-xs text-gray-500">Click within the selected region to drop a pin</p>
                             </div>
 
                             <div class="flex space-x-2 mb-4">
-                                <button
-                                    id="storeLocateMeBtn"
-                                    type="button"
+                                <button id="storeLocateMeBtn" type="button"
                                     class="px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition">
                                     Find My Location
                                 </button>
-                                <select
-                                    id="storeMapStyle"
-                                    class="text-sm border rounded-md px-2 py-1">
+                                <select id="storeMapStyle" class="text-sm border rounded-md px-2 py-1">
                                     <option value="osm">OpenStreetMap</option>
                                     <option value="satellite">Satellite</option>
                                     <option value="terrain">Terrain</option>
@@ -165,19 +181,15 @@ ob_start();
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label for="storeLatitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
-                                    <input
-                                        type="text"
-                                        id="storeLatitude"
-                                        readonly
+                                    <label for="storeLatitude"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
+                                    <input type="text" id="storeLatitude" readonly
                                         class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
                                 </div>
                                 <div>
-                                    <label for="storeLongitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
-                                    <input
-                                        type="text"
-                                        id="storeLongitude"
-                                        readonly
+                                    <label for="storeLongitude"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
+                                    <input type="text" id="storeLongitude" readonly
                                         class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
                                 </div>
                             </div>
@@ -187,15 +199,14 @@ ob_start();
                         <div>
                             <div class="space-y-4">
                                 <div>
-                                    <label for="storeLevel1" class="block text-sm font-medium text-gray-700 mb-1">Region/Province *</label>
+                                    <label for="storeLevel1"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Region/Province *</label>
                                     <div class="relative">
-                                        <select
-                                            id="storeLevel1"
+                                        <select id="storeLevel1"
                                             class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                             <option value="">Select Region/Province</option>
                                         </select>
-                                        <span
-                                            id="storeLoading1"
+                                        <span id="storeLoading1"
                                             class="hidden absolute right-2 top-2 text-sm text-gray-500">
                                             Loading...
                                         </span>
@@ -203,16 +214,14 @@ ob_start();
                                 </div>
 
                                 <div>
-                                    <label for="storeLevel2" class="block text-sm font-medium text-gray-700 mb-1">District *</label>
+                                    <label for="storeLevel2"
+                                        class="block text-sm font-medium text-gray-700 mb-1">District *</label>
                                     <div class="relative">
-                                        <select
-                                            id="storeLevel2"
-                                            disabled
+                                        <select id="storeLevel2" disabled
                                             class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                             <option value="">Select District</option>
                                         </select>
-                                        <span
-                                            id="storeLoading2"
+                                        <span id="storeLoading2"
                                             class="hidden absolute right-2 top-2 text-sm text-gray-500">
                                             Loading...
                                         </span>
@@ -220,16 +229,14 @@ ob_start();
                                 </div>
 
                                 <div>
-                                    <label for="storeLevel3" class="block text-sm font-medium text-gray-700 mb-1">Sub-county</label>
+                                    <label for="storeLevel3"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Sub-county</label>
                                     <div class="relative">
-                                        <select
-                                            id="storeLevel3"
-                                            disabled
+                                        <select id="storeLevel3" disabled
                                             class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                             <option value="">Select Sub-county</option>
                                         </select>
-                                        <span
-                                            id="storeLoading3"
+                                        <span id="storeLoading3"
                                             class="hidden absolute right-2 top-2 text-sm text-gray-500">
                                             Loading...
                                         </span>
@@ -237,16 +244,14 @@ ob_start();
                                 </div>
 
                                 <div>
-                                    <label for="storeLevel4" class="block text-sm font-medium text-gray-700 mb-1">Parish/Ward</label>
+                                    <label for="storeLevel4"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Parish/Ward</label>
                                     <div class="relative">
-                                        <select
-                                            id="storeLevel4"
-                                            disabled
+                                        <select id="storeLevel4" disabled
                                             class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                                             <option value="">Select Parish/Ward</option>
                                         </select>
-                                        <span
-                                            id="storeLoading4"
+                                        <span id="storeLoading4"
                                             class="hidden absolute right-2 top-2 text-sm text-gray-500">
                                             Loading...
                                         </span>
@@ -254,12 +259,9 @@ ob_start();
                                 </div>
 
                                 <div>
-                                    <label for="storeAddress" class="block text-sm font-medium text-gray-700 mb-1">Physical Address *</label>
-                                    <input
-                                        type="text"
-                                        id="storeAddress"
-                                        placeholder="Enter physical address"
-                                        readonly
+                                    <label for="storeAddress"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Physical Address *</label>
+                                    <input type="text" id="storeAddress" placeholder="Enter physical address" readonly
                                         class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50">
                                 </div>
                             </div>
@@ -267,15 +269,11 @@ ob_start();
                     </div>
 
                     <div class="flex justify-between mt-6">
-                        <button
-                            type="button"
-                            id="storeStep2BackBtn"
+                        <button type="button" id="storeStep2BackBtn"
                             class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                             BACK
                         </button>
-                        <button
-                            type="button"
-                            id="storeStep2NextBtn"
+                        <button type="button" id="storeStep2NextBtn"
                             class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                             NEXT
                         </button>
@@ -288,11 +286,9 @@ ob_start();
 
                     <div class="space-y-6">
                         <div>
-                            <label for="storeDescription" class="block text-sm font-medium text-gray-700 mb-1">Store Description</label>
-                            <textarea
-                                id="storeDescription"
-                                rows="4"
-                                placeholder="Brief description of your store"
+                            <label for="storeDescription" class="block text-sm font-medium text-gray-700 mb-1">Store
+                                Description</label>
+                            <textarea id="storeDescription" rows="4" placeholder="Brief description of your store"
                                 class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"></textarea>
                         </div>
 
@@ -301,55 +297,39 @@ ob_start();
                             <div class="flex items-center gap-4">
                                 <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
                                     <i id="storeLogoPlaceholder" class="fas fa-store text-gray-400 text-xl"></i>
-                                    <img
-                                        id="storeLogoPreview"
-                                        class="w-full h-full object-cover rounded-lg hidden"
-                                        src="#"
-                                        alt="Logo preview">
+                                    <img id="storeLogoPreview" class="w-full h-full object-cover rounded-lg hidden"
+                                        src="#" alt="Logo preview">
                                 </div>
-                                <label
-                                    for="storeLogo"
+                                <label for="storeLogo"
                                     class="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                                     Upload Logo
                                 </label>
-                                <input
-                                    type="file"
-                                    id="storeLogo"
-                                    accept="image/*"
-                                    class="hidden">
+                                <input type="file" id="storeLogo" accept="image/*" class="hidden">
                             </div>
                             <p class="text-xs text-gray-500 mt-1">Recommended size: 512×512 pixels. Max 2MB.</p>
                         </div>
 
                         <div>
-                            <label for="storeWebsite" class="block text-sm font-medium text-gray-700 mb-1">Website (Optional)</label>
-                            <input
-                                type="url"
-                                id="storeWebsite"
-                                placeholder="https://example.com"
+                            <label for="storeWebsite" class="block text-sm font-medium text-gray-700 mb-1">Website
+                                (Optional)</label>
+                            <input type="url" id="storeWebsite" placeholder="https://example.com"
                                 class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
 
                         <div>
-                            <label for="storeSocialMedia" class="block text-sm font-medium text-gray-700 mb-1">Social Media (Optional)</label>
-                            <input
-                                type="text"
-                                id="storeSocialMedia"
-                                placeholder="Facebook, Instagram, etc."
+                            <label for="storeSocialMedia" class="block text-sm font-medium text-gray-700 mb-1">Social
+                                Media (Optional)</label>
+                            <input type="text" id="storeSocialMedia" placeholder="Facebook, Instagram, etc."
                                 class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                     </div>
 
                     <div class="flex justify-between mt-6">
-                        <button
-                            type="button"
-                            id="storeStep3BackBtn"
+                        <button type="button" id="storeStep3BackBtn"
                             class="w-24 h-10 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                             BACK
                         </button>
-                        <button
-                            type="button"
-                            id="storeStep3FinishBtn"
+                        <button type="button" id="storeStep3FinishBtn"
                             class="w-24 h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                             SAVE
                         </button>
@@ -360,10 +340,41 @@ ob_start();
     </div>
 </div>
 
+<!-- Invitation Response Confirmation Modal -->
+<div id="invitationResponseModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/20" onclick="closeInvitationResponseModal()"></div>
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="invitationResponseTitle" class="text-lg font-semibold text-secondary">Confirm Response</h3>
+                <button onclick="closeInvitationResponseModal()" class="text-gray-400 hover:text-gray-500"
+                    id="invitationResponseCloseBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div id="invitationResponseContent" class="py-4">
+                <!-- Content will be set dynamically -->
+            </div>
+
+            <div class="flex justify-end gap-3 mt-4">
+                <button type="button" id="invitationResponseCancelBtn"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    onclick="closeInvitationResponseModal()">
+                    Cancel
+                </button>
+                <button type="button" id="invitationResponseConfirmBtn"
+                    class="px-4 py-2 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Loading Overlay -->
-<div
-    id="loadingOverlay"
-    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+<div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
         <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin mb-4"></div>
         <p class="text-gray-700">Processing...</p>
@@ -371,24 +382,16 @@ ob_start();
 </div>
 
 <!-- Leaflet CSS and JS -->
-<link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin="" />
-<script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <!-- Leaflet plugins for point-in-polygon -->
 <script src="https://unpkg.com/leaflet-pip@1.1.0/leaflet-pip.js"></script>
 
 <!-- intl-tel-input for phone -->
-<script
-    src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" />
 
 <style>
     .location-icon {
@@ -442,6 +445,15 @@ ob_start();
         background-color: rgba(59, 130, 246, 0.1);
         color: #3b82f6;
     }
+
+    .invitation-card {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .invitation-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
 </style>
 
 <script>
@@ -454,12 +466,16 @@ ob_start();
     let storeBaseLayers = {};
     let storePhoneInput = null;
     let allStores = [];
+    let pendingInvitations = [];
     let currentFilter = 'owned'; // Default filter
+    let currentInvitationAction = null;
+    let currentInvitationId = null;
 
     // On document ready
-    $(document).ready(function() {
-        // Load all stores initially
+    $(document).ready(function () {
+        // Load all stores and pending invitations
         loadAllStores();
+        loadPendingInvitations();
 
         // Initialize phone input
         initializePhoneInput();
@@ -472,14 +488,21 @@ ob_start();
         $('#storeStep3FinishBtn').click(() => saveStoreData());
 
         // Logo preview
-        $('#storeLogo').change(function(e) {
+        $('#storeLogo').change(function (e) {
             if (e.target.files && e.target.files[0]) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     $('#storeLogoPreview').attr('src', e.target.result).removeClass('hidden');
                     $('#storeLogoPlaceholder').addClass('hidden');
                 };
                 reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Invitation response handlers
+        $('#invitationResponseConfirmBtn').click(function () {
+            if (currentInvitationAction && currentInvitationId) {
+                processInvitationResponse(currentInvitationAction, currentInvitationId);
             }
         });
     });
@@ -552,7 +575,7 @@ ob_start();
             url: STORE_API_BASE + '?action=getOwnedStores',
             type: 'GET',
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     const ownedStores = response.stores || [];
                     // Add type property to each store
@@ -565,7 +588,7 @@ ob_start();
                         url: STORE_API_BASE + '?action=getManagedStores',
                         type: 'GET',
                         dataType: 'json',
-                        success: function(response) {
+                        success: function (response) {
                             hideLoading();
                             if (response.success) {
                                 const managedStores = response.stores || [];
@@ -584,7 +607,7 @@ ob_start();
                                 showErrorNotification(response.error || 'Failed to load managed stores');
                             }
                         },
-                        error: function() {
+                        error: function () {
                             hideLoading();
                             allStores = ownedStores;
                             renderStores(allStores);
@@ -596,11 +619,166 @@ ob_start();
                     showErrorNotification(response.error || 'Failed to load stores');
                 }
             },
-            error: function() {
+            error: function () {
                 hideLoading();
                 showErrorNotification('Failed to load stores. Please try again.');
             }
         });
+    }
+
+    // Load pending invitations
+    function loadPendingInvitations() {
+        $.ajax({
+            url: STORE_API_BASE + '?action=getPendingInvitations',
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    pendingInvitations = response.invitations || [];
+                    if (pendingInvitations.length > 0) {
+                        $('#pending-invitations-section').removeClass('hidden');
+                        renderPendingInvitations(pendingInvitations);
+                    } else {
+                        $('#pending-invitations-section').addClass('hidden');
+                    }
+                } else {
+                    showErrorNotification(response.error || 'Failed to load invitations');
+                }
+            },
+            error: function () {
+                showErrorNotification('Failed to load invitations. Please try again.');
+            }
+        });
+    }
+
+    // Render pending invitations
+    function renderPendingInvitations(invitations) {
+        const container = $('#pending-invitations-container');
+
+        if (!invitations || invitations.length === 0) {
+            container.html(`
+                <div class="bg-gray-50 rounded-lg p-6 text-center">
+                    <p class="text-gray-500">No pending invitations</p>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '<div class="grid grid-cols-1 gap-4">';
+
+        invitations.forEach(invitation => {
+            const logoUrl = invitation.logo_url ?
+                BASE_URL + invitation.logo_url :
+                `https://placehold.co/100x100/f0f0f0/808080?text=${invitation.store_name.substring(0, 2)}`;
+
+            html += `
+                <div class="invitation-card bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="p-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 bg-gray-50 flex-shrink-0 rounded-lg flex items-center justify-center">
+                                <img src="${logoUrl}" alt="${escapeHtml(invitation.store_name)}" class="w-12 h-12 object-cover rounded">
+                            </div>
+                            <div class="flex-grow">
+                                <h3 class="font-medium text-lg text-secondary">${escapeHtml(invitation.store_name)}</h3>
+                                <p class="text-sm text-gray-600">
+                                    <span class="font-medium">Role:</span> ${escapeHtml(invitation.role_display)}
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    <span class="font-medium">Invited by:</span> ${escapeHtml(invitation.owner_name)}
+                                </p>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Invited ${formatTimeAgo(new Date(invitation.created_at))}
+                                </p>
+                            </div>
+                            <div class="flex-shrink-0 flex gap-2">
+                                <button 
+                                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                                    onclick="confirmInvitationResponse('approve', '${invitation.manager_id}', '${escapeHtml(invitation.store_name)}')">
+                                    Approve
+                                </button>
+                                <button 
+                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                                    onclick="confirmInvitationResponse('deny', '${invitation.manager_id}', '${escapeHtml(invitation.store_name)}')">
+                                    Deny
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        container.html(html);
+    }
+
+    // Confirm invitation response
+    function confirmInvitationResponse(action, managerId, storeName) {
+        currentInvitationAction = action;
+        currentInvitationId = managerId;
+
+        const title = action === 'approve' ? 'Approve Invitation' : 'Deny Invitation';
+        const content = action === 'approve' ?
+            `Are you sure you want to approve the invitation to manage <strong>${escapeHtml(storeName)}</strong>? You will gain access to manage this store according to your assigned role.` :
+            `Are you sure you want to deny the invitation to manage <strong>${escapeHtml(storeName)}</strong>? This action cannot be undone, and the store owner will be notified.`;
+
+        const btnClass = action === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700';
+        const btnText = action === 'approve' ? 'Approve' : 'Deny';
+
+        $('#invitationResponseTitle').text(title);
+        $('#invitationResponseContent').html(`<p class="text-gray-700">${content}</p>`);
+        $('#invitationResponseConfirmBtn').removeClass('bg-green-600 bg-red-600 hover:bg-green-700 hover:bg-red-700')
+            .addClass(btnClass)
+            .text(btnText);
+
+        $('#invitationResponseModal').removeClass('hidden');
+    }
+
+    // Process invitation response
+    function processInvitationResponse(action, managerId) {
+        const endpoint = action === 'approve' ? 'approveManagerInvitation' : 'denyManagerInvitation';
+
+        // Disable buttons
+        $('#invitationResponseConfirmBtn, #invitationResponseCancelBtn, #invitationResponseCloseBtn').prop('disabled', true);
+        $('#invitationResponseConfirmBtn').html('<i class="fas fa-spinner fa-spin mr-2"></i>' + (action === 'approve' ? 'Approving...' : 'Denying...'));
+
+        $.ajax({
+            url: STORE_API_BASE + '?action=' + endpoint,
+            type: 'POST',
+            data: { managerId: managerId },
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    closeInvitationResponseModal();
+                    showSuccessNotification(response.message || (action === 'approve' ? 'Invitation approved successfully' : 'Invitation denied successfully'));
+
+                    // Reload invitations and stores
+                    loadPendingInvitations();
+                    if (action === 'approve') {
+                        loadAllStores(); // Reload stores if approved to show the new managed store
+                    }
+                } else {
+                    showErrorNotification(response.error || 'Failed to process invitation');
+                    enableInvitationResponseButtons();
+                }
+            },
+            error: function () {
+                showErrorNotification('Failed to process invitation. Please try again.');
+                enableInvitationResponseButtons();
+            }
+        });
+    }
+
+    function enableInvitationResponseButtons() {
+        $('#invitationResponseConfirmBtn, #invitationResponseCancelBtn, #invitationResponseCloseBtn').prop('disabled', false);
+        $('#invitationResponseConfirmBtn').text(currentInvitationAction === 'approve' ? 'Approve' : 'Deny');
+    }
+
+    function closeInvitationResponseModal() {
+        $('#invitationResponseModal').addClass('hidden');
+        currentInvitationAction = null;
+        currentInvitationId = null;
+        enableInvitationResponseButtons();
     }
 
     // Filter stores based on current filter
@@ -618,9 +796,9 @@ ob_start();
                     </div>
                     <h3 class="text-lg font-medium text-secondary mb-2">No Stores Found</h3>
                     <p class="text-sm text-gray-text mb-4">
-                        ${currentFilter === 'owned' ? 'You haven\'t created any stores yet.' : 
-                          currentFilter === 'managed' ? 'You don\'t manage any stores yet.' : 
-                          'No stores found.'}
+                        ${currentFilter === 'owned' ? 'You haven\'t created any stores yet.' :
+                    currentFilter === 'managed' ? 'You don\'t manage any stores yet.' :
+                        'No stores found.'}
                     </p>
                     ${currentFilter === 'owned' || currentFilter === 'all' ? `
                         <button 
@@ -749,6 +927,38 @@ ob_start();
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function formatTimeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) {
+            return 'just now';
+        }
+
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if (diffInMinutes < 60) {
+            return diffInMinutes + (diffInMinutes === 1 ? ' minute ago' : ' minutes ago');
+        }
+
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) {
+            return diffInHours + (diffInHours === 1 ? ' hour ago' : ' hours ago');
+        }
+
+        const diffInDays = Math.floor(diffInHours / 24);
+        if (diffInDays < 30) {
+            return diffInDays + (diffInDays === 1 ? ' day ago' : ' days ago');
+        }
+
+        const diffInMonths = Math.floor(diffInDays / 30);
+        if (diffInMonths < 12) {
+            return diffInMonths + (diffInMonths === 1 ? ' month ago' : ' months ago');
+        }
+
+        const diffInYears = Math.floor(diffInMonths / 12);
+        return diffInYears + (diffInYears === 1 ? ' year ago' : ' years ago');
     }
 
     /**
@@ -922,7 +1132,7 @@ ob_start();
             url: STORE_API_BASE + '?action=getStoreDetails&id=' + storeId,
             type: 'GET',
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 hideLoading();
                 if (!response.success) {
                     showErrorNotification(response.error || 'Failed to load store details');
@@ -958,7 +1168,7 @@ ob_start();
                 // Load & set UG regions
                 loadRegions(store.region, store.district, store.subcounty, store.parish);
             },
-            error: function() {
+            error: function () {
                 hideLoading();
                 showErrorNotification('Failed to load store details. Please try again.');
             }
@@ -1003,7 +1213,7 @@ ob_start();
                 processData: false,
                 contentType: false,
                 dataType: 'json',
-                success: function(resp) {
+                success: function (resp) {
                     if (resp.success) {
                         formData.temp_logo_path = resp.temp_path;
                         // Now call create or update
@@ -1013,7 +1223,7 @@ ob_start();
                         showErrorNotification(resp.message || 'Failed to upload logo');
                     }
                 },
-                error: function() {
+                error: function () {
                     hideLoading();
                     showErrorNotification('Failed to upload logo. Please try again.');
                 }
@@ -1036,7 +1246,7 @@ ob_start();
             data: JSON.stringify(formData),
             contentType: 'application/json',
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 hideLoading();
                 if (response.success) {
                     closeStoreModal();
@@ -1047,7 +1257,7 @@ ob_start();
                     showErrorNotification(response.error || 'Failed to save store');
                 }
             },
-            error: function() {
+            error: function () {
                 hideLoading();
                 showErrorNotification('Failed to save store. Please try again.');
             }
@@ -1055,10 +1265,10 @@ ob_start();
     }
 
     /**
-     * --------------------------------------------------
-     * Map & Regions
-     * --------------------------------------------------
-     */
+    * --------------------------------------------------
+    * Map & Regions
+    * --------------------------------------------------
+    */
     function initStoreMap(lat = 1.3733, lng = 32.2903) {
         // If map already exists, do nothing
         if (storeMap) return;
@@ -1070,9 +1280,9 @@ ob_start();
             }),
             satellite: L.tileLayer(
                 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping,' +
-                        ' Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-                }
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping,' +
+                    ' Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            }
             ),
             terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
                 attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' +
@@ -1084,7 +1294,7 @@ ob_start();
         storeBaseLayers.osm.addTo(storeMap);
 
         // Switch style
-        $('#storeMapStyle').change(function() {
+        $('#storeMapStyle').change(function () {
             const style = $(this).val();
             Object.values(storeBaseLayers).forEach(layer => {
                 if (storeMap.hasLayer(layer)) {
@@ -1097,7 +1307,7 @@ ob_start();
         });
 
         // Map clicks
-        storeMap.on('click', function(e) {
+        storeMap.on('click', function (e) {
             // Only allow dropping pin if within selected region
             if (storeCurrentGeoJSON) {
                 const point = {
@@ -1165,7 +1375,7 @@ ob_start();
         $('#storeLongitude').val(latlng.lng.toFixed(6));
         reverseGeocode(latlng.lat, latlng.lng);
 
-        storeMarker.on('dragend', function() {
+        storeMarker.on('dragend', function () {
             const newPos = storeMarker.getLatLng();
 
             // Check if new position is within bounds
@@ -1192,13 +1402,13 @@ ob_start();
     }
 
     function locateUser(btnSelector, mapObj, usage) {
-        $(btnSelector).click(function() {
+        $(btnSelector).click(function () {
             if (!navigator.geolocation) {
                 showErrorNotification('Geolocation is not supported by your browser');
                 return;
             }
             navigator.geolocation.getCurrentPosition(
-                function(pos) {
+                function (pos) {
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
                     mapObj.setView([lat, lng], 15);
@@ -1222,16 +1432,16 @@ ob_start();
                         dropStoreMarker(L.latLng(lat, lng));
                     }
                 },
-                function(error) {
+                function (error) {
                     console.error(error);
                     showErrorNotification(
                         'Unable to get your location. Please select your location manually on the map.'
                     );
                 }, {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
             );
         });
     }
@@ -1240,10 +1450,10 @@ ob_start();
     function reverseGeocode(lat, lng) {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
         fetch(url, {
-                headers: {
-                    'User-Agent': 'Zzimba Online Store Location Selector'
-                }
-            })
+            headers: {
+                'User-Agent': 'Zzimba Online Store Location Selector'
+            }
+        })
             .then(r => r.json())
             .then(data => {
                 if (data && data.display_name) {
@@ -1278,7 +1488,7 @@ ob_start();
                     });
 
                 window.ugGeoData = data; // keep globally
-                storeLevel1.change(function() {
+                storeLevel1.change(function () {
                     const region = $(this).val();
                     if (region) {
                         updateDistricts(region);
@@ -1292,7 +1502,7 @@ ob_start();
                         clearGeoJSON();
                     }
                 });
-                $('#storeLevel2').change(function() {
+                $('#storeLevel2').change(function () {
                     const dist = $(this).val();
                     const reg = $('#storeLevel1').val();
                     if (dist) {
@@ -1309,7 +1519,7 @@ ob_start();
                         });
                     }
                 });
-                $('#storeLevel3').change(function() {
+                $('#storeLevel3').change(function () {
                     const sub = $(this).val();
                     const dist = $('#storeLevel2').val();
                     const reg = $('#storeLevel1').val();
@@ -1328,7 +1538,7 @@ ob_start();
                         });
                     }
                 });
-                $('#storeLevel4').change(function() {
+                $('#storeLevel4').change(function () {
                     const parish = $(this).val();
                     const sub = $('#storeLevel3').val();
                     const dist = $('#storeLevel2').val();

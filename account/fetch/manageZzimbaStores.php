@@ -7,6 +7,9 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../../logs/php-errors.log');
 
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../mail/Mailer.php';
+
+use ZzimbaOnline\Mail\Mailer;
 
 header('Content-Type: application/json');
 
@@ -36,6 +39,10 @@ try {
 
         case 'getManagedStores':
             getManagedStores($pdo, $currentUserId);
+            break;
+
+        case 'getPendingInvitations':
+            getPendingInvitations($pdo, $currentUserId);
             break;
 
         case 'getStoreDetails':
@@ -72,6 +79,14 @@ try {
 
         case 'removeStoreManager':
             removeStoreManager($pdo, $_POST['storeId'] ?? '', $_POST['userId'] ?? '', $currentUserId);
+            break;
+
+        case 'approveManagerInvitation':
+            approveManagerInvitation($pdo, $_POST['managerId'] ?? '', $currentUserId);
+            break;
+
+        case 'denyManagerInvitation':
+            denyManagerInvitation($pdo, $_POST['managerId'] ?? '', $currentUserId);
             break;
 
         case 'getRegions':
@@ -135,7 +150,7 @@ function canAccessStore(PDO $pdo, string $storeId, string $userId): bool
     if (isOwner($pdo, $storeId, $userId)) {
         return true;
     }
-    $stmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active' LIMIT 1");
     $stmt->execute([$storeId, $userId]);
     return $stmt->rowCount() > 0;
 }
@@ -233,7 +248,7 @@ function initializeTables(PDO $pdo): void
             store_id VARCHAR(26) NOT NULL,
             user_id VARCHAR(26) NOT NULL,
             role ENUM('manager','inventory_manager','sales_manager','content_manager') NOT NULL DEFAULT 'manager',
-            status ENUM('active','inactive','removed') NOT NULL DEFAULT 'active',
+            status ENUM('active','inactive','removed') NOT NULL DEFAULT 'inactive',
             added_by VARCHAR(26) NOT NULL,
             approved TINYINT(1) NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL,
@@ -244,6 +259,64 @@ function initializeTables(PDO $pdo): void
             UNIQUE KEY store_manager_unique (store_id, user_id)
         )
     ");
+}
+
+/* -----------------------------------------------------------------------------
+   EMAIL NOTIFICATION FUNCTIONS
+----------------------------------------------------------------------------- */
+
+function sendManagerApprovalNotification(string $email, string $firstName, string $lastName, string $storeName): bool
+{
+    $subject = "Store Manager Invitation Approved - Zzimba Online";
+
+    $content = '
+        <div style="padding:20px 0;">
+            <h2>Store Manager Invitation Approved</h2>
+            <p>Hello ' . htmlspecialchars($firstName . ' ' . $lastName) . ',</p>
+            <p>You have approved the invitation to manage the store <strong>' . htmlspecialchars($storeName) . '</strong> on Zzimba Online.</p>
+            
+            <div style="margin:20px 0;padding:15px;background-color:#f5f5f5;border-radius:5px;text-align:center;">
+                <h3 style="margin-top:0;color:#10B981;">You now have access to manage this store</h3>
+            </div>
+            
+            <p>You can now access the store management features according to your assigned role.</p>
+            
+            <div style="margin:20px 0;text-align:center;">
+                <a href="https://zzimbaonline.com/account/zzimba-stores" style="display:inline-block;padding:12px 24px;background-color:#D92B13;color:#ffffff;text-decoration:none;font-weight:500;border-radius:4px;">
+                    Go to My Zzimba Stores
+                </a>
+            </div>
+            
+            <p>If you have any questions about your role or responsibilities, please contact the store owner or our support team.</p>
+        </div>';
+
+    return Mailer::sendMail($email, $subject, $content);
+}
+
+function sendManagerDenialNotification(string $ownerEmail, string $ownerName, string $managerName, string $storeName): bool
+{
+    $subject = "Store Manager Invitation Denied - Zzimba Online";
+
+    $content = '
+        <div style="padding:20px 0;">
+            <h2>Store Manager Invitation Denied</h2>
+            <p>Hello ' . htmlspecialchars($ownerName) . ',</p>
+            <p>This email is to inform you that <strong>' . htmlspecialchars($managerName) . '</strong> has denied your invitation to manage the store <strong>' . htmlspecialchars($storeName) . '</strong> on Zzimba Online.</p>
+            
+            <div style="margin:20px 0;padding:15px;background-color:#f5f5f5;border-radius:5px;text-align:center;">
+                <p style="font-size:18px;color:#F59E0B;">The invitation has been declined</p>
+            </div>
+            
+            <p>If you believe this was done in error or would like to invite someone else, you can do so from your store management dashboard.</p>
+            
+            <div style="margin:20px 0;text-align:center;">
+                <a href="https://zzimbaonline.com/account/zzimba-stores" style="display:inline-block;padding:12px 24px;background-color:#D92B13;color:#ffffff;text-decoration:none;font-weight:500;border-radius:4px;">
+                    Manage Your Stores
+                </a>
+            </div>
+        </div>';
+
+    return Mailer::sendMail($ownerEmail, $subject, $content);
 }
 
 /* -----------------------------------------------------------------------------
@@ -312,7 +385,7 @@ function getManagedStores(PDO $pdo, string $userId): void
         FROM vendor_stores vs
         JOIN store_managers sm ON vs.id = sm.store_id
         JOIN zzimba_users u      ON vs.owner_id = u.id
-        WHERE sm.user_id = ? AND vs.owner_id != ?
+        WHERE sm.user_id = ? AND vs.owner_id != ? AND sm.status = 'active' AND sm.approved = 1
         ORDER BY vs.created_at DESC
     ");
     $stmt->execute([$userId, $userId]);
@@ -326,6 +399,37 @@ function getManagedStores(PDO $pdo, string $userId): void
     }
 
     echo json_encode(['success' => true, 'stores' => $stores]);
+}
+
+function getPendingInvitations(PDO $pdo, string $userId): void
+{
+    $stmt = $pdo->prepare("
+        SELECT 
+            sm.id AS manager_id,
+            sm.role,
+            sm.created_at,
+            vs.id AS store_id,
+            vs.name AS store_name,
+            vs.logo_url,
+            u.first_name AS owner_first_name,
+            u.last_name AS owner_last_name,
+            u.email AS owner_email
+        FROM store_managers sm
+        JOIN vendor_stores vs ON sm.store_id = vs.id
+        JOIN zzimba_users u ON vs.owner_id = u.id
+        WHERE sm.user_id = ? AND sm.status = 'inactive' AND sm.approved = 0
+        ORDER BY sm.created_at DESC
+    ");
+    $stmt->execute([$userId]);
+    $invitations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($invitations as &$inv) {
+        $inv['role_display'] = ucwords(str_replace('_', ' ', $inv['role']));
+        $inv['owner_name'] = $inv['owner_first_name'] . ' ' . $inv['owner_last_name'];
+        unset($inv['owner_first_name'], $inv['owner_last_name']);
+    }
+
+    echo json_encode(['success' => true, 'invitations' => $invitations]);
 }
 
 function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
@@ -763,8 +867,8 @@ function addStoreManager(PDO $pdo, string $storeId, string $managerId, string $u
 
     $pdo->prepare("
         INSERT INTO store_managers
-          (id, store_id, user_id, role, added_by, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+          (id, store_id, user_id, role, status, added_by, approved, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 'inactive', ?, 0, ?, ?)
     ")->execute([
                 $entryId,
                 $storeId,
@@ -798,6 +902,106 @@ function removeStoreManager(PDO $pdo, string $storeId, string $managerId, string
         return;
     }
     echo json_encode(['success' => true, 'message' => 'Manager removed']);
+}
+
+function approveManagerInvitation(PDO $pdo, string $managerId, string $userId): void
+{
+    if (!isValidUlid($managerId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid manager ID']);
+        return;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT 
+            sm.id, sm.store_id, sm.role,
+            vs.name AS store_name,
+            u.email, u.first_name, u.last_name
+        FROM store_managers sm
+        JOIN vendor_stores vs ON sm.store_id = vs.id
+        JOIN zzimba_users u ON u.id = ?
+        WHERE sm.id = ? AND sm.user_id = ? AND sm.status = 'inactive' AND sm.approved = 0
+    ");
+    $stmt->execute([$userId, $managerId, $userId]);
+    $manager = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$manager) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Invitation not found or already processed']);
+        return;
+    }
+
+    $updateStmt = $pdo->prepare("
+        UPDATE store_managers 
+        SET status = 'active', approved = 1, updated_at = NOW()
+        WHERE id = ?
+    ");
+    $updateStmt->execute([$managerId]);
+
+    $emailSent = sendManagerApprovalNotification(
+        $manager['email'],
+        $manager['first_name'],
+        $manager['last_name'],
+        $manager['store_name']
+    );
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Manager invitation approved',
+        'email_sent' => $emailSent
+    ]);
+}
+
+function denyManagerInvitation(PDO $pdo, string $managerId, string $userId): void
+{
+    if (!isValidUlid($managerId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid manager ID']);
+        return;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT 
+            sm.id, sm.store_id,
+            vs.name AS store_name,
+            o.email AS owner_email, 
+            o.first_name AS owner_first_name,
+            o.last_name AS owner_last_name,
+            u.first_name AS manager_first_name,
+            u.last_name AS manager_last_name
+        FROM store_managers sm
+        JOIN vendor_stores vs ON sm.store_id = vs.id
+        JOIN zzimba_users o ON vs.owner_id = o.id
+        JOIN zzimba_users u ON u.id = ?
+        WHERE sm.id = ? AND sm.user_id = ? AND sm.status = 'inactive' AND sm.approved = 0
+    ");
+    $stmt->execute([$userId, $managerId, $userId]);
+    $manager = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$manager) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Invitation not found or already processed']);
+        return;
+    }
+
+    $deleteStmt = $pdo->prepare("DELETE FROM store_managers WHERE id = ?");
+    $deleteStmt->execute([$managerId]);
+
+    $managerName = $manager['manager_first_name'] . ' ' . $manager['manager_last_name'];
+    $ownerName = $manager['owner_first_name'] . ' ' . $manager['owner_last_name'];
+
+    $emailSent = sendManagerDenialNotification(
+        $manager['owner_email'],
+        $ownerName,
+        $managerName,
+        $manager['store_name']
+    );
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Manager invitation denied',
+        'email_sent' => $emailSent
+    ]);
 }
 
 function getRegions(): void
