@@ -6,7 +6,7 @@
                     <button class="inline-block p-4 border-b-2 border-red-600 rounded-t-lg text-red-600 font-medium"
                         id="categories-tab" data-tabs-target="#categories" type="button" role="tab"
                         aria-controls="categories" aria-selected="true">
-                        <i class="fas fa-tags mr-2"></i>Manage Categories
+                        <i class="fas fa-tags mr-2"></i>Categories
                     </button>
                 </li>
                 <li class="mr-2" role="presentation">
@@ -14,7 +14,7 @@
                         class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300"
                         id="products-tab" data-tabs-target="#products" type="button" role="tab" aria-controls="products"
                         aria-selected="false">
-                        <i class="fas fa-box mr-2"></i>Manage Products
+                        <i class="fas fa-box mr-2"></i>Products
                     </button>
                 </li>
             </ul>

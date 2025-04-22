@@ -235,6 +235,7 @@ function initializeTables(PDO $pdo): void
             role ENUM('manager','inventory_manager','sales_manager','content_manager') NOT NULL DEFAULT 'manager',
             status ENUM('active','inactive','removed') NOT NULL DEFAULT 'active',
             added_by VARCHAR(26) NOT NULL,
+            approved TINYINT(1) NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             FOREIGN KEY (store_id) REFERENCES vendor_stores(id) ON DELETE CASCADE,
