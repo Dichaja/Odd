@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Manage Vendors';
-$activeNav = 'manage-vendors';
+$activeNav = 'vendors';
 ob_start();
 ?>
 
