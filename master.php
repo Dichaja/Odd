@@ -507,7 +507,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             </div>
         </div>
     </div>
-    <nav class="bg-white shadow-lg sticky top-0 z-100">
+    <nav class="bg-white shadow-lg">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center">
