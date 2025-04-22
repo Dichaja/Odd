@@ -247,24 +247,6 @@ ob_start();
         color: white;
     }
 
-    #products-container {
-        display: grid;
-        grid-template-columns: repeat(1, 1fr);
-        gap: 1.5rem;
-    }
-
-    @media (min-width: 640px) {
-        #products-container {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    @media (min-width: 1024px) {
-        #products-container {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-
     @media (max-width: 640px) {
         .vendor-avatar {
             width: 80px;
@@ -406,6 +388,11 @@ ob_start();
                         data-tab="contact">
                         <i class="fa-solid fa-address-card mr-2"></i> Contact
                     </button>
+                    <button
+                        class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap"
+                        data-tab="manage">
+                        <i class="fa-solid fa-cog mr-2"></i> Manage Products & Categories
+                    </button>
                 </nav>
             </div>
         </div>
@@ -418,6 +405,7 @@ ob_start();
             include_once __DIR__ . '/vendorProfileComponents/about-tab.php';
             include_once __DIR__ . '/vendorProfileComponents/verification-tab.php';
             include_once __DIR__ . '/vendorProfileComponents/contact-tab.php';
+            include_once __DIR__ . '/vendorProfileComponents/manage-tab.php';
             ?>
         </div>
     </main>
@@ -446,7 +434,9 @@ ob_start();
     let allProducts = [];
     let availableUnits = [];
     let lineItemCount = 0;
+    // Add pendingDeleteType variable to the global variables
     let pendingDeleteId = null;
+    let pendingDeleteType = null;
     let categoryStatusChanges = {};
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -480,6 +470,16 @@ ob_start();
                 // Show the selected tab pane
                 const tabName = this.getAttribute('data-tab');
                 document.getElementById(tabName + '-tab').classList.remove('hidden');
+
+                // Load data for management tab if selected
+                if (tabName === 'manage' && isOwner) {
+                    // Trigger loading of categories in the management tab
+                    if (document.querySelector('.manage-subtab-btn[data-subtab="categories"]').classList.contains('border-primary')) {
+                        loadCategoriesForManagement();
+                    } else {
+                        loadProductsForManagement();
+                    }
+                }
             });
         });
 
@@ -596,9 +596,15 @@ ob_start();
             document.getElementById('website-section').classList.add('hidden');
         }
         isOwner = store.is_owner;
+
+        // Show/hide manage tab based on ownership
+        const manageTab = document.querySelector('button[data-tab="manage"]');
         if (isOwner) {
-            document.getElementById('owner-actions').classList.remove('hidden');
+            manageTab.classList.remove('hidden');
+        } else {
+            manageTab.classList.add('hidden');
         }
+
         updateVerificationProgress(store);
     }
 
