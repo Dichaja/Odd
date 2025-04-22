@@ -502,8 +502,10 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                 <span><i class="fas fa-phone mr-2"></i>+256 392 003-406</span>
             </div>
             <div class="flex items-center space-x-4">
-                <a href="#" class="hover:text-primary transition-colors"><i class="fas fa-truck mr-2"></i>Delivery Info</a>
-                <a href="<?= BASE_URL ?>terms-and-conditions" class="hover:text-primary transition-colors"><i class="fas fa-file-contract mr-2"></i>Terms &amp; Conditions</a>
+                <a href="#" class="hover:text-primary transition-colors"><i class="fas fa-truck mr-2"></i>Delivery
+                    Info</a>
+                <a href="<?= BASE_URL ?>terms-and-conditions" class="hover:text-primary transition-colors"><i
+                        class="fas fa-file-contract mr-2"></i>Terms &amp; Conditions</a>
             </div>
         </div>
     </div>
@@ -518,7 +520,8 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                 <div id="nav-and-search-container" class="hidden md:flex items-center space-x-8">
                     <div id="desktop-nav" class="flex items-center space-x-8"></div>
                     <div class="search-form hidden items-center">
-                        <input type="text" placeholder="Search for products..." class="px-4 py-2 rounded-l-lg focus:outline-none border border-gray-300">
+                        <input type="text" placeholder="Search for products..."
+                            class="px-4 py-2 rounded-l-lg focus:outline-none border border-gray-300">
                         <button class="bg-primary text-white px-6 py-2 rounded-r-lg hover:bg-red-600 transition-colors">
                             <i class="fas fa-search"></i>
                         </button>
@@ -534,16 +537,21 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                         </a>
                         <?php if (isset($_SESSION['user']) && $_SESSION['user']['logged_in']): ?>
                             <div class="user-dropdown">
-                                <button class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
-                                    <i class="fas fa-user mr-2"></i>Halo <?= htmlspecialchars($_SESSION['user']['username']) ?>!
+                                <button
+                                    class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
+                                    <i class="fas fa-user mr-2"></i>Halo
+                                    <?= htmlspecialchars($_SESSION['user']['username']) ?>!
                                     <i class="fas fa-chevron-down ml-2 text-xs"></i>
                                 </button>
                                 <div class="user-dropdown-menu">
                                     <div class="px-4 py-3 bg-gray-50">
-                                        <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($_SESSION['user']['username']) ?></p>
-                                        <p class="text-xs text-gray-500"><?= htmlspecialchars($_SESSION['user']['email']) ?></p>
+                                        <p class="text-sm font-medium text-gray-900">
+                                            <?= htmlspecialchars($_SESSION['user']['username']) ?></p>
+                                        <p class="text-xs text-gray-500"><?= htmlspecialchars($_SESSION['user']['email']) ?>
+                                        </p>
                                         <?php if (isset($_SESSION['user']['last_login']) && $_SESSION['user']['last_login']): ?>
-                                            <p class="text-xs text-gray-500 mt-1">Last login: <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?></p>
+                                            <p class="text-xs text-gray-500 mt-1">Last login:
+                                                <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?></p>
                                         <?php endif; ?>
                                     </div>
                                     <?php if ($_SESSION['user']['is_admin']): ?>
@@ -562,13 +570,15 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                                         </a>
                                     <?php endif; ?>
                                     <div class="border-t border-gray-200 my-1"></div>
-                                    <a href="javascript:void(0);" onclick="logoutUser(); return false;" class="user-dropdown-item text-red-600">
+                                    <a href="javascript:void(0);" onclick="logoutUser(); return false;"
+                                        class="user-dropdown-item text-red-600">
                                         <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
                                     </a>
                                 </div>
                             </div>
                         <?php else: ?>
-                            <a href="#" onclick="openAuthModal(); return false;" class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
+                            <a href="#" onclick="openAuthModal(); return false;"
+                                class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
                                 <i class="fas fa-user mr-2"></i>Login / Register
                             </a>
                         <?php endif; ?>
@@ -591,35 +601,43 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
         <div id="mobile-menu-items" class="space-y-4"></div>
         <div class="mt-6 space-y-4">
             <div class="relative">
-                <input type="text" placeholder="Search for products..." class="w-full px-4 py-2 rounded-lg focus:outline-none border border-gray-300">
+                <input type="text" placeholder="Search for products..."
+                    class="w-full px-4 py-2 rounded-lg focus:outline-none border border-gray-300">
                 <button class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
-            <a href="#" class="block text-center bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
+            <a href="#"
+                class="block text-center bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
                 <i class="fas fa-shopping-cart mr-2"></i>Cart
             </a>
             <?php if (isset($_SESSION['user']) && $_SESSION['user']['logged_in']): ?>
                 <?php if ($_SESSION['user']['is_admin']): ?>
-                    <a href="<?= BASE_URL ?>admin/dashboard" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                    <a href="<?= BASE_URL ?>admin/dashboard"
+                        class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
                         <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
                     </a>
                 <?php else: ?>
-                    <a href="<?= BASE_URL ?>account/dashboard" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                    <a href="<?= BASE_URL ?>account/dashboard"
+                        class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
                         <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
                     </a>
                 <?php endif; ?>
-                <a href="javascript:void(0);" onclick="logoutUser(); return false;" class="block text-center bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                <a href="javascript:void(0);" onclick="logoutUser(); return false;"
+                    class="block text-center bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                     <i class="fas fa-sign-out-alt mr-2"></i>Logout
                 </a>
             <?php else: ?>
-                <a href="#" onclick="openAuthModal(); return false;" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors" id="mobile-login-button">
+                <a href="#" onclick="openAuthModal(); return false;"
+                    class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                    id="mobile-login-button">
                     <i class="fas fa-user mr-2"></i>Login / Register
                 </a>
             <?php endif; ?>
         </div>
     </div>
-    <div id="auth-modal" style="z-index:1100" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div id="auth-modal" style="z-index:1100"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
         <div class="modal-container bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
             <div id="auth-forms-container"></div>
         </div>
@@ -627,19 +645,23 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
     <div class="main-area flex-grow">
         <?= $mainContent ?? '' ?>
     </div>
-    <footer class="bg-secondary text-white mt-auto">
+    <footer class="hidden sm:block bg-secondary text-white mt-auto">
         <div class="container mx-auto px-4 py-16">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
                     <h4 class="text-lg font-bold mb-4">Join Us</h4>
-                    <p class="text-gray-400">Be a part of something special. Whether you're a buyer looking for unique products or a vendor aiming to expand your business, Zzimba Online is the place for you.</p>
+                    <p class="text-gray-400">Be a part of something special. Whether you're a buyer looking for unique
+                        products or a vendor aiming to expand your business, Zzimba Online is the place for you.</p>
                 </div>
                 <div>
                     <h4 class="text-lg font-bold mb-4">Quick Links</h4>
                     <ul class="space-y-2">
-                        <li><a href="<?= BASE_URL ?>/about-us" class="text-gray-400 hover:text-primary">About Us</a></li>
-                        <li><a href="<?= BASE_URL ?>/materials-yard" class="text-gray-400 hover:text-primary">Materials</a></li>
-                        <li><a href="<?= BASE_URL ?>/contact-us" class="text-gray-400 hover:text-primary">Contact</a></li>
+                        <li><a href="<?= BASE_URL ?>/about-us" class="text-gray-400 hover:text-primary">About Us</a>
+                        </li>
+                        <li><a href="<?= BASE_URL ?>/materials-yard"
+                                class="text-gray-400 hover:text-primary">Materials</a></li>
+                        <li><a href="<?= BASE_URL ?>/contact-us" class="text-gray-400 hover:text-primary">Contact</a>
+                        </li>
                     </ul>
                 </div>
                 <div>
@@ -668,10 +690,16 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
         </div>
     </footer>
     <div id="notification-container" class="notification-container"></div>
-    <button id="scroll-to-top" class="fixed bottom-6 right-6 bg-primary hover:bg-red-600 text-white rounded-full p-3 shadow-lg transition-all duration-300 opacity-0 invisible" aria-label="Scroll to top">
+    <button id="scroll-to-top"
+        class="fixed bottom-6 right-6 bg-primary hover:bg-red-600 text-white rounded-full p-3 shadow-lg transition-all duration-300 opacity-0 invisible"
+        aria-label="Scroll to top">
         <svg class="w-6 h-6" viewBox="0 0 36 36">
-            <path class="scroll-circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="3" />
-            <path class="scroll-indicator" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="100" stroke-dashoffset="100" />
+            <path class="scroll-circle"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                stroke="rgba(255,255,255,0.2)" stroke-width="3" />
+            <path class="scroll-indicator"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none"
+                stroke="#fff" stroke-width="3" stroke-dasharray="100" stroke-dashoffset="100" />
             <i class="fas fa-arrow-up absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></i>
         </svg>
     </button>
@@ -915,12 +943,12 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             const userDropdownButton = document.getElementById('user-dropdown-button');
             if (userDropdownButton) {
                 const userDropdownMenu = document.querySelector('.user-dropdown-menu');
-                userDropdownButton.addEventListener('click', function() {
+                userDropdownButton.addEventListener('click', function () {
                     userDropdownMenu.classList.toggle('active');
                 });
 
                 // Close dropdown when clicking outside
-                document.addEventListener('click', function(e) {
+                document.addEventListener('click', function (e) {
                     if (!userDropdownButton.contains(e.target) && !userDropdownMenu.contains(e.target)) {
                         userDropdownMenu.classList.remove('active');
                     }
@@ -1012,7 +1040,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             document.addEventListener('DOMContentLoaded', () => {
                 const loginButton = document.getElementById('login-button');
                 if (loginButton) {
-                    loginButton.addEventListener('click', function(e) {
+                    loginButton.addEventListener('click', function (e) {
                         e.preventDefault();
                         openAuthModal();
                     });
@@ -1020,7 +1048,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
 
                 const mobileLoginButton = document.getElementById('mobile-login-button');
                 if (mobileLoginButton) {
-                    mobileLoginButton.addEventListener('click', function(e) {
+                    mobileLoginButton.addEventListener('click', function (e) {
                         e.preventDefault();
                         openAuthModal();
                     });
@@ -1028,10 +1056,10 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             });
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             if (!IS_LOGGED_IN) {
                 var xhr = new XMLHttpRequest();
-                xhr.onreadystatechange = function() {
+                xhr.onreadystatechange = function () {
                     if (xhr.readyState === 4 && xhr.status === 200) {
                         var container = document.getElementById('auth-forms-container');
                         container.innerHTML = xhr.responseText;
@@ -1065,11 +1093,11 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
         }
 
         // Enhanced OTP input handling
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Handle OTP inputs
             function setupOTPInputs() {
                 // Handle keydown for navigation and backspace
-                $(document).on('keydown', '.otp-input', function(e) {
+                $(document).on('keydown', '.otp-input', function (e) {
                     const $current = $(this);
                     const index = $('.otp-input[data-otp-target="' + $current.data('otp-target') + '"]').index($current);
                     const $inputs = $('.otp-input[data-otp-target="' + $current.data('otp-target') + '"]');
@@ -1098,7 +1126,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                 });
 
                 // Handle input for auto-focus to next input
-                $(document).on('input', '.otp-input', function() {
+                $(document).on('input', '.otp-input', function () {
                     const $current = $(this);
                     const $inputs = $('.otp-input[data-otp-target="' + $current.data('otp-target') + '"]');
                     const index = $inputs.index($current);
@@ -1128,7 +1156,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                 });
 
                 // Handle paste event (only for the first input of each group)
-                $(document).on('paste', '.otp-input:first-of-type', function(e) {
+                $(document).on('paste', '.otp-input:first-of-type', function (e) {
                     e.preventDefault();
 
                     const $current = $(this);
@@ -1167,7 +1195,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
         });
 
         function updateOTPValue(target) {
-            const values = $('.otp-input[data-otp-target="' + target + '"]').map(function() {
+            const values = $('.otp-input[data-otp-target="' + target + '"]').map(function () {
                 return this.value;
             }).get().join('');
             $('#' + target).val(values);
@@ -1180,17 +1208,17 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',
-                success: function(response) {
+                success: function (response) {
                     if (response.success) {
                         notifications.success('You have been successfully logged out');
-                        setTimeout(function() {
+                        setTimeout(function () {
                             window.location.href = BASE_URL;
                         }, 1000);
                     } else {
                         notifications.error(response.message || 'Failed to logout');
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error("Logout error:", xhr, status, error);
                     notifications.error('Failed to connect to the server. Please try again.');
                 }
