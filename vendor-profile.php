@@ -354,7 +354,12 @@ ob_start();
                     <button
                         class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap"
                         data-tab="manage">
-                        <i class="fa-solid fa-cog mr-2"></i> Manage Products & Categories
+                        <i class="fa-solid fa-cog mr-2"></i> Products & Categories
+                    </button>
+                    <button
+                        class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap"
+                        data-tab="managers">
+                        <i class="fa-solid fa-users-cog mr-2"></i> Store Managers
                     </button>
                 </nav>
             </div>
@@ -369,6 +374,7 @@ ob_start();
             include_once __DIR__ . '/vendorProfileComponents/verification-tab.php';
             include_once __DIR__ . '/vendorProfileComponents/contact-tab.php';
             include_once __DIR__ . '/vendorProfileComponents/manage-tab.php';
+            include_once __DIR__ . '/vendorProfileComponents/managers-tab.php';
             ?>
         </div>
     </main>
