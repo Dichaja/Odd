@@ -46,6 +46,12 @@ ob_start();
         background-color: #f3f4f6;
     }
 
+    @media (max-width: 640px) {
+        .vendor-cover {
+            height: 150px;
+        }
+    }
+
     .vendor-profile-info {
         display: flex;
         align-items: flex-end;
@@ -214,22 +220,28 @@ ob_start();
         .vendor-avatar {
             width: 80px;
             height: 80px;
+            margin: 0 auto;
+        }
+
+        .profile-info-mobile-center {
+            text-align: center;
+        }
+
+        .stats-mobile-center {
+            justify-content: center;
         }
     }
 </style>
 
-<!-- Cover Photo -->
-<div class="relative h-64 w-full bg-gray-200 overflow-hidden" id="vendor-cover-photo">
+<div class="relative h-40 md:h-64 w-full bg-gray-200 overflow-hidden" id="vendor-cover-photo">
     <div class="vendor-cover" id="vendor-cover"></div>
 </div>
 
-<!-- Loading State -->
 <div id="loading-state" class="flex flex-col items-center justify-center py-12">
     <div class="loader mb-4"></div>
     <p class="text-gray-600">Loading vendor profile...</p>
 </div>
 
-<!-- Error State -->
 <div id="error-state"
     class="hidden bg-red-50 border border-red-200 text-red-700 p-8 rounded-lg text-center max-w-2xl mx-auto my-12">
     <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
@@ -241,28 +253,24 @@ ob_start();
     </a>
 </div>
 
-<!-- Content State -->
-<div id="content-state" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10">
-    <!-- Profile Header -->
+<div id="content-state" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-16 relative z-10">
     <div class="bg-white rounded-lg shadow-lg p-6">
         <div class="flex flex-col md:flex-row">
-            <!-- Profile Picture -->
-            <div class="flex-shrink-0">
+            <div class="flex-shrink-0 flex md:block justify-center">
                 <div id="vendor-avatar"
                     class="h-32 w-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
                     <i class="fas fa-store text-gray-400 text-4xl"></i>
                 </div>
             </div>
 
-            <!-- Profile Info -->
-            <div class="mt-6 md:mt-0 md:ml-6 flex-grow">
+            <div class="mt-6 md:mt-0 md:ml-6 flex-grow profile-info-mobile-center">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-center">
                     <div>
                         <h1 id="vendor-name" class="text-3xl font-bold text-secondary">Store Name</h1>
                         <p id="vendor-description" class="text-gray-600 mt-1">Premium Construction Materials & Services
                         </p>
                     </div>
-                    <div class="mt-4 md:mt-0 flex space-x-3">
+                    <div class="mt-4 md:mt-0 flex space-x-3 justify-center md:justify-start">
                         <button
                             class="bg-primary hover:bg-red-700 text-white font-medium py-2 px-6 rounded-md transition duration-150 ease-in-out flex items-center">
                             <i class="fa-solid fa-user-plus mr-2"></i> Follow
@@ -274,8 +282,7 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- Stats Bar -->
-                <div class="mt-6 flex flex-wrap gap-y-4">
+                <div class="mt-6 flex flex-wrap gap-y-4 stats-mobile-center">
                     <div class="mr-8 flex items-center">
                         <i class="fa-solid fa-calendar-days text-gray-500 mr-2"></i>
                         <span id="vendor-registered" class="text-gray-700">Joined March 2008</span>
@@ -296,8 +303,7 @@ ob_start();
             </div>
         </div>
 
-        <!-- Social Stats -->
-        <div class="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-x-8 gap-y-4">
+        <div class="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-x-8 gap-y-4 stats-mobile-center">
             <div class="flex items-center">
                 <div id="vendor-status" class="bg-yellow-300 text-yellow-800 px-3 py-1 rounded-full text-sm">Status
                 </div>
@@ -326,9 +332,7 @@ ob_start();
         </div>
     </div>
 
-    <!-- Main Content -->
     <main class="py-8">
-        <!-- Navigation Tabs -->
         <div class="mb-2">
             <div class="border-b border-gray-200">
                 <nav class="-mb-px flex space-x-8 overflow-x-auto">
@@ -365,10 +369,8 @@ ob_start();
             </div>
         </div>
 
-        <!-- Tab Content -->
         <div id="tab-content">
             <?php
-            // Include tab components
             include_once __DIR__ . '/vendorProfileComponents/products-tab.php';
             include_once __DIR__ . '/vendorProfileComponents/about-tab.php';
             include_once __DIR__ . '/vendorProfileComponents/verification-tab.php';
@@ -380,11 +382,9 @@ ob_start();
     </main>
 </div>
 
-<!-- Toast Notifications -->
 <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-4"></div>
 
 <script>
-    // Global variables and functions
     window.openModal = function (modalId) {
         document.getElementById(modalId).style.display = 'block';
     };
@@ -414,34 +414,27 @@ ob_start();
             showError("No vendor ID provided");
         }
 
-        // Tab switching
         const tabs = document.querySelectorAll('nav button');
         const tabPanes = document.querySelectorAll('.tab-pane');
 
         tabs.forEach(tab => {
             tab.addEventListener('click', function () {
-                // Remove active class from all tabs
                 tabs.forEach(t => {
                     t.classList.remove('border-primary', 'text-primary');
                     t.classList.add('border-transparent', 'text-gray-500');
                 });
 
-                // Add active class to clicked tab
                 this.classList.remove('border-transparent', 'text-gray-500');
                 this.classList.add('border-primary', 'text-primary');
 
-                // Hide all tab panes
                 tabPanes.forEach(pane => {
                     pane.classList.add('hidden');
                 });
 
-                // Show the selected tab pane
                 const tabName = this.getAttribute('data-tab');
                 document.getElementById(tabName + '-tab').classList.remove('hidden');
 
-                // Load data for management tab if selected
                 if (tabName === 'manage' && isOwner) {
-                    // Trigger loading of categories in the management tab
                     if (document.querySelector('.manage-subtab-btn[data-subtab="categories"]').classList.contains('border-primary')) {
                         loadCategoriesForManagement();
                     } else {
@@ -451,7 +444,6 @@ ob_start();
             });
         });
 
-        // Manage Category tabs
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', function () {
                 const tabId = this.getAttribute('data-tab');
@@ -462,7 +454,6 @@ ob_start();
             });
         });
 
-        // Modal click outside to close
         window.addEventListener('click', function (event) {
             if (event.target.classList.contains('modal')) {
                 event.target.style.display = 'none';
@@ -565,7 +556,6 @@ ob_start();
         }
         isOwner = store.is_owner;
 
-        // Show/hide manage tab based on ownership
         const manageTab = document.querySelector('button[data-tab="manage"]');
         if (isOwner) {
             manageTab.classList.remove('hidden');
@@ -638,7 +628,6 @@ ob_start();
         return div.innerHTML;
     }
 
-    // Toast notification function
     function showToast(message, type = 'success') {
         const toast = document.createElement('div');
         toast.className = `flex items-center p-4 mb-4 w-full max-w-xs rounded-lg shadow ${type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'} transition-opacity duration-300`;
@@ -655,7 +644,6 @@ ob_start();
 
         document.getElementById('toast-container').appendChild(toast);
 
-        // Auto remove after 5 seconds
         setTimeout(() => {
             toast.classList.add('opacity-0');
             setTimeout(() => {
