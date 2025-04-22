@@ -295,13 +295,13 @@ function sendManagerApprovalNotification(string $email, string $firstName, strin
 
 function sendManagerDenialNotification(string $ownerEmail, string $ownerName, string $managerName, string $storeName): bool
 {
-    $subject = "Store Manager Invitation Denied - Zzimba Online";
+    $subject = "Store Manager Invitation Declined - Zzimba Online";
 
     $content = '
         <div style="padding:20px 0;">
-            <h2>Store Manager Invitation Denied</h2>
+            <h2>Store Manager Invitation Declined</h2>
             <p>Hello ' . htmlspecialchars($ownerName) . ',</p>
-            <p>This email is to inform you that <strong>' . htmlspecialchars($managerName) . '</strong> has denied your invitation to manage the store <strong>' . htmlspecialchars($storeName) . '</strong> on Zzimba Online.</p>
+            <p>This email is to inform you that <strong>' . htmlspecialchars($managerName) . '</strong> has declined your invitation to manage the store <strong>' . htmlspecialchars($storeName) . '</strong> on Zzimba Online.</p>
             
             <div style="margin:20px 0;padding:15px;background-color:#f5f5f5;border-radius:5px;text-align:center;">
                 <p style="font-size:18px;color:#F59E0B;">The invitation has been declined</p>
@@ -395,6 +395,17 @@ function getManagedStores(PDO $pdo, string $userId): void
         $s['uuid_id'] = $s['id'];
         $s['role'] = ucwords(str_replace('_', ' ', $s['role']));
         $s['location'] = $s['district'] . ', ' . $s['address'];
+
+        $catStmt = $pdo->prepare("
+            SELECT pc.name
+              FROM store_categories sc
+              JOIN product_categories pc ON sc.category_id = pc.id
+             WHERE sc.store_id = ? AND sc.status = 'active'
+             LIMIT 5
+        ");
+        $catStmt->execute([$s['id']]);
+        $s['categories'] = $catStmt->fetchAll(PDO::FETCH_COLUMN);
+
         unset($s['id'], $s['district'], $s['address']);
     }
 
@@ -999,7 +1010,7 @@ function denyManagerInvitation(PDO $pdo, string $managerId, string $userId): voi
 
     echo json_encode([
         'success' => true,
-        'message' => 'Manager invitation denied',
+        'message' => 'Manager invitation declined',
         'email_sent' => $emailSent
     ]);
 }

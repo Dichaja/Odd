@@ -578,10 +578,6 @@ ob_start();
             success: function (response) {
                 if (response.success) {
                     const ownedStores = response.stores || [];
-                    // Add type property to each store
-                    ownedStores.forEach(store => {
-                        store.type = 'owned';
-                    });
 
                     // Now load managed stores
                     $.ajax({
@@ -592,10 +588,6 @@ ob_start();
                             hideLoading();
                             if (response.success) {
                                 const managedStores = response.stores || [];
-                                // Add type property to each store
-                                managedStores.forEach(store => {
-                                    store.type = 'managed';
-                                });
 
                                 // Combine both types of stores
                                 allStores = [...ownedStores, ...managedStores];
@@ -698,8 +690,8 @@ ob_start();
                                 </button>
                                 <button 
                                     class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-                                    onclick="confirmInvitationResponse('deny', '${invitation.manager_id}', '${escapeHtml(invitation.store_name)}')">
-                                    Deny
+                                    onclick="confirmInvitationResponse('decline', '${invitation.manager_id}', '${escapeHtml(invitation.store_name)}')">
+                                    Decline
                                 </button>
                             </div>
                         </div>
@@ -717,13 +709,13 @@ ob_start();
         currentInvitationAction = action;
         currentInvitationId = managerId;
 
-        const title = action === 'approve' ? 'Approve Invitation' : 'Deny Invitation';
+        const title = action === 'approve' ? 'Approve Invitation' : 'Decline Invitation';
         const content = action === 'approve' ?
             `Are you sure you want to approve the invitation to manage <strong>${escapeHtml(storeName)}</strong>? You will gain access to manage this store according to your assigned role.` :
-            `Are you sure you want to deny the invitation to manage <strong>${escapeHtml(storeName)}</strong>? This action cannot be undone, and the store owner will be notified.`;
+            `Are you sure you want to decline the invitation to manage <strong>${escapeHtml(storeName)}</strong>? This action cannot be undone, and the store owner will be notified.`;
 
         const btnClass = action === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700';
-        const btnText = action === 'approve' ? 'Approve' : 'Deny';
+        const btnText = action === 'approve' ? 'Approve' : 'Decline';
 
         $('#invitationResponseTitle').text(title);
         $('#invitationResponseContent').html(`<p class="text-gray-700">${content}</p>`);
@@ -736,11 +728,11 @@ ob_start();
 
     // Process invitation response
     function processInvitationResponse(action, managerId) {
-        const endpoint = action === 'approve' ? 'approveManagerInvitation' : 'denyManagerInvitation';
+        const endpoint = action === 'approve' ? 'approveManagerInvitation' : 'declineManagerInvitation';
 
         // Disable buttons
         $('#invitationResponseConfirmBtn, #invitationResponseCancelBtn, #invitationResponseCloseBtn').prop('disabled', true);
-        $('#invitationResponseConfirmBtn').html('<i class="fas fa-spinner fa-spin mr-2"></i>' + (action === 'approve' ? 'Approving...' : 'Denying...'));
+        $('#invitationResponseConfirmBtn').html('<i class="fas fa-spinner fa-spin mr-2"></i>' + (action === 'approve' ? 'Approving...' : 'Declining...'));
 
         $.ajax({
             url: STORE_API_BASE + '?action=' + endpoint,
@@ -750,7 +742,7 @@ ob_start();
             success: function (response) {
                 if (response.success) {
                     closeInvitationResponseModal();
-                    showSuccessNotification(response.message || (action === 'approve' ? 'Invitation approved successfully' : 'Invitation denied successfully'));
+                    showSuccessNotification(response.message || (action === 'approve' ? 'Invitation approved successfully' : 'Invitation declined successfully'));
 
                     // Reload invitations and stores
                     loadPendingInvitations();
@@ -771,7 +763,7 @@ ob_start();
 
     function enableInvitationResponseButtons() {
         $('#invitationResponseConfirmBtn, #invitationResponseCancelBtn, #invitationResponseCloseBtn').prop('disabled', false);
-        $('#invitationResponseConfirmBtn').text(currentInvitationAction === 'approve' ? 'Approve' : 'Deny');
+        $('#invitationResponseConfirmBtn').text(currentInvitationAction === 'approve' ? 'Approve' : 'Decline');
     }
 
     function closeInvitationResponseModal() {
