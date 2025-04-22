@@ -329,7 +329,7 @@ ob_start();
     <!-- Main Content -->
     <main class="py-8">
         <!-- Navigation Tabs -->
-        <div class="mb-8">
+        <div class="mb-2">
             <div class="border-b border-gray-200">
                 <nav class="-mb-px flex space-x-8 overflow-x-auto">
                     <button class="border-primary text-primary font-medium py-4 px-1 border-b-2 whitespace-nowrap"
@@ -465,7 +465,7 @@ ob_start();
     });
 
     function loadVendorProfile(id) {
-        fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreDetails&id=${id}`)
+        fetch(`${BASE_URL}fetch/manageProfile?action=getStoreDetails&id=${id}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
