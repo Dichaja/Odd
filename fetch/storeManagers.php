@@ -393,13 +393,18 @@ function checkEmailAvailability(PDO $pdo, string $email, string $storeId, ?strin
             return;
         }
 
+        $removedManagerStmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'removed'");
+        $removedManagerStmt->execute([$storeId, $user['id']]);
+        $wasRemoved = (bool) $removedManagerStmt->fetchColumn();
+
         echo json_encode([
             'success' => true,
             'user' => [
                 'id' => $user['id'],
                 'first_name' => $user['first_name'],
                 'last_name' => $user['last_name']
-            ]
+            ],
+            'was_removed' => $wasRemoved
         ]);
     } catch (Exception $e) {
         error_log('Error checking email availability: ' . $e->getMessage());
@@ -424,6 +429,7 @@ function inviteManager(PDO $pdo, string $currentUser)
     $storeId = $data['store_id'];
     $email = $data['email'];
     $role = $data['role'];
+    $reinvite = isset($data['reinvite']) ? (bool) $data['reinvite'] : false;
 
     if (!isValidUlid($storeId)) {
         http_response_code(400);
@@ -516,23 +522,51 @@ function inviteManager(PDO $pdo, string $currentUser)
                 return;
             } else {
                 $updateStmt = $pdo->prepare("
-                    UPDATE store_managers 
-                    SET status = 'inactive', role = ?, updated_at = NOW() 
-                    WHERE id = ?
-                ");
+                UPDATE store_managers 
+                SET status = 'inactive', role = ?, updated_at = NOW() 
+                WHERE id = ?
+            ");
                 $updateStmt->execute([$role, $existingManager['id']]);
 
                 $managerId = $existingManager['id'];
             }
         } else {
-            $managerId = generateUlid();
-            $insertStmt = $pdo->prepare("
+            $removedManagerStmt = $pdo->prepare("SELECT id FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'removed'");
+            $removedManagerStmt->execute([$storeId, $userId]);
+            $removedManager = $removedManagerStmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($removedManager && !$reinvite) {
+                $pdo->rollBack();
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'This user was previously removed as a manager',
+                    'code' => 'previously_removed',
+                    'user_info' => [
+                        'first_name' => $user['first_name'],
+                        'last_name' => $user['last_name']
+                    ]
+                ]);
+                return;
+            }
+
+            if ($removedManager && $reinvite) {
+                $updateStmt = $pdo->prepare("
+                UPDATE store_managers 
+                SET status = 'inactive', role = ?, approved = 0, updated_at = NOW() 
+                WHERE id = ?
+            ");
+                $updateStmt->execute([$role, $removedManager['id']]);
+                $managerId = $removedManager['id'];
+            } else {
+                $managerId = generateUlid();
+                $insertStmt = $pdo->prepare("
                 INSERT INTO store_managers 
                     (id, store_id, user_id, role, status, added_by, approved, created_at, updated_at)
                 VALUES 
                     (?, ?, ?, ?, 'inactive', ?, 0, NOW(), NOW())
             ");
-            $insertStmt->execute([$managerId, $storeId, $userId, $role, $currentUser]);
+                $insertStmt->execute([$managerId, $storeId, $userId, $role, $currentUser]);
+            }
         }
 
         $emailSent = sendManagerInvitationEmail(
@@ -608,11 +642,11 @@ function updateManagerStatus(PDO $pdo, string $currentUser)
         }
 
         $checkStmt = $pdo->prepare("
-            SELECT sm.id, sm.status, sm.user_id, u.first_name, u.last_name, u.email 
-            FROM store_managers sm
-            JOIN zzimba_users u ON sm.user_id = u.id
-            WHERE sm.id = ? AND sm.store_id = ? AND sm.status != 'removed'
-        ");
+        SELECT sm.id, sm.status, sm.user_id, u.first_name, u.last_name, u.email 
+        FROM store_managers sm
+        JOIN zzimba_users u ON sm.user_id = u.id
+        WHERE sm.id = ? AND sm.store_id = ? AND sm.status != 'removed'
+    ");
         $checkStmt->execute([$managerId, $storeId]);
         $manager = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -636,20 +670,11 @@ function updateManagerStatus(PDO $pdo, string $currentUser)
         }
 
         $updateStmt = $pdo->prepare("
-            UPDATE store_managers 
-            SET status = ?, updated_at = NOW() 
-            WHERE id = ?
-        ");
+        UPDATE store_managers 
+        SET status = ?, updated_at = NOW() 
+        WHERE id = ?
+    ");
         $updateStmt->execute([$newStatus, $managerId]);
-
-        if ($newStatus === 'active') {
-            $approveStmt = $pdo->prepare("
-                UPDATE store_managers 
-                SET approved = 1 
-                WHERE id = ?
-            ");
-            $approveStmt->execute([$managerId]);
-        }
 
         $emailSent = sendManagerStatusChangeEmail(
             $manager['email'],

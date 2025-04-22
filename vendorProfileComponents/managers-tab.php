@@ -177,6 +177,53 @@
     </div>
 </div>
 
+<!-- Add a new modal for re-inviting removed managers -->
+<div id="reinviteManagerModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto">
+            <div class="flex justify-between items-center p-6 border-b">
+                <h2 class="text-xl font-bold text-amber-600">Re-invite Former Manager</h2>
+                <button type="button" class="text-gray-400 hover:text-gray-500"
+                    onclick="closeModal('reinviteManagerModal')">
+                    <span class="text-2xl">&times;</span>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div class="flex items-center justify-center mb-4 text-amber-600">
+                    <i class="fas fa-exclamation-triangle text-4xl"></i>
+                </div>
+                <p class="text-center text-gray-700 mb-2">This user was previously removed as a manager for this store.
+                </p>
+                <p id="reinvite-manager-name" class="text-center font-medium text-lg mb-4"></p>
+                <p class="text-center text-gray-600 mb-6">Do you want to re-invite them as a manager?</p>
+
+                <div class="mb-4">
+                    <label for="reinviteManagerRole" class="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                    <select id="reinviteManagerRole" name="reinviteManagerRole"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                        <option value="manager">Manager (Full Access)</option>
+                        <option value="inventory_manager">Inventory Manager</option>
+                        <option value="sales_manager">Sales Manager</option>
+                        <option value="content_manager">Content Manager</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-center space-x-4 mt-6">
+                    <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg"
+                        onclick="closeModal('reinviteManagerModal')">
+                        Cancel
+                    </button>
+                    <button id="confirm-reinvite-btn" type="button"
+                        class="px-4 py-2 bg-amber-600 text-white rounded-lg">
+                        Re-invite Manager
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     let storeManagers = [];
     let managerToDelete = null;
@@ -185,6 +232,7 @@
     let statusChangeData = null;
     let roleChangeData = null;
     let storeName = '';
+    let reinviteData = null;
 
     const roleLabels = {
         'manager': 'Manager (Full Access)',
@@ -225,19 +273,19 @@
 
         if (!managers || managers.length === 0) {
             container.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
-                    <div class="mb-6 text-gray-300">
-                        <i class="fas fa-users-cog text-8xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-700 mb-2">No Store Managers Yet</h3>
-                    <p class="text-gray-500 mb-6 max-w-md">
-                        Invite team members to help you manage your store. You can assign different roles based on their responsibilities.
-                    </p>
-                    <button id="empty-invite-btn" class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition flex items-center">
-                        <i class="fas fa-user-plus mr-2"></i> Invite Your First Store Manager
-                    </button>
+            <div class="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <div class="mb-6 text-gray-300">
+                    <i class="fas fa-users-cog text-8xl"></i>
                 </div>
-            `;
+                <h3 class="text-xl font-bold text-gray-700 mb-2">No Store Managers Yet</h3>
+                <p class="text-gray-500 mb-6 max-w-md">
+                    Invite team members to help you manage your store. You can assign different roles based on their responsibilities.
+                </p>
+                <button id="empty-invite-btn" class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition flex items-center">
+                    <i class="fas fa-user-plus mr-2"></i> Invite Your First Store Manager
+                </button>
+            </div>
+        `;
 
             document.getElementById('empty-invite-btn').addEventListener('click', function () {
                 openModal('inviteManagerModal');
@@ -265,49 +313,49 @@
             });
 
             managerItem.innerHTML = `
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <div class="mb-3 sm:mb-0">
-                        <div class="flex items-center">
-                            <h3 class="font-bold text-lg">${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}</h3>
-                            <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
-                                ${statusText}
-                            </span>
-                            ${approvedBadge}
-                        </div>
-                        <p class="text-gray-600 text-sm mt-1">
-                            <i class="fas fa-envelope mr-1"></i> ${escapeHtml(manager.email)}
-                        </p>
-                        <p class="text-gray-600 text-sm mt-1">
-                            <i class="fas fa-phone mr-1"></i> ${escapeHtml(manager.phone)}
-                        </p>
-                        <div class="mt-3 flex flex-wrap items-center gap-2">
-                            <span class="text-sm text-gray-500"><i class="fas fa-user-tag mr-1"></i> Role:</span>
-                            <select class="manager-role-select border border-gray-300 rounded px-2 py-1 text-sm" 
-                                data-id="${manager.id}" 
-                                data-name="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}"
-                                data-current="${manager.role}">
-                                ${roleOptions}
-                            </select>
-                            <span class="text-sm text-gray-500 ml-2"><i class="fas fa-calendar mr-1"></i> Added ${formatTimeAgo(new Date(manager.created_at))}</span>
-                        </div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div class="mb-3 sm:mb-0">
+                    <div class="flex items-center">
+                        <h3 class="font-bold text-lg">${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}</h3>
+                        <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                            ${statusText}
+                        </span>
+                        ${approvedBadge}
                     </div>
-                    <div class="flex flex-col sm:items-end">
-                        <label class="inline-flex items-center cursor-pointer mb-3">
-                            <input type="checkbox" class="sr-only peer manager-toggle" 
-                                data-id="${manager.id}" 
-                                data-name="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}"
-                                ${manager.status === 'active' ? 'checked' : ''}>
-                            <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-                            <span class="ml-2 text-sm font-medium text-gray-900">
-                                ${manager.status === 'active' ? 'Active' : 'Inactive'}
-                            </span>
-                        </label>
-                        <button class="text-red-600 hover:text-red-800 text-sm font-medium remove-manager-btn" data-id="${manager.id}" data-name="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}">
-                            <i class="fas fa-trash-alt mr-1"></i> Remove
-                        </button>
+                    <p class="text-gray-600 text-sm mt-1">
+                        <i class="fas fa-envelope mr-1"></i> ${escapeHtml(manager.email)}
+                    </p>
+                    <p class="text-gray-600 text-sm mt-1">
+                        <i class="fas fa-phone mr-1"></i> ${escapeHtml(manager.phone)}
+                    </p>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <span class="text-sm text-gray-500"><i class="fas fa-user-tag mr-1"></i> Role:</span>
+                        <select class="manager-role-select border border-gray-300 rounded px-2 py-1 text-sm" 
+                            data-id="${manager.id}" 
+                            data-name="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}"
+                            data-current="${manager.role}">
+                            ${roleOptions}
+                        </select>
+                        <span class="text-sm text-gray-500 ml-2"><i class="fas fa-calendar mr-1"></i> Added ${formatTimeAgo(new Date(manager.created_at))}</span>
                     </div>
                 </div>
-            `;
+                <div class="flex flex-col sm:items-end">
+                    <label class="inline-flex items-center cursor-pointer mb-3">
+                        <input type="checkbox" class="sr-only peer manager-toggle" 
+                            data-id="${manager.id}" 
+                            data-name="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}"
+                            ${manager.status === 'active' ? 'checked' : ''}>
+                        <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                        <span class="ml-2 text-sm font-medium text-gray-900">
+                            ${manager.status === 'active' ? 'Active' : 'Inactive'}
+                        </span>
+                    </label>
+                    <button class="text-red-600 hover:text-red-800 text-sm font-medium remove-manager-btn" data-id="${manager.id}" data-name="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}">
+                        <i class="fas fa-trash-alt mr-1"></i> Remove
+                    </button>
+                </div>
+            </div>
+        `;
 
             managersList.appendChild(managerItem);
         });
@@ -393,6 +441,7 @@
         const message = document.getElementById('email-validation-message');
 
         validatedEmail = null;
+        reinviteData = null;
         message.className = 'text-xs mt-1 hidden';
         message.textContent = '';
 
@@ -414,13 +463,24 @@
                     message.classList.remove('hidden');
 
                     if (data.success) {
-                        message.className = 'text-xs mt-1 text-green-600';
-                        message.textContent = `User found: ${data.user.first_name} ${data.user.last_name}`;
-                        validatedEmail = email;
+                        if (data.was_removed) {
+                            message.className = 'text-xs mt-1 text-amber-600';
+                            message.textContent = `User found: ${data.user.first_name} ${data.user.last_name} (previously removed)`;
+                            reinviteData = {
+                                email: email,
+                                firstName: data.user.first_name,
+                                lastName: data.user.last_name
+                            };
+                        } else {
+                            message.className = 'text-xs mt-1 text-green-600';
+                            message.textContent = `User found: ${data.user.first_name} ${data.user.last_name}`;
+                            validatedEmail = email;
+                        }
                     } else {
                         message.className = 'text-xs mt-1 text-red-600';
                         message.textContent = data.error || 'Invalid email';
                         validatedEmail = null;
+                        reinviteData = null;
                     }
                 })
                 .catch(error => {
@@ -430,6 +490,7 @@
                     message.className = 'text-xs mt-1 text-red-600';
                     message.textContent = 'Error checking email';
                     validatedEmail = null;
+                    reinviteData = null;
                 });
         }, 500);
     }
@@ -584,6 +645,28 @@
             });
     }
 
+    function resetModalForms() {
+        const forms = document.querySelectorAll('#inviteManagerModal form, #reinviteManagerModal form');
+        forms.forEach(form => form.reset());
+
+        document.getElementById('email-validation-message').className = 'text-xs mt-1 hidden';
+        document.getElementById('email-validation-message').textContent = '';
+        validatedEmail = null;
+        reinviteData = null;
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+
+        if (modalId === 'inviteManagerModal' || modalId === 'reinviteManagerModal') {
+            resetModalForms();
+        }
+    }
+
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const emailInput = document.getElementById('managerEmail');
         emailInput.addEventListener('input', function () {
@@ -595,6 +678,7 @@
             document.getElementById('inviteManagerForm').reset();
             document.getElementById('email-validation-message').className = 'text-xs mt-1 hidden';
             validatedEmail = null;
+            reinviteData = null;
         });
 
         document.getElementById('inviteManagerForm').addEventListener('submit', function (e) {
@@ -602,6 +686,14 @@
 
             const email = document.getElementById('managerEmail').value;
             const role = document.getElementById('managerRole').value;
+
+            if (reinviteData && reinviteData.email === email) {
+                document.getElementById('reinvite-manager-name').textContent = `${reinviteData.firstName} ${reinviteData.lastName}`;
+                document.getElementById('reinviteManagerRole').value = role;
+                openModal('reinviteManagerModal');
+                closeModal('inviteManagerModal');
+                return;
+            }
 
             if (email !== validatedEmail) {
                 showToast('Please enter a valid email address', 'error');
@@ -612,6 +704,9 @@
             const originalText = submitBtn.textContent;
             submitBtn.disabled = true;
             submitBtn.textContent = 'Sending...';
+
+            const closeBtn = document.querySelector('#inviteManagerModal button[onclick="closeModal(\'inviteManagerModal\')"]');
+            closeBtn.disabled = true;
 
             fetch(`${BASE_URL}fetch/storeManagers.php?action=inviteManager`, {
                 method: 'POST',
@@ -626,6 +721,7 @@
                 .then(data => {
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalText;
+                    closeBtn.disabled = false;
 
                     if (data.success) {
                         closeModal('inviteManagerModal');
@@ -635,14 +731,72 @@
                         const emailStatus = data.email_sent ? 'and notification email sent' : 'but email notification failed';
                         showToast(`Invitation sent successfully ${emailStatus}`, 'success');
                     } else {
-                        showToast(data.error || 'Failed to send invitation', 'error');
+                        if (data.code === 'previously_removed') {
+                            document.getElementById('reinvite-manager-name').textContent = `${data.user_info.first_name} ${data.user_info.last_name}`;
+                            document.getElementById('reinviteManagerRole').value = role;
+                            openModal('reinviteManagerModal');
+                            closeModal('inviteManagerModal');
+                        } else {
+                            showToast(data.error || 'Failed to send invitation', 'error');
+                        }
                     }
                 })
                 .catch(error => {
                     console.error('Error inviting manager:', error);
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalText;
+                    closeBtn.disabled = false;
                     showToast('Failed to send invitation. Please try again.', 'error');
+                });
+        });
+
+        document.getElementById('confirm-reinvite-btn').addEventListener('click', function () {
+            if (!reinviteData) {
+                showToast('Invalid reinvitation data', 'error');
+                return;
+            }
+
+            const email = reinviteData.email;
+            const role = document.getElementById('reinviteManagerRole').value;
+
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
+
+            const closeBtn = document.querySelector('#reinviteManagerModal button[onclick="closeModal(\'reinviteManagerModal\')"]');
+            closeBtn.disabled = true;
+
+            fetch(`${BASE_URL}fetch/storeManagers.php?action=inviteManager`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    store_id: vendorId,
+                    email: email,
+                    role: role,
+                    reinvite: true
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    this.disabled = false;
+                    this.innerHTML = 'Re-invite Manager';
+                    closeBtn.disabled = false;
+
+                    if (data.success) {
+                        closeModal('reinviteManagerModal');
+                        loadStoreManagers();
+
+                        const emailStatus = data.email_sent ? 'and notification email sent' : 'but email notification failed';
+                        showToast(`Manager re-invited successfully ${emailStatus}`, 'success');
+                    } else {
+                        showToast(data.error || 'Failed to re-invite manager', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error re-inviting manager:', error);
+                    this.disabled = false;
+                    this.innerHTML = 'Re-invite Manager';
+                    closeBtn.disabled = false;
+                    showToast('Failed to re-invite manager. Please try again.', 'error');
                 });
         });
 
@@ -651,12 +805,16 @@
                 this.disabled = true;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Removing...';
 
+                const closeBtn = document.querySelector('#deleteManagerModal button[onclick="closeModal(\'deleteManagerModal\')"]');
+                closeBtn.disabled = true;
+
                 deleteManager(managerToDelete);
 
                 setTimeout(() => {
                     closeModal('deleteManagerModal');
                     this.disabled = false;
                     this.innerHTML = 'Remove Manager';
+                    closeBtn.disabled = false;
                     managerToDelete = null;
                 }, 500);
             }
@@ -666,6 +824,9 @@
             if (statusChangeData) {
                 this.disabled = true;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Updating...';
+
+                const closeBtn = document.querySelector('#statusChangeModal button[onclick="closeModal(\'statusChangeModal\')"]');
+                closeBtn.disabled = true;
 
                 updateManagerStatus(
                     statusChangeData.managerId,
@@ -677,6 +838,7 @@
                     closeModal('statusChangeModal');
                     this.disabled = false;
                     this.textContent = statusChangeData.newStatus === 'active' ? 'Activate Manager' : 'Deactivate Manager';
+                    closeBtn.disabled = false;
                     statusChangeData = null;
                 }, 500);
             }
@@ -686,6 +848,9 @@
             if (roleChangeData) {
                 this.disabled = true;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Updating...';
+
+                const closeBtn = document.querySelector('#roleChangeModal button[onclick="closeModal(\'roleChangeModal\')"]');
+                closeBtn.disabled = true;
 
                 updateManagerRole(
                     roleChangeData.managerId,
@@ -697,6 +862,7 @@
                     closeModal('roleChangeModal');
                     this.disabled = false;
                     this.textContent = 'Confirm Change';
+                    closeBtn.disabled = false;
                     roleChangeData = null;
                 }, 500);
             }
