@@ -11,133 +11,188 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SE
 ob_start();
 ?>
 
-<!-- Stats Overview -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="space-y-8">
+    <!-- Welcome Section -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between">
-            <div class="space-y-1">
-                <p class="text-sm text-gray-text">Total Users</p>
-                <h3 class="text-2xl font-semibold text-secondary" id="stat-users">0</h3>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Welcome,
+                    <?= htmlspecialchars($_SESSION['user']['username']) ?></h1>
+                <p class="text-gray-500 mt-1">Here's what's happening with your users today.</p>
             </div>
-            <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
-                <i class="fas fa-users text-blue-500"></i>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between">
-            <div class="space-y-1">
-                <p class="text-sm text-gray-text">Active Users</p>
-                <h3 class="text-2xl font-semibold text-secondary" id="stat-active">0</h3>
-            </div>
-            <div class="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
-                <i class="fas fa-user-check text-green-500"></i>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between">
-            <div class="space-y-1">
-                <p class="text-sm text-gray-text">New Users (30d)</p>
-                <h3 class="text-2xl font-semibold text-secondary" id="stat-new">0</h3>
-            </div>
-            <div class="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center">
-                <i class="fas fa-user-plus text-purple-500"></i>
-            </div>
-        </div>
-    </div>
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between">
-            <div class="space-y-1">
-                <p class="text-sm text-gray-text">Inactive Users</p>
-                <h3 class="text-2xl font-semibold text-secondary" id="stat-inactive">0</h3>
-            </div>
-            <div class="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center">
-                <i class="fas fa-user-slash text-red-500"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- User Management -->
-<div class="bg-white rounded-lg shadow-sm border border-gray-100">
-    <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <h2 class="text-lg font-semibold text-secondary">User Management</h2>
-            <p class="text-sm text-gray-text mt-1">Manage and monitor user accounts</p>
-        </div>
-        <div class="flex flex-col md:flex-row items-center gap-3">
-            <div class="relative w-full md:w-auto">
-                <input type="text" id="searchUsers" placeholder="Search users..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-            </div>
-            <div class="flex items-center gap-2 w-full md:w-auto">
-                <select id="sortUsers" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
-                    <option value="created_at" selected>Sort by Registration Date</option>
-                    <option value="current_login">Sort by Last Login</option>
-                    <option value="username">Sort by Username</option>
-                    <option value="status">Sort by Status</option>
-                </select>
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-gray-500"><?= date('l, F j, Y') ?></span>
+                <div class="h-6 w-px bg-gray-200"></div>
+                <span class="text-sm text-gray-500" id="live-time">00:00:00</span>
             </div>
         </div>
     </div>
 
-    <!-- Desktop Table -->
-    <div class="responsive-table-desktop overflow-x-auto">
-        <table class="w-full" id="users-table">
-            <thead>
-                <tr class="text-left border-b border-gray-100">
-                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Username</th>
-                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Phone</th>
-                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Email</th>
-                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Registration Date</th>
-                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Status</th>
-                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Last Login</th>
-                    <th class="px-6 py-3 text-sm font-semibold text-gray-text">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="users-table-body">
-                <!-- Table rows will be populated by JavaScript -->
-                <tr>
-                    <td colspan="7" class="px-6 py-4 text-center">Loading users...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Mobile View -->
-    <div class="responsive-table-mobile p-4" id="users-mobile">
-        <!-- Mobile cards will be populated by JavaScript -->
-        <div class="text-center py-4">Loading users...</div>
-    </div>
-
-    <!-- Pagination -->
-    <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div class="text-sm text-gray-text">
-            Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span id="total-users">0</span> users
-        </div>
-        <div class="flex items-center gap-2">
-            <button id="prev-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <div id="pagination-numbers" class="flex items-center">
-                <!-- Pagination numbers will be populated by JavaScript -->
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div
+            class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md">
+            <div class="flex items-center justify-between">
+                <div class="space-y-1">
+                    <p class="text-sm font-medium text-gray-500">Total Users</p>
+                    <h3 class="text-3xl font-bold text-gray-900" id="stat-users">0</h3>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center">
+                    <i class="fas fa-users text-blue-500 text-xl"></i>
+                </div>
             </div>
-            <button id="next-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i class="fas fa-chevron-right"></i>
-            </button>
+        </div>
+
+        <div
+            class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md">
+            <div class="flex items-center justify-between">
+                <div class="space-y-1">
+                    <p class="text-sm font-medium text-gray-500">Active Users</p>
+                    <h3 class="text-3xl font-bold text-gray-900" id="stat-active">0</h3>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
+                    <i class="fas fa-user-check text-green-500 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md">
+            <div class="flex items-center justify-between">
+                <div class="space-y-1">
+                    <p class="text-sm font-medium text-gray-500">New Users (30d)</p>
+                    <h3 class="text-3xl font-bold text-gray-900" id="stat-new">0</h3>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center">
+                    <i class="fas fa-user-plus text-purple-500 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div
+            class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 transition-all duration-300 hover:shadow-md">
+            <div class="flex items-center justify-between">
+                <div class="space-y-1">
+                    <p class="text-sm font-medium text-gray-500">Inactive Users</p>
+                    <h3 class="text-3xl font-bold text-gray-900" id="stat-inactive">0</h3>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
+                    <i class="fas fa-user-slash text-red-500 text-xl"></i>
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- User Management -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900">User Management</h2>
+                <p class="text-sm text-gray-500 mt-1">Manage and monitor user accounts</p>
+            </div>
+            <div class="flex flex-col md:flex-row items-center gap-3">
+                <div class="relative w-full md:w-auto">
+                    <input type="text" id="searchUsers" placeholder="Search users..."
+                        class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <select id="filterStatus"
+                        class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                    <select id="sortUsers"
+                        class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
+                        <option value="created_at" selected>Sort by Registration Date</option>
+                        <option value="current_login">Sort by Last Login</option>
+                        <option value="username">Sort by Username</option>
+                        <option value="status">Sort by Status</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Desktop Table -->
+        <div class="responsive-table-desktop overflow-x-auto">
+            <table class="w-full" id="users-table">
+                <thead>
+                    <tr class="text-left bg-gray-50">
+                        <th
+                            class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[180px]">
+                            Username</th>
+                        <th
+                            class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[220px]">
+                            Contact</th>
+                        <th
+                            class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[180px]">
+                            Registration Date</th>
+                        <th
+                            class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[120px]">
+                            Status</th>
+                        <th
+                            class="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[180px]">
+                            Last Login</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body" class="divide-y divide-gray-100">
+                    <!-- Table rows will be populated by JavaScript -->
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                            <div class="flex items-center justify-center">
+                                <div
+                                    class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2">
+                                </div>
+                                Loading users...
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile View -->
+        <div class="responsive-table-mobile p-4" id="users-mobile">
+            <!-- Mobile cards will be populated by JavaScript -->
+            <div class="flex items-center justify-center py-4 text-gray-500">
+                <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
+                Loading users...
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-sm text-gray-500">
+                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span
+                    id="total-users">0</span> users
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="prev-page"
+                    class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div id="pagination-numbers" class="flex items-center">
+                    <!-- Pagination numbers will be populated by JavaScript -->
+                </div>
+                <button id="next-page"
+                    class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- User Details Modal -->
 <div id="userDetailsModal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/20" onclick="hideUserDetails()"></div>
-    <div class="absolute inset-y-0 right-0 w-full max-w-2xl bg-white shadow-lg transform translate-x-full transition-transform duration-300">
+    <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" onclick="hideUserDetails()"></div>
+    <div
+        class="absolute inset-y-0 right-0 w-full max-w-2xl bg-white shadow-lg transform translate-x-full transition-transform duration-300">
         <div class="flex flex-col h-full">
             <div class="flex items-center justify-between p-6 border-b border-gray-100">
-                <h3 class="text-lg font-semibold text-secondary" id="modal-user-title">User Details</h3>
+                <h3 class="text-lg font-semibold text-gray-900" id="modal-user-title">User Details</h3>
                 <button onclick="hideUserDetails()" class="text-gray-400 hover:text-gray-500">
                     <i class="fas fa-times"></i>
                 </button>
@@ -148,7 +203,8 @@ ob_start();
                 </div>
             </div>
             <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-                <button onclick="hideUserDetails()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+                <button onclick="hideUserDetails()"
+                    class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
                     Close
                 </button>
             </div>
@@ -158,7 +214,7 @@ ob_start();
 
 <!-- Session Expired Modal -->
 <div id="sessionExpiredModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden">
-    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
         <div class="p-6">
             <div class="text-center mb-4">
@@ -168,7 +224,8 @@ ob_start();
                 <p class="text-sm text-gray-500 mt-1">Redirecting in <span id="countdown">10</span> seconds...</p>
             </div>
             <div class="flex justify-center mt-6">
-                <button onclick="redirectToLogin()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                <button onclick="redirectToLogin()"
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
                     Login Now
                 </button>
             </div>
@@ -196,6 +253,13 @@ ob_start();
             border-radius: 0.5rem;
             margin-bottom: 1rem;
             overflow: hidden;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .mobile-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
         }
 
         .mobile-card-header {
@@ -204,6 +268,7 @@ ob_start();
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #f3f4f6;
+            background-color: #f9fafb;
         }
 
         .mobile-card-content {
@@ -246,7 +311,7 @@ ob_start();
     .status-badge {
         display: inline-flex;
         align-items: center;
-        padding: 0.25rem 0.5rem;
+        padding: 0.25rem 0.75rem;
         border-radius: 9999px;
         font-size: 0.75rem;
         font-weight: 500;
@@ -266,6 +331,38 @@ ob_start();
         background-color: #fef3c7;
         color: #92400e;
     }
+
+    /* Table hover effects */
+    #users-table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    #users-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    /* Table responsiveness */
+    .responsive-table-desktop {
+        overflow-x: auto;
+    }
+
+    /* Text truncation */
+    .truncate-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        display: block;
+    }
+
+    /* Clickable rows */
+    #users-table tbody tr {
+        cursor: pointer;
+    }
+
+    .mobile-card {
+        cursor: pointer;
+    }
 </style>
 
 <script>
@@ -276,6 +373,9 @@ ob_start();
     let currentSort = 'created_at';
     let currentOrder = 'desc';
     let currentSearch = '';
+    let currentFilter = '';
+    let userGrowthChart = null;
+    let userStatusChart = null;
 
     // Format date to a readable format
     function formatDate(dateString) {
@@ -368,9 +468,21 @@ ob_start();
         return div.innerHTML;
     }
 
+    // Update live time
+    function updateLiveTime() {
+        const now = new Date();
+        const timeElement = document.getElementById('live-time');
+        timeElement.textContent = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+    }
+
     // Load dashboard statistics
     function loadStats() {
-        fetch(`${BASE_URL}admin/fetch/manageDashboard/getStats`)
+        fetch(`${BASE_URL}admin/fetch/manageDashboard.php?action=getStats`)
             .then(response => {
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -391,6 +503,12 @@ ob_start();
                     document.getElementById('stat-inactive').textContent = stats.inactive_users.toLocaleString();
                     document.getElementById('stat-new').textContent = stats.new_users.toLocaleString();
 
+                    // Update change percentages
+                    document.getElementById('total-change').textContent = `${stats.total_change || 0}%`;
+                    document.getElementById('active-change').textContent = `${stats.active_change || 0}%`;
+                    document.getElementById('new-change').textContent = `${stats.new_change || 0}%`;
+                    document.getElementById('inactive-change').textContent = `${stats.inactive_change || 0}%`;
+
                 } else {
                     console.error('Error loading stats:', data.error);
                 }
@@ -408,10 +526,24 @@ ob_start();
         const mobileContainer = document.getElementById('users-mobile');
 
         // Show loading indicators
-        tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center">Loading users...</td></tr>';
-        mobileContainer.innerHTML = '<div class="text-center py-4">Loading users...</div>';
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                    <div class="flex items-center justify-center">
+                        <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Loading users...
+                    </div>
+                </td>
+            </tr>
+        `;
+        mobileContainer.innerHTML = `
+            <div class="flex items-center justify-center py-4 text-gray-500">
+                <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
+                Loading users...
+            </div>
+        `;
 
-        const url = new URL(`${BASE_URL}admin/fetch/manageDashboard/getUsers`);
+        const url = new URL(`${BASE_URL}admin/fetch/manageDashboard.php?action=getUsers`);
         url.searchParams.append('page', currentPage);
         url.searchParams.append('limit', itemsPerPage);
         url.searchParams.append('sort', currentSort);
@@ -419,6 +551,10 @@ ob_start();
 
         if (currentSearch) {
             url.searchParams.append('search', currentSearch);
+        }
+
+        if (currentFilter) {
+            url.searchParams.append('status', currentFilter);
         }
 
         fetch(url)
@@ -460,7 +596,7 @@ ob_start();
         mobileContainer.innerHTML = '';
 
         if (users.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center">No users found</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">No users found</td></tr>';
             mobileContainer.innerHTML = '<div class="text-center py-4">No users found</div>';
             return;
         }
@@ -469,6 +605,7 @@ ob_start();
             // Desktop row
             const tr = document.createElement('tr');
             tr.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
+            tr.onclick = function () { showUserDetails(user.id); };
 
             const initials = getUserInitials(user.username);
 
@@ -482,80 +619,73 @@ ob_start();
             }
 
             tr.innerHTML = `
-                <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
-                            ${initials}
-                        </div>
-                        <span class="font-medium text-gray-900">${escapeHtml(user.username)}</span>
+            <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
+                        ${initials}
                     </div>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-text">${escapeHtml(user.phone || '-')}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">${escapeHtml(user.email)}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">${formatDateTime(user.created_at)}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">${statusBadge}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">
-                    <div class="flex flex-col">
-                        <span>${formatDateTime(user.current_login)}</span>
-                        <span class="text-xs text-gray-400">${timeAgo(user.current_login)}</span>
-                    </div>
-                </td>
-                <td class="px-6 py-4 text-sm">
-                    <div class="flex items-center gap-2">
-                        <button onclick="showUserDetails('${user.id}')" class="text-blue-600 hover:text-blue-800">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
+                    <span class="font-medium text-gray-900 truncate-text">${escapeHtml(user.username)}</span>
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="flex flex-col">
+                    <span class="text-sm text-gray-500 truncate-text">${escapeHtml(user.email)}</span>
+                    <span class="text-sm text-gray-500 truncate-text">${escapeHtml(user.phone || '-')}</span>
+                </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-500 truncate-text">${formatDateTime(user.created_at)}</td>
+            <td class="px-6 py-4 text-sm text-gray-500">${statusBadge}</td>
+            <td class="px-6 py-4 text-sm text-gray-500">
+                <div class="flex flex-col">
+                    <span class="truncate-text">${formatDateTime(user.current_login)}</span>
+                    <span class="text-xs text-gray-400 truncate-text">${timeAgo(user.current_login)}</span>
+                </div>
+            </td>
+        `;
 
             tableBody.appendChild(tr);
 
             // Mobile card
             const mobileCard = document.createElement('div');
             mobileCard.className = 'mobile-card';
+            mobileCard.onclick = function () { showUserDetails(user.id); };
 
             mobileCard.innerHTML = `
-                <div class="mobile-card-header">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
-                            ${initials}
-                        </div>
-                        <div>
-                            <div class="font-medium text-gray-900">${escapeHtml(user.username)}</div>
-                            <div class="text-xs text-gray-500">${escapeHtml(user.email)}</div>
-                        </div>
+            <div class="mobile-card-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium">
+                        ${initials}
                     </div>
                     <div>
-                        ${statusBadge}
+                        <div class="font-medium text-gray-900">${escapeHtml(user.username)}</div>
+                        <div class="text-xs text-gray-500">${escapeHtml(user.email)}</div>
                     </div>
                 </div>
-                <div class="mobile-card-content">
-                    <div class="mobile-grid">
-                        <div class="mobile-grid-item">
-                            <span class="mobile-label">Phone</span>
-                            <span class="mobile-value">${escapeHtml(user.phone || '-')}</span>
-                        </div>
-                        <div class="mobile-grid-item">
-                            <span class="mobile-label">Registration</span>
-                            <span class="mobile-value">${formatDateTime(user.created_at)}</span>
-                        </div>
-                        <div class="mobile-grid-item">
-                            <span class="mobile-label">Last Login</span>
-                            <span class="mobile-value">${formatDateTime(user.current_login)}</span>
-                        </div>
-                        <div class="mobile-grid-item">
-                            <span class="mobile-label">Last Seen</span>
-                            <span class="mobile-value">${timeAgo(user.current_login)}</span>
-                        </div>
+                <div>
+                    ${statusBadge}
+                </div>
+            </div>
+            <div class="mobile-card-content">
+                <div class="mobile-grid">
+                    <div class="mobile-grid-item">
+                        <span class="mobile-label">Phone</span>
+                        <span class="mobile-value">${escapeHtml(user.phone || '-')}</span>
                     </div>
-                    <div class="mobile-actions">
-                        <button onclick="showUserDetails('${user.id}')" class="px-3 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
-                            <i class="fas fa-eye mr-1"></i> View
-                        </button>
+                    <div class="mobile-grid-item">
+                        <span class="mobile-label">Registration</span>
+                        <span class="mobile-value">${formatDateTime(user.created_at)}</span>
+                    </div>
+                    <div class="mobile-grid-item">
+                        <span class="mobile-label">Last Login</span>
+                        <span class="mobile-value">${formatDateTime(user.current_login)}</span>
+                    </div>
+                    <div class="mobile-grid-item">
+                        <span class="mobile-label">Last Seen</span>
+                        <span class="mobile-value">${timeAgo(user.current_login)}</span>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
 
             mobileContainer.appendChild(mobileCard);
         });
@@ -627,7 +757,7 @@ ob_start();
             'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
         button.textContent = pageNumber;
 
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             if (pageNumber !== currentPage) {
                 currentPage = pageNumber;
                 loadUsers();
@@ -651,12 +781,12 @@ ob_start();
 
         // Show modal
         modal.classList.remove('hidden');
-        setTimeout(function() {
+        setTimeout(function () {
             modal.querySelector('.transform').classList.remove('translate-x-full');
         }, 10);
 
         // Fetch user details
-        fetch(`${BASE_URL}admin/fetch/manageDashboard/getUserDetails?id=${userId}`)
+        fetch(`${BASE_URL}admin/fetch/manageDashboard.php?action=getUserDetails&id=${userId}`)
             .then(response => {
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -759,6 +889,27 @@ ob_start();
                         ` : ''}
                     </div>
                 </div>
+                
+                <div class="border-t border-gray-100 pt-6">
+                    <h5 class="font-medium text-gray-900 mb-4">Actions</h5>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+                            <i class="fas fa-envelope mr-2"></i> Send Email
+                        </button>
+                        ${user.status === 'active' ? `
+                        <button class="px-4 py-2 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors">
+                            <i class="fas fa-ban mr-2"></i> Suspend User
+                        </button>
+                        ` : `
+                        <button class="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors">
+                            <i class="fas fa-check-circle mr-2"></i> Activate User
+                        </button>
+                        `}
+                        <button class="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                            <i class="fas fa-trash-alt mr-2"></i> Delete User
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -769,7 +920,7 @@ ob_start();
     function hideUserDetails() {
         const modal = document.getElementById('userDetailsModal');
         modal.querySelector('.transform').classList.add('translate-x-full');
-        setTimeout(function() {
+        setTimeout(function () {
             modal.classList.add('hidden');
         }, 300);
     }
@@ -800,32 +951,42 @@ ob_start();
     }
 
     // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
+        // Update live time
+        updateLiveTime();
+        setInterval(updateLiveTime, 1000);
+
         // Load initial data
         loadStats();
         loadUsers();
 
         // Set up event listeners
-        document.getElementById('searchUsers').addEventListener('input', function() {
+        document.getElementById('searchUsers').addEventListener('input', function () {
             currentSearch = this.value.trim();
             currentPage = 1;
             loadUsers();
         });
 
-        document.getElementById('sortUsers').addEventListener('change', function() {
+        document.getElementById('sortUsers').addEventListener('change', function () {
             currentSort = this.value;
             currentPage = 1;
             loadUsers();
         });
 
-        document.getElementById('prev-page').addEventListener('click', function() {
+        document.getElementById('filterStatus').addEventListener('change', function () {
+            currentFilter = this.value;
+            currentPage = 1;
+            loadUsers();
+        });
+
+        document.getElementById('prev-page').addEventListener('click', function () {
             if (currentPage > 1) {
                 currentPage--;
                 loadUsers();
             }
         });
 
-        document.getElementById('next-page').addEventListener('click', function() {
+        document.getElementById('next-page').addEventListener('click', function () {
             if (currentPage < totalPages) {
                 currentPage++;
                 loadUsers();
