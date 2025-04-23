@@ -4,24 +4,80 @@
             <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
                 <li class="mr-2" role="presentation">
                     <button class="inline-block p-4 border-b-2 border-red-600 rounded-t-lg text-red-600 font-medium"
-                        id="categories-tab" data-tabs-target="#categories" type="button" role="tab"
-                        aria-controls="categories" aria-selected="true">
-                        <i class="fas fa-tags mr-2"></i>Categories
+                        id="products-tab" data-tabs-target="#products" type="button" role="tab" aria-controls="products"
+                        aria-selected="true">
+                        <i class="fas fa-box mr-2"></i>Products
                     </button>
                 </li>
                 <li class="mr-2" role="presentation">
                     <button
                         class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300"
-                        id="products-tab" data-tabs-target="#products" type="button" role="tab" aria-controls="products"
-                        aria-selected="false">
-                        <i class="fas fa-box mr-2"></i>Products
+                        id="categories-tab" data-tabs-target="#categories" type="button" role="tab"
+                        aria-controls="categories" aria-selected="false">
+                        <i class="fas fa-tags mr-2"></i>Categories
                     </button>
                 </li>
             </ul>
         </div>
 
         <div id="tab-content">
-            <div class="block" id="categories" role="tabpanel" aria-labelledby="categories-tab">
+            <div class="block" id="products" role="tabpanel" aria-labelledby="products-tab">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold mb-2">Store Products</h2>
+                        <p class="text-gray-600">Add new products to your store or manage existing ones</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Add New Product</h3>
+                    <form id="addProductForm">
+                        <div class="mb-4" id="productListContainer">
+                            <label for="productSearchInput" class="block text-sm font-medium text-gray-700 mb-1">Select
+                                Product *</label>
+                            <div class="relative">
+                                <div class="custom-select-container">
+                                    <input type="text" id="productSearchInput"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                        placeholder="Type to search for products..." autocomplete="off">
+                                    <input type="hidden" id="selectedProductId" name="product_id">
+                                    <input type="hidden" id="selectedCategoryId" name="category_id">
+                                    <div id="productDropdown" class="custom-select-dropdown hidden">
+                                        <div class="p-2 text-center text-gray-500">Loading products...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Products shown here are those not already in your store.
+                            </p>
+                        </div>
+
+                        <div id="unitPricingContainer" class="mt-4 hidden">
+                            <p class="font-semibold text-sm mb-2">Add one or more unit/price entries:</p>
+                            <div id="lineItemsWrapper" class="space-y-4"></div>
+                            <button type="button" id="addLineItemBtn"
+                                class="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded">
+                                + Add Another Unit
+                            </button>
+                        </div>
+
+                        <div class="flex justify-end mt-6">
+                            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg">
+                                Add Product
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold mb-4">Current Products</h3>
+                    <div class="bg-gray-50 rounded-lg p-8 text-center">
+                        <p class="text-gray-500">Your products will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden" id="categories" role="tabpanel" aria-labelledby="categories-tab">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
                     <div>
                         <h2 class="text-xl font-bold mb-2">Store Categories</h2>
@@ -37,23 +93,6 @@
                     <div class="flex justify-center items-center py-8">
                         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
                     </div>
-                </div>
-            </div>
-
-            <div class="hidden" id="products" role="tabpanel" aria-labelledby="products-tab">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
-                    <div>
-                        <h2 class="text-xl font-bold mb-2">Store Products</h2>
-                        <p class="text-gray-600">Add new products to your store or manage existing ones</p>
-                    </div>
-                    <button id="add-product-btn"
-                        class="mt-4 md:mt-0 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center">
-                        <i class="fas fa-plus-circle mr-2"></i> Add Product
-                    </button>
-                </div>
-
-                <div class="bg-gray-50 rounded-lg p-8 text-center">
-                    <p class="text-gray-500">Select a category and add products to your store</p>
                 </div>
             </div>
         </div>
@@ -94,58 +133,50 @@
     </div>
 </div>
 
-<div id="addProductModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-auto">
-            <div class="flex justify-between items-center p-6 border-b">
-                <h2 class="text-xl font-bold">Add Product</h2>
-                <button type="button" class="text-gray-400 hover:text-gray-500" onclick="closeModal('addProductModal')">
-                    <span class="text-2xl">&times;</span>
-                </button>
-            </div>
+<style>
+    .custom-select-container {
+        position: relative;
+        width: 100%;
+    }
 
-            <form id="addProductForm" class="p-6">
-                <div class="mb-4">
-                    <label for="productCategory" class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                    <select id="productCategory" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required>
-                        <option value="">Select a category</option>
-                    </select>
-                </div>
+    .custom-select-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 300px;
+        overflow-y: auto;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        z-index: 50;
+        margin-top: 0.25rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
 
-                <div class="mb-4" id="productListContainer">
-                    <label for="productSelect" class="block text-sm font-medium text-gray-700 mb-1">Select Product
-                        *</label>
-                    <select id="productSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg" required
-                        disabled>
-                        <option value="">Select a product</option>
-                    </select>
-                    <p class="text-xs text-gray-500 mt-1">
-                        Products shown here are those in that category, but <strong>not</strong> already in your store.
-                    </p>
-                </div>
+    .custom-select-option {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+    }
 
-                <div id="unitPricingContainer" class="mt-4 hidden">
-                    <p class="font-semibold text-sm mb-2">Add one or more unit/price entries:</p>
-                    <div id="lineItemsWrapper" class="space-y-4"></div>
-                    <button type="button" id="addLineItemBtn"
-                        class="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded">
-                        + Add Another Unit
-                    </button>
-                </div>
+    .custom-select-option:hover {
+        background-color: #f7fafc;
+    }
 
-                <div class="flex justify-end mt-6">
-                    <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg mr-2"
-                        onclick="closeModal('addProductModal')">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg">
-                        Add Product
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+    .custom-select-category {
+        padding: 0.25rem 1rem;
+        font-weight: 600;
+        background-color: #f1f5f9;
+        color: #475569;
+        font-size: 0.875rem;
+    }
+
+    .custom-select-no-results {
+        padding: 1rem;
+        text-align: center;
+        color: #6b7280;
+    }
+</style>
 
 <script>
     function escapeHtml(text) {
@@ -482,84 +513,136 @@
             });
     }
 
-    function loadStoreCategories() {
-        const categorySelect = document.getElementById('productCategory');
-        categorySelect.innerHTML = '<option value="">Select a category</option>';
+    function loadProductsForStore() {
+        const dropdown = document.getElementById('productDropdown');
+        dropdown.innerHTML = '<div class="p-2 text-center text-gray-500">Loading products...</div>';
 
-        if (!storeData) {
-            fetch(`${BASE_URL}fetch/manageProfile?action=getStoreDetails&id=${vendorId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.store) {
-                        storeData = data.store;
-                        populateCategorySelect(categorySelect);
-                    } else {
-                        showToast(data.error || "Failed to load store data", "error");
-                        categorySelect.innerHTML = '<option value="">Error loading categories</option>';
-                        categorySelect.disabled = true;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading store data:', error);
-                    categorySelect.innerHTML = '<option value="">Error loading categories</option>';
-                    categorySelect.disabled = true;
-                });
-        } else {
-            populateCategorySelect(categorySelect);
-        }
-    }
-
-    function populateCategorySelect(categorySelect) {
-        if (storeData.categories && storeData.categories.length > 0) {
-            const activeCats = storeData.categories.filter(cat => cat.status === 'active');
-            if (activeCats.length === 0) {
-                categorySelect.innerHTML = '<option value="">No active categories available</option>';
-                categorySelect.disabled = true;
-                return;
-            }
-
-            categorySelect.innerHTML = '<option value="">Select a category</option>';
-            activeCats.forEach(category => {
-                const option = document.createElement('option');
-                option.value = category.category_id;
-                option.textContent = category.name;
-                categorySelect.appendChild(option);
-            });
-            categorySelect.disabled = false;
-        } else {
-            categorySelect.innerHTML = '<option value="">No categories available</option>';
-            categorySelect.disabled = true;
-        }
-    }
-
-    function loadProductsForCategory(categoryId) {
-        const productSelect = document.getElementById('productSelect');
-        productSelect.innerHTML = '<option value="">Loading products...</option>';
-        productSelect.disabled = true;
-
-        fetch(`${BASE_URL}fetch/manageProfile?action=getProductsForCategory&store_id=${vendorId}&category_id=${categoryId}`)
+        fetch(`${BASE_URL}fetch/manageProfile?action=getProductsNotInStore&store_id=${vendorId}`)
             .then(response => response.json())
             .then(data => {
-                productSelect.innerHTML = '<option value="">Select a product</option>';
                 if (data.success && data.products && data.products.length > 0) {
+                    // Store all products for search functionality
+                    window.allProducts = data.products;
+
+                    // Group products by category
+                    const productsByCategory = {};
                     data.products.forEach(p => {
-                        const opt = document.createElement('option');
-                        opt.value = p.id;
-                        opt.textContent = p.name;
-                        productSelect.appendChild(opt);
+                        if (!productsByCategory[p.category_name]) {
+                            productsByCategory[p.category_name] = [];
+                        }
+                        productsByCategory[p.category_name].push(p);
                     });
-                    productSelect.disabled = false;
+
+                    // Populate dropdown
+                    populateProductDropdown(productsByCategory);
                 } else {
-                    productSelect.innerHTML = '<option value="">No products available for this category</option>';
-                    productSelect.disabled = true;
-                    document.getElementById('unitPricingContainer').classList.add('hidden');
+                    dropdown.innerHTML = '<div class="custom-select-no-results">No products available</div>';
                 }
             })
             .catch(error => {
-                console.error('Error loading products for category:', error);
-                productSelect.innerHTML = '<option value="">Error loading products</option>';
-                productSelect.disabled = true;
+                console.error('Error loading products:', error);
+                dropdown.innerHTML = '<div class="custom-select-no-results">Error loading products</div>';
             });
+    }
+
+    function populateProductDropdown(productsByCategory, filter = '') {
+        const dropdown = document.getElementById('productDropdown');
+        dropdown.innerHTML = '';
+
+        let hasResults = false;
+
+        // Sort categories alphabetically
+        const sortedCategories = Object.keys(productsByCategory).sort();
+
+        sortedCategories.forEach(category => {
+            const products = productsByCategory[category].filter(p =>
+                p.name.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            if (products.length > 0) {
+                hasResults = true;
+
+                // Add category header
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'custom-select-category';
+                categoryHeader.textContent = category;
+                dropdown.appendChild(categoryHeader);
+
+                // Add products under this category
+                products.forEach(product => {
+                    const option = document.createElement('div');
+                    option.className = 'custom-select-option';
+                    option.textContent = product.name;
+                    option.dataset.id = product.id;
+                    option.dataset.categoryId = product.category_id;
+                    option.dataset.name = product.name;
+
+                    option.addEventListener('click', function () {
+                        selectProduct(this.dataset.id, this.dataset.categoryId, this.dataset.name);
+                    });
+
+                    dropdown.appendChild(option);
+                });
+            }
+        });
+
+        if (!hasResults) {
+            dropdown.innerHTML = '<div class="custom-select-no-results">No matching products found</div>';
+        }
+    }
+
+    function selectProduct(productId, categoryId, productName) {
+        document.getElementById('selectedProductId').value = productId;
+        document.getElementById('selectedCategoryId').value = categoryId;
+        document.getElementById('productSearchInput').value = productName;
+        document.getElementById('productDropdown').classList.add('hidden');
+
+        // Load units for pricing
+        loadUnitsForProduct();
+    }
+
+    function initProductSearch() {
+        const searchInput = document.getElementById('productSearchInput');
+        const dropdown = document.getElementById('productDropdown');
+
+        // Helper to group and filter products
+        function groupAndFilterProducts(filterValue) {
+            const productsByCategory = {};
+
+            window.allProducts.forEach(p => {
+                if (!productsByCategory[p.category_name]) {
+                    productsByCategory[p.category_name] = [];
+                }
+                productsByCategory[p.category_name].push(p);
+            });
+
+            populateProductDropdown(productsByCategory, filterValue);
+        }
+
+        // Show dropdown and populate on focus
+        searchInput.addEventListener('focus', function () {
+            if (window.allProducts && window.allProducts.length > 0) {
+                dropdown.classList.remove('hidden');
+                groupAndFilterProducts(this.value);
+            } else {
+                loadProductsForStore(); // assumed to load and update `window.allProducts`
+            }
+        });
+
+        // Filter products as user types
+        searchInput.addEventListener('input', function () {
+            if (window.allProducts && window.allProducts.length > 0) {
+                dropdown.classList.remove('hidden');
+                groupAndFilterProducts(this.value);
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
     }
 
     function loadUnitsForProduct() {
@@ -608,6 +691,14 @@
             unitSelect.appendChild(opt);
         });
 
+        const packageSizeInput = document.createElement('input');
+        packageSizeInput.type = 'number';
+        packageSizeInput.min = '1';
+        packageSizeInput.value = '1';
+        packageSizeInput.placeholder = 'Package Size';
+        packageSizeInput.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
+        packageSizeInput.required = true;
+
         const priceCatSelect = document.createElement('select');
         priceCatSelect.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
         ['retail', 'wholesale', 'factory'].forEach(cat => {
@@ -640,6 +731,7 @@
         });
 
         row.appendChild(unitSelect);
+        row.appendChild(packageSizeInput);
         row.appendChild(priceCatSelect);
         row.appendChild(priceInput);
         row.appendChild(capacityInput);
@@ -671,10 +763,12 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalText;
                 if (data.success) {
-                    closeModal('addProductModal');
                     showToast('Product & pricing added successfully', 'success');
                     document.getElementById('addProductForm').reset();
                     document.getElementById('unitPricingContainer').classList.add('hidden');
+                    document.getElementById('productSearchInput').value = '';
+                    document.getElementById('selectedProductId').value = '';
+                    document.getElementById('selectedCategoryId').value = '';
                 } else {
                     showToast(data.error || 'Failed to add product', 'error');
                 }
@@ -688,7 +782,15 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        // Initialize variables
+        window.selectedCategories = [];
+        window.availableUnits = [];
+        window.lineItemCount = 0;
+        window.allProducts = [];
+
         loadStoreData();
+        loadProductsForStore();
+        initProductSearch();
 
         const tabButtons = document.querySelectorAll('[role="tab"]');
         const tabContents = document.querySelectorAll('[role="tabpanel"]');
@@ -722,41 +824,15 @@
 
         document.getElementById('saveCategoriesBtn').addEventListener('click', saveCategories);
 
-        document.getElementById('add-product-btn').addEventListener('click', function () {
-            openModal('addProductModal');
-            loadStoreCategories();
-        });
-
-        document.getElementById('productCategory').addEventListener('change', function () {
-            const catId = this.value;
-            if (catId) {
-                loadProductsForCategory(catId);
-            } else {
-                const productSelect = document.getElementById('productSelect');
-                productSelect.innerHTML = '<option value="">Select a product</option>';
-                productSelect.disabled = true;
-                document.getElementById('unitPricingContainer').classList.add('hidden');
-            }
-        });
-
-        document.getElementById('productSelect').addEventListener('change', function () {
-            const prodId = this.value;
-            if (prodId) {
-                loadUnitsForProduct();
-            } else {
-                document.getElementById('unitPricingContainer').classList.add('hidden');
-            }
-        });
-
         document.getElementById('addLineItemBtn').addEventListener('click', addLineItemRow);
 
         document.getElementById('addProductForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            const categoryId = document.getElementById('productCategory').value;
-            const productId = document.getElementById('productSelect').value;
+            const productId = document.getElementById('selectedProductId').value;
+            const categoryId = document.getElementById('selectedCategoryId').value;
 
-            if (!categoryId || !productId) {
-                showToast('Please select Category and Product', 'error');
+            if (!productId || !categoryId) {
+                showToast('Please select a Product', 'error');
                 return;
             }
 
@@ -770,17 +846,19 @@
             rows.forEach(row => {
                 const selects = row.querySelectorAll('select');
                 const inputs = row.querySelectorAll('input');
-                if (selects.length < 2 || inputs.length < 2) return;
+                if (selects.length < 2 || inputs.length < 3) return;
 
                 const unitUuid = selects[0].value;
+                const packageSize = inputs[0].value || 1;
                 const priceCategory = selects[1].value;
-                const priceVal = inputs[0].value;
-                const capacityVal = inputs[1].value || null;
+                const priceVal = inputs[1].value;
+                const capacityVal = inputs[2].value || null;
 
                 if (!unitUuid || !priceVal) return;
 
                 lineItems.push({
                     unit_id: unitUuid,
+                    package_size: packageSize,
                     price_category: priceCategory,
                     price: priceVal,
                     delivery_capacity: capacityVal
@@ -794,7 +872,6 @@
 
             const formData = new FormData();
             formData.append('store_id', vendorId);
-            formData.append('category_id', categoryId);
             formData.append('product_id', productId);
             formData.append('line_items', JSON.stringify(lineItems));
 

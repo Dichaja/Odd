@@ -88,6 +88,15 @@ try {
             getProductsNotInStore($pdo, $_GET['store_id'], $_GET['category_id']);
             break;
 
+        case 'getProductsNotInStore':
+            if (empty($_GET['store_id'])) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Store ID is required']);
+                break;
+            }
+            getAllProductsNotInStore($pdo, $_GET['store_id']);
+            break;
+
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Invalid action: ' . $action]);
@@ -106,42 +115,21 @@ function ensureProductPricingTable(PDO $pdo)
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS `product_pricing` (
             `id` VARCHAR(26) NOT NULL,
-            `store_id` VARCHAR(26) NOT NULL,
             `store_products_id` VARCHAR(26) NOT NULL,
             `product_unit_of_measure_id` VARCHAR(26) NOT NULL,
+            `package_size` int(5) NOT NULL DEFAULT 1,
             `created_by` VARCHAR(26) NOT NULL,
             `price` DECIMAL(10,2) NOT NULL,
             `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail',
             `delivery_capacity` INT DEFAULT NULL,
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
-            PRIMARY KEY (`id`)
+            PRIMARY KEY (`id`),
+            FOREIGN KEY (`store_products_id`) REFERENCES `store_products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (`product_unit_of_measure_id`) REFERENCES `product_unit_of_measure` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (`created_by`) REFERENCES `zzimba_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
     ");
-
-    $required = [
-        'store_products_id' => "ADD COLUMN `store_products_id` VARCHAR(26) NOT NULL AFTER `store_id`",
-        'product_unit_of_measure_id' => "ADD COLUMN `product_unit_of_measure_id` VARCHAR(26) NOT NULL AFTER `store_products_id`",
-        'created_by' => "ADD COLUMN `created_by` VARCHAR(26) NOT NULL AFTER `product_unit_of_measure_id`",
-        'price' => "ADD COLUMN `price` DECIMAL(10,2) NOT NULL AFTER `created_by`",
-        'price_category' => "ADD COLUMN `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail' AFTER `price`",
-        'delivery_capacity' => "ADD COLUMN `delivery_capacity` INT DEFAULT NULL AFTER `price_category`",
-        'created_at' => "ADD COLUMN `created_at` DATETIME NOT NULL AFTER `delivery_capacity`",
-        'updated_at' => "ADD COLUMN `updated_at` DATETIME NOT NULL AFTER `created_at`"
-    ];
-
-    $cols = $pdo->query("DESCRIBE `product_pricing`")->fetchAll(PDO::FETCH_COLUMN);
-    $cols = array_map('strtolower', $cols);
-
-    foreach ($required as $name => $ddl) {
-        if (!in_array(strtolower($name), $cols, true)) {
-            try {
-                $pdo->exec("ALTER TABLE `product_pricing` $ddl");
-            } catch (Exception $e) {
-                error_log("Error adding column `$name` to product_pricing: " . $e->getMessage());
-            }
-        }
-    }
 }
 
 function requireLogin()
@@ -318,6 +306,7 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                 pp.price,
                 pp.price_category,
                 pp.delivery_capacity,
+                pp.package_size,
                 pum.id             AS unit_id,
                 ppn.package_name,
                 psu.si_unit
@@ -360,6 +349,7 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                     'price' => (float) ($r['price'] ?? 0),
                     'price_category' => $r['price_category'] ?? 'retail',
                     'delivery_capacity' => $r['delivery_capacity'] !== null ? (int) $r['delivery_capacity'] : null,
+                    'package_size' => (int) ($r['package_size'] ?? 1),
                     'unit_id' => $r['unit_id'] ?? null
                 ];
             }
@@ -543,11 +533,10 @@ function updateCategoryStatus(PDO $pdo, string $currentUser)
 function addStoreProduct(PDO $pdo, string $currentUser)
 {
     $storeId = $_POST['store_id'] ?? '';
-    $categoryId = $_POST['category_id'] ?? '';
     $productId = $_POST['product_id'] ?? '';
     $lineItems = isset($_POST['line_items']) ? json_decode($_POST['line_items'], true) : [];
 
-    if (!isValidUlid($storeId) || !isValidUlid($categoryId) || !isValidUlid($productId)) {
+    if (!isValidUlid($storeId) || !isValidUlid($productId)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid ID format']);
         return;
@@ -561,17 +550,46 @@ function addStoreProduct(PDO $pdo, string $currentUser)
     try {
         $pdo->beginTransaction();
 
+        // Get product category
+        $prodCatStmt = $pdo->prepare("
+            SELECT category_id
+            FROM products
+            WHERE id = ?
+        ");
+        $prodCatStmt->execute([$productId]);
+        $categoryId = $prodCatStmt->fetchColumn();
+
+        if (!$categoryId) {
+            throw new Exception('Product category not found');
+        }
+
+        // Check if store already has this category
         $scStmt = $pdo->prepare("
             SELECT id
             FROM store_categories
-            WHERE store_id = ? AND category_id = ? AND status = 'active'
+            WHERE store_id = ? AND category_id = ? AND status != 'deleted'
         ");
         $scStmt->execute([$storeId, $categoryId]);
         $scId = $scStmt->fetchColumn();
+
+        // If category doesn't exist for this store, add it
         if (!$scId) {
-            throw new Exception('Store category not found');
+            $scId = generateUlid();
+            $pdo->prepare("
+                INSERT INTO store_categories
+                    (id, store_id, category_id, status, created_at, updated_at)
+                VALUES (?, ?, ?, 'active', NOW(), NOW())
+            ")->execute([$scId, $storeId, $categoryId]);
+        } else {
+            // Make sure the category is active
+            $pdo->prepare("
+                UPDATE store_categories
+                SET status = 'active', updated_at = NOW()
+                WHERE id = ? AND status != 'active'
+            ")->execute([$scId]);
         }
 
+        // Check if product already exists in store
         $check = $pdo->prepare("
             SELECT id, status
             FROM store_products
@@ -601,11 +619,12 @@ function addStoreProduct(PDO $pdo, string $currentUser)
         if (is_array($lineItems) && count($lineItems) > 0) {
             $pi = $pdo->prepare("
                 INSERT INTO product_pricing
-                    (id, store_id, store_products_id, product_unit_of_measure_id, created_by, price, price_category, delivery_capacity, created_at, updated_at)
+                    (id, store_products_id, product_unit_of_measure_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             foreach ($lineItems as $item) {
                 $unitId = $item['unit_id'] ?? '';
+                $packageSize = intval($item['package_size'] ?? 1);
                 $price = floatval($item['price'] ?? 0);
                 $cat = $item['price_category'] ?? 'retail';
                 $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
@@ -617,9 +636,9 @@ function addStoreProduct(PDO $pdo, string $currentUser)
                 $ppId = generateUlid();
                 $pi->execute([
                     $ppId,
-                    $storeId,
                     $spId,
                     $unitId,
+                    $packageSize,
                     $currentUser,
                     $price,
                     $cat,
@@ -636,28 +655,38 @@ function addStoreProduct(PDO $pdo, string $currentUser)
         }
         error_log('Error adding product: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error adding product']);
+        echo json_encode(['success' => false, 'error' => 'Error adding product: ' . $e->getMessage()]);
     }
 }
 
 function updateStoreProduct(PDO $pdo, string $currentUser)
 {
-    $storeId = $_POST['store_id'] ?? '';
     $storeProductId = $_POST['store_product_id'] ?? '';
     $lineItems = isset($_POST['line_items']) ? json_decode($_POST['line_items'], true) : [];
 
-    if (!isValidUlid($storeId) || !isValidUlid($storeProductId)) {
+    if (!isValidUlid($storeProductId)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid ID format']);
         return;
     }
-    if (!canManageStore($pdo, $storeId, $currentUser)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Permission denied']);
-        return;
-    }
 
     try {
+        // Get store ID from store_product_id
+        $storeIdStmt = $pdo->prepare("
+            SELECT sc.store_id
+            FROM store_products sp
+            JOIN store_categories sc ON sp.store_category_id = sc.id
+            WHERE sp.id = ?
+        ");
+        $storeIdStmt->execute([$storeProductId]);
+        $storeId = $storeIdStmt->fetchColumn();
+
+        if (!$storeId || !canManageStore($pdo, $storeId, $currentUser)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Permission denied']);
+            return;
+        }
+
         $pdo->beginTransaction();
 
         $pdo->prepare("DELETE FROM product_pricing WHERE store_products_id = ?")
@@ -666,11 +695,12 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
         if (is_array($lineItems) && count($lineItems) > 0) {
             $pi = $pdo->prepare("
                 INSERT INTO product_pricing
-                    (id, store_id, store_products_id, product_unit_of_measure_id, created_by, price, price_category, delivery_capacity, created_at, updated_at)
+                    (id, store_products_id, product_unit_of_measure_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             foreach ($lineItems as $item) {
                 $unitId = $item['unit_id'] ?? '';
+                $packageSize = intval($item['package_size'] ?? 1);
                 $price = floatval($item['price'] ?? 0);
                 $cat = $item['price_category'] ?? 'retail';
                 $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
@@ -682,9 +712,9 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                 $ppId = generateUlid();
                 $pi->execute([
                     $ppId,
-                    $storeId,
                     $storeProductId,
                     $unitId,
+                    $packageSize,
                     $currentUser,
                     $price,
                     $cat,
@@ -815,15 +845,52 @@ function getProductsNotInStore(PDO $pdo, string $storeId, string $categoryId)
                   SELECT sp.product_id
                   FROM store_products sp
                   JOIN store_categories sc ON sc.id = sp.store_category_id
-                  WHERE sc.store_id = ? AND sc.category_id = ? AND sp.status != 'deleted'
+                  WHERE sc.store_id = ? AND sp.status != 'deleted'
               )
             ORDER BY p.created_at DESC
         ");
-        $stmt->execute([$categoryId, $storeId, $categoryId]);
+        $stmt->execute([$categoryId, $storeId]);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode(['success' => true, 'products' => $products]);
     } catch (Exception $e) {
         error_log('Error in getProductsNotInStore: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error fetching products']);
+    }
+}
+
+function getAllProductsNotInStore(PDO $pdo, string $storeId)
+{
+    if (!isValidUlid($storeId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid ID format']);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                p.id,
+                p.title       AS name,
+                p.description,
+                p.category_id,
+                pc.name       AS category_name
+            FROM products p
+            JOIN product_categories pc ON p.category_id = pc.id
+            WHERE p.status = 'published'
+              AND p.id NOT IN (
+                  SELECT sp.product_id
+                  FROM store_products sp
+                  JOIN store_categories sc ON sc.id = sp.store_category_id
+                  WHERE sc.store_id = ? AND sp.status != 'deleted'
+              )
+            ORDER BY pc.name, p.title
+        ");
+        $stmt->execute([$storeId]);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'products' => $products]);
+    } catch (Exception $e) {
+        error_log('Error in getAllProductsNotInStore: ' . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Error fetching products']);
     }
