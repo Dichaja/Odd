@@ -93,6 +93,10 @@ try {
             getRegions();
             break;
 
+        case 'getNatureOfBusiness':
+            getNatureOfBusiness($pdo);
+            break;
+
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Invalid action']);
@@ -105,10 +109,6 @@ try {
 }
 
 ob_end_flush();
-
-/* -----------------------------------------------------------------------------
-   HELPERS
------------------------------------------------------------------------------ */
 
 function isValidUlid(string $id): bool
 {
@@ -132,10 +132,6 @@ function deleteDirectory(string $dir): bool
     }
     return rmdir($dir);
 }
-
-/* -----------------------------------------------------------------------------
-   AUTH & ACCESS
------------------------------------------------------------------------------ */
 
 function isOwner(PDO $pdo, string $storeId, string $userId): bool
 {
@@ -172,13 +168,21 @@ function storeFieldExists(PDO $pdo, string $field, string $value, string $exclud
     return $stmt->fetchColumn() > 0;
 }
 
-/* -----------------------------------------------------------------------------
-   TABLE INITIALIZATION
------------------------------------------------------------------------------ */
-
 function initializeTables(PDO $pdo): void
 {
-    // vendor_stores
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS nature_of_business (
+            id VARCHAR(26) PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            description TEXT,
+            status ENUM('active','inactive') NOT NULL DEFAULT 'active',
+            icon VARCHAR(100),
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            UNIQUE KEY name_unique (name)
+        )
+    ");
+
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS vendor_stores (
             id VARCHAR(26) PRIMARY KEY,
@@ -210,7 +214,6 @@ function initializeTables(PDO $pdo): void
         )
     ");
 
-    // store_categories
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS store_categories (
             id VARCHAR(26) PRIMARY KEY,
@@ -225,7 +228,6 @@ function initializeTables(PDO $pdo): void
         )
     ");
 
-    // store_products
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS store_products (
             id VARCHAR(26) PRIMARY KEY,
@@ -240,7 +242,6 @@ function initializeTables(PDO $pdo): void
         )
     ");
 
-    // store_managers
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS store_managers (
             id VARCHAR(26) PRIMARY KEY,
@@ -259,10 +260,6 @@ function initializeTables(PDO $pdo): void
         )
     ");
 }
-
-/* -----------------------------------------------------------------------------
-   EMAIL NOTIFICATION FUNCTIONS
------------------------------------------------------------------------------ */
 
 function sendManagerApprovalNotification(string $email, string $firstName, string $lastName, string $storeName): bool
 {
@@ -318,16 +315,26 @@ function sendManagerDenialNotification(string $ownerEmail, string $ownerName, st
     return Mailer::sendMail($ownerEmail, $subject, $content);
 }
 
-/* -----------------------------------------------------------------------------
-   ENDPOINTS
------------------------------------------------------------------------------ */
+function getNatureOfBusiness(PDO $pdo): void
+{
+    $stmt = $pdo->prepare("
+        SELECT id, name, description, icon, status 
+        FROM nature_of_business 
+        WHERE status = 'active'
+        ORDER BY name ASC
+    ");
+    $stmt->execute();
+    $natureOfBusiness = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode(['success' => true, 'natureOfBusiness' => $natureOfBusiness]);
+}
 
 function getOwnedStores(PDO $pdo, string $userId): void
 {
     $stmt = $pdo->prepare("
         SELECT 
             vs.id, vs.name, vs.description, vs.business_email,
-            vs.business_phone, vs.nature_of_operation,
+            vs.business_phone, vs.nature_of_business, nob.name as nature_of_business_name,
             vs.region, vs.district, vs.address, vs.logo_url,
             vs.status, vs.created_at,
             (
@@ -337,6 +344,7 @@ function getOwnedStores(PDO $pdo, string $userId): void
                  WHERE sc.store_id = vs.id AND sp.status = 'active'
             ) AS product_count
         FROM vendor_stores vs
+        LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id
         WHERE vs.owner_id = ?
         ORDER BY vs.created_at DESC
     ");
@@ -371,7 +379,7 @@ function getManagedStores(PDO $pdo, string $userId): void
     $stmt = $pdo->prepare("
         SELECT 
             vs.id, vs.name, vs.description, vs.business_email,
-            vs.business_phone, vs.nature_of_operation,
+            vs.business_phone, vs.nature_of_business, nob.name as nature_of_business_name,
             vs.region, vs.district, vs.address, vs.logo_url,
             vs.status, sm.role, u.username AS owner,
             vs.created_at,
@@ -382,6 +390,7 @@ function getManagedStores(PDO $pdo, string $userId): void
                  WHERE sc.store_id = vs.id AND sp.status = 'active'
             ) AS product_count
         FROM vendor_stores vs
+        LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id
         JOIN store_managers sm ON vs.id = sm.store_id
         JOIN zzimba_users u      ON vs.owner_id = u.id
         WHERE sm.user_id = ? AND vs.owner_id != ? AND sm.status = 'active' AND sm.approved = 1
@@ -456,8 +465,9 @@ function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
     }
 
     $stmt = $pdo->prepare("
-        SELECT vs.*, u.username AS owner_username, u.email AS owner_email, u.phone AS owner_phone
+        SELECT vs.*, nob.name as nature_of_business_name, u.username AS owner_username, u.email AS owner_email, u.phone AS owner_phone
         FROM vendor_stores vs
+        LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id
         JOIN zzimba_users u ON vs.owner_id = u.id
         WHERE vs.id = ?
     ");
@@ -511,7 +521,7 @@ function createStore(PDO $pdo, string $userId): void
 {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    foreach (['name', 'business_email', 'business_phone', 'nature_of_operation', 'region', 'district', 'address', 'latitude', 'longitude'] as $f) {
+    foreach (['name', 'business_email', 'business_phone', 'nature_of_business', 'region', 'district', 'address', 'latitude', 'longitude'] as $f) {
         if (empty($data[$f])) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => "Field '$f' is required"]);
@@ -542,7 +552,7 @@ function createStore(PDO $pdo, string $userId): void
         $stmt = $pdo->prepare("
             INSERT INTO vendor_stores (
                 id, owner_id, name, description, business_email, business_phone,
-                nature_of_operation, region, district, subcounty, parish, address,
+                nature_of_business, region, district, subcounty, parish, address,
                 latitude, longitude, logo_url, website_url, social_media,
                 status, created_at, updated_at
             ) VALUES (
@@ -556,7 +566,7 @@ function createStore(PDO $pdo, string $userId): void
             $data['description'] ?? '',
             $data['business_email'],
             $data['business_phone'],
-            $data['nature_of_operation'],
+            $data['nature_of_business'],
             $data['region'],
             $data['district'],
             $data['subcounty'] ?? null,
@@ -627,7 +637,7 @@ function updateStore(PDO $pdo, string $userId): void
         'description',
         'business_email',
         'business_phone',
-        'nature_of_operation',
+        'nature_of_business',
         'region',
         'district',
         'subcounty',

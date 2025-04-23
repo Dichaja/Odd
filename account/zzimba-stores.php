@@ -3,17 +3,6 @@ require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Manage Stores';
 $activeNav = 'zzimba-stores';
 
-// Sample nature of operations
-$natureOfOperations = [
-    'Manufacturer',
-    'Hardware Store',
-    'Earth materials',
-    'Plant & Equipment',
-    'Transporter',
-    'Wholesale Store',
-    'Distributor'
-];
-
 ob_start();
 ?>
 
@@ -27,7 +16,6 @@ ob_start();
                         Manage your vendor profiles and store listings
                     </p>
                 </div>
-                <!-- Create Button -->
                 <button id="createStoreBtn"
                     class="h-10 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors flex items-center gap-2 justify-center"
                     onclick="openStoreModal('create')">
@@ -38,7 +26,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Pending Invitations Section -->
     <div id="pending-invitations-section" class="content-section hidden">
         <div class="p-6">
             <div class="mb-6">
@@ -47,7 +34,6 @@ ob_start();
             </div>
 
             <div id="pending-invitations-container">
-                <!-- Invitations loaded dynamically via AJAX -->
                 <div class="flex justify-center items-center py-6">
                     <div class="w-8 h-8 border-4 border-user-primary border-t-transparent rounded-full animate-spin">
                     </div>
@@ -56,7 +42,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Combined Stores Section -->
     <div class="content-section">
         <div class="p-6">
             <div class="mb-6">
@@ -64,7 +49,6 @@ ob_start();
             </div>
 
             <div id="all-stores-container">
-                <!-- Stores loaded dynamically via AJAX -->
                 <div class="flex justify-center items-center py-12">
                     <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin">
                     </div>
@@ -74,7 +58,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Universal Store Modal (used for both CREATE and EDIT) -->
 <div id="storeModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/20" onclick="closeStoreModal()"></div>
     <div
@@ -82,14 +65,12 @@ ob_start();
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="storeModalTitle" class="text-lg font-semibold text-secondary">
-                    <!-- We'll set this text dynamically: "Create New Store" or "Edit Store" -->
                 </h3>
                 <button onclick="closeStoreModal()" class="text-gray-400 hover:text-gray-500">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
-            <!-- Step Indicators -->
             <div class="flex items-center justify-center mb-6">
                 <div class="flex items-center">
                     <div id="storeStep1Indicator"
@@ -107,11 +88,9 @@ ob_start();
             </div>
 
             <form id="storeForm">
-                <!-- Hidden fields to track mode (create/edit) and storeId (if editing) -->
                 <input type="hidden" id="storeMode" value="">
                 <input type="hidden" id="storeId" value="">
 
-                <!-- Step 1: Basic Store Details -->
                 <div id="storeStep1" class="step-content">
                     <h4 class="text-center font-medium text-secondary mb-4">Basic Store Details</h4>
                     <div class="space-y-4">
@@ -134,15 +113,11 @@ ob_start();
                                 class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                         <div>
-                            <label for="storeNatureOfOperation"
-                                class="block text-sm font-medium text-gray-700 mb-1">Nature of Operation *</label>
-                            <select id="storeNatureOfOperation"
+                            <label for="storeNatureOfBusiness"
+                                class="block text-sm font-medium text-gray-700 mb-1">Nature of Business *</label>
+                            <select id="storeNatureOfBusiness"
                                 class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                                <option value="">Select Nature of Operation</option>
-                                <?php foreach ($natureOfOperations as $operation): ?>
-                                    <option value="<?= htmlspecialchars($operation) ?>"><?= htmlspecialchars($operation) ?>
-                                    </option>
-                                <?php endforeach; ?>
+                                <option value="">Select Nature of Business</option>
                             </select>
                         </div>
                         <button type="button" id="storeStep1NextBtn"
@@ -152,12 +127,10 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- Step 2: Location Selection -->
                 <div id="storeStep2" class="step-content hidden">
                     <h4 class="text-center font-medium text-secondary mb-4">Store Location</h4>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Left column: Map -->
                         <div>
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Select Location on Map
@@ -195,7 +168,6 @@ ob_start();
                             </div>
                         </div>
 
-                        <!-- Right column: Administrative regions -->
                         <div>
                             <div class="space-y-4">
                                 <div>
@@ -280,7 +252,6 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- Step 3: Store Details -->
                 <div id="storeStep3" class="step-content hidden">
                     <h4 class="text-center font-medium text-secondary mb-4">Store Details</h4>
 
@@ -340,7 +311,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Invitation Response Confirmation Modal -->
 <div id="invitationResponseModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/20" onclick="closeInvitationResponseModal()"></div>
     <div
@@ -355,7 +325,6 @@ ob_start();
             </div>
 
             <div id="invitationResponseContent" class="py-4">
-                <!-- Content will be set dynamically -->
             </div>
 
             <div class="flex justify-end gap-3 mt-4">
@@ -373,7 +342,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Loading Overlay -->
 <div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
     <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
         <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -381,15 +349,12 @@ ob_start();
     </div>
 </div>
 
-<!-- Leaflet CSS and JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<!-- Leaflet plugins for point-in-polygon -->
 <script src="https://unpkg.com/leaflet-pip@1.1.0/leaflet-pip.js"></script>
 
-<!-- intl-tel-input for phone -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css" />
 
@@ -457,7 +422,6 @@ ob_start();
 </style>
 
 <script>
-    // Global constants
     const STORE_API_BASE = BASE_URL + 'account/fetch/manageZzimbaStores.php';
     let storeMap = null;
     let storeMarker = null;
@@ -467,27 +431,24 @@ ob_start();
     let storePhoneInput = null;
     let allStores = [];
     let pendingInvitations = [];
-    let currentFilter = 'owned'; // Default filter
+    let currentFilter = 'owned';
     let currentInvitationAction = null;
     let currentInvitationId = null;
+    let natureOfBusinessOptions = [];
 
-    // On document ready
     $(document).ready(function () {
-        // Load all stores and pending invitations
         loadAllStores();
         loadPendingInvitations();
+        loadNatureOfBusiness();
 
-        // Initialize phone input
         initializePhoneInput();
 
-        // Step navigation
         $('#storeStep1NextBtn').click(() => goToStep2());
         $('#storeStep2BackBtn').click(() => backToStep1());
         $('#storeStep2NextBtn').click(() => goToStep3());
         $('#storeStep3BackBtn').click(() => backToStep2());
         $('#storeStep3FinishBtn').click(() => saveStoreData());
 
-        // Logo preview
         $('#storeLogo').change(function (e) {
             if (e.target.files && e.target.files[0]) {
                 const reader = new FileReader();
@@ -499,7 +460,6 @@ ob_start();
             }
         });
 
-        // Invitation response handlers
         $('#invitationResponseConfirmBtn').click(function () {
             if (currentInvitationAction && currentInvitationId) {
                 processInvitationResponse(currentInvitationAction, currentInvitationId);
@@ -507,13 +467,24 @@ ob_start();
         });
     });
 
-    /**
-     * --------------------------------------------------
-     * Common Functions
-     * --------------------------------------------------
-     */
+    function loadNatureOfBusiness() {
+        $.ajax({
+            url: STORE_API_BASE + '?action=getNatureOfBusiness',
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    natureOfBusinessOptions = response.natureOfBusiness || [];
+                    const dropdown = $('#storeNatureOfBusiness');
+                    dropdown.html('<option value="">Select Nature of Business</option>');
+                    natureOfBusinessOptions.forEach(item => {
+                        dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+                    });
+                }
+            }
+        });
+    }
 
-    // Show/hide loading
     function showLoading() {
         $('#loadingOverlay').removeClass('hidden');
     }
@@ -566,11 +537,9 @@ ob_start();
         }, 3000);
     }
 
-    // Load all stores
     function loadAllStores() {
         showLoading();
 
-        // First load owned stores
         $.ajax({
             url: STORE_API_BASE + '?action=getOwnedStores',
             type: 'GET',
@@ -579,7 +548,6 @@ ob_start();
                 if (response.success) {
                     const ownedStores = (response.stores || []).map(s => ({ ...s, type: 'owned' }));
 
-                    // Now load managed stores
                     $.ajax({
                         url: STORE_API_BASE + '?action=getManagedStores',
                         type: 'GET',
@@ -589,7 +557,6 @@ ob_start();
                             if (response.success) {
                                 const managedStores = (response.stores || []).map(s => ({ ...s, type: 'managed' }));
 
-                                // Combine both types of stores
                                 allStores = [...ownedStores, ...managedStores];
                                 renderStores(allStores);
                             } else {
@@ -617,7 +584,6 @@ ob_start();
         });
     }
 
-    // Load pending invitations
     function loadPendingInvitations() {
         $.ajax({
             url: STORE_API_BASE + '?action=getPendingInvitations',
@@ -642,7 +608,6 @@ ob_start();
         });
     }
 
-    // Render pending invitations
     function renderPendingInvitations(invitations) {
         const container = $('#pending-invitations-container');
 
@@ -703,7 +668,6 @@ ob_start();
         container.html(html);
     }
 
-    // Confirm invitation response
     function confirmInvitationResponse(action, managerId, storeName) {
         currentInvitationAction = action;
         currentInvitationId = managerId;
@@ -725,11 +689,9 @@ ob_start();
         $('#invitationResponseModal').removeClass('hidden');
     }
 
-    // Process invitation response
     function processInvitationResponse(action, managerId) {
         const endpoint = action === 'approve' ? 'approveManagerInvitation' : 'declineManagerInvitation';
 
-        // Disable buttons
         $('#invitationResponseConfirmBtn, #invitationResponseCancelBtn, #invitationResponseCloseBtn').prop('disabled', true);
         $('#invitationResponseConfirmBtn').html('<i class="fas fa-spinner fa-spin mr-2"></i>' + (action === 'approve' ? 'Approving...' : 'Declining...'));
 
@@ -743,10 +705,9 @@ ob_start();
                     closeInvitationResponseModal();
                     showSuccessNotification(response.message || (action === 'approve' ? 'Invitation approved successfully' : 'Invitation declined successfully'));
 
-                    // Reload invitations and stores
                     loadPendingInvitations();
                     if (action === 'approve') {
-                        loadAllStores(); // Reload stores if approved to show the new managed store
+                        loadAllStores();
                     }
                 } else {
                     showErrorNotification(response.error || 'Failed to process invitation');
@@ -772,7 +733,6 @@ ob_start();
         enableInvitationResponseButtons();
     }
 
-    // Filter stores based on current filter
     function filterStores() {
         renderStores(allStores);
     }
@@ -871,7 +831,6 @@ ob_start();
         container.html(html);
     }
 
-    // Helper
     function getStatusBadge(status) {
         switch (status) {
             case 'active':
@@ -950,20 +909,13 @@ ob_start();
         return diffInYears + (diffInYears === 1 ? ' year ago' : ' years ago');
     }
 
-    /**
-     * --------------------------------------------------
-     * Modal & Form
-     * --------------------------------------------------
-     */
-
-    // Open modal in create or edit mode
     function openStoreModal(mode, storeId = null) {
         $('#storeModal').removeClass('hidden');
         $('#storeMode').val(mode);
 
         if (mode === 'create') {
             $('#storeModalTitle').text('Create New Store');
-            resetStoreForm(); // brand new form
+            resetStoreForm();
         } else {
             $('#storeModalTitle').text('Edit Store');
             resetStoreForm();
@@ -975,13 +927,11 @@ ob_start();
         $('#storeModal').addClass('hidden');
     }
 
-    // Step transitions
     function goToStep2() {
-        // Validate step 1
         const name = $('#storeBusinessName').val();
         const email = $('#storeBusinessEmail').val();
         const phone = storePhoneInput.getNumber();
-        const nature = $('#storeNatureOfOperation').val();
+        const nature = $('#storeNatureOfBusiness').val();
         if (!name || !email || !phone || !nature) {
             showErrorNotification('Please fill in all required fields');
             return;
@@ -990,7 +940,6 @@ ob_start();
             showErrorNotification('Please enter a valid phone number');
             return;
         }
-        // Step indicator update
         $('#storeStep1').addClass('hidden');
         $('#storeStep2').removeClass('hidden');
         $('#storeStep1Indicator')
@@ -1022,7 +971,6 @@ ob_start();
     }
 
     function goToStep3() {
-        // Validate step 2
         const lat = $('#storeLatitude').val();
         const lng = $('#storeLongitude').val();
         const lvl1 = $('#storeLevel1').val();
@@ -1032,7 +980,6 @@ ob_start();
             showErrorNotification('Please select your location on the map and fill in all required fields');
             return;
         }
-        // Step indicator update
         $('#storeStep2').addClass('hidden');
         $('#storeStep3').removeClass('hidden');
         $('#storeStep2Indicator')
@@ -1062,18 +1009,12 @@ ob_start();
         }, 100);
     }
 
-    // Clear form
     function resetStoreForm() {
-        // IMPORTANT: Removed the line that forced 'create' mode here!
-        // We only clear form fields; the actual mode is set in openStoreModal(...).
-
         $('#storeId').val('');
-        // Step 1 fields
         $('#storeBusinessName').val('');
         $('#storeBusinessEmail').val('');
         $('#storeContactNumber').val('');
-        $('#storeNatureOfOperation').val('');
-        // Step 2 fields
+        $('#storeNatureOfBusiness').val('');
         $('#storeLatitude').val('');
         $('#storeLongitude').val('');
         $('#storeAddress').val('');
@@ -1081,7 +1022,6 @@ ob_start();
         $('#storeLevel2').html('<option value="">Select District</option>').prop('disabled', true);
         $('#storeLevel3').html('<option value="">Select Sub-county</option>').prop('disabled', true);
         $('#storeLevel4').html('<option value="">Select Parish/Ward</option>').prop('disabled', true);
-        // Step 3 fields
         $('#storeDescription').val('');
         $('#storeWebsite').val('');
         $('#storeSocialMedia').val('');
@@ -1089,7 +1029,6 @@ ob_start();
         $('#storeLogoPreview').attr('src', '#').addClass('hidden');
         $('#storeLogoPlaceholder').removeClass('hidden');
 
-        // Step indicators
         $('#storeStep1').removeClass('hidden');
         $('#storeStep2, #storeStep3').addClass('hidden');
         $('#storeStep1Indicator')
@@ -1105,15 +1044,12 @@ ob_start();
             .removeClass('bg-green-500')
             .addClass('bg-gray-200');
 
-        // Re-init map
         destroyMap();
         initStoreMap();
 
-        // Load UG regions fresh
         loadRegions();
     }
 
-    // Populate form in "edit" mode
     function populateStoreForm(storeId) {
         $('#storeId').val(storeId);
         showLoading();
@@ -1129,21 +1065,17 @@ ob_start();
                 }
                 const store = response.store;
                 $('#storeId').val(store.uuid_id);
-                // Step 1
                 $('#storeBusinessName').val(store.name);
                 $('#storeBusinessEmail').val(store.business_email);
-                storePhoneInput.setNumber(store.business_phone); // phone
-                $('#storeNatureOfOperation').val(store.nature_of_operation);
-                // Step 2
+                storePhoneInput.setNumber(store.business_phone);
+                $('#storeNatureOfBusiness').val(store.nature_of_business);
                 $('#storeLatitude').val(store.latitude);
                 $('#storeLongitude').val(store.longitude);
                 $('#storeAddress').val(store.address);
-                // Step 3
                 $('#storeDescription').val(store.description);
                 $('#storeWebsite').val(store.website_url);
                 $('#storeSocialMedia').val(store.social_media);
 
-                // Logo
                 if (store.logo_url) {
                     $('#storeLogoPreview')
                         .attr('src', BASE_URL + store.logo_url)
@@ -1151,10 +1083,8 @@ ob_start();
                     $('#storeLogoPlaceholder').addClass('hidden');
                 }
 
-                // Now init map with that location
                 destroyMap();
                 initStoreMap(store.latitude, store.longitude);
-                // Load & set UG regions
                 loadRegions(store.region, store.district, store.subcounty, store.parish);
             },
             error: function () {
@@ -1164,18 +1094,16 @@ ob_start();
         });
     }
 
-    // Final submission
     function saveStoreData() {
         const mode = $('#storeMode').val();
         const storeId = $('#storeId').val();
 
-        // Gather form data
         const formData = {
             id: storeId,
             name: $('#storeBusinessName').val(),
             business_email: $('#storeBusinessEmail').val(),
             business_phone: storePhoneInput.getNumber(),
-            nature_of_operation: $('#storeNatureOfOperation').val(),
+            nature_of_business: $('#storeNatureOfBusiness').val(),
             region: $('#storeLevel1').val(),
             district: $('#storeLevel2').val(),
             subcounty: $('#storeLevel3').val(),
@@ -1188,7 +1116,6 @@ ob_start();
             social_media: $('#storeSocialMedia').val()
         };
 
-        // If user uploaded a new logo, we must first upload to temp
         const logoFile = $('#storeLogo')[0].files[0];
 
         if (logoFile) {
@@ -1205,7 +1132,6 @@ ob_start();
                 success: function (resp) {
                     if (resp.success) {
                         formData.temp_logo_path = resp.temp_path;
-                        // Now call create or update
                         finishSave(mode, formData);
                     } else {
                         hideLoading();
@@ -1218,7 +1144,6 @@ ob_start();
                 }
             });
         } else {
-            // No new logo
             finishSave(mode, formData);
         }
     }
@@ -1241,7 +1166,7 @@ ob_start();
                     closeStoreModal();
                     showSuccessNotification(response.message || 'Store saved successfully!');
                     resetStoreForm();
-                    loadAllStores(); // refresh list
+                    loadAllStores();
                 } else {
                     showErrorNotification(response.error || 'Failed to save store');
                 }
@@ -1253,13 +1178,7 @@ ob_start();
         });
     }
 
-    /**
-    * --------------------------------------------------
-    * Map & Regions
-    * --------------------------------------------------
-    */
     function initStoreMap(lat = 1.3733, lng = 32.2903) {
-        // If map already exists, do nothing
         if (storeMap) return;
         storeMap = L.map('storeMapContainer').setView([lat, lng], 7);
 
@@ -1282,7 +1201,6 @@ ob_start();
         };
         storeBaseLayers.osm.addTo(storeMap);
 
-        // Switch style
         $('#storeMapStyle').change(function () {
             const style = $(this).val();
             Object.values(storeBaseLayers).forEach(layer => {
@@ -1295,16 +1213,13 @@ ob_start();
             }
         });
 
-        // Map clicks
         storeMap.on('click', function (e) {
-            // Only allow dropping pin if within selected region
             if (storeCurrentGeoJSON) {
                 const point = {
                     type: 'Point',
                     coordinates: [e.latlng.lng, e.latlng.lat]
                 };
 
-                // Check if point is within any of the polygons in the current GeoJSON
                 let isWithinBounds = false;
                 for (const feature of storeCurrentGeoJSON.features) {
                     if (leafletPip.pointInLayer([e.latlng.lng, e.latlng.lat], L.geoJSON(feature), true).length > 0) {
@@ -1323,12 +1238,10 @@ ob_start();
             }
         });
 
-        // If we have coordinates, add a marker
         if (lat && lng && lat !== 1.3733 && lng !== 32.2903) {
             dropStoreMarker(L.latLng(lat, lng));
         }
 
-        // Try locate
         locateUser('#storeLocateMeBtn', storeMap, 'create');
     }
 
@@ -1344,17 +1257,14 @@ ob_start();
     }
 
     function dropStoreMarker(latlng) {
-        // If storeMarker exists, remove it
         if (storeMarker) storeMap.removeLayer(storeMarker);
 
-        // Create custom icon with pulse effect
         const icon = L.divIcon({
             className: 'location-icon pulse',
             iconSize: [16, 16],
             iconAnchor: [8, 8]
         });
 
-        // Create marker
         storeMarker = L.marker(latlng, {
             draggable: true,
             icon: icon
@@ -1367,7 +1277,6 @@ ob_start();
         storeMarker.on('dragend', function () {
             const newPos = storeMarker.getLatLng();
 
-            // Check if new position is within bounds
             let isWithinBounds = false;
             if (storeCurrentGeoJSON) {
                 for (const feature of storeCurrentGeoJSON.features) {
@@ -1383,7 +1292,6 @@ ob_start();
                 $('#storeLongitude').val(newPos.lng.toFixed(6));
                 reverseGeocode(newPos.lat, newPos.lng);
             } else {
-                // Reset to previous position
                 storeMarker.setLatLng(latlng);
                 showErrorNotification('Please keep the pin within the highlighted region');
             }
@@ -1402,7 +1310,6 @@ ob_start();
                     const lng = pos.coords.longitude;
                     mapObj.setView([lat, lng], 15);
 
-                    // Check if location is within bounds
                     let isWithinBounds = false;
                     if (storeCurrentGeoJSON) {
                         for (const feature of storeCurrentGeoJSON.features) {
@@ -1435,7 +1342,6 @@ ob_start();
         });
     }
 
-    // Reverse geocode
     function reverseGeocode(lat, lng) {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
         fetch(url, {
@@ -1454,13 +1360,11 @@ ob_start();
             });
     }
 
-    // Load regions
     function loadRegions(selectedRegion = null, selectedDistrict = null, selectedSubcounty = null, selectedParish = null) {
         fetch('<?= BASE_URL ?>locations/gadm41_UGA_4.json')
             .then(response => response.json())
             .then(data => {
                 if (!data.features) return;
-                // Unique level1
                 const level1Options = {};
                 data.features.forEach(f => {
                     const name = f.properties.NAME_1;
@@ -1476,7 +1380,7 @@ ob_start();
                         );
                     });
 
-                window.ugGeoData = data; // keep globally
+                window.ugGeoData = data;
                 storeLevel1.change(function () {
                     const region = $(this).val();
                     if (region) {
@@ -1550,7 +1454,6 @@ ob_start();
 
                 if (selectedRegion) {
                     updateDistricts(selectedRegion, selectedDistrict, selectedSubcounty, selectedParish);
-                    // Trigger map update with saved location
                     let selections = {
                         1: selectedRegion
                     };
@@ -1652,7 +1555,6 @@ ob_start();
 
     function updateMapGeoJSON(selections) {
         if (!window.ugGeoData || !storeMap) return;
-        // Remove existing geojson layer
         if (storeGeoJSONLayer) {
             storeMap.removeLayer(storeGeoJSONLayer);
             storeGeoJSONLayer = null;
@@ -1686,14 +1588,12 @@ ob_start();
             }
         }).addTo(storeMap);
 
-        // Ensure the map zooms to fit the bounds
         storeMap.fitBounds(storeGeoJSONLayer.getBounds(), {
             padding: [20, 20],
             maxZoom: 12,
             animate: true
         });
 
-        // If we have a marker, check if it's still within bounds
         if (storeMarker) {
             const markerPos = storeMarker.getLatLng();
             let isWithinBounds = false;
@@ -1728,7 +1628,6 @@ ob_start();
         $(selector).html('<option value="">Select option</option>').prop('disabled', true);
     }
 
-    // Initialize phone input
     function initializePhoneInput() {
         const phoneInputField = document.querySelector('#storeContactNumber');
         if (phoneInputField) {
