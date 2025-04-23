@@ -577,7 +577,7 @@ ob_start();
             dataType: 'json',
             success: function (response) {
                 if (response.success) {
-                    const ownedStores = response.stores || [];
+                    const ownedStores = (response.stores || []).map(s => ({ ...s, type: 'owned' }));
 
                     // Now load managed stores
                     $.ajax({
@@ -587,13 +587,12 @@ ob_start();
                         success: function (response) {
                             hideLoading();
                             if (response.success) {
-                                const managedStores = response.stores || [];
+                                const managedStores = (response.stores || []).map(s => ({ ...s, type: 'managed' }));
 
                                 // Combine both types of stores
                                 allStores = [...ownedStores, ...managedStores];
                                 renderStores(allStores);
                             } else {
-                                // If managed stores fail, still show owned stores
                                 allStores = ownedStores;
                                 renderStores(allStores);
                                 showErrorNotification(response.error || 'Failed to load managed stores');
@@ -846,15 +845,13 @@ ob_start();
                                 </div>
                             </div>
                             <div class="flex justify-end">
-                                ${store.type === 'owned' ? `
-                                    <button 
-                                        onclick="openStoreModal('edit','${store.uuid_id}')" 
-                                        class="h-8 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 text-sm mr-2"
-                                    >
-                                        <i class="fas fa-edit"></i>
-                                        <span>Edit</span>
-                                    </button>
-                                ` : ''}
+                                <button 
+                                    onclick="openStoreModal('edit','${store.uuid_id}')" 
+                                    class="h-8 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 text-sm mr-2"
+                                >
+                                    <i class="fas fa-edit"></i>
+                                    <span>Edit</span>
+                                </button>
                                 <a 
                                     href="../view/profile/vendor/${store.uuid_id}" 
                                     target="_blank" 
