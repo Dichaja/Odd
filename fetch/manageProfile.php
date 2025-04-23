@@ -197,7 +197,8 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
                 u.phone    AS owner_phone,
                 u.current_login AS owner_current_login,
                 (SELECT COUNT(*) FROM store_categories sc WHERE sc.store_id = v.id AND sc.status = 'active') AS category_count,
-                (SELECT COUNT(*) FROM store_products sp
+                (SELECT COUNT(*) FROM product_pricing pp 
+                    JOIN store_products sp ON pp.store_products_id = sp.id
                     JOIN store_categories sc ON sc.id = sp.store_category_id
                  WHERE sc.store_id = v.id AND sp.status = 'active' AND sc.status = 'active') AS product_count
             FROM vendor_stores v
@@ -228,7 +229,9 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
                 pc.id   AS category_id,
                 pc.name,
                 pc.description,
-                (SELECT COUNT(*) FROM store_products sp WHERE sp.store_category_id = sc.id AND sp.status = 'active') AS product_count
+                (SELECT COUNT(*) FROM product_pricing pp 
+                    JOIN store_products sp ON pp.store_products_id = sp.id
+                    WHERE sp.store_category_id = sc.id AND sp.status = 'active') AS product_count
             FROM store_categories sc
             JOIN product_categories pc ON sc.category_id = pc.id
             WHERE sc.store_id = ? AND sc.status != 'deleted'
