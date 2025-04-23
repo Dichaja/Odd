@@ -488,7 +488,7 @@ ob_start();
         document.getElementById('loading-state').classList.add('hidden');
         document.getElementById('content-state').classList.remove('hidden');
         document.getElementById('vendor-name').textContent = store.name;
-        document.getElementById('vendor-operation-type').textContent = store.nature_of_operation;
+        document.getElementById('vendor-operation-type').textContent = store.nature_of_business_name;
         const statusBadge = document.getElementById('vendor-status');
         const accountStatus = document.getElementById('account-status');
         if (store.status === 'active') {
@@ -569,7 +569,7 @@ ob_start();
     function updateVerificationProgress(store) {
         let completedSteps = 0;
         const totalSteps = 4;
-        const hasBasicDetails = store.name && store.business_email && store.business_phone && store.nature_of_operation;
+        const hasBasicDetails = store.name && store.business_email && store.business_phone && store.nature_of_business;
         completedSteps += hasBasicDetails ? 1 : 0;
         updateStepStatus('basic-details', hasBasicDetails);
         const hasLocationDetails = store.region && store.district && store.address && store.latitude && store.longitude;

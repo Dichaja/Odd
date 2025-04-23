@@ -12,7 +12,7 @@ use Ulid\Ulid;
 
 header('Content-Type: application/json');
 
-$isLoggedIn  = isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
+$isLoggedIn = isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 $currentUser = $isLoggedIn ? $_SESSION['user']['user_id'] : null;
 
 ensureProductPricingTable($pdo);
@@ -101,10 +101,6 @@ try {
 
 ob_end_flush();
 
-
-// -----------------------------------------------------------------------------
-// TABLE SETUP
-// -----------------------------------------------------------------------------
 function ensureProductPricingTable(PDO $pdo)
 {
     $pdo->exec("
@@ -124,14 +120,14 @@ function ensureProductPricingTable(PDO $pdo)
     ");
 
     $required = [
-        'store_products_id'           => "ADD COLUMN `store_products_id` VARCHAR(26) NOT NULL AFTER `store_id`",
-        'product_unit_of_measure_id'  => "ADD COLUMN `product_unit_of_measure_id` VARCHAR(26) NOT NULL AFTER `store_products_id`",
-        'created_by'                  => "ADD COLUMN `created_by` VARCHAR(26) NOT NULL AFTER `product_unit_of_measure_id`",
-        'price'                       => "ADD COLUMN `price` DECIMAL(10,2) NOT NULL AFTER `created_by`",
-        'price_category'              => "ADD COLUMN `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail' AFTER `price`",
-        'delivery_capacity'           => "ADD COLUMN `delivery_capacity` INT DEFAULT NULL AFTER `price_category`",
-        'created_at'                  => "ADD COLUMN `created_at` DATETIME NOT NULL AFTER `delivery_capacity`",
-        'updated_at'                  => "ADD COLUMN `updated_at` DATETIME NOT NULL AFTER `created_at`"
+        'store_products_id' => "ADD COLUMN `store_products_id` VARCHAR(26) NOT NULL AFTER `store_id`",
+        'product_unit_of_measure_id' => "ADD COLUMN `product_unit_of_measure_id` VARCHAR(26) NOT NULL AFTER `store_products_id`",
+        'created_by' => "ADD COLUMN `created_by` VARCHAR(26) NOT NULL AFTER `product_unit_of_measure_id`",
+        'price' => "ADD COLUMN `price` DECIMAL(10,2) NOT NULL AFTER `created_by`",
+        'price_category' => "ADD COLUMN `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail' AFTER `price`",
+        'delivery_capacity' => "ADD COLUMN `delivery_capacity` INT DEFAULT NULL AFTER `price_category`",
+        'created_at' => "ADD COLUMN `created_at` DATETIME NOT NULL AFTER `delivery_capacity`",
+        'updated_at' => "ADD COLUMN `updated_at` DATETIME NOT NULL AFTER `created_at`"
     ];
 
     $cols = $pdo->query("DESCRIBE `product_pricing`")->fetchAll(PDO::FETCH_COLUMN);
@@ -162,13 +158,10 @@ function isValidUlid(string $id): bool
     return (bool) preg_match('/^[0-9A-Z]{26}$/i', $id);
 }
 
-
-// -----------------------------------------------------------------------------
-// STORE OWNERSHIP HELPERS
-// -----------------------------------------------------------------------------
 function isStoreOwner(PDO $pdo, string $storeId, ?string $userId): bool
 {
-    if (!$userId) return false;
+    if (!$userId)
+        return false;
     $stmt = $pdo->prepare("SELECT 1 FROM vendor_stores WHERE id = ? AND owner_id = ? LIMIT 1");
     $stmt->execute([$storeId, $userId]);
     return (bool) $stmt->fetchColumn();
@@ -176,7 +169,8 @@ function isStoreOwner(PDO $pdo, string $storeId, ?string $userId): bool
 
 function canManageStore(PDO $pdo, string $storeId, ?string $userId): bool
 {
-    if (!$userId) return false;
+    if (!$userId)
+        return false;
     if (isStoreOwner($pdo, $storeId, $userId)) {
         return true;
     }
@@ -187,7 +181,8 @@ function canManageStore(PDO $pdo, string $storeId, ?string $userId): bool
 
 function getUserStoreRole(PDO $pdo, string $storeId, ?string $userId): ?string
 {
-    if (!$userId) return null;
+    if (!$userId)
+        return null;
     if (isStoreOwner($pdo, $storeId, $userId)) {
         return 'owner';
     }
@@ -196,10 +191,6 @@ function getUserStoreRole(PDO $pdo, string $storeId, ?string $userId): ?string
     return $stmt->fetchColumn() ?: null;
 }
 
-
-// -----------------------------------------------------------------------------
-// GET STORE DETAILS
-// -----------------------------------------------------------------------------
 function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
 {
     if (!$storeId || !isValidUlid($storeId)) {
@@ -212,6 +203,7 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
         $stmt = $pdo->prepare("
             SELECT
                 v.*,
+                nob.name AS nature_of_business_name,
                 u.username AS owner_username,
                 u.email    AS owner_email,
                 u.phone    AS owner_phone,
@@ -221,6 +213,7 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
                     JOIN store_categories sc ON sc.id = sp.store_category_id
                  WHERE sc.store_id = v.id AND sp.status = 'active' AND sc.status = 'active') AS product_count
             FROM vendor_stores v
+            LEFT JOIN nature_of_business nob ON v.nature_of_business = nob.id
             JOIN zzimba_users u ON v.owner_id = u.id
             WHERE v.id = ?
         ");
@@ -234,8 +227,8 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
         }
 
         $store['view_count'] = 0;
-        $store['is_owner']   = isStoreOwner($pdo, $storeId, $currentUserId);
-        $store['role']       = getUserStoreRole($pdo, $storeId, $currentUserId);
+        $store['is_owner'] = isStoreOwner($pdo, $storeId, $currentUserId);
+        $store['role'] = getUserStoreRole($pdo, $storeId, $currentUserId);
         $store['can_manage'] = canManageStore($pdo, $storeId, $currentUserId);
 
         $catStmt = $pdo->prepare("
@@ -286,9 +279,6 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
     }
 }
 
-// -----------------------------------------------------------------------------
-// GET STORE PRODUCTS (WITH PRICING)
-// -----------------------------------------------------------------------------
 function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit = 12)
 {
     if (!$storeId || !isValidUlid($storeId)) {
@@ -297,8 +287,8 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
         return;
     }
 
-    $page   = max(1, $page);
-    $limit  = max(1, min(50, $limit));
+    $page = max(1, $page);
+    $limit = max(1, min(50, $limit));
     $offset = ($page - 1) * $limit;
 
     try {
@@ -354,35 +344,35 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
             $pid = $r['product_id'];
             if (!isset($products[$pid])) {
                 $products[$pid] = [
-                    'id'               => $pid,
-                    'name'             => $r['name'],
-                    'description'      => $r['description'],
-                    'featured'         => (bool) $r['featured'],
-                    'category_name'    => $r['category_name'],
+                    'id' => $pid,
+                    'name' => $r['name'],
+                    'description' => $r['description'],
+                    'featured' => (bool) $r['featured'],
+                    'category_name' => $r['category_name'],
                     'store_category_id' => $r['store_category_id'],
                     'store_product_id' => $r['store_product_id'],
-                    'pricing'          => []
+                    'pricing' => []
                 ];
             }
             if ($r['pricing_id']) {
                 $products[$pid]['pricing'][] = [
-                    'unit_name'        => trim(($r['si_unit'] ?? '') . ' ' . ($r['package_name'] ?? '')),
-                    'price'            => (float) ($r['price'] ?? 0),
-                    'price_category'   => $r['price_category'] ?? 'retail',
+                    'unit_name' => trim(($r['si_unit'] ?? '') . ' ' . ($r['package_name'] ?? '')),
+                    'price' => (float) ($r['price'] ?? 0),
+                    'price_category' => $r['price_category'] ?? 'retail',
                     'delivery_capacity' => $r['delivery_capacity'] !== null ? (int) $r['delivery_capacity'] : null,
-                    'unit_id'          => $r['unit_id'] ?? null
+                    'unit_id' => $r['unit_id'] ?? null
                 ];
             }
         }
 
         echo json_encode([
-            'success'    => true,
-            'products'   => array_values($products),
+            'success' => true,
+            'products' => array_values($products),
             'pagination' => [
-                'total'  => $total,
-                'page'   => $page,
-                'limit'  => $limit,
-                'pages'  => (int) ceil($total / $limit)
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit,
+                'pages' => (int) ceil($total / $limit)
             ]
         ]);
     } catch (Exception $e) {
@@ -392,9 +382,6 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
     }
 }
 
-// -----------------------------------------------------------------------------
-// GET AVAILABLE CATEGORIES
-// -----------------------------------------------------------------------------
 function getAvailableCategories(PDO $pdo, ?string $storeId)
 {
     if (!$storeId || !isValidUlid($storeId)) {
@@ -433,9 +420,6 @@ function getAvailableCategories(PDO $pdo, ?string $storeId)
     }
 }
 
-// -----------------------------------------------------------------------------
-// GET CATEGORY PRODUCT COUNTS
-// -----------------------------------------------------------------------------
 function getCategoryProductCounts(PDO $pdo)
 {
     try {
@@ -459,9 +443,6 @@ function getCategoryProductCounts(PDO $pdo)
     }
 }
 
-// -----------------------------------------------------------------------------
-// UPDATE STORE CATEGORIES
-// -----------------------------------------------------------------------------
 function updateStoreCategories(PDO $pdo, string $currentUser)
 {
     $data = json_decode(file_get_contents('php://input'), true);
@@ -519,9 +500,6 @@ function updateStoreCategories(PDO $pdo, string $currentUser)
     }
 }
 
-// -----------------------------------------------------------------------------
-// UPDATE CATEGORY STATUS
-// -----------------------------------------------------------------------------
 function updateCategoryStatus(PDO $pdo, string $currentUser)
 {
     $data = json_decode(file_get_contents('php://input'), true);
@@ -562,15 +540,12 @@ function updateCategoryStatus(PDO $pdo, string $currentUser)
     }
 }
 
-// -----------------------------------------------------------------------------
-// ADD STORE PRODUCT (+ PRICING)
-// -----------------------------------------------------------------------------
 function addStoreProduct(PDO $pdo, string $currentUser)
 {
-    $storeId    = $_POST['store_id']    ?? '';
+    $storeId = $_POST['store_id'] ?? '';
     $categoryId = $_POST['category_id'] ?? '';
-    $productId  = $_POST['product_id']  ?? '';
-    $lineItems  = isset($_POST['line_items']) ? json_decode($_POST['line_items'], true) : [];
+    $productId = $_POST['product_id'] ?? '';
+    $lineItems = isset($_POST['line_items']) ? json_decode($_POST['line_items'], true) : [];
 
     if (!isValidUlid($storeId) || !isValidUlid($categoryId) || !isValidUlid($productId)) {
         http_response_code(400);
@@ -630,10 +605,10 @@ function addStoreProduct(PDO $pdo, string $currentUser)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             foreach ($lineItems as $item) {
-                $unitId = $item['unit_id']      ?? '';
-                $price   = floatval($item['price']   ?? 0);
-                $cat     = $item['price_category']     ?? 'retail';
-                $cap     = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
+                $unitId = $item['unit_id'] ?? '';
+                $price = floatval($item['price'] ?? 0);
+                $cat = $item['price_category'] ?? 'retail';
+                $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
 
                 if (!isValidUlid($unitId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
                     throw new Exception('Invalid line item data');
@@ -665,14 +640,11 @@ function addStoreProduct(PDO $pdo, string $currentUser)
     }
 }
 
-// -----------------------------------------------------------------------------
-// UPDATE STORE PRODUCT
-// -----------------------------------------------------------------------------
 function updateStoreProduct(PDO $pdo, string $currentUser)
 {
-    $storeId        = $_POST['store_id']         ?? '';
+    $storeId = $_POST['store_id'] ?? '';
     $storeProductId = $_POST['store_product_id'] ?? '';
-    $lineItems      = isset($_POST['line_items']) ? json_decode($_POST['line_items'], true) : [];
+    $lineItems = isset($_POST['line_items']) ? json_decode($_POST['line_items'], true) : [];
 
     if (!isValidUlid($storeId) || !isValidUlid($storeProductId)) {
         http_response_code(400);
@@ -698,10 +670,10 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             foreach ($lineItems as $item) {
-                $unitId = $item['unit_id']      ?? '';
-                $price   = floatval($item['price']   ?? 0);
-                $cat     = $item['price_category']     ?? 'retail';
-                $cap     = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
+                $unitId = $item['unit_id'] ?? '';
+                $price = floatval($item['price'] ?? 0);
+                $cat = $item['price_category'] ?? 'retail';
+                $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
 
                 if (!isValidUlid($unitId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
                     throw new Exception('Invalid line item data');
@@ -733,9 +705,6 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
     }
 }
 
-// -----------------------------------------------------------------------------
-// DELETE PRODUCT
-// -----------------------------------------------------------------------------
 function deleteProduct(PDO $pdo, string $storeProductId, ?string $currentUser)
 {
     if (!isValidUlid($storeProductId)) {
@@ -779,18 +748,15 @@ function deleteProduct(PDO $pdo, string $storeProductId, ?string $currentUser)
     }
 }
 
-// -----------------------------------------------------------------------------
-// STATS / VIEWS / REPORT
-// -----------------------------------------------------------------------------
 function getStoreStats(PDO $pdo, ?string $storeId, ?string $currentUser)
 {
     echo json_encode([
         'success' => true,
-        'stats'   => [
-            'product_count'  => 12,
+        'stats' => [
+            'product_count' => 12,
             'category_count' => 3,
-            'total_views'    => 0,
-            'top_products'   => []
+            'total_views' => 0,
+            'top_products' => []
         ]
     ]);
 }
@@ -805,9 +771,6 @@ function reportStore(PDO $pdo, ?string $storeId, string $reason, ?string $curren
     echo json_encode(['success' => true, 'message' => 'Report submitted']);
 }
 
-// -----------------------------------------------------------------------------
-// GET UNITS FOR PRODUCT
-// -----------------------------------------------------------------------------
 function getUnitsForProduct(PDO $pdo)
 {
     try {
@@ -831,9 +794,6 @@ function getUnitsForProduct(PDO $pdo)
     }
 }
 
-// -----------------------------------------------------------------------------
-// GET PRODUCTS NOT IN STORE
-// -----------------------------------------------------------------------------
 function getProductsNotInStore(PDO $pdo, string $storeId, string $categoryId)
 {
     if (!isValidUlid($storeId) || !isValidUlid($categoryId)) {
