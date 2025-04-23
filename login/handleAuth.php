@@ -204,10 +204,10 @@ function createOTP(string $type, string $account, PDO $pdo): string
          VALUES (:id, :type, :account, :otp, :created_at, :expires_at)'
     );
     $stmt->execute([
-        ':id'         => $id,
-        ':type'       => $type,
-        ':account'    => $account,
-        ':otp'        => $hashedOTP,
+        ':id' => $id,
+        ':type' => $type,
+        ':account' => $account,
+        ':otp' => $hashedOTP,
         ':created_at' => $now,
         ':expires_at' => $expires
     ]);
@@ -267,8 +267,8 @@ try {
             if ($isAdmin) {
                 $stmt = $pdo->prepare(
                     $isEmail
-                        ? 'SELECT id FROM admin_users WHERE email = :identifier'
-                        : 'SELECT id FROM admin_users WHERE username = :identifier'
+                    ? 'SELECT id FROM admin_users WHERE email = :identifier'
+                    : 'SELECT id FROM admin_users WHERE username = :identifier'
                 );
                 $stmt->execute([':identifier' => $identifier]);
 
@@ -283,8 +283,8 @@ try {
 
             $stmt = $pdo->prepare(
                 $isEmail
-                    ? 'SELECT id FROM zzimba_users WHERE email = :identifier'
-                    : 'SELECT id FROM zzimba_users WHERE username = :identifier'
+                ? 'SELECT id FROM zzimba_users WHERE email = :identifier'
+                : 'SELECT id FROM zzimba_users WHERE username = :identifier'
             );
             $stmt->execute([':identifier' => $identifier]);
 
@@ -318,8 +318,8 @@ try {
 
             $stmt = $pdo->prepare(
                 $isEmail
-                    ? "SELECT id, username, password, status, email, last_login FROM $table WHERE email = :identifier"
-                    : "SELECT id, username, password, status, email, last_login FROM $table WHERE username = :identifier"
+                ? "SELECT id, username, password, status, email, last_login FROM $table WHERE email = :identifier"
+                : "SELECT id, username, password, status, email, last_login FROM $table WHERE username = :identifier"
             );
             $stmt->execute([':identifier' => $identifier]);
 
@@ -361,15 +361,17 @@ try {
             $update->execute([':now' => $now, ':id' => $user['id']]);
 
             $_SESSION['user'] = [
-                'logged_in'  => true,
-                'user_id'    => $user['id'],
-                'username'   => $user['username'],
-                'email'      => $user['email'],
-                'is_admin'   => ($table === 'admin_users'),
+                'logged_in' => true,
+                'user_id' => $user['id'],
+                'username' => $user['username'],
+                'email' => $user['email'],
+                'is_admin' => ($table === 'admin_users'),
                 'last_login' => $user['last_login']
             ];
 
-            $redirect = ($table === 'admin_users') ? 'admin/dashboard' : 'account/dashboard';
+            $redirect = ($table === 'admin_users')
+                ? BASE_URL . 'admin/dashboard'
+                : BASE_URL . 'account/dashboard';
 
             echo json_encode(['success' => true, 'message' => 'Login successful', 'redirect' => $redirect]);
             break;
@@ -588,11 +590,11 @@ try {
                  VALUES (:id, :username, :email, :phone, :password, "active", :created_at, :updated_at)'
             );
             $stmt->execute([
-                ':id'         => $userId,
-                ':username'   => $username,
-                ':email'      => $email,
-                ':phone'      => $phone,
-                ':password'   => $hashedPassword,
+                ':id' => $userId,
+                ':username' => $username,
+                ':email' => $email,
+                ':phone' => $phone,
+                ':password' => $hashedPassword,
                 ':created_at' => $now,
                 ':updated_at' => $now
             ]);
