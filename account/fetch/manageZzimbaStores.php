@@ -187,10 +187,7 @@ function initializeTables(PDO $pdo): void
             description TEXT,
             business_email VARCHAR(100) NOT NULL,
             business_phone VARCHAR(20) NOT NULL,
-            nature_of_operation ENUM(
-                'Manufacturer','Hardware Store','Earth materials',
-                'Plant & Equipment','Transporter','Wholesale Store','Distributor'
-            ) NOT NULL,
+            nature_of_business VARCHAR(26) NULL,
             region VARCHAR(100) NOT NULL,
             district VARCHAR(100) NOT NULL,
             subcounty VARCHAR(100),
@@ -205,6 +202,8 @@ function initializeTables(PDO $pdo): void
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             FOREIGN KEY (owner_id) REFERENCES zzimba_users(id) ON DELETE CASCADE,
+            FOREIGN KEY (nature_of_business) REFERENCES nature_of_business(id)
+                ON DELETE SET NULL ON UPDATE CASCADE,
             UNIQUE KEY store_name_unique  (name),
             UNIQUE KEY store_email_unique (business_email),
             UNIQUE KEY store_phone_unique (business_phone)

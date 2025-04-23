@@ -16,9 +16,9 @@ ob_start();
                 <i class="fas fa-bell"></i>
                 <span>Send Notification</span>
             </button>
-            <a href="vendor-categories" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+            <a href="nature-of-business" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
                 <i class="fas fa-tags"></i>
-                <span>Categories</span>
+                <span>Nature of Business</span>
             </a>
         </div>
     </div>
