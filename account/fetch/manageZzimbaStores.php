@@ -339,8 +339,9 @@ function getOwnedStores(PDO $pdo, string $userId): void
             vs.status, vs.created_at,
             (
                 SELECT COUNT(*) 
-                  FROM store_categories sc 
-                  JOIN store_products sp ON sc.id = sp.store_category_id 
+                  FROM product_pricing pp
+                  JOIN store_products sp ON pp.store_products_id = sp.id
+                  JOIN store_categories sc ON sc.id = sp.store_category_id 
                  WHERE sc.store_id = vs.id AND sp.status = 'active'
             ) AS product_count
         FROM vendor_stores vs
@@ -385,8 +386,9 @@ function getManagedStores(PDO $pdo, string $userId): void
             vs.created_at,
             (
                 SELECT COUNT(*) 
-                  FROM store_categories sc 
-                  JOIN store_products sp ON sc.id = sp.store_category_id
+                  FROM product_pricing pp
+                  JOIN store_products sp ON pp.store_products_id = sp.id
+                  JOIN store_categories sc ON sc.id = sp.store_category_id
                  WHERE sc.store_id = vs.id AND sp.status = 'active'
             ) AS product_count
         FROM vendor_stores vs
