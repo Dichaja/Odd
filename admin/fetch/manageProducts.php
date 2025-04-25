@@ -106,13 +106,10 @@ function getProducts(PDO $pdo)
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($products as &$prod) {
-        $prod['id']       = $prod['id'];
-        unset($prod['id']);
-
         $prod['category'] = $prod['category_id'];
         unset($prod['category_id']);
 
-        $prod['images']        = getProductImages($prod['id']);
+        $prod['images'] = getProductImages($prod['id']);
         $prod['category_name'] = $prod['category_name'] ?? '(Unknown)';
     }
 
@@ -149,13 +146,10 @@ function getProduct(PDO $pdo)
         return;
     }
 
-    $product['id']       = $product['id'];
-    unset($product['id']);
-
     $product['category'] = $product['category_id'];
     unset($product['category_id']);
 
-    $product['images']        = getProductImages($product['id']);
+    $product['images'] = getProductImages($product['id']);
 
     echo json_encode(['success' => true, 'data' => $product]);
 }
@@ -170,14 +164,14 @@ function createProduct(PDO $pdo)
         return;
     }
 
-    $title        = trim($data['title']);
-    $categoryId   = trim($data['category_id']);
-    $description  = $data['description']      ?? '';
-    $metaTitle    = $data['meta_title']       ?? '';
-    $metaDesc     = $data['meta_description'] ?? '';
-    $metaKeywords = $data['meta_keywords']    ?? '';
-    $status       = $data['status']           ?? 'published';
-    $featured     = !empty($data['featured']) ? 1 : 0;
+    $title = trim($data['title']);
+    $categoryId = trim($data['category_id']);
+    $description = $data['description'] ?? '';
+    $metaTitle = $data['meta_title'] ?? '';
+    $metaDesc = $data['meta_description'] ?? '';
+    $metaKeywords = $data['meta_keywords'] ?? '';
+    $status = $data['status'] ?? 'published';
+    $featured = !empty($data['featured']) ? 1 : 0;
 
     $stmt = $pdo->prepare("SELECT id FROM product_categories WHERE id = :cat");
     $stmt->execute([':cat' => $categoryId]);
@@ -188,7 +182,7 @@ function createProduct(PDO $pdo)
     }
 
     $productId = generateUlid();
-    $now       = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+    $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
     $insert = $pdo->prepare(
         "INSERT INTO products (
@@ -204,17 +198,17 @@ function createProduct(PDO $pdo)
          )"
     );
     $insert->execute([
-        ':id'              => $productId,
-        ':title'           => $title,
-        ':cat'             => $categoryId,
-        ':description'     => $description,
-        ':meta_title'      => $metaTitle,
+        ':id' => $productId,
+        ':title' => $title,
+        ':cat' => $categoryId,
+        ':description' => $description,
+        ':meta_title' => $metaTitle,
         ':meta_description' => $metaDesc,
-        ':meta_keywords'   => $metaKeywords,
-        ':status'          => $status,
-        ':featured'        => $featured,
-        ':created_at'      => $now,
-        ':updated_at'      => $now
+        ':meta_keywords' => $metaKeywords,
+        ':status' => $status,
+        ':featured' => $featured,
+        ':created_at' => $now,
+        ':updated_at' => $now
     ]);
 
     if (!empty($data['temp_images']) && is_array($data['temp_images'])) {
@@ -224,7 +218,7 @@ function createProduct(PDO $pdo)
     echo json_encode([
         'success' => true,
         'message' => 'Product created successfully',
-        'id'      => $productId
+        'id' => $productId
     ]);
 }
 
@@ -254,14 +248,14 @@ function updateProduct(PDO $pdo)
         return;
     }
 
-    $title       = trim($data['title']);
-    $categoryId  = trim($data['category_id']);
-    $description = $data['description']      ?? '';
-    $metaTitle   = $data['meta_title']       ?? '';
-    $metaDesc    = $data['meta_description'] ?? '';
-    $metaKeywords = $data['meta_keywords']    ?? '';
-    $status      = $data['status']           ?? 'published';
-    $featured    = !empty($data['featured']) ? 1 : 0;
+    $title = trim($data['title']);
+    $categoryId = trim($data['category_id']);
+    $description = $data['description'] ?? '';
+    $metaTitle = $data['meta_title'] ?? '';
+    $metaDesc = $data['meta_description'] ?? '';
+    $metaKeywords = $data['meta_keywords'] ?? '';
+    $status = $data['status'] ?? 'published';
+    $featured = !empty($data['featured']) ? 1 : 0;
 
     $stmt = $pdo->prepare("SELECT id FROM product_categories WHERE id = :cat");
     $stmt->execute([':cat' => $categoryId]);
@@ -287,21 +281,21 @@ function updateProduct(PDO $pdo)
          WHERE id = :id"
     );
     $stmt->execute([
-        ':title'           => $title,
-        ':cat'             => $categoryId,
-        ':description'     => $description,
-        ':meta_title'      => $metaTitle,
+        ':title' => $title,
+        ':cat' => $categoryId,
+        ':description' => $description,
+        ':meta_title' => $metaTitle,
         ':meta_description' => $metaDesc,
-        ':meta_keywords'   => $metaKeywords,
-        ':status'          => $status,
-        ':featured'        => $featured,
-        ':updated_at'      => $now,
-        ':id'              => $id
+        ':meta_keywords' => $metaKeywords,
+        ':status' => $status,
+        ':featured' => $featured,
+        ':updated_at' => $now,
+        ':id' => $id
     ]);
 
     if (!empty($data['update_images'])) {
         $existing = $data['existing_images'] ?? [];
-        $temp     = $data['temp_images']     ?? [];
+        $temp = $data['temp_images'] ?? [];
 
         deleteAllProductImages($id, false);
 
@@ -354,7 +348,7 @@ function toggleFeatured(PDO $pdo)
         return;
     }
 
-    $id       = $data['id'];
+    $id = $data['id'];
     $featured = !empty($data['featured']) ? 1 : 0;
 
     $stmt = $pdo->prepare("SELECT id FROM products WHERE id = :id");
@@ -372,10 +366,10 @@ function toggleFeatured(PDO $pdo)
          SET featured = :featured, updated_at = :updated_at
          WHERE id = :id"
     )->execute([
-        ':featured'   => $featured,
-        ':updated_at' => $now,
-        ':id'         => $id
-    ]);
+                ':featured' => $featured,
+                ':updated_at' => $now,
+                ':id' => $id
+            ]);
 
     echo json_encode([
         'success' => true,
@@ -396,10 +390,10 @@ function uploadImage()
         return;
     }
 
-    $file     = $_FILES['image'];
-    $ext      = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $allowed  = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    $size     = $file['size'];
+    $file = $_FILES['image'];
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    $size = $file['size'];
 
     if (!in_array($ext, $allowed) || $size > 5 * 1024 * 1024) {
         http_response_code(400);
@@ -407,27 +401,28 @@ function uploadImage()
         return;
     }
 
-    $tempDir   = __DIR__ . '/../../uploads/temp/';
-    if (!file_exists($tempDir)) mkdir($tempDir, 0755, true);
+    $tempDir = __DIR__ . '/../../uploads/temp/';
+    if (!file_exists($tempDir))
+        mkdir($tempDir, 0755, true);
 
-    $newName   = uniqid('temp_') . ".$ext";
-    $destPath  = $tempDir . $newName;
-    $relPath   = 'uploads/temp/' . $newName;
+    $newName = uniqid('temp_') . ".$ext";
+    $destPath = $tempDir . $newName;
+    $relPath = 'uploads/temp/' . $newName;
 
     cropAndResizeImage($file['tmp_name'], $destPath, 1600, 900);
 
     echo json_encode([
-        'success'   => true,
+        'success' => true,
         'temp_path' => $relPath,
-        'url'       => BASE_URL . $relPath
+        'url' => BASE_URL . $relPath
     ]);
 }
 
 function cropAndResizeImage($src, $dst, $w, $h)
 {
     list($ow, $oh) = getimagesize($src);
-    $ratio  = $w / $h;
-    $origR  = $ow / $oh;
+    $ratio = $w / $h;
+    $origR = $ow / $oh;
 
     if ($origR > $ratio) {
         $nw = $oh * $ratio;
@@ -504,13 +499,16 @@ function cropAndResizeImage($src, $dst, $w, $h)
 function getProductImages($uuid)
 {
     $dir = __DIR__ . '/../../img/products/' . $uuid;
-    if (!is_dir($dir)) return [];
+    if (!is_dir($dir))
+        return [];
 
     $json = $dir . '/images.json';
-    if (!file_exists($json)) return [];
+    if (!file_exists($json))
+        return [];
 
     $data = json_decode(file_get_contents($json), true);
-    if (empty($data['images'])) return [];
+    if (empty($data['images']))
+        return [];
 
     $out = [];
     foreach ($data['images'] as $f) {
@@ -525,13 +523,16 @@ function getProductImages($uuid)
 function moveProductImages($uuid, array $temps)
 {
     $dir = __DIR__ . '/../../img/products/' . $uuid;
-    if (!file_exists($dir)) mkdir($dir, 0755, true);
+    if (!file_exists($dir))
+        mkdir($dir, 0755, true);
 
     $moved = [];
     foreach ($temps as $t) {
-        if (empty($t['temp_path'])) continue;
+        if (empty($t['temp_path']))
+            continue;
         $src = __DIR__ . '/../../' . $t['temp_path'];
-        if (!file_exists($src)) continue;
+        if (!file_exists($src))
+            continue;
         $ext = pathinfo($src, PATHINFO_EXTENSION);
         $dst = "$dir/" . uniqid('prod_') . ".$ext";
         rename($src, $dst);
@@ -544,16 +545,20 @@ function moveProductImages($uuid, array $temps)
 function saveExistingImages($uuid, array $imgs)
 {
     $dir = __DIR__ . '/../../img/products/' . $uuid;
-    if (!file_exists($dir)) mkdir($dir, 0755, true);
+    if (!file_exists($dir))
+        mkdir($dir, 0755, true);
     file_put_contents("$dir/images.json", json_encode(['images' => $imgs], JSON_PRETTY_PRINT));
 }
 
 function deleteAllProductImages($uuid, $rmDir = false)
 {
     $dir = __DIR__ . '/../../img/products/' . $uuid;
-    if (!is_dir($dir)) return;
+    if (!is_dir($dir))
+        return;
     foreach (glob("$dir/*") as $f) {
-        if (is_file($f)) unlink($f);
+        if (is_file($f))
+            unlink($f);
     }
-    if ($rmDir) rmdir($dir);
+    if ($rmDir)
+        rmdir($dir);
 }

@@ -87,9 +87,8 @@ function getCategories(PDO $pdo)
         );
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($categories as &$c) {
-            $c['id']   = $c['id'];
+            // Add image URL without removing the ID
             $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
-            unset($c['id']);
         }
         echo json_encode(['success' => true, 'categories' => $categories]);
     } catch (Exception $e) {
@@ -119,10 +118,10 @@ function getCategory(PDO $pdo)
             echo json_encode(['success' => false, 'message' => 'Category not found']);
             return;
         }
-        $c['id']   = $c['id'];
+        // Add image URL and has_image flag without removing the ID
         $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
         $c['has_image'] = doesCategoryImageExist($c['id'], $c['name']);
-        unset($c['id']);
+
         echo json_encode(['success' => true, 'data' => $c]);
     } catch (Exception $e) {
         error_log($e->getMessage());
@@ -139,13 +138,13 @@ function createCategory(PDO $pdo)
         echo json_encode(['success' => false, 'message' => 'Category name is required']);
         return;
     }
-    $name            = trim($data['name']);
-    $description     = trim($data['description'] ?? '');
-    $metaTitle       = trim($data['meta_title'] ?? '');
+    $name = trim($data['name']);
+    $description = trim($data['description'] ?? '');
+    $metaTitle = trim($data['meta_title'] ?? '');
     $metaDescription = trim($data['meta_description'] ?? '');
-    $metaKeywords    = trim($data['meta_keywords'] ?? '');
-    $status          = in_array($data['status'] ?? '', ['active', 'inactive']) ? $data['status'] : 'active';
-    $tempImagePath   = trim($data['temp_image_path'] ?? '');
+    $metaKeywords = trim($data['meta_keywords'] ?? '');
+    $status = in_array($data['status'] ?? '', ['active', 'inactive']) ? $data['status'] : 'active';
+    $tempImagePath = trim($data['temp_image_path'] ?? '');
     try {
         $stmt = $pdo->prepare('SELECT id FROM product_categories WHERE name = :name');
         $stmt->execute([':name' => $name]);
@@ -154,7 +153,7 @@ function createCategory(PDO $pdo)
             echo json_encode(['success' => false, 'message' => 'A category with this name already exists']);
             return;
         }
-        $id  = generateUlid();
+        $id = generateUlid();
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
         $stmt = $pdo->prepare(
             'INSERT INTO product_categories
@@ -163,15 +162,15 @@ function createCategory(PDO $pdo)
              (:id,:name,:description,:meta_title,:meta_description,:meta_keywords,:status,:created_at,:updated_at)'
         );
         $stmt->execute([
-            ':id'               => $id,
-            ':name'             => $name,
-            ':description'      => $description,
-            ':meta_title'       => $metaTitle,
+            ':id' => $id,
+            ':name' => $name,
+            ':description' => $description,
+            ':meta_title' => $metaTitle,
             ':meta_description' => $metaDescription,
-            ':meta_keywords'    => $metaKeywords,
-            ':status'           => $status,
-            ':created_at'       => $now,
-            ':updated_at'       => $now
+            ':meta_keywords' => $metaKeywords,
+            ':status' => $status,
+            ':created_at' => $now,
+            ':updated_at' => $now
         ]);
         if ($tempImagePath && file_exists(__DIR__ . '/../../' . $tempImagePath)) {
             $ext = pathinfo($tempImagePath, PATHINFO_EXTENSION);
@@ -198,15 +197,15 @@ function updateCategory(PDO $pdo)
         echo json_encode(['success' => false, 'message' => 'Category ID and name are required']);
         return;
     }
-    $id               = $data['id'];
-    $name             = trim($data['name']);
-    $description      = trim($data['description'] ?? '');
-    $metaTitle        = trim($data['meta_title'] ?? '');
-    $metaDescription  = trim($data['meta_description'] ?? '');
-    $metaKeywords     = trim($data['meta_keywords'] ?? '');
-    $status           = in_array($data['status'] ?? '', ['active', 'inactive']) ? $data['status'] : 'active';
-    $tempImagePath    = trim($data['temp_image_path'] ?? '');
-    $removeImage      = !empty($data['remove_image']);
+    $id = $data['id'];
+    $name = trim($data['name']);
+    $description = trim($data['description'] ?? '');
+    $metaTitle = trim($data['meta_title'] ?? '');
+    $metaDescription = trim($data['meta_description'] ?? '');
+    $metaKeywords = trim($data['meta_keywords'] ?? '');
+    $status = in_array($data['status'] ?? '', ['active', 'inactive']) ? $data['status'] : 'active';
+    $tempImagePath = trim($data['temp_image_path'] ?? '');
+    $removeImage = !empty($data['remove_image']);
     try {
         $stmt = $pdo->prepare('SELECT name FROM product_categories WHERE id = :id');
         $stmt->execute([':id' => $id]);
@@ -238,14 +237,14 @@ function updateCategory(PDO $pdo)
              WHERE id = :id'
         );
         $stmt->execute([
-            ':name'            => $name,
-            ':description'     => $description,
-            ':meta_title'      => $metaTitle,
+            ':name' => $name,
+            ':description' => $description,
+            ':meta_title' => $metaTitle,
             ':meta_description' => $metaDescription,
-            ':meta_keywords'   => $metaKeywords,
-            ':status'          => $status,
-            ':updated_at'      => $now,
-            ':id'              => $id
+            ':meta_keywords' => $metaKeywords,
+            ':status' => $status,
+            ':updated_at' => $now,
+            ':id' => $id
         ]);
         $dir = __DIR__ . '/../../img/product-categories/' . $id;
         if (!file_exists($dir)) {
@@ -305,21 +304,21 @@ function uploadImage()
         return;
     }
     try {
-        $file      = $_FILES['image'];
-        $ext       = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $allowed   = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        $file = $_FILES['image'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
         if (!in_array($ext, $allowed) || $file['size'] > 5_000_000) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Invalid file']);
             return;
         }
-        $dir       = __DIR__ . '/../../uploads/temp/';
+        $dir = __DIR__ . '/../../uploads/temp/';
         if (!file_exists($dir)) {
             mkdir($dir, 0755, true);
         }
-        $name      = uniqid('temp_') . ".$ext";
-        $dest      = $dir . $name;
-        $rel       = 'uploads/temp/' . $name;
+        $name = uniqid('temp_') . ".$ext";
+        $dest = $dir . $name;
+        $rel = 'uploads/temp/' . $name;
         list($w, $h) = getimagesize($file['tmp_name']);
         $tw = 1200;
         $th = 675;
@@ -372,9 +371,9 @@ function uploadImage()
         imagedestroy($src);
         imagedestroy($dst);
         echo json_encode([
-            'success'   => true,
+            'success' => true,
             'temp_path' => $rel,
-            'url'       => BASE_URL . $rel
+            'url' => BASE_URL . $rel
         ]);
     } catch (Exception $e) {
         error_log($e->getMessage());
@@ -405,7 +404,7 @@ function getCategoryImageUrl($categoryId, $categoryName)
 
 function doesCategoryImageExist($categoryId, $categoryName)
 {
-    $dir  = __DIR__ . '/../../img/product-categories/' . $categoryId . '/';
+    $dir = __DIR__ . '/../../img/product-categories/' . $categoryId . '/';
     $safe = sanitizeFileName($categoryName);
     foreach (['webp', 'jpg', 'jpeg', 'png', 'gif'] as $ext) {
         if (file_exists("$dir$safe.$ext")) {
@@ -432,9 +431,9 @@ function deleteAllCategoryImages($categoryId, $removeDir = false)
 
 function renameExistingCategoryImage($categoryId, $oldName, $newName)
 {
-    $dir    = __DIR__ . '/../../img/product-categories/' . $categoryId;
-    $safeO  = sanitizeFileName($oldName);
-    $safeN  = sanitizeFileName($newName);
+    $dir = __DIR__ . '/../../img/product-categories/' . $categoryId;
+    $safeO = sanitizeFileName($oldName);
+    $safeN = sanitizeFileName($newName);
     foreach (['webp', 'jpg', 'jpeg', 'png', 'gif'] as $ext) {
         $old = "$dir/$safeO.$ext";
         if (file_exists($old)) {

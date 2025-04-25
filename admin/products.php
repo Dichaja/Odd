@@ -19,15 +19,18 @@ ob_start();
             <p class="text-sm text-gray-text mt-1">View, edit, and manage products</p>
         </div>
         <div class="flex flex-col md:flex-row items-center gap-3">
-            <button id="addNewProductBtn" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+            <button id="addNewProductBtn"
+                class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
                 <i class="fas fa-plus"></i>
                 <span>Add Product</span>
             </button>
-            <a href="product-package" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+            <a href="product-package"
+                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
                 <i class="fas fa-box"></i>
                 <span>Package Definition</span>
             </a>
-            <a href="product-categories" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+            <a href="product-categories"
+                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
                 <i class="fas fa-tags"></i>
                 <span>Categories</span>
             </a>
@@ -38,12 +41,14 @@ ob_start();
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="relative w-full md:w-auto">
-                <input type="text" id="searchProducts" placeholder="Search products..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                <input type="text" id="searchProducts" placeholder="Search products..."
+                    class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
             </div>
             <div class="flex items-center gap-2 w-full md:w-auto">
                 <label for="sortProducts" class="text-sm text-gray-700 whitespace-nowrap">Sort By:</label>
-                <select id="sortProducts" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
+                <select id="sortProducts"
+                    class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
                     <option value="" selected>Select</option>
                     <option value="latest">Latest</option>
                     <option value="verify">Verified</option>
@@ -59,23 +64,27 @@ ob_start();
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label for="filterCategory" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select id="filterCategory" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                <select id="filterCategory"
+                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                     <option value="">All Categories</option>
                 </select>
             </div>
             <div>
                 <label for="filterFeatured" class="block text-sm font-medium text-gray-700 mb-1">Featured Status</label>
-                <select id="filterFeatured" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                <select id="filterFeatured"
+                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                     <option value="">All Products</option>
                     <option value="featured">Featured Only</option>
                     <option value="not-featured">Not Featured</option>
                 </select>
             </div>
             <div class="md:col-span-2 flex justify-end">
-                <button id="resetFilters" class="h-10 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors mr-2">
+                <button id="resetFilters"
+                    class="h-10 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors mr-2">
                     Reset Filters
                 </button>
-                <button id="applyFilters" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                <button id="applyFilters"
+                    class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
                     Apply Filters
                 </button>
             </div>
@@ -99,14 +108,17 @@ ob_start();
             <!-- Pagination placeholder -->
             <div class="mt-6 flex justify-between items-center">
                 <div class="text-sm text-gray-500">
-                    Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalProducts">0</span>
+                    Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span
+                        id="totalProducts">0</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="prev-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+                    <button id="prev-page"
+                        class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
                         <i class="fas fa-chevron-left"></i>
                     </button>
                     <div id="pagination-numbers" class="flex items-center"></div>
-                    <button id="next-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+                    <button id="next-page"
+                        class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
                         <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
@@ -141,12 +153,17 @@ ob_start();
                 <!-- Title & Category -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="productTitle" class="block text-sm font-medium text-gray-700 mb-1">Title <span class="text-red-500">*</span></label>
-                        <input type="text" id="productTitle" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter product title">
+                        <label for="productTitle" class="block text-sm font-medium text-gray-700 mb-1">Title <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" id="productTitle"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            placeholder="Enter product title">
                     </div>
                     <div>
-                        <label for="productCategory" class="block text-sm font-medium text-gray-700 mb-1">Category <span class="text-red-500">*</span></label>
-                        <select id="productCategory" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        <label for="productCategory" class="block text-sm font-medium text-gray-700 mb-1">Category <span
+                                class="text-red-500">*</span></label>
+                        <select id="productCategory"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                             <!-- dynamically populate from DB -->
                             <option value="">Select Category</option>
                         </select>
@@ -155,30 +172,42 @@ ob_start();
 
                 <!-- Description -->
                 <div>
-                    <label for="productDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea id="productDescription" rows="3" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter product description"></textarea>
+                    <label for="productDescription"
+                        class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="productDescription" rows="3"
+                        class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                        placeholder="Enter product description"></textarea>
                 </div>
 
                 <!-- SEO fields -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="productMetaTitle" class="block text-sm font-medium text-gray-700 mb-1">Meta Title</label>
-                        <input type="text" id="productMetaTitle" class="w-full px-3 py-2 rounded-lg border border-gray-200" placeholder="For SEO...">
+                        <label for="productMetaTitle" class="block text-sm font-medium text-gray-700 mb-1">Meta
+                            Title</label>
+                        <input type="text" id="productMetaTitle"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-200" placeholder="For SEO...">
                     </div>
                     <div>
-                        <label for="productMetaDescription" class="block text-sm font-medium text-gray-700 mb-1">Meta Description</label>
-                        <textarea id="productMetaDescription" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200" placeholder="For SEO..."></textarea>
+                        <label for="productMetaDescription" class="block text-sm font-medium text-gray-700 mb-1">Meta
+                            Description</label>
+                        <textarea id="productMetaDescription" rows="2"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-200"
+                            placeholder="For SEO..."></textarea>
                     </div>
                 </div>
                 <div>
-                    <label for="productMetaKeywords" class="block text-sm font-medium text-gray-700 mb-1">Meta Keywords</label>
-                    <input type="text" id="productMetaKeywords" class="w-full px-3 py-2 rounded-lg border border-gray-200" placeholder="keyword1, keyword2...">
+                    <label for="productMetaKeywords" class="block text-sm font-medium text-gray-700 mb-1">Meta
+                        Keywords</label>
+                    <input type="text" id="productMetaKeywords"
+                        class="w-full px-3 py-2 rounded-lg border border-gray-200" placeholder="keyword1, keyword2...">
                 </div>
 
                 <!-- Images Upload/Preview -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Product Images (16:9 recommended)</label>
-                    <button type="button" id="addImageBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Product Images (16:9
+                        recommended)</label>
+                    <button type="button" id="addImageBtn"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                         <i class="fas fa-upload mr-1"></i> Upload Images
                     </button>
                     <input type="file" id="imageUploadInput" class="hidden" accept="image/*" multiple>
@@ -192,7 +221,8 @@ ob_start();
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="productStatus" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select id="productStatus" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
+                        <select id="productStatus"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
                             <option value="published" selected>Published</option>
                             <option value="pending">Pending</option>
                             <option value="draft">Draft</option>
@@ -203,7 +233,9 @@ ob_start();
                         <div class="flex items-center h-10">
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="productFeatured" class="sr-only peer">
-                                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                                <div
+                                    class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all">
+                                </div>
                                 <span class="ml-3 text-sm text-gray-700">Mark as featured</span>
                             </label>
                         </div>
@@ -213,8 +245,10 @@ ob_start();
         </div>
 
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button type="button" onclick="hideProductModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-            <button type="button" id="saveProductBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save Product</button>
+            <button type="button" onclick="hideProductModal()"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="button" id="saveProductBtn"
+                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save Product</button>
         </div>
     </div>
 </div>
@@ -230,7 +264,8 @@ ob_start();
             </button>
         </div>
         <div class="p-6">
-            <p class="text-gray-600 mb-4">Are you sure you want to delete this product? This action cannot be undone.</p>
+            <p class="text-gray-600 mb-4">Are you sure you want to delete this product? This action cannot be undone.
+            </p>
             <div class="bg-gray-50 p-4 rounded-lg mb-4">
                 <div class="grid grid-cols-1 gap-2 text-sm">
                     <div class="text-gray-500">Product:</div>
@@ -239,8 +274,10 @@ ob_start();
             </div>
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideDeleteModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-            <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
+            <button onclick="hideDeleteModal()"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button id="confirmDeleteBtn"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
         </div>
     </div>
 </div>
@@ -263,8 +300,10 @@ ob_start();
             </div>
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideCropperModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-            <button id="cropImageBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Crop & Save</button>
+            <button onclick="hideCropperModal()"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button id="cropImageBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Crop &
+                Save</button>
         </div>
     </div>
 </div>
@@ -280,20 +319,23 @@ ob_start();
                 <p class="text-sm text-gray-500 mt-2">Your session has expired.</p>
             </div>
             <div class="flex justify-center mt-6">
-                <button onclick="redirectToLogin()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Login Now</button>
+                <button onclick="redirectToLogin()"
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Login Now</button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Notifications -->
-<div id="successNotification" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
+<div id="successNotification"
+    class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-2"></i>
         <span id="successMessage"></span>
     </div>
 </div>
-<div id="errorNotification" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
+<div id="errorNotification"
+    class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-exclamation-circle mr-2"></i>
         <span id="errorMessage"></span>
@@ -820,15 +862,15 @@ ob_start();
         showLoading(featured ? 'Marking as featured...' : 'Removing from featured...');
 
         fetch(`${BASE_URL}admin/fetch/manageProducts/toggleFeatured`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id: productId,
-                    featured: featured
-                })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: productId,
+                featured: featured
             })
+        })
             .then(res => {
                 if (res.status === 401) {
                     showSessionExpiredModal();
@@ -881,7 +923,7 @@ ob_start();
             modalTitle.textContent = 'Edit Product';
             showLoading('Loading product details...');
 
-            fetch(`${BASE_URL}admin/fetch/manageProducts/getProduct&id=${productId}`)
+            fetch(`${BASE_URL}admin/fetch/manageProducts/getProduct?id=${productId}`)
                 .then(res => {
                     if (res.status === 401) {
                         showSessionExpiredModal();
@@ -998,12 +1040,12 @@ ob_start();
         const endpoint = productId ? 'updateProduct' : 'createProduct';
 
         fetch(`${BASE_URL}admin/fetch/manageProducts/${endpoint}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
             .then(res => {
                 if (res.status === 401) {
                     showSessionExpiredModal();
@@ -1048,14 +1090,14 @@ ob_start();
         hideDeleteModal();
 
         fetch(`${BASE_URL}admin/fetch/manageProducts/deleteProduct`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id: window.deleteProductId
-                })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: window.deleteProductId
             })
+        })
             .then(res => {
                 if (res.status === 401) {
                     showSessionExpiredModal();
@@ -1086,7 +1128,7 @@ ob_start();
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const reader = new FileReader();
-            reader.onload = function(ev) {
+            reader.onload = function (ev) {
                 showCropperModal(ev.target.result);
             };
             reader.readAsDataURL(file);
@@ -1101,7 +1143,7 @@ ob_start();
         imageElement.src = imageUrl;
         modal.classList.remove('hidden');
 
-        imageElement.onload = function() {
+        imageElement.onload = function () {
             if (typeof Cropper === 'undefined') {
                 console.error('Cropper library not loaded');
                 return;
@@ -1158,9 +1200,9 @@ ob_start();
             showLoading('Uploading image...');
 
             fetch(`${BASE_URL}admin/fetch/manageProducts/uploadImage`, {
-                    method: 'POST',
-                    body: formData
-                })
+                method: 'POST',
+                body: formData
+            })
                 .then(res => res.json())
                 .then(data => {
                     hideLoading();
