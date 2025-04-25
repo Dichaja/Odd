@@ -15,131 +15,221 @@ ob_start();
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl font-semibold text-secondary">Package Definition</h1>
-            <p class="text-sm text-gray-text mt-1">Define and manage product packaging and units of measure</p>
+            <p class="text-sm text-gray-text mt-1">Define and manage product packaging and SI units</p>
         </div>
         <div class="flex flex-col md:flex-row items-center gap-3">
-            <a href="products" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+            <a href="products"
+                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
                 <i class="fas fa-arrow-left"></i>
                 <span>Back to Products</span>
             </a>
         </div>
     </div>
 
-    <!-- Unit of Measure Form Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100">
-            <h2 class="text-lg font-semibold text-primary" id="unitOfMeasureFormTitle">Add New Unit of Measure</h2>
-            <p class="text-sm text-gray-text mt-1">Create a new unit of measure by selecting or creating a package name and SI unit</p>
+    <!-- Tabs -->
+    <div class="border-b border-gray-200">
+        <ul class="flex flex-wrap -mb-px">
+            <li class="mr-2">
+                <button id="tab-package-names"
+                    class="inline-block p-4 border-b-2 border-primary text-primary rounded-t-lg active"
+                    aria-current="page">
+                    Package Names
+                </button>
+            </li>
+            <li class="mr-2">
+                <button id="tab-si-units"
+                    class="inline-block p-4 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 rounded-t-lg">
+                    SI Units
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Package Names Tab Content -->
+    <div id="content-package-names" class="space-y-6">
+        <!-- Package Name Form Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-lg font-semibold text-primary" id="packageNameFormTitle">Add New Package Name</h2>
+                <p class="text-sm text-gray-text mt-1">Create a new package name for products</p>
+            </div>
+
+            <div class="p-6">
+                <form id="packageNameForm" class="space-y-4" autocomplete="off">
+                    <input type="hidden" id="packageNameId" name="packageNameId" value="">
+
+                    <div>
+                        <label for="package_name" class="block text-sm font-medium text-gray-700 mb-1">Package
+                            Name</label>
+                        <input type="text" id="package_name" name="package_name"
+                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            placeholder="Enter package name">
+                    </div>
+
+                    <div class="flex justify-end mt-4">
+                        <button type="button" id="cancelPackageNameForm"
+                            class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2 hidden">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submitPackageNameButton"
+                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            Save Package Name
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
-        <div class="p-6">
-            <form id="unitOfMeasureForm" class="space-y-4">
-                <input type="hidden" id="unitOfMeasureId" name="unitOfMeasureId" value="">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="package_name_select" class="block text-sm font-medium text-gray-700 mb-1">Package Name</label>
-                        <select id="package_name_select" name="package_name_select" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            <option value="" disabled selected>Select Package Name</option>
-                            <option value="create_new">Create New</option>
-                        </select>
-                        <div id="new_package_name_container" class="mt-2 hidden">
-                            <input type="text" id="new_package_name" name="new_package_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter new package name">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="si_unit_select" class="block text-sm font-medium text-gray-700 mb-1">SI Unit</label>
-                        <select id="si_unit_select" name="si_unit_select" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            <option value="" disabled selected>Select SI Unit</option>
-                            <option value="create_new">Create New</option>
-                        </select>
-                        <div id="new_si_unit_container" class="mt-2 hidden">
-                            <input type="text" id="new_si_unit" name="new_si_unit" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter new SI unit">
-                        </div>
+        <!-- Package Names List Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
+            <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-secondary">Package Names</h2>
+                    <p class="text-sm text-gray-text mt-1">
+                        <span id="package-name-count">0</span> package names found
+                    </p>
+                </div>
+                <div class="flex flex-col md:flex-row items-center gap-3">
+                    <div class="relative w-full md:w-auto">
+                        <input type="text" id="searchPackageNames" placeholder="Search package names..."
+                            class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     </div>
                 </div>
+            </div>
 
-                <div class="flex justify-end mt-4">
-                    <button type="button" id="cancelUnitOfMeasureForm" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2 hidden">
-                        Cancel
+            <div class="overflow-x-auto">
+                <table class="w-full" id="package-names-table">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left border-b border-gray-100">
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">#</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">Package Name</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text hidden md:table-cell">Created At
+                            </th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">Updated At</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text w-32">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="package-names-table-body">
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center">Loading package names...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination for Package Names -->
+            <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-gray-text">
+                    Showing <span id="showing-start-package-names">0</span> to <span
+                        id="showing-end-package-names">0</span> of <span id="total-package-names">0</span> package names
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prev-page-package-names"
+                        class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left"></i>
                     </button>
-                    <button type="submit" id="submitUnitOfMeasureButton" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                        Save Unit of Measure
+                    <div id="pagination-numbers-package-names" class="flex items-center">
+                    </div>
+                    <button id="next-page-package-names"
+                        class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
-    <!-- Units of Measure List Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
-        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-lg font-semibold text-secondary">Units of Measure</h2>
-                <p class="text-sm text-gray-text mt-1">
-                    <span id="unit-of-measure-count">0</span> units of measure found
-                </p>
+    <!-- SI Units Tab Content -->
+    <div id="content-si-units" class="space-y-6 hidden">
+        <!-- SI Unit Form Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-lg font-semibold text-primary" id="siUnitFormTitle">Add New SI Unit</h2>
+                <p class="text-sm text-gray-text mt-1">Create a new SI unit for products</p>
             </div>
-            <div class="flex flex-col md:flex-row items-center gap-3">
-                <div class="relative w-full md:w-auto">
-                    <input type="text" id="searchUnitsOfMeasure" placeholder="Search units of measure..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                </div>
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <select id="filterPackageName" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
-                        <option value="" selected>All Package Names</option>
-                    </select>
-                </div>
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <select id="filterSIUnit" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
-                        <option value="" selected>All SI Units</option>
-                    </select>
-                </div>
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <select id="filterStatus" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
-                        <option value="" selected>All Statuses</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Pending">Pending</option>
-                    </select>
-                </div>
+
+            <div class="p-6">
+                <form id="siUnitForm" class="space-y-4" autocomplete="off">
+                    <input type="hidden" id="siUnitId" name="siUnitId" value="">
+
+                    <div>
+                        <label for="si_unit" class="block text-sm font-medium text-gray-700 mb-1">SI Unit</label>
+                        <input type="text" id="si_unit" name="si_unit"
+                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            placeholder="Enter SI unit">
+                    </div>
+
+                    <div class="flex justify-end mt-4">
+                        <button type="button" id="cancelSIUnitForm"
+                            class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2 hidden">
+                            Cancel
+                        </button>
+                        <button type="submit" id="submitSIUnitButton"
+                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            Save SI Unit
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full" id="units-of-measure-table">
-                <thead>
-                    <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">#</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">SI Unit</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Package Name</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Unit of Measure</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Status</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text w-32">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="units-of-measure-table-body">
-                    <tr>
-                        <td colspan="6" class="px-6 py-4 text-center">Loading units of measure...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination for Units of Measure -->
-        <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-gray-text">
-                Showing <span id="showing-start-units-of-measure">0</span> to <span id="showing-end-units-of-measure">0</span> of <span id="total-units-of-measure">0</span> units of measure
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="prev-page-units-of-measure" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div id="pagination-numbers-units-of-measure" class="flex items-center">
+        <!-- SI Units List Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
+            <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-secondary">SI Units</h2>
+                    <p class="text-sm text-gray-text mt-1">
+                        <span id="si-unit-count">0</span> SI units found
+                    </p>
                 </div>
-                <button id="next-page-units-of-measure" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <div class="flex flex-col md:flex-row items-center gap-3">
+                    <div class="relative w-full md:w-auto">
+                        <input type="text" id="searchSIUnits" placeholder="Search SI units..."
+                            class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full" id="si-units-table">
+                    <thead class="bg-gray-50">
+                        <tr class="text-left border-b border-gray-100">
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">#</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">SI Unit</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text hidden md:table-cell">Created At
+                            </th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text">Updated At</th>
+                            <th class="px-6 py-3 text-sm font-semibold text-gray-text w-32">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="si-units-table-body">
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center">Loading SI units...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination for SI Units -->
+            <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-gray-text">
+                    Showing <span id="showing-start-si-units">0</span> to <span id="showing-end-si-units">0</span> of
+                    <span id="total-si-units">0</span> SI units
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prev-page-si-units"
+                        class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div id="pagination-numbers-si-units" class="flex items-center">
+                    </div>
+                    <button id="next-page-si-units"
+                        class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -153,166 +243,65 @@ ob_start();
     </div>
 </div>
 
-<!-- Delete Unit of Measure Modal -->
-<div id="deleteUnitOfMeasureModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideDeleteUnitOfMeasureModal()"></div>
+<!-- Delete Package Name Modal -->
+<div id="deletePackageNameModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/20" onclick="hideDeletePackageNameModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
         <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Delete Unit of Measure</h3>
-            <button onclick="hideDeleteUnitOfMeasureModal()" class="text-gray-400 hover:text-gray-500">
+            <h3 class="text-lg font-semibold text-secondary">Delete Package Name</h3>
+            <button onclick="hideDeletePackageNameModal()" class="text-gray-400 hover:text-gray-500">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         <div class="p-6">
-            <p class="text-gray-600 mb-4">Are you sure you want to delete this unit of measure? This action cannot be undone.</p>
+            <p class="text-gray-600 mb-4">Are you sure you want to delete this package name? This action cannot be
+                undone.</p>
             <div class="bg-gray-50 p-4 rounded-lg mb-4">
                 <div class="grid grid-cols-2 gap-2 text-sm">
                     <div class="text-gray-500">Package Name:</div>
                     <div class="font-medium text-gray-900" id="delete-package-name"></div>
-                    <div class="text-gray-500">SI Unit:</div>
-                    <div class="font-medium text-gray-900" id="delete-si-unit"></div>
-                    <div class="text-gray-500">Unit of Measure:</div>
-                    <div class="font-medium text-gray-900" id="delete-unit-of-measure"></div>
-                    <div class="text-gray-500">Status:</div>
-                    <div class="font-medium text-gray-900" id="delete-status"></div>
                 </div>
             </div>
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideDeleteUnitOfMeasureModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+            <button onclick="hideDeletePackageNameModal()"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
                 Cancel
             </button>
-            <button id="confirmDeleteUnitOfMeasure" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            <button id="confirmDeletePackageName" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
                 Delete
             </button>
         </div>
     </div>
 </div>
 
-<!-- Change Status Modal -->
-<div id="changeStatusModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideChangeStatusModal()"></div>
+<!-- Delete SI Unit Modal -->
+<div id="deleteSIUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/20" onclick="hideDeleteSIUnitModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
         <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Change Status</h3>
-            <button onclick="hideChangeStatusModal()" class="text-gray-400 hover:text-gray-500">
+            <h3 class="text-lg font-semibold text-secondary">Delete SI Unit</h3>
+            <button onclick="hideDeleteSIUnitModal()" class="text-gray-400 hover:text-gray-500">
                 <i class="fas fa-times"></i>
             </button>
         </div>
         <div class="p-6">
-            <p class="text-gray-600 mb-4">Change the status of this unit of measure:</p>
+            <p class="text-gray-600 mb-4">Are you sure you want to delete this SI unit? This action cannot be undone.
+            </p>
             <div class="bg-gray-50 p-4 rounded-lg mb-4">
                 <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div class="text-gray-500">Package Name:</div>
-                    <div class="font-medium text-gray-900" id="status-package-name"></div>
                     <div class="text-gray-500">SI Unit:</div>
-                    <div class="font-medium text-gray-900" id="status-si-unit"></div>
-                    <div class="text-gray-500">Unit of Measure:</div>
-                    <div class="font-medium text-gray-900" id="status-unit-of-measure"></div>
-                </div>
-            </div>
-            <div class="mt-4">
-                <label for="status-toggle" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <div class="flex items-center gap-3">
-                    <span class="text-sm text-gray-500">Pending</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="status-toggle" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                    </label>
-                    <span class="text-sm text-gray-900 font-medium">Approved</span>
+                    <div class="font-medium text-gray-900" id="delete-si-unit"></div>
                 </div>
             </div>
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideChangeStatusModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+            <button onclick="hideDeleteSIUnitModal()"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
                 Cancel
             </button>
-            <button id="confirmChangeStatus" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                Save Changes
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Package Name Modal -->
-<div id="editPackageNameModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideEditPackageNameModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Edit Package Name</h3>
-            <button onclick="hideEditPackageNameModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="p-6">
-            <p class="text-gray-600 mb-4">Update the package name for this unit of measure:</p>
-            <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div class="text-gray-500">Current Package Name:</div>
-                    <div class="font-medium text-gray-900" id="current-package-name"></div>
-                    <div class="text-gray-500">SI Unit:</div>
-                    <div class="font-medium text-gray-900" id="edit-package-si-unit"></div>
-                </div>
-            </div>
-            <div class="mt-4">
-                <label for="edit-package-name-select" class="block text-sm font-medium text-gray-700 mb-1">New Package Name</label>
-                <select id="edit-package-name-select" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <option value="" disabled selected>Select Package Name</option>
-                    <option value="create_new">Create New</option>
-                </select>
-                <div id="edit-new-package-name-container" class="mt-2 hidden">
-                    <input type="text" id="edit-new-package-name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter new package name">
-                </div>
-            </div>
-        </div>
-        <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideEditPackageNameModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
-                Cancel
-            </button>
-            <button id="confirmEditPackageName" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                Save Changes
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Edit SI Unit Modal -->
-<div id="editSIUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideEditSIUnitModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Edit SI Unit</h3>
-            <button onclick="hideEditSIUnitModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="p-6">
-            <p class="text-gray-600 mb-4">Update the SI unit for this unit of measure:</p>
-            <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                <div class="grid grid-cols-2 gap-2 text-sm">
-                    <div class="text-gray-500">Package Name:</div>
-                    <div class="font-medium text-gray-900" id="edit-si-package-name"></div>
-                    <div class="text-gray-500">Current SI Unit:</div>
-                    <div class="font-medium text-gray-900" id="current-si-unit"></div>
-                </div>
-            </div>
-            <div class="mt-4">
-                <label for="edit-si-unit-select" class="block text-sm font-medium text-gray-700 mb-1">New SI Unit</label>
-                <select id="edit-si-unit-select" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <option value="" disabled selected>Select SI Unit</option>
-                    <option value="create_new">Create New</option>
-                </select>
-                <div id="edit-new-si-unit-container" class="mt-2 hidden">
-                    <input type="text" id="edit-new-si-unit" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter new SI unit">
-                </div>
-            </div>
-        </div>
-        <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideEditSIUnitModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
-                Cancel
-            </button>
-            <button id="confirmEditSIUnit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                Save Changes
+            <button id="confirmDeleteSIUnit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                Delete
             </button>
         </div>
     </div>
@@ -330,7 +319,8 @@ ob_start();
                 <p class="text-sm text-gray-500 mt-1">Redirecting in <span id="countdown">10</span> seconds...</p>
             </div>
             <div class="flex justify-center mt-6">
-                <button onclick="redirectToLogin()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                <button onclick="redirectToLogin()"
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
                     Login Now
                 </button>
             </div>
@@ -339,7 +329,8 @@ ob_start();
 </div>
 
 <!-- Success Notification -->
-<div id="successNotification" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
+<div id="successNotification"
+    class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-2"></i>
         <span id="successMessage"></span>
@@ -347,7 +338,8 @@ ob_start();
 </div>
 
 <!-- Error Notification -->
-<div id="errorNotification" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
+<div id="errorNotification"
+    class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-exclamation-circle mr-2"></i>
         <span id="errorMessage"></span>
@@ -357,167 +349,149 @@ ob_start();
 <script>
     const BASE_URL = '<?= BASE_URL ?>';
 
-    // Units of Measure variables
-    let unitsOfMeasureData = [];
+    // Package Names variables
     let packageNamesData = [];
-    let siUnitsData = [];
-    let currentUnitsOfMeasurePage = 1;
-    let totalUnitsOfMeasurePages = 1;
+    let currentPackageNamesPage = 1;
+    let totalPackageNamesPages = 1;
     let itemsPerPage = 10;
-    let filteredUnitsOfMeasure = [];
+    let filteredPackageNames = [];
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Package Name and SI Unit select change handlers
-        const packageNameSelect = document.getElementById('package_name_select');
-        const siUnitSelect = document.getElementById('si_unit_select');
-        const newPackageNameContainer = document.getElementById('new_package_name_container');
-        const newSIUnitContainer = document.getElementById('new_si_unit_container');
+    // SI Units variables
+    let siUnitsData = [];
+    let currentSIUnitsPage = 1;
+    let totalSIUnitsPages = 1;
+    let filteredSIUnits = [];
 
-        packageNameSelect.addEventListener('change', function() {
-            if (this.value === 'create_new') {
-                newPackageNameContainer.classList.remove('hidden');
-            } else {
-                newPackageNameContainer.classList.add('hidden');
-            }
+    document.addEventListener('DOMContentLoaded', function () {
+        // Tab switching
+        const tabPackageNames = document.getElementById('tab-package-names');
+        const tabSIUnits = document.getElementById('tab-si-units');
+        const contentPackageNames = document.getElementById('content-package-names');
+        const contentSIUnits = document.getElementById('content-si-units');
+
+        tabPackageNames.addEventListener('click', function () {
+            tabPackageNames.classList.add('border-primary', 'text-primary');
+            tabPackageNames.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+            tabSIUnits.classList.remove('border-primary', 'text-primary');
+            tabSIUnits.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+
+            contentPackageNames.classList.remove('hidden');
+            contentSIUnits.classList.add('hidden');
         });
 
-        siUnitSelect.addEventListener('change', function() {
-            if (this.value === 'create_new') {
-                newSIUnitContainer.classList.remove('hidden');
-            } else {
-                newSIUnitContainer.classList.add('hidden');
-            }
+        tabSIUnits.addEventListener('click', function () {
+            tabSIUnits.classList.add('border-primary', 'text-primary');
+            tabSIUnits.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+            tabPackageNames.classList.remove('border-primary', 'text-primary');
+            tabPackageNames.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+
+            contentSIUnits.classList.remove('hidden');
+            contentPackageNames.classList.add('hidden');
         });
 
-        // Edit Package Name Modal
-        const editPackageNameSelect = document.getElementById('edit-package-name-select');
-        const editNewPackageNameContainer = document.getElementById('edit-new-package-name-container');
+        // Package Name Form
+        const packageNameForm = document.getElementById('packageNameForm');
+        const cancelPackageNameFormBtn = document.getElementById('cancelPackageNameForm');
 
-        editPackageNameSelect.addEventListener('change', function() {
-            if (this.value === 'create_new') {
-                editNewPackageNameContainer.classList.remove('hidden');
-            } else {
-                editNewPackageNameContainer.classList.add('hidden');
-            }
-        });
-
-        // Edit SI Unit Modal
-        const editSIUnitSelect = document.getElementById('edit-si-unit-select');
-        const editNewSIUnitContainer = document.getElementById('edit-new-si-unit-container');
-
-        editSIUnitSelect.addEventListener('change', function() {
-            if (this.value === 'create_new') {
-                editNewSIUnitContainer.classList.remove('hidden');
-            } else {
-                editNewSIUnitContainer.classList.add('hidden');
-            }
-        });
-
-        // Unit of Measure Form
-        const unitOfMeasureForm = document.getElementById('unitOfMeasureForm');
-        const cancelUnitOfMeasureFormBtn = document.getElementById('cancelUnitOfMeasureForm');
-
-        unitOfMeasureForm.addEventListener('submit', async function(e) {
+        packageNameForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
-            const packageNameSelectValue = packageNameSelect.value;
-            const siUnitSelectValue = siUnitSelect.value;
-            let packageNameId = packageNameSelectValue;
-            let siUnitId = siUnitSelectValue;
-            let newSIUnitName = null;
+            const packageNameId = document.getElementById('packageNameId').value;
+            const packageName = document.getElementById('package_name').value.trim();
 
-            // Create new package name if needed
-            if (packageNameSelectValue === 'create_new' || packageNameSelectValue === '') {
-                const newPackageName = document.getElementById('new_package_name').value.trim();
-                if (!newPackageName) {
-                    showErrorNotification('Please enter a package name');
-                    return;
-                }
-
-                try {
-                    const response = await createNewPackageName(newPackageName);
-                    if (response.success) {
-                        packageNameId = response.id;
-                    } else {
-                        showErrorNotification(response.message || 'Failed to create package name');
-                        return;
-                    }
-                } catch (error) {
-                    showErrorNotification('Failed to create package name');
-                    return;
-                }
+            if (!packageName) {
+                showErrorNotification('Please enter a package name');
+                return;
             }
 
-            // Handle SI unit
-            if (siUnitSelectValue === 'create_new' || siUnitSelectValue === '') {
-                newSIUnitName = document.getElementById('new_si_unit').value.trim();
-                if (!newSIUnitName) {
-                    showErrorNotification('Please enter an SI unit');
-                    return;
-                }
-
-                // Generate a temporary UUID for the new SI unit
-                siUnitId = generateUUID();
-            }
-
-            // Create unit of measure
-            createUnitOfMeasure(packageNameId, siUnitId, newSIUnitName);
-        });
-
-        cancelUnitOfMeasureFormBtn.addEventListener('click', function() {
-            resetUnitOfMeasureForm();
-        });
-
-        // Search and Filter
-        document.getElementById('searchUnitsOfMeasure').addEventListener('input', function(e) {
-            filterUnitsOfMeasure();
-        });
-
-        document.getElementById('filterPackageName').addEventListener('change', function() {
-            filterUnitsOfMeasure();
-        });
-
-        document.getElementById('filterSIUnit').addEventListener('change', function() {
-            filterUnitsOfMeasure();
-        });
-
-        document.getElementById('filterStatus').addEventListener('change', function() {
-            filterUnitsOfMeasure();
-        });
-
-        // Pagination for Units of Measure
-        document.getElementById('prev-page-units-of-measure').addEventListener('click', function() {
-            if (currentUnitsOfMeasurePage > 1) {
-                currentUnitsOfMeasurePage--;
-                renderUnitsOfMeasurePagination();
-                renderUnitsOfMeasure(filteredUnitsOfMeasure);
+            if (packageNameId) {
+                updatePackageName(packageNameId, packageName);
+            } else {
+                createPackageName(packageName);
             }
         });
 
-        document.getElementById('next-page-units-of-measure').addEventListener('click', function() {
-            if (currentUnitsOfMeasurePage < totalUnitsOfMeasurePages) {
-                currentUnitsOfMeasurePage++;
-                renderUnitsOfMeasurePagination();
-                renderUnitsOfMeasure(filteredUnitsOfMeasure);
+        cancelPackageNameFormBtn.addEventListener('click', function () {
+            resetPackageNameForm();
+        });
+
+        // SI Unit Form
+        const siUnitForm = document.getElementById('siUnitForm');
+        const cancelSIUnitFormBtn = document.getElementById('cancelSIUnitForm');
+
+        siUnitForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const siUnitId = document.getElementById('siUnitId').value;
+            const siUnit = document.getElementById('si_unit').value.trim();
+
+            if (!siUnit) {
+                showErrorNotification('Please enter an SI unit');
+                return;
+            }
+
+            if (siUnitId) {
+                updateSIUnit(siUnitId, siUnit);
+            } else {
+                createSIUnit(siUnit);
             }
         });
 
-        // Delete confirmation
-        document.getElementById('confirmDeleteUnitOfMeasure').addEventListener('click', confirmDeleteUnitOfMeasure);
+        cancelSIUnitFormBtn.addEventListener('click', function () {
+            resetSIUnitForm();
+        });
 
-        // Change status confirmation
-        document.getElementById('confirmChangeStatus').addEventListener('click', confirmChangeStatus);
+        // Search Package Names
+        document.getElementById('searchPackageNames').addEventListener('input', function () {
+            filterPackageNames();
+        });
 
-        // Edit Package Name confirmation
-        document.getElementById('confirmEditPackageName').addEventListener('click', confirmEditPackageName);
+        // Search SI Units
+        document.getElementById('searchSIUnits').addEventListener('input', function () {
+            filterSIUnits();
+        });
 
-        // Edit SI Unit confirmation
-        document.getElementById('confirmEditSIUnit').addEventListener('click', confirmEditSIUnit);
+        // Pagination for Package Names
+        document.getElementById('prev-page-package-names').addEventListener('click', function () {
+            if (currentPackageNamesPage > 1) {
+                currentPackageNamesPage--;
+                renderPackageNamesPagination();
+                renderPackageNames(filteredPackageNames);
+            }
+        });
+
+        document.getElementById('next-page-package-names').addEventListener('click', function () {
+            if (currentPackageNamesPage < totalPackageNamesPages) {
+                currentPackageNamesPage++;
+                renderPackageNamesPagination();
+                renderPackageNames(filteredPackageNames);
+            }
+        });
+
+        // Pagination for SI Units
+        document.getElementById('prev-page-si-units').addEventListener('click', function () {
+            if (currentSIUnitsPage > 1) {
+                currentSIUnitsPage--;
+                renderSIUnitsPagination();
+                renderSIUnits(filteredSIUnits);
+            }
+        });
+
+        document.getElementById('next-page-si-units').addEventListener('click', function () {
+            if (currentSIUnitsPage < totalSIUnitsPages) {
+                currentSIUnitsPage++;
+                renderSIUnitsPagination();
+                renderSIUnits(filteredSIUnits);
+            }
+        });
+
+        // Delete confirmations
+        document.getElementById('confirmDeletePackageName').addEventListener('click', confirmDeletePackageName);
+        document.getElementById('confirmDeleteSIUnit').addEventListener('click', confirmDeleteSIUnit);
 
         // Load data
         loadPackageNames();
         loadSIUnits();
-        loadUnitsOfMeasure();
     });
 
     // Package Names Functions
@@ -539,7 +513,13 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     packageNamesData = data.packageNames;
-                    populatePackageNameDropdowns(packageNamesData);
+                    // Sort by updated_at in descending order
+                    packageNamesData.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+                    filteredPackageNames = [...packageNamesData];
+
+                    totalPackageNamesPages = Math.ceil(filteredPackageNames.length / itemsPerPage);
+                    renderPackageNamesPagination();
+                    renderPackageNames(filteredPackageNames);
                 } else {
                     showErrorNotification(data.message || 'Failed to load package names');
                 }
@@ -553,94 +533,301 @@ ob_start();
             });
     }
 
-    function populatePackageNameDropdowns(packageNames) {
-        const packageNameSelect = document.getElementById('package_name_select');
-        const filterPackageName = document.getElementById('filterPackageName');
-        const editPackageNameSelect = document.getElementById('edit-package-name-select');
+    function filterPackageNames() {
+        const searchQuery = document.getElementById('searchPackageNames').value.toLowerCase();
 
-        // Sort package names alphabetically
-        packageNames.sort((a, b) => a.package_name.localeCompare(b.package_name));
+        filteredPackageNames = packageNamesData.filter(pkg =>
+            pkg.package_name.toLowerCase().includes(searchQuery)
+        );
 
-        // Clear existing options except the first two (placeholder and create new)
-        while (packageNameSelect.options.length > 2) {
-            packageNameSelect.remove(2);
+        currentPackageNamesPage = 1;
+        totalPackageNamesPages = Math.ceil(filteredPackageNames.length / itemsPerPage);
+        renderPackageNamesPagination();
+        renderPackageNames(filteredPackageNames);
+    }
+
+    function renderPackageNamesPagination() {
+        const paginationContainer = document.getElementById('pagination-numbers-package-names');
+        paginationContainer.innerHTML = '';
+
+        const prevButton = document.getElementById('prev-page-package-names');
+        const nextButton = document.getElementById('next-page-package-names');
+
+        prevButton.disabled = currentPackageNamesPage === 1;
+        nextButton.disabled = currentPackageNamesPage === totalPackageNamesPages || totalPackageNamesPages === 0;
+
+        if (totalPackageNamesPages <= 5) {
+            for (let i = 1; i <= totalPackageNamesPages; i++) {
+                paginationContainer.appendChild(createPaginationButton(i, 'package-names'));
+            }
+        } else {
+            paginationContainer.appendChild(createPaginationButton(1, 'package-names'));
+
+            if (currentPackageNamesPage > 3) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'px-2';
+                ellipsis.textContent = '...';
+                paginationContainer.appendChild(ellipsis);
+            }
+
+            for (let i = Math.max(2, currentPackageNamesPage - 1); i <= Math.min(totalPackageNamesPages - 1, currentPackageNamesPage + 1); i++) {
+                paginationContainer.appendChild(createPaginationButton(i, 'package-names'));
+            }
+
+            if (currentPackageNamesPage < totalPackageNamesPages - 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'px-2';
+                ellipsis.textContent = '...';
+                paginationContainer.appendChild(ellipsis);
+            }
+
+            if (totalPackageNamesPages > 1) {
+                paginationContainer.appendChild(createPaginationButton(totalPackageNamesPages, 'package-names'));
+            }
+        }
+    }
+
+    function createPaginationButton(pageNumber, type) {
+        const button = document.createElement('button');
+        const isActive = pageNumber === (type === 'package-names' ? currentPackageNamesPage : currentSIUnitsPage);
+
+        button.className = isActive ?
+            'px-3 py-2 rounded-lg bg-primary text-white' :
+            'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
+        button.textContent = pageNumber;
+
+        button.addEventListener('click', function () {
+            if (type === 'package-names') {
+                currentPackageNamesPage = pageNumber;
+                renderPackageNamesPagination();
+                renderPackageNames(filteredPackageNames);
+            } else {
+                currentSIUnitsPage = pageNumber;
+                renderSIUnitsPagination();
+                renderSIUnits(filteredSIUnits);
+            }
+        });
+
+        return button;
+    }
+
+    function renderPackageNames(packageNames) {
+        const tableBody = document.getElementById('package-names-table-body');
+        tableBody.innerHTML = '';
+
+        document.getElementById('package-name-count').textContent = packageNames.length;
+
+        const start = (currentPackageNamesPage - 1) * itemsPerPage;
+        const end = Math.min(start + itemsPerPage, packageNames.length);
+
+        document.getElementById('showing-start-package-names').textContent = packageNames.length > 0 ? start + 1 : 0;
+        document.getElementById('showing-end-package-names').textContent = end;
+        document.getElementById('total-package-names').textContent = packageNames.length;
+
+        const paginatedPackageNames = packageNames.slice(start, end);
+
+        if (paginatedPackageNames.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">No package names found</td></tr>';
+            return;
         }
 
-        // Clear filter dropdown except the first option
-        while (filterPackageName.options.length > 1) {
-            filterPackageName.remove(1);
-        }
+        paginatedPackageNames.forEach((pkg, index) => {
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
 
-        // Clear edit dropdown except the first two options
-        while (editPackageNameSelect.options.length > 2) {
-            editPackageNameSelect.remove(2);
-        }
+            // Format dates in 12-hour format without seconds
+            const createdDate = new Date(pkg.created_at);
+            const updatedDate = new Date(pkg.updated_at);
 
-        // Add package names to dropdowns
-        packageNames.forEach(pkg => {
-            // Add to form select
-            const option1 = document.createElement('option');
-            option1.value = pkg.id;
-            option1.textContent = pkg.package_name;
-            packageNameSelect.appendChild(option1);
+            const createdAt = createdDate.toLocaleDateString() + ' ' +
+                createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+            const updatedAt = updatedDate.toLocaleDateString() + ' ' +
+                updatedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-            // Add to filter select
-            const option2 = document.createElement('option');
-            option2.value = pkg.package_name;
-            option2.textContent = pkg.package_name;
-            filterPackageName.appendChild(option2);
+            row.innerHTML = `
+                <td class="px-6 py-4 text-sm text-gray-text">${start + index + 1}</td>
+                <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(pkg.package_name)}</td>
+                <td class="px-6 py-4 text-sm text-gray-text hidden md:table-cell">${createdAt}</td>
+                <td class="px-6 py-4 text-sm text-gray-text">${updatedAt}</td>
+                <td class="px-6 py-4 text-sm">
+                    <div class="flex items-center gap-2">
+                        <button class="btn-edit-package-name text-blue-600 hover:text-blue-800" data-id="${pkg.id}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-delete-package-name text-red-600 hover:text-red-800" data-id="${pkg.id}" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
 
-            // Add to edit select
-            const option3 = document.createElement('option');
-            option3.value = pkg.id;
-            option3.textContent = pkg.package_name;
-            editPackageNameSelect.appendChild(option3);
+            tableBody.appendChild(row);
+        });
+
+        document.querySelectorAll('.btn-edit-package-name').forEach(button => {
+            button.addEventListener('click', function () {
+                const packageNameId = this.getAttribute('data-id');
+                editPackageName(packageNameId);
+            });
+        });
+
+        document.querySelectorAll('.btn-delete-package-name').forEach(button => {
+            button.addEventListener('click', function () {
+                const packageNameId = this.getAttribute('data-id');
+                showDeletePackageNameModal(packageNameId);
+            });
         });
     }
 
-    async function createNewPackageName(packageName) {
+    function createPackageName(packageName) {
         showLoading('Creating package name...');
 
-        try {
-            const response = await fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createPackageName`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    package_name: packageName
-                })
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createPackageName`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                package_name: packageName
+            })
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showSuccessNotification(data.message || 'Package name created successfully!');
+                    resetPackageNameForm();
+                    loadPackageNames();
+                } else {
+                    showErrorNotification(data.message || 'Failed to create package name');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                if (error.message !== 'Session expired') {
+                    console.error('Error creating package name:', error);
+                    showErrorNotification('Failed to create package name. Please try again.');
+                }
             });
+    }
 
-            if (response.status === 401) {
-                showSessionExpiredModal();
-                throw new Error('Session expired');
-            }
+    function updatePackageName(id, packageName) {
+        showLoading('Updating package name...');
 
-            const data = await response.json();
-            hideLoading();
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=updatePackageName`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: id,
+                package_name: packageName
+            })
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showSuccessNotification(data.message || 'Package name updated successfully!');
+                    resetPackageNameForm();
+                    loadPackageNames();
+                } else {
+                    showErrorNotification(data.message || 'Failed to update package name');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                if (error.message !== 'Session expired') {
+                    console.error('Error updating package name:', error);
+                    showErrorNotification('Failed to update package name. Please try again.');
+                }
+            });
+    }
 
-            if (data.success) {
-                // Add to packageNamesData
-                packageNamesData.push({
-                    id: data.id,
-                    package_name: packageName,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                });
+    function editPackageName(packageNameId) {
+        const packageName = packageNamesData.find(p => p.id === packageNameId);
 
-                // Update dropdowns
-                populatePackageNameDropdowns(packageNamesData);
-            }
-
-            return data;
-        } catch (error) {
-            hideLoading();
-            if (error.message !== 'Session expired') {
-                console.error('Error creating package name:', error);
-            }
-            throw error;
+        if (packageName) {
+            document.getElementById('packageNameFormTitle').textContent = 'Edit Package Name';
+            document.getElementById('packageNameId').value = packageNameId;
+            document.getElementById('package_name').value = packageName.package_name;
+            document.getElementById('submitPackageNameButton').textContent = 'Update Package Name';
+            document.getElementById('cancelPackageNameForm').classList.remove('hidden');
         }
+    }
+
+    function showDeletePackageNameModal(packageNameId) {
+        const packageName = packageNamesData.find(p => p.id === packageNameId);
+
+        if (packageName) {
+            document.getElementById('delete-package-name').textContent = packageName.package_name;
+            document.getElementById('confirmDeletePackageName').setAttribute('data-id', packageNameId);
+            document.getElementById('deletePackageNameModal').classList.remove('hidden');
+        }
+    }
+
+    function hideDeletePackageNameModal() {
+        document.getElementById('deletePackageNameModal').classList.add('hidden');
+    }
+
+    function confirmDeletePackageName() {
+        const packageNameId = document.getElementById('confirmDeletePackageName').getAttribute('data-id');
+
+        showLoading('Deleting package name...');
+        hideDeletePackageNameModal();
+
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=deletePackageName`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: packageNameId
+            })
+        })
+            .then(response => {
+                if (response.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return response.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showSuccessNotification(data.message || 'Package name deleted successfully!');
+                    loadPackageNames();
+                } else {
+                    showErrorNotification(data.message || 'Failed to delete package name');
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                if (error.message !== 'Session expired') {
+                    console.error('Error deleting package name:', error);
+                    showErrorNotification('Failed to delete package name. Please try again.');
+                }
+            });
+    }
+
+    function resetPackageNameForm() {
+        document.getElementById('packageNameForm').reset();
+        document.getElementById('packageNameId').value = '';
+        document.getElementById('packageNameFormTitle').textContent = 'Add New Package Name';
+        document.getElementById('submitPackageNameButton').textContent = 'Save Package Name';
+        document.getElementById('cancelPackageNameForm').classList.add('hidden');
     }
 
     // SI Units Functions
@@ -662,7 +849,13 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     siUnitsData = data.siUnits;
-                    populateSIUnitDropdowns(siUnitsData);
+                    // Sort by updated_at in descending order
+                    siUnitsData.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+                    filteredSIUnits = [...siUnitsData];
+
+                    totalSIUnitsPages = Math.ceil(filteredSIUnits.length / itemsPerPage);
+                    renderSIUnitsPagination();
+                    renderSIUnits(filteredSIUnits);
                 } else {
                     showErrorNotification(data.message || 'Failed to load SI units');
                 }
@@ -676,329 +869,104 @@ ob_start();
             });
     }
 
-    function populateSIUnitDropdowns(siUnits) {
-        const siUnitSelect = document.getElementById('si_unit_select');
-        const filterSIUnit = document.getElementById('filterSIUnit');
-        const editSIUnitSelect = document.getElementById('edit-si-unit-select');
+    function filterSIUnits() {
+        const searchQuery = document.getElementById('searchSIUnits').value.toLowerCase();
 
-        // Sort SI units alphabetically
-        siUnits.sort((a, b) => a.si_unit.localeCompare(b.si_unit));
+        filteredSIUnits = siUnitsData.filter(unit =>
+            unit.si_unit.toLowerCase().includes(searchQuery)
+        );
 
-        // Clear existing options except the first two (placeholder and create new)
-        while (siUnitSelect.options.length > 2) {
-            siUnitSelect.remove(2);
-        }
-
-        // Clear filter dropdown except the first option
-        while (filterSIUnit.options.length > 1) {
-            filterSIUnit.remove(1);
-        }
-
-        // Clear edit dropdown except the first two options
-        while (editSIUnitSelect.options.length > 2) {
-            editSIUnitSelect.remove(2);
-        }
-
-        // Add SI units to dropdowns
-        siUnits.forEach(unit => {
-            // Add to form select
-            const option1 = document.createElement('option');
-            option1.value = unit.id;
-            option1.textContent = unit.si_unit;
-            siUnitSelect.appendChild(option1);
-
-            // Add to filter select
-            const option2 = document.createElement('option');
-            option2.value = unit.si_unit;
-            option2.textContent = unit.si_unit;
-            filterSIUnit.appendChild(option2);
-
-            // Add to edit select
-            const option3 = document.createElement('option');
-            option3.value = unit.id;
-            option3.textContent = unit.si_unit;
-            editSIUnitSelect.appendChild(option3);
-        });
+        currentSIUnitsPage = 1;
+        totalSIUnitsPages = Math.ceil(filteredSIUnits.length / itemsPerPage);
+        renderSIUnitsPagination();
+        renderSIUnits(filteredSIUnits);
     }
 
-    async function createNewSIUnit(siUnit) {
-        showLoading('Creating SI unit...');
-
-        try {
-            const response = await fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createSIUnit`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    si_unit: siUnit
-                })
-            });
-
-            if (response.status === 401) {
-                showSessionExpiredModal();
-                throw new Error('Session expired');
-            }
-
-            const data = await response.json();
-            hideLoading();
-
-            if (data.success) {
-                // Add to siUnitsData
-                siUnitsData.push({
-                    id: data.id,
-                    si_unit: siUnit,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                });
-
-                // Update dropdowns
-                populateSIUnitDropdowns(siUnitsData);
-            }
-
-            return data;
-        } catch (error) {
-            hideLoading();
-            if (error.message !== 'Session expired') {
-                console.error('Error creating SI unit:', error);
-            }
-            throw error;
-        }
-    }
-
-    // Units of Measure Functions
-    function loadUnitsOfMeasure() {
-        const tableBody = document.getElementById('units-of-measure-table-body');
-        tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center">Loading units of measure...</td></tr>';
-
-        showLoading('Loading units of measure...');
-
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=getUnitsOfMeasure`)
-            .then(response => {
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        showSessionExpiredModal();
-                        throw new Error('Session expired');
-                    }
-                    throw new Error(`Server responded with status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    unitsOfMeasureData = data.unitsOfMeasure;
-                    filteredUnitsOfMeasure = [...unitsOfMeasureData];
-
-                    totalUnitsOfMeasurePages = Math.ceil(filteredUnitsOfMeasure.length / itemsPerPage);
-                    renderUnitsOfMeasurePagination();
-                    renderUnitsOfMeasure(filteredUnitsOfMeasure);
-                } else {
-                    showErrorNotification(data.message || 'Failed to load units of measure');
-                    tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error loading units of measure</td></tr>';
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                if (error.message !== 'Session expired') {
-                    console.error('Error loading units of measure:', error);
-                    showErrorNotification('Failed to load units of measure. Please try again.');
-                    tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Failed to load units of measure</td></tr>';
-                }
-            });
-    }
-
-    function filterUnitsOfMeasure() {
-        const searchQuery = document.getElementById('searchUnitsOfMeasure').value.toLowerCase();
-        const packageNameFilter = document.getElementById('filterPackageName').value.toLowerCase();
-        const siUnitFilter = document.getElementById('filterSIUnit').value.toLowerCase();
-        const statusFilter = document.getElementById('filterStatus').value;
-
-        filteredUnitsOfMeasure = unitsOfMeasureData.filter(unit => {
-            const matchesSearch =
-                unit.package_name.toLowerCase().includes(searchQuery) ||
-                unit.si_unit.toLowerCase().includes(searchQuery) ||
-                unit.unit_of_measure.toLowerCase().includes(searchQuery);
-
-            const matchesPackageName = packageNameFilter === '' || unit.package_name.toLowerCase() === packageNameFilter;
-            const matchesSIUnit = siUnitFilter === '' || unit.si_unit.toLowerCase() === siUnitFilter;
-            const matchesStatus = statusFilter === '' || unit.status === statusFilter;
-
-            return matchesSearch && matchesPackageName && matchesSIUnit && matchesStatus;
-        });
-
-        currentUnitsOfMeasurePage = 1;
-        totalUnitsOfMeasurePages = Math.ceil(filteredUnitsOfMeasure.length / itemsPerPage);
-        renderUnitsOfMeasurePagination();
-        renderUnitsOfMeasure(filteredUnitsOfMeasure);
-    }
-
-    function renderUnitsOfMeasurePagination() {
-        const paginationContainer = document.getElementById('pagination-numbers-units-of-measure');
+    function renderSIUnitsPagination() {
+        const paginationContainer = document.getElementById('pagination-numbers-si-units');
         paginationContainer.innerHTML = '';
 
-        const prevButton = document.getElementById('prev-page-units-of-measure');
-        const nextButton = document.getElementById('next-page-units-of-measure');
+        const prevButton = document.getElementById('prev-page-si-units');
+        const nextButton = document.getElementById('next-page-si-units');
 
-        prevButton.disabled = currentUnitsOfMeasurePage === 1;
-        nextButton.disabled = currentUnitsOfMeasurePage === totalUnitsOfMeasurePages || totalUnitsOfMeasurePages === 0;
+        prevButton.disabled = currentSIUnitsPage === 1;
+        nextButton.disabled = currentSIUnitsPage === totalSIUnitsPages || totalSIUnitsPages === 0;
 
-        if (totalUnitsOfMeasurePages <= 5) {
-            for (let i = 1; i <= totalUnitsOfMeasurePages; i++) {
-                paginationContainer.appendChild(createPaginationButton(i));
+        if (totalSIUnitsPages <= 5) {
+            for (let i = 1; i <= totalSIUnitsPages; i++) {
+                paginationContainer.appendChild(createPaginationButton(i, 'si-units'));
             }
         } else {
-            paginationContainer.appendChild(createPaginationButton(1));
+            paginationContainer.appendChild(createPaginationButton(1, 'si-units'));
 
-            if (currentUnitsOfMeasurePage > 3) {
+            if (currentSIUnitsPage > 3) {
                 const ellipsis = document.createElement('span');
                 ellipsis.className = 'px-2';
                 ellipsis.textContent = '...';
                 paginationContainer.appendChild(ellipsis);
             }
 
-            for (let i = Math.max(2, currentUnitsOfMeasurePage - 1); i <= Math.min(totalUnitsOfMeasurePages - 1, currentUnitsOfMeasurePage + 1); i++) {
-                paginationContainer.appendChild(createPaginationButton(i));
+            for (let i = Math.max(2, currentSIUnitsPage - 1); i <= Math.min(totalSIUnitsPages - 1, currentSIUnitsPage + 1); i++) {
+                paginationContainer.appendChild(createPaginationButton(i, 'si-units'));
             }
 
-            if (currentUnitsOfMeasurePage < totalUnitsOfMeasurePages - 2) {
+            if (currentSIUnitsPage < totalSIUnitsPages - 2) {
                 const ellipsis = document.createElement('span');
                 ellipsis.className = 'px-2';
                 ellipsis.textContent = '...';
                 paginationContainer.appendChild(ellipsis);
             }
 
-            if (totalUnitsOfMeasurePages > 1) {
-                paginationContainer.appendChild(createPaginationButton(totalUnitsOfMeasurePages));
+            if (totalSIUnitsPages > 1) {
+                paginationContainer.appendChild(createPaginationButton(totalSIUnitsPages, 'si-units'));
             }
         }
     }
 
-    function createPaginationButton(pageNumber) {
-        const button = document.createElement('button');
-        const isActive = pageNumber === currentUnitsOfMeasurePage;
-
-        button.className = isActive ?
-            'px-3 py-2 rounded-lg bg-primary text-white' :
-            'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
-        button.textContent = pageNumber;
-
-        button.addEventListener('click', function() {
-            currentUnitsOfMeasurePage = pageNumber;
-            renderUnitsOfMeasurePagination();
-            renderUnitsOfMeasure(filteredUnitsOfMeasure);
-        });
-
-        return button;
-    }
-
-    function createUnitOfMeasure(packageNameId, siUnitId, siUnitName = null) {
-        showLoading('Creating unit of measure...');
-
-        const payload = {
-            package_name_id: packageNameId,
-            si_unit_id: siUnitId,
-            status: 'Approved'
-        };
-
-        // Add SI unit name if provided (for new SI units)
-        if (siUnitName) {
-            payload.si_unit_name = siUnitName;
-        }
-
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createUnitOfMeasure`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(response => {
-                if (response.status === 401) {
-                    showSessionExpiredModal();
-                    throw new Error('Session expired');
-                }
-                return response.json();
-            })
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    showSuccessNotification(data.message || 'Unit of measure created successfully!');
-                    resetUnitOfMeasureForm();
-                    loadUnitsOfMeasure();
-                } else {
-                    showErrorNotification(data.message || 'Failed to create unit of measure');
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                if (error.message !== 'Session expired') {
-                    console.error('Error creating unit of measure:', error);
-                    showErrorNotification('Failed to create unit of measure. Please try again.');
-                }
-            });
-    }
-
-    // Generate UUID for new SI units
-    function generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-
-    function renderUnitsOfMeasure(unitsOfMeasure) {
-        const tableBody = document.getElementById('units-of-measure-table-body');
+    function renderSIUnits(siUnits) {
+        const tableBody = document.getElementById('si-units-table-body');
         tableBody.innerHTML = '';
 
-        document.getElementById('unit-of-measure-count').textContent = unitsOfMeasure.length;
+        document.getElementById('si-unit-count').textContent = siUnits.length;
 
-        const start = (currentUnitsOfMeasurePage - 1) * itemsPerPage;
-        const end = Math.min(start + itemsPerPage, unitsOfMeasure.length);
+        const start = (currentSIUnitsPage - 1) * itemsPerPage;
+        const end = Math.min(start + itemsPerPage, siUnits.length);
 
-        document.getElementById('showing-start-units-of-measure').textContent = unitsOfMeasure.length > 0 ? start + 1 : 0;
-        document.getElementById('showing-end-units-of-measure').textContent = end;
-        document.getElementById('total-units-of-measure').textContent = unitsOfMeasure.length;
+        document.getElementById('showing-start-si-units').textContent = siUnits.length > 0 ? start + 1 : 0;
+        document.getElementById('showing-end-si-units').textContent = end;
+        document.getElementById('total-si-units').textContent = siUnits.length;
 
-        const paginatedUnitsOfMeasure = unitsOfMeasure.slice(start, end);
+        const paginatedSIUnits = siUnits.slice(start, end);
 
-        if (paginatedUnitsOfMeasure.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center">No units of measure found</td></tr>';
+        if (paginatedSIUnits.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">No SI units found</td></tr>';
             return;
         }
 
-        paginatedUnitsOfMeasure.forEach((unit, index) => {
+        paginatedSIUnits.forEach((unit, index) => {
             const row = document.createElement('tr');
             row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
 
-            const statusClass = unit.status === 'Approved' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
+            // Format dates in 12-hour format without seconds
+            const createdDate = new Date(unit.created_at);
+            const updatedDate = new Date(unit.updated_at);
 
-            // Format unit of measure with SI unit first
-            const formattedUnitOfMeasure = `${unit.si_unit} ${unit.package_name}`;
+            const createdAt = createdDate.toLocaleDateString() + ' ' +
+                createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+            const updatedAt = updatedDate.toLocaleDateString() + ' ' +
+                updatedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
             row.innerHTML = `
                 <td class="px-6 py-4 text-sm text-gray-text">${start + index + 1}</td>
                 <td class="px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(unit.si_unit)}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">${escapeHtml(unit.package_name)}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">${escapeHtml(formattedUnitOfMeasure)}</td>
-                <td class="px-6 py-4 text-sm">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
-                        ${escapeHtml(unit.status)}
-                    </span>
-                </td>
+                <td class="px-6 py-4 text-sm text-gray-text hidden md:table-cell">${createdAt}</td>
+                <td class="px-6 py-4 text-sm text-gray-text">${updatedAt}</td>
                 <td class="px-6 py-4 text-sm">
                     <div class="flex items-center gap-2">
-                        <button class="btn-edit-package-name text-blue-600 hover:text-blue-800" data-id="${unit.id}" title="Edit Package Name">
-                            <i class="fas fa-box"></i>
+                        <button class="btn-edit-si-unit text-blue-600 hover:text-blue-800" data-id="${unit.id}" title="Edit">
+                            <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn-edit-si-unit text-green-600 hover:text-green-800" data-id="${unit.id}" title="Edit SI Unit">
-                            <i class="fas fa-ruler"></i>
-                        </button>
-                        <button class="btn-change-status text-blue-600 hover:text-blue-800" data-id="${unit.id}" title="Change Status">
-                            <i class="fas fa-exchange-alt"></i>
-                        </button>
-                        <button class="btn-delete-unit-of-measure text-red-600 hover:text-red-800" data-id="${unit.id}" title="Delete">
+                        <button class="btn-delete-si-unit text-red-600 hover:text-red-800" data-id="${unit.id}" title="Delete">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -1008,52 +976,33 @@ ob_start();
             tableBody.appendChild(row);
         });
 
-        document.querySelectorAll('.btn-edit-package-name').forEach(button => {
-            button.addEventListener('click', function() {
-                const unitOfMeasureId = this.getAttribute('data-id');
-                showEditPackageNameModal(unitOfMeasureId);
-            });
-        });
-
         document.querySelectorAll('.btn-edit-si-unit').forEach(button => {
-            button.addEventListener('click', function() {
-                const unitOfMeasureId = this.getAttribute('data-id');
-                showEditSIUnitModal(unitOfMeasureId);
+            button.addEventListener('click', function () {
+                const siUnitId = this.getAttribute('data-id');
+                editSIUnit(siUnitId);
             });
         });
 
-        document.querySelectorAll('.btn-change-status').forEach(button => {
-            button.addEventListener('click', function() {
-                const unitOfMeasureId = this.getAttribute('data-id');
-                showChangeStatusModal(unitOfMeasureId);
-            });
-        });
-
-        document.querySelectorAll('.btn-delete-unit-of-measure').forEach(button => {
-            button.addEventListener('click', function() {
-                const unitOfMeasureId = this.getAttribute('data-id');
-                showDeleteUnitOfMeasureModal(unitOfMeasureId);
+        document.querySelectorAll('.btn-delete-si-unit').forEach(button => {
+            button.addEventListener('click', function () {
+                const siUnitId = this.getAttribute('data-id');
+                showDeleteSIUnitModal(siUnitId);
             });
         });
     }
 
-    function confirmChangeStatus() {
-        const unitOfMeasureId = document.getElementById('confirmChangeStatus').getAttribute('data-id');
-        const status = document.getElementById('status-toggle').checked ? 'Approved' : 'Pending';
+    function createSIUnit(siUnit) {
+        showLoading('Creating SI unit...');
 
-        showLoading('Updating status...');
-        hideChangeStatusModal();
-
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=updateUnitOfMeasure`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: unitOfMeasureId,
-                    status: status
-                })
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createSIUnit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                si_unit: siUnit
             })
+        })
             .then(response => {
                 if (response.status === 401) {
                     showSessionExpiredModal();
@@ -1064,212 +1013,35 @@ ob_start();
             .then(data => {
                 hideLoading();
                 if (data.success) {
-                    showSuccessNotification(data.message || 'Status updated successfully!');
-                    loadUnitsOfMeasure();
+                    showSuccessNotification(data.message || 'SI unit created successfully!');
+                    resetSIUnitForm();
+                    loadSIUnits();
                 } else {
-                    showErrorNotification(data.message || 'Failed to update status');
+                    showErrorNotification(data.message || 'Failed to create SI unit');
                 }
             })
             .catch(error => {
                 hideLoading();
                 if (error.message !== 'Session expired') {
-                    console.error('Error updating status:', error);
-                    showErrorNotification('Failed to update status. Please try again.');
+                    console.error('Error creating SI unit:', error);
+                    showErrorNotification('Failed to create SI unit. Please try again.');
                 }
             });
     }
 
-    function showChangeStatusModal(unitOfMeasureId) {
-        const unit = unitsOfMeasureData.find(u => u.id === unitOfMeasureId);
-
-        if (unit) {
-            document.getElementById('status-package-name').textContent = unit.package_name;
-            document.getElementById('status-si-unit').textContent = unit.si_unit;
-            document.getElementById('status-unit-of-measure').textContent = `${unit.si_unit} ${unit.package_name}`;
-            document.getElementById('status-toggle').checked = unit.status === 'Approved';
-            document.getElementById('confirmChangeStatus').setAttribute('data-id', unitOfMeasureId);
-
-            document.getElementById('changeStatusModal').classList.remove('hidden');
-        }
-    }
-
-    function showEditPackageNameModal(unitOfMeasureId) {
-        const unit = unitsOfMeasureData.find(u => u.id === unitOfMeasureId);
-
-        if (unit) {
-            document.getElementById('current-package-name').textContent = unit.package_name;
-            document.getElementById('edit-package-si-unit').textContent = unit.si_unit;
-            document.getElementById('confirmEditPackageName').setAttribute('data-id', unitOfMeasureId);
-            document.getElementById('confirmEditPackageName').setAttribute('data-si-unit-id', unit.si_unit_id);
-            document.getElementById('confirmEditPackageName').setAttribute('data-package-name-id', unit.package_name_id);
-
-            // Reset the select to default
-            document.getElementById('edit-package-name-select').value = '';
-            document.getElementById('edit-new-package-name-container').classList.add('hidden');
-            document.getElementById('edit-new-package-name').value = '';
-
-            document.getElementById('editPackageNameModal').classList.remove('hidden');
-        }
-    }
-
-    function showEditSIUnitModal(unitOfMeasureId) {
-        const unit = unitsOfMeasureData.find(u => u.id === unitOfMeasureId);
-
-        if (unit) {
-            document.getElementById('edit-si-package-name').textContent = unit.package_name;
-            document.getElementById('current-si-unit').textContent = unit.si_unit;
-            document.getElementById('confirmEditSIUnit').setAttribute('data-id', unitOfMeasureId);
-            document.getElementById('confirmEditSIUnit').setAttribute('data-si-unit-id', unit.si_unit_id);
-            document.getElementById('confirmEditSIUnit').setAttribute('data-package-name-id', unit.package_name_id);
-
-            // Reset the select to default
-            document.getElementById('edit-si-unit-select').value = '';
-            document.getElementById('edit-new-si-unit-container').classList.add('hidden');
-            document.getElementById('edit-new-si-unit').value = '';
-
-            document.getElementById('editSIUnitModal').classList.remove('hidden');
-        }
-    }
-
-    function showDeleteUnitOfMeasureModal(unitOfMeasureId) {
-        const unit = unitsOfMeasureData.find(u => u.id === unitOfMeasureId);
-
-        if (unit) {
-            document.getElementById('delete-package-name').textContent = unit.package_name;
-            document.getElementById('delete-si-unit').textContent = unit.si_unit;
-            document.getElementById('delete-unit-of-measure').textContent = `${unit.si_unit} ${unit.package_name}`;
-            document.getElementById('delete-status').textContent = unit.status;
-            document.getElementById('confirmDeleteUnitOfMeasure').setAttribute('data-id', unitOfMeasureId);
-
-            document.getElementById('deleteUnitOfMeasureModal').classList.remove('hidden');
-        }
-    }
-
-    function hideChangeStatusModal() {
-        document.getElementById('changeStatusModal').classList.add('hidden');
-    }
-
-    function hideEditPackageNameModal() {
-        document.getElementById('editPackageNameModal').classList.add('hidden');
-    }
-
-    function hideEditSIUnitModal() {
-        document.getElementById('editSIUnitModal').classList.add('hidden');
-    }
-
-    function hideDeleteUnitOfMeasureModal() {
-        document.getElementById('deleteUnitOfMeasureModal').classList.add('hidden');
-    }
-
-    async function confirmEditPackageName() {
-        const unitOfMeasureId = document.getElementById('confirmEditPackageName').getAttribute('data-id');
-        const packageNameSelect = document.getElementById('edit-package-name-select');
-        let packageNameId = packageNameSelect.value;
-
-        if (!packageNameId && packageNameSelect.value !== 'create_new') {
-            showErrorNotification('Please select a package name');
-            return;
-        }
-
-        // Create new package name if needed
-        if (packageNameSelect.value === 'create_new') {
-            const newPackageName = document.getElementById('edit-new-package-name').value.trim();
-            if (!newPackageName) {
-                showErrorNotification('Please enter a package name');
-                return;
-            }
-
-            try {
-                const response = await createNewPackageName(newPackageName);
-                if (response.success) {
-                    packageNameId = response.id;
-                } else {
-                    showErrorNotification(response.message || 'Failed to create package name');
-                    return;
-                }
-            } catch (error) {
-                showErrorNotification('Failed to create package name');
-                return;
-            }
-        }
-
-        showLoading('Updating package name...');
-        hideEditPackageNameModal();
-
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=updateUnitOfMeasure`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: unitOfMeasureId,
-                    package_name_id: packageNameId
-                })
-            })
-            .then(response => {
-                if (response.status === 401) {
-                    showSessionExpiredModal();
-                    throw new Error('Session expired');
-                }
-                return response.json();
-            })
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    showSuccessNotification(data.message || 'Package name updated successfully!');
-                    loadUnitsOfMeasure();
-                } else {
-                    showErrorNotification(data.message || 'Failed to update package name');
-                }
-            })
-            .catch(error => {
-                hideLoading();
-                if (error.message !== 'Session expired') {
-                    console.error('Error updating package name:', error);
-                    showErrorNotification('Failed to update package name. Please try again.');
-                }
-            });
-    }
-
-    async function confirmEditSIUnit() {
-        const unitOfMeasureId = document.getElementById('confirmEditSIUnit').getAttribute('data-id');
-        const siUnitSelect = document.getElementById('edit-si-unit-select');
-        let siUnitId = siUnitSelect.value;
-        let siUnitName = null;
-
-        if (!siUnitId && siUnitSelect.value !== 'create_new') {
-            showErrorNotification('Please select an SI unit');
-            return;
-        }
-
-        // Create new SI unit if needed
-        if (siUnitSelect.value === 'create_new') {
-            siUnitName = document.getElementById('edit-new-si-unit').value.trim();
-            if (!siUnitName) {
-                showErrorNotification('Please enter an SI unit');
-                return;
-            }
-        }
-
+    function updateSIUnit(id, siUnit) {
         showLoading('Updating SI unit...');
-        hideEditSIUnitModal();
 
-        const payload = {
-            id: unitOfMeasureId,
-            si_unit_id: siUnitId
-        };
-
-        if (siUnitName) {
-            payload.si_unit_name = siUnitName;
-        }
-
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=updateUnitOfMeasure`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=updateSIUnit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: id,
+                si_unit: siUnit
             })
+        })
             .then(response => {
                 if (response.status === 401) {
                     showSessionExpiredModal();
@@ -1281,7 +1053,8 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'SI unit updated successfully!');
-                    loadUnitsOfMeasure();
+                    resetSIUnitForm();
+                    loadSIUnits();
                 } else {
                     showErrorNotification(data.message || 'Failed to update SI unit');
                 }
@@ -1295,21 +1068,47 @@ ob_start();
             });
     }
 
-    function confirmDeleteUnitOfMeasure() {
-        const unitOfMeasureId = document.getElementById('confirmDeleteUnitOfMeasure').getAttribute('data-id');
+    function editSIUnit(siUnitId) {
+        const siUnit = siUnitsData.find(u => u.id === siUnitId);
 
-        showLoading('Deleting unit of measure...');
-        hideDeleteUnitOfMeasureModal();
+        if (siUnit) {
+            document.getElementById('siUnitFormTitle').textContent = 'Edit SI Unit';
+            document.getElementById('siUnitId').value = siUnitId;
+            document.getElementById('si_unit').value = siUnit.si_unit;
+            document.getElementById('submitSIUnitButton').textContent = 'Update SI Unit';
+            document.getElementById('cancelSIUnitForm').classList.remove('hidden');
+        }
+    }
 
-        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=deleteUnitOfMeasure`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: unitOfMeasureId
-                })
+    function showDeleteSIUnitModal(siUnitId) {
+        const siUnit = siUnitsData.find(u => u.id === siUnitId);
+
+        if (siUnit) {
+            document.getElementById('delete-si-unit').textContent = siUnit.si_unit;
+            document.getElementById('confirmDeleteSIUnit').setAttribute('data-id', siUnitId);
+            document.getElementById('deleteSIUnitModal').classList.remove('hidden');
+        }
+    }
+
+    function hideDeleteSIUnitModal() {
+        document.getElementById('deleteSIUnitModal').classList.add('hidden');
+    }
+
+    function confirmDeleteSIUnit() {
+        const siUnitId = document.getElementById('confirmDeleteSIUnit').getAttribute('data-id');
+
+        showLoading('Deleting SI unit...');
+        hideDeleteSIUnitModal();
+
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=deleteSIUnit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: siUnitId
             })
+        })
             .then(response => {
                 if (response.status === 401) {
                     showSessionExpiredModal();
@@ -1320,26 +1119,27 @@ ob_start();
             .then(data => {
                 hideLoading();
                 if (data.success) {
-                    showSuccessNotification(data.message || 'Unit of measure deleted successfully!');
-                    loadUnitsOfMeasure();
+                    showSuccessNotification(data.message || 'SI unit deleted successfully!');
+                    loadSIUnits();
                 } else {
-                    showErrorNotification(data.message || 'Failed to delete unit of measure');
+                    showErrorNotification(data.message || 'Failed to delete SI unit');
                 }
             })
             .catch(error => {
                 hideLoading();
                 if (error.message !== 'Session expired') {
-                    console.error('Error deleting unit of measure:', error);
-                    showErrorNotification('Failed to delete unit of measure. Please try again.');
+                    console.error('Error deleting SI unit:', error);
+                    showErrorNotification('Failed to delete SI unit. Please try again.');
                 }
             });
     }
 
-    function resetUnitOfMeasureForm() {
-        document.getElementById('unitOfMeasureForm').reset();
-        document.getElementById('unitOfMeasureId').value = '';
-        document.getElementById('new_package_name_container').classList.add('hidden');
-        document.getElementById('new_si_unit_container').classList.add('hidden');
+    function resetSIUnitForm() {
+        document.getElementById('siUnitForm').reset();
+        document.getElementById('siUnitId').value = '';
+        document.getElementById('siUnitFormTitle').textContent = 'Add New SI Unit';
+        document.getElementById('submitSIUnitButton').textContent = 'Save SI Unit';
+        document.getElementById('cancelSIUnitForm').classList.add('hidden');
     }
 
     // Utility Functions
@@ -1403,6 +1203,15 @@ ob_start();
         setTimeout(() => {
             notification.classList.add('hidden');
         }, 3000);
+    }
+
+    // Generate UUID for new entities if needed
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
     }
 </script>
 
