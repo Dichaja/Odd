@@ -179,6 +179,47 @@ ob_start();
                         placeholder="Enter product description"></textarea>
                 </div>
 
+                <!-- Package Names -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Package Names</label>
+                    <div class="space-y-3">
+                        <div class="custom-dropdown-container">
+                            <div class="relative">
+                                <input type="text" id="packageNameSearch"
+                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                    placeholder="Click to select package names" autocomplete="off">
+                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                                <div id="packageNameDropdown" class="custom-dropdown-menu hidden">
+                                    <div class="p-2 border-b border-gray-100">
+                                        <input type="text" id="packageNameFilter"
+                                            class="w-full px-3 py-1 text-sm rounded-md border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                            placeholder="Search package names...">
+                                    </div>
+                                    <div id="packageNameOptions" class="max-h-60 overflow-y-auto p-1">
+                                        <!-- Package name options will be populated here -->
+                                        <div class="p-2 text-center text-gray-500 text-sm">Loading package names...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="newPackageName"
+                                class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                placeholder="Enter new package name">
+                            <button type="button" id="addPackageNameBtn"
+                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                Add
+                            </button>
+                        </div>
+                        <div id="selectedPackageNames" class="flex flex-wrap gap-2 mt-2">
+                            <!-- Selected package names will appear here -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- SEO fields -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -409,6 +450,112 @@ ob_start();
         width: 100%;
         height: 100%;
     }
+
+    /* Custom Dropdown Styles */
+    .custom-dropdown-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        z-index: 50;
+        margin-top: 0.25rem;
+    }
+
+    .custom-dropdown-option {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+    }
+
+    .custom-dropdown-option:hover {
+        background-color: #f3f4f6;
+    }
+
+    .custom-dropdown-option.selected {
+        background-color: #e6f7ff;
+    }
+
+    .custom-dropdown-option .checkbox {
+        width: 16px;
+        height: 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 3px;
+        margin-right: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .custom-dropdown-option.selected .checkbox {
+        background-color: #2196F3;
+        border-color: #2196F3;
+    }
+
+    .custom-dropdown-option.selected .checkbox i {
+        color: white;
+        font-size: 10px;
+    }
+
+    .package-tag {
+        display: inline-flex;
+        align-items: center;
+        background-color: #e2e8f0;
+        color: #2d3748;
+        border-radius: 0.375rem;
+        padding: 0.25rem 0.5rem;
+        margin: 0.125rem;
+        font-size: 0.875rem;
+    }
+
+    .package-tag button {
+        margin-left: 0.25rem;
+        color: #4a5568;
+        font-size: 0.75rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .package-tag button:hover {
+        color: #e53e3e;
+    }
+
+    .no-results {
+        padding: 0.75rem;
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .add-new-option {
+        padding: 0.5rem 1rem;
+        border-top: 1px solid #e2e8f0;
+        color: #2196F3;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .add-new-option:hover {
+        background-color: #f3f4f6;
+    }
+
+    .add-new-option i {
+        margin-right: 0.5rem;
+    }
 </style>
 
 <script>
@@ -426,6 +573,8 @@ ob_start();
         search: '',
         sort: ''
     };
+    let packageNamesData = [];
+    let selectedPackageNames = [];
 
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof Sortable === 'undefined') {
@@ -437,6 +586,8 @@ ob_start();
                 initSortable();
             };
             document.head.appendChild(script);
+        } else {
+            initSortable();
         }
 
         if (typeof Cropper === 'undefined') {
@@ -455,11 +606,14 @@ ob_start();
 
         loadCategories();
         loadProducts();
+        loadPackageNames();
+        initPackageNameDropdown();
 
         document.getElementById('addNewProductBtn').addEventListener('click', () => showProductModal(null));
         document.getElementById('saveProductBtn').addEventListener('click', saveProduct);
         document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
         document.getElementById('cropImageBtn').addEventListener('click', cropAndSaveImage);
+        document.getElementById('addPackageNameBtn').addEventListener('click', addNewPackageName);
 
         document.getElementById('prev-page').addEventListener('click', () => {
             if (currentPage > 1) {
@@ -505,6 +659,179 @@ ob_start();
         initSortable();
     });
 
+    function initPackageNameDropdown() {
+        const searchInput = document.getElementById('packageNameSearch');
+        const dropdown = document.getElementById('packageNameDropdown');
+        const filterInput = document.getElementById('packageNameFilter');
+
+        // Show dropdown when clicking on the search input
+        searchInput.addEventListener('click', function () {
+            dropdown.classList.remove('hidden');
+            renderPackageNameOptions();
+        });
+
+        // Filter package names as user types in the filter input
+        filterInput.addEventListener('input', function () {
+            renderPackageNameOptions(this.value);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!searchInput.contains(e.target) &&
+                !dropdown.contains(e.target) &&
+                !e.target.closest('#selectedPackageNames')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    function renderPackageNameOptions(filterText = '') {
+        const container = document.getElementById('packageNameOptions');
+        container.innerHTML = '';
+
+        if (!packageNamesData || packageNamesData.length === 0) {
+            container.innerHTML = '<div class="no-results">No package names available</div>';
+            return;
+        }
+
+        // Filter out already selected package names and apply text filter
+        const availablePackageNames = packageNamesData.filter(pkg => {
+            const isSelected = selectedPackageNames.some(selected => selected.id === pkg.id);
+            const matchesFilter = !filterText || pkg.package_name.toLowerCase().includes(filterText.toLowerCase());
+            return !isSelected && matchesFilter;
+        });
+
+        if (availablePackageNames.length === 0) {
+            container.innerHTML = '<div class="no-results">No matching package names found</div>';
+            return;
+        }
+
+        // Render available package names
+        availablePackageNames.forEach(pkg => {
+            const option = document.createElement('div');
+            option.className = 'custom-dropdown-option';
+            option.dataset.id = pkg.id;
+            option.dataset.name = pkg.package_name;
+            option.innerHTML = `
+                <div class="checkbox">
+                    <i class="fas fa-check"></i>
+                </div>
+                <span>${escapeHtml(pkg.package_name)}</span>
+            `;
+
+            option.addEventListener('click', function () {
+                selectPackageName(pkg);
+                renderPackageNameOptions(filterText);
+            });
+
+            container.appendChild(option);
+        });
+    }
+
+    function selectPackageName(pkg) {
+        // Add to selected package names if not already selected
+        if (!selectedPackageNames.some(selected => selected.id === pkg.id)) {
+            selectedPackageNames.push({
+                id: pkg.id,
+                name: pkg.package_name
+            });
+            renderSelectedPackageNames();
+
+            // Update the search input placeholder
+            updatePackageNameSearchPlaceholder();
+        }
+    }
+
+    function updatePackageNameSearchPlaceholder() {
+        const searchInput = document.getElementById('packageNameSearch');
+        if (selectedPackageNames.length > 0) {
+            searchInput.placeholder = `${selectedPackageNames.length} package name(s) selected`;
+        } else {
+            searchInput.placeholder = 'Click to select package names';
+        }
+    }
+
+    function renderSelectedPackageNames() {
+        const container = document.getElementById('selectedPackageNames');
+        container.innerHTML = '';
+
+        selectedPackageNames.forEach(pkg => {
+            const tag = document.createElement('div');
+            tag.className = 'package-tag';
+            tag.innerHTML = `
+                ${escapeHtml(pkg.name)}
+                <button type="button" data-id="${pkg.id}">×</button>
+            `;
+
+            tag.querySelector('button').addEventListener('click', function () {
+                removePackageName(pkg.id);
+            });
+
+            container.appendChild(tag);
+        });
+    }
+
+    function removePackageName(packageNameId) {
+        selectedPackageNames = selectedPackageNames.filter(pkg => pkg.id !== packageNameId);
+        renderSelectedPackageNames();
+        renderPackageNameOptions(document.getElementById('packageNameFilter').value);
+        updatePackageNameSearchPlaceholder();
+    }
+
+    function addNewPackageName() {
+        const input = document.getElementById('newPackageName');
+        const packageName = input.value.trim();
+
+        if (!packageName) {
+            showErrorNotification('Please enter a package name');
+            return;
+        }
+
+        showLoading('Adding new package name...');
+
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createPackageName`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                package_name: packageName
+            })
+        })
+            .then(res => {
+                if (res.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return res.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showSuccessNotification(data.message || 'Package name created successfully');
+                    input.value = '';
+
+                    // Add the new package name to the data
+                    const newPackage = {
+                        id: data.id,
+                        package_name: packageName
+                    };
+                    packageNamesData.push(newPackage);
+
+                    // Select the newly created package name
+                    selectPackageName(newPackage);
+                    renderPackageNameOptions(document.getElementById('packageNameFilter').value);
+                } else {
+                    showErrorNotification(data.message || 'Failed to create package name');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                console.error('Error creating package name:', err);
+                showErrorNotification('Failed to create package name');
+            });
+    }
+
     function initSortable() {
         const container = document.getElementById('imagePreviewContainer');
         if (container && typeof Sortable !== 'undefined') {
@@ -538,6 +865,33 @@ ob_start();
 
     function hideLoading() {
         document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
+    function loadPackageNames() {
+        showLoading('Loading package names...');
+
+        fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=getPackageNames`)
+            .then(res => {
+                if (res.status === 401) {
+                    showSessionExpiredModal();
+                    throw new Error('Session expired');
+                }
+                return res.json();
+            })
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    packageNamesData = data.packageNames || [];
+                    renderPackageNameOptions();
+                } else {
+                    showErrorNotification(data.message || 'Failed to load package names');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                console.error('Error loading package names:', err);
+                showErrorNotification('Failed to load package names');
+            });
     }
 
     function loadCategories() {
@@ -807,6 +1161,20 @@ ob_start();
             </div>
         `;
 
+        // Package names display
+        let packageNamesHtml = '';
+        if (prod.package_names && prod.package_names.length > 0) {
+            packageNamesHtml = `
+                <div class="flex flex-wrap gap-1 mt-2">
+                    ${prod.package_names.map(pkg => `
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                            ${escapeHtml(pkg.package_name)}
+                        </span>
+                    `).join('')}
+                </div>
+            `;
+        }
+
         card.innerHTML = `
             <div class="relative bg-gray-100 h-64">
                 <div class="product-image-slider h-full">
@@ -829,6 +1197,8 @@ ob_start();
                 </div>
 
                 <div class="text-sm text-gray-600 mb-3 line-clamp-2">${escapeHtml(prod.description || 'No description available')}</div>
+                
+                ${packageNamesHtml}
 
                 <div class="flex justify-end gap-2 mt-3">
                     <button class="btn-edit w-10 h-10 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center justify-center" data-id="${prod.id}" title="Edit Product">
@@ -961,18 +1331,37 @@ ob_start();
         document.getElementById('productForm').reset();
         document.getElementById('edit-product-id').value = '';
         document.getElementById('imagePreviewContainer').innerHTML = '';
+        document.getElementById('selectedPackageNames').innerHTML = '';
+        document.getElementById('packageNameFilter').value = '';
+        document.getElementById('packageNameSearch').placeholder = 'Click to select package names';
+
+        selectedPackageNames = [];
     }
 
     function populateProductForm(prod) {
         document.getElementById('edit-product-id').value = prod.id;
         document.getElementById('productTitle').value = prod.title;
-        document.getElementById('productCategory').value = prod.category;
+        if (prod.category) {
+            document.getElementById('productCategory').value = prod.category;
+        } else {
+            console.warn('No category found for product:', prod);
+        }
         document.getElementById('productDescription').value = prod.description || '';
         document.getElementById('productMetaTitle').value = prod.meta_title || '';
         document.getElementById('productMetaDescription').value = prod.meta_description || '';
         document.getElementById('productMetaKeywords').value = prod.meta_keywords || '';
         document.getElementById('productStatus').value = prod.status;
         document.getElementById('productFeatured').checked = (prod.featured == 1);
+
+        // Set package names
+        if (prod.package_names && prod.package_names.length > 0) {
+            selectedPackageNames = prod.package_names.map(pkg => ({
+                id: pkg.id,
+                name: pkg.package_name
+            }));
+            renderSelectedPackageNames();
+            updatePackageNameSearchPlaceholder();
+        }
 
         // images
         if (prod.images && prod.images.length > 0) {
@@ -992,6 +1381,9 @@ ob_start();
         const keywords = document.getElementById('productMetaKeywords').value.trim();
         const status = document.getElementById('productStatus').value;
         const featured = document.getElementById('productFeatured').checked;
+
+        // Get selected package names
+        const packageNames = selectedPackageNames.map(pkg => pkg.id);
 
         if (!title || !category) {
             showErrorNotification('Title and Category are required');
@@ -1034,7 +1426,8 @@ ob_start();
             featured: featured,
             temp_images: tempImages,
             existing_images: images,
-            update_images: imageDivs.length > 0
+            update_images: imageDivs.length > 0,
+            package_names: packageNames
         };
 
         const endpoint = productId ? 'updateProduct' : 'createProduct';

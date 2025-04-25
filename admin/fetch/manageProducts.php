@@ -39,6 +39,19 @@ try {
             FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT
         )"
     );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS product_package_name_mappings (
+            id VARCHAR(26) PRIMARY KEY,
+            product_id VARCHAR(26) NOT NULL,
+            product_package_name_id VARCHAR(26) NOT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+            FOREIGN KEY (product_package_name_id) REFERENCES product_package_name(id) ON DELETE CASCADE,
+            UNIQUE KEY product_package_unique (product_id, product_package_name_id)
+        )"
+    );
 } catch (PDOException $e) {
     error_log("Table creation error: " . $e->getMessage());
     http_response_code(500);
@@ -78,6 +91,10 @@ try {
             toggleFeatured($pdo);
             break;
 
+        case 'getProductPackageNames':
+            getProductPackageNames($pdo);
+            break;
+
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Endpoint not found: ' . $action]);
@@ -106,11 +123,16 @@ function getProducts(PDO $pdo)
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($products as &$prod) {
+        $productId = $prod['id'];
+
         $prod['category'] = $prod['category_id'];
         unset($prod['category_id']);
 
-        $prod['images'] = getProductImages($prod['id']);
+        $prod['id'] = $productId;
+
+        $prod['images'] = getProductImages($productId);
         $prod['category_name'] = $prod['category_name'] ?? '(Unknown)';
+        $prod['package_names'] = getProductPackageNamesById($pdo, $productId);
     }
 
     echo json_encode(['success' => true, 'products' => $products]);
@@ -146,10 +168,15 @@ function getProduct(PDO $pdo)
         return;
     }
 
+    $productId = $product['id'];
+
     $product['category'] = $product['category_id'];
     unset($product['category_id']);
 
-    $product['images'] = getProductImages($product['id']);
+    $product['id'] = $productId;
+
+    $product['images'] = getProductImages($productId);
+    $product['package_names'] = getProductPackageNamesById($pdo, $productId);
 
     echo json_encode(['success' => true, 'data' => $product]);
 }
@@ -172,6 +199,7 @@ function createProduct(PDO $pdo)
     $metaKeywords = $data['meta_keywords'] ?? '';
     $status = $data['status'] ?? 'published';
     $featured = !empty($data['featured']) ? 1 : 0;
+    $packageNames = $data['package_names'] ?? [];
 
     $stmt = $pdo->prepare("SELECT id FROM product_categories WHERE id = :cat");
     $stmt->execute([':cat' => $categoryId]);
@@ -184,42 +212,57 @@ function createProduct(PDO $pdo)
     $productId = generateUlid();
     $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-    $insert = $pdo->prepare(
-        "INSERT INTO products (
-             id, title, category_id, description,
-             meta_title, meta_description, meta_keywords,
-             status, featured,
-             created_at, updated_at
-         ) VALUES (
-             :id, :title, :cat, :description,
-             :meta_title, :meta_description, :meta_keywords,
-             :status, :featured,
-             :created_at, :updated_at
-         )"
-    );
-    $insert->execute([
-        ':id' => $productId,
-        ':title' => $title,
-        ':cat' => $categoryId,
-        ':description' => $description,
-        ':meta_title' => $metaTitle,
-        ':meta_description' => $metaDesc,
-        ':meta_keywords' => $metaKeywords,
-        ':status' => $status,
-        ':featured' => $featured,
-        ':created_at' => $now,
-        ':updated_at' => $now
-    ]);
+    $pdo->beginTransaction();
 
-    if (!empty($data['temp_images']) && is_array($data['temp_images'])) {
-        moveProductImages($productId, $data['temp_images']);
+    try {
+        $insert = $pdo->prepare(
+            "INSERT INTO products (
+                 id, title, category_id, description,
+                 meta_title, meta_description, meta_keywords,
+                 status, featured,
+                 created_at, updated_at
+             ) VALUES (
+                 :id, :title, :cat, :description,
+                 :meta_title, :meta_description, :meta_keywords,
+                 :status, :featured,
+                 :created_at, :updated_at
+             )"
+        );
+        $insert->execute([
+            ':id' => $productId,
+            ':title' => $title,
+            ':cat' => $categoryId,
+            ':description' => $description,
+            ':meta_title' => $metaTitle,
+            ':meta_description' => $metaDesc,
+            ':meta_keywords' => $metaKeywords,
+            ':status' => $status,
+            ':featured' => $featured,
+            ':created_at' => $now,
+            ':updated_at' => $now
+        ]);
+
+        if (!empty($packageNames) && is_array($packageNames)) {
+            saveProductPackageNames($pdo, $productId, $packageNames);
+        }
+
+        if (!empty($data['temp_images']) && is_array($data['temp_images'])) {
+            moveProductImages($productId, $data['temp_images']);
+        }
+
+        $pdo->commit();
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Product created successfully',
+            'id' => $productId
+        ]);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Error creating product: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error creating product: ' . $e->getMessage()]);
     }
-
-    echo json_encode([
-        'success' => true,
-        'message' => 'Product created successfully',
-        'id' => $productId
-    ]);
 }
 
 function updateProduct(PDO $pdo)
@@ -256,6 +299,7 @@ function updateProduct(PDO $pdo)
     $metaKeywords = $data['meta_keywords'] ?? '';
     $status = $data['status'] ?? 'published';
     $featured = !empty($data['featured']) ? 1 : 0;
+    $packageNames = $data['package_names'] ?? [];
 
     $stmt = $pdo->prepare("SELECT id FROM product_categories WHERE id = :cat");
     $stmt->execute([':cat' => $categoryId]);
@@ -267,47 +311,67 @@ function updateProduct(PDO $pdo)
 
     $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-    $stmt = $pdo->prepare(
-        "UPDATE products SET
-             title = :title,
-             category_id = :cat,
-             description = :description,
-             meta_title = :meta_title,
-             meta_description = :meta_description,
-             meta_keywords = :meta_keywords,
-             status = :status,
-             featured = :featured,
-             updated_at = :updated_at
-         WHERE id = :id"
-    );
-    $stmt->execute([
-        ':title' => $title,
-        ':cat' => $categoryId,
-        ':description' => $description,
-        ':meta_title' => $metaTitle,
-        ':meta_description' => $metaDesc,
-        ':meta_keywords' => $metaKeywords,
-        ':status' => $status,
-        ':featured' => $featured,
-        ':updated_at' => $now,
-        ':id' => $id
-    ]);
+    $pdo->beginTransaction();
 
-    if (!empty($data['update_images'])) {
-        $existing = $data['existing_images'] ?? [];
-        $temp = $data['temp_images'] ?? [];
+    try {
+        $stmt = $pdo->prepare(
+            "UPDATE products SET
+                 title = :title,
+                 category_id = :cat,
+                 description = :description,
+                 meta_title = :meta_title,
+                 meta_description = :meta_description,
+                 meta_keywords = :meta_keywords,
+                 status = :status,
+                 featured = :featured,
+                 updated_at = :updated_at
+             WHERE id = :id"
+        );
+        $stmt->execute([
+            ':title' => $title,
+            ':cat' => $categoryId,
+            ':description' => $description,
+            ':meta_title' => $metaTitle,
+            ':meta_description' => $metaDesc,
+            ':meta_keywords' => $metaKeywords,
+            ':status' => $status,
+            ':featured' => $featured,
+            ':updated_at' => $now,
+            ':id' => $id
+        ]);
 
-        deleteAllProductImages($id, false);
+        if (isset($data['package_names'])) {
+            $pdo->prepare("DELETE FROM product_package_name_mappings WHERE product_id = :product_id")
+                ->execute([':product_id' => $id]);
 
-        if (!empty($existing)) {
-            saveExistingImages($id, $existing);
+            if (!empty($packageNames) && is_array($packageNames)) {
+                saveProductPackageNames($pdo, $id, $packageNames);
+            }
         }
-        if (!empty($temp)) {
-            moveProductImages($id, $temp);
+
+        if (!empty($data['update_images'])) {
+            $existing = $data['existing_images'] ?? [];
+            $temp = $data['temp_images'] ?? [];
+
+            deleteAllProductImages($id, false);
+
+            if (!empty($existing)) {
+                saveExistingImages($id, $existing);
+            }
+            if (!empty($temp)) {
+                moveProductImages($id, $temp);
+            }
         }
+
+        $pdo->commit();
+
+        echo json_encode(['success' => true, 'message' => 'Product updated successfully']);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Error updating product: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error updating product: ' . $e->getMessage()]);
     }
-
-    echo json_encode(['success' => true, 'message' => 'Product updated successfully']);
 }
 
 function deleteProduct(PDO $pdo)
@@ -330,12 +394,26 @@ function deleteProduct(PDO $pdo)
         return;
     }
 
-    $pdo->prepare("DELETE FROM products WHERE id = :id")
-        ->execute([':id' => $id]);
+    $pdo->beginTransaction();
 
-    deleteAllProductImages($id, true);
+    try {
+        $pdo->prepare("DELETE FROM product_package_name_mappings WHERE product_id = :id")
+            ->execute([':id' => $id]);
 
-    echo json_encode(['success' => true, 'message' => 'Product deleted successfully']);
+        $pdo->prepare("DELETE FROM products WHERE id = :id")
+            ->execute([':id' => $id]);
+
+        deleteAllProductImages($id, true);
+
+        $pdo->commit();
+
+        echo json_encode(['success' => true, 'message' => 'Product deleted successfully']);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Error deleting product: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error deleting product: ' . $e->getMessage()]);
+    }
 }
 
 function toggleFeatured(PDO $pdo)
@@ -561,4 +639,58 @@ function deleteAllProductImages($uuid, $rmDir = false)
     }
     if ($rmDir)
         rmdir($dir);
+}
+
+function getProductPackageNames(PDO $pdo)
+{
+    if (!isset($_GET['product_id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing product ID']);
+        return;
+    }
+
+    $productId = $_GET['product_id'];
+
+    $packageNames = getProductPackageNamesById($pdo, $productId);
+
+    echo json_encode(['success' => true, 'packageNames' => $packageNames]);
+}
+
+function getProductPackageNamesById(PDO $pdo, $productId)
+{
+    $stmt = $pdo->prepare(
+        "SELECT ppn.id, ppn.package_name
+         FROM product_package_name ppn
+         JOIN product_package_name_mappings ppnm ON ppn.id = ppnm.product_package_name_id
+         WHERE ppnm.product_id = :product_id
+         ORDER BY ppn.package_name"
+    );
+    $stmt->execute([':product_id' => $productId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function saveProductPackageNames(PDO $pdo, $productId, array $packageNames)
+{
+    $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+
+    foreach ($packageNames as $packageNameId) {
+        $mappingId = generateUlid();
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO product_package_name_mappings (
+                id, product_id, product_package_name_id, created_at, updated_at
+            ) VALUES (
+                :id, :product_id, :package_name_id, :created_at, :updated_at
+            ) ON DUPLICATE KEY UPDATE updated_at = :updated_at_2"
+        );
+
+        $stmt->execute([
+            ':id' => $mappingId,
+            ':product_id' => $productId,
+            ':package_name_id' => $packageNameId,
+            ':created_at' => $now,
+            ':updated_at' => $now,
+            ':updated_at_2' => $now
+        ]);
+    }
 }
