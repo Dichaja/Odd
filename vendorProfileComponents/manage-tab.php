@@ -53,11 +53,11 @@
                         </div>
 
                         <div id="unitPricingContainer" class="mt-4 hidden">
-                            <p class="font-semibold text-sm mb-2">Add one or more unit/price entries:</p>
+                            <p class="font-semibold text-sm mb-2">Add one or more pricing entries:</p>
                             <div id="lineItemsWrapper" class="space-y-4"></div>
                             <button type="button" id="addLineItemBtn"
                                 class="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded">
-                                + Add Another Unit
+                                + Add Another Entry
                             </button>
                         </div>
 
@@ -597,8 +597,8 @@
         document.getElementById('productSearchInput').value = productName;
         document.getElementById('productDropdown').classList.add('hidden');
 
-        // Load units for pricing
-        loadUnitsForProduct();
+        // Load package mappings for pricing
+        loadPackageMappingsForProduct(productId);
     }
 
     function initProductSearch() {
@@ -645,28 +645,34 @@
         });
     }
 
-    function loadUnitsForProduct() {
-        fetch(`${BASE_URL}fetch/manageProfile?action=getUnitsForProduct`)
-            .then(response => response.json())
-            .then(data => {
+    function loadPackageMappingsForProduct(productId) {
+        fetch(`${BASE_URL}fetch/manageProfile?action=getPackageNamesForProduct&product_id=${productId}`)
+            .then(r => r.json()).then(data => {
                 if (data.success) {
-                    availableUnits = data.units;
-                    prepareUnitPricingUI();
+                    availablePackageMappings = data.mappings;
+                    ensureSIUnits();
+                    preparePricingUI();
                 } else {
-                    availableUnits = [];
-                    document.getElementById('unitPricingContainer').classList.add('hidden');
-                    showToast('Failed to load units', 'error');
+                    showToast('Failed to load package mappings', 'error');
                 }
-            })
-            .catch(error => {
-                console.error('Error fetching units:', error);
-                availableUnits = [];
-                document.getElementById('unitPricingContainer').classList.add('hidden');
-                showToast('Error loading units', 'error');
+            }).catch(err => {
+                console.error(err);
+                showToast('Error loading mappings', 'error');
             });
     }
 
-    function prepareUnitPricingUI() {
+    function ensureSIUnits() {
+        if (!availableSIUnits || availableSIUnits.length === 0) {
+            fetch(`${BASE_URL}fetch/manageProfile?action=getSIUnits`)
+                .then(r => r.json()).then(data => {
+                    if (data.success) {
+                        availableSIUnits = data.siUnits;
+                    }
+                }).catch(console.error);
+        }
+    }
+
+    function preparePricingUI() {
         const container = document.getElementById('unitPricingContainer');
         container.classList.remove('hidden');
         const wrapper = document.getElementById('lineItemsWrapper');
@@ -679,112 +685,249 @@
         lineItemCount++;
         const wrapper = document.getElementById('lineItemsWrapper');
         const row = document.createElement('div');
-        row.classList.add('flex', 'flex-wrap', 'gap-2', 'items-center');
+        row.classList.add('space-y-2', 'p-4', 'border', 'rounded-lg', 'relative');
 
-        const unitSelect = document.createElement('select');
-        unitSelect.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
-        unitSelect.required = true;
-        availableUnits.forEach(u => {
-            const opt = document.createElement('option');
-            opt.value = u.product_unit_of_measure_id;
-            opt.textContent = `${u.si_unit} ${u.package_name}`;
-            unitSelect.appendChild(opt);
-        });
+        // PACKAGE MAPPING dropdown
+        const pkgContainer = document.createElement('div');
+        pkgContainer.innerHTML = `
+            <label class="block text-sm font-medium text-gray-700">Package</label>
+            <div class="relative custom-select-container">
+                <input type="text" class="pkg-search-input w-full px-3 py-2 border rounded" placeholder="Search package..." autocomplete="off"/>
+                <input type="hidden" name="package_mapping_id" class="pkg-mapping-id"/>
+                <div class="pkg-dropdown custom-select-dropdown hidden"></div>
+            </div>`;
+        row.appendChild(pkgContainer);
 
-        const packageSizeInput = document.createElement('input');
-        packageSizeInput.type = 'number';
-        packageSizeInput.min = '1';
-        packageSizeInput.value = '1';
-        packageSizeInput.placeholder = 'Package Size';
-        packageSizeInput.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
-        packageSizeInput.required = true;
+        // SI UNIT dropdown + fallback
+        const siContainer = document.createElement('div');
+        siContainer.innerHTML = `
+            <label class="block text-sm font-medium text-gray-700">SI Unit</label>
+            <div class="relative custom-select-container">
+                <input type="text" class="si-search-input w-full px-3 py-2 border rounded" placeholder="Search SI unit..." autocomplete="off"/>
+                <input type="hidden" name="si_unit_id" class="si-unit-id"/>
+                <div class="si-dropdown custom-select-dropdown hidden"></div>
+            </div>
+            <div class="si-fallback hidden mt-2">
+                <input type="text" class="new-si-input w-full px-3 py-2 border rounded" placeholder="Enter new SI unit"/>
+                <button type="button" class="mt-2 px-3 py-1 bg-green-500 text-white rounded">Add SI Unit</button>
+            </div>`;
+        row.appendChild(siContainer);
 
-        const priceCatSelect = document.createElement('select');
-        priceCatSelect.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
-        ['retail', 'wholesale', 'factory'].forEach(cat => {
-            const opt = document.createElement('option');
-            opt.value = cat;
-            opt.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
-            priceCatSelect.appendChild(opt);
-        });
+        // PACKAGE SIZE, PRICE CATEGORY, PRICE, CAPACITY
+        const other = document.createElement('div');
+        other.classList.add('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
+        other.innerHTML = `
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Package Size</label>
+                <input type="number" name="package_size" value="1" min="1" required class="w-full px-2 py-1 border rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Price Category</label>
+                <select name="price_category" class="w-full px-2 py-1 border rounded">
+                    <option value="retail">Retail</option>
+                    <option value="wholesale">Wholesale</option>
+                    <option value="factory">Factory</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Price</label>
+                <input type="number" step="any" name="price" required class="w-full px-2 py-1 border rounded">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Delivery Capacity</label>
+                <input type="number" name="delivery_capacity" class="w-full px-2 py-1 border rounded">
+            </div>`;
+        row.appendChild(other);
 
-        const priceInput = document.createElement('input');
-        priceInput.type = 'number';
-        priceInput.min = '0';
-        priceInput.step = 'any';
-        priceInput.placeholder = 'Price';
-        priceInput.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
-        priceInput.required = true;
-
-        const capacityInput = document.createElement('input');
-        capacityInput.type = 'number';
-        capacityInput.min = '0';
-        capacityInput.placeholder = 'Capacity';
-        capacityInput.classList.add('border', 'rounded', 'px-2', 'py-1', 'text-sm');
-
-        priceCatSelect.addEventListener('change', function () {
-            if (this.value === 'wholesale' || this.value === 'factory') {
-                capacityInput.placeholder = 'Max. Capacity';
-            } else {
-                capacityInput.placeholder = 'Capacity';
-            }
-        });
-
-        row.appendChild(unitSelect);
-        row.appendChild(packageSizeInput);
-        row.appendChild(priceCatSelect);
-        row.appendChild(priceInput);
-        row.appendChild(capacityInput);
-
+        // Remove button
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
-        removeBtn.classList.add('px-2', 'py-1', 'text-xs', 'bg-red-200', 'text-red-800', 'rounded');
         removeBtn.textContent = 'Remove';
-        removeBtn.addEventListener('click', () => {
-            wrapper.removeChild(row);
-        });
+        removeBtn.className = 'absolute top-2 right-2 px-2 py-1 text-xs bg-red-200 text-red-800 rounded';
+        removeBtn.addEventListener('click', () => row.remove());
         row.appendChild(removeBtn);
 
         wrapper.appendChild(row);
+
+        // Initialize dropdown behaviors
+        initPackageDropdown(row);
+        initSiDropdown(row);
     }
 
-    function addProductToStore(formData) {
-        const submitBtn = document.querySelector('#addProductForm button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Adding...';
+    function initPackageDropdown(row) {
+        const input = row.querySelector('.pkg-search-input');
+        const hid = row.querySelector('.pkg-mapping-id');
+        const dd = row.querySelector('.pkg-dropdown');
 
+        function showList(filter = '') {
+            dd.innerHTML = '';
+            let found = false;
+            availablePackageMappings.forEach(m => {
+                if (m.package_name.toLowerCase().includes(filter.toLowerCase())) {
+                    found = true;
+                    const opt = document.createElement('div');
+                    opt.className = 'custom-select-option';
+                    opt.textContent = m.package_name;
+                    opt.dataset.id = m.id;
+                    opt.addEventListener('click', () => {
+                        hid.value = m.id;
+                        input.value = m.package_name;
+                        dd.classList.add('hidden');
+                        // clear any SI-unit rows if needed
+                    });
+                    dd.appendChild(opt);
+                }
+            });
+            if (!found) {
+                dd.innerHTML = `<div class="custom-select-no-results">No matching packages</div>`;
+            }
+        }
+
+        input.addEventListener('focus', () => { dd.classList.remove('hidden'); showList(input.value); });
+        input.addEventListener('input', () => { dd.classList.remove('hidden'); showList(input.value); });
+        document.addEventListener('click', e => {
+            if (!row.contains(e.target)) dd.classList.add('hidden');
+        });
+    }
+
+    function initSiDropdown(row) {
+        const input = row.querySelector('.si-search-input');
+        const hid = row.querySelector('.si-unit-id');
+        const dd = row.querySelector('.si-dropdown');
+        const fallback = row.querySelector('.si-fallback');
+        const newInput = fallback.querySelector('.new-si-input');
+        const addBtn = fallback.querySelector('button');
+
+        function showList(filter = '') {
+            dd.innerHTML = '';
+            let found = false;
+            availableSIUnits.forEach(u => {
+                if (u.si_unit.toLowerCase().includes(filter.toLowerCase())) {
+                    found = true;
+                    const opt = document.createElement('div');
+                    opt.className = 'custom-select-option';
+                    opt.textContent = u.si_unit;
+                    opt.dataset.id = u.id;
+                    opt.addEventListener('click', () => {
+                        hid.value = u.id;
+                        input.value = u.si_unit;
+                        dd.classList.add('hidden');
+                        fallback.classList.add('hidden');
+                    });
+                    dd.appendChild(opt);
+                }
+            });
+            if (!found) {
+                dd.innerHTML = `<div class="custom-select-no-results">No matching SI Units found</div>`;
+                fallback.classList.remove('hidden');
+            } else {
+                fallback.classList.add('hidden');
+            }
+        }
+
+        input.addEventListener('focus', () => { dd.classList.remove('hidden'); ensureSIUnits(); showList(input.value); });
+        input.addEventListener('input', () => { dd.classList.remove('hidden'); showList(input.value); });
+        document.addEventListener('click', e => {
+            if (!row.contains(e.target)) dd.classList.add('hidden');
+        });
+
+        addBtn.addEventListener('click', () => {
+            const name = newInput.value.trim();
+            if (!name) return showToast('Enter SI unit', 'error');
+            addBtn.disabled = true;
+            fetch(`${BASE_URL}fetch/manageProfile?action=createSIUnit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ si_unit: name })
+            })
+                .then(r => r.json()).then(data => {
+                    addBtn.disabled = false;
+                    if (data.success) {
+                        availableSIUnits.push({ id: data.id, si_unit: name });
+                        hid.value = data.id;
+                        input.value = name;
+                        dd.classList.add('hidden');
+                        fallback.classList.add('hidden');
+                    } else {
+                        showToast(data.message || 'Failed to create', 'error');
+                    }
+                }).catch(err => {
+                    addBtn.disabled = false;
+                    console.error(err);
+                    showToast('Error creating SI unit', 'error');
+                });
+        });
+    }
+
+    async function handleAddProduct(e) {
+        e.preventDefault();
+        const productId = document.getElementById('selectedProductId').value;
+        const categoryId = document.getElementById('selectedCategoryId').value;
+        if (!productId || !categoryId) return showToast('Select product first', 'error');
+
+        const rows = document.querySelectorAll('#lineItemsWrapper > div');
+        if (rows.length === 0) return showToast('Add at least one pricing entry', 'error');
+
+        const lineItems = [];
+        for (const row of rows) {
+            const pmId = row.querySelector('input[name="package_mapping_id"]').value;
+            const siId = row.querySelector('input[name="si_unit_id"]').value;
+            const pkgSize = row.querySelector('input[name="package_size"]').value;
+            const priceCat = row.querySelector('select[name="price_category"]').value;
+            const price = row.querySelector('input[name="price"]').value;
+            const cap = row.querySelector('input[name="delivery_capacity"]').value;
+            if (!pmId || !siId || !price) continue;
+            lineItems.push({
+                package_mapping_id: pmId,
+                si_unit_id: siId,
+                package_size: pkgSize,
+                price_category: priceCat,
+                price,
+                delivery_capacity: cap
+            });
+        }
+        if (lineItems.length === 0) return showToast('Complete all fields', 'error');
+
+        const formData = new FormData();
+        formData.append('store_id', vendorId);
+        formData.append('product_id', productId);
+        formData.append('line_items', JSON.stringify(lineItems));
+
+        const btn = document.querySelector('#addProductForm button[type="submit"]');
+        const orig = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+        
         fetch(`${BASE_URL}fetch/manageProfile?action=addStoreProduct`, {
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
-            .then(data => {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
+            .then(r => r.json()).then(data => {
+                btn.disabled = false;
+                btn.textContent = orig;
                 if (data.success) {
-                    showToast('Product & pricing added successfully', 'success');
+                    showToast('Product & pricing added', 'success');
                     document.getElementById('addProductForm').reset();
                     document.getElementById('unitPricingContainer').classList.add('hidden');
-                    document.getElementById('productSearchInput').value = '';
-                    document.getElementById('selectedProductId').value = '';
-                    document.getElementById('selectedCategoryId').value = '';
+                    availableSIUnits = [];
+                    availablePackageMappings = [];
+                    loadProductsForStore();
                 } else {
                     showToast(data.error || 'Failed to add product', 'error');
                 }
-            })
-            .catch(error => {
-                console.error('Error adding product:', error);
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-                showToast('Failed to add product. Please try again.', 'error');
+            }).catch(err => {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = orig;
+                showToast('Error adding product', 'error');
             });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize variables
         window.selectedCategories = [];
-        window.availableUnits = [];
+        window.availablePackageMappings = [];
+        window.availableSIUnits = [];
         window.lineItemCount = 0;
         window.allProducts = [];
 
@@ -826,57 +969,7 @@
 
         document.getElementById('addLineItemBtn').addEventListener('click', addLineItemRow);
 
-        document.getElementById('addProductForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const productId = document.getElementById('selectedProductId').value;
-            const categoryId = document.getElementById('selectedCategoryId').value;
-
-            if (!productId || !categoryId) {
-                showToast('Please select a Product', 'error');
-                return;
-            }
-
-            const rows = document.querySelectorAll('#lineItemsWrapper > div');
-            if (rows.length === 0) {
-                showToast('Please add at least one pricing entry', 'error');
-                return;
-            }
-
-            const lineItems = [];
-            rows.forEach(row => {
-                const selects = row.querySelectorAll('select');
-                const inputs = row.querySelectorAll('input');
-                if (selects.length < 2 || inputs.length < 3) return;
-
-                const unitUuid = selects[0].value;
-                const packageSize = inputs[0].value || 1;
-                const priceCategory = selects[1].value;
-                const priceVal = inputs[1].value;
-                const capacityVal = inputs[2].value || null;
-
-                if (!unitUuid || !priceVal) return;
-
-                lineItems.push({
-                    unit_id: unitUuid,
-                    package_size: packageSize,
-                    price_category: priceCategory,
-                    price: priceVal,
-                    delivery_capacity: capacityVal
-                });
-            });
-
-            if (lineItems.length === 0) {
-                showToast('Please ensure you have filled the price for at least one line item', 'error');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('store_id', vendorId);
-            formData.append('product_id', productId);
-            formData.append('line_items', JSON.stringify(lineItems));
-
-            addProductToStore(formData);
-        });
+        document.getElementById('addProductForm').addEventListener('submit', handleAddProduct);
 
         window.addEventListener('click', function (event) {
             if (event.target.classList.contains('fixed') && event.target.classList.contains('inset-0')) {

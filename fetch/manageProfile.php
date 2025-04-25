@@ -37,6 +37,19 @@ try {
             getCategoryProductCounts($pdo);
             break;
 
+        case 'getPackageNamesForProduct':
+            getPackageNamesForProduct($pdo);
+            break;
+
+        case 'getSIUnits':
+            getSIUnits($pdo);
+            break;
+
+        case 'createSIUnit':
+            requireLogin();
+            createSIUnit($pdo);
+            break;
+
         case 'updateStoreCategories':
             requireLogin();
             updateStoreCategories($pdo, $currentUser);
@@ -116,7 +129,8 @@ function ensureProductPricingTable(PDO $pdo)
         CREATE TABLE IF NOT EXISTS `product_pricing` (
             `id` VARCHAR(26) NOT NULL,
             `store_products_id` VARCHAR(26) NOT NULL,
-            `product_unit_of_measure_id` VARCHAR(26) NOT NULL,
+            `package_mapping_id` VARCHAR(26) NOT NULL,
+            `si_unit_id` VARCHAR(26) NOT NULL,
             `package_size` int(5) NOT NULL DEFAULT 1,
             `created_by` VARCHAR(26) NOT NULL,
             `price` DECIMAL(10,2) NOT NULL,
@@ -126,7 +140,8 @@ function ensureProductPricingTable(PDO $pdo)
             `updated_at` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
             FOREIGN KEY (`store_products_id`) REFERENCES `store_products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-            FOREIGN KEY (`product_unit_of_measure_id`) REFERENCES `product_unit_of_measure` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (`package_mapping_id`) REFERENCES `product_package_name_mappings` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (`si_unit_id`) REFERENCES `product_si_units` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
             FOREIGN KEY (`created_by`) REFERENCES `zzimba_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
     ");
@@ -177,6 +192,72 @@ function getUserStoreRole(PDO $pdo, string $storeId, ?string $userId): ?string
     $stmt = $pdo->prepare("SELECT role FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active'");
     $stmt->execute([$storeId, $userId]);
     return $stmt->fetchColumn() ?: null;
+}
+
+function getPackageNamesForProduct(PDO $pdo)
+{
+    $pid = $_GET['product_id'] ?? '';
+    if (!$pid || !isValidUlid($pid)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid product ID']);
+        return;
+    }
+    $stmt = $pdo->prepare("
+        SELECT ppm.id, ppn.package_name
+        FROM product_package_name_mappings ppm
+        JOIN product_package_name ppn ON ppm.product_package_name_id = ppn.id
+        WHERE ppm.product_id = ?
+    ");
+    $stmt->execute([$pid]);
+    $mappings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['success' => true, 'mappings' => $mappings]);
+}
+
+function getSIUnits(PDO $pdo)
+{
+    try {
+        $stmt = $pdo->query("
+            SELECT id, si_unit FROM product_si_units ORDER BY si_unit
+        ");
+        $units = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'siUnits' => $units]);
+    } catch (Exception $e) {
+        error_log('Error in getSIUnits: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error retrieving SI units']);
+    }
+}
+
+function createSIUnit(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $name = trim($data['si_unit'] ?? '');
+    if ($name === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'SI unit cannot be empty']);
+        return;
+    }
+    try {
+        // check existing
+        $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE si_unit = ?");
+        $stmt->execute([$name]);
+        if ($row = $stmt->fetch()) {
+            echo json_encode(['success' => true, 'message' => 'Already exists', 'id' => $row['id']]);
+            return;
+        }
+        $id = (string) Ulid::generate();
+        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+        $ins = $pdo->prepare("
+            INSERT INTO product_si_units (id, si_unit, created_at, updated_at)
+            VALUES (?, ?, ?, ?)
+        ");
+        $ins->execute([$id, $name, $now, $now]);
+        echo json_encode(['success' => true, 'message' => 'Created', 'id' => $id]);
+    } catch (Exception $e) {
+        error_log('Error in createSIUnit: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error creating SI unit']);
+    }
 }
 
 function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
@@ -310,17 +391,18 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                 pp.price_category,
                 pp.delivery_capacity,
                 pp.package_size,
-                pum.id             AS unit_id,
+                ppm.id             AS package_mapping_id,
                 ppn.package_name,
+                psu.id             AS si_unit_id,
                 psu.si_unit
             FROM store_products sp
             JOIN store_categories sc ON sp.store_category_id = sc.id
             JOIN products        p   ON sp.product_id        = p.id
             JOIN product_categories pc ON p.category_id = pc.id
-            LEFT JOIN product_pricing pp   ON pp.store_products_id        = sp.id
-            LEFT JOIN product_unit_of_measure pum ON pp.product_unit_of_measure_id = pum.id
-            LEFT JOIN product_si_units psu         ON pum.product_si_unit_id       = psu.id
-            LEFT JOIN product_package_name ppn     ON pum.product_package_name_id  = ppn.id
+            LEFT JOIN product_pricing pp   ON pp.store_products_id = sp.id
+            LEFT JOIN product_package_name_mappings ppm ON pp.package_mapping_id = ppm.id
+            LEFT JOIN product_package_name ppn ON ppm.product_package_name_id = ppn.id
+            LEFT JOIN product_si_units psu ON pp.si_unit_id = psu.id
             WHERE sc.store_id = ?
               AND sp.status   = 'active'
               AND p.status    = 'published'
@@ -353,7 +435,8 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                     'price_category' => $r['price_category'] ?? 'retail',
                     'delivery_capacity' => $r['delivery_capacity'] !== null ? (int) $r['delivery_capacity'] : null,
                     'package_size' => (int) ($r['package_size'] ?? 1),
-                    'unit_id' => $r['unit_id'] ?? null
+                    'package_mapping_id' => $r['package_mapping_id'] ?? null,
+                    'si_unit_id' => $r['si_unit_id'] ?? null
                 ];
             }
         }
@@ -622,17 +705,18 @@ function addStoreProduct(PDO $pdo, string $currentUser)
         if (is_array($lineItems) && count($lineItems) > 0) {
             $pi = $pdo->prepare("
                 INSERT INTO product_pricing
-                    (id, store_products_id, product_unit_of_measure_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                    (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             foreach ($lineItems as $item) {
-                $unitId = $item['unit_id'] ?? '';
+                $pmId = $item['package_mapping_id'] ?? '';
+                $siId = $item['si_unit_id'] ?? '';
                 $packageSize = intval($item['package_size'] ?? 1);
                 $price = floatval($item['price'] ?? 0);
                 $cat = $item['price_category'] ?? 'retail';
                 $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
 
-                if (!isValidUlid($unitId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
+                if (!isValidUlid($pmId) || !isValidUlid($siId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
                     throw new Exception('Invalid line item data');
                 }
 
@@ -640,7 +724,8 @@ function addStoreProduct(PDO $pdo, string $currentUser)
                 $pi->execute([
                     $ppId,
                     $spId,
-                    $unitId,
+                    $pmId,
+                    $siId,
                     $packageSize,
                     $currentUser,
                     $price,
@@ -698,17 +783,18 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
         if (is_array($lineItems) && count($lineItems) > 0) {
             $pi = $pdo->prepare("
                 INSERT INTO product_pricing
-                    (id, store_products_id, product_unit_of_measure_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                    (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             foreach ($lineItems as $item) {
-                $unitId = $item['unit_id'] ?? '';
+                $pmId = $item['package_mapping_id'] ?? '';
+                $siId = $item['si_unit_id'] ?? '';
                 $packageSize = intval($item['package_size'] ?? 1);
                 $price = floatval($item['price'] ?? 0);
                 $cat = $item['price_category'] ?? 'retail';
                 $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
 
-                if (!isValidUlid($unitId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
+                if (!isValidUlid($pmId) || !isValidUlid($siId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
                     throw new Exception('Invalid line item data');
                 }
 
@@ -716,7 +802,8 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                 $pi->execute([
                     $ppId,
                     $storeProductId,
-                    $unitId,
+                    $pmId,
+                    $siId,
                     $packageSize,
                     $currentUser,
                     $price,
