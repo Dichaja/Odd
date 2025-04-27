@@ -69,7 +69,7 @@
                 </button>
             </div>
 
-            <div class="p-6">
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
                 <form id="editProductForm">
                     <input type="hidden" id="editStoreProductId" name="store_product_id">
                     <div class="mb-4">

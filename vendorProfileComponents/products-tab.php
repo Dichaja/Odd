@@ -30,14 +30,11 @@
 </div>
 
 <script>
-    // Products Tab JavaScript
     document.addEventListener('DOMContentLoaded', function () {
-        // Load products when the page loads
         if (vendorId) {
             loadProductsForDisplay(vendorId);
         }
 
-        // Filter and sort products
         document.getElementById('filter-category').addEventListener('change', filterProductsByCategory);
         document.getElementById('search-products').addEventListener('input', function (e) {
             const searchTerm = e.target.value.toLowerCase();
@@ -67,7 +64,6 @@
             productCards.forEach(card => container.appendChild(card));
         });
 
-        // Load more products
         document.getElementById('loadMoreBtn').addEventListener('click', function () {
             if (currentPage < totalPages) {
                 loadProductsForDisplay(vendorId, currentPage + 1);
@@ -75,7 +71,6 @@
         });
     });
 
-    // Products Tab Functions
     function loadProductsForDisplay(id, page = 1) {
         fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreProducts&id=${id}&page=${page}`)
             .then(response => response.json())
@@ -153,15 +148,26 @@
             productCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform hover:-translate-y-1 flex flex-col h-full';
             const productNameShort = encodeURIComponent(product.name.substring(0, 2));
             const imageUrl = `https://placehold.co/400x300/f0f0f0/808080?text=${productNameShort}`;
-            let pricingLines = (product.pricing && product.pricing.length > 0) ?
-                product.pricing.map(pr => `
-                <div class="text-sm text-gray-700 my-1">
-                    <strong>${escapeHtml(pr.unit_name)}</strong>: <span class="text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
-                    <span class="text-xs text-gray-500">/ ${escapeHtml(pr.price_category)}</span>
-                    ${pr.delivery_capacity ? `<span class="ml-2 text-xs text-gray-400">Cap: ${pr.delivery_capacity}</span>` : ''}
-                </div>
-            `).join('') :
-                `<div class="text-sm text-gray-600 italic">No price data</div>`;
+
+            let pricingLines = '';
+            if (product.pricing && product.pricing.length > 0) {
+                pricingLines = product.pricing.map(pr => {
+                    const unitParts = pr.unit_name.split(' ');
+                    const siUnit = unitParts[0] || '';
+                    const packageName = unitParts.slice(1).join(' ') || '';
+                    const formattedUnit = `${pr.package_size} ${siUnit} ${packageName}`.trim();
+
+                    return `
+                    <div class="text-sm text-gray-700 my-1">
+                        <strong>${escapeHtml(formattedUnit)}</strong>: <span class="text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
+                        <span class="text-xs text-gray-500">/ ${escapeHtml(pr.price_category)}</span>
+                        ${pr.delivery_capacity ? `<span class="ml-2 text-xs text-gray-400">Cap: ${pr.delivery_capacity}</span>` : ''}
+                    </div>
+                    `;
+                }).join('');
+            } else {
+                pricingLines = `<div class="text-sm text-gray-600 italic">No price data</div>`;
+            }
 
             productCard.innerHTML = `
             <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover">
@@ -178,7 +184,7 @@
                     <button onclick="showProductDetails('${product.store_product_id}')" class="bg-white border border-gray-300 text-gray-700 py-2 rounded-md text-sm hover:bg-gray-100 transition-colors w-full">Details</button>
                 </div>
             </div>
-        `;
+            `;
             container.appendChild(productCard);
         });
     }
@@ -189,9 +195,6 @@
             showToast("Product details not found.", "error");
             return;
         }
-
-        // You could implement a modal to show product details here
-        // For now, we'll just show a toast
         showToast(`Showing details for ${product.name}`, "success");
     }
 </script>
