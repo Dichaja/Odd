@@ -30,6 +30,26 @@
 </div>
 
 <script>
+    // --------------------------------------------------
+    //  Helper: get first product image or placeholder
+    // --------------------------------------------------
+    async function getProductImageUrl(product) {
+        const placeholderText = encodeURIComponent((product.name || '').substring(0, 2));
+        const placeholder = `https://placehold.co/400x300/f0f0f0/808080?text=${placeholderText}`;
+
+        try {
+            const res = await fetch(`${BASE_URL}img/products/${product.id}/images.json`);
+            if (!res.ok) return placeholder;
+            const json = await res.json();
+            if (Array.isArray(json.images) && json.images.length > 0) {
+                return `${BASE_URL}img/products/${product.id}/${json.images[0]}`;
+            }
+        } catch (e) {
+            // ignore errors and fall back
+        }
+        return placeholder;
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         if (vendorId) {
             loadProductsForDisplay(vendorId);
@@ -134,7 +154,10 @@
         renderProductsForDisplay(filtered, true);
     }
 
-    function renderProductsForDisplay(products, clearExisting = true) {
+    // --------------------------------------------------
+    //  Render: now async so we can await image fetch
+    // --------------------------------------------------
+    async function renderProductsForDisplay(products, clearExisting = true) {
         const container = document.getElementById('products-container');
         if (clearExisting) {
             container.innerHTML = '';
@@ -143,12 +166,12 @@
             container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500">No products found for this vendor.</div>`;
             return;
         }
-        products.forEach(product => {
-            const productCard = document.createElement('div');
-            productCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform hover:-translate-y-1 flex flex-col h-full';
-            const productNameShort = encodeURIComponent(product.name.substring(0, 2));
-            const imageUrl = `https://placehold.co/400x300/f0f0f0/808080?text=${productNameShort}`;
 
+        for (const product of products) {
+            // fetch image (or placeholder)
+            const imageUrl = await getProductImageUrl(product);
+
+            // build pricing lines
             let pricingLines = '';
             if (product.pricing && product.pricing.length > 0) {
                 pricingLines = product.pricing.map(pr => {
@@ -158,35 +181,38 @@
                     const formattedUnit = `${pr.package_size} ${siUnit} ${packageName}`.trim();
 
                     return `
-                    <div class="text-sm text-gray-700 my-1">
-                        <strong>${escapeHtml(formattedUnit)}</strong>: <span class="text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
-                        <span class="text-xs text-gray-500">/ ${escapeHtml(pr.price_category)}</span>
-                        ${pr.delivery_capacity ? `<span class="ml-2 text-xs text-gray-400">Cap: ${pr.delivery_capacity}</span>` : ''}
-                    </div>
+                        <div class="text-sm text-gray-700 my-1">
+                            <strong>${escapeHtml(formattedUnit)}</strong>: <span class="text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
+                            <span class="text-xs text-gray-500">/ ${escapeHtml(pr.price_category)}</span>
+                            ${pr.delivery_capacity ? `<span class="ml-2 text-xs text-gray-400">Cap: ${pr.delivery_capacity}</span>` : ''}
+                        </div>
                     `;
                 }).join('');
             } else {
                 pricingLines = `<div class="text-sm text-gray-600 italic">No price data</div>`;
             }
 
+            // create card
+            const productCard = document.createElement('div');
+            productCard.className = 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-transform hover:-translate-y-1 flex flex-col h-full';
             productCard.innerHTML = `
-            <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover">
-            <div class="p-4 flex flex-col flex-grow">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">${escapeHtml(product.name)}</h3>
-                <p class="text-gray-500 text-sm mb-4 flex-grow">
-                    ${escapeHtml(product.description || '').substring(0, 100)}...
-                </p>
-                <div class="border-t border-gray-200 pt-2">
-                    ${pricingLines}
+                <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover">
+                <div class="p-4 flex flex-col flex-grow">
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">${escapeHtml(product.name)}</h3>
+                    <p class="text-gray-500 text-sm mb-4 flex-grow">
+                        ${escapeHtml(product.description || '').substring(0, 100)}...
+                    </p>
+                    <div class="border-t border-gray-200 pt-2">
+                        ${pricingLines}
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 pt-4 mt-auto">
+                        <button class="bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-700 transition-colors w-full">Buy</button>
+                        <button onclick="showProductDetails('${product.store_product_id}')" class="bg-white border border-gray-300 text-gray-700 py-2 rounded-md text-sm hover:bg-gray-100 transition-colors w-full">Details</button>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-2 pt-4 mt-auto">
-                    <button class="bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-700 transition-colors w-full">Buy</button>
-                    <button onclick="showProductDetails('${product.store_product_id}')" class="bg-white border border-gray-300 text-gray-700 py-2 rounded-md text-sm hover:bg-gray-100 transition-colors w-full">Details</button>
-                </div>
-            </div>
             `;
             container.appendChild(productCard);
-        });
+        }
     }
 
     function showProductDetails(productId) {
