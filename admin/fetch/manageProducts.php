@@ -22,6 +22,9 @@ if (
 
 date_default_timezone_set('Africa/Kampala');
 
+/* --------------------------------------------------------------------------
+   ┃  DB-table bootstrap
+   -------------------------------------------------------------------------- */
 try {
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS products (
@@ -59,6 +62,9 @@ try {
     exit;
 }
 
+/* --------------------------------------------------------------------------
+   ┃  Router
+   -------------------------------------------------------------------------- */
 $action = $_GET['action'] ?? '';
 
 try {
@@ -66,39 +72,30 @@ try {
         case 'getProducts':
             getProducts($pdo);
             break;
-
         case 'getProduct':
             getProduct($pdo);
             break;
-
         case 'createProduct':
             createProduct($pdo);
             break;
-
         case 'updateProduct':
             updateProduct($pdo);
             break;
-
         case 'deleteProduct':
             deleteProduct($pdo);
             break;
-
         case 'uploadImage':
             uploadImage();
             break;
-
         case 'toggleFeatured':
             toggleFeatured($pdo);
             break;
-
         case 'getProductPackageNames':
             getProductPackageNames($pdo);
             break;
-
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Endpoint not found: ' . $action]);
-            break;
     }
 } catch (Exception $e) {
     error_log("Error in manageProducts: " . $e->getMessage());
@@ -106,6 +103,9 @@ try {
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }
 
+/* --------------------------------------------------------------------------
+   ┃  End-points
+   -------------------------------------------------------------------------- */
 function getProducts(PDO $pdo)
 {
     $stmt = $pdo->prepare(
@@ -123,16 +123,11 @@ function getProducts(PDO $pdo)
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($products as &$prod) {
-        $productId = $prod['id'];
-
         $prod['category'] = $prod['category_id'];
         unset($prod['category_id']);
-
-        $prod['id'] = $productId;
-
-        $prod['images'] = getProductImages($productId);
+        $prod['images'] = getProductImages($prod['id']);
         $prod['category_name'] = $prod['category_name'] ?? '(Unknown)';
-        $prod['package_names'] = getProductPackageNamesById($pdo, $productId);
+        $prod['package_names'] = getProductPackageNamesById($pdo, $prod['id']);
     }
 
     echo json_encode(['success' => true, 'products' => $products]);
@@ -168,15 +163,10 @@ function getProduct(PDO $pdo)
         return;
     }
 
-    $productId = $product['id'];
-
     $product['category'] = $product['category_id'];
     unset($product['category_id']);
-
-    $product['id'] = $productId;
-
-    $product['images'] = getProductImages($productId);
-    $product['package_names'] = getProductPackageNamesById($pdo, $productId);
+    $product['images'] = getProductImages($product['id']);
+    $product['package_names'] = getProductPackageNamesById($pdo, $product['id']);
 
     echo json_encode(['success' => true, 'data' => $product]);
 }
@@ -242,11 +232,10 @@ function createProduct(PDO $pdo)
             ':updated_at' => $now
         ]);
 
-        if (!empty($packageNames) && is_array($packageNames)) {
+        if (!empty($packageNames)) {
             saveProductPackageNames($pdo, $productId, $packageNames);
         }
-
-        if (!empty($data['temp_images']) && is_array($data['temp_images'])) {
+        if (!empty($data['temp_images'])) {
             moveProductImages($productId, $data['temp_images']);
         }
 
@@ -314,52 +303,64 @@ function updateProduct(PDO $pdo)
     $pdo->beginTransaction();
 
     try {
-        $stmt = $pdo->prepare(
+        /* -------- core data update -------- */
+        $pdo->prepare(
             "UPDATE products SET
-                 title = :title,
-                 category_id = :cat,
-                 description = :description,
-                 meta_title = :meta_title,
+                 title          = :title,
+                 category_id    = :cat,
+                 description    = :description,
+                 meta_title     = :meta_title,
                  meta_description = :meta_description,
-                 meta_keywords = :meta_keywords,
-                 status = :status,
-                 featured = :featured,
-                 updated_at = :updated_at
+                 meta_keywords  = :meta_keywords,
+                 status         = :status,
+                 featured       = :featured,
+                 updated_at     = :updated_at
              WHERE id = :id"
-        );
-        $stmt->execute([
-            ':title' => $title,
-            ':cat' => $categoryId,
-            ':description' => $description,
-            ':meta_title' => $metaTitle,
-            ':meta_description' => $metaDesc,
-            ':meta_keywords' => $metaKeywords,
-            ':status' => $status,
-            ':featured' => $featured,
-            ':updated_at' => $now,
-            ':id' => $id
-        ]);
+        )->execute([
+                    ':title' => $title,
+                    ':cat' => $categoryId,
+                    ':description' => $description,
+                    ':meta_title' => $metaTitle,
+                    ':meta_description' => $metaDesc,
+                    ':meta_keywords' => $metaKeywords,
+                    ':status' => $status,
+                    ':featured' => $featured,
+                    ':updated_at' => $now,
+                    ':id' => $id
+                ]);
 
+        /* -------- package-name mappings -------- */
         if (isset($data['package_names'])) {
-            $pdo->prepare("DELETE FROM product_package_name_mappings WHERE product_id = :product_id")
-                ->execute([':product_id' => $id]);
+            $pdo->prepare("DELETE FROM product_package_name_mappings WHERE product_id = :pid")
+                ->execute([':pid' => $id]);
 
-            if (!empty($packageNames) && is_array($packageNames)) {
+            if (!empty($packageNames)) {
                 saveProductPackageNames($pdo, $id, $packageNames);
             }
         }
 
+        /* -------- image handling -------- */
         if (!empty($data['update_images'])) {
+
             $existing = $data['existing_images'] ?? [];
             $temp = $data['temp_images'] ?? [];
 
-            deleteAllProductImages($id, false);
+            // If nothing actually changed, do nothing.
+            if (!empty($existing) || !empty($temp)) {
 
-            if (!empty($existing)) {
-                saveExistingImages($id, $existing);
-            }
-            if (!empty($temp)) {
-                moveProductImages($id, $temp);
+                $existingBasenames = array_map('basename', $existing);
+
+                if (!empty($existingBasenames)) {
+                    cleanProductImagesDirectory($id, $existingBasenames);
+                } else {
+                    // If user intentionally cleared gallery
+                    deleteAllProductImages($id, false);
+                }
+
+                $moved = !empty($temp) ? moveProductImages($id, $temp) : [];
+
+                $finalList = array_merge($existingBasenames, $moved);
+                saveExistingImages($id, $finalList);
             }
         }
 
@@ -428,6 +429,7 @@ function toggleFeatured(PDO $pdo)
 
     $id = $data['id'];
     $featured = !empty($data['featured']) ? 1 : 0;
+    $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
     $stmt = $pdo->prepare("SELECT id FROM products WHERE id = :id");
     $stmt->execute([':id' => $id]);
@@ -436,8 +438,6 @@ function toggleFeatured(PDO $pdo)
         echo json_encode(['success' => false, 'message' => 'Product not found']);
         return;
     }
-
-    $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
     $pdo->prepare(
         "UPDATE products
@@ -457,6 +457,9 @@ function toggleFeatured(PDO $pdo)
     ]);
 }
 
+/* --------------------------------------------------------------------------
+   ┃  Image upload & processing
+   -------------------------------------------------------------------------- */
 function uploadImage()
 {
     if (
@@ -542,18 +545,7 @@ function cropAndResizeImage($src, $dst, $w, $h)
         imagefilledrectangle($dstImg, 0, 0, $w, $h, $trans);
     }
 
-    imagecopyresampled(
-        $dstImg,
-        $srcImg,
-        0,
-        0,
-        $cropX,
-        $cropY,
-        $w,
-        $h,
-        $cw,
-        $ch
-    );
+    imagecopyresampled($dstImg, $srcImg, 0, 0, $cropX, $cropY, $w, $h, $cw, $ch);
 
     switch ($type) {
         case IMAGETYPE_JPEG:
@@ -574,6 +566,9 @@ function cropAndResizeImage($src, $dst, $w, $h)
     imagedestroy($dstImg);
 }
 
+/* --------------------------------------------------------------------------
+   ┃  Gallery helpers
+   -------------------------------------------------------------------------- */
 function getProductImages($uuid)
 {
     $dir = __DIR__ . '/../../img/products/' . $uuid;
@@ -617,7 +612,13 @@ function moveProductImages($uuid, array $temps)
         $moved[] = basename($dst);
     }
 
-    file_put_contents("$dir/images.json", json_encode(['images' => $moved], JSON_PRETTY_PRINT));
+    // Append to / overwrite existing list
+    $current = getProductImages($uuid);
+    $currentBasenames = array_map('basename', $current);
+    $newList = array_merge($currentBasenames, $moved);
+    saveExistingImages($uuid, $newList);
+
+    return $moved;
 }
 
 function saveExistingImages($uuid, array $imgs)
@@ -641,6 +642,23 @@ function deleteAllProductImages($uuid, $rmDir = false)
         rmdir($dir);
 }
 
+function cleanProductImagesDirectory($uuid, array $keepList)
+{
+    $dir = __DIR__ . '/../../img/products/' . $uuid;
+    if (!is_dir($dir))
+        return;
+
+    $keep = array_map('basename', $keepList);
+    foreach (glob("$dir/*") as $f) {
+        if (is_file($f) && !in_array(basename($f), $keep, true)) {
+            unlink($f);
+        }
+    }
+}
+
+/* --------------------------------------------------------------------------
+   ┃  Package-name helpers
+   -------------------------------------------------------------------------- */
 function getProductPackageNames(PDO $pdo)
 {
     if (!isset($_GET['product_id'])) {
@@ -650,7 +668,6 @@ function getProductPackageNames(PDO $pdo)
     }
 
     $productId = $_GET['product_id'];
-
     $packageNames = getProductPackageNamesById($pdo, $productId);
 
     echo json_encode(['success' => true, 'packageNames' => $packageNames]);
