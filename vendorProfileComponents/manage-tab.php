@@ -1,132 +1,123 @@
 <div id="manage-tab" class="tab-pane hidden">
     <div class="bg-white rounded-lg shadow-md px-6 mb-6">
-        <div class="border-b border-gray-200 mb-6">
-            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
-                <li class="mr-2" role="presentation">
-                    <button class="inline-block p-4 border-b-2 border-red-600 rounded-t-lg text-red-600 font-medium"
-                        id="products-tab" data-tabs-target="#products" type="button" role="tab" aria-controls="products"
-                        aria-selected="true">
-                        <i class="fas fa-box mr-2"></i>Products
-                    </button>
-                </li>
-                <li class="mr-2" role="presentation">
-                    <button
-                        class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300"
-                        id="categories-tab" data-tabs-target="#categories" type="button" role="tab"
-                        aria-controls="categories" aria-selected="false">
-                        <i class="fas fa-tags mr-2"></i>Categories
-                    </button>
-                </li>
-            </ul>
+        <div class="mb-6">
+            <h2 class="text-xl font-bold mb-2">Store Products</h2>
+            <p class="text-gray-600">Add new products to your store or manage existing ones</p>
         </div>
 
-        <div id="tab-content">
-            <div class="block" id="products" role="tabpanel" aria-labelledby="products-tab">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
-                    <div>
-                        <h2 class="text-xl font-bold mb-2">Store Products</h2>
-                        <p class="text-gray-600">Add new products to your store or manage existing ones</p>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Add New Product</h3>
-                    <form id="addProductForm">
-                        <div class="mb-4" id="productListContainer">
-                            <label for="productSearchInput" class="block text-sm font-medium text-gray-700 mb-1">Select
-                                Product *</label>
-                            <div class="relative">
-                                <div class="custom-select-container">
-                                    <input type="text" id="productSearchInput"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                                        placeholder="Type to search for products..." autocomplete="off">
-                                    <input type="hidden" id="selectedProductId" name="product_id">
-                                    <input type="hidden" id="selectedCategoryId" name="category_id">
-                                    <div id="productDropdown" class="custom-select-dropdown hidden">
-                                        <div class="p-2 text-center text-gray-500">Loading products...</div>
-                                    </div>
-                                </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4">Add New Product</h3>
+            <form id="addProductForm">
+                <div class="mb-4" id="productListContainer">
+                    <label for="productSearchInput" class="block text-sm font-medium text-gray-700 mb-1">Select
+                        Product *</label>
+                    <div class="relative">
+                        <div class="custom-select-container">
+                            <input type="text" id="productSearchInput"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                placeholder="Type to search for products..." autocomplete="off">
+                            <input type="hidden" id="selectedProductId" name="product_id">
+                            <input type="hidden" id="selectedCategoryId" name="category_id">
+                            <div id="productDropdown" class="custom-select-dropdown hidden">
+                                <div class="p-2 text-center text-gray-500">Loading products...</div>
                             </div>
-                            <p class="text-xs text-gray-500 mt-1">
-                                Products shown here are those not already in your store.
-                            </p>
                         </div>
-
-                        <div id="unitPricingContainer" class="mt-4 hidden">
-                            <p class="font-semibold text-sm mb-2">Add one or more pricing entries:</p>
-                            <div id="lineItemsWrapper" class="space-y-4"></div>
-                            <button type="button" id="addLineItemBtn"
-                                class="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded">
-                                + Add Another Entry
-                            </button>
-                        </div>
-
-                        <div class="flex justify-end mt-6">
-                            <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg">
-                                Add Product
-                            </button>
-                        </div>
-                    </form>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                        Products shown here are those not already in your store.
+                    </p>
                 </div>
 
-                <div class="bg-white rounded-lg border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold mb-4">Current Products</h3>
-                    <div class="bg-gray-50 rounded-lg p-8 text-center">
-                        <p class="text-gray-500">Your products will appear here</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="hidden" id="categories" role="tabpanel" aria-labelledby="categories-tab">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
-                    <div>
-                        <h2 class="text-xl font-bold mb-2">Store Categories</h2>
-                        <p class="text-gray-600">Manage your store's product categories</p>
-                    </div>
-                    <button id="add-category-btn"
-                        class="mt-4 md:mt-0 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition flex items-center">
-                        <i class="fas fa-plus-circle mr-2"></i> Add New Category
+                <div id="unitPricingContainer" class="mt-4 hidden">
+                    <p class="font-semibold text-sm mb-2">Add one or more pricing entries:</p>
+                    <div id="lineItemsWrapper" class="space-y-4"></div>
+                    <button type="button" id="addLineItemBtn"
+                        class="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded">
+                        + Add Another Entry
                     </button>
                 </div>
 
-                <div id="store-categories-container" class="max-h-[600px] overflow-y-auto mb-4">
-                    <div class="flex justify-center items-center py-8">
-                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-                    </div>
+                <div class="flex justify-end mt-6">
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg">
+                        Add Product
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold mb-4">Current Products</h3>
+            <div id="productsList" class="space-y-4">
+                <div class="flex justify-center items-center py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
                 </div>
             </div>
+            <div id="pagination" class="mt-6 flex justify-center space-x-2"></div>
         </div>
     </div>
 </div>
 
-<div id="addCategoryModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden overflow-y-auto">
+<!-- Edit Product Modal -->
+<div id="editProductModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-auto">
             <div class="flex justify-between items-center p-6 border-b">
-                <h2 class="text-xl font-bold">Add New Category</h2>
+                <h2 class="text-xl font-bold">Edit Product Pricing</h2>
                 <button type="button" class="text-gray-400 hover:text-gray-500"
-                    onclick="closeModal('addCategoryModal')">
+                    onclick="closeModal('editProductModal')">
                     <span class="text-2xl">&times;</span>
                 </button>
             </div>
 
             <div class="p-6">
-                <p class="text-gray-600 mb-4">Add new categories to your store:</p>
-                <div id="available-categories-container"
-                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-96 overflow-y-auto mb-4">
-                    <div class="flex justify-center items-center py-8 col-span-full">
-                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+                <form id="editProductForm">
+                    <input type="hidden" id="editStoreProductId" name="store_product_id">
+                    <div class="mb-4">
+                        <h3 id="editProductName" class="text-lg font-medium"></h3>
+                        <p id="editProductCategory" class="text-sm text-gray-600"></p>
                     </div>
-                </div>
+
+                    <div id="editPricingContainer" class="mt-4">
+                        <p class="font-semibold text-sm mb-2">Pricing entries:</p>
+                        <div id="editLineItemsWrapper" class="space-y-4"></div>
+                        <button type="button" id="editAddLineItemBtn"
+                            class="mt-2 px-3 py-1 bg-blue-500 text-white text-sm rounded">
+                            + Add Another Entry
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <div class="flex justify-end p-6 border-t">
                 <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg mr-2"
-                    onclick="closeModal('addCategoryModal')">
+                    onclick="closeModal('editProductModal')">
                     Cancel
                 </button>
-                <button type="button" id="saveCategoriesBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg">
+                <button type="button" id="saveProductChangesBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg">
                     Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-40 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto">
+            <div class="p-6">
+                <h3 class="text-lg font-medium mb-4">Confirm Delete</h3>
+                <p class="text-gray-600">Are you sure you want to delete this product from your store? This action
+                    cannot be undone.</p>
+                <p id="deleteProductName" class="font-medium mt-2"></p>
+            </div>
+            <div class="flex justify-end p-6 border-t">
+                <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg mr-2"
+                    onclick="closeModal('deleteConfirmModal')">
+                    Cancel
+                </button>
+                <button type="button" id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg">
+                    Delete
                 </button>
             </div>
         </div>
@@ -175,6 +166,37 @@
         padding: 1rem;
         text-align: center;
         color: #6b7280;
+    }
+
+    .product-card {
+        transition: all 0.2s ease;
+    }
+
+    .product-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .price-tag {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .price-retail {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .price-wholesale {
+        background-color: #dcfce7;
+        color: #15803d;
+    }
+
+    .price-factory {
+        background-color: #fef3c7;
+        color: #92400e;
     }
 </style>
 
@@ -232,7 +254,6 @@
             .then(data => {
                 if (data.success && data.store) {
                     storeData = data.store;
-                    loadStoreCategoriesForDisplay();
                 } else {
                     showToast(data.error || "Failed to load store data", "error");
                 }
@@ -240,276 +261,6 @@
             .catch(error => {
                 console.error('Error loading store data:', error);
                 showToast("Failed to load store data", "error");
-            });
-    }
-
-    function loadStoreCategoriesForDisplay() {
-        const container = document.getElementById('store-categories-container');
-        container.innerHTML = '<div class="flex justify-center items-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div></div>';
-
-        fetch(`${BASE_URL}fetch/manageProfile?action=getStoreDetails&id=${vendorId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.store) {
-                    storeData = data.store;
-
-                    if (!storeData.categories || storeData.categories.length === 0) {
-                        container.innerHTML = '<div class="text-center py-8"><p class="text-gray-500">No categories added to this store yet.</p><p class="mt-2 text-sm text-gray-400">Click "Add New Category" to get started</p></div>';
-                        return;
-                    }
-
-                    container.innerHTML = '';
-                    const categoryList = document.createElement('div');
-                    categoryList.className = 'space-y-4';
-
-                    storeData.categories.forEach(category => {
-                        const categoryItem = document.createElement('div');
-                        categoryItem.className = 'bg-white border border-gray-200 rounded-lg shadow-sm p-4 transition-all hover:shadow-md';
-                        categoryItem.dataset.id = category.id;
-
-                        const statusClass = category.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-                        const statusText = category.status === 'active' ? 'Active' : 'Inactive';
-
-                        categoryItem.innerHTML = `
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                                <div class="mb-3 sm:mb-0">
-                                    <div class="flex items-center">
-                                        <h3 class="font-bold text-lg">${escapeHtml(category.name)}</h3>
-                                        <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
-                                            ${statusText}
-                                        </span>
-                                    </div>
-                                    <p class="text-gray-600 text-sm mt-1 line-clamp-2 overflow-hidden text-ellipsis">
-                                        ${escapeHtml(category.description || 'No description available')}
-                                    </p>
-                                    <div class="mt-2 text-sm text-gray-500">
-                                        <span><i class="fas fa-box"></i> ${category.product_count || 0} Products</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                    <label class="inline-flex items-center cursor-pointer mr-4">
-                                        <input type="checkbox" class="sr-only peer category-toggle" 
-                                            data-id="${category.id}" 
-                                            ${category.status === 'active' ? 'checked' : ''}>
-                                        <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-                                        <span class="ml-2 text-sm font-medium text-gray-900">
-                                            ${category.status === 'active' ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </label>
-                                </div>
-                            </div>
-                        `;
-
-                        categoryList.appendChild(categoryItem);
-                    });
-
-                    container.appendChild(categoryList);
-
-                    document.querySelectorAll('.category-toggle').forEach(toggle => {
-                        toggle.addEventListener('change', function () {
-                            const categoryId = this.dataset.id;
-                            const newStatus = this.checked ? 'active' : 'inactive';
-                            const statusLabel = this.parentElement.querySelector('span');
-                            const loadingIndicator = document.createElement('span');
-
-                            statusLabel.textContent = 'Updating...';
-                            this.disabled = true;
-
-                            const badge = this.closest('.flex').parentElement.querySelector('.rounded-full');
-                            badge.className = 'ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
-                            badge.textContent = 'Updating...';
-
-                            fetch(`${BASE_URL}fetch/manageProfile?action=updateCategoryStatus`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    store_id: vendorId,
-                                    category_updates: { [categoryId]: newStatus }
-                                })
-                            })
-                                .then(response => response.json())
-                                .then(data => {
-                                    this.disabled = false;
-
-                                    if (data.success) {
-                                        statusLabel.textContent = newStatus === 'active' ? 'Active' : 'Inactive';
-
-                                        if (newStatus === 'active') {
-                                            badge.className = 'ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
-                                            badge.textContent = 'Active';
-                                        } else {
-                                            badge.className = 'ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
-                                            badge.textContent = 'Inactive';
-                                        }
-
-                                        showToast(`Category status updated to ${newStatus}`, 'success');
-                                    } else {
-                                        this.checked = !this.checked;
-                                        statusLabel.textContent = !this.checked ? 'Active' : 'Inactive';
-
-                                        if (!this.checked) {
-                                            badge.className = 'ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
-                                            badge.textContent = 'Active';
-                                        } else {
-                                            badge.className = 'ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
-                                            badge.textContent = 'Inactive';
-                                        }
-
-                                        showToast(data.error || 'Failed to update category status', 'error');
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error updating category status:', error);
-                                    this.disabled = false;
-                                    this.checked = !this.checked;
-                                    statusLabel.textContent = !this.checked ? 'Active' : 'Inactive';
-
-                                    if (!this.checked) {
-                                        badge.className = 'ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800';
-                                        badge.textContent = 'Active';
-                                    } else {
-                                        badge.className = 'ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
-                                        badge.textContent = 'Inactive';
-                                    }
-
-                                    showToast('Failed to update category status. Please try again.', 'error');
-                                });
-                        });
-                    });
-                } else {
-                    container.innerHTML = '<p class="text-center text-red-500 py-4">Failed to load categories.</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading categories:', error);
-                container.innerHTML = '<p class="text-center text-red-500 py-4">Failed to load categories.</p>';
-            });
-    }
-
-    function loadAvailableCategories() {
-        const container = document.getElementById('available-categories-container');
-        container.innerHTML = '<div class="flex justify-center items-center py-8 col-span-full"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div></div>';
-
-        fetch(`${BASE_URL}fetch/manageProfile?action=getAvailableCategories&store_id=${vendorId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.categories && data.categories.length > 0) {
-                    const activeCategories = data.categories.filter(cat => cat.status === 'active');
-                    if (activeCategories.length === 0) {
-                        container.innerHTML = '<p class="text-center text-gray-500 py-4 col-span-full">No additional active categories available.</p>';
-                        return;
-                    }
-
-                    container.innerHTML = '';
-                    fetch(`${BASE_URL}fetch/manageProfile?action=getCategoryProductCounts`)
-                        .then(r => r.json())
-                        .then(countData => {
-                            const productCounts = countData.success ? countData.counts : {};
-                            activeCategories.forEach(category => {
-                                const categoryCard = document.createElement('div');
-                                categoryCard.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow';
-                                const productCount = productCounts[category.id] || 0;
-                                categoryCard.innerHTML = `
-                                    <div class="flex items-start">
-                                        <input type="checkbox" id="cat-${category.id}" class="category-checkbox mt-1 h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500" value="${category.id}">
-                                        <div class="ml-3">
-                                            <label for="cat-${category.id}" class="font-medium text-gray-900 cursor-pointer">${escapeHtml(category.name)}</label>
-                                            <p class="text-gray-600 text-sm mt-1 line-clamp-2 overflow-hidden text-ellipsis">${escapeHtml(category.description || 'No description available')}</p>
-                                            <p class="text-sm text-gray-500 mt-2"><i class="fas fa-box"></i> ${productCount} Products</p>
-                                        </div>
-                                    </div>
-                                `;
-                                container.appendChild(categoryCard);
-                                const checkbox = categoryCard.querySelector('input');
-                                checkbox.addEventListener('change', function () {
-                                    if (this.checked) {
-                                        if (!selectedCategories.includes(this.value)) {
-                                            selectedCategories.push(this.value);
-                                        }
-                                    } else {
-                                        selectedCategories = selectedCategories.filter(id => id !== this.value);
-                                    }
-                                });
-                            });
-                        })
-                        .catch(error => {
-                            console.error('Error loading category product counts:', error);
-                            activeCategories.forEach(category => {
-                                const categoryCard = document.createElement('div');
-                                categoryCard.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow';
-                                categoryCard.innerHTML = `
-                                    <div class="flex items-start">
-                                        <input type="checkbox" id="cat-${category.id}" class="category-checkbox mt-1 h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500" value="${category.id}">
-                                        <div class="ml-3">
-                                            <label for="cat-${category.id}" class="font-medium text-gray-900 cursor-pointer">${escapeHtml(category.name)}</label>
-                                            <p class="text-gray-600 text-sm mt-1 line-clamp-2 overflow-hidden text-ellipsis">${escapeHtml(category.description || 'No description available')}</p>
-                                        </div>
-                                    </div>
-                                `;
-                                container.appendChild(categoryCard);
-                                const checkbox = categoryCard.querySelector('input');
-                                checkbox.addEventListener('change', function () {
-                                    if (this.checked) {
-                                        if (!selectedCategories.includes(this.value)) {
-                                            selectedCategories.push(this.value);
-                                        }
-                                    } else {
-                                        selectedCategories = selectedCategories.filter(id => id !== this.value);
-                                    }
-                                });
-                            });
-                        });
-                } else {
-                    container.innerHTML = '<p class="text-center text-gray-500 py-4 col-span-full">No additional categories available.</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading categories:', error);
-                container.innerHTML = '<p class="text-center text-red-500 py-4 col-span-full">Failed to load categories.</p>';
-            });
-    }
-
-    function saveCategories() {
-        if (selectedCategories.length === 0) {
-            showToast('Please select at least one category to add', 'error');
-            return;
-        }
-
-        const button = document.getElementById('saveCategoriesBtn');
-        const originalText = button.textContent;
-        button.disabled = true;
-        button.textContent = 'Saving...';
-
-        fetch(`${BASE_URL}fetch/manageProfile?action=updateStoreCategories`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                store_id: vendorId,
-                categories: selectedCategories
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                button.disabled = false;
-                button.textContent = originalText;
-                if (data.success) {
-                    closeModal('addCategoryModal');
-                    showToast('Categories added successfully', 'success');
-                    selectedCategories = [];
-                    loadStoreCategoriesForDisplay();
-                } else {
-                    showToast(data.error || 'Failed to add categories', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error adding categories:', error);
-                button.disabled = false;
-                button.textContent = originalText;
-                showToast('Failed to add categories. Please try again.', 'error');
             });
     }
 
@@ -681,9 +432,9 @@
         addLineItemRow();
     }
 
-    function addLineItemRow() {
+    function addLineItemRow(container = 'lineItemsWrapper', existingData = null) {
         lineItemCount++;
-        const wrapper = document.getElementById('lineItemsWrapper');
+        const wrapper = document.getElementById(container);
         const row = document.createElement('div');
         row.classList.add('space-y-2', 'p-4', 'border', 'rounded-lg', 'relative');
 
@@ -752,6 +503,44 @@
         // Initialize dropdown behaviors
         initPackageDropdown(row);
         initSiDropdown(row);
+
+        // If we have existing data, populate the fields
+        if (existingData) {
+            const pkgInput = row.querySelector('.pkg-search-input');
+            const pkgId = row.querySelector('.pkg-mapping-id');
+            const siInput = row.querySelector('.si-search-input');
+            const siId = row.querySelector('.si-unit-id');
+            const pkgSize = row.querySelector('input[name="package_size"]');
+            const priceCategory = row.querySelector('select[name="price_category"]');
+            const price = row.querySelector('input[name="price"]');
+            const capacity = row.querySelector('input[name="delivery_capacity"]');
+
+            // Find the package name from the mapping ID
+            if (existingData.package_mapping_id && availablePackageMappings) {
+                const pkg = availablePackageMappings.find(p => p.id === existingData.package_mapping_id);
+                if (pkg) {
+                    pkgInput.value = pkg.package_name;
+                    pkgId.value = pkg.id;
+                }
+            }
+
+            // Find the SI unit from the ID
+            if (existingData.si_unit_id && availableSIUnits) {
+                const si = availableSIUnits.find(s => s.id === existingData.si_unit_id);
+                if (si) {
+                    siInput.value = si.si_unit;
+                    siId.value = si.id;
+                }
+            }
+
+            // Set other values
+            pkgSize.value = existingData.package_size || 1;
+            priceCategory.value = existingData.price_category || 'retail';
+            price.value = existingData.price || '';
+            if (existingData.delivery_capacity !== null) {
+                capacity.value = existingData.delivery_capacity;
+            }
+        }
     }
 
     function initPackageDropdown(row) {
@@ -897,7 +686,7 @@
         const orig = btn.textContent;
         btn.disabled = true;
         btn.textContent = 'Adding...';
-        
+
         fetch(`${BASE_URL}fetch/manageProfile?action=addStoreProduct`, {
             method: 'POST',
             body: formData
@@ -912,6 +701,7 @@
                     availableSIUnits = [];
                     availablePackageMappings = [];
                     loadProductsForStore();
+                    loadCurrentProducts(1); // Refresh the product list
                 } else {
                     showToast(data.error || 'Failed to add product', 'error');
                 }
@@ -923,9 +713,272 @@
             });
     }
 
+    function loadCurrentProducts(page = 1, limit = 10) {
+        const container = document.getElementById('productsList');
+        container.innerHTML = '<div class="flex justify-center items-center py-8"><div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div></div>';
+
+        fetch(`${BASE_URL}fetch/manageProfile?action=getStoreProducts&id=${vendorId}&page=${page}&limit=${limit}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.products) {
+                    if (data.products.length === 0) {
+                        container.innerHTML = '<div class="text-center py-8"><p class="text-gray-500">No products added to this store yet.</p></div>';
+                        return;
+                    }
+
+                    container.innerHTML = '';
+                    data.products.forEach(product => {
+                        const card = createProductCard(product);
+                        container.appendChild(card);
+                    });
+
+                    // Create pagination
+                    createPagination(data.pagination);
+                } else {
+                    container.innerHTML = '<div class="text-center py-8"><p class="text-red-500">Failed to load products.</p></div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading products:', error);
+                container.innerHTML = '<div class="text-center py-8"><p class="text-red-500">Error loading products.</p></div>';
+            });
+    }
+
+    function createProductCard(product) {
+        const card = document.createElement('div');
+        card.className = 'product-card bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow';
+
+        let pricingHtml = '';
+        if (product.pricing && product.pricing.length > 0) {
+            pricingHtml = '<div class="mt-3 space-y-2">';
+            pricingHtml += '<h4 class="text-sm font-medium text-gray-700">Pricing:</h4>';
+            pricingHtml += '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
+
+            product.pricing.forEach(price => {
+                const priceClass = `price-${price.price_category}`;
+                pricingHtml += `
+                    <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                        <div>
+                            <span class="text-sm">${escapeHtml(price.unit_name)}</span>
+                            ${price.package_size > 1 ? `<span class="text-xs text-gray-500"> (x${price.package_size})</span>` : ''}
+                        </div>
+                        <div class="flex items-center">
+                            <span class="price-tag ${priceClass}">${formatNumber(price.price)} UGX</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            pricingHtml += '</div></div>';
+        } else {
+            pricingHtml = '<p class="text-sm text-gray-500 mt-2">No pricing information available</p>';
+        }
+
+        card.innerHTML = `
+            <div class="flex justify-between">
+                <div>
+                    <h3 class="font-semibold text-lg">${escapeHtml(product.name)}</h3>
+                    <p class="text-sm text-gray-600">${escapeHtml(product.category_name)}</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button type="button" class="edit-product-btn px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200" data-id="${product.store_product_id}" data-product='${JSON.stringify(product)}'>
+                        Edit
+                    </button>
+                    <button type="button" class="delete-product-btn px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200" data-id="${product.store_product_id}" data-name="${escapeHtml(product.name)}">
+                        Delete
+                    </button>
+                </div>
+            </div>
+            ${pricingHtml}
+        `;
+
+        // Add event listeners
+        const editBtn = card.querySelector('.edit-product-btn');
+        const deleteBtn = card.querySelector('.delete-product-btn');
+
+        editBtn.addEventListener('click', function () {
+            const productData = JSON.parse(this.dataset.product);
+            openEditProductModal(productData);
+        });
+
+        deleteBtn.addEventListener('click', function () {
+            const productId = this.dataset.id;
+            const productName = this.dataset.name;
+            openDeleteConfirmModal(productId, productName);
+        });
+
+        return card;
+    }
+
+    function createPagination(pagination) {
+        const container = document.getElementById('pagination');
+        container.innerHTML = '';
+
+        if (pagination.pages <= 1) return;
+
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.className = `px-3 py-1 rounded ${pagination.page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
+        prevBtn.textContent = 'Previous';
+        prevBtn.disabled = pagination.page === 1;
+        if (pagination.page > 1) {
+            prevBtn.addEventListener('click', () => loadCurrentProducts(pagination.page - 1, pagination.limit));
+        }
+        container.appendChild(prevBtn);
+
+        // Page numbers
+        const startPage = Math.max(1, pagination.page - 2);
+        const endPage = Math.min(pagination.pages, pagination.page + 2);
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.className = `px-3 py-1 rounded ${i === pagination.page ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
+            pageBtn.textContent = i;
+            pageBtn.addEventListener('click', () => loadCurrentProducts(i, pagination.limit));
+            container.appendChild(pageBtn);
+        }
+
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.className = `px-3 py-1 rounded ${pagination.page === pagination.pages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
+        nextBtn.textContent = 'Next';
+        nextBtn.disabled = pagination.page === pagination.pages;
+        if (pagination.page < pagination.pages) {
+            nextBtn.addEventListener('click', () => loadCurrentProducts(pagination.page + 1, pagination.limit));
+        }
+        container.appendChild(nextBtn);
+    }
+
+    function openEditProductModal(product) {
+        document.getElementById('editStoreProductId').value = product.store_product_id;
+        document.getElementById('editProductName').textContent = product.name;
+        document.getElementById('editProductCategory').textContent = product.category_name;
+
+        const wrapper = document.getElementById('editLineItemsWrapper');
+        wrapper.innerHTML = '';
+
+        // Load package mappings for this product
+        fetch(`${BASE_URL}fetch/manageProfile?action=getPackageNamesForProduct&product_id=${product.id}`)
+            .then(r => r.json()).then(data => {
+                if (data.success) {
+                    availablePackageMappings = data.mappings;
+                    ensureSIUnits();
+
+                    // Add existing pricing entries
+                    if (product.pricing && product.pricing.length > 0) {
+                        product.pricing.forEach(price => {
+                            addLineItemRow('editLineItemsWrapper', price);
+                        });
+                    } else {
+                        addLineItemRow('editLineItemsWrapper');
+                    }
+
+                    openModal('editProductModal');
+                } else {
+                    showToast('Failed to load package mappings', 'error');
+                }
+            }).catch(err => {
+                console.error(err);
+                showToast('Error loading mappings', 'error');
+            });
+    }
+
+    function openDeleteConfirmModal(productId, productName) {
+        document.getElementById('deleteProductName').textContent = productName;
+        document.getElementById('confirmDeleteBtn').dataset.id = productId;
+        openModal('deleteConfirmModal');
+    }
+
+    function handleEditProduct() {
+        const storeProductId = document.getElementById('editStoreProductId').value;
+        const rows = document.querySelectorAll('#editLineItemsWrapper > div');
+        if (rows.length === 0) return showToast('Add at least one pricing entry', 'error');
+
+        const lineItems = [];
+        for (const row of rows) {
+            const pmId = row.querySelector('input[name="package_mapping_id"]').value;
+            const siId = row.querySelector('input[name="si_unit_id"]').value;
+            const pkgSize = row.querySelector('input[name="package_size"]').value;
+            const priceCat = row.querySelector('select[name="price_category"]').value;
+            const price = row.querySelector('input[name="price"]').value;
+            const cap = row.querySelector('input[name="delivery_capacity"]').value;
+            if (!pmId || !siId || !price) continue;
+            lineItems.push({
+                package_mapping_id: pmId,
+                si_unit_id: siId,
+                package_size: pkgSize,
+                price_category: priceCat,
+                price,
+                delivery_capacity: cap
+            });
+        }
+        if (lineItems.length === 0) return showToast('Complete all fields', 'error');
+
+        const formData = new FormData();
+        formData.append('store_product_id', storeProductId);
+        formData.append('line_items', JSON.stringify(lineItems));
+
+        const btn = document.getElementById('saveProductChangesBtn');
+        const orig = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        fetch(`${BASE_URL}fetch/manageProfile?action=updateStoreProduct`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(r => r.json()).then(data => {
+                btn.disabled = false;
+                btn.textContent = orig;
+                if (data.success) {
+                    showToast('Product pricing updated', 'success');
+                    closeModal('editProductModal');
+                    loadCurrentProducts(1); // Refresh the product list
+                } else {
+                    showToast(data.error || 'Failed to update product', 'error');
+                }
+            }).catch(err => {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = orig;
+                showToast('Error updating product', 'error');
+            });
+    }
+
+    function handleDeleteProduct() {
+        const productId = document.getElementById('confirmDeleteBtn').dataset.id;
+        const btn = document.getElementById('confirmDeleteBtn');
+        const orig = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Deleting...';
+
+        const formData = new FormData();
+        formData.append('id', productId);
+
+        fetch(`${BASE_URL}fetch/manageProfile?action=deleteProduct`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(r => r.json()).then(data => {
+                btn.disabled = false;
+                btn.textContent = orig;
+                if (data.success) {
+                    showToast('Product deleted', 'success');
+                    closeModal('deleteConfirmModal');
+                    loadCurrentProducts(1); // Refresh the product list
+                } else {
+                    showToast(data.error || 'Failed to delete product', 'error');
+                }
+            }).catch(err => {
+                console.error(err);
+                btn.disabled = false;
+                btn.textContent = orig;
+                showToast('Error deleting product', 'error');
+            });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize variables
-        window.selectedCategories = [];
         window.availablePackageMappings = [];
         window.availableSIUnits = [];
         window.lineItemCount = 0;
@@ -933,43 +986,14 @@
 
         loadStoreData();
         loadProductsForStore();
+        loadCurrentProducts(1);
         initProductSearch();
 
-        const tabButtons = document.querySelectorAll('[role="tab"]');
-        const tabContents = document.querySelectorAll('[role="tabpanel"]');
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                tabButtons.forEach(btn => {
-                    btn.classList.remove('border-red-600', 'text-red-600');
-                    btn.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
-                    btn.setAttribute('aria-selected', 'false');
-                });
-
-                tabContents.forEach(content => {
-                    content.classList.add('hidden');
-                });
-
-                this.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
-                this.classList.add('border-red-600', 'text-red-600');
-                this.setAttribute('aria-selected', 'true');
-
-                const tabId = this.getAttribute('data-tabs-target').substring(1);
-                document.getElementById(tabId).classList.remove('hidden');
-            });
-        });
-
-        document.getElementById('add-category-btn').addEventListener('click', function () {
-            openModal('addCategoryModal');
-            loadAvailableCategories();
-            selectedCategories = [];
-        });
-
-        document.getElementById('saveCategoriesBtn').addEventListener('click', saveCategories);
-
-        document.getElementById('addLineItemBtn').addEventListener('click', addLineItemRow);
-
+        document.getElementById('addLineItemBtn').addEventListener('click', () => addLineItemRow('lineItemsWrapper'));
+        document.getElementById('editAddLineItemBtn').addEventListener('click', () => addLineItemRow('editLineItemsWrapper'));
         document.getElementById('addProductForm').addEventListener('submit', handleAddProduct);
+        document.getElementById('saveProductChangesBtn').addEventListener('click', handleEditProduct);
+        document.getElementById('confirmDeleteBtn').addEventListener('click', handleDeleteProduct);
 
         window.addEventListener('click', function (event) {
             if (event.target.classList.contains('fixed') && event.target.classList.contains('inset-0')) {

@@ -29,14 +29,6 @@ try {
             getStoreProducts($pdo, $_GET['id'] ?? null, $_GET['page'] ?? 1, $_GET['limit'] ?? 12);
             break;
 
-        case 'getAvailableCategories':
-            getAvailableCategories($pdo, $_GET['store_id'] ?? null);
-            break;
-
-        case 'getCategoryProductCounts':
-            getCategoryProductCounts($pdo);
-            break;
-
         case 'getPackageNamesForProduct':
             getPackageNamesForProduct($pdo);
             break;
@@ -48,11 +40,6 @@ try {
         case 'createSIUnit':
             requireLogin();
             createSIUnit($pdo);
-            break;
-
-        case 'updateStoreCategories':
-            requireLogin();
-            updateStoreCategories($pdo, $currentUser);
             break;
 
         case 'updateCategoryStatus':
@@ -455,124 +442,6 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
         error_log('Error retrieving store products: ' . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Error retrieving store products']);
-    }
-}
-
-function getAvailableCategories(PDO $pdo, ?string $storeId)
-{
-    if (!$storeId || !isValidUlid($storeId)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
-        return;
-    }
-
-    try {
-        $stmt = $pdo->prepare("
-            SELECT
-                id,
-                name,
-                description,
-                status,
-                meta_title,
-                meta_description,
-                meta_keywords
-            FROM product_categories
-            WHERE status = 'active'
-              AND id NOT IN (
-                  SELECT category_id
-                  FROM store_categories
-                  WHERE store_id = ? AND status != 'deleted'
-              )
-            ORDER BY name
-        ");
-        $stmt->execute([$storeId]);
-        $cats = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode(['success' => true, 'categories' => $cats]);
-    } catch (Exception $e) {
-        error_log('Error getting available categories: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error retrieving categories']);
-    }
-}
-
-function getCategoryProductCounts(PDO $pdo)
-{
-    try {
-        $stmt = $pdo->query("
-            SELECT
-                id AS category_id,
-                (SELECT COUNT(*) FROM products p WHERE p.category_id = pc.id AND p.status = 'published') AS product_count
-            FROM product_categories pc
-            WHERE status = 'active'
-        ");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $counts = [];
-        foreach ($rows as $r) {
-            $counts[$r['category_id']] = (int) $r['product_count'];
-        }
-        echo json_encode(['success' => true, 'counts' => $counts]);
-    } catch (Exception $e) {
-        error_log('Error getting category counts: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error retrieving counts']);
-    }
-}
-
-function updateStoreCategories(PDO $pdo, string $currentUser)
-{
-    $data = json_decode(file_get_contents('php://input'), true);
-    if (empty($data['store_id']) || empty($data['categories']) || !isValidUlid($data['store_id'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Missing or invalid data']);
-        return;
-    }
-    $storeId = $data['store_id'];
-    if (!canManageStore($pdo, $storeId, $currentUser)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Permission denied']);
-        return;
-    }
-
-    try {
-        $pdo->beginTransaction();
-        $ins = $pdo->prepare("
-            INSERT INTO store_categories (id, store_id, category_id, status, created_at, updated_at)
-            VALUES (?, ?, ?, 'active', NOW(), NOW())
-        ");
-        foreach ($data['categories'] as $catId) {
-            if (!isValidUlid($catId)) {
-                throw new Exception('Invalid category ID');
-            }
-            $chk = $pdo->prepare("
-                SELECT id, status
-                FROM store_categories
-                WHERE store_id = ? AND category_id = ?
-            ");
-            $chk->execute([$storeId, $catId]);
-            $ex = $chk->fetch(PDO::FETCH_ASSOC);
-            if ($ex) {
-                if ($ex['status'] === 'deleted') {
-                    $pdo->prepare("
-                        UPDATE store_categories
-                        SET status = 'active', updated_at = NOW()
-                        WHERE id = ?
-                    ")->execute([$ex['id']]);
-                }
-            } else {
-                $id = generateUlid();
-                $ins->execute([$id, $storeId, $catId]);
-            }
-        }
-        $pdo->commit();
-        echo json_encode(['success' => true, 'message' => 'Categories updated']);
-    } catch (Exception $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-        error_log('Error updating categories: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error updating categories']);
     }
 }
 

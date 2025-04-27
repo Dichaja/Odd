@@ -358,7 +358,7 @@ ob_start();
                     <button
                         class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap"
                         data-tab="manage">
-                        <i class="fa-solid fa-cog mr-2"></i> Products & Categories
+                        <i class="fa-solid fa-cog mr-2"></i> Manage Products
                     </button>
                     <button
                         class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap"
