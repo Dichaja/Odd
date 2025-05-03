@@ -170,14 +170,34 @@
 
     .product-card {
         transition: all 0.2s ease;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     .product-card:hover {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
+    .product-card-header {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+    }
+
+    .product-card-body {
+        padding: 1rem;
+    }
+
+    .product-card-footer {
+        padding: 0.75rem 1rem;
+        background-color: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+    }
+
     .price-tag {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
         padding: 0.25rem 0.5rem;
         border-radius: 0.25rem;
         font-size: 0.875rem;
@@ -197,6 +217,37 @@
     .price-factory {
         background-color: #fef3c7;
         color: #92400e;
+    }
+
+    .price-item {
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        background-color: #f9fafb;
+        margin-bottom: 0.5rem;
+    }
+
+    .price-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+
+    .price-item-details {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        color: #4b5563;
+    }
+
+    .capacity-badge {
+        font-size: 0.75rem;
+        padding: 0.125rem 0.375rem;
+        border-radius: 0.25rem;
+        background-color: #f3f4f6;
+        color: #4b5563;
     }
 </style>
 
@@ -441,53 +492,54 @@
         // PACKAGE MAPPING dropdown
         const pkgContainer = document.createElement('div');
         pkgContainer.innerHTML = `
-            <label class="block text-sm font-medium text-gray-700">Package</label>
-            <div class="relative custom-select-container">
-                <input type="text" class="pkg-search-input w-full px-3 py-2 border rounded" placeholder="Search package..." autocomplete="off"/>
-                <input type="hidden" name="package_mapping_id" class="pkg-mapping-id"/>
-                <div class="pkg-dropdown custom-select-dropdown hidden"></div>
-            </div>`;
+        <label class="block text-sm font-medium text-gray-700">Package</label>
+        <div class="relative custom-select-container">
+            <input type="text" class="pkg-search-input w-full px-3 py-2 border rounded" placeholder="Search package..." autocomplete="off"/>
+            <input type="hidden" name="package_mapping_id" class="pkg-mapping-id"/>
+            <div class="pkg-dropdown custom-select-dropdown hidden"></div>
+        </div>`;
         row.appendChild(pkgContainer);
 
         // SI UNIT dropdown + fallback
         const siContainer = document.createElement('div');
         siContainer.innerHTML = `
-            <label class="block text-sm font-medium text-gray-700">SI Unit</label>
-            <div class="relative custom-select-container">
-                <input type="text" class="si-search-input w-full px-3 py-2 border rounded" placeholder="Search SI unit..." autocomplete="off"/>
-                <input type="hidden" name="si_unit_id" class="si-unit-id"/>
-                <div class="si-dropdown custom-select-dropdown hidden"></div>
-            </div>
-            <div class="si-fallback hidden mt-2">
-                <input type="text" class="new-si-input w-full px-3 py-2 border rounded" placeholder="Enter new SI unit"/>
-                <button type="button" class="mt-2 px-3 py-1 bg-green-500 text-white rounded">Add SI Unit</button>
-            </div>`;
+        <label class="block text-sm font-medium text-gray-700">SI Unit</label>
+        <div class="relative custom-select-container">
+            <input type="text" class="si-search-input w-full px-3 py-2 border rounded" placeholder="Search SI unit..." autocomplete="off"/>
+            <input type="hidden" name="si_unit_id" class="si-unit-id"/>
+            <div class="si-dropdown custom-select-dropdown hidden"></div>
+        </div>
+        <div class="si-fallback hidden mt-2">
+            <input type="text" class="new-si-input w-full px-3 py-2 border rounded" placeholder="Enter new SI unit"/>
+            <button type="button" class="mt-2 px-3 py-1 bg-green-500 text-white rounded">Add SI Unit</button>
+        </div>`;
         row.appendChild(siContainer);
 
         // PACKAGE SIZE, PRICE CATEGORY, PRICE, CAPACITY
         const other = document.createElement('div');
         other.classList.add('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
         other.innerHTML = `
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Package Size</label>
-                <input type="number" name="package_size" value="1" min="1" required class="w-full px-2 py-1 border rounded">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Price Category</label>
-                <select name="price_category" class="w-full px-2 py-1 border rounded">
-                    <option value="retail">Retail</option>
-                    <option value="wholesale">Wholesale</option>
-                    <option value="factory">Factory</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Price</label>
-                <input type="number" step="any" name="price" required class="w-full px-2 py-1 border rounded">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Delivery Capacity</label>
-                <input type="number" name="delivery_capacity" class="w-full px-2 py-1 border rounded">
-            </div>`;
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Package Size</label>
+            <input type="number" name="package_size" value="1" min="1" required class="w-full px-2 py-1 border rounded">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Price Category</label>
+            <select name="price_category" class="price-category-select w-full px-2 py-1 border rounded">
+                <option value="">-- Select Category --</option>
+                <option value="retail">Retail</option>
+                <option value="wholesale">Wholesale</option>
+                <option value="factory">Factory</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Price</label>
+            <input type="number" step="any" name="price" required class="w-full px-2 py-1 border rounded">
+        </div>
+        <div class="delivery-capacity-container">
+            <label class="block text-sm font-medium text-gray-700 delivery-capacity-label">Capacity</label>
+            <input type="number" name="delivery_capacity" class="w-full px-2 py-1 border rounded">
+        </div>`;
         row.appendChild(other);
 
         // Remove button
@@ -504,6 +556,19 @@
         initPackageDropdown(row);
         initSiDropdown(row);
 
+        // Initialize price category change handler
+        const priceSelect = row.querySelector('.price-category-select');
+        priceSelect.addEventListener('change', function () {
+            const capacityLabel = row.querySelector('.delivery-capacity-label');
+            if (this.value === 'retail') {
+                capacityLabel.textContent = 'Max. Capacity';
+            } else if (this.value === 'wholesale' || this.value === 'factory') {
+                capacityLabel.textContent = 'Min. Capacity';
+            } else {
+                capacityLabel.textContent = 'Capacity';
+            }
+        });
+
         // If we have existing data, populate the fields
         if (existingData) {
             const pkgInput = row.querySelector('.pkg-search-input');
@@ -514,6 +579,7 @@
             const priceCategory = row.querySelector('select[name="price_category"]');
             const price = row.querySelector('input[name="price"]');
             const capacity = row.querySelector('input[name="delivery_capacity"]');
+            const capacityLabel = row.querySelector('.delivery-capacity-label');
 
             // Find the package name from the mapping ID
             if (existingData.package_mapping_id && availablePackageMappings) {
@@ -535,10 +601,17 @@
 
             // Set other values
             pkgSize.value = existingData.package_size || 1;
-            priceCategory.value = existingData.price_category || 'retail';
+            priceCategory.value = existingData.price_category || '';
             price.value = existingData.price || '';
             if (existingData.delivery_capacity !== null) {
                 capacity.value = existingData.delivery_capacity;
+            }
+
+            // Update capacity label based on price category
+            if (existingData.price_category === 'retail') {
+                capacityLabel.textContent = 'Max. Capacity';
+            } else if (existingData.price_category === 'wholesale' || existingData.price_category === 'factory') {
+                capacityLabel.textContent = 'Min. Capacity';
             }
         }
     }
@@ -746,51 +819,73 @@
 
     function createProductCard(product) {
         const card = document.createElement('div');
-        card.className = 'product-card bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow';
+        card.className = 'product-card bg-white border border-gray-200 mb-4';
 
-        let pricingHtml = '';
+        // Create card header with product name, category, and action buttons
+        const cardHeader = document.createElement('div');
+        cardHeader.className = 'product-card-header flex justify-between items-center';
+
+        const productInfo = document.createElement('div');
+        productInfo.innerHTML = `
+        <h3 class="font-semibold text-lg">${escapeHtml(product.name)}</h3>
+        <p class="text-sm text-gray-600">${escapeHtml(product.category_name)}</p>
+    `;
+
+        const actionButtons = document.createElement('div');
+        actionButtons.className = 'flex space-x-2';
+        actionButtons.innerHTML = `
+        <button type="button" class="edit-product-btn px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200" data-id="${product.store_product_id}" data-product='${JSON.stringify(product)}'>
+            Edit
+        </button>
+        <button type="button" class="delete-product-btn px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200" data-id="${product.store_product_id}" data-name="${escapeHtml(product.name)}">
+            Delete
+        </button>
+    `;
+
+        cardHeader.appendChild(productInfo);
+        cardHeader.appendChild(actionButtons);
+        card.appendChild(cardHeader);
+
+        // Create card body with pricing information
+        const cardBody = document.createElement('div');
+        cardBody.className = 'product-card-body';
+
         if (product.pricing && product.pricing.length > 0) {
-            pricingHtml = '<div class="mt-3 space-y-2">';
-            pricingHtml += '<h4 class="text-sm font-medium text-gray-700">Pricing:</h4>';
-            pricingHtml += '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
+            const pricingContainer = document.createElement('div');
+            pricingContainer.className = 'grid grid-cols-1 md:grid-cols-2 gap-3';
 
             product.pricing.forEach(price => {
                 const priceClass = `price-${price.price_category}`;
-                pricingHtml += `
-                    <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                        <div>
-                            <span class="text-sm">${escapeHtml(price.unit_name)}</span>
-                            ${price.package_size > 1 ? `<span class="text-xs text-gray-500"> (x${price.package_size})</span>` : ''}
-                        </div>
-                        <div class="flex items-center">
-                            <span class="price-tag ${priceClass}">${formatNumber(price.price)} UGX</span>
-                        </div>
-                    </div>
-                `;
+                const packageInfo = `${price.package_size} ${price.unit_name}`;
+                const capacityLabel = price.price_category === 'retail' ? 'Max' : 'Min';
+                const capacityInfo = price.delivery_capacity !== null ?
+                    `${capacityLabel} Capacity: ${price.delivery_capacity}` : '';
+
+                // Get category display name with first letter capitalized
+                const categoryDisplay = price.price_category.charAt(0).toUpperCase() + price.price_category.slice(1);
+
+                const priceItem = document.createElement('div');
+                priceItem.className = 'price-item';
+                priceItem.innerHTML = `
+                <div class="price-item-header">
+                    <span class="price-tag ${priceClass}">UGX ${formatNumber(price.price)}</span>
+                    <span class="text-sm font-medium">${categoryDisplay}</span>
+                </div>
+                <div class="price-item-details">
+                    <span>Package: ${packageInfo}</span>
+                    ${capacityInfo ? `<span class="capacity-badge">${capacityInfo}</span>` : ''}
+                </div>
+            `;
+
+                pricingContainer.appendChild(priceItem);
             });
 
-            pricingHtml += '</div></div>';
+            cardBody.appendChild(pricingContainer);
         } else {
-            pricingHtml = '<p class="text-sm text-gray-500 mt-2">No pricing information available</p>';
+            cardBody.innerHTML = '<p class="text-sm text-gray-500">No pricing information available</p>';
         }
 
-        card.innerHTML = `
-            <div class="flex justify-between">
-                <div>
-                    <h3 class="font-semibold text-lg">${escapeHtml(product.name)}</h3>
-                    <p class="text-sm text-gray-600">${escapeHtml(product.category_name)}</p>
-                </div>
-                <div class="flex space-x-2">
-                    <button type="button" class="edit-product-btn px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200" data-id="${product.store_product_id}" data-product='${JSON.stringify(product)}'>
-                        Edit
-                    </button>
-                    <button type="button" class="delete-product-btn px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200" data-id="${product.store_product_id}" data-name="${escapeHtml(product.name)}">
-                        Delete
-                    </button>
-                </div>
-            </div>
-            ${pricingHtml}
-        `;
+        card.appendChild(cardBody);
 
         // Add event listeners
         const editBtn = card.querySelector('.edit-product-btn');
@@ -857,12 +952,35 @@
         const wrapper = document.getElementById('editLineItemsWrapper');
         wrapper.innerHTML = '';
 
+        // First ensure we have SI Units loaded
+        const loadSIUnits = new Promise((resolve) => {
+            if (availableSIUnits && availableSIUnits.length > 0) {
+                resolve();
+            } else {
+                fetch(`${BASE_URL}fetch/manageProfile?action=getSIUnits`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            availableSIUnits = data.siUnits;
+                        }
+                        resolve();
+                    })
+                    .catch(err => {
+                        console.error('Error loading SI Units:', err);
+                        resolve();
+                    });
+            }
+        });
+
         // Load package mappings for this product
-        fetch(`${BASE_URL}fetch/manageProfile?action=getPackageNamesForProduct&product_id=${product.id}`)
-            .then(r => r.json()).then(data => {
-                if (data.success) {
-                    availablePackageMappings = data.mappings;
-                    ensureSIUnits();
+        Promise.all([
+            fetch(`${BASE_URL}fetch/manageProfile?action=getPackageNamesForProduct&product_id=${product.id}`)
+                .then(r => r.json()),
+            loadSIUnits
+        ])
+            .then(([packageData]) => {
+                if (packageData.success) {
+                    availablePackageMappings = packageData.mappings;
 
                     // Add existing pricing entries
                     if (product.pricing && product.pricing.length > 0) {
@@ -877,9 +995,10 @@
                 } else {
                     showToast('Failed to load package mappings', 'error');
                 }
-            }).catch(err => {
+            })
+            .catch(err => {
                 console.error(err);
-                showToast('Error loading mappings', 'error');
+                showToast('Error loading data for product', 'error');
             });
     }
 

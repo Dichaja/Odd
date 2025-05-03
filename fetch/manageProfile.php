@@ -646,15 +646,38 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
 
         $pdo->beginTransaction();
 
-        $pdo->prepare("DELETE FROM product_pricing WHERE store_products_id = ?")
-            ->execute([$storeProductId]);
+        // Get existing pricing entries to compare
+        $existingStmt = $pdo->prepare("
+            SELECT id, package_mapping_id, si_unit_id, package_size, price, price_category, delivery_capacity
+            FROM product_pricing
+            WHERE store_products_id = ?
+        ");
+        $existingStmt->execute([$storeProductId]);
+        $existingPricing = $existingStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Create lookup arrays for existing pricing
+        $existingByKey = [];
+        foreach ($existingPricing as $item) {
+            $key = $item['package_mapping_id'] . '_' . $item['si_unit_id'] . '_' . $item['price_category'];
+            $existingByKey[$key] = $item;
+        }
+
+        // Track which existing items are updated
+        $updatedIds = [];
 
         if (is_array($lineItems) && count($lineItems) > 0) {
-            $pi = $pdo->prepare("
+            $updateStmt = $pdo->prepare("
+                UPDATE product_pricing
+                SET package_size = ?, price = ?, delivery_capacity = ?, updated_at = NOW()
+                WHERE id = ?
+            ");
+
+            $insertStmt = $pdo->prepare("
                 INSERT INTO product_pricing
                     (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
+
             foreach ($lineItems as $item) {
                 $pmId = $item['package_mapping_id'] ?? '';
                 $siId = $item['si_unit_id'] ?? '';
@@ -667,18 +690,50 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                     throw new Exception('Invalid line item data');
                 }
 
-                $ppId = generateUlid();
-                $pi->execute([
-                    $ppId,
-                    $storeProductId,
-                    $pmId,
-                    $siId,
-                    $packageSize,
-                    $currentUser,
-                    $price,
-                    $cat,
-                    $cap
-                ]);
+                // Check if this pricing entry already exists
+                $key = $pmId . '_' . $siId . '_' . $cat;
+
+                if (isset($existingByKey[$key])) {
+                    // Update existing entry
+                    $existingId = $existingByKey[$key]['id'];
+                    $updateStmt->execute([
+                        $packageSize,
+                        $price,
+                        $cap,
+                        $existingId
+                    ]);
+                    $updatedIds[] = $existingId;
+                } else {
+                    // Insert new entry
+                    $ppId = generateUlid();
+                    $insertStmt->execute([
+                        $ppId,
+                        $storeProductId,
+                        $pmId,
+                        $siId,
+                        $packageSize,
+                        $currentUser,
+                        $price,
+                        $cat,
+                        $cap
+                    ]);
+                }
+            }
+        }
+
+        // Delete pricing entries that weren't updated
+        if (!empty($existingPricing)) {
+            $toDelete = [];
+            foreach ($existingPricing as $item) {
+                if (!in_array($item['id'], $updatedIds)) {
+                    $toDelete[] = $item['id'];
+                }
+            }
+
+            if (!empty($toDelete)) {
+                $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
+                $deleteStmt = $pdo->prepare("DELETE FROM product_pricing WHERE id IN ($placeholders)");
+                $deleteStmt->execute($toDelete);
             }
         }
 
