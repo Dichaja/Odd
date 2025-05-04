@@ -24,7 +24,7 @@
                         </div>
                     </div>
                     <p class="text-xs text-gray-500 mt-1">
-                        Products shown here are those not already in your store.
+                        Choose from existing products on the platform or add a new one
                     </p>
                 </div>
 
@@ -515,12 +515,12 @@
         </div>`;
         row.appendChild(siContainer);
 
-        // PACKAGE SIZE, PRICE CATEGORY, PRICE, CAPACITY
+        // Unit Size, PRICE CATEGORY, PRICE, CAPACITY
         const other = document.createElement('div');
         other.classList.add('grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4');
         other.innerHTML = `
         <div>
-            <label class="block text-sm font-medium text-gray-700">Package Size</label>
+            <label class="block text-sm font-medium text-gray-700">Unit Size</label>
             <input type="number" name="package_size" value="1" min="1" required class="w-full px-2 py-1 border rounded">
         </div>
         <div>
