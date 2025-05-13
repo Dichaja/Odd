@@ -1694,32 +1694,27 @@ ob_start();
     }
 
     function initializePhoneInput() {
-        const phoneInputField = document.querySelector('#storeContactNumber');
-        if (phoneInputField) {
-            storePhoneInput = window.intlTelInput(phoneInputField, {
-                utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js',
-                preferredCountries: ['ug', 'ke', 'tz', 'rw'],
-                initialCountry: 'ug',
-                separateDialCode: true,
-                autoPlaceholder: 'polite',
-                onlyCountries: ['ug']
-            });
-            $('.iti').addClass('w-full');
-        }
+        const intlTelOptions = {
+            utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js',
+            initialCountry: 'ug',
+            separateDialCode: true,
+            autoPlaceholder: 'polite',
+            onlyCountries: ['ug'],
+            preferredCountries: ['ug']
+        };
 
-        // Initialize the contact person phone input with Uganda only
-        const contactPhoneInputField = document.querySelector('#storeContactPersonPhone');
-        if (contactPhoneInputField) {
-            storeContactPhoneInput = window.intlTelInput(contactPhoneInputField, {
-                utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js',
-                preferredCountries: ['ug'],
-                initialCountry: 'ug',
-                separateDialCode: true,
-                autoPlaceholder: 'polite',
-                onlyCountries: ['ug'] // Only allow Uganda (+256)
-            });
-            $('.iti').addClass('w-full');
-        }
+        const initIntlTelInput = (selector) => {
+            const inputField = document.querySelector(selector);
+            if (inputField) {
+                const instance = window.intlTelInput(inputField, intlTelOptions);
+                $(inputField).closest('.iti').addClass('w-full');
+                return instance;
+            }
+            return null;
+        };
+
+        storePhoneInput = initIntlTelInput('#storeContactNumber');
+        storeContactPhoneInput = initIntlTelInput('#storeContactPersonPhone');
     }
 </script>
 

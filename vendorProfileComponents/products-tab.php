@@ -53,93 +53,36 @@
         display: inline-block;
     }
 
-    .price-value {
-        position: relative;
-        z-index: 1;
-        transition: opacity 0.3s ease;
-        opacity: 0;
-    }
-
-    .price-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(200, 200, 200, 0.7);
-        backdrop-filter: blur(3px);
-        border-radius: 4px;
-        cursor: pointer;
-        z-index: 2;
-        overflow: hidden;
-    }
-
-    .price-overlay::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background:
-            radial-gradient(white, rgba(255, 255, 255, 0) 2px) 0 0 / 4px 4px,
-            radial-gradient(white, rgba(255, 255, 255, 0) 1px) 2px 2px / 4px 4px;
-        animation: staticNoise 0.2s infinite alternate;
-        opacity: 0.4;
-    }
-
-    @keyframes staticNoise {
-        0% {
-            background-position: 0% 0%, 2px 2px;
-        }
-
-        10% {
-            background-position: -1px 1px, 1px 3px;
-        }
-
-        20% {
-            background-position: 1px -1px, 3px 1px;
-        }
-
-        30% {
-            background-position: -2px -2px, 0px 0px;
-        }
-
-        40% {
-            background-position: 2px 2px, 4px 4px;
-        }
-
-        50% {
-            background-position: 0px 2px, 2px 4px;
-        }
-
-        60% {
-            background-position: -1px -1px, 1px 1px;
-        }
-
-        70% {
-            background-position: 1px 0px, 3px 2px;
-        }
-
-        80% {
-            background-position: -2px 1px, 0px 3px;
-        }
-
-        90% {
-            background-position: 0px -2px, 2px 0px;
-        }
-
-        100% {
-            background-position: 1px 1px, 3px 3px;
-        }
-    }
-
-    .price-revealed .price-overlay {
+    .price-hidden {
         display: none;
     }
 
-    .price-revealed .price-value {
-        opacity: 1;
+    .view-price-btn {
+        color: #2563eb;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: underline;
+    }
+
+    .view-price-btn:hover {
+        color: #1d4ed8;
+    }
+
+    .view-more-prices {
+        color: #2563eb;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-align: center;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        border-top: 1px dashed #e5e7eb;
+    }
+
+    .view-more-prices:hover {
+        color: #1d4ed8;
+        background-color: #f9fafb;
     }
 
     .product-card {
@@ -211,11 +154,20 @@
             }
         });
 
-        // Event delegation for price reveal
+        // Event delegation for price reveal and view more prices
         document.addEventListener('click', function (e) {
-            if (e.target.closest('.price-overlay')) {
-                const priceContainer = e.target.closest('.price-container');
-                priceContainer.classList.add('price-revealed');
+            // Handle view price button clicks
+            if (e.target.classList.contains('view-price-btn')) {
+                const priceValue = e.target.nextElementSibling;
+                priceValue.classList.remove('price-hidden');
+                e.target.classList.add('price-hidden');
+            }
+
+            // Handle view more prices button clicks
+            if (e.target.classList.contains('view-more-prices')) {
+                const hiddenPrices = e.target.previousElementSibling.querySelectorAll('.hidden-price-row');
+                hiddenPrices.forEach(row => row.classList.remove('hidden'));
+                e.target.classList.add('hidden');
             }
         });
     });
@@ -308,32 +260,54 @@
 
             // build pricing lines
             let pricingLines = '';
+            let hasHiddenPrices = false;
+
             if (product.pricing && product.pricing.length > 0) {
-                pricingLines = product.pricing.map(pr => {
+                const pricingContainer = document.createElement('div');
+                pricingContainer.className = 'pricing-container';
+
+                product.pricing.forEach((pr, index) => {
                     const unitParts = pr.unit_name.split(' ');
                     const siUnit = unitParts[0] || '';
                     const packageName = unitParts.slice(1).join(' ') || '';
                     const formattedUnit = `${pr.package_size} ${siUnit} ${packageName}`.trim();
                     const categoryDisplay = pr.price_category.charAt(0).toUpperCase() + pr.price_category.slice(1);
 
-                    return `
-                        <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 rounded">
+                    // Determine if this price row should be hidden (if index >= 2)
+                    const hiddenClass = index >= 2 ? 'hidden hidden-price-row' : '';
+
+                    if (index >= 2) {
+                        hasHiddenPrices = true;
+                    }
+
+                    pricingLines += `
+                        <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 rounded ${hiddenClass}">
                             <div class="flex flex-col">
                                 <span class="font-medium text-gray-700">${escapeHtml(formattedUnit)}</span>
-                                <span class="text-xs text-gray-500">${categoryDisplay}</span>
-                                ${pr.delivery_capacity ?
-                            `<span class="text-xs text-gray-500">
-                                        ${pr.price_category === 'retail' ? 'Max' : 'Min'} Capacity: ${pr.delivery_capacity}
-                                    </span>` :
+                                <div class="flex items-center text-xs text-gray-500">
+                                    <span>${categoryDisplay}</span>
+                                    ${pr.delivery_capacity ?
+                            `<span class="ml-2">• ${pr.price_category === 'retail' ? 'Max' : 'Min'} Capacity: ${pr.delivery_capacity}</span>` :
                             ''}
+                                </div>
                             </div>
                             <div class="price-container">
-                                <span class="price-value text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
-                                <div class="price-overlay"></div>
+                                <span class="view-price-btn">View Price</span>
+                                <span class="price-hidden text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
                             </div>
                         </div>
                     `;
-                }).join('');
+                });
+
+                // Add "View More" button if there are hidden prices
+                if (hasHiddenPrices) {
+                    pricingLines = `
+                        <div class="pricing-rows">
+                            ${pricingLines}
+                        </div>
+                        <div class="view-more-prices">View More Prices</div>
+                    `;
+                }
             } else {
                 pricingLines = `<div class="text-sm text-gray-600 italic p-2">No price data</div>`;
             }
