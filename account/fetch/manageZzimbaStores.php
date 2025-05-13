@@ -191,6 +191,9 @@ function initializeTables(PDO $pdo): void
             description TEXT,
             business_email VARCHAR(100) NOT NULL,
             business_phone VARCHAR(20) NOT NULL,
+            contact_person_name VARCHAR(255),
+            contact_person_email VARCHAR(100),
+            contact_person_phone VARCHAR(20),
             nature_of_business VARCHAR(26) NULL,
             region VARCHAR(100) NOT NULL,
             district VARCHAR(100) NOT NULL,
@@ -208,9 +211,7 @@ function initializeTables(PDO $pdo): void
             FOREIGN KEY (owner_id) REFERENCES zzimba_users(id) ON DELETE CASCADE,
             FOREIGN KEY (nature_of_business) REFERENCES nature_of_business(id)
                 ON DELETE SET NULL ON UPDATE CASCADE,
-            UNIQUE KEY store_name_unique  (name),
-            UNIQUE KEY store_email_unique (business_email),
-            UNIQUE KEY store_phone_unique (business_phone)
+            UNIQUE KEY store_name_unique (name)
         )
     ");
 
@@ -334,7 +335,8 @@ function getOwnedStores(PDO $pdo, string $userId): void
     $stmt = $pdo->prepare("
         SELECT 
             vs.id, vs.name, vs.description, vs.business_email,
-            vs.business_phone, vs.nature_of_business, nob.name as nature_of_business_name,
+            vs.business_phone, vs.contact_person_name, vs.contact_person_email, vs.contact_person_phone,
+            vs.nature_of_business, nob.name as nature_of_business_name,
             vs.region, vs.district, vs.address, vs.logo_url,
             vs.status, vs.created_at,
             (
@@ -380,7 +382,8 @@ function getManagedStores(PDO $pdo, string $userId): void
     $stmt = $pdo->prepare("
         SELECT 
             vs.id, vs.name, vs.description, vs.business_email,
-            vs.business_phone, vs.nature_of_business, nob.name as nature_of_business_name,
+            vs.business_phone, vs.contact_person_name, vs.contact_person_email, vs.contact_person_phone,
+            vs.nature_of_business, nob.name as nature_of_business_name,
             vs.region, vs.district, vs.address, vs.logo_url,
             vs.status, sm.role, u.username AS owner,
             vs.created_at,
@@ -531,22 +534,23 @@ function createStore(PDO $pdo, string $userId): void
         }
     }
 
+    // Validate contact person fields
+    foreach (['contact_person_name', 'contact_person_email', 'contact_person_phone'] as $f) {
+        if (empty($data[$f])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => "Field '$f' is required"]);
+            return;
+        }
+    }
+
     try {
         if (storeFieldExists($pdo, 'name', $data['name'])) {
             http_response_code(409);
             echo json_encode(['success' => false, 'error' => 'Name in use']);
             return;
         }
-        if (storeFieldExists($pdo, 'business_email', $data['business_email'])) {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'error' => 'Email in use']);
-            return;
-        }
-        if (storeFieldExists($pdo, 'business_phone', $data['business_phone'], null, $userId)) {
-            http_response_code(409);
-            echo json_encode(['success' => false, 'error' => 'Business_phone in use']);
-            return;
-        }
+
+        // No longer checking for uniqueness of email and phone
 
         $storeId = generateUlid();
         $now = date('Y-m-d H:i:s');
@@ -554,11 +558,12 @@ function createStore(PDO $pdo, string $userId): void
         $stmt = $pdo->prepare("
             INSERT INTO vendor_stores (
                 id, owner_id, name, description, business_email, business_phone,
+                contact_person_name, contact_person_email, contact_person_phone,
                 nature_of_business, region, district, subcounty, parish, address,
                 latitude, longitude, logo_url, website_url, social_media,
                 status, created_at, updated_at
             ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?
             )
         ");
         $stmt->execute([
@@ -568,6 +573,9 @@ function createStore(PDO $pdo, string $userId): void
             $data['description'] ?? '',
             $data['business_email'],
             $data['business_phone'],
+            $data['contact_person_name'],
+            $data['contact_person_email'],
+            $data['contact_person_phone'],
             $data['nature_of_business'],
             $data['region'],
             $data['district'],
@@ -630,7 +638,7 @@ function updateStore(PDO $pdo, string $userId): void
         return;
     }
 
-    $stmt = $pdo->prepare("SELECT name, business_email, business_phone FROM vendor_stores WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT name FROM vendor_stores WHERE id = ?");
     $stmt->execute([$storeId]);
     $current = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -639,6 +647,9 @@ function updateStore(PDO $pdo, string $userId): void
         'description',
         'business_email',
         'business_phone',
+        'contact_person_name',
+        'contact_person_email',
+        'contact_person_phone',
         'nature_of_business',
         'region',
         'district',
@@ -656,15 +667,10 @@ function updateStore(PDO $pdo, string $userId): void
 
     foreach ($fields as $f) {
         if (isset($data[$f])) {
-            if (in_array($f, ['name', 'business_email', 'business_phone'])) {
-                if (
-                    $data[$f] !== $current[$f]
-                    && storeFieldExists($pdo, $f, $data[$f], $storeId, $userId)
-                ) {
-                    http_response_code(409);
-                    echo json_encode(['success' => false, 'error' => ucfirst($f) . ' in use']);
-                    return;
-                }
+            if ($f === 'name' && $data[$f] !== $current[$f] && storeFieldExists($pdo, $f, $data[$f], $storeId)) {
+                http_response_code(409);
+                echo json_encode(['success' => false, 'error' => 'Name in use']);
+                return;
             }
             $updates[] = "$f = ?";
             $params[] = $data[$f];

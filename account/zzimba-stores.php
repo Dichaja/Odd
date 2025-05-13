@@ -93,7 +93,7 @@ ob_start();
 
                 <div id="storeStep1" class="step-content">
                     <h4 class="text-center font-medium text-secondary mb-4">Basic Store Details</h4>
-                    <div class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label for="storeBusinessName" class="block text-sm font-medium text-gray-700 mb-1">Business
                                 Name *</label>
@@ -120,10 +120,32 @@ ob_start();
                                 <option value="">Select Nature of Business</option>
                             </select>
                         </div>
-                        <button type="button" id="storeStep1NextBtn"
-                            class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
-                            NEXT
-                        </button>
+                        <!-- New Contact Person Fields -->
+                        <div>
+                            <label for="storeContactPersonName"
+                                class="block text-sm font-medium text-gray-700 mb-1">Contact Person Name *</label>
+                            <input type="text" id="storeContactPersonName" placeholder="Enter contact person name"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                        </div>
+                        <div>
+                            <label for="storeContactPersonEmail"
+                                class="block text-sm font-medium text-gray-700 mb-1">Contact Person Email *</label>
+                            <input type="email" id="storeContactPersonEmail" placeholder="Enter contact person email"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="storeContactPersonPhone"
+                                class="block text-sm font-medium text-gray-700 mb-1">Contact Person Phone * <span
+                                    class="text-xs text-gray-500">(Only +256 allowed)</span></label>
+                            <input type="tel" id="storeContactPersonPhone" placeholder="Enter contact person phone"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <button type="button" id="storeStep1NextBtn"
+                                class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                                NEXT
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -429,6 +451,7 @@ ob_start();
     let storeCurrentGeoJSON = null;
     let storeBaseLayers = {};
     let storePhoneInput = null;
+    let storeContactPhoneInput = null;
     let allStores = [];
     let pendingInvitations = [];
     let currentFilter = 'owned';
@@ -931,15 +954,32 @@ ob_start();
         const name = $('#storeBusinessName').val();
         const email = $('#storeBusinessEmail').val();
         const phone = storePhoneInput.getNumber();
+        const contactName = $('#storeContactPersonName').val();
+        const contactEmail = $('#storeContactPersonEmail').val();
+        const contactPhone = storeContactPhoneInput.getNumber();
         const nature = $('#storeNatureOfBusiness').val();
-        if (!name || !email || !phone || !nature) {
+
+        if (!name || !email || !phone || !nature || !contactName || !contactEmail || !contactPhone) {
             showErrorNotification('Please fill in all required fields');
             return;
         }
+
         if (!storePhoneInput.isValidNumber()) {
-            showErrorNotification('Please enter a valid phone number');
+            showErrorNotification('Please enter a valid business phone number');
             return;
         }
+
+        if (!storeContactPhoneInput.isValidNumber()) {
+            showErrorNotification('Please enter a valid contact person phone number');
+            return;
+        }
+
+        // Check if contact phone number starts with +256
+        if (!contactPhone.startsWith('+256')) {
+            showErrorNotification('Contact person phone number must start with +256');
+            return;
+        }
+
         $('#storeStep1').addClass('hidden');
         $('#storeStep2').removeClass('hidden');
         $('#storeStep1Indicator')
@@ -1014,6 +1054,9 @@ ob_start();
         $('#storeBusinessName').val('');
         $('#storeBusinessEmail').val('');
         $('#storeContactNumber').val('');
+        $('#storeContactPersonName').val('');
+        $('#storeContactPersonEmail').val('');
+        $('#storeContactPersonPhone').val('');
         $('#storeNatureOfBusiness').val('');
         $('#storeLatitude').val('');
         $('#storeLongitude').val('');
@@ -1068,6 +1111,18 @@ ob_start();
                 $('#storeBusinessName').val(store.name);
                 $('#storeBusinessEmail').val(store.business_email);
                 storePhoneInput.setNumber(store.business_phone);
+
+                // Set contact person details if available
+                if (store.contact_person_name) {
+                    $('#storeContactPersonName').val(store.contact_person_name);
+                }
+                if (store.contact_person_email) {
+                    $('#storeContactPersonEmail').val(store.contact_person_email);
+                }
+                if (store.contact_person_phone) {
+                    storeContactPhoneInput.setNumber(store.contact_person_phone);
+                }
+
                 $('#storeNatureOfBusiness').val(store.nature_of_business);
                 $('#storeLatitude').val(store.latitude);
                 $('#storeLongitude').val(store.longitude);
@@ -1098,11 +1153,21 @@ ob_start();
         const mode = $('#storeMode').val();
         const storeId = $('#storeId').val();
 
+        // Validate contact person phone starts with +256
+        const contactPhone = storeContactPhoneInput.getNumber();
+        if (!contactPhone.startsWith('+256')) {
+            showErrorNotification('Contact person phone number must start with +256');
+            return;
+        }
+
         const formData = {
             id: storeId,
             name: $('#storeBusinessName').val(),
             business_email: $('#storeBusinessEmail').val(),
             business_phone: storePhoneInput.getNumber(),
+            contact_person_name: $('#storeContactPersonName').val(),
+            contact_person_email: $('#storeContactPersonEmail').val(),
+            contact_person_phone: contactPhone,
             nature_of_business: $('#storeNatureOfBusiness').val(),
             region: $('#storeLevel1').val(),
             district: $('#storeLevel2').val(),
@@ -1636,7 +1701,22 @@ ob_start();
                 preferredCountries: ['ug', 'ke', 'tz', 'rw'],
                 initialCountry: 'ug',
                 separateDialCode: true,
-                autoPlaceholder: 'polite'
+                autoPlaceholder: 'polite',
+                onlyCountries: ['ug']
+            });
+            $('.iti').addClass('w-full');
+        }
+
+        // Initialize the contact person phone input with Uganda only
+        const contactPhoneInputField = document.querySelector('#storeContactPersonPhone');
+        if (contactPhoneInputField) {
+            storeContactPhoneInput = window.intlTelInput(contactPhoneInputField, {
+                utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js',
+                preferredCountries: ['ug'],
+                initialCountry: 'ug',
+                separateDialCode: true,
+                autoPlaceholder: 'polite',
+                onlyCountries: ['ug'] // Only allow Uganda (+256)
             });
             $('.iti').addClass('w-full');
         }
