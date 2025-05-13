@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../mail/Mailer.php';
+require_once __DIR__ . '/../sms/SMS.php';
 
 use ZzimbaOnline\Mail\Mailer;
 
@@ -14,51 +15,51 @@ date_default_timezone_set('Africa/Kampala');
 try {
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS admin_users (
-            id VARCHAR(26) PRIMARY KEY,
-            username VARCHAR(50) NOT NULL UNIQUE,
-            email VARCHAR(100) NOT NULL UNIQUE,
-            phone VARCHAR(20) NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            first_name VARCHAR(50),
-            last_name VARCHAR(50),
-            role ENUM('super_admin','admin','editor') NOT NULL DEFAULT 'admin',
-            status ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
-            profile_pic_url VARCHAR(255),
-            current_login DATETIME,
-            last_login DATETIME,
-            created_at DATETIME NOT NULL,
-            updated_at DATETIME NOT NULL
-        )"
+        id VARCHAR(26) PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        phone VARCHAR(20) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        first_name VARCHAR(50),
+        last_name VARCHAR(50),
+        role ENUM('super_admin','admin','editor') NOT NULL DEFAULT 'admin',
+        status ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
+        profile_pic_url VARCHAR(255),
+        current_login DATETIME,
+        last_login DATETIME,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL
+    )"
     );
 
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS zzimba_users (
-            id VARCHAR(26) PRIMARY KEY,
-            username VARCHAR(50) NOT NULL UNIQUE,
-            email VARCHAR(100) NOT NULL UNIQUE,
-            phone VARCHAR(20) NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            first_name VARCHAR(50),
-            last_name VARCHAR(50),
-            status ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
-            profile_pic_url VARCHAR(255),
-            current_login DATETIME,
-            last_login DATETIME,
-            created_at DATETIME NOT NULL,
-            updated_at DATETIME NOT NULL
-        )"
+        id VARCHAR(26) PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        phone VARCHAR(20) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        first_name VARCHAR(50),
+        last_name VARCHAR(50),
+        status ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
+        profile_pic_url VARCHAR(255),
+        current_login DATETIME,
+        last_login DATETIME,
+        created_at DATETIME NOT NULL,
+        updated_at DATETIME NOT NULL
+    )"
     );
 
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS otp_verifications (
-            id VARCHAR(26) PRIMARY KEY,
-            type ENUM('email','phone') NOT NULL,
-            account VARCHAR(100) NOT NULL,
-            otp VARCHAR(255) NOT NULL,
-            created_at DATETIME NOT NULL,
-            expires_at DATETIME NOT NULL,
-            INDEX (account, type)
-        )"
+        id VARCHAR(26) PRIMARY KEY,
+        type ENUM('email','phone') NOT NULL,
+        account VARCHAR(100) NOT NULL,
+        otp VARCHAR(255) NOT NULL,
+        created_at DATETIME NOT NULL,
+        expires_at DATETIME NOT NULL,
+        INDEX (account, type)
+    )"
     );
 } catch (PDOException $e) {
     error_log('Table creation error: ' . $e->getMessage());
@@ -98,51 +99,75 @@ function sendEmailOTP(string $email, string $otp): bool
 {
     $subject = 'Your Verification Code - Zzimba Online';
     $content = '
-        <div style="text-align:center;padding:20px 0;">
-            <h2>Email Verification</h2>
-            <p>Thank you for registering with Zzimba Online. Please use the verification code below to complete your registration:</p>
-            <div style="margin:30px auto;padding:10px;background-color:#f5f5f5;border-radius:5px;width:200px;text-align:center;">
-                <h1 style="letter-spacing:5px;font-size:32px;margin:0;">' . $otp . '</h1>
-            </div>
-            <p>This code will expire in 10 minutes.</p>
-            <p>If you did not request this code, please ignore this email.</p>
-        </div>';
+    <div style="text-align:center;padding:20px 0;">
+        <h2>Email Verification</h2>
+        <p>Thank you for registering with Zzimba Online. Please use the verification code below to complete your registration:</p>
+        <div style="margin:30px auto;padding:10px;background-color:#f5f5f5;border-radius:5px;width:200px;text-align:center;">
+            <h1 style="letter-spacing:5px;font-size:32px;margin:0;">' . $otp . '</h1>
+        </div>
+        <p>This code will expire in 10 minutes.</p>
+        <p>If you did not request this code, please ignore this email.</p>
+    </div>';
     return Mailer::sendMail($email, $subject, $content);
+}
+
+function sendSmsOTP(string $phone, string $otp): bool
+{
+    try {
+        $message = "Your Zzimba Online verification code is: $otp. This code will expire in 10 minutes.";
+        $result = SMS::send($phone, $message);
+        return isset($result['success']) && $result['success'] === true;
+    } catch (Exception $e) {
+        error_log('SMS OTP Error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 function sendLoginOTP(string $email, string $otp): bool
 {
     $subject = 'Your OTP Verification Code - Zzimba Online';
     $content = '
-        <div style="text-align:center;padding:20px 0;">
-            <h2>OTP Verification</h2>
-            <p>Please use the following OTP to verify your account ownership and set up a new password:</p>
-            <div style="margin:30px auto;padding:10px;background-color:#f5f5f5;border-radius:5px;width:200px;text-align:center;">
-                <h1 style="letter-spacing:5px;font-size:32px;margin:0;">' . $otp . '</h1>
-            </div>
-            <p>This code will expire in 10 minutes.</p>
-            <p>If you did not initiate this request, please ignore this email.</p>
-        </div>';
+    <div style="text-align:center;padding:20px 0;">
+        <h2>OTP Verification</h2>
+        <p>Please use the following OTP to verify your account ownership and set up a new password:</p>
+        <div style="margin:30px auto;padding:10px;background-color:#f5f5f5;border-radius:5px;width:200px;text-align:center;">
+            <h1 style="letter-spacing:5px;font-size:32px;margin:0;">' . $otp . '</h1>
+        </div>
+        <p>This code will expire in 10 minutes.</p>
+        <p>If you did not initiate this request, please ignore this email.</p>
+    </div>';
     return Mailer::sendMail($email, $subject, $content);
+}
+
+function sendLoginSmsOTP(string $phone, string $otp): bool
+{
+    try {
+        $message = "Your Zzimba Online login verification code is: $otp. This code will expire in 10 minutes.";
+        $result = SMS::send($phone, $message);
+        return isset($result['success']) && $result['success'] === true;
+    } catch (Exception $e) {
+        error_log('Login SMS OTP Error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 function sendWelcomeEmail(string $username, string $email, string $phone): bool
 {
     $subject = 'Welcome to Zzimba Online!';
     $content = '
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-            <h2 style="color:#d32f2f;text-align:center;">Welcome to Zzimba Online!</h2>
-            <p>Dear ' . htmlspecialchars($username) . ',</p>
-            <p>Thank you for creating an account with Zzimba Online. We\'re excited to have you join our community!</p>
-            <div style="background-color:#f5f5f5;border-radius:5px;padding:15px;margin:20px 0;">
-                <h3 style="margin-top:0;">Your Account Information:</h3>
-                <p><strong>Username:</strong> ' . htmlspecialchars($username) . '</p>
-                <p><strong>Email:</strong> ' . htmlspecialchars($email) . '</p>
-                <p><strong>Phone:</strong> ' . htmlspecialchars($phone) . '</p>
-            </div>
-            <p>We recommend updating your profile information after you log in to enhance your experience with our platform.</p>
-            <p>If you have any questions or need assistance, please don\'t hesitate to contact our support team.</p>
-        </div>';
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#d32f2f;text-align:center;">Welcome to Zzimba Online!</h2>
+        <p>Dear ' . htmlspecialchars($username) . ',</p>
+        <p>Thank you for creating an account with Zzimba Online. We\'re excited to have you join our community!</p>
+        <div style="background-color:#f5f5f5;border-radius:5px;padding:15px;margin:20px 0;">
+            <h3 style="margin-top:0;">Your Account Information:</h3>
+            <p><strong>Username:</strong> ' . htmlspecialchars($username) . '</p>
+            <p><strong>Email:</strong> ' . htmlspecialchars($email) . '</p>
+            <p><strong>Phone:</strong> ' . htmlspecialchars($phone) . '</p>
+        </div>
+        <p>We recommend updating your profile information after you log in to enhance your experience with our platform.</p>
+        <p>If you have any questions or need assistance, please don\'t hesitate to contact our support team.</p>
+    </div>';
     return Mailer::sendMail($email, $subject, $content);
 }
 
@@ -150,16 +175,28 @@ function sendPasswordResetOTP(string $email, string $otp): bool
 {
     $subject = 'Password Reset Code - Zzimba Online';
     $content = '
-        <div style="text-align:center;padding:20px 0;">
-            <h2>Password Reset</h2>
-            <p>You have requested to reset your password. Please use the verification code below to continue:</p>
-            <div style="margin:30px auto;padding:10px;background-color:#f5f5f5;border-radius:5px;width:200px;text-align:center;">
-                <h1 style="letter-spacing:5px;font-size:32px;margin:0;">' . $otp . '</h1>
-            </div>
-            <p>This code will expire in 10 minutes.</p>
-            <p>If you did not request this code, please ignore this email or contact our support team if you believe this is unauthorized activity.</p>
-        </div>';
+    <div style="text-align:center;padding:20px 0;">
+        <h2>Password Reset</h2>
+        <p>You have requested to reset your password. Please use the verification code below to continue:</p>
+        <div style="margin:30px auto;padding:10px;background-color:#f5f5f5;border-radius:5px;width:200px;text-align:center;">
+            <h1 style="letter-spacing:5px;font-size:32px;margin:0;">' . $otp . '</h1>
+        </div>
+        <p>This code will expire in 10 minutes.</p>
+        <p>If you did not request this code, please ignore this email or contact our support team if you believe this is unauthorized activity.</p>
+    </div>';
     return Mailer::sendMail($email, $subject, $content);
+}
+
+function sendPasswordResetSmsOTP(string $phone, string $otp): bool
+{
+    try {
+        $message = "Your Zzimba Online password reset code is: $otp. This code will expire in 10 minutes.";
+        $result = SMS::send($phone, $message);
+        return isset($result['success']) && $result['success'] === true;
+    } catch (Exception $e) {
+        error_log('Password Reset SMS Error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 function sendPasswordChangedEmail(string $email, ?string $username = null): bool
@@ -168,24 +205,38 @@ function sendPasswordChangedEmail(string $email, ?string $username = null): bool
     $subject = 'Password Changed - Zzimba Online';
     $greeting = $username ? 'Dear ' . htmlspecialchars($username) . ',' : 'Hello,';
     $content = '
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-            <h2 style="color:#d32f2f;text-align:center;">Password Changed</h2>
-            <p>' . $greeting . '</p>
-            <p>Your password for Zzimba Online has been successfully changed on ' . $now . ' (East Africa Time).</p>
-            <div style="background-color:#f5f5f5;border-radius:5px;padding:15px;margin:20px 0;">
-                <p><strong>If you made this change:</strong> You can disregard this email. Your account is secure.</p>
-                <p><strong>If you did NOT make this change:</strong> Please contact our support team immediately as your account may have been compromised.</p>
-            </div>
-            <p>For security reasons, we recommend:</p>
-            <ul>
-                <li>Regularly updating your password</li>
-                <li>Not sharing your password with others</li>
-                <li>Using unique passwords for different websites</li>
-            </ul>
-            <p>If you have any questions or concerns, please don\'t hesitate to contact our support team.</p>
-            <p>Best regards,<br>The Zzimba Online Team</p>
-        </div>';
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#d32f2f;text-align:center;">Password Changed</h2>
+        <p>' . $greeting . '</p>
+        <p>Your password for Zzimba Online has been successfully changed on ' . $now . ' (East Africa Time).</p>
+        <div style="background-color:#f5f5f5;border-radius:5px;padding:15px;margin:20px 0;">
+            <p><strong>If you made this change:</strong> You can disregard this email. Your account is secure.</p>
+            <p><strong>If you did NOT make this change:</strong> Please contact our support team immediately as your account may have been compromised.</p>
+        </div>
+        <p>For security reasons, we recommend:</p>
+        <ul>
+            <li>Regularly updating your password</li>
+            <li>Not sharing your password with others</li>
+            <li>Using unique passwords for different websites</li>
+        </ul>
+        <p>If you have any questions or concerns, please don\'t hesitate to contact our support team.</p>
+        <p>Best regards,<br>The Zzimba Online Team</p>
+    </div>';
     return Mailer::sendMail($email, $subject, $content);
+}
+
+function sendPasswordChangedSms(string $phone, ?string $username = null): bool
+{
+    try {
+        $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
+        $greeting = $username ? "Dear $username," : "Hello,";
+        $message = "$greeting Your Zzimba Online password was changed on $now. If you didn't make this change, please contact support immediately.";
+        $result = SMS::send($phone, $message);
+        return isset($result['success']) && $result['success'] === true;
+    } catch (Exception $e) {
+        error_log('Password Changed SMS Error: ' . $e->getMessage());
+        return false;
+    }
 }
 
 function createOTP(string $type, string $account, PDO $pdo): string
@@ -201,7 +252,7 @@ function createOTP(string $type, string $account, PDO $pdo): string
 
     $stmt = $pdo->prepare(
         'INSERT INTO otp_verifications (id, type, account, otp, created_at, expires_at)
-         VALUES (:id, :type, :account, :otp, :created_at, :expires_at)'
+     VALUES (:id, :type, :account, :otp, :created_at, :expires_at)'
     );
     $stmt->execute([
         ':id' => $id,
@@ -318,8 +369,8 @@ try {
 
             $stmt = $pdo->prepare(
                 $isEmail
-                ? "SELECT id, username, password, status, email, last_login FROM $table WHERE email = :identifier"
-                : "SELECT id, username, password, status, email, last_login FROM $table WHERE username = :identifier"
+                ? "SELECT id, username, password, status, email, phone, last_login FROM $table WHERE email = :identifier"
+                : "SELECT id, username, password, status, email, phone, last_login FROM $table WHERE username = :identifier"
             );
             $stmt->execute([':identifier' => $identifier]);
 
@@ -345,7 +396,7 @@ try {
                     break;
                 }
                 http_response_code(401);
-                echo json_encode(['success' => false, 'errorCode' => 'EMPTY_PASSWORD', 'email' => $user['email']]);
+                echo json_encode(['success' => false, 'errorCode' => 'EMPTY_PASSWORD', 'email' => $user['email'], 'phone' => $user['phone']]);
                 break;
             }
 
@@ -365,6 +416,7 @@ try {
                 'user_id' => $user['id'],
                 'username' => $user['username'],
                 'email' => $user['email'],
+                'phone' => $user['phone'],
                 'is_admin' => ($table === 'admin_users'),
                 'last_login' => $user['last_login']
             ];
@@ -531,10 +583,91 @@ try {
             break;
 
         case 'sendPhoneOTP':
+            if (!isset($data['phone'])) {
+                http_response_code(400);
+                die(json_encode(['success' => false, 'message' => 'Missing phone number']));
+            }
+
+            $phone = $data['phone'];
+
+            if (!isValidPhone($phone)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
+                break;
+            }
+
+            $otp = createOTP('phone', $phone, $pdo);
+
+            if (!sendSmsOTP($phone, $otp)) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to send verification code. Please try again.']);
+                break;
+            }
+
+            echo json_encode(['success' => true, 'message' => 'OTP sent to phone']);
+            break;
+
         case 'verifyPhoneOTP':
+            if (!isset($data['phone'], $data['otp'])) {
+                http_response_code(400);
+                die(json_encode(['success' => false, 'message' => 'Missing required fields']));
+            }
+
+            $phone = $data['phone'];
+            $otp = $data['otp'];
+
+            if (!isValidPhone($phone)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
+                break;
+            }
+
+            if (!verifyOTP('phone', $phone, $otp, $pdo)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid or expired verification code']);
+                break;
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Phone verified successfully']);
+            break;
+
         case 'sendResetPhone':
-            http_response_code(503);
-            echo json_encode(['success' => false, 'message' => 'Phone verification is currently under maintenance. Please use email verification.']);
+            if (!isset($data['phone'])) {
+                http_response_code(400);
+                die(json_encode(['success' => false, 'message' => 'Missing phone number']));
+            }
+
+            $phone = $data['phone'];
+
+            if (!isValidPhone($phone)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
+                break;
+            }
+
+            $stmt = $pdo->prepare('SELECT id FROM admin_users WHERE phone = :phone');
+            $stmt->execute([':phone' => $phone]);
+            $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $stmt = $pdo->prepare('SELECT id FROM zzimba_users WHERE phone = :phone');
+            $stmt->execute([':phone' => $phone]);
+            $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$adminUser && !$zzimbaUser) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Phone number not found']);
+                break;
+            }
+
+            $otp = createOTP('phone', $phone, $pdo);
+
+            if (!sendPasswordResetSmsOTP($phone, $otp)) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Failed to send reset code. Please try again.']);
+                break;
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Reset code sent to phone']);
             break;
 
         case 'register':
@@ -587,7 +720,7 @@ try {
 
             $stmt = $pdo->prepare(
                 'INSERT INTO zzimba_users (id, username, email, phone, password, status, created_at, updated_at)
-                 VALUES (:id, :username, :email, :phone, :password, "active", :created_at, :updated_at)'
+             VALUES (:id, :username, :email, :phone, :password, "active", :created_at, :updated_at)'
             );
             $stmt->execute([
                 ':id' => $userId,
@@ -657,19 +790,17 @@ try {
             $contactType = $data['contactType'];
             $otp = $data['otp'];
 
-            if ($contactType !== 'email') {
-                http_response_code(503);
-                echo json_encode(['success' => false, 'message' => 'Phone verification is currently under maintenance. Please use email verification.']);
-                break;
-            }
-
-            if (!isValidEmail($contact)) {
+            if ($contactType === 'email' && !isValidEmail($contact)) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid email format']);
                 break;
+            } else if ($contactType === 'phone' && !isValidPhone($contact)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
+                break;
             }
 
-            if (!verifyOTP('email', $contact, $otp, $pdo)) {
+            if (!verifyOTP($contactType, $contact, $otp, $pdo)) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid or expired verification code']);
                 break;
@@ -688,15 +819,13 @@ try {
             $contactType = $data['contactType'];
             $password = $data['password'];
 
-            if ($contactType !== 'email') {
-                http_response_code(503);
-                echo json_encode(['success' => false, 'message' => 'Phone verification is currently under maintenance. Please use email verification.']);
-                break;
-            }
-
-            if (!isValidEmail($contact)) {
+            if ($contactType === 'email' && !isValidEmail($contact)) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid email format']);
+                break;
+            } else if ($contactType === 'phone' && !isValidPhone($contact)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
                 break;
             }
 
@@ -706,13 +835,23 @@ try {
                 break;
             }
 
-            $stmt = $pdo->prepare('SELECT id, username FROM admin_users WHERE email = :email');
-            $stmt->execute([':email' => $contact]);
-            $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($contactType === 'email') {
+                $stmt = $pdo->prepare('SELECT id, username, phone FROM admin_users WHERE email = :contact');
+                $stmt->execute([':contact' => $contact]);
+                $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $stmt = $pdo->prepare('SELECT id, username FROM zzimba_users WHERE email = :email');
-            $stmt->execute([':email' => $contact]);
-            $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
+                $stmt = $pdo->prepare('SELECT id, username, phone FROM zzimba_users WHERE email = :contact');
+                $stmt->execute([':contact' => $contact]);
+                $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
+            } else {
+                $stmt = $pdo->prepare('SELECT id, username, email FROM admin_users WHERE phone = :contact');
+                $stmt->execute([':contact' => $contact]);
+                $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                $stmt = $pdo->prepare('SELECT id, username, email FROM zzimba_users WHERE phone = :contact');
+                $stmt->execute([':contact' => $contact]);
+                $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
+            }
 
             if (!$adminUser && !$zzimbaUser) {
                 http_response_code(404);
@@ -727,13 +866,35 @@ try {
                 $stmt = $pdo->prepare('UPDATE admin_users SET password = :password, updated_at = :updated_at WHERE id = :id');
                 $stmt->execute([':password' => $hashedPassword, ':updated_at' => $now, ':id' => $adminUser['id']]);
                 $username = $adminUser['username'];
+
+                if ($contactType === 'email') {
+                    sendPasswordChangedEmail($contact, $username);
+                    if (isset($adminUser['phone'])) {
+                        sendPasswordChangedSms($adminUser['phone'], $username);
+                    }
+                } else {
+                    sendPasswordChangedSms($contact, $username);
+                    if (isset($adminUser['email'])) {
+                        sendPasswordChangedEmail($adminUser['email'], $username);
+                    }
+                }
             } else {
                 $stmt = $pdo->prepare('UPDATE zzimba_users SET password = :password, updated_at = :updated_at WHERE id = :id');
                 $stmt->execute([':password' => $hashedPassword, ':updated_at' => $now, ':id' => $zzimbaUser['id']]);
                 $username = $zzimbaUser['username'];
-            }
 
-            sendPasswordChangedEmail($contact, $username);
+                if ($contactType === 'email') {
+                    sendPasswordChangedEmail($contact, $username);
+                    if (isset($zzimbaUser['phone'])) {
+                        sendPasswordChangedSms($zzimbaUser['phone'], $username);
+                    }
+                } else {
+                    sendPasswordChangedSms($contact, $username);
+                    if (isset($zzimbaUser['email'])) {
+                        sendPasswordChangedEmail($zzimbaUser['email'], $username);
+                    }
+                }
+            }
 
             echo json_encode(['success' => true, 'message' => 'Password reset successfully']);
             break;
@@ -750,6 +911,7 @@ try {
             break;
     }
 } catch (Exception $e) {
+    error_log('Auth Error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }
