@@ -216,6 +216,99 @@ ob_start();
         color: white;
     }
 
+    .share-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .share-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #4B5563;
+    }
+
+    .share-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .share-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 9999px;
+        color: #DC2626;
+        border: 1.5px solid #DC2626;
+        background-color: transparent;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .share-button .fa-solid,
+    .share-button .fa-brands {
+        font-size: 10px !important;
+    }
+
+    .share-button:hover {
+        background-color: rgba(220, 38, 38, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .tooltip {
+        position: absolute;
+        bottom: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #1F2937;
+        color: white;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s, visibility 0.2s;
+        z-index: 10;
+    }
+
+    .tooltip::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        width: 8px;
+        height: 8px;
+        background-color: #1F2937;
+    }
+
+    .share-button:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .copy-success {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #10B981;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        z-index: 50;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .copy-success.show {
+        opacity: 1;
+    }
+
     @media (max-width: 640px) {
         .vendor-avatar {
             width: 80px;
@@ -270,16 +363,6 @@ ob_start();
                         <p id="vendor-description" class="text-gray-600 mt-1">Premium Construction Materials & Services
                         </p>
                     </div>
-                    <div class="mt-4 md:mt-0 flex space-x-3 justify-center md:justify-start">
-                        <button
-                            class="bg-primary hover:bg-red-700 text-white font-medium py-2 px-6 rounded-md transition duration-150 ease-in-out flex items-center">
-                            <i class="fa-solid fa-user-plus mr-2"></i> Follow
-                        </button>
-                        <button
-                            class="border border-gray-300 hover:bg-gray-50 text-secondary font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">
-                            <i class="fa-solid fa-envelope"></i>
-                        </button>
-                    </div>
                 </div>
 
                 <div class="mt-6 flex flex-wrap gap-y-4 stats-mobile-center">
@@ -321,13 +404,30 @@ ob_start();
                     <span class="ml-1 text-sm text-gray-600">(128 reviews)</span>
                 </div>
             </div>
-            <div class="flex items-center">
-                <div class="text-xl font-bold text-secondary">1.2K</div>
-                <div class="ml-2 text-gray-600">Followers</div>
-            </div>
-            <div class="flex items-center">
-                <div class="text-xl font-bold text-secondary">100+</div>
-                <div class="ml-2 text-gray-600">Orders Completed</div>
+            <div class="ml-0 sm:ml-auto share-container">
+                <span class="share-label">SHARE</span>
+                <div class="share-buttons">
+                    <button onclick="copyLink()" class="share-button" title="Copy link">
+                        <i class="fa-solid fa-link"></i>
+                        <span class="tooltip">Copy link to clipboard</span>
+                    </button>
+                    <button onclick="shareOnWhatsApp()" class="share-button" title="Share on WhatsApp">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <span class="tooltip">Share this profile on WhatsApp</span>
+                    </button>
+                    <button onclick="shareOnFacebook()" class="share-button" title="Share on Facebook">
+                        <i class="fa-brands fa-facebook-f"></i>
+                        <span class="tooltip">Share this profile on Facebook</span>
+                    </button>
+                    <button onclick="shareOnTwitter()" class="share-button" title="Share on Twitter/X">
+                        <i class="fa-brands fa-x-twitter"></i>
+                        <span class="tooltip">Post this on your X</span>
+                    </button>
+                    <button onclick="shareOnLinkedIn()" class="share-button" title="Share on LinkedIn">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                        <span class="tooltip">Share on LinkedIn</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -382,6 +482,7 @@ ob_start();
     </main>
 </div>
 
+<div id="copy-success" class="copy-success">Link copied to clipboard!</div>
 <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-4"></div>
 
 <script>
@@ -406,6 +507,55 @@ ob_start();
     let pendingDeleteId = null;
     let pendingDeleteType = null;
     let categoryStatusChanges = {};
+
+    // Copy link function
+    function copyLink() {
+        const currentUrl = window.location.href;
+        navigator.clipboard.writeText(currentUrl).then(() => {
+            const copySuccess = document.getElementById('copy-success');
+            copySuccess.classList.add('show');
+            setTimeout(() => {
+                copySuccess.classList.remove('show');
+            }, 2000);
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+            showToast('Failed to copy link', 'error');
+        });
+    }
+
+    // Social sharing functions
+    function shareOnWhatsApp() {
+        const currentUrl = window.location.href;
+        const vendorName = document.getElementById('vendor-name').textContent;
+        const vendorDescription = document.getElementById('vendor-description').textContent;
+        const message = `Check out ${vendorName}\n\n${vendorDescription}\n\nVisit their profile on Zzimba Online: ${currentUrl}`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+    }
+
+    function shareOnFacebook() {
+        const currentUrl = window.location.href;
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+        window.open(facebookUrl, '_blank');
+    }
+
+    function shareOnTwitter() {
+        const currentUrl = window.location.href;
+        const vendorName = document.getElementById('vendor-name').textContent;
+        const vendorDescription = document.getElementById('vendor-description').textContent;
+        const message = `Check out ${vendorName}\n\n${vendorDescription}\n\nVisit their profile on Zzimba Online:`;
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(currentUrl)}`;
+        window.open(twitterUrl, '_blank');
+    }
+
+    function shareOnLinkedIn() {
+        const currentUrl = window.location.href;
+        const vendorName = document.getElementById('vendor-name').textContent;
+        const vendorDescription = document.getElementById('vendor-description').textContent;
+        const message = `Check out ${vendorName}\n\n${vendorDescription}\n\nVisit their profile on Zzimba Online.`;
+        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(vendorName)}&summary=${encodeURIComponent(message)}`;
+        window.open(linkedinUrl, '_blank');
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
         if (vendorId) {
