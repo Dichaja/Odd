@@ -73,14 +73,6 @@ try {
             getStoreManagers($pdo, $_GET['storeId'] ?? '', $currentUserId);
             break;
 
-        case 'addStoreManager':
-            addStoreManager($pdo, $_POST['storeId'] ?? '', $_POST['userId'] ?? '', $currentUserId);
-            break;
-
-        case 'removeStoreManager':
-            removeStoreManager($pdo, $_POST['storeId'] ?? '', $_POST['userId'] ?? '', $currentUserId);
-            break;
-
         case 'approveManagerInvitation':
             approveManagerInvitation($pdo, $_POST['managerId'] ?? '', $currentUserId);
             break;
@@ -861,75 +853,6 @@ function getStoreManagers(PDO $pdo, string $storeId, string $userId): void
     }
 
     echo json_encode(['success' => true, 'managers' => $mgrs]);
-}
-
-function addStoreManager(PDO $pdo, string $storeId, string $managerId, string $userId): void
-{
-    if (!isValidUlid($storeId) || !isValidUlid($managerId)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid IDs']);
-        return;
-    }
-    if (!isOwner($pdo, $storeId, $userId)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Permission denied']);
-        return;
-    }
-    $stmt = $pdo->prepare("SELECT 1 FROM zzimba_users WHERE id = ?");
-    $stmt->execute([$managerId]);
-    if (!$stmt->fetchColumn()) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'User not found']);
-        return;
-    }
-    $stmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ?");
-    $stmt->execute([$storeId, $managerId]);
-    if ($stmt->fetchColumn()) {
-        http_response_code(409);
-        echo json_encode(['success' => false, 'error' => 'Already manager']);
-        return;
-    }
-    $entryId = generateUlid();
-    $role = $_POST['role'] ?? 'manager';
-    $now = date('Y-m-d H:i:s');
-
-    $pdo->prepare("
-        INSERT INTO store_managers
-          (id, store_id, user_id, role, status, added_by, approved, created_at, updated_at)
-        VALUES (?, ?, ?, ?, 'inactive', ?, 0, ?, ?)
-    ")->execute([
-                $entryId,
-                $storeId,
-                $managerId,
-                $role,
-                $userId,
-                $now,
-                $now
-            ]);
-
-    echo json_encode(['success' => true, 'manager_id' => $entryId]);
-}
-
-function removeStoreManager(PDO $pdo, string $storeId, string $managerId, string $userId): void
-{
-    if (!isValidUlid($storeId) || !isValidUlid($managerId)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid IDs']);
-        return;
-    }
-    if (!isOwner($pdo, $storeId, $userId)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Permission denied']);
-        return;
-    }
-    $stmt = $pdo->prepare("DELETE FROM store_managers WHERE id = ? AND store_id = ?");
-    $stmt->execute([$managerId, $storeId]);
-    if (!$stmt->rowCount()) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'Manager not found']);
-        return;
-    }
-    echo json_encode(['success' => true, 'message' => 'Manager removed']);
 }
 
 function approveManagerInvitation(PDO $pdo, string $managerId, string $userId): void
