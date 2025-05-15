@@ -9,7 +9,6 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $js_code = curl_exec($ch);
 curl_close($ch);
 
-// Check if user is logged in
 $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 ?>
 <!DOCTYPE html>
@@ -63,27 +62,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
         }
     </script>
     <style>
-        .mega-menu {
-            visibility: hidden;
-            opacity: 0;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 150%;
-            background: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            transform: translateY(10px);
-            z-index: 50;
-            white-space: nowrap
-        }
-
-        .menu-item:hover .mega-menu {
-            visibility: visible;
-            opacity: 1;
-            transform: translateY(0)
-        }
-
         .nav-link {
             position: relative
         }
@@ -451,7 +429,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             }
         }
 
-        /* User dropdown menu */
         .user-dropdown {
             position: relative;
         }
@@ -546,12 +523,14 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                                 <div class="user-dropdown-menu">
                                     <div class="px-4 py-3 bg-gray-50">
                                         <p class="text-sm font-medium text-gray-900">
-                                            <?= htmlspecialchars($_SESSION['user']['username']) ?></p>
+                                            <?= htmlspecialchars($_SESSION['user']['username']) ?>
+                                        </p>
                                         <p class="text-xs text-gray-500"><?= htmlspecialchars($_SESSION['user']['email']) ?>
                                         </p>
                                         <?php if (isset($_SESSION['user']['last_login']) && $_SESSION['user']['last_login']): ?>
                                             <p class="text-xs text-gray-500 mt-1">Last login:
-                                                <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?></p>
+                                                <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?>
+                                            </p>
                                         <?php endif; ?>
                                     </div>
                                     <?php if ($_SESSION['user']['is_admin']): ?>
@@ -883,23 +862,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             materials: {
                 icon: 'fa-warehouse',
                 title: 'Materials Yard',
-                children: {
-                    cement: {
-                        title: 'Cement & Concrete',
-                        icon: 'fa-angle-right',
-                        url: '#cement'
-                    },
-                    bricks: {
-                        title: 'Bricks & Blocks',
-                        icon: 'fa-angle-right',
-                        url: '#bricks'
-                    },
-                    steel: {
-                        title: 'Steel & Metals',
-                        icon: 'fa-angle-right',
-                        url: '#steel'
-                    }
-                }
+                url: BASE_URL + 'materials-yard'
             },
             contact: {
                 icon: 'fa-envelope',
@@ -911,13 +874,8 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
         function generateNavigation(i) {
             let h = '';
             for (const [k, v] of Object.entries(i)) {
-                if (v.children) {
-                    const a = k === activeNavKey ? 'active' : '';
-                    h += `<div class="menu-item relative group"><button class="flex items-center space-x-2 text-secondary hover:text-primary transition-colors nav-link ${a}"><i class="fas ${v.icon} mr-2"></i><span>${v.title}</span><i class="fas fa-chevron-down text-xs ml-1 dropdown-icon"></i></button><div class="mega-menu p-6"><div class="grid grid-cols-1 gap-8"><div><h3 class="font-bold text-lg mb-4 text-secondary border-b pb-2">${v.title}</h3><ul class="space-y-2">${Object.entries(v.children).map(([ck, ch]) => `<li><a href="${ch.url}" class="flex items-center text-gray-600 hover:text-primary transition-colors"><i class="fas ${ch.icon} mr-2 text-sm"></i>${ch.title}</a></li>`).join('')}</ul></div></div></div></div>`;
-                } else {
-                    const a = k === activeNavKey ? 'active' : '';
-                    h += `<a href="${v.url}" class="nav-link text-secondary hover:text-primary transition-colors ${a}"><i class="fas ${v.icon} mr-2"></i>${v.title}</a>`;
-                }
+                const a = k === activeNavKey ? 'active' : '';
+                h += `<a href="${v.url}" class="nav-link text-secondary hover:text-primary transition-colors ${a}"><i class="fas ${v.icon} mr-2"></i>${v.title}</a>`;
             }
             return h;
         }
@@ -925,13 +883,8 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
         function generateMobileNavigation(i) {
             let h = '';
             for (const [k, v] of Object.entries(i)) {
-                if (v.children) {
-                    const a = k === activeNavKey ? 'active' : '';
-                    h += `<div class="py-2 px-4 text-secondary"><div class="flex items-center justify-between ${a}"><span><i class="fas ${v.icon} mr-2"></i>${v.title}</span><i class="fas fa-chevron-down text-xs"></i></div><div class="mt-2 ml-4 space-y-2">${Object.entries(v.children).map(([ck, ch]) => `<a href="${ch.url}" class="block py-2 text-secondary hover:text-primary hover:bg-gray-50"><i class="fas ${ch.icon} mr-2"></i>${ch.title}</a>`).join('')}</div></div>`;
-                } else {
-                    const a = k === activeNavKey ? 'active' : '';
-                    h += `<a href="${v.url}" class="block py-2 px-4 text-secondary hover:text-primary hover:bg-gray-50 ${a}"><i class="fas ${v.icon} mr-2"></i>${v.title}</a>`;
-                }
+                const a = k === activeNavKey ? 'active' : '';
+                h += `<a href="${v.url}" class="block py-2 px-4 text-secondary hover:text-primary hover:bg-gray-50 ${a}"><i class="fas ${v.icon} mr-2"></i>${v.title}</a>`;
             }
             return h;
         }
@@ -939,7 +892,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             document.getElementById('desktop-nav').innerHTML = generateNavigation(navItems);
             document.getElementById('mobile-menu-items').innerHTML = generateMobileNavigation(navItems);
 
-            // User dropdown toggle
             const userDropdownButton = document.getElementById('user-dropdown-button');
             if (userDropdownButton) {
                 const userDropdownMenu = document.querySelector('.user-dropdown-menu');
@@ -947,7 +899,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                     userDropdownMenu.classList.toggle('active');
                 });
 
-                // Close dropdown when clicking outside
                 document.addEventListener('click', function (e) {
                     if (!userDropdownButton.contains(e.target) && !userDropdownMenu.contains(e.target)) {
                         userDropdownMenu.classList.remove('active');
@@ -1035,7 +986,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
         window.addEventListener('scroll', updateScrollProgress);
         updateScrollProgress();
 
-        // Only setup login button if user is not logged in
         if (!IS_LOGGED_IN) {
             document.addEventListener('DOMContentLoaded', () => {
                 const loginButton = document.getElementById('login-button');
@@ -1092,20 +1042,15 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             }
         }
 
-        // Enhanced OTP input handling
         $(document).ready(function () {
-            // Handle OTP inputs
             function setupOTPInputs() {
-                // Handle keydown for navigation and backspace
                 $(document).on('keydown', '.otp-input', function (e) {
                     const $current = $(this);
                     const index = $('.otp-input[data-otp-target="' + $current.data('otp-target') + '"]').index($current);
                     const $inputs = $('.otp-input[data-otp-target="' + $current.data('otp-target') + '"]');
 
-                    // Handle backspace/delete
                     if (e.keyCode === 8 || e.keyCode === 46) {
                         if ($current.val() === '') {
-                            // If current input is empty, focus and clear previous input
                             if (index > 0) {
                                 e.preventDefault();
                                 $inputs.eq(index - 1).focus().val('');
@@ -1114,34 +1059,29 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                         }
                     }
 
-                    // Arrow key navigation
-                    if (e.keyCode === 37 && index > 0) { // Left arrow
+                    if (e.keyCode === 37 && index > 0) {
                         e.preventDefault();
                         $inputs.eq(index - 1).focus();
                     }
-                    if (e.keyCode === 39 && index < $inputs.length - 1) { // Right arrow
+                    if (e.keyCode === 39 && index < $inputs.length - 1) {
                         e.preventDefault();
                         $inputs.eq(index + 1).focus();
                     }
                 });
 
-                // Handle input for auto-focus to next input
                 $(document).on('input', '.otp-input', function () {
                     const $current = $(this);
                     const $inputs = $('.otp-input[data-otp-target="' + $current.data('otp-target') + '"]');
                     const index = $inputs.index($current);
 
-                    // Ensure only numbers are entered
                     $current.val($current.val().replace(/[^0-9]/g, ''));
 
-                    // Auto-focus to next input when a digit is entered
                     if ($current.val().length === 1 && index < $inputs.length - 1) {
                         $inputs.eq(index + 1).focus();
                     }
 
                     updateOTPValue($current.data('otp-target'));
 
-                    // Check if all inputs are filled for auto-submit
                     const allFilled = $inputs.toArray().every(input => input.value.length === 1);
                     if (allFilled) {
                         const target = $current.data('otp-target');
@@ -1155,7 +1095,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                     }
                 });
 
-                // Handle paste event (only for the first input of each group)
                 $(document).on('paste', '.otp-input:first-of-type', function (e) {
                     e.preventDefault();
 
@@ -1163,21 +1102,17 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                     const target = $current.data('otp-target');
                     const $inputs = $('.otp-input[data-otp-target="' + target + '"]');
 
-                    // Get pasted data and clean it
                     const pasteData = (e.originalEvent.clipboardData || window.clipboardData).getData('text');
                     const digits = pasteData.replace(/\D/g, '').substring(0, 6);
 
-                    // Fill inputs with pasted digits
                     for (let i = 0; i < Math.min(digits.length, $inputs.length); i++) {
                         $inputs.eq(i).val(digits[i] || '');
                     }
 
-                    // Focus the last filled input
                     $inputs.eq(Math.min(digits.length, $inputs.length) - 1).focus();
 
                     updateOTPValue(target);
 
-                    // Auto-submit if all fields are filled
                     if (digits.length >= 6) {
                         if (target === 'email-otp') {
                             handleEmailOTPSubmit();
@@ -1190,7 +1125,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
                 });
             }
 
-            // Initialize OTP inputs when document is ready
             setupOTPInputs();
         });
 
@@ -1201,7 +1135,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             $('#' + target).val(values);
         }
 
-        // Fix the logoutUser function to properly handle the action parameter
         function logoutUser() {
             $.ajax({
                 url: BASE_URL + 'auth/logout',
