@@ -309,6 +309,39 @@ ob_start();
         opacity: 1;
     }
 
+    .view-location-btn {
+        display: inline-flex;
+        align-items: center;
+        color: #DC2626;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .view-location-btn:hover {
+        text-decoration: underline;
+    }
+
+    .location-hidden {
+        display: none;
+    }
+
+    .location-visible {
+        display: flex;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
     @media (max-width: 640px) {
         .vendor-avatar {
             width: 80px;
@@ -371,8 +404,15 @@ ob_start();
                         <span id="vendor-registered" class="text-gray-700">Joined March 2008</span>
                     </div>
                     <div class="mr-8 flex items-center">
-                        <i class="fa-solid fa-location-dot text-gray-500 mr-2"></i>
-                        <span id="vendor-location" class="text-gray-700">Building City, BC 12345</span>
+                        <div id="location-section">
+                            <button id="view-location-btn" class="view-location-btn" onclick="showLocation()">
+                                <i class="fa-solid fa-location-dot text-gray-500 mr-2"></i>
+                                <span>View Location</span>
+                            </button>
+                            <div id="location-container" class="location-hidden">
+                                <span id="vendor-location" class="text-gray-700">Building City, BC 12345</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="mr-8 flex items-center">
                         <i class="fa-solid fa-box text-gray-500 mr-2"></i>
@@ -507,6 +547,19 @@ ob_start();
     let pendingDeleteId = null;
     let pendingDeleteType = null;
     let categoryStatusChanges = {};
+
+    // Show location function - only shows, doesn't hide
+    function showLocation() {
+        const locationContainer = document.getElementById('location-container');
+        const viewLocationBtn = document.getElementById('view-location-btn');
+
+        // Show the location
+        locationContainer.classList.remove('location-hidden');
+        locationContainer.classList.add('location-visible');
+
+        // Hide the button
+        viewLocationBtn.style.display = 'none';
+    }
 
     // Copy link function
     function copyLink() {
