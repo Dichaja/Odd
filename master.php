@@ -516,7 +516,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
     </div>
     <nav class="bg-white shadow-lg">
         <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center h-[50px]">
+            <div class="flex justify-between items-center h-[70px]">
                 <div class="flex items-center">
                     <a href="<?= BASE_URL ?>">
                         <img src="<?= BASE_URL ?>img/logo_alt.png?height=40&width=150" alt="Logo" class="h-10">

@@ -4,7 +4,8 @@ $pageTitle = $pageTitle ?? 'Zzimba Online Uganda';
 $activeNav = $activeNav ?? 'home';
 
 // Load homepage data from JSON file
-function loadHomepageData() {
+function loadHomepageData()
+{
     $filePath = __DIR__ . '/page-data/homepage/index.json';
 
     if (file_exists($filePath)) {
@@ -13,6 +14,110 @@ function loadHomepageData() {
     }
 
     return [];
+}
+
+// Function to fetch featured products from database
+function getFeaturedProducts($pdo, $limit = 8)
+{
+    try {
+        $stmt = $pdo->prepare(
+            "SELECT p.id, p.title, p.description, p.category_id, c.name AS category_name
+             FROM products p
+             LEFT JOIN product_categories c ON p.category_id = c.id
+             WHERE p.featured = 1 AND p.status = 'published'
+             ORDER BY p.created_at DESC
+             LIMIT :limit"
+        );
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Add image URLs to each product
+        foreach ($products as &$product) {
+            $product['images'] = getProductImages($product['id']);
+        }
+
+        return $products;
+    } catch (Exception $e) {
+        error_log("Error fetching featured products: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Function to fetch categories from database based on the provided schema
+function getCategories($pdo, $limit = 8)
+{
+    try {
+        $stmt = $pdo->prepare(
+            "SELECT id, name, description, meta_title, meta_description, meta_keywords, status
+             FROM product_categories 
+             WHERE status = 'active' 
+             ORDER BY name ASC
+             LIMIT :limit"
+        );
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Add image URLs to each category
+        foreach ($categories as &$category) {
+            $category['image'] = getCategoryImage($category['id']);
+        }
+
+        return $categories;
+    } catch (Exception $e) {
+        error_log("Error fetching categories: " . $e->getMessage());
+        return [];
+    }
+}
+
+// Function to get product images
+function getProductImages($uuid)
+{
+    $dir = __DIR__ . '/img/products/' . $uuid;
+    if (!is_dir($dir)) {
+        return ['https://placehold.co/600x400?text=No+Image'];
+    }
+
+    $json = $dir . '/images.json';
+    if (!file_exists($json)) {
+        return ['https://placehold.co/600x400?text=No+Image'];
+    }
+
+    $data = json_decode(file_get_contents($json), true);
+    if (empty($data['images'])) {
+        return ['https://placehold.co/600x400?text=No+Image'];
+    }
+
+    $out = [];
+    foreach ($data['images'] as $f) {
+        if (filter_var($f, FILTER_VALIDATE_URL)) {
+            $out[] = $f;
+        } else {
+            $out[] = BASE_URL . "img/products/$uuid/$f";
+        }
+    }
+
+    return $out;
+}
+
+// Function to get category image
+function getCategoryImage($uuid)
+{
+    $dir = __DIR__ . '/img/categories/' . $uuid;
+
+    // Check if directory exists and has images
+    if (is_dir($dir)) {
+        $files = glob($dir . '/*.{jpg,jpeg,png,gif,webp}', GLOB_BRACE);
+        if (!empty($files)) {
+            return BASE_URL . 'img/categories/' . $uuid . '/' . basename($files[0]);
+        }
+    }
+
+    // Return placeholder if no image found
+    return 'https://placehold.co/800x450?text=Category';
 }
 
 // Load data from JSON
@@ -27,117 +132,35 @@ $categoriesSection = $homepageData['categoriesSection'] ?? [];
 $partnersSection = $homepageData['partnersSection'] ?? [];
 $partners = $homepageData['partners'] ?? [];
 
-// Fallback data for featured products (not in JSON)
-$featuredProducts = [
-    [
-        'image' => 'https://placehold.co/600x400',
-        'title' => 'Premium Cement',
-        'description' => 'High-quality Portland cement',
-        'price' => 'UGX 29,999'
-    ],
-    [
-        'image' => 'https://placehold.co/600x400',
-        'title' => 'Reinforced Steel',
-        'description' => 'Strong and durable steel',
-        'price' => 'UGX 49,999'
-    ],
-    [
-        'image' => 'https://placehold.co/600x400',
-        'title' => 'Concrete Blocks',
-        'description' => 'Reliable concrete blocks',
-        'price' => 'UGX 19,999'
-    ],
-    [
-        'image' => 'https://placehold.co/600x400',
-        'title' => 'Bricks',
-        'description' => 'Red clay bricks',
-        'price' => 'UGX 9,999'
-    ],
-    [
-        'image' => 'https://placehold.co/600x400',
-        'title' => 'Roofing Sheets',
-        'description' => 'Durable metal roofing',
-        'price' => 'UGX 39,999'
-    ],
-    [
-        'image' => 'https://placehold.co/600x400',
-        'title' => 'PVC Pipes',
-        'description' => 'High-quality plumbing pipes',
-        'price' => 'UGX 15,999'
-    ],
-    [
-        'image' => 'https://placehold.co/600x400',
-        'title' => 'Paint Buckets',
-        'description' => 'Premium interior paint',
-        'price' => 'UGX 24,999'
-    ],
-    [
-        'image' => 'https://placehold.co/600x400',
-        'title' => 'Electrical Wiring',
-        'description' => 'Safe and reliable wiring',
-        'price' => 'UGX 12,999'
-    ]
-];
-
-// Fallback data for categories (not in JSON)
-$categories = [
-    [
-        'image' => 'https://placehold.co/800x450',
-        'title' => 'Cement & Concrete'
-    ],
-    [
-        'image' => 'https://placehold.co/800x450',
-        'title' => 'Bricks & Blocks'
-    ],
-    [
-        'image' => 'https://placehold.co/800x450',
-        'title' => 'Steel & Metals'
-    ],
-    [
-        'image' => 'https://placehold.co/800x450',
-        'title' => 'Tiles & Flooring'
-    ],
-    [
-        'image' => 'https://placehold.co/800x450',
-        'title' => 'Plumbing Supplies'
-    ],
-    [
-        'image' => 'https://placehold.co/800x450',
-        'title' => 'Electrical Materials'
-    ],
-    [
-        'image' => 'https://placehold.co/800x450',
-        'title' => 'Paints & Finishes'
-    ],
-    [
-        'image' => 'https://placehold.co/800x450',
-        'title' => 'Tools & Equipment'
-    ]
-];
-
 // Filter active hero slides and sort by order
-$activeHeroSlides = array_filter($heroSlides, function($slide) {
+$activeHeroSlides = array_filter($heroSlides, function ($slide) {
     return isset($slide['active']) && $slide['active'] === true;
 });
-usort($activeHeroSlides, function($a, $b) {
+usort($activeHeroSlides, function ($a, $b) {
     return ($a['order'] ?? 999) - ($b['order'] ?? 999);
 });
 
 // Filter active key features and sort by order
-$activeKeyFeatures = array_filter($keyFeatures, function($feature) {
+$activeKeyFeatures = array_filter($keyFeatures, function ($feature) {
     return isset($feature['active']) && $feature['active'] === true;
 });
-usort($activeKeyFeatures, function($a, $b) {
+usort($activeKeyFeatures, function ($a, $b) {
     return ($a['order'] ?? 999) - ($b['order'] ?? 999);
 });
 
 // Filter active partners and sort by order
-$activePartners = array_filter($partners, function($partner) {
+$activePartners = array_filter($partners, function ($partner) {
     return isset($partner['active']) && $partner['active'] === true;
 });
-usort($activePartners, function($a, $b) {
+usort($activePartners, function ($a, $b) {
     return ($a['order'] ?? 999) - ($b['order'] ?? 999);
 });
+
+// Fetch featured products from database
+$featuredProducts = getFeaturedProducts($pdo, 8);
+
+// Fetch categories from database
+$categories = getCategories($pdo, 8);
 
 ob_start();
 ?>
@@ -150,8 +173,8 @@ ob_start();
                         <img src="<?= BASE_URL . $slide['image'] ?>" alt="<?= strip_tags($slide['title']) ?>"
                             class="w-full h-full object-cover">
                     <?php else: ?>
-                        <img src="https://placehold.co/1800x600?text=<?= urlencode(strip_tags($slide['title'])) ?>" alt="<?= strip_tags($slide['title']) ?>"
-                            class="w-full h-full object-cover">
+                        <img src="https://placehold.co/1800x600?text=<?= urlencode(strip_tags($slide['title'])) ?>"
+                            alt="<?= strip_tags($slide['title']) ?>" class="w-full h-full object-cover">
                     <?php endif; ?>
                     <div class="absolute inset-0 bg-black bg-opacity-50"></div>
                     <div class="absolute inset-0 flex items-center">
@@ -174,207 +197,229 @@ ob_start();
 </div>
 
 <?php if (isset($requestQuoteSection['active']) && $requestQuoteSection['active']): ?>
-<div class="bg-gray-50 py-8">
-    <div class="container mx-auto px-4 text-center">
-        <a href="<?= BASE_URL . $requestQuoteSection['buttonUrl'] ?>"
-            class="inline-flex items-center px-6 py-3 border border-transparent text-lg font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 shadow-md hover:shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <?= $requestQuoteSection['buttonText'] ?>
-        </a>
-        <?php if (!empty($requestQuoteSection['description'])): ?>
-            <p class="mt-3 text-gray-600"><?= $requestQuoteSection['description'] ?></p>
-        <?php endif; ?>
+    <div class="bg-gray-50 py-8">
+        <div class="container mx-auto px-4 text-center">
+            <a href="<?= BASE_URL . $requestQuoteSection['buttonUrl'] ?>"
+                class="inline-flex items-center px-6 py-3 border border-transparent text-lg font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 shadow-md hover:shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <?= $requestQuoteSection['buttonText'] ?>
+            </a>
+            <?php if (!empty($requestQuoteSection['description'])): ?>
+                <p class="mt-3 text-gray-600"><?= $requestQuoteSection['description'] ?></p>
+            <?php endif; ?>
+        </div>
     </div>
-</div>
 <?php endif; ?>
 
 <?php if (!empty($activeKeyFeatures)): ?>
-<div class="container mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 md:grid-cols-<?= min(count($activeKeyFeatures), 3) ?> gap-8">
-        <?php foreach ($activeKeyFeatures as $feature): ?>
-            <div class="text-center bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                <div class="text-4xl mb-4"><?= $feature['icon'] ?></div>
-                <h3 class="text-xl font-semibold mb-2"><?= $feature['title'] ?></h3>
-                <p class="text-gray-600"><?= $feature['description'] ?></p>
-            </div>
-        <?php endforeach; ?>
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-<?= min(count($activeKeyFeatures), 3) ?> gap-8">
+            <?php foreach ($activeKeyFeatures as $feature): ?>
+                <div class="text-center bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                    <div class="text-4xl mb-4"><?= $feature['icon'] ?></div>
+                    <h3 class="text-xl font-semibold mb-2"><?= $feature['title'] ?></h3>
+                    <p class="text-gray-600"><?= $feature['description'] ?></p>
+                </div>
+            <?php endforeach; ?>
+        </div>
     </div>
-</div>
 <?php endif; ?>
 
 <?php if (isset($featuredProductsSection['active']) && $featuredProductsSection['active']): ?>
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-bold"><?= $featuredProductsSection['title'] ?></h2>
-        <?php if (!empty($featuredProductsSection['linkText']) && !empty($featuredProductsSection['linkUrl'])): ?>
-            <a href="<?= BASE_URL . $featuredProductsSection['linkUrl'] ?>" class="text-primary hover:text-red-700 font-medium"><?= $featuredProductsSection['linkText'] ?></a>
-        <?php endif; ?>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-<?= $featuredProductsSection['productsPerRow'] ?? 4 ?> gap-8" id="featured-products-container">
-        <?php
-        $initialProductCount = min(($featuredProductsSection['defaultRows'] ?? 1) * ($featuredProductsSection['productsPerRow'] ?? 4), count($featuredProducts));
-        for ($i = 0; $i < $initialProductCount; $i++):
-            $product = $featuredProducts[$i];
-            ?>
-            <div
-                class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="relative">
-                    <img src="<?= $product['image'] ?>" alt="<?= $product['title'] ?>" class="w-full h-48 object-cover">
-                    <div class="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-semibold">HOT
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold"><?= $featuredProductsSection['title'] ?></h2>
+            <?php if (!empty($featuredProductsSection['linkText']) && !empty($featuredProductsSection['linkUrl'])): ?>
+                <a href="<?= BASE_URL . $featuredProductsSection['linkUrl'] ?>"
+                    class="text-primary hover:text-red-700 font-medium"><?= $featuredProductsSection['linkText'] ?></a>
+            <?php endif; ?>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-<?= $featuredProductsSection['productsPerRow'] ?? 4 ?> gap-8"
+            id="featured-products-container">
+            <?php
+            $initialProductCount = min(($featuredProductsSection['defaultRows'] ?? 1) * ($featuredProductsSection['productsPerRow'] ?? 4), count($featuredProducts));
+            for ($i = 0; $i < $initialProductCount; $i++):
+                if (!isset($featuredProducts[$i]))
+                    continue;
+                $product = $featuredProducts[$i];
+                $productImage = !empty($product['images']) ? $product['images'][0] : 'https://placehold.co/600x400?text=No+Image';
+                ?>
+                <div
+                    class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="relative product-image-container">
+                        <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>">
+                            <img src="<?= $productImage ?>" alt="<?= htmlspecialchars($product['title']) ?>"
+                                class="w-full h-48 object-cover">
+                            <div class="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-semibold">HOT
+                            </div>
+                            <div
+                                class="product-overlay absolute inset-0 bg-black bg-opacity-60 opacity-0 transition-opacity flex items-center justify-center">
+                                <div class="text-white bg-primary px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                                    Details <i class="fas fa-arrow-right ml-1"></i>
+                                </div>
+                            </div>
+                        </a>
                     </div>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg mb-2"><?= $product['title'] ?></h3>
-                    <p class="text-gray-600 mb-4 h-12"><?= $product['description'] ?></p>
-                    <div class="flex justify-between items-center">
-                        <span class="text-primary font-bold text-xl"><?= $product['price'] ?></span>
-                        <div class="flex space-x-2">
-                            <button
-                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
-                                <i class="fas fa-shopping-cart mr-1"></i> Buy
-                            </button>
-                            <button
-                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                                <i class="fas fa-tag mr-1"></i> Sell
-                            </button>
+                    <div class="p-5">
+                        <h3 class="font-bold text-lg mb-2 truncate" title="<?= htmlspecialchars($product['title']) ?>">
+                            <?= htmlspecialchars($product['title']) ?>
+                        </h3>
+                        <p class="text-gray-600 mb-4 line-clamp-2 h-12"><?= htmlspecialchars($product['description']) ?></p>
+                        <div class="flex justify-end items-center">
+                            <div class="flex space-x-2">
+                                <button
+                                    class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                    <i class="fas fa-shopping-cart mr-1"></i> Buy
+                                </button>
+                                <button
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                                    <i class="fas fa-tag mr-1"></i> Sell
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
+            <?php endfor; ?>
+        </div>
+        <?php if (count($featuredProducts) > $initialProductCount && !empty($featuredProductsSection['loadMoreButtonText'])): ?>
+            <div class="text-center mt-10">
+                <button id="load-more-products"
+                    class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors inline-flex items-center">
+                    <span><?= $featuredProductsSection['loadMoreButtonText'] ?></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 animate-bounce" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                </button>
             </div>
-        <?php endfor; ?>
+        <?php endif; ?>
     </div>
-    <?php if (count($featuredProducts) > $initialProductCount && !empty($featuredProductsSection['loadMoreButtonText'])): ?>
-    <div class="text-center mt-10">
-        <button id="load-more-products"
-            class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors inline-flex items-center">
-            <span><?= $featuredProductsSection['loadMoreButtonText'] ?></span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 animate-bounce" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-        </button>
-    </div>
-    <?php endif; ?>
-</div>
 <?php endif; ?>
 
 <?php if (isset($categoriesSection['active']) && $categoriesSection['active']): ?>
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-bold"><?= $categoriesSection['title'] ?></h2>
-        <?php if (!empty($categoriesSection['linkText']) && !empty($categoriesSection['linkUrl'])): ?>
-            <a href="<?= BASE_URL . $categoriesSection['linkUrl'] ?>" class="text-primary hover:text-red-700 font-medium"><?= $categoriesSection['linkText'] ?></a>
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold"><?= $categoriesSection['title'] ?></h2>
+            <?php if (!empty($categoriesSection['linkText']) && !empty($categoriesSection['linkUrl'])): ?>
+                <a href="<?= BASE_URL . $categoriesSection['linkUrl'] ?>"
+                    class="text-primary hover:text-red-700 font-medium"><?= $categoriesSection['linkText'] ?></a>
+            <?php endif; ?>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-<?= $categoriesSection['categoriesPerRow'] ?? 4 ?> gap-8"
+            id="categories-container">
+            <?php
+            $initialCategoryCount = min(($categoriesSection['defaultRows'] ?? 1) * ($categoriesSection['categoriesPerRow'] ?? 4), count($categories));
+            for ($i = 0; $i < $initialCategoryCount; $i++):
+                if (!isset($categories[$i]))
+                    continue;
+                $category = $categories[$i];
+                ?>
+                <a href="<?= BASE_URL ?>view/category/<?= $category['id'] ?>"
+                    class="block relative rounded-xl overflow-hidden group cursor-pointer shadow-lg">
+                    <img src="<?= $category['image'] ?>" alt="<?= htmlspecialchars($category['name']) ?>"
+                        class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80 group-hover:opacity-90 transition-all">
+                        <div class="absolute bottom-0 left-0 right-0 p-6">
+                            <h3 class="text-white text-xl font-bold mb-2 truncate"
+                                title="<?= htmlspecialchars($category['name']) ?>"><?= htmlspecialchars($category['name']) ?>
+                            </h3>
+                            <div class="w-10 h-1 bg-primary mb-4 transform transition-all duration-300 group-hover:w-20"></div>
+                            <div
+                                class="text-white bg-primary bg-opacity-0 group-hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100 inline-block">
+                                Explore <i class="fas fa-arrow-right ml-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            <?php endfor; ?>
+        </div>
+        <?php if (count($categories) > $initialCategoryCount && !empty($categoriesSection['loadMoreButtonText'])): ?>
+            <div class="text-center mt-10">
+                <button id="load-more-categories"
+                    class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors inline-flex items-center">
+                    <span><?= $categoriesSection['loadMoreButtonText'] ?></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 animate-bounce" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                </button>
+            </div>
         <?php endif; ?>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-<?= $categoriesSection['categoriesPerRow'] ?? 4 ?> gap-8" id="categories-container">
-        <?php
-        $initialCategoryCount = min(($categoriesSection['defaultRows'] ?? 1) * ($categoriesSection['categoriesPerRow'] ?? 4), count($categories));
-        for ($i = 0; $i < $initialCategoryCount; $i++):
-            $category = $categories[$i];
-            ?>
-            <div class="relative rounded-xl overflow-hidden group cursor-pointer shadow-lg">
-                <img src="<?= $category['image'] ?>" alt="<?= $category['title'] ?>"
-                    class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
-                <div
-                    class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80 group-hover:opacity-90 transition-all">
-                    <div class="absolute bottom-0 left-0 right-0 p-6">
-                        <h3 class="text-white text-xl font-bold mb-2"><?= $category['title'] ?></h3>
-                        <div class="w-10 h-1 bg-primary mb-4 transform transition-all duration-300 group-hover:w-20"></div>
-                        <button
-                            class="text-white bg-primary bg-opacity-0 group-hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100">
-                            Explore <i class="fas fa-arrow-right ml-1"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        <?php endfor; ?>
-    </div>
-    <?php if (count($categories) > $initialCategoryCount && !empty($categoriesSection['loadMoreButtonText'])): ?>
-    <div class="text-center mt-10">
-        <button id="load-more-categories"
-            class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors inline-flex items-center">
-            <span><?= $categoriesSection['loadMoreButtonText'] ?></span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 animate-bounce" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-        </button>
-    </div>
-    <?php endif; ?>
-</div>
 <?php endif; ?>
 
 <?php if (isset($partnersSection['active']) && $partnersSection['active'] && !empty($activePartners)): ?>
-<div class="bg-gray-50 py-8">
-    <div class="container mx-auto px-4">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold mb-4"><?= $partnersSection['title'] ?></h2>
-            <?php if (!empty($partnersSection['description'])): ?>
-                <p class="text-gray-600 max-w-2xl mx-auto"><?= $partnersSection['description'] ?></p>
-            <?php endif; ?>
-        </div>
+    <div class="bg-gray-50 py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-4"><?= $partnersSection['title'] ?></h2>
+                <?php if (!empty($partnersSection['description'])): ?>
+                    <p class="text-gray-600 max-w-2xl mx-auto"><?= $partnersSection['description'] ?></p>
+                <?php endif; ?>
+            </div>
 
-        <div class="partners-carousel relative">
-            <div class="swiper partners-slider">
-                <div class="swiper-wrapper">
-                    <?php foreach (array_chunk($activePartners, 5) as $partnerGroup): ?>
-                        <div class="swiper-slide">
-                            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
-                                <?php foreach ($partnerGroup as $partner): ?>
-                                    <?php 
-                                    $partnerLink = '#';
-                                    $targetAttr = '';
-                                    if (isset($partner['hasLink']) && $partner['hasLink'] && !empty($partner['redirectLink'])) {
-                                        $partnerLink = $partner['redirectLink']; // Direct URL, not prefixed with BASE_URL
-                                        $targetAttr = 'target="_blank"';
-                                    }
-                                    ?>
-                                    <a href="<?= $partnerLink ?>" <?= $targetAttr ?>
-                                        class="partner-card bg-white rounded-lg p-4 md:p-6 shadow-md hover:shadow-lg transition-all duration-300 flex flex-col items-center justify-center h-32 md:h-40">
-                                        <?php if (!empty($partner['logo'])): ?>
-                                            <img src="<?= BASE_URL . $partner['logo'] ?>" alt="<?= $partner['name'] ?>"
-                                                class="h-12 md:h-16 object-contain mb-2 md:mb-4">
-                                        <?php else: ?>
-                                            <img src="https://placehold.co/200x100?text=<?= urlencode($partner['name']) ?>" alt="<?= $partner['name'] ?>"
-                                                class="h-12 md:h-16 object-contain mb-2 md:mb-4">
-                                        <?php endif; ?>
-                                        <p class="text-center font-medium text-gray-800 text-sm md:text-base">
-                                            <?= $partner['name'] ?>
-                                        </p>
-                                    </a>
-                                <?php endforeach; ?>
+            <div class="partners-carousel relative">
+                <div class="swiper partners-slider">
+                    <div class="swiper-wrapper">
+                        <?php foreach (array_chunk($activePartners, 5) as $partnerGroup): ?>
+                            <div class="swiper-slide">
+                                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
+                                    <?php foreach ($partnerGroup as $partner): ?>
+                                        <?php
+                                        $partnerLink = '#';
+                                        $targetAttr = '';
+                                        if (isset($partner['hasLink']) && $partner['hasLink'] && !empty($partner['redirectLink'])) {
+                                            $partnerLink = $partner['redirectLink']; // Direct URL, not prefixed with BASE_URL
+                                            $targetAttr = 'target="_blank"';
+                                        }
+                                        ?>
+                                        <a href="<?= $partnerLink ?>" <?= $targetAttr ?>
+                                            class="partner-card bg-white rounded-lg p-4 md:p-6 shadow-md hover:shadow-lg transition-all duration-300 flex flex-col items-center justify-center h-32 md:h-40">
+                                            <?php if (!empty($partner['logo'])): ?>
+                                                <img src="<?= BASE_URL . $partner['logo'] ?>" alt="<?= $partner['name'] ?>"
+                                                    class="h-12 md:h-16 object-contain mb-2 md:mb-4">
+                                            <?php else: ?>
+                                                <img src="https://placehold.co/200x100?text=<?= urlencode($partner['name']) ?>"
+                                                    alt="<?= $partner['name'] ?>" class="h-12 md:h-16 object-contain mb-2 md:mb-4">
+                                            <?php endif; ?>
+                                            <p class="text-center font-medium text-gray-800 text-sm md:text-base">
+                                                <?= $partner['name'] ?>
+                                            </p>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div
+                    class="swiper-button-next partners-next absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full shadow-md p-3 z-10 hidden md:flex">
+                </div>
+                <div
+                    class="swiper-button-prev partners-prev absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full shadow-md p-3 z-10 hidden md:flex">
                 </div>
             </div>
-            <div
-                class="swiper-button-next partners-next absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full shadow-md p-3 z-10 hidden md:flex">
-            </div>
-            <div
-                class="swiper-button-prev partners-prev absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full shadow-md p-3 z-10 hidden md:flex">
-            </div>
-        </div>
 
-        <?php if (!empty($partnersSection['ctaButtonText']) && !empty($partnersSection['ctaButtonUrl'])): ?>
-        <div class="text-center mt-10">
-            <a href="<?= BASE_URL . $partnersSection['ctaButtonUrl'] ?>"
-                class="inline-flex items-center px-6 py-3 border border-primary text-primary font-medium rounded-lg hover:bg-primary hover:text-white transition-colors duration-300">
-                <?= $partnersSection['ctaButtonText'] ?>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-            </a>
+            <?php if (!empty($partnersSection['ctaButtonText']) && !empty($partnersSection['ctaButtonUrl'])): ?>
+                <div class="text-center mt-10">
+                    <a href="<?= BASE_URL . $partnersSection['ctaButtonUrl'] ?>"
+                        class="inline-flex items-center px-6 py-3 border border-primary text-primary font-medium rounded-lg hover:bg-primary hover:text-white transition-colors duration-300">
+                        <?= $partnersSection['ctaButtonText'] ?>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                    </a>
+                </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
     </div>
-</div>
 <?php endif; ?>
 
 <style>
@@ -443,6 +488,36 @@ ob_start();
     .partners-next:after,
     .partners-prev:after {
         font-size: 14px !important;
+    }
+
+    /* Text truncation utilities */
+    .truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-clamp: 2;
+    }
+
+    /* Product image hover effects */
+    .product-image-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .product-overlay {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .product-image-container:hover .product-overlay {
+        opacity: 1;
     }
 </style>
 
@@ -520,20 +595,33 @@ ob_start();
                 loadMoreProductsBtn.querySelector('span').textContent = 'Loading...';
 
                 setTimeout(() => {
+                    const products = <?= json_encode($featuredProducts) ?>;
+
                     for (let i = productsLoaded; i < productsLoaded + productsToLoad; i++) {
-                        const product = <?= json_encode($featuredProducts) ?>[i];
+                        if (!products[i]) continue;
+
+                        const product = products[i];
+                        const productImage = product.images && product.images.length > 0 ?
+                            product.images[0] : 'https://placehold.co/600x400?text=No+Image';
+
                         const productElement = document.createElement('div');
                         productElement.className = 'bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 opacity-0';
                         productElement.innerHTML = `
-                            <div class="relative">
-                                <img src="${product.image}" alt="${product.title}" class="w-full h-48 object-cover">
-                                <div class="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-semibold">HOT</div>
+                            <div class="relative product-image-container">
+                                <a href="<?= BASE_URL ?>view/product/${product.id}">
+                                    <img src="${productImage}" alt="${product.title}" class="w-full h-48 object-cover">
+                                    <div class="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-semibold">HOT</div>
+                                    <div class="product-overlay absolute inset-0 bg-black bg-opacity-60 opacity-0 transition-opacity flex items-center justify-center">
+                                        <div class="text-white bg-primary px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                                            Details <i class="fas fa-arrow-right ml-1"></i>
+                                        </div>
+                                    </div>
+                                </a>
                             </div>
                             <div class="p-5">
-                                <h3 class="font-bold text-lg mb-2">${product.title}</h3>
-                                <p class="text-gray-600 mb-4 h-12">${product.description}</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-primary font-bold text-xl">${product.price}</span>
+                                <h3 class="font-bold text-lg mb-2 truncate" title="${product.title}">${product.title}</h3>
+                                <p class="text-gray-600 mb-4 line-clamp-2 h-12">${product.description}</p>
+                                <div class="flex justify-end items-center">
                                     <div class="flex space-x-2">
                                         <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
                                             <i class="fas fa-shopping-cart mr-1"></i> Buy
@@ -587,19 +675,24 @@ ob_start();
                 loadMoreCategoriesBtn.querySelector('span').textContent = 'Loading...';
 
                 setTimeout(() => {
+                    const categories = <?= json_encode($categories) ?>;
+
                     for (let i = categoriesLoaded; i < categoriesLoaded + categoriesToLoad; i++) {
-                        const category = <?= json_encode($categories) ?>[i];
-                        const categoryElement = document.createElement('div');
-                        categoryElement.className = 'relative rounded-xl overflow-hidden group cursor-pointer shadow-lg opacity-0';
+                        if (!categories[i]) continue;
+
+                        const category = categories[i];
+                        const categoryElement = document.createElement('a');
+                        categoryElement.href = `<?= BASE_URL ?>view/category/${category.id}`;
+                        categoryElement.className = 'block relative rounded-xl overflow-hidden group cursor-pointer shadow-lg opacity-0';
                         categoryElement.innerHTML = `
-                            <img src="${category.image}" alt="${category.title}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
+                            <img src="${category.image}" alt="${category.name}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
                             <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80 group-hover:opacity-90 transition-all">
                                 <div class="absolute bottom-0 left-0 right-0 p-6">
-                                    <h3 class="text-white text-xl font-bold mb-2">${category.title}</h3>
+                                    <h3 class="text-white text-xl font-bold mb-2 truncate" title="${category.name}">${category.name}</h3>
                                     <div class="w-10 h-1 bg-primary mb-4 transform transition-all duration-300 group-hover:w-20"></div>
-                                    <button class="text-white bg-primary bg-opacity-0 group-hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100">
+                                    <div class="text-white bg-primary bg-opacity-0 group-hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100 inline-block">
                                         Explore <i class="fas fa-arrow-right ml-1"></i>
-                                    </button>
+                                    </div>
                                 </div>
                             </div>
                         `;
