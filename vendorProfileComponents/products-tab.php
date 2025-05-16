@@ -1,6 +1,4 @@
-<!-- Products Tab -->
 <div id="products-tab" class="tab-pane active">
-    <!-- Filter and Sort -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div class="flex flex-col sm:flex-row gap-4 w-full">
             <select id="filter-category" class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto">
@@ -17,7 +15,6 @@
         </div>
     </div>
 
-    <!-- Products Grid -->
     <div id="products-container" class="masonry-grid">
         <div class="col-span-full text-center py-8 text-gray-500">
             No products found for this vendor.
@@ -91,12 +88,37 @@
         flex-direction: column;
         height: 100%;
     }
+
+    .login-note {
+        text-align: center;
+        font-size: 0.875rem;
+        color: #6b7280;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        border-top: 1px dashed #e5e7eb;
+    }
+
+    .login-btn {
+        display: block;
+        text-align: center;
+        background-color: #f3f4f6;
+        color: #4b5563;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .login-btn:hover {
+        background-color: #e5e7eb;
+        color: #374151;
+    }
 </style>
 
 <script>
-    // --------------------------------------------------
-    //  Helper: get first product image or placeholder
-    // --------------------------------------------------
     async function getProductImageUrl(product) {
         const placeholderText = encodeURIComponent((product.name || '').substring(0, 2));
         const placeholder = `https://placehold.co/400x300/f0f0f0/808080?text=${placeholderText}`;
@@ -109,7 +131,6 @@
                 return `${BASE_URL}img/products/${product.id}/${json.images[0]}`;
             }
         } catch (e) {
-            // ignore errors and fall back
         }
         return placeholder;
     }
@@ -154,20 +175,38 @@
             }
         });
 
-        // Event delegation for price reveal and view more prices
         document.addEventListener('click', function (e) {
-            // Handle view price button clicks
             if (e.target.classList.contains('view-price-btn')) {
+                if (!isLoggedIn) {
+                    if (typeof openAuthModal === 'function') {
+                        openAuthModal();
+                    }
+                    return false;
+                }
+
                 const priceValue = e.target.nextElementSibling;
                 priceValue.classList.remove('price-hidden');
                 e.target.classList.add('price-hidden');
             }
 
-            // Handle view more prices button clicks
             if (e.target.classList.contains('view-more-prices')) {
+                if (!isLoggedIn) {
+                    if (typeof openAuthModal === 'function') {
+                        openAuthModal();
+                    }
+                    return false;
+                }
+
                 const hiddenPrices = e.target.previousElementSibling.querySelectorAll('.hidden-price-row');
                 hiddenPrices.forEach(row => row.classList.remove('hidden'));
                 e.target.classList.add('hidden');
+            }
+
+            if (e.target.classList.contains('login-btn')) {
+                if (typeof openAuthModal === 'function') {
+                    openAuthModal();
+                }
+                return false;
             }
         });
     });
@@ -235,9 +274,6 @@
         renderProductsForDisplay(filtered, true);
     }
 
-    // --------------------------------------------------
-    //  Render: now async so we can await image fetch
-    // --------------------------------------------------
     async function renderProductsForDisplay(products, clearExisting = true) {
         const container = document.getElementById('products-container');
         if (clearExisting) {
@@ -249,31 +285,42 @@
         }
 
         for (const product of products) {
-            // fetch image (or placeholder)
             const imageUrl = await getProductImageUrl(product);
 
-            // Find lowest price for sorting
             let lowestPrice = 0;
             if (product.pricing && product.pricing.length > 0) {
                 lowestPrice = Math.min(...product.pricing.map(p => parseFloat(p.price)));
             }
 
-            // build pricing lines
+            let filteredPricing = product.pricing || [];
+            let hasRetailPrice = false;
+
+            if (!isLoggedIn) {
+                filteredPricing = filteredPricing.filter(p => p.price_category === 'retail');
+                if (filteredPricing.length > 0) {
+                    hasRetailPrice = true;
+                }
+            }
+
             let pricingLines = '';
             let hasHiddenPrices = false;
 
-            if (product.pricing && product.pricing.length > 0) {
+            if (filteredPricing.length > 0) {
                 const pricingContainer = document.createElement('div');
                 pricingContainer.className = 'pricing-container';
 
-                product.pricing.forEach((pr, index) => {
+                filteredPricing.forEach((pr, index) => {
                     const unitParts = pr.unit_name.split(' ');
                     const siUnit = unitParts[0] || '';
                     const packageName = unitParts.slice(1).join(' ') || '';
                     const formattedUnit = `${pr.package_size} ${siUnit} ${packageName}`.trim();
-                    const categoryDisplay = pr.price_category.charAt(0).toUpperCase() + pr.price_category.slice(1);
 
-                    // Determine if this price row should be hidden (if index >= 2)
+                    const categoryDisplay = isLoggedIn ?
+                        (pr.price_category.charAt(0).toUpperCase() + pr.price_category.slice(1)) : '';
+
+                    const deliveryCapacity = isLoggedIn && pr.delivery_capacity ?
+                        `<span class="ml-2">• ${pr.price_category === 'retail' ? 'Max' : 'Min'} Capacity: ${pr.delivery_capacity}</span>` : '';
+
                     const hiddenClass = index >= 2 ? 'hidden hidden-price-row' : '';
 
                     if (index >= 2) {
@@ -284,22 +331,20 @@
                         <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 rounded ${hiddenClass}">
                             <div class="flex flex-col">
                                 <span class="font-medium text-gray-700">${escapeHtml(formattedUnit)}</span>
-                                <div class="flex items-center text-xs text-gray-500">
-                                    <span>${categoryDisplay}</span>
-                                    ${pr.delivery_capacity ?
-                            `<span class="ml-2">• ${pr.price_category === 'retail' ? 'Max' : 'Min'} Capacity: ${pr.delivery_capacity}</span>` :
-                            ''}
-                                </div>
+                                ${(categoryDisplay || deliveryCapacity) ?
+                            `<div class="flex items-center text-xs text-gray-500">
+                                        ${categoryDisplay ? `<span>${categoryDisplay}</span>` : ''}
+                                        ${deliveryCapacity}
+                                    </div>` : ''}
                             </div>
                             <div class="price-container">
-                                <span class="view-price-btn">View Price</span>
+                                <span class="view-price-btn" data-requires-login="${!isLoggedIn}">View Price</span>
                                 <span class="price-hidden text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
                             </div>
                         </div>
                     `;
                 });
 
-                // Add "View More" button if there are hidden prices
                 if (hasHiddenPrices) {
                     pricingLines = `
                         <div class="pricing-rows">
@@ -308,11 +353,26 @@
                         <div class="view-more-prices">View More Prices</div>
                     `;
                 }
+
+                if (!isLoggedIn && hasRetailPrice) {
+                    pricingLines += `
+                        <div class="login-note">
+                            Login to view more price categories
+                        </div>
+                    `;
+                }
             } else {
-                pricingLines = `<div class="text-sm text-gray-600 italic p-2">No price data</div>`;
+                if (!isLoggedIn) {
+                    pricingLines = `
+                        <button class="login-btn">
+                            Login to see Price Categories
+                        </button>
+                    `;
+                } else {
+                    pricingLines = `<div class="text-sm text-gray-600 italic p-2">No price data</div>`;
+                }
             }
 
-            // create card
             const productCard = document.createElement('div');
             productCard.className = 'product-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow';
             productCard.dataset.lowestPrice = lowestPrice.toString();
@@ -327,19 +387,19 @@
                         ${pricingLines}
                     </div>
                     <div class="grid grid-cols-2 gap-3 mt-auto">
-                        <button class="bg-red-600 text-white py-2 px-3 rounded-md text-sm hover:bg-red-700 transition-colors w-full flex items-center justify-center gap-2">
+                        <button onclick="${!isLoggedIn ? 'openAuthModal(); return false;' : 'buyInStore(\'' + product.store_product_id + '\')'}" class="bg-red-600 text-white py-2 px-3 rounded-md text-sm hover:bg-red-700 transition-colors w-full flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             Buy in Store
                         </button>
-                        <button onclick="showProductDetails('${product.store_product_id}')" class="bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-100 transition-colors w-full flex items-center justify-center gap-2">
+                        <a href="${BASE_URL}view/product/${product.store_product_id}" target="_blank" class="bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-100 transition-colors w-full flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                             Shop Now
-                        </button>
+                        </a>
                     </div>
                 </div>
             `;
@@ -354,5 +414,14 @@
             return;
         }
         showToast(`Showing details for ${product.name}`, "success");
+    }
+
+    function buyInStore(productId) {
+        const product = allProducts.find(p => p.store_product_id === productId);
+        if (!product) {
+            showToast("Product details not found.", "error");
+            return;
+        }
+        showToast(`Adding ${product.name} to cart`, "success");
     }
 </script>

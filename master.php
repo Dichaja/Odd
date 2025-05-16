@@ -719,16 +719,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script>
-        function sendEmailOTP(email, otp) {
-            console.log("Demo: Sending Email OTP to", email, "OTP:", otp);
-            return true;
-        }
-
-        function sendSMSOTP(phone, otp) {
-            console.log("Demo: Sending SMS OTP to", phone, "OTP:", otp);
-            return true;
-        }
-
         // New toast function
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
