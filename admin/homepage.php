@@ -649,7 +649,7 @@ ob_start();
                                         <img src="<?= BASE_URL . $partner['logo'] ?>" alt="<?= $partner['name'] ?>"
                                             class="max-h-full max-w-full object-contain">
                                     <?php else: ?>
-                                        <img src="https://placehold.co/200x100/text=<?= urlencode($partner['name']) ?>"
+                                        <img src="https://placehold.co/200x100?text=<?= urlencode($partner['name']) ?>"
                                             alt="<?= $partner['name'] ?>" class="max-h-full max-w-full object-contain">
                                     <?php endif; ?>
                                     <div class="absolute top-2 right-2 flex space-x-1">
