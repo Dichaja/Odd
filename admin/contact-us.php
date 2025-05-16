@@ -1,6 +1,6 @@
 <?php
-$pageTitle = 'Mapping';
-$activeNav = 'mapping';
+$pageTitle = 'Manage Contact Us';
+$activeNav = 'contact-us';
 ob_start();
 ?>
 

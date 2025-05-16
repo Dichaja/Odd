@@ -40,41 +40,48 @@ $menuItems = [
     'overview' => [
         'title' => 'Overview',
         'items' => [
-            'dashboard' => ['title' => 'Dashboard', 'icon' => 'fa-tachometer-alt', 'notifications' => 0],
-            'mapping' => ['title' => 'Mapping', 'icon' => 'fa-map-marked-alt', 'notifications' => 0],
+            'dashboard' => ['title' => 'Dashboard', 'icon' => 'fa-tachometer-alt']
+        ]
+    ],
+    'pages' => [
+        'title' => 'Pages',
+        'items' => [
+            'homepage' => ['title' => 'Homepage', 'icon' => 'fa-home'],
+            'about-us' => ['title' => 'About Us', 'icon' => 'fa-info-circle'],
+            'contact-us' => ['title' => 'Contact Us', 'icon' => 'fa-envelope'],
         ]
     ],
     'finance' => [
         'title' => 'Finance',
         'items' => [
-            'cash-account' => ['title' => 'Cash Account', 'icon' => 'fa-wallet', 'notifications' => 0],
-            'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card', 'notifications' => 0],
+            'cash-account' => ['title' => 'Cash Account', 'icon' => 'fa-wallet'],
+            'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card'],
         ]
     ],
     'management' => [
         'title' => 'Management',
         'items' => [
-            'products' => ['title' => 'Products', 'icon' => 'fa-box', 'notifications' => 0],
-            'vendor-stores' => ['title' => 'Vendor Stores', 'icon' => 'fa-store', 'notifications' => 0],
-            'fundi' => ['title' => 'Fundi', 'icon' => 'fa-hard-hat', 'notifications' => 0],
-            'order-catalogue' => ['title' => 'Order Catalogue', 'icon' => 'fa-book', 'notifications' => 0],
-            'member-subscription' => ['title' => 'Subscriptions', 'icon' => 'fa-users', 'notifications' => 0],
-            'quotations' => ['title' => 'Quotations', 'icon' => 'fa-file-invoice-dollar', 'notifications' => 0],
+            'products' => ['title' => 'Products', 'icon' => 'fa-box'],
+            'vendor-stores' => ['title' => 'Vendor Stores', 'icon' => 'fa-store'],
+            'fundi' => ['title' => 'Fundi', 'icon' => 'fa-hard-hat'],
+            'order-catalogue' => ['title' => 'Order Catalogue', 'icon' => 'fa-book'],
+            'member-subscription' => ['title' => 'Subscriptions', 'icon' => 'fa-users'],
+            'quotations' => ['title' => 'Quotations', 'icon' => 'fa-file-invoice-dollar'],
         ]
     ],
     'marketing' => [
         'title' => 'Marketing',
         'items' => [
-            'schedule-ads' => ['title' => 'Schedule Ads', 'icon' => 'fa-calendar-alt', 'notifications' => 0],
-            'ads-management' => ['title' => 'Ads Management', 'icon' => 'fa-ad', 'notifications' => 0],
+            'schedule-ads' => ['title' => 'Schedule Ads', 'icon' => 'fa-calendar-alt'],
+            'ads-management' => ['title' => 'Ads Management', 'icon' => 'fa-ad'],
         ]
     ],
     'analytics' => [
         'title' => 'Analytics',
         'items' => [
-            'search-log' => ['title' => 'Search Log', 'icon' => 'fa-search', 'notifications' => 0],
-            'page-activity' => ['title' => 'Page Activity', 'icon' => 'fa-chart-line', 'notifications' => 0],
-            'sessions' => ['title' => 'Sessions', 'icon' => 'fa-history', 'notifications' => 0],
+            'search-log' => ['title' => 'Search Log', 'icon' => 'fa-search'],
+            'page-activity' => ['title' => 'Page Activity', 'icon' => 'fa-chart-line'],
+            'sessions' => ['title' => 'Sessions', 'icon' => 'fa-history'],
         ]
     ],
 ];
@@ -169,7 +176,8 @@ $menuItems = [
 
 <body class="bg-gray-50 font-rubik">
     <div class="flex min-h-screen">
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <aside id="sidebar"
+            class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
                     <a href="<?= BASE_URL ?>admin/dashboard" class="flex items-center space-x-3">
@@ -182,18 +190,12 @@ $menuItems = [
                         <div class="nav-category"><?= htmlspecialchars($category['title']) ?></div>
                         <div class="space-y-1 mb-2">
                             <?php foreach ($category['items'] as $itemKey => $item): ?>
-                                <a href="<?= BASE_URL ?>admin/<?= $itemKey ?>"
-                                    id="nav-<?= $itemKey ?>"
-                                    class="group flex items-center justify-between px-4 py-2.5 text-sm rounded-lg transition-all duration-200 <?= $activeNav === $itemKey ? 'bg-primary/10 text-primary active-nav-item' : 'text-gray-text hover:bg-gray-50 hover:text-primary' ?>">
+                                <a href="<?= BASE_URL ?>admin/<?= $itemKey ?>" id="nav-<?= $itemKey ?>"
+                                    class="group flex items-center px-4 py-2.5 text-sm rounded-lg transition-all duration-200 <?= $activeNav === $itemKey ? 'bg-primary/10 text-primary active-nav-item' : 'text-gray-text hover:bg-gray-50 hover:text-primary' ?>">
                                     <div class="flex items-center gap-3">
                                         <i class="fas <?= $item['icon'] ?> w-5 h-5"></i>
                                         <span><?= htmlspecialchars($item['title']) ?></span>
                                     </div>
-                                    <?php if ($item['notifications'] > 0): ?>
-                                        <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-primary text-white min-w-[1.5rem]">
-                                            <?= $item['notifications'] ?>
-                                        </span>
-                                    <?php endif; ?>
                                 </a>
                             <?php endforeach; ?>
                         </div>
@@ -202,11 +204,13 @@ $menuItems = [
 
                 <div class="p-4 border-t border-gray-100">
                     <div class="space-y-2">
-                        <a href="users" class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-primary transition-colors duration-200">
+                        <a href="users"
+                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-primary transition-colors duration-200">
                             <i class="fas fa-users w-5 h-5 mr-3"></i>
                             Users
                         </a>
-                        <a href="#" class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-primary transition-colors duration-200">
+                        <a href="#"
+                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-primary transition-colors duration-200">
                             <i class="fas fa-cog w-5 h-5 mr-3"></i>
                             Settings
                         </a>
@@ -219,35 +223,44 @@ $menuItems = [
             <header class="sticky top-0 z-40 bg-white border-b border-gray-100">
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
-                        <button id="sidebarToggle" class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
+                        <button id="sidebarToggle"
+                            class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
-                        <h1 class="text-xl font-semibold text-secondary"><?= htmlspecialchars($pageTitle ?? 'Dashboard') ?></h1>
+                        <h1 class="text-xl font-semibold text-secondary">
+                            <?= htmlspecialchars($pageTitle ?? 'Dashboard') ?></h1>
                     </div>
 
                     <div class="flex items-center gap-2">
                         <div class="relative" id="userDropdown">
-                            <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2" title="Last login: <?= htmlspecialchars($formattedLastLogin) ?>">
+                            <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2"
+                                title="Last login: <?= htmlspecialchars($formattedLastLogin) ?>">
                                 <div class="user-initials"><?= htmlspecialchars($userInitials) ?></div>
-                                <span class="hidden md:block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
+                                <span
+                                    class="hidden md:block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
                                 <i class="fas fa-chevron-down text-sm text-gray-400"></i>
                             </button>
-                            <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
+                            <div id="userDropdownMenu"
+                                class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
                                 <div class="px-4 py-2 border-b border-gray-100 mb-1">
                                     <p class="text-sm font-medium"><?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500"><?= htmlspecialchars($userEmail) ?></p>
-                                    <p class="text-xs text-gray-400 mt-1">Last login: <?= htmlspecialchars($formattedLastLogin) ?></p>
+                                    <p class="text-xs text-gray-400 mt-1">Last login:
+                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
                                 </div>
-                                <a href="<?= BASE_URL ?>admin/profile" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                <a href="<?= BASE_URL ?>admin/profile"
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                                     <i class="fas fa-user w-5 h-5 text-gray-400"></i>
                                     Profile
                                 </a>
-                                <a href="<?= BASE_URL ?>admin/settings" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                <a href="<?= BASE_URL ?>admin/settings"
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                                     <i class="fas fa-cog w-5 h-5 text-gray-400"></i>
                                     Settings
                                 </a>
                                 <div class="my-2 border-t border-gray-100"></div>
-                                <a href="javascript:void(0);" onclick="logoutUser(); return false;" class="flex items-center gap-3 px-4 py-2.5 text-sm text-primary hover:bg-gray-50">
+                                <a href="javascript:void(0);" onclick="logoutUser(); return false;"
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-primary hover:bg-gray-50">
                                     <i class="fas fa-sign-out-alt w-5 h-5"></i>
                                     Logout
                                 </a>
@@ -311,7 +324,7 @@ $menuItems = [
             }
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const activeNavItem = document.querySelector('.active-nav-item');
             const sidebarNav = document.getElementById('sidebarNav');
 
@@ -326,12 +339,12 @@ $menuItems = [
 
         function logoutUser() {
             fetch('<?= BASE_URL ?>auth/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
