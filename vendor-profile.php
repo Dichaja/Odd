@@ -1098,7 +1098,8 @@ ob_start();
     window.closeModal = function (modalId) {
         document.getElementById(modalId).style.display = 'none';
 
-        // Reset cropper if closing logo modal
+        document.body.style.overflow = 'auto';
+
         if (modalId === 'edit-logo-modal') {
             if (window.cropper) {
                 window.cropper.destroy();
@@ -1109,7 +1110,6 @@ ob_start();
             document.getElementById('logo-file-input').value = '';
         }
 
-        // Reset cover cropper if closing cover modal
         if (modalId === 'edit-cover-modal') {
             if (window.coverCropper) {
                 window.coverCropper.destroy();
