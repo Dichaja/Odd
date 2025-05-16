@@ -973,12 +973,18 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
         function openAuthModal() {
             const m = document.getElementById('auth-modal');
             const c = m.querySelector('.modal-container');
+
             m.classList.remove('hidden');
             m.classList.add('flex');
+
+            m.style.display = 'flex';
+
             c.offsetHeight;
             c.classList.add('active');
+
             document.body.style.overflow = 'hidden';
         }
+
 
         function closeAuthModal() {
             const m = document.getElementById('auth-modal');
