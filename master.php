@@ -131,6 +131,35 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             position: relative
         }
 
+        /* New toast styles */
+        .toast {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            z-index: 10000;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .toast-success {
+            background-color: #10B981;
+        }
+
+        .toast-error {
+            background-color: #EF4444;
+        }
+
+        .toast-show {
+            opacity: 1;
+        }
+
+        /* Keep the notification container for backward compatibility */
         .notification-container {
             position: fixed;
             bottom: 2rem;
@@ -699,6 +728,30 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             console.log("Demo: Sending SMS OTP to", phone, "OTP:", otp);
             return true;
         }
+
+        // New toast function
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            // Trigger reflow and show
+            requestAnimationFrame(() => {
+                toast.classList.add('toast-show');
+            });
+
+            // Hide and remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('toast-show');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        }
+
+        // Keep the original notification system but update it to use the new toast design
         class NotificationSystem {
             constructor() {
                 this.container = document.getElementById('notification-container');
@@ -707,35 +760,37 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
             }
             show(o) {
                 const {
-                    type = 'info', title, message, duration = 10000
+                    type = 'info', title, message, duration = 5000
                 } = o;
+
+                // Use the new toast design
+                const toast = document.createElement('div');
+                toast.className = `toast ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+                toast.textContent = message;
+
+                document.body.appendChild(toast);
+
+                // Trigger reflow and show
+                requestAnimationFrame(() => {
+                    toast.classList.add('toast-show');
+                });
+
                 const id = this.counter++;
-                const n = document.createElement('div');
-                n.className = 'notification ' + type;
-                n.setAttribute('role', 'alert');
-                let icon;
-                if (type === 'success') icon = '<i class="fas fa-check-circle"></i>';
-                else if (type === 'error') icon = '<i class="fas fa-exclamation-circle"></i>';
-                else if (type === 'warning') icon = '<i class="fas fa-exclamation-triangle"></i>';
-                else icon = '<i class="fas fa-info-circle"></i>';
-                n.innerHTML = `<div class="icon">${icon}</div><div class="content">${title ? `<div class="title">${title}</div>` : ''}<div class="message">${message}</div></div><button class="close" aria-label="Close notification"><i class="fas fa-times"></i></button>`;
-                this.container.appendChild(n);
-                this.notifications.set(id, n);
-                n.offsetHeight;
-                n.classList.add('show');
-                const closeBtn = n.querySelector('.close');
-                closeBtn.addEventListener('click', () => this.close(id));
+                this.notifications.set(id, toast);
+
+                // Hide and remove after duration
                 if (duration > 0) {
                     setTimeout(() => this.close(id), duration);
                 }
+
                 return id;
             }
             close(id) {
-                const n = this.notifications.get(id);
-                if (n) {
-                    n.classList.remove('show');
+                const toast = this.notifications.get(id);
+                if (toast) {
+                    toast.classList.remove('toast-show');
                     setTimeout(() => {
-                        n.remove();
+                        toast.remove();
                         this.notifications.delete(id);
                     }, 300);
                 }
