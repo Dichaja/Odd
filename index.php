@@ -3,30 +3,31 @@ require_once __DIR__ . '/config/config.php';
 $pageTitle = $pageTitle ?? 'Zzimba Online Uganda';
 $activeNav = $activeNav ?? 'home';
 
-$heroSlides = [
-    [
-        'image' => 'https://placehold.co/1800x600',
-        'title' => 'Buy Online<br>Deliver On-site',
-        'subtitle' => 'Quality building materials delivered to your doorstep',
-        'buttonText' => 'Buy Now',
-        'buttonUrl' => '#'
-    ],
-    [
-        'image' => 'https://placehold.co/1800x600',
-        'title' => 'Construction Procurement<br>Made Easy',
-        'subtitle' => 'Discover our wide range of products',
-        'buttonText' => 'Order Now',
-        'buttonUrl' => '#'
-    ],
-    [
-        'image' => 'https://placehold.co/1800x600',
-        'title' => '100s of Vendors<br>1000s of Supplies',
-        'subtitle' => 'Latest trends in building materials',
-        'buttonText' => 'Join Now',
-        'buttonUrl' => '#'
-    ]
-];
+// Load homepage data from JSON file
+function loadHomepageData() {
+    $filePath = __DIR__ . '/page-data/homepage/index.json';
 
+    if (file_exists($filePath)) {
+        $jsonData = file_get_contents($filePath);
+        return json_decode($jsonData, true) ?: [];
+    }
+
+    return [];
+}
+
+// Load data from JSON
+$homepageData = loadHomepageData();
+
+// Extract data from the loaded JSON
+$heroSlides = $homepageData['heroSlides'] ?? [];
+$requestQuoteSection = $homepageData['requestQuoteSection'] ?? [];
+$keyFeatures = $homepageData['keyFeatures'] ?? [];
+$featuredProductsSection = $homepageData['featuredProductsSection'] ?? [];
+$categoriesSection = $homepageData['categoriesSection'] ?? [];
+$partnersSection = $homepageData['partnersSection'] ?? [];
+$partners = $homepageData['partners'] ?? [];
+
+// Fallback data for featured products (not in JSON)
 $featuredProducts = [
     [
         'image' => 'https://placehold.co/600x400',
@@ -78,6 +79,7 @@ $featuredProducts = [
     ]
 ];
 
+// Fallback data for categories (not in JSON)
 $categories = [
     [
         'image' => 'https://placehold.co/800x450',
@@ -113,40 +115,51 @@ $categories = [
     ]
 ];
 
-$partners = [
-    ['name' => 'Rutungu Investments', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'Jonik Hardware Supplies', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'Picaso Hardware', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'Ug Martyrs Construction', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'Shule Electricals', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'Cheap General Hardware', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'A&C Concrete', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'SEMU Hardware', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => "God's Mercy Hardware", 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'Rehoboth Plumbing', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'Mirage Tiles', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'HW Hardware', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'Kiwa Paints Uganda Ltd', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'STOTA Africa', 'logo' => 'https://placehold.co/200x100'],
-    ['name' => 'Utopia', 'logo' => 'https://placehold.co/200x100']
-];
+// Filter active hero slides and sort by order
+$activeHeroSlides = array_filter($heroSlides, function($slide) {
+    return isset($slide['active']) && $slide['active'] === true;
+});
+usort($activeHeroSlides, function($a, $b) {
+    return ($a['order'] ?? 999) - ($b['order'] ?? 999);
+});
+
+// Filter active key features and sort by order
+$activeKeyFeatures = array_filter($keyFeatures, function($feature) {
+    return isset($feature['active']) && $feature['active'] === true;
+});
+usort($activeKeyFeatures, function($a, $b) {
+    return ($a['order'] ?? 999) - ($b['order'] ?? 999);
+});
+
+// Filter active partners and sort by order
+$activePartners = array_filter($partners, function($partner) {
+    return isset($partner['active']) && $partner['active'] === true;
+});
+usort($activePartners, function($a, $b) {
+    return ($a['order'] ?? 999) - ($b['order'] ?? 999);
+});
 
 ob_start();
 ?>
 <div class="swiper hero-slider">
     <div class="swiper-wrapper" id="hero-slider-wrapper">
-        <?php foreach ($heroSlides as $slide): ?>
+        <?php foreach ($activeHeroSlides as $slide): ?>
             <div class="swiper-slide relative">
                 <div class="hero-aspect-ratio w-full">
-                    <img src="<?= $slide['image'] ?>" alt="<?= strip_tags($slide['title']) ?>"
-                        class="w-full h-full object-cover">
+                    <?php if (!empty($slide['image'])): ?>
+                        <img src="<?= BASE_URL . $slide['image'] ?>" alt="<?= strip_tags($slide['title']) ?>"
+                            class="w-full h-full object-cover">
+                    <?php else: ?>
+                        <img src="https://placehold.co/1800x600?text=<?= urlencode(strip_tags($slide['title'])) ?>" alt="<?= strip_tags($slide['title']) ?>"
+                            class="w-full h-full object-cover">
+                    <?php endif; ?>
                     <div class="absolute inset-0 bg-black bg-opacity-50"></div>
                     <div class="absolute inset-0 flex items-center">
                         <div class="container mx-auto px-4">
                             <div class="text-white max-w-2xl">
                                 <h1 class="text-2xl md:text-5xl font-bold mb-3 md:mb-6"><?= $slide['title'] ?></h1>
                                 <p class="text-base md:text-xl mb-4 md:mb-8"><?= $slide['subtitle'] ?></p>
-                                <a href="<?= $slide['buttonUrl'] ?>"
+                                <a href="<?= BASE_URL . $slide['buttonUrl'] ?>"
                                     class="bg-primary text-white px-4 md:px-8 py-2 md:py-3 rounded-lg text-sm md:text-lg hover:bg-red-600 transition-colors"><?= $slide['buttonText'] ?></a>
                             </div>
                         </div>
@@ -160,49 +173,50 @@ ob_start();
     <div class="swiper-button-prev text-white hidden md:flex"></div>
 </div>
 
+<?php if (isset($requestQuoteSection['active']) && $requestQuoteSection['active']): ?>
 <div class="bg-gray-50 py-8">
     <div class="container mx-auto px-4 text-center">
-        <a href="<?= BASE_URL ?>request-for-quote"
+        <a href="<?= BASE_URL . $requestQuoteSection['buttonUrl'] ?>"
             class="inline-flex items-center px-6 py-3 border border-transparent text-lg font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 shadow-md hover:shadow-lg">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            Request a Quote Now
+            <?= $requestQuoteSection['buttonText'] ?>
         </a>
-        <p class="mt-3 text-gray-600">Get personalized quotes for your construction needs</p>
+        <?php if (!empty($requestQuoteSection['description'])): ?>
+            <p class="mt-3 text-gray-600"><?= $requestQuoteSection['description'] ?></p>
+        <?php endif; ?>
     </div>
 </div>
+<?php endif; ?>
 
+<?php if (!empty($activeKeyFeatures)): ?>
 <div class="container mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="text-center bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            <div class="text-4xl mb-4">🏗️</div>
-            <h3 class="text-xl font-semibold mb-2">Quality Materials</h3>
-            <p class="text-gray-600">Premium construction supplies from trusted manufacturers</p>
-        </div>
-        <div class="text-center bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            <div class="text-4xl mb-4">🚚</div>
-            <h3 class="text-xl font-semibold mb-2">Fast Delivery</h3>
-            <p class="text-gray-600">Next-day delivery available on most items</p>
-        </div>
-        <div class="text-center bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            <div class="text-4xl mb-4">💪</div>
-            <h3 class="text-xl font-semibold mb-2">Expert Support</h3>
-            <p class="text-gray-600">Professional advice from industry experts</p>
-        </div>
+    <div class="grid grid-cols-1 md:grid-cols-<?= min(count($activeKeyFeatures), 3) ?> gap-8">
+        <?php foreach ($activeKeyFeatures as $feature): ?>
+            <div class="text-center bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                <div class="text-4xl mb-4"><?= $feature['icon'] ?></div>
+                <h3 class="text-xl font-semibold mb-2"><?= $feature['title'] ?></h3>
+                <p class="text-gray-600"><?= $feature['description'] ?></p>
+            </div>
+        <?php endforeach; ?>
     </div>
 </div>
+<?php endif; ?>
 
+<?php if (isset($featuredProductsSection['active']) && $featuredProductsSection['active']): ?>
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-bold">Featured Products</h2>
-        <a href="#" class="text-primary hover:text-red-700 font-medium">View All Products →</a>
+        <h2 class="text-3xl font-bold"><?= $featuredProductsSection['title'] ?></h2>
+        <?php if (!empty($featuredProductsSection['linkText']) && !empty($featuredProductsSection['linkUrl'])): ?>
+            <a href="<?= BASE_URL . $featuredProductsSection['linkUrl'] ?>" class="text-primary hover:text-red-700 font-medium"><?= $featuredProductsSection['linkText'] ?></a>
+        <?php endif; ?>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" id="featured-products-container">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-<?= $featuredProductsSection['productsPerRow'] ?? 4 ?> gap-8" id="featured-products-container">
         <?php
-        $initialProductCount = 4;
+        $initialProductCount = min(($featuredProductsSection['defaultRows'] ?? 1) * ($featuredProductsSection['productsPerRow'] ?? 4), count($featuredProducts));
         for ($i = 0; $i < $initialProductCount; $i++):
             $product = $featuredProducts[$i];
             ?>
@@ -233,26 +247,32 @@ ob_start();
             </div>
         <?php endfor; ?>
     </div>
+    <?php if (count($featuredProducts) > $initialProductCount && !empty($featuredProductsSection['loadMoreButtonText'])): ?>
     <div class="text-center mt-10">
         <button id="load-more-products"
             class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors inline-flex items-center">
-            <span>Load More</span>
+            <span><?= $featuredProductsSection['loadMoreButtonText'] ?></span>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 animate-bounce" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
         </button>
     </div>
+    <?php endif; ?>
 </div>
+<?php endif; ?>
 
+<?php if (isset($categoriesSection['active']) && $categoriesSection['active']): ?>
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-bold">Shop by Category</h2>
-        <a href="#" class="text-primary hover:text-red-700 font-medium">View All Categories →</a>
+        <h2 class="text-3xl font-bold"><?= $categoriesSection['title'] ?></h2>
+        <?php if (!empty($categoriesSection['linkText']) && !empty($categoriesSection['linkUrl'])): ?>
+            <a href="<?= BASE_URL . $categoriesSection['linkUrl'] ?>" class="text-primary hover:text-red-700 font-medium"><?= $categoriesSection['linkText'] ?></a>
+        <?php endif; ?>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" id="categories-container">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-<?= $categoriesSection['categoriesPerRow'] ?? 4 ?> gap-8" id="categories-container">
         <?php
-        $initialCategoryCount = 4;
+        $initialCategoryCount = min(($categoriesSection['defaultRows'] ?? 1) * ($categoriesSection['categoriesPerRow'] ?? 4), count($categories));
         for ($i = 0; $i < $initialCategoryCount; $i++):
             $category = $categories[$i];
             ?>
@@ -273,37 +293,55 @@ ob_start();
             </div>
         <?php endfor; ?>
     </div>
+    <?php if (count($categories) > $initialCategoryCount && !empty($categoriesSection['loadMoreButtonText'])): ?>
     <div class="text-center mt-10">
         <button id="load-more-categories"
             class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors inline-flex items-center">
-            <span>Load More</span>
+            <span><?= $categoriesSection['loadMoreButtonText'] ?></span>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 animate-bounce" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
         </button>
     </div>
+    <?php endif; ?>
 </div>
+<?php endif; ?>
 
+<?php if (isset($partnersSection['active']) && $partnersSection['active'] && !empty($activePartners)): ?>
 <div class="bg-gray-50 py-8">
     <div class="container mx-auto px-4">
         <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold mb-4">Our Trusted Partners</h2>
-            <p class="text-gray-600 max-w-2xl mx-auto">We collaborate with leading suppliers and vendors in the
-                construction industry to bring you the best products and services.</p>
+            <h2 class="text-3xl font-bold mb-4"><?= $partnersSection['title'] ?></h2>
+            <?php if (!empty($partnersSection['description'])): ?>
+                <p class="text-gray-600 max-w-2xl mx-auto"><?= $partnersSection['description'] ?></p>
+            <?php endif; ?>
         </div>
 
         <div class="partners-carousel relative">
             <div class="swiper partners-slider">
                 <div class="swiper-wrapper">
-                    <?php foreach (array_chunk($partners, 5) as $partnerGroup): ?>
+                    <?php foreach (array_chunk($activePartners, 5) as $partnerGroup): ?>
                         <div class="swiper-slide">
                             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
                                 <?php foreach ($partnerGroup as $partner): ?>
-                                    <a href="#" target="_blank"
+                                    <?php 
+                                    $partnerLink = '#';
+                                    $targetAttr = '';
+                                    if (isset($partner['hasLink']) && $partner['hasLink'] && !empty($partner['redirectLink'])) {
+                                        $partnerLink = $partner['redirectLink']; // Direct URL, not prefixed with BASE_URL
+                                        $targetAttr = 'target="_blank"';
+                                    }
+                                    ?>
+                                    <a href="<?= $partnerLink ?>" <?= $targetAttr ?>
                                         class="partner-card bg-white rounded-lg p-4 md:p-6 shadow-md hover:shadow-lg transition-all duration-300 flex flex-col items-center justify-center h-32 md:h-40">
-                                        <img src="<?= $partner['logo'] ?>" alt="<?= $partner['name'] ?>"
-                                            class="h-12 md:h-16 object-contain mb-2 md:mb-4">
+                                        <?php if (!empty($partner['logo'])): ?>
+                                            <img src="<?= BASE_URL . $partner['logo'] ?>" alt="<?= $partner['name'] ?>"
+                                                class="h-12 md:h-16 object-contain mb-2 md:mb-4">
+                                        <?php else: ?>
+                                            <img src="https://placehold.co/200x100?text=<?= urlencode($partner['name']) ?>" alt="<?= $partner['name'] ?>"
+                                                class="h-12 md:h-16 object-contain mb-2 md:mb-4">
+                                        <?php endif; ?>
                                         <p class="text-center font-medium text-gray-800 text-sm md:text-base">
                                             <?= $partner['name'] ?>
                                         </p>
@@ -322,10 +360,11 @@ ob_start();
             </div>
         </div>
 
+        <?php if (!empty($partnersSection['ctaButtonText']) && !empty($partnersSection['ctaButtonUrl'])): ?>
         <div class="text-center mt-10">
-            <a href="#"
+            <a href="<?= BASE_URL . $partnersSection['ctaButtonUrl'] ?>"
                 class="inline-flex items-center px-6 py-3 border border-primary text-primary font-medium rounded-lg hover:bg-primary hover:text-white transition-colors duration-300">
-                Become a Partner
+                <?= $partnersSection['ctaButtonText'] ?>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -333,8 +372,10 @@ ob_start();
                 </svg>
             </a>
         </div>
+        <?php endif; ?>
     </div>
 </div>
+<?php endif; ?>
 
 <style>
     .hero-aspect-ratio {
@@ -459,123 +500,129 @@ ob_start();
         });
 
         const loadMoreProductsBtn = document.getElementById('load-more-products');
-        let productsLoaded = <?= $initialProductCount ?>;
-        const totalProducts = <?= count($featuredProducts) ?>;
+        if (loadMoreProductsBtn) {
+            let productsLoaded = <?= $initialProductCount ?>;
+            const totalProducts = <?= count($featuredProducts) ?>;
+            const productsPerRow = <?= $featuredProductsSection['productsPerRow'] ?? 4 ?>;
 
-        loadMoreProductsBtn.addEventListener('click', function () {
-            const productsContainer = document.getElementById('featured-products-container');
-            const productsToLoad = Math.min(4, totalProducts - productsLoaded);
+            loadMoreProductsBtn.addEventListener('click', function () {
+                const productsContainer = document.getElementById('featured-products-container');
+                const productsToLoad = Math.min(productsPerRow, totalProducts - productsLoaded);
 
-            if (productsToLoad <= 0) {
-                loadMoreProductsBtn.disabled = true;
-                loadMoreProductsBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                loadMoreProductsBtn.querySelector('span').textContent = 'No More Products';
-                loadMoreProductsBtn.querySelector('svg').classList.remove('animate-bounce');
-                return;
-            }
-
-            loadMoreProductsBtn.querySelector('span').textContent = 'Loading...';
-
-            setTimeout(() => {
-                for (let i = productsLoaded; i < productsLoaded + productsToLoad; i++) {
-                    const product = <?= json_encode($featuredProducts) ?>[i];
-                    const productElement = document.createElement('div');
-                    productElement.className = 'bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 opacity-0';
-                    productElement.innerHTML = `
-                        <div class="relative">
-                            <img src="${product.image}" alt="${product.title}" class="w-full h-48 object-cover">
-                            <div class="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-semibold">HOT</div>
-                        </div>
-                        <div class="p-5">
-                            <h3 class="font-bold text-lg mb-2">${product.title}</h3>
-                            <p class="text-gray-600 mb-4 h-12">${product.description}</p>
-                            <div class="flex justify-between items-center">
-                                <span class="text-primary font-bold text-xl">${product.price}</span>
-                                <div class="flex space-x-2">
-                                    <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
-                                        <i class="fas fa-shopping-cart mr-1"></i> Buy
-                                    </button>
-                                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                                        <i class="fas fa-tag mr-1"></i> Sell
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    productsContainer.appendChild(productElement);
-
-                    setTimeout(() => {
-                        productElement.classList.add('fade-in');
-                    }, (i - productsLoaded) * 150);
-                }
-
-                productsLoaded += productsToLoad;
-
-                loadMoreProductsBtn.querySelector('span').textContent = 'Load More';
-
-                if (productsLoaded >= totalProducts) {
+                if (productsToLoad <= 0) {
                     loadMoreProductsBtn.disabled = true;
                     loadMoreProductsBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     loadMoreProductsBtn.querySelector('span').textContent = 'No More Products';
                     loadMoreProductsBtn.querySelector('svg').classList.remove('animate-bounce');
+                    return;
                 }
-            }, 800);
-        });
+
+                loadMoreProductsBtn.querySelector('span').textContent = 'Loading...';
+
+                setTimeout(() => {
+                    for (let i = productsLoaded; i < productsLoaded + productsToLoad; i++) {
+                        const product = <?= json_encode($featuredProducts) ?>[i];
+                        const productElement = document.createElement('div');
+                        productElement.className = 'bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 opacity-0';
+                        productElement.innerHTML = `
+                            <div class="relative">
+                                <img src="${product.image}" alt="${product.title}" class="w-full h-48 object-cover">
+                                <div class="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-semibold">HOT</div>
+                            </div>
+                            <div class="p-5">
+                                <h3 class="font-bold text-lg mb-2">${product.title}</h3>
+                                <p class="text-gray-600 mb-4 h-12">${product.description}</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-primary font-bold text-xl">${product.price}</span>
+                                    <div class="flex space-x-2">
+                                        <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                            <i class="fas fa-shopping-cart mr-1"></i> Buy
+                                        </button>
+                                        <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                                            <i class="fas fa-tag mr-1"></i> Sell
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        productsContainer.appendChild(productElement);
+
+                        setTimeout(() => {
+                            productElement.classList.add('fade-in');
+                        }, (i - productsLoaded) * 150);
+                    }
+
+                    productsLoaded += productsToLoad;
+
+                    loadMoreProductsBtn.querySelector('span').textContent = '<?= $featuredProductsSection['loadMoreButtonText'] ?? 'Load More' ?>';
+
+                    if (productsLoaded >= totalProducts) {
+                        loadMoreProductsBtn.disabled = true;
+                        loadMoreProductsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        loadMoreProductsBtn.querySelector('span').textContent = 'No More Products';
+                        loadMoreProductsBtn.querySelector('svg').classList.remove('animate-bounce');
+                    }
+                }, 800);
+            });
+        }
 
         const loadMoreCategoriesBtn = document.getElementById('load-more-categories');
-        let categoriesLoaded = <?= $initialCategoryCount ?>;
-        const totalCategories = <?= count($categories) ?>;
+        if (loadMoreCategoriesBtn) {
+            let categoriesLoaded = <?= $initialCategoryCount ?>;
+            const totalCategories = <?= count($categories) ?>;
+            const categoriesPerRow = <?= $categoriesSection['categoriesPerRow'] ?? 4 ?>;
 
-        loadMoreCategoriesBtn.addEventListener('click', function () {
-            const categoriesContainer = document.getElementById('categories-container');
-            const categoriesToLoad = Math.min(4, totalCategories - categoriesLoaded);
+            loadMoreCategoriesBtn.addEventListener('click', function () {
+                const categoriesContainer = document.getElementById('categories-container');
+                const categoriesToLoad = Math.min(categoriesPerRow, totalCategories - categoriesLoaded);
 
-            if (categoriesToLoad <= 0) {
-                loadMoreCategoriesBtn.disabled = true;
-                loadMoreCategoriesBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                loadMoreCategoriesBtn.querySelector('span').textContent = 'No More Categories';
-                loadMoreCategoriesBtn.querySelector('svg').classList.remove('animate-bounce');
-                return;
-            }
-
-            loadMoreCategoriesBtn.querySelector('span').textContent = 'Loading...';
-
-            setTimeout(() => {
-                for (let i = categoriesLoaded; i < categoriesLoaded + categoriesToLoad; i++) {
-                    const category = <?= json_encode($categories) ?>[i];
-                    const categoryElement = document.createElement('div');
-                    categoryElement.className = 'relative rounded-xl overflow-hidden group cursor-pointer shadow-lg opacity-0';
-                    categoryElement.innerHTML = `
-                        <img src="${category.image}" alt="${category.title}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80 group-hover:opacity-90 transition-all">
-                            <div class="absolute bottom-0 left-0 right-0 p-6">
-                                <h3 class="text-white text-xl font-bold mb-2">${category.title}</h3>
-                                <div class="w-10 h-1 bg-primary mb-4 transform transition-all duration-300 group-hover:w-20"></div>
-                                <button class="text-white bg-primary bg-opacity-0 group-hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100">
-                                    Explore <i class="fas fa-arrow-right ml-1"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    categoriesContainer.appendChild(categoryElement);
-
-                    setTimeout(() => {
-                        categoryElement.classList.add('fade-in');
-                    }, (i - categoriesLoaded) * 150);
-                }
-
-                categoriesLoaded += categoriesToLoad;
-
-                loadMoreCategoriesBtn.querySelector('span').textContent = 'Load More';
-
-                if (categoriesLoaded >= totalCategories) {
+                if (categoriesToLoad <= 0) {
                     loadMoreCategoriesBtn.disabled = true;
                     loadMoreCategoriesBtn.classList.add('opacity-50', 'cursor-not-allowed');
                     loadMoreCategoriesBtn.querySelector('span').textContent = 'No More Categories';
                     loadMoreCategoriesBtn.querySelector('svg').classList.remove('animate-bounce');
+                    return;
                 }
-            }, 800);
-        });
+
+                loadMoreCategoriesBtn.querySelector('span').textContent = 'Loading...';
+
+                setTimeout(() => {
+                    for (let i = categoriesLoaded; i < categoriesLoaded + categoriesToLoad; i++) {
+                        const category = <?= json_encode($categories) ?>[i];
+                        const categoryElement = document.createElement('div');
+                        categoryElement.className = 'relative rounded-xl overflow-hidden group cursor-pointer shadow-lg opacity-0';
+                        categoryElement.innerHTML = `
+                            <img src="${category.image}" alt="${category.title}" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80 group-hover:opacity-90 transition-all">
+                                <div class="absolute bottom-0 left-0 right-0 p-6">
+                                    <h3 class="text-white text-xl font-bold mb-2">${category.title}</h3>
+                                    <div class="w-10 h-1 bg-primary mb-4 transform transition-all duration-300 group-hover:w-20"></div>
+                                    <button class="text-white bg-primary bg-opacity-0 group-hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100">
+                                        Explore <i class="fas fa-arrow-right ml-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        categoriesContainer.appendChild(categoryElement);
+
+                        setTimeout(() => {
+                            categoryElement.classList.add('fade-in');
+                        }, (i - categoriesLoaded) * 150);
+                    }
+
+                    categoriesLoaded += categoriesToLoad;
+
+                    loadMoreCategoriesBtn.querySelector('span').textContent = '<?= $categoriesSection['loadMoreButtonText'] ?? 'Load More' ?>';
+
+                    if (categoriesLoaded >= totalCategories) {
+                        loadMoreCategoriesBtn.disabled = true;
+                        loadMoreCategoriesBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        loadMoreCategoriesBtn.querySelector('span').textContent = 'No More Categories';
+                        loadMoreCategoriesBtn.querySelector('svg').classList.remove('animate-bounce');
+                    }
+                }, 800);
+            });
+        }
     });
 </script>
 <?php
