@@ -277,7 +277,6 @@ ob_start();
         text-align: center;
         border: none;
         padding: 0.5rem 0;
-        -moz-appearance: textfield;
     }
 
     .quantity-input::-webkit-outer-spin-button,

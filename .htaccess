@@ -134,6 +134,9 @@ RewriteRule ^admin/fetch/([^/]+)$ admin/fetch/$1.php [L]
 # Vendor profile by ULID
 RewriteRule ^view/profile/vendor/([0-9A-HJKMNP-TV-Z]{26})/?$ vendor-profile.php?id=$1 [L,QSA,NC]
 
+# Product details by ULID
+RewriteRule ^view/product/([0-9A-HJKMNP-TV-Z]{26})/?$ product-details.php?id=$1 [L,QSA,NC]
+
 # General rule for other files to work without .php extension
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
