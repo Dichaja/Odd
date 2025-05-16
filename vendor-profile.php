@@ -21,6 +21,9 @@ if ($vendorId) {
     }
 }
 
+// Check if user is logged in
+$isLoggedIn = !empty($_SESSION['user']['logged_in']);
+
 ob_start();
 ?>
 
@@ -406,7 +409,7 @@ ob_start();
 <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden" id="vendor-cover-photo">
     <div id="vendor-cover" class="w-full h-full bg-center bg-cover"></div>
     <div id="cover-edit-button"
-        class="absolute top-4 right-4 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md cursor-pointer text-red-600 border border-gray-200 hover:bg-gray-50 transition-colors">
+        class="absolute top-4 right-4 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md cursor-pointer text-red-600 border border-gray-200 hover:bg-gray-50 transition-colors <?= $isLoggedIn ? '' : 'hidden' ?>">
         <i class="fas fa-camera"></i>
     </div>
 </div>
@@ -414,6 +417,18 @@ ob_start();
 <div id="loading-state" class="flex flex-col items-center justify-center py-12">
     <div class="loader mb-4"></div>
     <p class="text-gray-600">Loading vendor profile...</p>
+</div>
+
+<div id="not-found-state"
+    class="hidden bg-red-50 border border-red-200 text-red-700 p-8 rounded-lg text-center max-w-2xl mx-auto my-12">
+    <i class="fas fa-exclamation-circle text-4xl mb-4"></i>
+    <h2 class="text-xl font-bold mb-2">Store Not Found or Not Active</h2>
+    <p class="mb-4">This store may not exist or has not been activated by an administrator yet.</p>
+    <p class="mb-6">If you believe this is an error, please contact the system administrator for assistance.</p>
+    <a href="<?= BASE_URL ?>"
+        class="inline-block bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
+        Return to Home
+    </a>
 </div>
 
 <div id="error-state"
@@ -437,7 +452,7 @@ ob_start();
                         <i class="fas fa-store text-gray-400 text-4xl"></i>
                     </div>
                     <div id="avatar-edit-button"
-                        class="absolute bottom-0 right-0 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm cursor-pointer text-red-600 border border-gray-200 hover:bg-gray-50 transition-colors hidden">
+                        class="absolute bottom-0 right-0 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm cursor-pointer text-red-600 border border-gray-200 hover:bg-gray-50 transition-colors <?= $isLoggedIn ? '' : 'hidden' ?>">
                         <i class="fas fa-camera"></i>
                     </div>
                 </div>
@@ -449,12 +464,12 @@ ob_start();
                         <h1 id="vendor-name-container" class="text-3xl font-bold text-secondary">
                             <span id="vendor-name">Store Name</span>
                             <i id="edit-name-button"
-                                class="fas fa-pen ml-2 text-gray-500 hover:text-red-600 text-sm cursor-pointer transition-colors hidden"></i>
+                                class="fas fa-pen ml-2 text-gray-500 hover:text-red-600 text-sm cursor-pointer transition-colors <?= $isLoggedIn ? '' : 'hidden' ?>"></i>
                         </h1>
                         <p id="vendor-description-container" class="text-gray-600 mt-1">
                             <span id="vendor-description">Premium Construction Materials & Services</span>
                             <i id="edit-description-button"
-                                class="fas fa-pen ml-2 text-gray-500 hover:text-red-600 text-sm cursor-pointer transition-colors hidden"></i>
+                                class="fas fa-pen ml-2 text-gray-500 hover:text-red-600 text-sm cursor-pointer transition-colors <?= $isLoggedIn ? '' : 'hidden' ?>"></i>
                         </p>
                     </div>
                 </div>
@@ -557,12 +572,12 @@ ob_start();
                         <i class="fa-solid fa-address-card mr-2"></i> Contact
                     </button>
                     <button
-                        class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap"
+                        class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap <?= $isLoggedIn ? '' : 'hidden' ?>"
                         data-tab="manage">
                         <i class="fa-solid fa-cog mr-2"></i> Manage Products
                     </button>
                     <button
-                        class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap"
+                        class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium py-4 px-1 border-b-2 whitespace-nowrap <?= $isLoggedIn ? '' : 'hidden' ?>"
                         data-tab="managers">
                         <i class="fa-solid fa-users-cog mr-2"></i> Store Managers
                     </button>
@@ -714,6 +729,7 @@ ob_start();
     let categoryStatusChanges = {};
     let cropper = null;
     let coverCropper = null;
+    let isLoggedIn = <?= $isLoggedIn ? 'true' : 'false' ?>;
 
     // Function to edit the cover photo
     function editCover() {
@@ -1132,7 +1148,7 @@ ob_start();
                 const tabName = this.getAttribute('data-tab');
                 document.getElementById(tabName + '-tab').classList.remove('hidden');
 
-                if (tabName === 'manage' && isOwner) {
+                if (tabName === 'manage') {
                     if (document.querySelector('.manage-subtab-btn[data-subtab="categories"]').classList.contains('border-primary')) {
                         loadCategoriesForManagement();
                     } else {
@@ -1189,25 +1205,30 @@ ob_start();
 
     function loadVendorProfile(id) {
         fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=getStoreDetails&id=${id}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success && data.store) {
                     storeData = data.store;
                     renderVendorProfile(storeData);
                     populateCategoryFilter(storeData.categories);
                 } else {
-                    showError(data.error || "Failed to load vendor profile");
+                    // Handle specific error for store not found or not active
+                    if (data.error === "Store not found or not active") {
+                        showNotFoundOrInactive();
+                    } else {
+                        showError(data.error || "Failed to load vendor profile");
+                    }
                 }
             })
             .catch(error => {
                 console.error('Error loading vendor profile:', error);
                 showError("Failed to load vendor profile");
             });
+    }
+
+    function showNotFoundOrInactive() {
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('not-found-state').classList.remove('hidden');
     }
 
     function renderVendorProfile(store) {
@@ -1284,24 +1305,7 @@ ob_start();
             coverContainer.style.backgroundImage = `url(https://placehold.co/1200x400/e5e7eb/6b7280?text=${encodeURIComponent(store.name)})`;
         }
 
-        // Show cover edit button if user is owner
-        if (isOwner) {
-            document.getElementById('cover-edit-button').classList.remove('hidden');
-        }
-
         isOwner = store.is_owner;
-
-        const manageTab = document.querySelector('button[data-tab="manage"]');
-        if (isOwner) {
-            manageTab.classList.remove('hidden');
-
-            // Show edit buttons if user is owner
-            document.getElementById('edit-name-button').classList.remove('hidden');
-            document.getElementById('edit-description-button').classList.remove('hidden');
-            document.getElementById('avatar-edit-button').classList.remove('hidden');
-        } else {
-            manageTab.classList.add('hidden');
-        }
 
         updateVerificationProgress(store);
     }
