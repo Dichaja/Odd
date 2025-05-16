@@ -13,22 +13,32 @@ use ZzimbaOnline\Mail\Mailer;
 
 header('Content-Type: application/json');
 
-if (empty($_SESSION['user']['logged_in'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Session expired', 'session_expired' => true]);
-    exit;
-}
+// Get action before checking session
+$action = $_GET['action'] ?? '';
 
-$currentUserId = $_SESSION['user']['user_id'] ?? null;
-if (!$currentUserId) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Invalid user session']);
-    exit;
+// Only check session for actions that require authentication
+$publicActions = ['getStoreDetails'];
+$requiresAuth = !in_array($action, $publicActions);
+
+if ($requiresAuth) {
+    if (empty($_SESSION['user']['logged_in'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Session expired', 'session_expired' => true]);
+        exit;
+    }
+
+    $currentUserId = $_SESSION['user']['user_id'] ?? null;
+    if (!$currentUserId) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Invalid user session']);
+        exit;
+    }
+} else {
+    // For public actions, set currentUserId to null
+    $currentUserId = null;
 }
 
 initializeTables($pdo);
-
-$action = $_GET['action'] ?? '';
 
 try {
     switch ($action) {
@@ -129,16 +139,24 @@ function deleteDirectory(string $dir): bool
     return rmdir($dir);
 }
 
-function isOwner(PDO $pdo, string $storeId, string $userId): bool
+function isOwner(PDO $pdo, string $storeId, ?string $userId): bool
 {
+    if (!$userId) {
+        return false;
+    }
     $stmt = $pdo->prepare("SELECT owner_id FROM vendor_stores WHERE id = ?");
     $stmt->execute([$storeId]);
     $store = $stmt->fetch(PDO::FETCH_ASSOC);
     return $store && $store['owner_id'] === $userId;
 }
 
-function canAccessStore(PDO $pdo, string $storeId, string $userId): bool
+function canAccessStore(PDO $pdo, string $storeId, ?string $userId): bool
 {
+    // If no userId (public access), only allow read access
+    if (!$userId) {
+        return true;
+    }
+
     if (isOwner($pdo, $storeId, $userId)) {
         return true;
     }
@@ -147,7 +165,7 @@ function canAccessStore(PDO $pdo, string $storeId, string $userId): bool
     return $stmt->rowCount() > 0;
 }
 
-function storeFieldExists(PDO $pdo, string $field, string $value, string $excludeId = null, string $ownerId = null): bool
+function storeFieldExists(PDO $pdo, string $field, string $value, string $excludeId = null, ?string $ownerId = null): bool
 {
     $sql = "SELECT COUNT(*) FROM vendor_stores WHERE $field = ?";
     $params = [$value];
@@ -453,43 +471,41 @@ function getPendingInvitations(PDO $pdo, string $userId): void
     echo json_encode(['success' => true, 'invitations' => $invitations]);
 }
 
-function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
+function getStoreDetails(PDO $pdo, string $storeId, ?string $userId): void
 {
     if (!isValidUlid($storeId)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
         return;
     }
-    if (!canAccessStore($pdo, $storeId, $userId)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
-        return;
-    }
+
+    // For public access, we don't need to check canAccessStore
+    // We'll just fetch the store details if it exists and is active
 
     $stmt = $pdo->prepare("
         SELECT vs.*, nob.name as nature_of_business_name, u.username AS owner_username, u.email AS owner_email, u.phone AS owner_phone
         FROM vendor_stores vs
         LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id
         JOIN zzimba_users u ON vs.owner_id = u.id
-        WHERE vs.id = ?
+        WHERE vs.id = ? AND vs.status = 'active'
     ");
     $stmt->execute([$storeId]);
     $store = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$store) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'Store not found']);
+        echo json_encode(['success' => false, 'error' => 'Store not found or not active']);
         return;
     }
 
     $store['uuid_id'] = $store['id'];
-    $store['is_owner'] = $store['owner_id'] === $userId;
+    $store['is_owner'] = $userId && $store['owner_id'] === $userId;
 
     $catStmt = $pdo->prepare("
         SELECT sc.id, pc.name, pc.description, sc.status, sc.created_at
         FROM store_categories sc
         JOIN product_categories pc ON sc.category_id = pc.id
-        WHERE sc.store_id = ?
+        WHERE sc.store_id = ? AND sc.status = 'active'
     ");
     $catStmt->execute([$storeId]);
     $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -499,20 +515,26 @@ function getStoreDetails(PDO $pdo, string $storeId, string $userId): void
     }
     $store['categories'] = $categories;
 
-    $mgrStmt = $pdo->prepare("
-        SELECT sm.id, sm.user_id, sm.role, sm.created_at, u.username, u.email, u.phone
-        FROM store_managers sm
-        JOIN zzimba_users u ON sm.user_id = u.id
-        WHERE sm.store_id = ?
-    ");
-    $mgrStmt->execute([$storeId]);
-    $managers = $mgrStmt->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($managers as &$m) {
-        $m['uuid_id'] = $m['id'];
-        $m['user_uuid_id'] = $m['user_id'];
-        unset($m['id'], $m['user_id']);
+    // Only include managers information if the user is authenticated and has access
+    if ($userId && canAccessStore($pdo, $storeId, $userId)) {
+        $mgrStmt = $pdo->prepare("
+            SELECT sm.id, sm.user_id, sm.role, sm.created_at, u.username, u.email, u.phone
+            FROM store_managers sm
+            JOIN zzimba_users u ON sm.user_id = u.id
+            WHERE sm.store_id = ?
+        ");
+        $mgrStmt->execute([$storeId]);
+        $managers = $mgrStmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($managers as &$m) {
+            $m['uuid_id'] = $m['id'];
+            $m['user_uuid_id'] = $m['user_id'];
+            unset($m['id'], $m['user_id']);
+        }
+        $store['managers'] = $managers;
+    } else {
+        // For public access, don't include sensitive manager information
+        $store['managers'] = [];
     }
-    $store['managers'] = $managers;
 
     unset($store['id']);
 
@@ -602,6 +624,23 @@ function createStore(PDO $pdo, string $userId): void
             );
             $url = 'img/stores/' . $storeId . '/logo/' . $name;
             $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?")
+                ->execute([$url, $storeId]);
+        }
+
+        if (
+            !empty($data['temp_cover_path'])
+            && file_exists(__DIR__ . '/../../' . $data['temp_cover_path'])
+        ) {
+            $ext = pathinfo($data['temp_cover_path'], PATHINFO_EXTENSION);
+            $dir = __DIR__ . '/../../img/stores/' . $storeId . '/cover';
+            mkdir($dir, 0755, true);
+            $name = 'cover.' . $ext;
+            rename(
+                __DIR__ . '/../../' . $data['temp_cover_path'],
+                "$dir/$name"
+            );
+            $url = 'img/stores/' . $storeId . '/cover/' . $name;
+            $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = ? WHERE id = ?")
                 ->execute([$url, $storeId]);
         }
 
@@ -924,11 +963,21 @@ function getStoreCategories(PDO $pdo, string $storeId): void
         echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
         return;
     }
+
+    // Check if store exists and is active
+    $storeStmt = $pdo->prepare("SELECT 1 FROM vendor_stores WHERE id = ? AND status = 'active'");
+    $storeStmt->execute([$storeId]);
+    if ($storeStmt->rowCount() === 0) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Store not found or not active']);
+        return;
+    }
+
     $stmt = $pdo->prepare("
         SELECT sc.id, pc.name, pc.description, sc.status, sc.created_at
         FROM store_categories sc
         JOIN product_categories pc ON sc.category_id = pc.id
-        WHERE sc.store_id = ?
+        WHERE sc.store_id = ? AND sc.status = 'active'
         ORDER BY pc.name
     ");
     $stmt->execute([$storeId]);
@@ -942,13 +991,20 @@ function getStoreCategories(PDO $pdo, string $storeId): void
     echo json_encode(['success' => true, 'categories' => $cats]);
 }
 
-function getStoreManagers(PDO $pdo, string $storeId, string $userId): void
+function getStoreManagers(PDO $pdo, string $storeId, ?string $userId): void
 {
     if (!isValidUlid($storeId)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
         return;
     }
+
+    if (!$userId || !canAccessStore($pdo, $storeId, $userId)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Access denied']);
+        return;
+    }
+
     $stmt = $pdo->prepare("
         SELECT sm.id, sm.user_id, sm.role, sm.created_at,
                u.username, u.email, u.phone

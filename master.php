@@ -27,7 +27,6 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
     <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
     <script src="<?= BASE_URL ?>track/eventLog.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
-    <link rel="icon" type="image/png" href="favicon.png">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         const BASE_URL = "<?php echo BASE_URL; ?>";

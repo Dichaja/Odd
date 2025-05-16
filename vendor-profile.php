@@ -39,19 +39,6 @@ ob_start();
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
-    .vendor-cover {
-        height: 250px;
-        width: 100%;
-        object-fit: cover;
-        background-color: #f3f4f6;
-    }
-
-    @media (max-width: 640px) {
-        .vendor-cover {
-            height: 150px;
-        }
-    }
-
     .vendor-profile-info {
         display: flex;
         align-items: flex-end;
@@ -416,8 +403,12 @@ ob_start();
     /* Edit button styles */
 </style>
 
-<div class="relative h-40 md:h-64 w-full bg-gray-200 overflow-hidden" id="vendor-cover-photo">
-    <div class="vendor-cover" id="vendor-cover"></div>
+<div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden" id="vendor-cover-photo">
+    <div id="vendor-cover" class="w-full h-full bg-center bg-cover"></div>
+    <div id="cover-edit-button"
+        class="absolute top-4 right-4 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md cursor-pointer text-red-600 border border-gray-200 hover:bg-gray-50 transition-colors">
+        <i class="fas fa-camera"></i>
+    </div>
 </div>
 
 <div id="loading-state" class="flex flex-col items-center justify-center py-12">
@@ -655,7 +646,7 @@ ob_start();
                     to a 1:1 ratio.</p>
             </div>
             <div id="cropper-container" class="cropper-container hidden">
-                <img id="cropper-image" src="/placeholder.svg" alt="Image to crop">
+                <img id="cropper-image" src="https://placehold.co/600x400?text=Image+to+Crop" alt="Image to crop">
             </div>
         </div>
         <div class="modal-footer">
@@ -668,26 +659,43 @@ ob_start();
     </div>
 </div>
 
+<!-- Edit Cover Photo Modal -->
+<div id="edit-cover-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Cover Photo</h2>
+            <span class="close" onclick="closeModal('edit-cover-modal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="mb-4">
+                <label for="cover-file-input" class="block text-sm font-medium text-gray-700 mb-1">Upload Cover
+                    Photo</label>
+                <input type="file" id="cover-file-input" accept="image/*"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                <p class="text-sm text-gray-500 mt-1">Select an image that will be cropped to a 3:1 ratio for best
+                    results.</p>
+            </div>
+            <div id="cover-cropper-container" class="cropper-container hidden">
+                <img id="cover-cropper-image" src="https://placehold.co/1200x400?text=Cover+Image+to+Crop"
+                    alt="Image to crop">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                onclick="closeModal('edit-cover-modal')">Cancel</button>
+            <button type="button" id="crop-cover-button"
+                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 hidden"
+                onclick="cropAndSaveCover()">Crop & Save</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 
 <script>
     window.openModal = function (modalId) {
         document.getElementById(modalId).style.display = 'block';
-    };
-    window.closeModal = function (modalId) {
-        document.getElementById(modalId).style.display = 'none';
-
-        // Reset cropper if closing logo modal
-        if (modalId === 'edit-logo-modal') {
-            if (window.cropper) {
-                window.cropper.destroy();
-                window.cropper = null;
-            }
-            document.getElementById('cropper-container').classList.add('hidden');
-            document.getElementById('crop-button').classList.add('hidden');
-            document.getElementById('logo-file-input').value = '';
-        }
     };
 
     let vendorId = '<?= $vendorId ?>';
@@ -705,6 +713,118 @@ ob_start();
     let pendingDeleteType = null;
     let categoryStatusChanges = {};
     let cropper = null;
+    let coverCropper = null;
+
+    // Function to edit the cover photo
+    function editCover() {
+        openModal('edit-cover-modal');
+    }
+
+    // Initialize the cover cropper
+    function initCoverCropper(image) {
+        if (coverCropper) {
+            coverCropper.destroy();
+        }
+
+        const cropperContainer = document.getElementById('cover-cropper-container');
+        cropperContainer.classList.remove('hidden');
+
+        const cropperImage = document.getElementById('cover-cropper-image');
+        cropperImage.src = image;
+
+        coverCropper = new Cropper(cropperImage, {
+            aspectRatio: 3 / 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false
+        });
+
+        document.getElementById('crop-cover-button').classList.remove('hidden');
+    }
+
+    // Crop and save the cover photo
+    function cropAndSaveCover() {
+        if (!coverCropper) {
+            showToast('Please select an image first', 'error');
+            return;
+        }
+
+        // Get the cropped canvas
+        const canvas = coverCropper.getCroppedCanvas({
+            width: 1200,
+            height: 400,
+            fillColor: '#fff',
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+
+        if (!canvas) {
+            showToast('Failed to crop image', 'error');
+            return;
+        }
+
+        // Convert canvas to blob
+        canvas.toBlob(function (blob) {
+            const formData = new FormData();
+            formData.append('cover', blob, 'cover.png');
+
+            // First upload the cover
+            fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=uploadVendorCover`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Then update the store with the new cover path
+                        const updateData = {
+                            id: vendorId,
+                            temp_cover_path: data.temp_path
+                        };
+
+                        return fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=updateStore`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(updateData)
+                        });
+                    } else {
+                        throw new Error(data.message || 'Failed to upload cover photo');
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the cover in the UI
+                        const coverUrl = canvas.toDataURL();
+                        const coverContainer = document.getElementById('vendor-cover');
+                        coverContainer.style.backgroundImage = `url(${coverUrl})`;
+
+                        closeModal('edit-cover-modal');
+                        showToast('Cover photo updated successfully');
+
+                        // Reload the page to see the updated cover
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showToast(data.error || 'Failed to update cover photo', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating cover photo:', error);
+                    showToast('Failed to update cover photo', 'error');
+                });
+        }, 'image/png');
+    }
 
     // Show location function - only shows, doesn't hide
     function showLocation() {
@@ -959,6 +1079,32 @@ ob_start();
         }, 'image/png');
     }
 
+    window.closeModal = function (modalId) {
+        document.getElementById(modalId).style.display = 'none';
+
+        // Reset cropper if closing logo modal
+        if (modalId === 'edit-logo-modal') {
+            if (window.cropper) {
+                window.cropper.destroy();
+                window.cropper = null;
+            }
+            document.getElementById('cropper-container').classList.add('hidden');
+            document.getElementById('crop-button').classList.add('hidden');
+            document.getElementById('logo-file-input').value = '';
+        }
+
+        // Reset cover cropper if closing cover modal
+        if (modalId === 'edit-cover-modal') {
+            if (window.coverCropper) {
+                window.coverCropper.destroy();
+                window.coverCropper = null;
+            }
+            document.getElementById('cover-cropper-container').classList.add('hidden');
+            document.getElementById('crop-cover-button').classList.add('hidden');
+            document.getElementById('cover-file-input').value = '';
+        }
+    };
+
     document.addEventListener('DOMContentLoaded', function () {
         if (vendorId) {
             loadVendorProfile(vendorId);
@@ -1023,10 +1169,22 @@ ob_start();
             }
         });
 
+        // Set up cover file input change event
+        document.getElementById('cover-file-input').addEventListener('change', function (e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    initCoverCropper(e.target.result);
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
         // Set up edit button click events
         document.getElementById('edit-name-button').addEventListener('click', editName);
         document.getElementById('edit-description-button').addEventListener('click', editDescription);
         document.getElementById('avatar-edit-button').addEventListener('click', editLogo);
+        document.getElementById('cover-edit-button').addEventListener('click', editCover);
     });
 
     function loadVendorProfile(id) {
@@ -1095,6 +1253,8 @@ ob_start();
         } else {
             document.getElementById('vendor-last-seen').textContent = 'Not available';
         }
+
+        // Handle logo placeholder
         if (store.logo_url) {
             const logoImg = document.createElement('img');
             logoImg.src = BASE_URL + store.logo_url;
@@ -1103,25 +1263,32 @@ ob_start();
             const avatarContainer = document.getElementById('vendor-avatar');
             avatarContainer.innerHTML = '';
             avatarContainer.appendChild(logoImg);
-        }
-        document.getElementById('vendor-cover').style.backgroundImage = 'linear-gradient(45deg, #f3f4f6 25%, #e5e7eb 25%, #e5e7eb 50%, #f3f4f6 50%, #f3f4f6 75%, #e5e7eb 75%, #e5e7eb 100%)';
-        document.getElementById('vendor-cover').style.backgroundSize = '20px 20px';
-        const activeCategories = store.categories ? store.categories.filter(cat => cat.status === 'active') : [];
-        const activeProductsCount = store.product_count || 0;
-        document.getElementById('product-count').textContent = `${activeProductsCount} Products`;
-        document.getElementById('product-count-summary').textContent = activeProductsCount;
-        document.getElementById('category-count').textContent = `${activeCategories.length} Categories`;
-        document.getElementById('category-count-summary').textContent = activeCategories.length;
-        document.getElementById('view-count').textContent = '0';
-        const createdYear = new Date(store.created_at).getFullYear();
-        document.getElementById('member-since').textContent = createdYear;
-        document.getElementById('store-description').textContent = store.description || 'No description provided.';
-        if (store.website_url) {
-            document.getElementById('store-website').textContent = store.website_url;
-            document.getElementById('store-website').href = store.website_url.startsWith('http') ? store.website_url : 'https://' + store.website_url;
         } else {
-            document.getElementById('website-section').classList.add('hidden');
+            // Use placehold.co for logo placeholder
+            const firstWord = store.name.split(' ')[0];
+            const logoPlaceholder = document.createElement('img');
+            logoPlaceholder.src = `https://placehold.co/400x400/e5e7eb/6b7280?text=${encodeURIComponent(firstWord)}`;
+            logoPlaceholder.alt = store.name;
+            logoPlaceholder.className = 'w-full h-full object-cover rounded-full';
+            const avatarContainer = document.getElementById('vendor-avatar');
+            avatarContainer.innerHTML = '';
+            avatarContainer.appendChild(logoPlaceholder);
         }
+
+        // Handle cover photo placeholder
+        const coverContainer = document.getElementById('vendor-cover');
+        if (store.vendor_cover_url) {
+            coverContainer.style.backgroundImage = `url(${BASE_URL + store.vendor_cover_url})`;
+        } else {
+            // Use placehold.co for cover placeholder
+            coverContainer.style.backgroundImage = `url(https://placehold.co/1200x400/e5e7eb/6b7280?text=${encodeURIComponent(store.name)})`;
+        }
+
+        // Show cover edit button if user is owner
+        if (isOwner) {
+            document.getElementById('cover-edit-button').classList.remove('hidden');
+        }
+
         isOwner = store.is_owner;
 
         const manageTab = document.querySelector('button[data-tab="manage"]');

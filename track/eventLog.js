@@ -2,7 +2,7 @@
     function loadULID() {
         if (typeof ulid === 'undefined') {
             var ulidScript = document.createElement('script');
-            ulidScript.src = 'https://cdn.jsdelivr.net/npm/ulid/dist/ulid.min.js';
+            ulidScript.src = '';
             ulidScript.onload = initializeEventLog;
             document.head.appendChild(ulidScript);
         } else {
