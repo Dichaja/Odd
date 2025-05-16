@@ -177,29 +177,29 @@
 
         document.addEventListener('click', function (e) {
             if (e.target.classList.contains('view-price-btn')) {
-                if (!isLoggedIn) {
+                <?php if (!$isLoggedIn): ?>
                     if (typeof openAuthModal === 'function') {
                         openAuthModal();
                     }
                     return false;
-                }
-
-                const priceValue = e.target.nextElementSibling;
-                priceValue.classList.remove('price-hidden');
-                e.target.classList.add('price-hidden');
+                <?php else: ?>
+                    const priceValue = e.target.nextElementSibling;
+                    priceValue.classList.remove('price-hidden');
+                    e.target.classList.add('price-hidden');
+                <?php endif; ?>
             }
 
             if (e.target.classList.contains('view-more-prices')) {
-                if (!isLoggedIn) {
+                <?php if (!$isLoggedIn): ?>
                     if (typeof openAuthModal === 'function') {
                         openAuthModal();
                     }
                     return false;
-                }
-
-                const hiddenPrices = e.target.previousElementSibling.querySelectorAll('.hidden-price-row');
-                hiddenPrices.forEach(row => row.classList.remove('hidden'));
-                e.target.classList.add('hidden');
+                <?php else: ?>
+                    const hiddenPrices = e.target.previousElementSibling.querySelectorAll('.hidden-price-row');
+                    hiddenPrices.forEach(row => row.classList.remove('hidden'));
+                    e.target.classList.add('hidden');
+                <?php endif; ?>
             }
 
             if (e.target.classList.contains('login-btn')) {
@@ -295,12 +295,12 @@
             let filteredPricing = product.pricing || [];
             let hasRetailPrice = false;
 
-            if (!isLoggedIn) {
+            <?php if (!$isLoggedIn): ?>
                 filteredPricing = filteredPricing.filter(p => p.price_category === 'retail');
                 if (filteredPricing.length > 0) {
                     hasRetailPrice = true;
                 }
-            }
+            <?php endif; ?>
 
             let pricingLines = '';
             let hasHiddenPrices = false;
@@ -315,11 +315,17 @@
                     const packageName = unitParts.slice(1).join(' ') || '';
                     const formattedUnit = `${pr.package_size} ${siUnit} ${packageName}`.trim();
 
-                    const categoryDisplay = isLoggedIn ?
-                        (pr.price_category.charAt(0).toUpperCase() + pr.price_category.slice(1)) : '';
+                    let categoryDisplay = '';
+                    <?php if ($isLoggedIn): ?>
+                        categoryDisplay = pr.price_category.charAt(0).toUpperCase() + pr.price_category.slice(1);
+                    <?php endif; ?>
 
-                    const deliveryCapacity = isLoggedIn && pr.delivery_capacity ?
-                        `<span class="ml-2">• ${pr.price_category === 'retail' ? 'Max' : 'Min'} Capacity: ${pr.delivery_capacity}</span>` : '';
+                    let deliveryCapacity = '';
+                    <?php if ($isLoggedIn): ?>
+                        if (pr.delivery_capacity) {
+                            deliveryCapacity = `<span class="ml-2">• ${pr.price_category === 'retail' ? 'Max' : 'Min'} Capacity: ${pr.delivery_capacity}</span>`;
+                        }
+                    <?php endif; ?>
 
                     const hiddenClass = index >= 2 ? 'hidden hidden-price-row' : '';
 
@@ -338,7 +344,7 @@
                                     </div>` : ''}
                             </div>
                             <div class="price-container">
-                                <span class="view-price-btn" data-requires-login="${!isLoggedIn}">View Price</span>
+                                <span class="view-price-btn">View Price</span>
                                 <span class="price-hidden text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
                             </div>
                         </div>
@@ -354,29 +360,33 @@
                     `;
                 }
 
-                if (!isLoggedIn && hasRetailPrice) {
-                    pricingLines += `
+                <?php if (!$isLoggedIn): ?>
+                    if (hasRetailPrice) {
+                        pricingLines += `
                         <div class="login-note">
                             Login to view more price categories
                         </div>
                     `;
-                }
+                    }
+                <?php endif; ?>
             } else {
-                if (!isLoggedIn) {
+                <?php if (!$isLoggedIn): ?>
                     pricingLines = `
-                        <button class="login-btn">
-                            Login to see Price Categories
-                        </button>
-                    `;
-                } else {
+                    <button class="login-btn">
+                        Login to see Price Categories
+                    </button>
+                `;
+                <?php else: ?>
                     pricingLines = `<div class="text-sm text-gray-600 italic p-2">No price data</div>`;
-                }
+                <?php endif; ?>
             }
 
             const productCard = document.createElement('div');
             productCard.className = 'product-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow';
             productCard.dataset.lowestPrice = lowestPrice.toString();
-            productCard.innerHTML = `
+
+            // Create the HTML content for the product card
+            let cardContent = `
                 <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover">
                 <div class="p-4 flex flex-col flex-grow">
                     <h3 class="text-lg font-bold text-gray-800 mb-2">${escapeHtml(product.name)}</h3>
@@ -387,22 +397,43 @@
                         ${pricingLines}
                     </div>
                     <div class="grid grid-cols-2 gap-3 mt-auto">
-                        <button onclick="${!isLoggedIn ? 'openAuthModal(); return false;' : 'buyInStore(\'' + product.store_product_id + '\')'}" class="bg-red-600 text-white py-2 px-3 rounded-md text-sm hover:bg-red-700 transition-colors w-full flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Buy in Store
-                        </button>
-                        <a href="${BASE_URL}view/product/${product.store_product_id}" target="_blank" class="bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-100 transition-colors w-full flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                            Shop Now
-                        </a>
+            `;
+
+            // Add the Buy in Store button with proper conditional logic
+            <?php if ($isLoggedIn): ?>
+                cardContent += `
+                <button onclick="buyInStore('${product.store_product_id}')" class="bg-red-600 text-white py-2 px-3 rounded-md text-sm hover:bg-red-700 transition-colors w-full flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Buy in Store
+                </button>
+            `;
+            <?php else: ?>
+                cardContent += `
+                <button onclick="openAuthModal(); return false;" class="bg-red-600 text-white py-2 px-3 rounded-md text-sm hover:bg-red-700 transition-colors w-full flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Buy in Store
+                </button>
+            `;
+            <?php endif; ?>
+
+            // Add the Shop Now button and close the divs
+            cardContent += `
+                <a href="${BASE_URL}view/product/${product.store_product_id}" target="_blank" class="bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-100 transition-colors w-full flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Shop Now
+                </a>
                     </div>
                 </div>
             `;
+
+            productCard.innerHTML = cardContent;
             container.appendChild(productCard);
         }
     }
