@@ -1,0 +1,94 @@
+{
+    "heroSlides": [
+        {
+            "id": "1747407129816",
+            "title": "Buy Online<br>Deliver On-site",
+            "subtitle": "Quality building materials delivered to your doorstep",
+            "buttonText": "Buy Now",
+            "buttonUrl": "#",
+            "active": true,
+            "order": 1,
+            "image": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747407422145",
+            "title": "Construction Procurement<br>Made Easy",
+            "subtitle": "Discover our wide range of products",
+            "buttonText": "Order Now",
+            "buttonUrl": "#",
+            "active": true,
+            "order": 2,
+            "image": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747407455483",
+            "title": "100s of Vendors<br>1000s of Supplies",
+            "subtitle": "Latest trends in building materials",
+            "buttonText": "Join Now",
+            "buttonUrl": "#",
+            "active": true,
+            "order": 3,
+            "image": null,
+            "removeImage": false
+        }
+    ],
+    "requestQuoteSection": {
+        "buttonText": "Request a Quote Now",
+        "buttonUrl": "request-for-quote",
+        "description": "Get personalized quotes for your construction needs",
+        "active": true
+    },
+    "keyFeatures": [
+        {
+            "id": "1747407745304",
+            "icon": "🏗️",
+            "title": "Quality Materials",
+            "description": "Premium construction supplies from trusted manufacturers",
+            "active": true,
+            "order": 1
+        },
+        {
+            "id": "1747407769751",
+            "icon": "🚚",
+            "title": "Fast Delivery",
+            "description": "Next-day delivery available on most items",
+            "active": true,
+            "order": 2
+        },
+        {
+            "id": "1747407796317",
+            "icon": "💪",
+            "title": "Expert Support",
+            "description": "Professional advice from industry experts",
+            "active": true,
+            "order": 3
+        }
+    ],
+    "featuredProductsSection": {
+        "title": "Featured Products",
+        "linkText": "View All Products →",
+        "linkUrl": "materials-yard",
+        "loadMoreButtonText": "Load More",
+        "defaultRows": 1,
+        "productsPerRow": 4,
+        "active": true
+    },
+    "categoriesSection": {
+        "title": "Shop by Category",
+        "linkText": "View All Categories →",
+        "linkUrl": "product-categories",
+        "loadMoreButtonText": "Load More",
+        "defaultRows": 1,
+        "categoriesPerRow": 4,
+        "active": true
+    },
+    "partnersSection": {
+        "title": "Our Trusted Partners",
+        "ctaButtonText": "Become a Partner",
+        "ctaButtonUrl": "become-a-partner",
+        "description": "We collaborate with leading suppliers and vendors in the construction industry to bring you the best products and services.",
+        "active": true
+    }
+}
