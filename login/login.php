@@ -1855,16 +1855,6 @@ function getStepTitle($mode, $step)
         }
     }
 
-    function closeAuthModal() {
-        const modal = document.getElementById('auth-modal');
-        if (modal) {
-            modal.classList.remove('show');
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-    }
-
     // Initialize phone input fields when document is ready
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize phone input for registration
