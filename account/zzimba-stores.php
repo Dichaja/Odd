@@ -120,24 +120,11 @@ ob_start();
                                 <option value="">Select Nature of Business</option>
                             </select>
                         </div>
-                        <!-- New Contact Person Fields -->
-                        <div>
+                        <!-- Contact Person Name Field Only -->
+                        <div class="sm:col-span-2">
                             <label for="storeContactPersonName"
                                 class="block text-sm font-medium text-gray-700 mb-1">Contact Person Name *</label>
                             <input type="text" id="storeContactPersonName" placeholder="Enter contact person name"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        </div>
-                        <div>
-                            <label for="storeContactPersonEmail"
-                                class="block text-sm font-medium text-gray-700 mb-1">Contact Person Email *</label>
-                            <input type="email" id="storeContactPersonEmail" placeholder="Enter contact person email"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label for="storeContactPersonPhone"
-                                class="block text-sm font-medium text-gray-700 mb-1">Contact Person Phone * <span
-                                    class="text-xs text-gray-500">(Only +256 allowed)</span></label>
-                            <input type="tel" id="storeContactPersonPhone" placeholder="Enter contact person phone"
                                 class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary">
                         </div>
                         <div class="sm:col-span-2">
@@ -762,94 +749,123 @@ ob_start();
 
     function renderStores(stores) {
         const container = $('#all-stores-container');
+
+        /* ------------- empty-state block ------------- */
         if (!stores || stores.length === 0) {
             container.html(`
-                <div class="bg-gray-50 rounded-lg p-8 text-center">
-                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                        <i class="fas fa-store text-gray-400 text-2xl"></i>
-                    </div>
-                    <h3 class="text-lg font-medium text-secondary mb-2">No Stores Found</h3>
-                    <p class="text-sm text-gray-text mb-4">
-                        ${currentFilter === 'owned' ? 'You haven\'t created any stores yet.' :
-                    currentFilter === 'managed' ? 'You don\'t manage any stores yet.' :
-                        'No stores found.'}
-                    </p>
-                    ${currentFilter === 'owned' || currentFilter === 'all' ? `
-                        <button 
-                            id="createFirstStoreBtn" 
-                            class="h-10 px-6 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors"
-                            onclick="openStoreModal('create')"
-                        >
-                            Create Your First Store
-                        </button>
-                    ` : ''}
+            <div class="bg-gray-50 rounded-lg p-8 text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                    <i class="fas fa-store text-gray-400 text-2xl"></i>
                 </div>
-            `);
+                <h3 class="text-lg font-medium text-secondary mb-2">No Stores Found</h3>
+                <p class="text-sm text-gray-text mb-4">
+                    ${currentFilter === 'owned'
+                    ? "You haven’t created any stores yet."
+                    : currentFilter === 'managed'
+                        ? "You don’t manage any stores yet."
+                        : "No stores found."
+                }
+                </p>
+                ${currentFilter === 'owned' || currentFilter === 'all'
+                    ? `
+                            <button
+                                id="createFirstStoreBtn"
+                                class="h-10 px-6 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors"
+                                onclick="openStoreModal('create')"
+                            >
+                                Create Your First Store
+                            </button>
+                        `
+                    : ''
+                }
+            </div>
+        `);
             return;
         }
 
+        /* ------------- cards grid ------------- */
         let html = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">';
         stores.forEach((store) => {
             const statusBadge = getStatusBadge(store.status);
-            const logoUrl = store.logo_url ?
-                BASE_URL + store.logo_url :
-                `https://placehold.co/100x100/f0f0f0/808080?text=${store.name.substring(0, 2)}`;
+            const logoUrl = store.logo_url
+                ? BASE_URL + store.logo_url
+                : `https://placehold.co/100x100/f0f0f0/808080?text=${store.name.substring(0, 2)}`;
 
-            const storeTypeBadge = store.type === 'owned' ?
-                '<span class="store-type-badge store-type-owned">Owned</span>' :
-                '<span class="store-type-badge store-type-managed">Managed</span>';
+            const storeTypeBadge =
+                store.type === 'owned'
+                    ? '<span class="store-type-badge store-type-owned">Owned</span>'
+                    : '<span class="store-type-badge store-type-managed">Managed</span>';
 
             html += `
-                <div class="store-card bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 relative">
-                    ${storeTypeBadge}
-                    <div class="flex flex-col sm:flex-row">
-                        <div class="w-full sm:w-32 h-32 bg-gray-50 flex items-center justify-center flex-shrink-0">
-                            <img src="${logoUrl}" alt="${escapeHtml(store.name)}" class="w-20 h-20 object-cover rounded-lg">
+            <div class="store-card bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 relative">
+                ${storeTypeBadge}
+                <div class="flex flex-col sm:flex-row">
+                    <!-- logo -->
+                    <div class="w-full sm:w-32 h-32 bg-gray-50 flex items-center justify-center flex-shrink-0">
+                        <img src="${logoUrl}" alt="${escapeHtml(store.name)}" class="w-20 h-20 object-cover rounded-lg">
+                    </div>
+
+                    <!-- content -->
+                    <div class="p-4 sm:p-6 flex-grow min-w-0">
+                        <!-- top row : name & status -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 min-w-0">
+                            <h3
+                                class="font-semibold text-secondary truncate"
+                                title="${escapeHtml(store.name)}"
+                            >
+                                ${escapeHtml(store.name)}
+                            </h3>
+                            <div class="inline-flex items-center flex-shrink-0">
+                                ${statusBadge}
+                            </div>
                         </div>
-                        <div class="p-4 sm:p-6 flex-grow">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                                <h3 class="font-semibold text-secondary">${escapeHtml(store.name)}</h3>
-                                <div class="inline-flex items-center">
-                                    ${statusBadge}
-                                </div>
+
+                        <!-- location (2-line clamp) -->
+                        <p
+                            class="text-sm text-gray-text mb-3 overflow-hidden line-clamp-2"
+                            title="${escapeHtml(store.location)}"
+                        >
+                            <i class="fas fa-map-marker-alt mr-1 text-user-primary"></i>
+                            ${escapeHtml(store.location)}
+                        </p>
+
+                        <!-- stats -->
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-xs text-gray-text">Products</p>
+                                <p class="font-medium">${store.product_count || 0}</p>
                             </div>
-                            <p class="text-sm text-gray-text mb-3">
-                                <i class="fas fa-map-marker-alt mr-1 text-user-primary"></i>
-                                ${escapeHtml(store.location)}
-                            </p>
-                            <div class="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <p class="text-xs text-gray-text">Active Products</p>
-                                    <p class="font-medium">${store.product_count || 0}</p>
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-text">Active Categories</p>
-                                    <p class="font-medium">${store.categories ? store.categories.length : 0}</p>
-                                </div>
+                            <div>
+                                <p class="text-xs text-gray-text">Categories</p>
+                                <p class="font-medium">${store.categories ? store.categories.length : 0}</p>
                             </div>
-                            <div class="flex justify-end">
-                                <button 
-                                    onclick="openStoreModal('edit','${store.uuid_id}')" 
-                                    class="h-8 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 text-sm mr-2"
-                                >
-                                    <i class="fas fa-edit"></i>
-                                    <span>Edit</span>
-                                </button>
-                                <a 
-                                    href="../view/profile/vendor/${store.uuid_id}" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm"
-                                >
-                                    <i class="fas fa-cog"></i>
-                                    <span>Manage</span>
-                                </a>
-                            </div>
+                        </div>
+
+                        <!-- actions -->
+                        <div class="flex justify-end">
+                            <button
+                                onclick="openStoreModal('edit','${store.uuid_id}')"
+                                class="h-8 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-1 text-sm mr-2"
+                            >
+                                <i class="fas fa-edit"></i>
+                                <span>Edit</span>
+                            </button>
+                            <a
+                                href="../view/profile/vendor/${store.uuid_id}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm"
+                            >
+                                <i class="fas fa-cog"></i>
+                                <span>Manage</span>
+                            </a>
                         </div>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
         });
+
         html += '</div>';
         container.html(html);
     }
@@ -955,28 +971,15 @@ ob_start();
         const email = $('#storeBusinessEmail').val();
         const phone = storePhoneInput.getNumber();
         const contactName = $('#storeContactPersonName').val();
-        const contactEmail = $('#storeContactPersonEmail').val();
-        const contactPhone = storeContactPhoneInput.getNumber();
         const nature = $('#storeNatureOfBusiness').val();
 
-        if (!name || !email || !phone || !nature || !contactName || !contactEmail || !contactPhone) {
+        if (!name || !email || !phone || !nature || !contactName) {
             showErrorNotification('Please fill in all required fields');
             return;
         }
 
         if (!storePhoneInput.isValidNumber()) {
             showErrorNotification('Please enter a valid business phone number');
-            return;
-        }
-
-        if (!storeContactPhoneInput.isValidNumber()) {
-            showErrorNotification('Please enter a valid contact person phone number');
-            return;
-        }
-
-        // Check if contact phone number starts with +256
-        if (!contactPhone.startsWith('+256')) {
-            showErrorNotification('Contact person phone number must start with +256');
             return;
         }
 
@@ -1055,8 +1058,6 @@ ob_start();
         $('#storeBusinessEmail').val('');
         $('#storeContactNumber').val('');
         $('#storeContactPersonName').val('');
-        $('#storeContactPersonEmail').val('');
-        $('#storeContactPersonPhone').val('');
         $('#storeNatureOfBusiness').val('');
         $('#storeLatitude').val('');
         $('#storeLongitude').val('');
@@ -1112,15 +1113,9 @@ ob_start();
                 $('#storeBusinessEmail').val(store.business_email);
                 storePhoneInput.setNumber(store.business_phone);
 
-                // Set contact person details if available
+                // Set contact person name if available
                 if (store.contact_person_name) {
                     $('#storeContactPersonName').val(store.contact_person_name);
-                }
-                if (store.contact_person_email) {
-                    $('#storeContactPersonEmail').val(store.contact_person_email);
-                }
-                if (store.contact_person_phone) {
-                    storeContactPhoneInput.setNumber(store.contact_person_phone);
                 }
 
                 $('#storeNatureOfBusiness').val(store.nature_of_business);
@@ -1153,21 +1148,12 @@ ob_start();
         const mode = $('#storeMode').val();
         const storeId = $('#storeId').val();
 
-        // Validate contact person phone starts with +256
-        const contactPhone = storeContactPhoneInput.getNumber();
-        if (!contactPhone.startsWith('+256')) {
-            showErrorNotification('Contact person phone number must start with +256');
-            return;
-        }
-
         const formData = {
             id: storeId,
             name: $('#storeBusinessName').val(),
             business_email: $('#storeBusinessEmail').val(),
             business_phone: storePhoneInput.getNumber(),
             contact_person_name: $('#storeContactPersonName').val(),
-            contact_person_email: $('#storeContactPersonEmail').val(),
-            contact_person_phone: contactPhone,
             nature_of_business: $('#storeNatureOfBusiness').val(),
             region: $('#storeLevel1').val(),
             district: $('#storeLevel2').val(),
