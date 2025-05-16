@@ -206,8 +206,6 @@ function initializeTables(PDO $pdo): void
             business_email VARCHAR(100) NOT NULL,
             business_phone VARCHAR(20) NOT NULL,
             contact_person_name VARCHAR(255),
-            contact_person_email VARCHAR(100),
-            contact_person_phone VARCHAR(20),
             nature_of_business VARCHAR(26) NULL,
             region VARCHAR(100) NOT NULL,
             district VARCHAR(100) NOT NULL,
@@ -350,7 +348,7 @@ function getOwnedStores(PDO $pdo, string $userId): void
     $stmt = $pdo->prepare("
         SELECT 
             vs.id, vs.name, vs.description, vs.business_email,
-            vs.business_phone, vs.contact_person_name, vs.contact_person_email, vs.contact_person_phone,
+            vs.business_phone, vs.contact_person_name,
             vs.nature_of_business, nob.name as nature_of_business_name,
             vs.region, vs.district, vs.address, vs.logo_url,
             vs.status, vs.created_at,
@@ -397,7 +395,7 @@ function getManagedStores(PDO $pdo, string $userId): void
     $stmt = $pdo->prepare("
         SELECT 
             vs.id, vs.name, vs.description, vs.business_email,
-            vs.business_phone, vs.contact_person_name, vs.contact_person_email, vs.contact_person_phone,
+            vs.business_phone, vs.contact_person_name,
             vs.nature_of_business, nob.name as nature_of_business_name,
             vs.region, vs.district, vs.address, vs.logo_url,
             vs.status, sm.role, u.username AS owner,
@@ -553,13 +551,11 @@ function createStore(PDO $pdo, string $userId): void
         }
     }
 
-    // Validate contact person fields
-    foreach (['contact_person_name', 'contact_person_email', 'contact_person_phone'] as $f) {
-        if (empty($data[$f])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'error' => "Field '$f' is required"]);
-            return;
-        }
+    // Validate contact person name field
+    if (empty($data['contact_person_name'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => "Field 'contact_person_name' is required"]);
+        return;
     }
 
     try {
@@ -577,12 +573,11 @@ function createStore(PDO $pdo, string $userId): void
         $stmt = $pdo->prepare("
             INSERT INTO vendor_stores (
                 id, owner_id, name, description, business_email, business_phone,
-                contact_person_name, contact_person_email, contact_person_phone,
-                nature_of_business, region, district, subcounty, parish, address,
+                contact_person_name, nature_of_business, region, district, subcounty, parish, address,
                 latitude, longitude, logo_url, website_url, social_media,
                 status, created_at, updated_at
             ) VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?
             )
         ");
         $stmt->execute([
@@ -593,8 +588,6 @@ function createStore(PDO $pdo, string $userId): void
             $data['business_email'],
             $data['business_phone'],
             $data['contact_person_name'],
-            $data['contact_person_email'],
-            $data['contact_person_phone'],
             $data['nature_of_business'],
             $data['region'],
             $data['district'],
@@ -684,8 +677,6 @@ function updateStore(PDO $pdo, string $userId): void
         'business_email',
         'business_phone',
         'contact_person_name',
-        'contact_person_email',
-        'contact_person_phone',
         'nature_of_business',
         'region',
         'district',
