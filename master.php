@@ -698,7 +698,7 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
     </footer>
     <div id="notification-container" class="notification-container"></div>
     <button id="scroll-to-top"
-        class="fixed bottom-6 right-6 bg-primary hover:bg-red-600 text-white rounded-full p-3 shadow-lg transition-all duration-300 opacity-0 invisible"
+        class="fixed bottom-6 right-6 bg-primary hover:bg-red-600 text-white rounded-full p-2 shadow-lg transition-all duration-300 opacity-0 invisible"
         aria-label="Scroll to top">
         <svg class="w-6 h-6" viewBox="0 0 36 36">
             <path class="scroll-circle"
