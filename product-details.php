@@ -121,16 +121,15 @@ ob_start();
         flex-shrink: 0;
     }
 
-    /* Line clamp for description */
     .line-clamp-2 {
         display: -webkit-box;
-        -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
         overflow: hidden;
         text-overflow: ellipsis;
+        line-clamp: 2;
     }
 
-    /* Share buttons styling from vendor-profile.php */
     .share-container {
         display: flex;
         align-items: center;
