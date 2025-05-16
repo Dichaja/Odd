@@ -290,25 +290,6 @@ ob_start();
         visibility: visible;
     }
 
-    .copy-success {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #10B981;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-        z-index: 50;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-
-    .copy-success.show {
-        opacity: 1;
-    }
-
     .view-location-btn {
         display: inline-flex;
         align-items: center;
@@ -357,6 +338,82 @@ ob_start();
             justify-content: center;
         }
     }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        width: 90%;
+        max-width: 500px;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .close {
+        color: #aaa;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+    }
+
+    .modal-body {
+        margin-bottom: 1rem;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    /* Image cropper styles */
+    .cropper-container {
+        width: 100%;
+        height: 300px;
+        margin-bottom: 1rem;
+    }
+
+    .avatar-edit-container {
+        position: relative;
+    }
+
+    /* Edit button styles */
 </style>
 
 <div class="relative h-40 md:h-64 w-full bg-gray-200 overflow-hidden" id="vendor-cover-photo">
@@ -383,17 +440,30 @@ ob_start();
     <div class="bg-white rounded-lg shadow-lg p-6">
         <div class="flex flex-col md:flex-row">
             <div class="flex-shrink-0 flex md:block justify-center">
-                <div id="vendor-avatar"
-                    class="h-32 w-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
-                    <i class="fas fa-store text-gray-400 text-4xl"></i>
+                <div id="vendor-avatar-container" class="avatar-edit-container">
+                    <div id="vendor-avatar"
+                        class="h-32 w-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
+                        <i class="fas fa-store text-gray-400 text-4xl"></i>
+                    </div>
+                    <div id="avatar-edit-button"
+                        class="absolute bottom-0 right-0 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm cursor-pointer text-red-600 border border-gray-200 hover:bg-gray-50 transition-colors hidden">
+                        <i class="fas fa-camera"></i>
+                    </div>
                 </div>
             </div>
 
             <div class="mt-6 md:mt-0 md:ml-6 flex-grow profile-info-mobile-center">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-center">
                     <div>
-                        <h1 id="vendor-name" class="text-3xl font-bold text-secondary">Store Name</h1>
-                        <p id="vendor-description" class="text-gray-600 mt-1">Premium Construction Materials & Services
+                        <h1 id="vendor-name-container" class="text-3xl font-bold text-secondary">
+                            <span id="vendor-name">Store Name</span>
+                            <i id="edit-name-button"
+                                class="fas fa-pen ml-2 text-gray-500 hover:text-red-600 text-sm cursor-pointer transition-colors hidden"></i>
+                        </h1>
+                        <p id="vendor-description-container" class="text-gray-600 mt-1">
+                            <span id="vendor-description">Premium Construction Materials & Services</span>
+                            <i id="edit-description-button"
+                                class="fas fa-pen ml-2 text-gray-500 hover:text-red-600 text-sm cursor-pointer transition-colors hidden"></i>
                         </p>
                     </div>
                 </div>
@@ -522,8 +592,84 @@ ob_start();
     </main>
 </div>
 
-<div id="copy-success" class="copy-success">Link copied to clipboard!</div>
-<div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-4"></div>
+<!-- Edit Name Modal -->
+<div id="edit-name-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Store Name</h2>
+            <span class="close" onclick="closeModal('edit-name-modal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="mb-4">
+                <label for="store-name-input" class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                <input type="text" id="store-name-input"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                onclick="closeModal('edit-name-modal')">Cancel</button>
+            <button type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                onclick="saveName()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Description Modal -->
+<div id="edit-description-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Store Description</h2>
+            <span class="close" onclick="closeModal('edit-description-modal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="mb-4">
+                <label for="store-description-input" class="block text-sm font-medium text-gray-700 mb-1">Store
+                    Description</label>
+                <textarea id="store-description-input" rows="4"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                onclick="closeModal('edit-description-modal')">Cancel</button>
+            <button type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                onclick="saveDescription()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Logo Modal -->
+<div id="edit-logo-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Edit Store Logo</h2>
+            <span class="close" onclick="closeModal('edit-logo-modal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="mb-4">
+                <label for="logo-file-input" class="block text-sm font-medium text-gray-700 mb-1">Upload Logo</label>
+                <input type="file" id="logo-file-input" accept="image/*"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
+                <p class="text-sm text-gray-500 mt-1">Select a square image for best results. The image will be cropped
+                    to a 1:1 ratio.</p>
+            </div>
+            <div id="cropper-container" class="cropper-container hidden">
+                <img id="cropper-image" src="/placeholder.svg" alt="Image to crop">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                onclick="closeModal('edit-logo-modal')">Cancel</button>
+            <button type="button" id="crop-button"
+                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 hidden"
+                onclick="cropAndSaveLogo()">Crop & Save</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 
 <script>
     window.openModal = function (modalId) {
@@ -531,6 +677,17 @@ ob_start();
     };
     window.closeModal = function (modalId) {
         document.getElementById(modalId).style.display = 'none';
+
+        // Reset cropper if closing logo modal
+        if (modalId === 'edit-logo-modal') {
+            if (window.cropper) {
+                window.cropper.destroy();
+                window.cropper = null;
+            }
+            document.getElementById('cropper-container').classList.add('hidden');
+            document.getElementById('crop-button').classList.add('hidden');
+            document.getElementById('logo-file-input').value = '';
+        }
     };
 
     let vendorId = '<?= $vendorId ?>';
@@ -547,6 +704,7 @@ ob_start();
     let pendingDeleteId = null;
     let pendingDeleteType = null;
     let categoryStatusChanges = {};
+    let cropper = null;
 
     // Show location function - only shows, doesn't hide
     function showLocation() {
@@ -565,11 +723,7 @@ ob_start();
     function copyLink() {
         const currentUrl = window.location.href;
         navigator.clipboard.writeText(currentUrl).then(() => {
-            const copySuccess = document.getElementById('copy-success');
-            copySuccess.classList.add('show');
-            setTimeout(() => {
-                copySuccess.classList.remove('show');
-            }, 2000);
+            showToast('Link copied to clipboard!', 'success');
         }).catch(err => {
             console.error('Could not copy text: ', err);
             showToast('Failed to copy link', 'error');
@@ -608,6 +762,201 @@ ob_start();
         const message = `Check out ${vendorName}\n\n${vendorDescription}\n\nVisit their profile on Zzimba Online.`;
         const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(vendorName)}&summary=${encodeURIComponent(message)}`;
         window.open(linkedinUrl, '_blank');
+    }
+
+    // Edit name functionality
+    function editName() {
+        const nameInput = document.getElementById('store-name-input');
+        nameInput.value = document.getElementById('vendor-name').textContent;
+        openModal('edit-name-modal');
+    }
+
+    function saveName() {
+        const newName = document.getElementById('store-name-input').value.trim();
+        if (!newName) {
+            showToast('Store name cannot be empty', 'error');
+            return;
+        }
+
+        const data = {
+            id: vendorId,
+            name: newName
+        };
+
+        fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=updateStore`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('vendor-name').textContent = newName;
+                    closeModal('edit-name-modal');
+                    showToast('Store name updated successfully');
+                } else {
+                    showToast(data.error || 'Failed to update store name', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating store name:', error);
+                showToast('Failed to update store name', 'error');
+            });
+    }
+
+    // Edit description functionality
+    function editDescription() {
+        const descriptionInput = document.getElementById('store-description-input');
+        descriptionInput.value = document.getElementById('vendor-description').textContent;
+        openModal('edit-description-modal');
+    }
+
+    function saveDescription() {
+        const newDescription = document.getElementById('store-description-input').value.trim();
+
+        const data = {
+            id: vendorId,
+            description: newDescription
+        };
+
+        fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=updateStore`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('vendor-description').textContent = newDescription || 'No description provided.';
+                    document.getElementById('store-description').textContent = newDescription || 'No description provided.';
+                    closeModal('edit-description-modal');
+                    showToast('Store description updated successfully');
+                } else {
+                    showToast(data.error || 'Failed to update store description', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating store description:', error);
+                showToast('Failed to update store description', 'error');
+            });
+    }
+
+    // Edit logo functionality
+    function editLogo() {
+        openModal('edit-logo-modal');
+    }
+
+    function initCropper(image) {
+        if (cropper) {
+            cropper.destroy();
+        }
+
+        const cropperContainer = document.getElementById('cropper-container');
+        cropperContainer.classList.remove('hidden');
+
+        const cropperImage = document.getElementById('cropper-image');
+        cropperImage.src = image;
+
+        cropper = new Cropper(cropperImage, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 1,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false
+        });
+
+        document.getElementById('crop-button').classList.remove('hidden');
+    }
+
+    function cropAndSaveLogo() {
+        if (!cropper) {
+            showToast('Please select an image first', 'error');
+            return;
+        }
+
+        // Get the cropped canvas
+        const canvas = cropper.getCroppedCanvas({
+            width: 512,
+            height: 512,
+            fillColor: '#fff',
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+
+        if (!canvas) {
+            showToast('Failed to crop image', 'error');
+            return;
+        }
+
+        // Convert canvas to blob
+        canvas.toBlob(function (blob) {
+            const formData = new FormData();
+            formData.append('logo', blob, 'logo.png');
+
+            // First upload the logo
+            fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=uploadLogo`, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Then update the store with the new logo path
+                        const updateData = {
+                            id: vendorId,
+                            temp_logo_path: data.temp_path
+                        };
+
+                        return fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=updateStore`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(updateData)
+                        });
+                    } else {
+                        throw new Error(data.message || 'Failed to upload logo');
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the logo in the UI
+                        const logoUrl = canvas.toDataURL();
+                        const avatarContainer = document.getElementById('vendor-avatar');
+                        avatarContainer.innerHTML = '';
+                        const logoImg = document.createElement('img');
+                        logoImg.src = logoUrl;
+                        logoImg.alt = document.getElementById('vendor-name').textContent;
+                        logoImg.className = 'w-full h-full object-cover rounded-full';
+                        avatarContainer.appendChild(logoImg);
+
+                        closeModal('edit-logo-modal');
+                        showToast('Store logo updated successfully');
+
+                        // Reload the page to see the updated logo
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        showToast(data.error || 'Failed to update store logo', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating store logo:', error);
+                    showToast('Failed to update store logo', 'error');
+                });
+        }, 'image/png');
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -662,10 +1011,26 @@ ob_start();
                 event.target.style.display = 'none';
             }
         });
+
+        // Set up logo file input change event
+        document.getElementById('logo-file-input').addEventListener('change', function (e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    initCropper(e.target.result);
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Set up edit button click events
+        document.getElementById('edit-name-button').addEventListener('click', editName);
+        document.getElementById('edit-description-button').addEventListener('click', editDescription);
+        document.getElementById('avatar-edit-button').addEventListener('click', editLogo);
     });
 
     function loadVendorProfile(id) {
-        fetch(`${BASE_URL}fetch/manageProfile?action=getStoreDetails&id=${id}`)
+        fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=getStoreDetails&id=${id}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -762,6 +1127,11 @@ ob_start();
         const manageTab = document.querySelector('button[data-tab="manage"]');
         if (isOwner) {
             manageTab.classList.remove('hidden');
+
+            // Show edit buttons if user is owner
+            document.getElementById('edit-name-button').classList.remove('hidden');
+            document.getElementById('edit-description-button').classList.remove('hidden');
+            document.getElementById('avatar-edit-button').classList.remove('hidden');
         } else {
             manageTab.classList.add('hidden');
         }
@@ -787,6 +1157,22 @@ ob_start();
         document.getElementById('completion-percentage').textContent = percentage;
         document.getElementById('completion-steps').textContent = completedSteps;
         document.getElementById('verification-progress').style.width = `${percentage}%`;
+    }
+
+    function updateStepStatus(id, completed) {
+        const stepElement = document.getElementById(`step-${id}`);
+        if (stepElement) {
+            const iconElement = stepElement.querySelector('.step-icon');
+            if (completed) {
+                iconElement.classList.remove('pending');
+                iconElement.classList.add('completed');
+                iconElement.innerHTML = '<i class="fas fa-check"></i>';
+            } else {
+                iconElement.classList.remove('completed');
+                iconElement.classList.add('pending');
+                iconElement.innerHTML = '<i class="fas fa-times"></i>';
+            }
+        }
     }
 
     function showError(message) {
@@ -833,22 +1219,17 @@ ob_start();
 
     function showToast(message, type = 'success') {
         const toast = document.createElement('div');
-        toast.className = `flex items-center p-4 mb-4 w-full max-w-xs rounded-lg shadow ${type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'} transition-opacity duration-300`;
+        toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity duration-300`;
+        toast.textContent = message;
 
-        toast.innerHTML = `
-            <div class="inline-flex flex-shrink-0 justify-center items-center w-8 h-8 ${type === 'success' ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'} rounded-lg">
-                <i class="fa-solid ${type === 'success' ? 'fa-check' : 'fa-xmark'}"></i>
-            </div>
-            <div class="ml-3 text-sm font-normal">${message}</div>
-            <button type="button" class="ml-auto -mx-1.5 -my-1.5 ${type === 'success' ? 'bg-green-50 text-green-500 hover:text-green-700' : 'bg-red-50 text-red-500 hover:text-red-700'} rounded-lg p-1.5 inline-flex h-8 w-8" onclick="this.parentElement.remove()">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        `;
+        document.body.appendChild(toast);
 
-        document.getElementById('toast-container').appendChild(toast);
+        toast.offsetHeight; // Trigger reflow
+
+        toast.classList.add('opacity-100');
 
         setTimeout(() => {
-            toast.classList.add('opacity-0');
+            toast.classList.remove('opacity-100');
             setTimeout(() => {
                 toast.remove();
             }, 300);

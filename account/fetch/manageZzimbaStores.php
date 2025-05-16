@@ -65,6 +65,10 @@ try {
             uploadLogo();
             break;
 
+        case 'uploadVendorCover':
+            uploadVendorCover();
+            break;
+
         case 'getStoreCategories':
             getStoreCategories($pdo, $_GET['storeId'] ?? '');
             break;
@@ -195,6 +199,7 @@ function initializeTables(PDO $pdo): void
             latitude DECIMAL(10,8) NOT NULL,
             longitude DECIMAL(11,8) NOT NULL,
             logo_url VARCHAR(255),
+            vendor_cover_url VARCHAR(255),
             website_url VARCHAR(255),
             social_media TEXT,
             status ENUM('active','pending','inactive','suspended') NOT NULL DEFAULT 'pending',
@@ -702,6 +707,29 @@ function updateStore(PDO $pdo, string $userId): void
             ->execute([$storeId]);
     }
 
+    if (
+        !empty($data['temp_cover_path'])
+        && file_exists(__DIR__ . '/../../' . $data['temp_cover_path'])
+    ) {
+        $ext = pathinfo($data['temp_cover_path'], PATHINFO_EXTENSION);
+        $dir = __DIR__ . '/../../img/stores/' . $storeId . '/cover';
+        $files = glob("$dir/*");
+        foreach ($files as $f) {
+            is_file($f) && unlink($f);
+        }
+        mkdir($dir, 0755, true);
+        $name = 'cover.' . $ext;
+        rename(__DIR__ . '/../../' . $data['temp_cover_path'], "$dir/$name");
+        $url = 'img/stores/' . $storeId . '/cover/' . $name;
+        $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = ? WHERE id = ?")
+            ->execute([$url, $storeId]);
+    } elseif (!empty($data['remove_cover'])) {
+        $dir = __DIR__ . '/../../img/stores/' . $storeId . '/cover';
+        deleteDirectory($dir);
+        $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = NULL WHERE id = ?")
+            ->execute([$storeId]);
+    }
+
     echo json_encode(['success' => true, 'message' => 'Store updated']);
 }
 
@@ -785,6 +813,92 @@ function uploadLogo(): void
     }
 
     imagecopyresampled($dst, $src, 0, 0, $srcX, $srcY, $size, $size, $srcS, $srcS);
+
+    match ($ext) {
+        'jpg', 'jpeg' => imagejpeg($dst, $path, 90),
+        'png' => imagepng($dst, $path, 9),
+        'webp' => imagewebp($dst, $path, 90),
+        'gif' => imagegif($dst, $path),
+    };
+
+    imagedestroy($src);
+    imagedestroy($dst);
+
+    echo json_encode([
+        'success' => true,
+        'temp_path' => 'uploads/temp/' . $name,
+        'url' => BASE_URL . 'uploads/temp/' . $name
+    ]);
+}
+
+function uploadVendorCover(): void
+{
+    if (empty($_FILES['cover']) || $_FILES['cover']['error'] !== UPLOAD_ERR_OK) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Upload error']);
+        return;
+    }
+
+    $file = $_FILES['cover'];
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    if (!in_array($ext, $allowed) || $file['size'] > 2_000_000) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid file']);
+        return;
+    }
+
+    $tmpDir = __DIR__ . '/../../uploads/temp/';
+    mkdir($tmpDir, 0755, true);
+    $name = uniqid('temp_') . ".$ext";
+    $path = $tmpDir . $name;
+
+    $imgInfo = getimagesize($file['tmp_name']);
+    $src = match ($ext) {
+        'jpg', 'jpeg' => imagecreatefromjpeg($file['tmp_name']),
+        'png' => imagecreatefrompng($file['tmp_name']),
+        'webp' => imagecreatefromwebp($file['tmp_name']),
+        'gif' => imagecreatefromgif($file['tmp_name']),
+        default => null
+    };
+    if (!$src) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Image processing error']);
+        return;
+    }
+
+    // For cover image, we'll use a different aspect ratio (e.g., 1200x400 for a banner)
+    $width = 1200;
+    $height = 400;
+    $dst = imagecreatetruecolor($width, $height);
+    if (in_array($ext, ['png', 'gif'])) {
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+        $bg = imagecolorallocatealpha($dst, 255, 255, 255, 127);
+        imagefilledrectangle($dst, 0, 0, $width, $height, $bg);
+    } else {
+        imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+    }
+
+    [$w, $h] = $imgInfo;
+    $srcRatio = $w / $h;
+    $dstRatio = $width / $height;
+
+    if ($srcRatio > $dstRatio) {
+        // Source is wider than destination
+        $srcH = $h;
+        $srcW = $h * $dstRatio;
+        $srcX = ($w - $srcW) / 2;
+        $srcY = 0;
+    } else {
+        // Source is taller than destination
+        $srcW = $w;
+        $srcH = $w / $dstRatio;
+        $srcX = 0;
+        $srcY = ($h - $srcH) / 2;
+    }
+
+    imagecopyresampled($dst, $src, 0, 0, $srcX, $srcY, $width, $height, $srcW, $srcH);
 
     match ($ext) {
         'jpg', 'jpeg' => imagejpeg($dst, $path, 90),
