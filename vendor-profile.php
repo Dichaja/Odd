@@ -523,23 +523,23 @@ ob_start();
             <div class="ml-0 sm:ml-auto share-container">
                 <span class="share-label">SHARE</span>
                 <div class="share-buttons">
-                    <button onclick="copyLink()" class="share-button" title="Copy link">
+                    <button onclick="copyLink()" class="share-button">
                         <i class="fa-solid fa-link"></i>
                         <span class="tooltip">Copy link to clipboard</span>
                     </button>
-                    <button onclick="shareOnWhatsApp()" class="share-button" title="Share on WhatsApp">
+                    <button onclick="shareOnWhatsApp()" class="share-button">
                         <i class="fa-brands fa-whatsapp"></i>
                         <span class="tooltip">Share this profile on WhatsApp</span>
                     </button>
-                    <button onclick="shareOnFacebook()" class="share-button" title="Share on Facebook">
+                    <button onclick="shareOnFacebook()" class="share-button">
                         <i class="fa-brands fa-facebook-f"></i>
                         <span class="tooltip">Share this profile on Facebook</span>
                     </button>
-                    <button onclick="shareOnTwitter()" class="share-button" title="Share on Twitter/X">
+                    <button onclick="shareOnTwitter()" class="share-button">
                         <i class="fa-brands fa-x-twitter"></i>
                         <span class="tooltip">Post this on your X</span>
                     </button>
-                    <button onclick="shareOnLinkedIn()" class="share-button" title="Share on LinkedIn">
+                    <button onclick="shareOnLinkedIn()" class="share-button">
                         <i class="fa-brands fa-linkedin-in"></i>
                         <span class="tooltip">Share on LinkedIn</span>
                     </button>
