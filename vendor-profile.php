@@ -870,7 +870,7 @@ ob_start();
     function shareOnWhatsApp() {
         const currentUrl = window.location.href;
         const vendorName = document.getElementById('vendor-name').textContent;
-        const message = `*'${vendorName}'* is now on Zzimba Online!\n\nFollow the link to view our profile and offer of the day.\n\n${currentUrl}`;
+        const message = `*${vendorName}* is now on Zzimba Online!\n\nFollow the link to view our profile and offer of the day.\n\n${currentUrl}`;
         const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
     }
@@ -878,7 +878,7 @@ ob_start();
     function shareOnFacebook() {
         const currentUrl = window.location.href;
         const vendorName = document.getElementById('vendor-name').textContent;
-        const message = `'${vendorName}' is now on Zzimba Online! Follow the link to view our profile and offer of the day.`;
+        const message = `${vendorName} is now on Zzimba Online! Follow the link to view our profile and offer of the day.`;
         // Facebook doesn't allow custom text in sharer.php, so we'll just share the URL
         // The message will be used as the title when possible
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}&quote=${encodeURIComponent(message)}`;
@@ -888,7 +888,7 @@ ob_start();
     function shareOnTwitter() {
         const currentUrl = window.location.href;
         const vendorName = document.getElementById('vendor-name').textContent;
-        const message = `'${vendorName}' is now on Zzimba Online!\n\nFollow the link to view our profile and offer of the day.`;
+        const message = `${vendorName} is now on Zzimba Online!\n\nFollow the link to view our profile and offer of the day.`;
         const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(currentUrl)}`;
         window.open(twitterUrl, '_blank');
     }
@@ -896,7 +896,7 @@ ob_start();
     function shareOnLinkedIn() {
         const currentUrl = window.location.href;
         const vendorName = document.getElementById('vendor-name').textContent;
-        const message = `'${vendorName}' is now on Zzimba Online! Follow the link to view our profile and offer of the day.`;
+        const message = `${vendorName} is now on Zzimba Online! Follow the link to view our profile and offer of the day.`;
         const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(vendorName)}&summary=${encodeURIComponent(message)}`;
         window.open(linkedinUrl, '_blank');
     }
