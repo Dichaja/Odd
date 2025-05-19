@@ -1,38 +1,31 @@
 <?php
 function getStepTitle($mode, $step)
 {
-    if ($mode === 'login') {
-        if ($step === 'username')
-            return 'Login';
-        if ($step === 'password')
-            return 'Enter Password';
-    } else if ($mode === 'register') {
-        if ($step === 'username')
-            return 'Create Account';
-        if ($step === 'email')
-            return 'Enter Email';
-        if ($step === 'email-verify')
-            return 'Verify Email';
-        if ($step === 'phone')
-            return 'Enter Phone Number';
-        if ($step === 'phone-verify')
-            return 'Verify Phone';
-        if ($step === 'password')
-            return 'Create Password';
-    } else if ($mode === 'forgot_password') {
-        if ($step === 'options')
-            return 'Forgot Password';
-        if ($step === 'email-form')
-            return 'Verify via Email';
-        if ($step === 'phone-form')
-            return 'Verify via Phone';
-    } else if ($mode === 'reset_password') {
-        if ($step === 'verify')
-            return 'Verify Code';
-        if ($step === 'form')
-            return 'Reset Password';
-    }
-    return 'Authentication';
+    $titles = [
+        'login' => [
+            'username' => 'Login',
+            'password' => 'Enter Password'
+        ],
+        'register' => [
+            'username' => 'Create Account',
+            'email' => 'Enter Email',
+            'email-verify' => 'Verify Email',
+            'phone' => 'Enter Phone Number',
+            'phone-verify' => 'Verify Phone',
+            'password' => 'Create Password'
+        ],
+        'forgot_password' => [
+            'options' => 'Forgot Password',
+            'email-form' => 'Verify via Email',
+            'phone-form' => 'Verify via Phone'
+        ],
+        'reset_password' => [
+            'verify' => 'Verify Code',
+            'form' => 'Reset Password'
+        ]
+    ];
+
+    return $titles[$mode][$step] ?? 'Authentication';
 }
 ?>
 <!-- Login: Username Step -->
@@ -252,26 +245,7 @@ function getStepTitle($mode, $step)
                 <p class="mb-4 text-center">We've sent a verification code to <strong
                         id="register-email-display"></strong></p>
                 <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-                <div class="flex justify-between gap-2 mb-2">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="email-otp" autofocus>
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="email-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="email-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="email-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="email-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="email-otp">
-                </div>
+                <div id="email-otp-inputs"></div>
                 <input type="hidden" id="email-otp" value="">
                 <div id="email-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="mt-2 text-sm text-gray-500 text-center">
@@ -332,26 +306,7 @@ function getStepTitle($mode, $step)
                 <p class="mb-4 text-center">We've sent a verification code to <strong
                         id="register-phone-display"></strong></p>
                 <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-                <div class="flex justify-between gap-2 mb-2">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="phone-otp" autofocus>
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="phone-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="phone-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="phone-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="phone-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="phone-otp">
-                </div>
+                <div id="phone-otp-inputs"></div>
                 <input type="hidden" id="phone-otp" value="">
                 <div id="phone-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="mt-2 text-sm text-gray-500 text-center">
@@ -566,26 +521,7 @@ function getStepTitle($mode, $step)
                 <p class="mb-4 text-center">We've sent a verification code to <strong
                         id="reset-contact-display"></strong></p>
                 <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-                <div class="flex justify-between gap-2 mb-2">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="reset-otp" autofocus>
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="reset-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="reset-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="reset-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="reset-otp">
-                    <input type="text" maxlength="1"
-                        class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                        data-otp-target="reset-otp">
-                </div>
+                <div id="reset-otp-inputs"></div>
                 <input type="hidden" id="reset-otp" value="">
                 <div id="reset-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="mt-2 text-sm text-gray-500 text-center">
@@ -751,42 +687,10 @@ function getStepTitle($mode, $step)
     }
 
     function hideAllForms() {
-        ['username', 'password'].forEach(s => {
-            const el = document.getElementById('login-step-' + s);
-            if (el) {
-                el.classList.remove('active');
-                el.style.display = 'none';
-            }
+        document.querySelectorAll('.auth-form').forEach(form => {
+            form.classList.remove('active');
+            form.style.display = 'none';
         });
-        ['username', 'email', 'email-verify', 'phone', 'phone-verify', 'password'].forEach(s => {
-            const el = document.getElementById('register-step-' + s);
-            if (el) {
-                el.classList.remove('active');
-                el.style.display = 'none';
-            }
-        });
-        ['options', 'email-form', 'phone-form'].forEach(s => {
-            const el = document.getElementById('forgot-password-' + s);
-            if (el) {
-                el.classList.remove('active');
-                el.style.display = 'none';
-            }
-        });
-        const resetEl = document.getElementById('reset-password-verify');
-        if (resetEl) {
-            resetEl.classList.remove('active');
-            resetEl.style.display = 'none';
-        }
-        const resetFormEl = document.getElementById('reset-password-form');
-        if (resetFormEl) {
-            resetFormEl.classList.remove('active');
-            resetFormEl.style.display = 'none';
-        }
-        const emptyOptEl = document.getElementById('empty-password-options');
-        if (emptyOptEl) {
-            emptyOptEl.classList.remove('active');
-            emptyOptEl.style.display = 'none';
-        }
     }
 
     function showForgotPasswordOptions() {
@@ -874,6 +778,34 @@ function getStepTitle($mode, $step)
         }
     }
 
+    function renderOtpInputs(target) {
+        const container = document.getElementById(target + '-inputs');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="flex justify-between gap-2 mb-2">
+                <input type="text" maxlength="1"
+                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                    data-otp-target="${target}" autofocus>
+                <input type="text" maxlength="1"
+                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                    data-otp-target="${target}">
+                <input type="text" maxlength="1"
+                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                    data-otp-target="${target}">
+                <input type="text" maxlength="1"
+                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                    data-otp-target="${target}">
+                <input type="text" maxlength="1"
+                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                    data-otp-target="${target}">
+                <input type="text" maxlength="1"
+                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                    data-otp-target="${target}">
+            </div>
+        `;
+    }
+
     function startOTPTimer(type, seconds) {
         let r = seconds;
         const te = document.getElementById(type + '-timer');
@@ -898,6 +830,8 @@ function getStepTitle($mode, $step)
                 }
             }
         }, 1000);
+
+        // Clear previous timer if exists
         if (type === 'email-otp') {
             if (emailOTPTimer) clearInterval(emailOTPTimer);
             emailOTPTimer = iv;
@@ -915,6 +849,36 @@ function getStepTitle($mode, $step)
             return this.value;
         }).get().join('');
         $('#' + target).val(values);
+    }
+
+    function resendOtp(endpoint, payload, timerType, successMsg, errorMsg) {
+        const button = $('#resend-' + timerType);
+        if (button.prop('disabled')) return;
+
+        const originalText = button.html();
+        button.prop('disabled', true).addClass('text-gray-400').html('<i class="fas fa-spinner fa-spin mr-1"></i>Resending...');
+
+        $.ajax({
+            url: BASE_URL + 'auth/' + endpoint,
+            type: 'POST',
+            data: JSON.stringify(payload),
+            contentType: 'application/json',
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    startOTPTimer(timerType, 120);
+                    notifications.success(successMsg);
+                } else {
+                    button.prop('disabled', false).removeClass('text-gray-400');
+                    notifications.error(response.message || errorMsg);
+                }
+                button.html(originalText);
+            },
+            error: function () {
+                button.prop('disabled', false).removeClass('text-gray-400').html(originalText);
+                notifications.error(errorMsg);
+            }
+        });
     }
 
     function handleLoginUsernameSubmit() {
@@ -1057,6 +1021,7 @@ function getStepTitle($mode, $step)
             dataType: 'json',
             success: function (response) {
                 if (response.success) {
+                    renderOtpInputs('reset-otp');
                     showResetVerifyForm();
                     $('.otp-input[data-otp-target="reset-otp"]').val('');
                     document.getElementById('reset-otp').value = '';
@@ -1159,6 +1124,7 @@ function getStepTitle($mode, $step)
                             button.innerHTML = originalText;
                             if (otpResponse.success) {
                                 notifications.success('Verification code sent to your email');
+                                renderOtpInputs('email-otp');
                                 startOTPTimer('email-otp', 120);
                                 showRegisterStep('email-verify');
                                 $('.otp-input[data-otp-target="email-otp"]').val('');
@@ -1279,6 +1245,7 @@ function getStepTitle($mode, $step)
                         success: function (otpResponse) {
                             if (otpResponse.success) {
                                 notifications.success('Verification code sent to your phone');
+                                renderOtpInputs('phone-otp');
                                 startOTPTimer('phone-otp', 120);
                                 showRegisterStep('phone-verify');
                                 $('.otp-input[data-otp-target="phone-otp"]').val('');
@@ -1453,6 +1420,7 @@ function getStepTitle($mode, $step)
                     document.getElementById('reset-back-link').onclick = function () {
                         showForgotPasswordForm('email');
                     };
+                    renderOtpInputs('reset-otp');
                     startOTPTimer('reset-otp', 120);
                     showResetVerifyForm();
                     $('.otp-input[data-otp-target="reset-otp"]').val('');
@@ -1506,6 +1474,7 @@ function getStepTitle($mode, $step)
                     document.getElementById('reset-back-link').onclick = function () {
                         showForgotPasswordForm('phone');
                     };
+                    renderOtpInputs('reset-otp');
                     startOTPTimer('reset-otp', 120);
                     showResetVerifyForm();
                     $('.otp-input[data-otp-target="reset-otp"]').val('');
@@ -1672,100 +1641,28 @@ function getStepTitle($mode, $step)
     });
 
     $(document).on('click', '#resend-email-otp', function () {
-        const button = $(this);
-        if (button.prop('disabled')) return;
-        const originalText = button.html();
-        button.prop('disabled', true).addClass('text-gray-400').html('<i class="fas fa-spinner fa-spin mr-1"></i>Resending...');
-        $.ajax({
-            url: BASE_URL + 'auth/sendEmailOTP',
-            type: 'POST',
-            data: JSON.stringify({
-                email: registrationData.email
-            }),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function (response) {
-                if (response.success) {
-                    startOTPTimer('email-otp', 120);
-                    notifications.success('Verification code resent to your email');
-                } else {
-                    button.prop('disabled', false).removeClass('text-gray-400');
-                    notifications.error(response.message || 'Failed to resend code');
-                }
-                button.html(originalText);
-            },
-            error: function () {
-                button.prop('disabled', false).removeClass('text-gray-400').html(originalText);
-                notifications.error('Failed to resend code. Please try again.');
-            }
-        });
+        resendOtp('sendEmailOTP', {
+            email: registrationData.email
+        }, 'email-otp', 'Verification code resent to your email', 'Failed to resend code. Please try again.');
     });
 
     $(document).on('click', '#resend-phone-otp', function () {
-        const button = $(this);
-        if (button.prop('disabled')) return;
-        const originalText = button.html();
-        button.prop('disabled', true).addClass('text-gray-400').html('<i class="fas fa-spinner fa-spin mr-1"></i>Resending...');
-        $.ajax({
-            url: BASE_URL + 'auth/sendPhoneOTP',
-            type: 'POST',
-            data: JSON.stringify({
-                phone: registrationData.phone
-            }),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function (response) {
-                if (response.success) {
-                    startOTPTimer('phone-otp', 120);
-                    notifications.success('Verification code resent to your phone');
-                } else {
-                    button.prop('disabled', false).removeClass('text-gray-400');
-                    notifications.error(response.message || 'Failed to resend code');
-                }
-                button.html(originalText);
-            },
-            error: function () {
-                button.prop('disabled', false).removeClass('text-gray-400').html(originalText);
-                notifications.error('Failed to resend code. Please try again.');
-            }
-        });
+        resendOtp('sendPhoneOTP', {
+            phone: registrationData.phone
+        }, 'phone-otp', 'Verification code resent to your phone', 'Failed to resend code. Please try again.');
     });
 
     $(document).on('click', '#resend-reset-otp', function () {
-        const button = $(this);
-        if (button.prop('disabled')) return;
         if (!resetMethod) {
             resetMethod = 'email';
         }
-        const originalText = button.html();
-        button.prop('disabled', true).addClass('text-gray-400').html('<i class="fas fa-spinner fa-spin mr-1"></i>Resending...');
         const endpoint = resetMethod === 'email' ? 'sendResetEmail' : 'sendResetPhone';
         const dataPayload = resetMethod === 'email' ? {
             email: forgotPasswordData.contact
         } : {
             phone: forgotPasswordData.contact
         };
-        $.ajax({
-            url: BASE_URL + 'auth/' + endpoint,
-            type: 'POST',
-            data: JSON.stringify(dataPayload),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function (response) {
-                if (response.success) {
-                    startOTPTimer('reset-otp', 120);
-                    notifications.success('Verification code resent');
-                } else {
-                    button.prop('disabled', false).removeClass('text-gray-400');
-                    notifications.error(response.message || 'Failed to resend code');
-                }
-                button.html(originalText);
-            },
-            error: function () {
-                button.prop('disabled', false).removeClass('text-gray-400').html(originalText);
-                notifications.error('Failed to resend code. Please try again.');
-            }
-        });
+        resendOtp(endpoint, dataPayload, 'reset-otp', 'Verification code resent', 'Failed to resend code. Please try again.');
     });
 
     function togglePasswordVisibility(inputId) {
@@ -1857,6 +1754,11 @@ function getStepTitle($mode, $step)
 
     // Initialize phone input fields when document is ready
     document.addEventListener('DOMContentLoaded', function () {
+        // Initialize OTP input containers
+        renderOtpInputs('email-otp');
+        renderOtpInputs('phone-otp');
+        renderOtpInputs('reset-otp');
+
         // Initialize phone input for registration
         const phoneInput = document.querySelector("#phone");
         if (phoneInput) {
