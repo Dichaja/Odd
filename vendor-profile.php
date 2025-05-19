@@ -882,8 +882,10 @@ ob_start();
         document.getElementById('content-state').classList.remove('hidden');
         document.getElementById('vendor-name').textContent = store.name;
         document.getElementById('vendor-operation-type').textContent = store.nature_of_business_name;
+
         const statusBadge = document.getElementById('vendor-status');
         const accountStatus = document.getElementById('account-status');
+
         if (store.status === 'active') {
             statusBadge.className = 'bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm';
             statusBadge.textContent = 'Active';
@@ -900,12 +902,14 @@ ob_start();
             accountStatus.className = 'inline-block bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium';
             accountStatus.textContent = store.status.charAt(0).toUpperCase() + store.status.slice(1);
         }
+
         document.getElementById('vendor-location').textContent = `${store.district}, ${store.address}`;
         document.getElementById('vendor-location-contact').textContent = `${store.district}, ${store.address}`;
         document.getElementById('vendor-owner').textContent = store.owner_username;
         document.getElementById('vendor-description').textContent = store.description || 'No description provided.';
         storeEmail = store.business_email;
         storePhone = store.business_phone;
+
         const regDate = new Date(store.created_at);
         const formattedDate = regDate.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -914,6 +918,7 @@ ob_start();
         });
         document.getElementById('vendor-registered').textContent = `Joined ${formattedDate}`;
         document.getElementById('vendor-registered-contact').textContent = formattedDate;
+
         if (store.owner_current_login) {
             const lastSeen = new Date(store.owner_current_login);
             document.getElementById('vendor-last-seen').textContent = formatTimeAgo(lastSeen);
@@ -946,6 +951,13 @@ ob_start();
         } else {
             coverContainer.style.backgroundImage = `url(https://placehold.co/1200x400/e5e7eb/6b7280?text=${encodeURIComponent(store.name)})`;
         }
+
+        const productCount = Number(store.product_count) || 0;
+        const categoryCount = Number(store.category_count) || 0;
+        const productLabel = productCount === 1 ? 'Product' : 'Products';
+        const categoryLabel = categoryCount === 1 ? 'Category' : 'Categories';
+        document.getElementById('product-count').textContent = `${productCount} ${productLabel}`;
+        document.getElementById('category-count').textContent = `${categoryCount} ${categoryLabel}`;
 
         isOwner = store.is_owner;
 

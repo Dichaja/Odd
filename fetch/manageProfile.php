@@ -485,6 +485,7 @@ function updateCategoryStatus(PDO $pdo, string $currentUser)
     }
 }
 
+
 function addStoreProduct(PDO $pdo, string $currentUser)
 {
     $storeId = $_POST['store_id'] ?? '';
@@ -604,6 +605,8 @@ function addStoreProduct(PDO $pdo, string $currentUser)
             }
         }
 
+        updateEmptyCategories($pdo);
+
         $pdo->commit();
         echo json_encode(['success' => true, 'message' => 'Product & pricing added']);
     } catch (Exception $e) {
@@ -616,6 +619,7 @@ function addStoreProduct(PDO $pdo, string $currentUser)
     }
 }
 
+// Modify the updateStoreProduct function to call updateEmptyCategories at the end
 function updateStoreProduct(PDO $pdo, string $currentUser)
 {
     $storeProductId = $_POST['store_product_id'] ?? '';
@@ -736,6 +740,8 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                 $deleteStmt->execute($toDelete);
             }
         }
+
+        updateEmptyCategories($pdo);
 
         $pdo->commit();
         echo json_encode(['success' => true, 'message' => 'Product pricing updated']);
@@ -907,5 +913,31 @@ function getAllProductsNotInStore(PDO $pdo, string $storeId)
         error_log('Error in getAllProductsNotInStore: ' . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Error fetching products']);
+    }
+}
+
+function updateEmptyCategories(PDO $pdo)
+{
+    try {
+        $stmt = $pdo->prepare("
+            SELECT sc.id
+            FROM store_categories sc
+            LEFT JOIN store_products sp ON sc.id = sp.store_category_id
+            WHERE sc.status != 'deleted'
+            GROUP BY sc.id
+            HAVING COUNT(sp.id) = 0
+        ");
+        $stmt->execute();
+        $emptyCategories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        if (!empty($emptyCategories)) {
+            $placeholders = implode(',', array_fill(0, count($emptyCategories), '?'));
+            $deleteStmt = $pdo->prepare("UPDATE store_categories SET status = 'deleted', updated_at = NOW() WHERE id IN ($placeholders)");
+            $deleteStmt->execute($emptyCategories);
+
+            error_log('Removed ' . count($emptyCategories) . ' empty categories');
+        }
+    } catch (Exception $e) {
+        error_log('Error in updateEmptyCategories: ' . $e->getMessage());
     }
 }

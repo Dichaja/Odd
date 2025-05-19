@@ -477,11 +477,18 @@ function getStoreDetails(PDO $pdo, string $storeId, ?string $userId): void
         return;
     }
 
-    // For public access, we don't need to check canAccessStore
-    // We'll just fetch the store details if it exists and is active
-
     $stmt = $pdo->prepare("
-        SELECT vs.*, nob.name as nature_of_business_name, u.username AS owner_username, u.email AS owner_email, u.phone AS owner_phone
+        SELECT 
+            vs.*, 
+            nob.name as nature_of_business_name, 
+            u.username AS owner_username, 
+            u.email AS owner_email, 
+            u.phone AS owner_phone,
+            (SELECT COUNT(*) FROM store_categories sc WHERE sc.store_id = vs.id AND sc.status = 'active') AS category_count,
+            (SELECT COUNT(*) FROM product_pricing pp 
+                JOIN store_products sp ON pp.store_products_id = sp.id
+                JOIN store_categories sc ON sc.id = sp.store_category_id
+             WHERE sc.store_id = vs.id AND sp.status = 'active' AND sc.status = 'active') AS product_count
         FROM vendor_stores vs
         LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id
         JOIN zzimba_users u ON vs.owner_id = u.id
@@ -500,7 +507,15 @@ function getStoreDetails(PDO $pdo, string $storeId, ?string $userId): void
     $store['is_owner'] = $userId && $store['owner_id'] === $userId;
 
     $catStmt = $pdo->prepare("
-        SELECT sc.id, pc.name, pc.description, sc.status, sc.created_at
+        SELECT 
+            sc.id, 
+            pc.name, 
+            pc.description, 
+            sc.status, 
+            sc.created_at,
+            (SELECT COUNT(*) FROM product_pricing pp 
+                JOIN store_products sp ON pp.store_products_id = sp.id
+                WHERE sp.store_category_id = sc.id AND sp.status = 'active') AS product_count
         FROM store_categories sc
         JOIN product_categories pc ON sc.category_id = pc.id
         WHERE sc.store_id = ? AND sc.status = 'active'
