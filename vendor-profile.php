@@ -7,7 +7,7 @@ $storeData = null;
 
 function generateSeoMetaTags($store)
 {
-    $title = htmlspecialchars($store['name'] ?? 'Vendor Store') . ' | Zzimba Online';
+    $title = htmlspecialchars($store['name'] ?? 'Vendor Store') . ' | Zzimba Store';
     $description = htmlspecialchars($store['description'] ?? 'Discover quality products and services at ' . ($store['name'] ?? 'this vendor store') . ' on Zzimba Online.');
 
     // Determine OG image with fallback mechanism
