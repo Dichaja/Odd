@@ -1,9 +1,38 @@
 <?php
-$pageTitle = 'Vendor Profile';
 $activeNav = 'vendors';
 require_once __DIR__ . '/config/config.php';
 
 $vendorId = $_GET['id'] ?? null;
+$storeData = null;
+
+function generateSeoMetaTags($store)
+{
+    $title = htmlspecialchars($store['name'] ?? 'Vendor Store') . ' | Zzimba Online';
+    $description = htmlspecialchars($store['description'] ?? 'Discover quality products and services at ' . ($store['name'] ?? 'this vendor store') . ' on Zzimba Online.');
+
+    // Determine OG image with fallback mechanism
+    $ogImage = '';
+    if (!empty($store['logo_url'])) {
+        $ogImage = BASE_URL . $store['logo_url'];
+    } elseif (!empty($store['vendor_cover_url'])) {
+        $ogImage = BASE_URL . $store['vendor_cover_url'];
+    } else {
+        $storeName = urlencode($store['name'] ?? 'Vendor Store');
+        $ogImage = "https://placehold.co/1200x630?text={$storeName}";
+    }
+
+    $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+
+    return [
+        'title' => $title,
+        'description' => $description,
+        'og_title' => $title,
+        'og_description' => $description,
+        'og_image' => $ogImage,
+        'og_url' => $currentUrl,
+        'og_type' => 'website'
+    ];
+}
 
 if ($vendorId) {
     try {
@@ -14,397 +43,22 @@ if ($vendorId) {
         $store = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($store) {
-            $pageTitle = htmlspecialchars($store['name']);
+            $stmt = $pdo->prepare("SELECT * FROM vendor_stores WHERE id = ?");
+            $stmt->execute([$storeId]);
+            $storeData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $seoTags = generateSeoMetaTags($storeData);
+            $pageTitle = $seoTags['title'];
         }
     } catch (Exception $e) {
-        error_log("Error fetching vendor name: " . $e->getMessage());
+        error_log("Error fetching vendor data: " . $e->getMessage());
     }
 }
 
-// Check if user is logged in
 $isLoggedIn = !empty($_SESSION['user']['logged_in']);
 
 ob_start();
 ?>
-
-<style>
-    .vendor-container {
-        max-width: 1200px;
-        margin: 2rem auto;
-        padding: 0 2rem;
-    }
-
-    .vendor-header {
-        position: relative;
-        margin-bottom: 2rem;
-        border-radius: 1rem;
-        overflow: hidden;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-
-    .vendor-profile-info {
-        display: flex;
-        align-items: flex-end;
-        padding: 2rem;
-        background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 100%);
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        color: white;
-    }
-
-    .vendor-avatar {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        border: 4px solid white;
-        margin-right: 2rem;
-        object-fit: cover;
-        background-color: #f3f4f6;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .verification-wrapper {
-        margin-top: 2rem;
-    }
-
-    .verification-track {
-        height: 0.5rem;
-        background-color: #E5E7EB;
-        border-radius: 0.25rem;
-        margin-top: 0.5rem;
-    }
-
-    .verification-indicator {
-        height: 100%;
-        background-color: #C00000;
-        border-radius: 0.25rem;
-        transition: width 0.5s ease-in-out;
-    }
-
-    .step-icon {
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-        flex-shrink: 0;
-    }
-
-    .step-icon.completed {
-        background-color: #10B981;
-        color: white;
-    }
-
-    .step-icon.pending {
-        background-color: #E5E7EB;
-        color: #4B5563;
-    }
-
-    .loader {
-        border: 4px solid rgba(0, 0, 0, 0.1);
-        border-left-color: #C00000;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .tab-container {
-        border-bottom: 1px solid #e5e7eb;
-        margin-bottom: 1rem;
-    }
-
-    .tab-button {
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        cursor: pointer;
-        border: none;
-        background: none;
-        position: relative;
-    }
-
-    .tab-button.active {
-        color: #C00000;
-        border-bottom: 2px solid #C00000;
-    }
-
-    .tab-content {
-        display: none;
-    }
-
-    .tab-content.active {
-        display: block;
-    }
-
-    .category-grid {
-        display: grid;
-        grid-template-columns: repeat(1, 1fr);
-        gap: 1rem;
-    }
-
-    @media (min-width: 640px) {
-        .category-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-
-    .category-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        padding: 1rem;
-        transition: all 0.2s ease;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .category-card:hover {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-
-    .category-description {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .badge {
-        display: inline-block;
-        padding: 0.25rem 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    .badge-success {
-        background-color: #10B981;
-        color: white;
-    }
-
-    .badge-warning {
-        background-color: #F59E0B;
-        color: white;
-    }
-
-    .badge-danger {
-        background-color: #EF4444;
-        color: white;
-    }
-
-    .share-container {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .share-label {
-        font-size: 12px;
-        font-weight: 500;
-        color: #4B5563;
-    }
-
-    .share-buttons {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .share-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.5rem;
-        height: 1.5rem;
-        border-radius: 9999px;
-        color: #DC2626;
-        border: 1.5px solid #DC2626;
-        background-color: transparent;
-        transition: all 0.2s ease;
-        position: relative;
-    }
-
-    .share-button .fa-solid,
-    .share-button .fa-brands {
-        font-size: 10px !important;
-    }
-
-    .share-button:hover {
-        background-color: rgba(220, 38, 38, 0.1);
-        transform: translateY(-2px);
-    }
-
-    .tooltip {
-        position: absolute;
-        bottom: -40px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #1F2937;
-        color: white;
-        padding: 0.5rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        white-space: nowrap;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.2s, visibility 0.2s;
-        z-index: 10;
-    }
-
-    .tooltip::before {
-        content: '';
-        position: absolute;
-        top: -4px;
-        left: 50%;
-        transform: translateX(-50%) rotate(45deg);
-        width: 8px;
-        height: 8px;
-        background-color: #1F2937;
-    }
-
-    .share-button:hover .tooltip {
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .view-location-btn {
-        display: inline-flex;
-        align-items: center;
-        color: #DC2626;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .view-location-btn:hover {
-        text-decoration: underline;
-    }
-
-    .location-hidden {
-        display: none;
-    }
-
-    .location-visible {
-        display: flex;
-        animation: fadeIn 0.3s ease-in-out;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    @media (max-width: 640px) {
-        .vendor-avatar {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto;
-        }
-
-        .profile-info-mobile-center {
-            text-align: center;
-        }
-
-        .stats-mobile-center {
-            justify-content: center;
-        }
-    }
-
-    /* Modal styles */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-content {
-        background-color: #fefefe;
-        margin: 10% auto;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        width: 90%;
-        max-width: 500px;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .modal-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #111827;
-    }
-
-    .close {
-        color: #aaa;
-        font-size: 28px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-    }
-
-    .modal-body {
-        margin-bottom: 1rem;
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.5rem;
-        padding-top: 0.5rem;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    /* Image cropper styles */
-    .cropper-container {
-        width: 100%;
-        height: 300px;
-        margin-bottom: 1rem;
-    }
-
-    .avatar-edit-container {
-        position: relative;
-    }
-
-    /* Edit button styles */
-</style>
 
 <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden" id="vendor-cover-photo">
     <div id="vendor-cover" class="w-full h-full bg-center bg-cover"></div>
@@ -415,7 +69,7 @@ ob_start();
 </div>
 
 <div id="loading-state" class="flex flex-col items-center justify-center py-12">
-    <div class="loader mb-4"></div>
+    <div class="border-4 border-gray-200 border-l-red-600 rounded-full w-10 h-10 animate-spin mb-4"></div>
     <p class="text-gray-600">Loading vendor profile...</p>
 </div>
 
@@ -446,9 +100,9 @@ ob_start();
     <div class="bg-white rounded-lg shadow-lg p-6">
         <div class="flex flex-col md:flex-row">
             <div class="flex-shrink-0 flex md:block justify-center">
-                <div id="vendor-avatar-container" class="avatar-edit-container">
+                <div id="vendor-avatar-container" class="relative">
                     <div id="vendor-avatar"
-                        class="h-32 w-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
+                        class="h-32 w-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-white flex items-center justify-center">
                         <i class="fas fa-store text-gray-400 text-4xl"></i>
                     </div>
                     <div id="avatar-edit-button"
@@ -458,7 +112,7 @@ ob_start();
                 </div>
             </div>
 
-            <div class="mt-6 md:mt-0 md:ml-6 flex-grow profile-info-mobile-center">
+            <div class="mt-6 md:mt-0 md:ml-6 flex-grow text-center md:text-left">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-center">
                     <div>
                         <h1 id="vendor-name-container" class="text-3xl font-bold text-secondary">
@@ -474,18 +128,20 @@ ob_start();
                     </div>
                 </div>
 
-                <div class="mt-6 flex flex-wrap gap-y-4 stats-mobile-center">
+                <div class="mt-6 flex flex-wrap gap-y-4 justify-center md:justify-start">
                     <div class="mr-8 flex items-center">
                         <i class="fa-solid fa-calendar-days text-gray-500 mr-2"></i>
                         <span id="vendor-registered" class="text-gray-700">Joined March 2008</span>
                     </div>
                     <div class="mr-8 flex items-center">
                         <div id="location-section">
-                            <button id="view-location-btn" class="view-location-btn" onclick="showLocation()">
+                            <button id="view-location-btn"
+                                class="flex items-center text-red-600 text-sm font-medium hover:underline transition-all"
+                                onclick="showLocation()">
                                 <i class="fa-solid fa-location-dot text-gray-500 mr-2"></i>
                                 <span>View Location</span>
                             </button>
-                            <div id="location-container" class="location-hidden">
+                            <div id="location-container" class="hidden">
                                 <span id="vendor-location" class="text-gray-700">Building City, BC 12345</span>
                             </div>
                         </div>
@@ -502,7 +158,7 @@ ob_start();
             </div>
         </div>
 
-        <div class="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-x-8 gap-y-4 stats-mobile-center">
+        <div class="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-x-8 gap-y-4 justify-center md:justify-start">
             <div class="flex items-center">
                 <div id="vendor-status" class="bg-yellow-300 text-yellow-800 px-3 py-1 rounded-full text-sm">Status
                 </div>
@@ -520,28 +176,43 @@ ob_start();
                     <span class="ml-1 text-sm text-gray-600">(128 reviews)</span>
                 </div>
             </div>
-            <div class="ml-0 sm:ml-auto share-container">
-                <span class="share-label">SHARE</span>
-                <div class="share-buttons">
-                    <button onclick="copyLink()" class="share-button">
-                        <i class="fa-solid fa-link"></i>
-                        <span class="tooltip">Copy link to clipboard</span>
+            <div class="ml-0 sm:ml-auto flex items-center gap-2">
+                <span class="text-xs font-medium text-gray-500">SHARE</span>
+                <div class="flex gap-2">
+                    <button onclick="copyLink()"
+                        class="flex items-center justify-center w-6 h-6 rounded-full text-red-600 border-[1.5px] border-red-600 bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all relative">
+                        <i class="fa-solid fa-link text-xs"></i>
+                        <span
+                            class="absolute bottom-[-40px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity z-10 before:content-[''] before:absolute before:top-[-4px] before:left-1/2 before:transform before:-translate-x-1/2 before:rotate-45 before:w-2 before:h-2 before:bg-gray-800">Copy
+                            link to clipboard</span>
                     </button>
-                    <button onclick="shareOnWhatsApp()" class="share-button">
-                        <i class="fa-brands fa-whatsapp"></i>
-                        <span class="tooltip">Share this profile on WhatsApp</span>
+                    <button onclick="shareOnWhatsApp()"
+                        class="flex items-center justify-center w-6 h-6 rounded-full text-red-600 border-[1.5px] border-red-600 bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all relative">
+                        <i class="fa-brands fa-whatsapp text-xs"></i>
+                        <span
+                            class="absolute bottom-[-40px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity z-10 before:content-[''] before:absolute before:top-[-4px] before:left-1/2 before:transform before:-translate-x-1/2 before:rotate-45 before:w-2 before:h-2 before:bg-gray-800">Share
+                            this profile on WhatsApp</span>
                     </button>
-                    <button onclick="shareOnFacebook()" class="share-button">
-                        <i class="fa-brands fa-facebook-f"></i>
-                        <span class="tooltip">Share this profile on Facebook</span>
+                    <button onclick="shareOnFacebook()"
+                        class="flex items-center justify-center w-6 h-6 rounded-full text-red-600 border-[1.5px] border-red-600 bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all relative">
+                        <i class="fa-brands fa-facebook-f text-xs"></i>
+                        <span
+                            class="absolute bottom-[-40px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity z-10 before:content-[''] before:absolute before:top-[-4px] before:left-1/2 before:transform before:-translate-x-1/2 before:rotate-45 before:w-2 before:h-2 before:bg-gray-800">Share
+                            this profile on Facebook</span>
                     </button>
-                    <button onclick="shareOnTwitter()" class="share-button">
-                        <i class="fa-brands fa-x-twitter"></i>
-                        <span class="tooltip">Post this on your X</span>
+                    <button onclick="shareOnTwitter()"
+                        class="flex items-center justify-center w-6 h-6 rounded-full text-red-600 border-[1.5px] border-red-600 bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all relative">
+                        <i class="fa-brands fa-x-twitter text-xs"></i>
+                        <span
+                            class="absolute bottom-[-40px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity z-10 before:content-[''] before:absolute before:top-[-4px] before:left-1/2 before:transform before:-translate-x-1/2 before:rotate-45 before:w-2 before:h-2 before:bg-gray-800">Post
+                            this on your X</span>
                     </button>
-                    <button onclick="shareOnLinkedIn()" class="share-button">
-                        <i class="fa-brands fa-linkedin-in"></i>
-                        <span class="tooltip">Share on LinkedIn</span>
+                    <button onclick="shareOnLinkedIn()"
+                        class="flex items-center justify-center w-6 h-6 rounded-full text-red-600 border-[1.5px] border-red-600 bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all relative">
+                        <i class="fa-brands fa-linkedin-in text-xs"></i>
+                        <span
+                            class="absolute bottom-[-40px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity z-10 before:content-[''] before:absolute before:top-[-4px] before:left-1/2 before:transform before:-translate-x-1/2 before:rotate-45 before:w-2 before:h-2 before:bg-gray-800">Share
+                            on LinkedIn</span>
                     </button>
                 </div>
             </div>
@@ -599,20 +270,21 @@ ob_start();
 </div>
 
 <!-- Edit Name Modal -->
-<div id="edit-name-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Edit Store Name</h2>
-            <span class="close" onclick="closeModal('edit-name-modal')">&times;</span>
+<div id="edit-name-modal" class="fixed inset-0 z-[1000] hidden bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto mt-[10%] p-5">
+        <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Edit Store Name</h2>
+            <span class="text-2xl font-bold text-gray-400 hover:text-gray-900 cursor-pointer"
+                onclick="closeModal('edit-name-modal')">&times;</span>
         </div>
-        <div class="modal-body">
+        <div class="mb-4">
             <div class="mb-4">
                 <label for="store-name-input" class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
                 <input type="text" id="store-name-input"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary">
             </div>
         </div>
-        <div class="modal-footer">
+        <div class="flex justify-end gap-2 pt-2 border-t border-gray-200">
             <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
                 onclick="closeModal('edit-name-modal')">Cancel</button>
             <button type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
@@ -622,13 +294,14 @@ ob_start();
 </div>
 
 <!-- Edit Description Modal -->
-<div id="edit-description-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Edit Store Description</h2>
-            <span class="close" onclick="closeModal('edit-description-modal')">&times;</span>
+<div id="edit-description-modal" class="fixed inset-0 z-[1000] hidden bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto mt-[10%] p-5">
+        <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Edit Store Description</h2>
+            <span class="text-2xl font-bold text-gray-400 hover:text-gray-900 cursor-pointer"
+                onclick="closeModal('edit-description-modal')">&times;</span>
         </div>
-        <div class="modal-body">
+        <div class="mb-4">
             <div class="mb-4">
                 <label for="store-description-input" class="block text-sm font-medium text-gray-700 mb-1">Store
                     Description</label>
@@ -636,7 +309,7 @@ ob_start();
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"></textarea>
             </div>
         </div>
-        <div class="modal-footer">
+        <div class="flex justify-end gap-2 pt-2 border-t border-gray-200">
             <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
                 onclick="closeModal('edit-description-modal')">Cancel</button>
             <button type="button" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
@@ -646,13 +319,14 @@ ob_start();
 </div>
 
 <!-- Edit Logo Modal -->
-<div id="edit-logo-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Edit Store Logo</h2>
-            <span class="close" onclick="closeModal('edit-logo-modal')">&times;</span>
+<div id="edit-logo-modal" class="fixed inset-0 z-[1000] hidden bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto mt-[10%] p-5">
+        <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Edit Store Logo</h2>
+            <span class="text-2xl font-bold text-gray-400 hover:text-gray-900 cursor-pointer"
+                onclick="closeModal('edit-logo-modal')">&times;</span>
         </div>
-        <div class="modal-body">
+        <div class="mb-4">
             <div class="mb-4">
                 <label for="logo-file-input" class="block text-sm font-medium text-gray-700 mb-1">Upload Logo</label>
                 <input type="file" id="logo-file-input" accept="image/*"
@@ -660,28 +334,29 @@ ob_start();
                 <p class="text-sm text-gray-500 mt-1">Select a square image for best results. The image will be cropped
                     to a 1:1 ratio.</p>
             </div>
-            <div id="cropper-container" class="cropper-container hidden">
+            <div id="cropper-container" class="hidden h-[300px] mb-4">
                 <img id="cropper-image" src="https://placehold.co/600x400?text=Image+to+Crop" alt="Image to crop">
             </div>
         </div>
-        <div class="modal-footer">
+        <div class="flex justify-end gap-2 pt-2 border-t border-gray-200">
             <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
                 onclick="closeModal('edit-logo-modal')">Cancel</button>
             <button type="button" id="crop-button"
-                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 hidden"
+                class="hidden px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                 onclick="cropAndSaveLogo()">Crop & Save</button>
         </div>
     </div>
 </div>
 
 <!-- Edit Cover Photo Modal -->
-<div id="edit-cover-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Edit Cover Photo</h2>
-            <span class="close" onclick="closeModal('edit-cover-modal')">&times;</span>
+<div id="edit-cover-modal" class="fixed inset-0 z-[1000] hidden bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto mt-[10%] p-5">
+        <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Edit Cover Photo</h2>
+            <span class="text-2xl font-bold text-gray-400 hover:text-gray-900 cursor-pointer"
+                onclick="closeModal('edit-cover-modal')">&times;</span>
         </div>
-        <div class="modal-body">
+        <div class="mb-4">
             <div class="mb-4">
                 <label for="cover-file-input" class="block text-sm font-medium text-gray-700 mb-1">Upload Cover
                     Photo</label>
@@ -690,16 +365,16 @@ ob_start();
                 <p class="text-sm text-gray-500 mt-1">Select an image that will be cropped to a 3:1 ratio for best
                     results.</p>
             </div>
-            <div id="cover-cropper-container" class="cropper-container hidden">
+            <div id="cover-cropper-container" class="hidden h-[300px] mb-4">
                 <img id="cover-cropper-image" src="https://placehold.co/1200x400?text=Cover+Image+to+Crop"
                     alt="Image to crop">
             </div>
         </div>
-        <div class="modal-footer">
+        <div class="flex justify-end gap-2 pt-2 border-t border-gray-200">
             <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
                 onclick="closeModal('edit-cover-modal')">Cancel</button>
             <button type="button" id="crop-cover-button"
-                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 hidden"
+                class="hidden px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                 onclick="cropAndSaveCover()">Crop & Save</button>
         </div>
     </div>
@@ -731,12 +406,10 @@ ob_start();
     let coverCropper = null;
     let isLoggedIn = <?= $isLoggedIn ? 'true' : 'false' ?>;
 
-    // Function to edit the cover photo
     function editCover() {
         openModal('edit-cover-modal');
     }
 
-    // Initialize the cover cropper
     function initCoverCropper(image) {
         if (coverCropper) {
             coverCropper.destroy();
@@ -765,14 +438,12 @@ ob_start();
         document.getElementById('crop-cover-button').classList.remove('hidden');
     }
 
-    // Crop and save the cover photo
     function cropAndSaveCover() {
         if (!coverCropper) {
             showToast('Please select an image first', 'error');
             return;
         }
 
-        // Get the cropped canvas
         const canvas = coverCropper.getCroppedCanvas({
             width: 1200,
             height: 400,
@@ -786,12 +457,10 @@ ob_start();
             return;
         }
 
-        // Convert canvas to blob
         canvas.toBlob(function (blob) {
             const formData = new FormData();
             formData.append('cover', blob, 'cover.png');
 
-            // First upload the cover
             fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=uploadVendorCover`, {
                 method: 'POST',
                 body: formData
@@ -799,7 +468,6 @@ ob_start();
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Then update the store with the new cover path
                         const updateData = {
                             id: vendorId,
                             temp_cover_path: data.temp_path
@@ -819,7 +487,6 @@ ob_start();
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Update the cover in the UI
                         const coverUrl = canvas.toDataURL();
                         const coverContainer = document.getElementById('vendor-cover');
                         coverContainer.style.backgroundImage = `url(${coverUrl})`;
@@ -827,7 +494,6 @@ ob_start();
                         closeModal('edit-cover-modal');
                         showToast('Cover photo updated successfully');
 
-                        // Reload the page to see the updated cover
                         setTimeout(() => {
                             window.location.reload();
                         }, 1500);
@@ -842,20 +508,16 @@ ob_start();
         }, 'image/png');
     }
 
-    // Show location function - only shows, doesn't hide
     function showLocation() {
         const locationContainer = document.getElementById('location-container');
         const viewLocationBtn = document.getElementById('view-location-btn');
 
-        // Show the location
-        locationContainer.classList.remove('location-hidden');
-        locationContainer.classList.add('location-visible');
+        locationContainer.classList.remove('hidden');
+        locationContainer.classList.add('animate-fadeIn');
 
-        // Hide the button
         viewLocationBtn.style.display = 'none';
     }
 
-    // Copy link function
     function copyLink() {
         const currentUrl = window.location.href;
         navigator.clipboard.writeText(currentUrl).then(() => {
@@ -866,7 +528,6 @@ ob_start();
         });
     }
 
-    // Social sharing functions
     function shareOnWhatsApp() {
         const currentUrl = window.location.href;
         const vendorName = document.getElementById('vendor-name').textContent;
@@ -879,8 +540,6 @@ ob_start();
         const currentUrl = window.location.href;
         const vendorName = document.getElementById('vendor-name').textContent;
         const message = `${vendorName} is now on Zzimba Online! Follow the link to view our profile and offer of the day.`;
-        // Facebook doesn't allow custom text in sharer.php, so we'll just share the URL
-        // The message will be used as the title when possible
         const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}&quote=${encodeURIComponent(message)}`;
         window.open(facebookUrl, '_blank');
     }
@@ -901,7 +560,6 @@ ob_start();
         window.open(linkedinUrl, '_blank');
     }
 
-    // Edit name functionality
     function editName() {
         const nameInput = document.getElementById('store-name-input');
         nameInput.value = document.getElementById('vendor-name').textContent;
@@ -943,7 +601,6 @@ ob_start();
             });
     }
 
-    // Edit description functionality
     function editDescription() {
         const descriptionInput = document.getElementById('store-description-input');
         descriptionInput.value = document.getElementById('vendor-description').textContent;
@@ -982,7 +639,6 @@ ob_start();
             });
     }
 
-    // Edit logo functionality
     function editLogo() {
         openModal('edit-logo-modal');
     }
@@ -1021,7 +677,6 @@ ob_start();
             return;
         }
 
-        // Get the cropped canvas
         const canvas = cropper.getCroppedCanvas({
             width: 512,
             height: 512,
@@ -1035,12 +690,10 @@ ob_start();
             return;
         }
 
-        // Convert canvas to blob
         canvas.toBlob(function (blob) {
             const formData = new FormData();
             formData.append('logo', blob, 'logo.png');
 
-            // First upload the logo
             fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=uploadLogo`, {
                 method: 'POST',
                 body: formData
@@ -1048,7 +701,6 @@ ob_start();
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Then update the store with the new logo path
                         const updateData = {
                             id: vendorId,
                             temp_logo_path: data.temp_path
@@ -1068,7 +720,6 @@ ob_start();
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Update the logo in the UI
                         const logoUrl = canvas.toDataURL();
                         const avatarContainer = document.getElementById('vendor-avatar');
                         avatarContainer.innerHTML = '';
@@ -1081,7 +732,6 @@ ob_start();
                         closeModal('edit-logo-modal');
                         showToast('Store logo updated successfully');
 
-                        // Reload the page to see the updated logo
                         setTimeout(() => {
                             window.location.reload();
                         }, 1500);
@@ -1098,7 +748,6 @@ ob_start();
 
     window.closeModal = function (modalId) {
         document.getElementById(modalId).style.display = 'none';
-
         document.body.style.overflow = 'auto';
 
         if (modalId === 'edit-logo-modal') {
@@ -1175,7 +824,6 @@ ob_start();
             }
         });
 
-        // Set up logo file input change event
         document.getElementById('logo-file-input').addEventListener('change', function (e) {
             if (e.target.files && e.target.files[0]) {
                 const reader = new FileReader();
@@ -1186,7 +834,6 @@ ob_start();
             }
         });
 
-        // Set up cover file input change event
         document.getElementById('cover-file-input').addEventListener('change', function (e) {
             if (e.target.files && e.target.files[0]) {
                 const reader = new FileReader();
@@ -1197,7 +844,6 @@ ob_start();
             }
         });
 
-        // Set up edit button click events
         document.getElementById('edit-name-button').addEventListener('click', editName);
         document.getElementById('edit-description-button').addEventListener('click', editDescription);
         document.getElementById('avatar-edit-button').addEventListener('click', editLogo);
@@ -1213,7 +859,6 @@ ob_start();
                     renderVendorProfile(storeData);
                     populateCategoryFilter(storeData.categories);
                 } else {
-                    // Handle specific error for store not found or not active
                     if (data.error === "Store not found or not active") {
                         showNotFoundOrInactive();
                     } else {
@@ -1276,7 +921,6 @@ ob_start();
             document.getElementById('vendor-last-seen').textContent = 'Not available';
         }
 
-        // Handle logo placeholder
         if (store.logo_url) {
             const logoImg = document.createElement('img');
             logoImg.src = BASE_URL + store.logo_url;
@@ -1286,7 +930,6 @@ ob_start();
             avatarContainer.innerHTML = '';
             avatarContainer.appendChild(logoImg);
         } else {
-            // Use placehold.co for logo placeholder
             const firstWord = store.name.split(' ')[0];
             const logoPlaceholder = document.createElement('img');
             logoPlaceholder.src = `https://placehold.co/400x400/e5e7eb/6b7280?text=${encodeURIComponent(firstWord)}`;
@@ -1297,12 +940,10 @@ ob_start();
             avatarContainer.appendChild(logoPlaceholder);
         }
 
-        // Handle cover photo placeholder
         const coverContainer = document.getElementById('vendor-cover');
         if (store.vendor_cover_url) {
             coverContainer.style.backgroundImage = `url(${BASE_URL + store.vendor_cover_url})`;
         } else {
-            // Use placehold.co for cover placeholder
             coverContainer.style.backgroundImage = `url(https://placehold.co/1200x400/e5e7eb/6b7280?text=${encodeURIComponent(store.name)})`;
         }
 
@@ -1396,7 +1037,7 @@ ob_start();
 
         document.body.appendChild(toast);
 
-        toast.offsetHeight; // Trigger reflow
+        toast.offsetHeight;
 
         toast.classList.add('opacity-100');
 
@@ -1411,5 +1052,12 @@ ob_start();
 
 <?php
 $mainContent = ob_get_clean();
+
+// Generate SEO meta tags for the master template
+$seoTags = [];
+if ($storeData) {
+    $seoTags = generateSeoMetaTags($storeData);
+}
+
 include __DIR__ . '/master.php';
 ?>

@@ -10,6 +10,21 @@ $js_code = curl_exec($ch);
 curl_close($ch);
 
 $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
+
+// Default meta description if none is provided
+$metaDescription = 'Zzimba Online Uganda - Your one-stop shop for construction materials and services. Buy online and get delivery on-site.';
+
+// Check if SEO tags are provided from vendor-profile.php or other pages
+$hasSeoTags = isset($seoTags) && is_array($seoTags);
+
+// If SEO tags are provided, use them
+if ($hasSeoTags) {
+    $title = $seoTags['title'] ?? $title;
+    $metaDescription = $seoTags['description'] ?? $metaDescription;
+}
+
+// Get current URL for canonical and OG URL
+$currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -18,6 +33,35 @@ $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title) ?></title>
+    <meta name="description" content="<?= htmlspecialchars($metaDescription) ?>">
+    <link rel="canonical" href="<?= htmlspecialchars($currentUrl) ?>">
+
+    <!-- Open Graph Meta Tags -->
+    <?php if ($hasSeoTags): ?>
+        <meta property="og:title" content="<?= htmlspecialchars($seoTags['og_title'] ?? $title) ?>">
+        <meta property="og:description" content="<?= htmlspecialchars($seoTags['og_description'] ?? $metaDescription) ?>">
+        <meta property="og:image" content="<?= htmlspecialchars($seoTags['og_image'] ?? BASE_URL . 'img/logo_alt.png') ?>">
+        <meta property="og:url" content="<?= htmlspecialchars($seoTags['og_url'] ?? $currentUrl) ?>">
+        <meta property="og:type" content="<?= htmlspecialchars($seoTags['og_type'] ?? 'website') ?>">
+    <?php else: ?>
+        <meta property="og:title" content="<?= htmlspecialchars($title) ?>">
+        <meta property="og:description" content="<?= htmlspecialchars($metaDescription) ?>">
+        <meta property="og:image" content="<?= BASE_URL ?>img/logo_alt.png">
+        <meta property="og:url" content="<?= htmlspecialchars($currentUrl) ?>">
+        <meta property="og:type" content="website">
+    <?php endif; ?>
+
+    <meta property="og:site_name" content="Zzimba Online">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title"
+        content="<?= htmlspecialchars($hasSeoTags ? ($seoTags['og_title'] ?? $title) : $title) ?>">
+    <meta name="twitter:description"
+        content="<?= htmlspecialchars($hasSeoTags ? ($seoTags['og_description'] ?? $metaDescription) : $metaDescription) ?>">
+    <meta name="twitter:image"
+        content="<?= htmlspecialchars($hasSeoTags ? ($seoTags['og_image'] ?? BASE_URL . 'img/logo_alt.png') : BASE_URL . 'img/logo_alt.png') ?>">
+
     <link rel="icon" href="<?= BASE_URL ?>img/favicon.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
