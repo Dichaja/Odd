@@ -640,11 +640,14 @@ ob_start();
             html += `
                 <div class="invitation-card bg-white rounded-lg border border-gray-200 overflow-hidden">
                     <div class="p-4">
-                        <div class="flex items-center gap-4">
-                            <div class="w-16 h-16 bg-gray-50 flex-shrink-0 rounded-lg flex items-center justify-center">
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <!-- Logo -->
+                            <div class="w-16 h-16 bg-gray-50 flex-shrink-0 rounded-lg flex items-center justify-center mx-auto sm:mx-0">
                                 <img src="${logoUrl}" alt="${escapeHtml(invitation.store_name)}" class="w-12 h-12 object-cover rounded">
                             </div>
-                            <div class="flex-grow">
+
+                            <!-- Content -->
+                            <div class="flex-grow text-center sm:text-left">
                                 <h3 class="font-medium text-lg text-secondary">${escapeHtml(invitation.store_name)}</h3>
                                 <p class="text-sm text-gray-600">
                                     <span class="font-medium">Role:</span> ${escapeHtml(invitation.role_display)}
@@ -656,7 +659,9 @@ ob_start();
                                     Invited ${formatTimeAgo(new Date(invitation.created_at))}
                                 </p>
                             </div>
-                            <div class="flex-shrink-0 flex gap-2">
+
+                            <!-- Buttons -->
+                            <div class="flex flex-col sm:flex-row gap-2 sm:justify-end sm:flex-shrink-0 w-full sm:w-auto">
                                 <button 
                                     class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                                     onclick="confirmInvitationResponse('approve', '${invitation.manager_id}', '${escapeHtml(invitation.store_name)}')">
