@@ -187,7 +187,7 @@ ob_start();
                             <div id="cropperContainer" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Crop Image (16:9)</label>
                                 <div class="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                                    <img id="cropperImage" src="/placeholder.svg" alt="Image to crop" class="max-w-full">
+                                    <img id="cropperImage" src="" alt="Image to crop" class="max-w-full">
                                 </div>
                                 <div class="flex justify-end mt-3 space-x-2">
                                     <button type="button" id="cancelCrop" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
@@ -202,7 +202,7 @@ ob_start();
                             <div id="imagePreviewContainer" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Image Preview</label>
                                 <div class="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                                    <img id="imagePreview" src="/placeholder.svg" alt="Category image preview" class="w-full h-full object-cover">
+                                    <img id="imagePreview" src="" alt="Category image preview" class="w-full h-full object-cover">
                                     <button type="button" id="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors">
                                         <i class="fas fa-times"></i>
                                     </button>
