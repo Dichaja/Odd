@@ -1029,14 +1029,16 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
             document.body.style.overflow = 'hidden';
         }
 
-
         function closeAuthModal() {
             const m = document.getElementById('auth-modal');
             const c = m.querySelector('.modal-container');
+
             c.classList.remove('active');
+
             setTimeout(() => {
                 m.classList.remove('flex');
                 m.classList.add('hidden');
+                m.style.display = '';
                 document.body.style.overflow = 'auto';
             }, 300);
         }
