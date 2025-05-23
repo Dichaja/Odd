@@ -106,13 +106,13 @@ function getProductImages($uuid)
 // Function to get category image
 function getCategoryImage($uuid)
 {
-    $dir = __DIR__ . '/img/categories/' . $uuid;
+    $dir = __DIR__ . '/img/product-categories/' . $uuid;
 
     // Check if directory exists and has images
     if (is_dir($dir)) {
         $files = glob($dir . '/*.{jpg,jpeg,png,gif,webp}', GLOB_BRACE);
         if (!empty($files)) {
-            return BASE_URL . 'img/categories/' . $uuid . '/' . basename($files[0]);
+            return BASE_URL . 'img/product-categories/' . $uuid . '/' . basename($files[0]);
         }
     }
 
