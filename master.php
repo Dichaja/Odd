@@ -688,7 +688,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
         </div>
     </div>
     <div id="auth-modal" style="z-index:1100"
-        class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+        class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center hidden">
         <div class="modal-container bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
             <div id="auth-forms-container"></div>
         </div>
