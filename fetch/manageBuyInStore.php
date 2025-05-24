@@ -190,10 +190,11 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
     }
 
     $visitDate = new DateTime($data['visitDate']);
-    $today = new DateTime();
-    if ($visitDate <= $today) {
+    $today = new DateTime('today', new DateTimeZone('Africa/Kampala'));
+
+    if ($visitDate < $today) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Visit date must be in the future']);
+        echo json_encode(['success' => false, 'error' => 'Visit date must be today or later']);
         return;
     }
 

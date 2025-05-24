@@ -640,18 +640,24 @@
         });
     });
 
+    function ymd(year, month /* 0-based */, day) {
+        const mm = String(month + 1).padStart(2, '0');
+        const dd = String(day).padStart(2, '0');
+        return `${year}-${mm}-${dd}`;
+    }
+
     // Initialize datepicker
     function initDatepicker() {
         const container = document.getElementById('datepicker-container');
         const hiddenInput = document.getElementById('visitDate');
 
-        // Get today's date
-        const today = new Date();
+        const eatNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Africa/Kampala' }));
+        eatNow.setHours(0, 0, 0, 0);
+        const today = eatNow;
         let currentMonth = today.getMonth();
         let currentYear = today.getFullYear();
 
-        // Set today's date as default
-        const todayString = today.toISOString().split('T')[0];
+        const todayString = ymd(today.getFullYear(), today.getMonth(), today.getDate());
         hiddenInput.value = todayString;
 
         // Create datepicker structure
@@ -738,7 +744,8 @@
                 dayElement.textContent = day;
 
                 const date = new Date(currentYear, currentMonth, day);
-                const dateString = date.toISOString().split('T')[0];
+                date.setHours(0, 0, 0, 0);
+                const dateString = ymd(currentYear, currentMonth, day);
 
                 // Check if this is today
                 const isToday = date.toDateString() === today.toDateString();
@@ -899,6 +906,7 @@
                         }
                     <?php endif; ?>
 
+                    const pricingId = pr.pricing_id || pr.id || '';
                     const hiddenClass = index >= 2 ? 'hidden hidden-price-row' : '';
 
                     if (index >= 2) {
@@ -906,7 +914,7 @@
                     }
 
                     pricingLines += `
-                        <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 rounded ${hiddenClass}">
+                        <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 rounded ${hiddenClass}" data-pricing-id="${pricingId}">
                             <div class="flex flex-col">
                                 <span class="font-medium text-gray-700">${escapeHtml(formattedUnit)}</span>
                                 ${(categoryDisplay || deliveryCapacity) ?
@@ -1118,7 +1126,7 @@
             const categoryDisplay = pricing.price_category.charAt(0).toUpperCase() + pricing.price_category.slice(1);
 
             const option = document.createElement('option');
-            option.value = pricing.pricing_id;
+            option.value = pricing.pricing_id || pricing.id || '';
             option.textContent = `${formattedUnit} (${categoryDisplay}) - UGX ${formatNumber(pricing.price)}`;
             option.dataset.category = pricing.price_category;
             option.dataset.capacity = pricing.delivery_capacity || '1';
@@ -1191,7 +1199,7 @@
         const summaryDate = document.getElementById('summaryDate');
 
         if (visitDate) {
-            const date = new Date(visitDate);
+            const date = new Date(new Date(visitDate).toLocaleString('en-US', { timeZone: 'Africa/Kampala' }));
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             summaryDate.textContent = date.toLocaleDateString('en-US', options);
         } else {

@@ -417,6 +417,7 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
             }
             if ($r['pricing_id']) {
                 $products[$pid]['pricing'][] = [
+                    'pricing_id' => $r['pricing_id'],
                     'unit_name' => trim(($r['si_unit'] ?? '') . ' ' . ($r['package_name'] ?? '')),
                     'price' => (float) ($r['price'] ?? 0),
                     'price_category' => $r['price_category'] ?? 'retail',
