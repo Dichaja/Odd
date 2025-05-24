@@ -15,7 +15,6 @@ header('Content-Type: application/json');
 $isLoggedIn = isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 $currentUser = $isLoggedIn ? $_SESSION['user']['user_id'] : null;
 
-// Ensure buy_in_store_requests table exists
 ensureBuyInStoreTable($pdo);
 
 $action = $_GET['action'] ?? '';
@@ -53,17 +52,13 @@ try {
 
 ob_end_flush();
 
-/**
- * Ensure the buy_in_store_requests table exists
- */
 function ensureBuyInStoreTable(PDO $pdo)
 {
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS `buy_in_store_requests` (
             `id` VARCHAR(26) NOT NULL,
             `user_id` VARCHAR(26) NOT NULL,
-            `store_product_id` VARCHAR(26) NOT NULL,
-            `pricing_id` VARCHAR(26) NOT NULL,
+            `product_pricing_id` VARCHAR(26) NOT NULL,
             `visit_date` DATE NOT NULL,
             `quantity` INT NOT NULL,
             `alt_contact` VARCHAR(20) DEFAULT NULL,
@@ -73,16 +68,12 @@ function ensureBuyInStoreTable(PDO $pdo)
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
-            KEY `fk_buy_in_store_user` (`user_id`),
-            KEY `fk_buy_in_store_product` (`store_product_id`),
-            KEY `fk_buy_in_store_pricing` (`pricing_id`)
+            FOREIGN KEY (`user_id`) REFERENCES `zzimba_users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (`product_pricing_id`) REFERENCES `product_pricing`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
     ");
 }
 
-/**
- * Require user to be logged in
- */
 function requireLogin()
 {
     if (empty($_SESSION['user']['logged_in'])) {
@@ -92,21 +83,13 @@ function requireLogin()
     }
 }
 
-/**
- * Check if ULID is valid
- */
 function isValidUlid(string $id): bool
 {
     return (bool) preg_match('/^[0-9A-Z]{26}$/i', $id);
 }
 
-/**
- * Get user information for the Buy in Store form
- * Retrieves information from the session
- */
 function getUserInfo()
 {
-    // Check if user session exists
     if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in']) {
         http_response_code(401);
         echo json_encode([
@@ -117,7 +100,6 @@ function getUserInfo()
         return;
     }
 
-    // Get user information from session
     $user = [
         'username' => $_SESSION['user']['username'] ?? null,
         'email' => $_SESSION['user']['email'] ?? null,
@@ -129,17 +111,12 @@ function getUserInfo()
             : ($_SESSION['user']['username'] ?? null)
     ];
 
-    // Return user information
     echo json_encode([
         'success' => true,
         'user' => $user
     ]);
 }
 
-/**
- * Get product packages for a specific product
- * Used to populate the package selection dropdown
- */
 function getProductPackages(PDO $pdo)
 {
     $productId = $_GET['productId'] ?? '';
@@ -151,7 +128,6 @@ function getProductPackages(PDO $pdo)
     }
 
     try {
-        // Query to get product pricing information
         $stmt = $pdo->prepare("
             SELECT 
                 pp.id,
@@ -188,10 +164,6 @@ function getProductPackages(PDO $pdo)
     }
 }
 
-/**
- * Submit Buy in Store request
- * Creates a new record in the buy_in_store_requests table
- */
 function submitBuyInStore(PDO $pdo, string $currentUser)
 {
     $data = json_decode(file_get_contents('php://input'), true);
@@ -202,8 +174,7 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
         return;
     }
 
-    // Validate required fields
-    $requiredFields = ['productId', 'packageId', 'visitDate', 'quantity'];
+    $requiredFields = ['packageId', 'visitDate', 'quantity'];
     foreach ($requiredFields as $field) {
         if (empty($data[$field])) {
             http_response_code(400);
@@ -212,14 +183,12 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
         }
     }
 
-    // Validate product ID and package ID
-    if (!isValidUlid($data['productId']) || !isValidUlid($data['packageId'])) {
+    if (!isValidUlid($data['packageId'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid ID format']);
         return;
     }
 
-    // Validate visit date (must be in the future)
     $visitDate = new DateTime($data['visitDate']);
     $today = new DateTime();
     if ($visitDate <= $today) {
@@ -228,7 +197,6 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
         return;
     }
 
-    // Validate quantity
     $quantity = intval($data['quantity']);
     if ($quantity < 1) {
         http_response_code(400);
@@ -239,17 +207,14 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
     try {
         $pdo->beginTransaction();
 
-        // Generate a unique ID for the request
         $requestId = (string) Ulid::generate();
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-        // Insert into buy_in_store_requests table
         $stmt = $pdo->prepare("
             INSERT INTO buy_in_store_requests (
                 id, 
                 user_id, 
-                store_product_id, 
-                pricing_id, 
+                product_pricing_id, 
                 visit_date, 
                 quantity, 
                 alt_contact,
@@ -258,7 +223,7 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
                 status, 
                 created_at, 
                 updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
         ");
 
         $altContact = $data['altContact'] ?? null;
@@ -268,7 +233,6 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
         $stmt->execute([
             $requestId,
             $currentUser,
-            $data['productId'],
             $data['packageId'],
             $data['visitDate'],
             $quantity,
@@ -279,12 +243,10 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
             $now
         ]);
 
-        // Log the action
-        logAction($pdo, "User {$currentUser} submitted a buy-in-store request for product {$data['productId']}");
+        logAction($pdo, "User {$currentUser} submitted a buy-in-store request for pricing ID {$data['packageId']}");
 
         $pdo->commit();
 
-        // Return success response
         echo json_encode([
             'success' => true,
             'message' => 'Your in-store purchase request has been submitted successfully!',
@@ -300,9 +262,6 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
     }
 }
 
-/**
- * Get buy in store request history for the current user
- */
 function getBuyInStoreHistory(PDO $pdo, string $currentUser)
 {
     try {
@@ -323,9 +282,9 @@ function getBuyInStoreHistory(PDO $pdo, string $currentUser)
             FROM 
                 buy_in_store_requests bir
             JOIN 
-                product_pricing pp ON bir.pricing_id = pp.id
+                product_pricing pp ON bir.product_pricing_id = pp.id
             JOIN 
-                store_products sp ON bir.store_product_id = sp.id
+                store_products sp ON pp.store_products_id = sp.id
             JOIN 
                 products p ON sp.product_id = p.id
             JOIN 
@@ -357,9 +316,6 @@ function getBuyInStoreHistory(PDO $pdo, string $currentUser)
     }
 }
 
-/**
- * Log an action in the action_logs table
- */
 function logAction(PDO $pdo, string $action)
 {
     try {
@@ -369,7 +325,6 @@ function logAction(PDO $pdo, string $action)
         $stmt = $pdo->prepare("INSERT INTO action_logs (log_id, action, created_at) VALUES (?, ?, ?)");
         $stmt->execute([$logId, $action, $now]);
     } catch (Exception $e) {
-        // Silently fail - logging should not interrupt the main flow
         error_log('Error logging action: ' . $e->getMessage());
     }
 }

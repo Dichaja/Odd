@@ -552,7 +552,7 @@ function inviteManager(PDO $pdo, string $currentUser)
             if ($removedManager && $reinvite) {
                 $updateStmt = $pdo->prepare("
                 UPDATE store_managers 
-                SET status = 'inactive', role = ?, approved = 0, updated_at = NOW() 
+                SET status = 'inactive', role = ?, approved = 0, updated_at = NOW(), created_at = NOW() 
                 WHERE id = ?
             ");
                 $updateStmt->execute([$role, $removedManager['id']]);

@@ -1030,7 +1030,7 @@
 
         // Reset form
         document.getElementById('buyInStoreForm').reset();
-        document.getElementById('buyInStoreTitle').textContent = `Buy In Store: ${product.name}`;
+        document.getElementById('buyInStoreTitle').textContent = `Complete Your Request`;
 
         // Show loading state
         document.getElementById('buyInStoreLoading').classList.remove('hidden');
