@@ -855,15 +855,11 @@ ob_start();
                                 <i class="fas fa-edit"></i>
                                 <span>Edit</span>
                             </button>
-                            <a
-                                href="../view/profile/vendor/${store.uuid_id}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm"
-                            >
+                            <button onclick="redirectToManageStore('${store.uuid_id}')"
+                                class="h-8 px-3 bg-user-primary text-white rounded hover:bg-user-primary/90 transition-colors flex items-center gap-1 text-sm">
                                 <i class="fas fa-cog"></i>
                                 <span>Manage</span>
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -873,6 +869,28 @@ ob_start();
 
         html += '</div>';
         container.html(html);
+    }
+
+    function redirectToManageStore(storeUuid) {
+        showLoading();
+        $.ajax({
+            url: BASE_URL + 'account/fetch/initVendorSession.php',
+            type: 'POST',
+            data: { store_uuid: storeUuid },
+            dataType: 'json',
+            success: function (response) {
+                hideLoading();
+                if (response.success && response.redirect_url) {
+                    window.location.href = response.redirect_url;
+                } else {
+                    showErrorNotification(response.message || 'Failed to initiate store session');
+                }
+            },
+            error: function () {
+                hideLoading();
+                showErrorNotification('Server error occurred. Please try again.');
+            }
+        });
     }
 
     function getStatusBadge(status) {

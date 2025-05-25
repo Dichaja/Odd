@@ -1,40 +1,37 @@
 RewriteEngine On
 
-# Enable browser caching
+##############################################
+# 1. Enable Browser Caching
+##############################################
 <IfModule mod_expires.c>
   ExpiresActive On
-
   ExpiresDefault "access plus 1 month"
 
+  # Stylesheets & Scripts
   ExpiresByType text/css "access plus 1 week"
   ExpiresByType application/javascript "access plus 1 week"
-  ExpiresByType application/x-javascript "access plus 1 week"
   ExpiresByType text/javascript "access plus 1 week"
   ExpiresByType application/json "access plus 1 week"
 
-  # Images: 6 hours
+  # Images
   ExpiresByType image/jpeg "access plus 6 hours"
   ExpiresByType image/png "access plus 6 hours"
   ExpiresByType image/gif "access plus 6 hours"
   ExpiresByType image/svg+xml "access plus 6 hours"
   ExpiresByType image/webp "access plus 6 hours"
   ExpiresByType image/x-icon "access plus 6 hours"
-  ExpiresByType image/vnd.microsoft.icon "access plus 6 hours"
 
+  # Fonts
   ExpiresByType application/font-woff "access plus 1 year"
   ExpiresByType application/font-woff2 "access plus 1 year"
-  ExpiresByType application/vnd.ms-fontobject "access plus 1 year"
   ExpiresByType font/ttf "access plus 1 year"
   ExpiresByType font/otf "access plus 1 year"
-  ExpiresByType font/woff "access plus 1 year"
-  ExpiresByType font/woff2 "access plus 1 year"
 
+  # Pages
   ExpiresByType text/html "access plus 2 hours"
-  ExpiresByType application/xhtml+xml "access plus 2 hours"
 </IfModule>
 
 <IfModule mod_headers.c>
-  # Images: 6 hours
   <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico)$">
     Header set Cache-Control "max-age=21600, public"
   </FilesMatch>
@@ -50,87 +47,70 @@ RewriteEngine On
   </FilesMatch>
 </IfModule>
 
-# Redirect admin/ to dashboard
-RewriteRule ^admin/?$ admin/dashboard [L,R=301]
-RewriteRule ^account/?$ account/dashboard [L,R=301]
-
-# Block direct access to the /config directory
+##############################################
+# 2. Block Sensitive Folders
+##############################################
 RewriteRule ^config(/.*)?$ - [F,L]
 
-# Custom error documents
-ErrorDocument 404 /404.php
-ErrorDocument 403 /403.php
+##############################################
+# 3. Redirects
+##############################################
+RewriteRule ^admin/?$ admin/dashboard [L,R=301]
+RewriteRule ^account/?$ account/dashboard [L,R=301]
+RewriteRule ^vendor-store/?$ vendor-store/dashboard [L,R=301]
 
-# Authentication API endpoints (SEO friendly)
-RewriteRule ^auth/checkUser$ login/handleAuth.php?action=checkUser [L,QSA]
-RewriteRule ^auth/login$ login/handleAuth.php?action=login [L,QSA]
-RewriteRule ^auth/checkUsername$ login/handleAuth.php?action=checkUsername [L,QSA]
-RewriteRule ^auth/checkEmail$ login/handleAuth.php?action=checkEmail [L,QSA]
-RewriteRule ^auth/checkPhone$ login/handleAuth.php?action=checkPhone [L,QSA]
-RewriteRule ^auth/sendEmailOTP$ login/handleAuth.php?action=sendEmailOTP [L,QSA]
-RewriteRule ^auth/verifyEmailOTP$ login/handleAuth.php?action=verifyEmailOTP [L,QSA]
-RewriteRule ^auth/sendPhoneOTP$ login/handleAuth.php?action=sendPhoneOTP [L,QSA]
-RewriteRule ^auth/verifyPhoneOTP$ login/handleAuth.php?action=verifyPhoneOTP [L,QSA]
-RewriteRule ^auth/register$ login/handleAuth.php?action=register [L,QSA]
-RewriteRule ^auth/sendResetEmail$ login/handleAuth.php?action=sendResetEmail [L,QSA]
-RewriteRule ^auth/sendResetPhone$ login/handleAuth.php?action=sendResetPhone [L,QSA]
-RewriteRule ^auth/verifyResetOTP$ login/handleAuth.php?action=verifyResetOTP [L,QSA]
-RewriteRule ^auth/resetPassword$ login/handleAuth.php?action=resetPassword [L,QSA]
-RewriteRule ^auth/logout$ login/handleAuth.php?action=logout [L,QSA]
+##############################################
+# 4. Clean URLs for Static Pages
+##############################################
+RewriteRule ^(about-us|request-for-quote|contact-us|products-page)$ $1.php [L]
 
-# Rewrite rules for clean URLs
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^about-us$ about-us.php [L]
-RewriteRule ^request-for-quote$ request-for-quote.php [L]
-RewriteRule ^contact-us$ contact-us.php [L]
-RewriteRule ^products-page$ products-page.php [L]
-
-# Admin section clean URLs - Generic rule for all admin pages
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin/([^/]+)$ admin/$1.php [L]
-
-# User's section clean URLs - Generic rule for all account pages
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^account/([^/]+)$ account/$1.php [L]
-
-# Rewrite for admin manageProfile fetch - FIXED RULE
-RewriteRule ^admin/fetch/manageProfile/([^/]+)$ admin/fetch/manageProfile.php?action=$1 [L,QSA]
-
-# Rewrite for manageProfile fetch - FIXED RULE
-RewriteRule ^fetch/manageProfile/([^/]+)$ account/fetch/manageProfile.php?action=$1 [L,QSA]
-
-# General Rule for Admin Fetch Folder (For All Files)
-# Rewrite admin/fetch/{filename}/{action} → fetch/{filename}.php?action={action}
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin/fetch/([^/]+)/([^/]+)$ admin/fetch/$1.php?action=$2 [L,QSA]
-
-# General Rule for Fetch Folder (For All Files)
-# Rewrite fetch/{filename}/{action} → fetch/{filename}.php?action={action}
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^fetch/([^/]+)/([^/]+)$ fetch/$1.php?action=$2 [L,QSA]
-
-# Rewrite fetch/{filename} → fetch/{filename}.php
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^fetch/([^/]+)$ fetch/$1.php [L]
-
-# Rewrite admin/fetch/{filename} → admin/fetch/{filename}.php
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin/fetch/([^/]+)$ admin/fetch/$1.php [L]
-
-# Vendor profile by ULID
-RewriteRule ^view/profile/vendor/([0-9A-HJKMNP-TV-Z]{26})/?$ vendor-profile.php?id=$1 [L,QSA,NC]
-
-# Product details by ULID
-RewriteRule ^view/product/([0-9A-HJKMNP-TV-Z]{26})/?$ product-details.php?id=$1 [L,QSA,NC]
-
-# General rule for other files to work without .php extension
+##############################################
+# 5. SEO-Friendly Clean URLs for Any .php Page
+##############################################
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([^/.]+)$ $1.php [L]
+
+##############################################
+# 6. Dynamic Routing for Auth API (Under login/handleAuth.php)
+##############################################
+RewriteRule ^auth/([a-zA-Z0-9_-]+)$ login/handleAuth.php?action=$1 [L,QSA]
+
+##############################################
+# 7. Generalized API Routing (Admin & Account Fetch)
+##############################################
+
+# Pattern: /fetch/module/action → fetch/module.php?action=action
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^fetch/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)$ fetch/$1.php?action=$2 [L,QSA]
+
+# Pattern: /admin/fetch/module/action
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^admin/fetch/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)$ admin/fetch/$1.php?action=$2 [L,QSA]
+
+# Pattern: /fetch/module → fetch/module.php
+RewriteRule ^fetch/([a-zA-Z0-9_-]+)$ fetch/$1.php [L]
+
+# Pattern: /admin/fetch/module → admin/fetch/module.php
+RewriteRule ^admin/fetch/([a-zA-Z0-9_-]+)$ admin/fetch/$1.php [L]
+
+##############################################
+# 8. Account/Admin/vendor-store Sections - Clean Page URLs
+##############################################
+RewriteRule ^account/([a-zA-Z0-9_-]+)$ account/$1.php [L]
+RewriteRule ^admin/([a-zA-Z0-9_-]+)$ admin/$1.php [L]
+RewriteRule ^vendor-store/([a-zA-Z0-9_-]+)$ vendor-store/$1.php [L]
+
+##############################################
+# 9. View Routes (with ULID patterns)
+##############################################
+RewriteRule ^view/profile/vendor/([0-9A-HJKMNP-TV-Z]{26})$ vendor-profile.php?id=$1 [L,QSA]
+RewriteRule ^view/product/([0-9A-HJKMNP-TV-Z]{26})$ product-details.php?id=$1 [L,QSA]
+
+##############################################
+# 10. Custom Error Pages
+##############################################
+ErrorDocument 404 /404.php
+ErrorDocument 403 /403.php
