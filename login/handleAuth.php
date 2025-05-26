@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../mail/Mailer.php';
 require_once __DIR__ . '/../sms/SMS.php';
+require_once __DIR__ . '/../lib/NotificationService.php';
 
 use ZzimbaOnline\Mail\Mailer;
 
@@ -299,6 +300,8 @@ $action = $_GET['action'] ?? '';
 $data = json_decode(file_get_contents('php://input'), true);
 
 try {
+    $ns = new NotificationService($pdo);
+
     switch ($action) {
         case 'checkUser':
             if (!isset($data['identifier'])) {
@@ -375,6 +378,21 @@ try {
             $stmt->execute([':identifier' => $identifier]);
 
             if ($stmt->rowCount() === 0) {
+                $recipients = [
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin-global',
+                        'message' => "Failed login attempt for non-existent user: $identifier"
+                    ]
+                ];
+                $ns->create(
+                    'login',
+                    'Failed Login Attempt',
+                    $recipients,
+                    null,
+                    'normal'
+                );
+
                 http_response_code(404);
                 echo json_encode(['success' => false, 'message' => ($table === 'admin_users' ? 'Admin user not found. Please check your credentials.' : 'User not found. Please check your credentials or register a new account.')]);
                 break;
@@ -383,6 +401,21 @@ try {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user['status'] !== 'active') {
+                $recipients = [
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin-global',
+                        'message' => "Login attempt for {$user['status']} account: {$user['username']}"
+                    ]
+                ];
+                $ns->create(
+                    'login',
+                    'Login Attempt - Inactive Account',
+                    $recipients,
+                    null,
+                    'high'
+                );
+
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Your account is ' . $user['status'] . '. Please contact support.']);
                 break;
@@ -401,6 +434,21 @@ try {
             }
 
             if (!password_verify($password, $user['password'])) {
+                $recipients = [
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin-global',
+                        'message' => "Failed login attempt with incorrect password for user: {$user['username']}"
+                    ]
+                ];
+                $ns->create(
+                    'login',
+                    'Failed Login Attempt',
+                    $recipients,
+                    null,
+                    'normal'
+                );
+
                 http_response_code(401);
                 echo json_encode(['success' => false, 'message' => 'Invalid password']);
                 break;
@@ -420,6 +468,22 @@ try {
                 'is_admin' => ($table === 'admin_users'),
                 'last_login' => $user['last_login']
             ];
+
+            $recipients = [
+                [
+                    'type' => 'admin',
+                    'id' => 'admin-global',
+                    'message' => "Successful login: {$user['username']} logged in at $now"
+                ]
+            ];
+            $ns->create(
+                'login',
+                'Successful Login',
+                $recipients,
+                null,
+                'low',
+                $user['id']
+            );
 
             $redirect = ($table === 'admin_users')
                 ? BASE_URL . 'admin/dashboard'
@@ -574,6 +638,21 @@ try {
             }
 
             if (!verifyOTP('email', $email, $otp, $pdo)) {
+                $recipients = [
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin-global',
+                        'message' => "Failed OTP verification attempt for email: $email"
+                    ]
+                ];
+                $ns->create(
+                    'login',
+                    'Failed OTP Verification',
+                    $recipients,
+                    null,
+                    'normal'
+                );
+
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid or expired verification code']);
                 break;
@@ -623,6 +702,21 @@ try {
             }
 
             if (!verifyOTP('phone', $phone, $otp, $pdo)) {
+                $recipients = [
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin-global',
+                        'message' => "Failed OTP verification attempt for phone: $phone"
+                    ]
+                ];
+                $ns->create(
+                    'login',
+                    'Failed OTP Verification',
+                    $recipients,
+                    null,
+                    'normal'
+                );
+
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid or expired verification code']);
                 break;
@@ -645,20 +739,36 @@ try {
                 break;
             }
 
-            $stmt = $pdo->prepare('SELECT id FROM admin_users WHERE phone = :phone');
+            $stmt = $pdo->prepare('SELECT id, username FROM admin_users WHERE phone = :phone');
             $stmt->execute([':phone' => $phone]);
             $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $stmt = $pdo->prepare('SELECT id FROM zzimba_users WHERE phone = :phone');
+            $stmt = $pdo->prepare('SELECT id, username FROM zzimba_users WHERE phone = :phone');
             $stmt->execute([':phone' => $phone]);
             $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$adminUser && !$zzimbaUser) {
+                $recipients = [
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin-global',
+                        'message' => "Password reset attempt for non-existent phone: $phone"
+                    ]
+                ];
+                $ns->create(
+                    'password_reset',
+                    'Failed Password Reset Attempt',
+                    $recipients,
+                    null,
+                    'normal'
+                );
+
                 http_response_code(404);
                 echo json_encode(['success' => false, 'message' => 'Phone number not found']);
                 break;
             }
 
+            $user = $adminUser ?: $zzimbaUser;
             $otp = createOTP('phone', $phone, $pdo);
 
             if (!sendPasswordResetSmsOTP($phone, $otp)) {
@@ -666,6 +776,22 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Failed to send reset code. Please try again.']);
                 break;
             }
+
+            $recipients = [
+                [
+                    'type' => 'admin',
+                    'id' => 'admin-global',
+                    'message' => "Password reset initiated via phone for user: {$user['username']}"
+                ]
+            ];
+            $ns->create(
+                'password_reset',
+                'Password Reset Initiated',
+                $recipients,
+                null,
+                'normal',
+                $user['id']
+            );
 
             echo json_encode(['success' => true, 'message' => 'Reset code sent to phone']);
             break;
@@ -709,6 +835,21 @@ try {
             $stmt->execute([':username' => $username, ':email' => $email, ':phone' => $phone]);
 
             if ($stmt->rowCount() > 0) {
+                $recipients = [
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin-global',
+                        'message' => "Failed signup attempt with existing credentials: $username, $email, $phone"
+                    ]
+                ];
+                $ns->create(
+                    'signup',
+                    'Failed Signup Attempt',
+                    $recipients,
+                    null,
+                    'normal'
+                );
+
                 http_response_code(409);
                 echo json_encode(['success' => false, 'message' => 'Username, email, or phone number is already registered']);
                 break;
@@ -734,6 +875,22 @@ try {
 
             sendWelcomeEmail($username, $email, $phone);
 
+            $recipients = [
+                [
+                    'type' => 'admin',
+                    'id' => 'admin-global',
+                    'message' => "New user registered successfully: $username ($email)"
+                ]
+            ];
+            $ns->create(
+                'signup',
+                'Successful User Registration',
+                $recipients,
+                null,
+                'normal',
+                $userId
+            );
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Registration successful! Please login with your new credentials.',
@@ -755,20 +912,36 @@ try {
                 break;
             }
 
-            $stmt = $pdo->prepare('SELECT id FROM admin_users WHERE email = :email');
+            $stmt = $pdo->prepare('SELECT id, username FROM admin_users WHERE email = :email');
             $stmt->execute([':email' => $email]);
             $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $stmt = $pdo->prepare('SELECT id FROM zzimba_users WHERE email = :email');
+            $stmt = $pdo->prepare('SELECT id, username FROM zzimba_users WHERE email = :email');
             $stmt->execute([':email' => $email]);
             $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$adminUser && !$zzimbaUser) {
+                $recipients = [
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin-global',
+                        'message' => "Password reset attempt for non-existent email: $email"
+                    ]
+                ];
+                $ns->create(
+                    'password_reset',
+                    'Failed Password Reset Attempt',
+                    $recipients,
+                    null,
+                    'normal'
+                );
+
                 http_response_code(404);
                 echo json_encode(['success' => false, 'message' => 'Email not found']);
                 break;
             }
 
+            $user = $adminUser ?: $zzimbaUser;
             $otp = createOTP('email', $email, $pdo);
 
             if (!sendPasswordResetOTP($email, $otp)) {
@@ -776,6 +949,22 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Failed to send reset code. Please try again.']);
                 break;
             }
+
+            $recipients = [
+                [
+                    'type' => 'admin',
+                    'id' => 'admin-global',
+                    'message' => "Password reset initiated via email for user: {$user['username']}"
+                ]
+            ];
+            $ns->create(
+                'password_reset',
+                'Password Reset Initiated',
+                $recipients,
+                null,
+                'normal',
+                $user['id']
+            );
 
             echo json_encode(['success' => true, 'message' => 'Reset code sent to email']);
             break;
@@ -801,6 +990,33 @@ try {
             }
 
             if (!verifyOTP($contactType, $contact, $otp, $pdo)) {
+                $field = $contactType === 'email' ? 'email' : 'phone';
+                $stmt = $pdo->prepare("SELECT username FROM admin_users WHERE $field = :contact");
+                $stmt->execute([':contact' => $contact]);
+                $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                $stmt = $pdo->prepare("SELECT username FROM zzimba_users WHERE $field = :contact");
+                $stmt->execute([':contact' => $contact]);
+                $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                $user = $adminUser ?: $zzimbaUser;
+                $username = $user ? $user['username'] : $contact;
+
+                $recipients = [
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin-global',
+                        'message' => "Failed password reset OTP verification for user: $username"
+                    ]
+                ];
+                $ns->create(
+                    'password_reset',
+                    'Failed Password Reset OTP',
+                    $recipients,
+                    null,
+                    'normal'
+                );
+
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Invalid or expired verification code']);
                 break;
@@ -866,6 +1082,7 @@ try {
                 $stmt = $pdo->prepare('UPDATE admin_users SET password = :password, updated_at = :updated_at WHERE id = :id');
                 $stmt->execute([':password' => $hashedPassword, ':updated_at' => $now, ':id' => $adminUser['id']]);
                 $username = $adminUser['username'];
+                $userId = $adminUser['id'];
 
                 if ($contactType === 'email') {
                     sendPasswordChangedEmail($contact, $username);
@@ -882,6 +1099,7 @@ try {
                 $stmt = $pdo->prepare('UPDATE zzimba_users SET password = :password, updated_at = :updated_at WHERE id = :id');
                 $stmt->execute([':password' => $hashedPassword, ':updated_at' => $now, ':id' => $zzimbaUser['id']]);
                 $username = $zzimbaUser['username'];
+                $userId = $zzimbaUser['id'];
 
                 if ($contactType === 'email') {
                     sendPasswordChangedEmail($contact, $username);
@@ -895,6 +1113,27 @@ try {
                     }
                 }
             }
+
+            $recipients = [
+                [
+                    'type' => 'user',
+                    'id' => $userId,
+                    'message' => "Your password has been successfully reset."
+                ],
+                [
+                    'type' => 'admin',
+                    'id' => 'admin-global',
+                    'message' => "Password successfully reset for user: $username"
+                ]
+            ];
+            $ns->create(
+                'password_reset',
+                'Password Reset Successful',
+                $recipients,
+                null,
+                'normal',
+                $userId
+            );
 
             echo json_encode(['success' => true, 'message' => 'Password reset successfully']);
             break;

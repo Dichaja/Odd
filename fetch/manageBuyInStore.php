@@ -7,6 +7,7 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php-errors.log');
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../lib/NotificationService.php';
 
 use Ulid\Ulid;
 
@@ -24,21 +25,17 @@ try {
         case 'getUserInfo':
             getUserInfo();
             break;
-
         case 'getProductPackages':
             getProductPackages($pdo);
             break;
-
         case 'submitBuyInStore':
             requireLogin();
             submitBuyInStore($pdo, $currentUser);
             break;
-
         case 'getBuyInStoreHistory':
             requireLogin();
             getBuyInStoreHistory($pdo, $currentUser);
             break;
-
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Invalid action: ' . $action]);
@@ -62,7 +59,7 @@ function ensureBuyInStoreTable(PDO $pdo)
             `visit_date` DATE NOT NULL,
             `quantity` INT NOT NULL,
             `alt_contact` VARCHAR(20) DEFAULT NULL,
-            `alt_email` VARCHAR(100) DEFAULT NULL,
+            `alt_email`   VARCHAR(100) DEFAULT NULL,
             `notes` TEXT DEFAULT NULL,
             `status` ENUM('pending','confirmed','completed','cancelled') NOT NULL DEFAULT 'pending',
             `created_at` DATETIME NOT NULL,
@@ -92,11 +89,7 @@ function getUserInfo()
 {
     if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in']) {
         http_response_code(401);
-        echo json_encode([
-            'success' => false,
-            'error' => 'User not logged in',
-            'session_expired' => true
-        ]);
+        echo json_encode(['success' => false, 'error' => 'User not logged in', 'session_expired' => true]);
         return;
     }
 
@@ -106,15 +99,12 @@ function getUserInfo()
         'phone' => $_SESSION['user']['phone'] ?? null,
         'first_name' => $_SESSION['user']['first_name'] ?? null,
         'last_name' => $_SESSION['user']['last_name'] ?? null,
-        'name' => isset($_SESSION['user']['first_name']) && isset($_SESSION['user']['last_name'])
+        'name' => (isset($_SESSION['user']['first_name'], $_SESSION['user']['last_name']))
             ? $_SESSION['user']['first_name'] . ' ' . $_SESSION['user']['last_name']
             : ($_SESSION['user']['username'] ?? null)
     ];
 
-    echo json_encode([
-        'success' => true,
-        'user' => $user
-    ]);
+    echo json_encode(['success' => true, 'user' => $user]);
 }
 
 function getProductPackages(PDO $pdo)
@@ -138,25 +128,17 @@ function getProductPackages(PDO $pdo)
                 psu.si_unit,
                 ppn.package_name
             FROM 
-                product_pricing pp
-            JOIN 
-                product_si_units psu ON pp.si_unit_id = psu.id
-            JOIN 
-                product_package_name_mappings ppm ON pp.package_mapping_id = ppm.id
-            JOIN 
-                product_package_name ppn ON ppm.product_package_name_id = ppn.id
+                product_pricing            pp
+            JOIN product_si_units          psu ON pp.si_unit_id       = psu.id
+            JOIN product_package_name_mappings ppm ON pp.package_mapping_id = ppm.id
+            JOIN product_package_name      ppn ON ppm.product_package_name_id = ppn.id
             WHERE 
                 pp.store_products_id = ?
             ORDER BY 
                 pp.price_category, pp.price
         ");
         $stmt->execute([$productId]);
-        $packages = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode([
-            'success' => true,
-            'packages' => $packages
-        ]);
+        echo json_encode(['success' => true, 'packages' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     } catch (Exception $e) {
         error_log('Error fetching product packages: ' . $e->getMessage());
         http_response_code(500);
@@ -167,7 +149,6 @@ function getProductPackages(PDO $pdo)
 function submitBuyInStore(PDO $pdo, string $currentUser)
 {
     $data = json_decode(file_get_contents('php://input'), true);
-
     if (!$data) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid data submitted']);
@@ -191,7 +172,6 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
 
     $visitDate = new DateTime($data['visitDate']);
     $today = new DateTime('today', new DateTimeZone('Africa/Kampala'));
-
     if ($visitDate < $today) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Visit date must be today or later']);
@@ -206,30 +186,15 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
     }
 
     try {
-        $pdo->beginTransaction();
-
         $requestId = (string) Ulid::generate();
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
         $stmt = $pdo->prepare("
             INSERT INTO buy_in_store_requests (
-                id, 
-                user_id, 
-                product_pricing_id, 
-                visit_date, 
-                quantity, 
-                alt_contact,
-                alt_email,
-                notes,
-                status, 
-                created_at, 
-                updated_at
+                id, user_id, product_pricing_id, visit_date, quantity,
+                alt_contact, alt_email, notes, status, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
         ");
-
-        $altContact = $data['altContact'] ?? null;
-        $altEmail = $data['altEmail'] ?? null;
-        $notes = $data['notes'] ?? null;
 
         $stmt->execute([
             $requestId,
@@ -237,16 +202,61 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
             $data['packageId'],
             $data['visitDate'],
             $quantity,
-            $altContact,
-            $altEmail,
-            $notes,
+            $data['altContact'] ?? null,
+            $data['altEmail'] ?? null,
+            $data['notes'] ?? null,
             $now,
             $now
         ]);
 
         logAction($pdo, "User {$currentUser} submitted a buy-in-store request for pricing ID {$data['packageId']}");
 
-        $pdo->commit();
+        $storeStmt = $pdo->prepare("
+            SELECT vs.id   AS store_id,
+                   vs.name AS store_name
+            FROM   product_pricing pp
+            JOIN   store_products  sp ON pp.store_products_id = sp.id
+            JOIN   store_categories sc ON sp.store_category_id = sc.id
+            JOIN   vendor_stores   vs ON sc.store_id = vs.id
+            WHERE  pp.id = ?
+            LIMIT 1
+        ");
+        $storeStmt->execute([$data['packageId']]);
+        $storeData = $storeStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$storeData) {
+            throw new Exception('Linked store not found for pricing ID ' . $data['packageId']);
+        }
+
+        $ns = new NotificationService($pdo);
+
+        $userName = trim(
+            ($_SESSION['user']['first_name'] ?? '') . ' ' . ($_SESSION['user']['last_name'] ?? '')
+        ) ?: ($_SESSION['user']['username'] ?? 'User');
+
+        $visitDatePretty = $visitDate->format('j M Y');
+
+        $recipients = [
+            [
+                'type' => 'store',
+                'id' => $storeData['store_id'],
+                'message' => "$userName wants to visit your store \"{$storeData['store_name']}\" on $visitDatePretty."
+            ],
+            [
+                'type' => 'admin',
+                'id' => 'admin-global',
+                'message' => "$userName submitted a visit request to \"{$storeData['store_name']}\" on $visitDatePretty."
+            ]
+        ];
+
+        $ns->create(
+            'visit_request',
+            'New Visit Request',
+            $recipients,
+            BASE_URL . "/vendor-store/requests?id={$storeData['store_id']}",
+            'high',
+            $currentUser
+        );
 
         echo json_encode([
             'success' => true,
@@ -254,9 +264,8 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
             'requestId' => $requestId
         ]);
     } catch (Exception $e) {
-        if ($pdo->inTransaction()) {
+        if ($pdo->inTransaction())
             $pdo->rollBack();
-        }
         error_log('Error submitting buy-in-store request: ' . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Error submitting request']);
@@ -273,43 +282,27 @@ function getBuyInStoreHistory(PDO $pdo, string $currentUser)
                 bir.quantity,
                 bir.status,
                 bir.created_at,
-                p.title AS product_name,
+                p.title         AS product_name,
                 pp.price,
                 pp.price_category,
                 pp.package_size,
                 psu.si_unit,
                 ppn.package_name,
-                vs.name AS store_name
-            FROM 
-                buy_in_store_requests bir
-            JOIN 
-                product_pricing pp ON bir.product_pricing_id = pp.id
-            JOIN 
-                store_products sp ON pp.store_products_id = sp.id
-            JOIN 
-                products p ON sp.product_id = p.id
-            JOIN 
-                store_categories sc ON sp.store_category_id = sc.id
-            JOIN 
-                vendor_stores vs ON sc.store_id = vs.id
-            JOIN 
-                product_si_units psu ON pp.si_unit_id = psu.id
-            JOIN 
-                product_package_name_mappings ppm ON pp.package_mapping_id = ppm.id
-            JOIN 
-                product_package_name ppn ON ppm.product_package_name_id = ppn.id
-            WHERE 
-                bir.user_id = ?
-            ORDER BY 
-                bir.created_at DESC
+                vs.name         AS store_name
+            FROM   buy_in_store_requests bir
+            JOIN   product_pricing          pp  ON bir.product_pricing_id = pp.id
+            JOIN   store_products           sp  ON pp.store_products_id = sp.id
+            JOIN   products                 p   ON sp.product_id        = p.id
+            JOIN   store_categories         sc  ON sp.store_category_id = sc.id
+            JOIN   vendor_stores            vs  ON sc.store_id          = vs.id
+            JOIN   product_si_units         psu ON pp.si_unit_id        = psu.id
+            JOIN   product_package_name_mappings ppm ON pp.package_mapping_id = ppm.id
+            JOIN   product_package_name     ppn ON ppm.product_package_name_id = ppn.id
+            WHERE  bir.user_id = ?
+            ORDER BY bir.created_at DESC
         ");
         $stmt->execute([$currentUser]);
-        $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode([
-            'success' => true,
-            'history' => $history
-        ]);
+        echo json_encode(['success' => true, 'history' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
     } catch (Exception $e) {
         error_log('Error fetching buy-in-store history: ' . $e->getMessage());
         http_response_code(500);
@@ -322,7 +315,6 @@ function logAction(PDO $pdo, string $action)
     try {
         $logId = (string) Ulid::generate();
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-
         $stmt = $pdo->prepare("INSERT INTO action_logs (log_id, action, created_at) VALUES (?, ?, ?)");
         $stmt->execute([$logId, $action, $now]);
     } catch (Exception $e) {
