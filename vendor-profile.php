@@ -259,7 +259,7 @@ ob_start();
 
 <!-- Edit Name Modal -->
 <div id="edit-name-modal" class="fixed inset-0 z-[1000] hidden bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto mt-[10%] p-5">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
         <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-900">Edit Store Name</h2>
             <span class="text-2xl font-bold text-gray-400 hover:text-gray-900 cursor-pointer"
@@ -283,7 +283,7 @@ ob_start();
 
 <!-- Edit Description Modal -->
 <div id="edit-description-modal" class="fixed inset-0 z-[1000] hidden bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto mt-[10%] p-5">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
         <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-900">Edit Store Description</h2>
             <span class="text-2xl font-bold text-gray-400 hover:text-gray-900 cursor-pointer"
@@ -308,7 +308,7 @@ ob_start();
 
 <!-- Edit Logo Modal -->
 <div id="edit-logo-modal" class="fixed inset-0 z-[1000] hidden bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto mt-[10%] p-5">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
         <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-900">Edit Store Logo</h2>
             <span class="text-2xl font-bold text-gray-400 hover:text-gray-900 cursor-pointer"
@@ -338,7 +338,7 @@ ob_start();
 
 <!-- Edit Cover Photo Modal -->
 <div id="edit-cover-modal" class="fixed inset-0 z-[1000] hidden bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto mt-[10%] p-5">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
         <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-900">Edit Cover Photo</h2>
             <span class="text-2xl font-bold text-gray-400 hover:text-gray-900 cursor-pointer"
