@@ -259,8 +259,9 @@ $menuItems = [
                             <i class="fas fa-bars text-xl"></i>
                         </button>
                         <h1 class="text-xl font-semibold text-secondary truncate max-w-full"
-                            title="<?= htmlspecialchars($pageTitle ?? 'Vendor Dashboard') ?>">
-                            <?= htmlspecialchars($pageTitle ?? 'Vendor Dashboard') ?></h1>
+                            title="<?= htmlspecialchars($storeName) ?>">
+                            <?= htmlspecialchars($storeName) ?>
+                        </h1>
                     </div>
                     <div class="flex items-center gap-2">
                         <!-- Notification bell -->
