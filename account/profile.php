@@ -63,6 +63,10 @@ ob_start();
                         class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
                         <i class="fas fa-lock"></i><span>Change Password</span>
                     </button>
+                    <button id="deleteAccountBtn"
+                        class="h-10 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
+                        <i class="fas fa-user-slash"></i><span>Delete Account</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -199,6 +203,36 @@ ob_start();
     </div>
 </div>
 
+<!-- Delete Account Modal -->
+<div id="deleteAccountModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/20" onclick="hideModal('deleteAccountModal')"></div>
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Delete Account</h3>
+                <button onclick="hideModal('deleteAccountModal')" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-gray-700 mb-6">
+                Are you sure you want to delete your account? This action cannot be undone.
+            </p>
+            <div class="flex justify-end gap-3">
+                <button type="button" id="deleteAccountCancelBtn"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    onclick="hideModal('deleteAccountModal')">
+                    Cancel
+                </button>
+                <button type="button" id="deleteAccountConfirmBtn"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Delete Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Success Notification -->
 <div id="successNotification"
     class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
@@ -231,21 +265,32 @@ ob_start();
             separateDialCode: true,
             autoPlaceholder: "polite"
         });
-
         $('.iti').addClass('w-full');
         $("#phone").on('blur', validatePhoneNumber);
 
-        $('#editProfileBtn').click(() => $('html,body').animate({ scrollTop: $('#personalInfoForm').offset().top - 100 }, 500));
+        $('#editProfileBtn').click(() =>
+            $('html, body').animate({ scrollTop: $('#personalInfoForm').offset().top - 100 }, 500)
+        );
         $('#changePasswordBtn').click(() => showModal('changePasswordModal'));
+        $('#deleteAccountBtn').click(() => showModal('deleteAccountModal'));
 
-        $('#personalInfoForm').submit(e => { e.preventDefault(); if (validatePhoneNumber()) updateProfile() });
-        $('#changePasswordForm').submit(e => { e.preventDefault(); changePassword() });
+        $('#personalInfoForm').submit(e => {
+            e.preventDefault();
+            if (validatePhoneNumber()) updateProfile();
+        });
+        $('#changePasswordForm').submit(e => {
+            e.preventDefault();
+            changePassword();
+        });
+
+        $('#deleteAccountCancelBtn').click(() => hideModal('deleteAccountModal'));
+        $('#deleteAccountConfirmBtn').click(() => doDeleteAccount());
 
         fetchUserDetails();
     });
 
-    function showIncompleteBanner() { $('#incompleteBanner').removeClass('hidden') }
-    function hideIncompleteBanner() { $('#incompleteBanner').addClass('hidden') }
+    function showIncompleteBanner() { $('#incompleteBanner').removeClass('hidden'); }
+    function hideIncompleteBanner() { $('#incompleteBanner').addClass('hidden'); }
 
     function evaluateProfileCompleteness(user) {
         const missing = PROFILE_REQUIRED_FIELDS.filter(f => !(user[f] || '').trim());
@@ -257,7 +302,10 @@ ob_start();
             url: BASE_URL + 'account/fetch/manageProfile.php?action=getUserDetails',
             dataType: 'json',
             success(resp) {
-                if (!resp.success) { showErrorNotification('Failed to load user details.'); return; }
+                if (!resp.success) {
+                    showErrorNotification('Failed to load user details.');
+                    return;
+                }
                 const u = resp.data;
 
                 $('#firstName').val(u.first_name || '');
@@ -276,21 +324,37 @@ ob_start();
                 $('#user-initials span').text(init);
 
                 const jd = new Date(u.created_at);
-                $('#user-joined').text('Member since ' + jd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+                $('#user-joined').text('Member since ' + jd.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                }));
 
-                if (u.last_login) $('#user-lastlogin').text('Last login: ' + getTimeAgo(new Date(u.last_login)));
-                else $('#user-lastlogin').text('First login');
+                if (u.last_login) {
+                    $('#user-lastlogin').text('Last login: ' + getTimeAgo(new Date(u.last_login)));
+                } else {
+                    $('#user-lastlogin').text('First login');
+                }
 
                 $('#overview-email').text(u.email || 'Not set');
                 $('#overview-phone').text(u.phone || 'Not set');
 
-                const map = { active: 'text-green-600', inactive: 'text-yellow-600', suspended: 'text-red-600' };
+                const map = {
+                    active: 'text-green-600',
+                    inactive: 'text-yellow-600',
+                    suspended: 'text-red-600',
+                    deleted: 'text-gray-600'
+                };
                 const cls = map[u.status] || '';
-                $('#overview-status').html(`<span class="${cls}">${u.status ? u.status.charAt(0).toUpperCase() + u.status.slice(1) : 'Unknown'}</span>`);
+                $('#overview-status').html(
+                    `<span class="${cls}">${u.status ? u.status.charAt(0).toUpperCase() + u.status.slice(1) : 'Unknown'}</span>`
+                );
 
                 evaluateProfileCompleteness(u);
             },
-            error() { showErrorNotification('Failed to load user details.') }
+            error() {
+                showErrorNotification('Failed to load user details.');
+            }
         });
     }
 
@@ -298,26 +362,35 @@ ob_start();
         const e = $('#phone-error').addClass('hidden');
         const num = phoneInput.getNumber();
         if (!num) return false;
-        if (!phoneInput.isValidNumber()) { e.text('Invalid phone number').removeClass('hidden'); return false; }
+        if (!phoneInput.isValidNumber()) {
+            e.text('Invalid phone number').removeClass('hidden');
+            return false;
+        }
         return true;
     }
 
     function updateProfile() {
         $('#profile-form-error,#profile-form-success').addClass('hidden').text('');
         const fd = {
-            first_name: $('#firstName').val().trim(), last_name: $('#lastName').val().trim(),
-            email: $('#email').val().trim(), phone: phoneInput.getNumber()
+            first_name: $('#firstName').val().trim(),
+            last_name: $('#lastName').val().trim(),
+            email: $('#email').val().trim(),
+            phone: phoneInput.getNumber()
         };
         if (!fd.first_name || !fd.email || !fd.phone) {
             $('#profile-form-error').removeClass('hidden').text('First name, email & phone are required');
             return;
         }
-        const btn = $('#personalInfoForm button[type="submit"]'), orig = btn.html();
+        const btn = $('#personalInfoForm button[type="submit"]'),
+            orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving…').prop('disabled', true);
 
         $.ajax({
             url: BASE_URL + 'account/fetch/manageProfile.php?action=updateProfile',
-            method: 'POST', contentType: 'application/json', data: JSON.stringify(fd), dataType: 'json',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(fd),
+            dataType: 'json',
             success(r) {
                 btn.html(orig).prop('disabled', false);
                 if (r.success) {
@@ -332,7 +405,7 @@ ob_start();
             error(xhr) {
                 btn.html(orig).prop('disabled', false);
                 let msg = 'Server error. Try again.';
-                try { msg = JSON.parse(xhr.responseText).message || msg } catch { }
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
                 $('#profile-form-error').removeClass('hidden').text(msg);
                 showErrorNotification(msg);
             }
@@ -341,19 +414,29 @@ ob_start();
 
     function changePassword() {
         $('#password-form-error').addClass('hidden').text('');
-        const cur = $('#currentPassword').val(), nw = $('#newPassword').val(), cf = $('#confirmPassword').val();
-        if (!cur || !nw || !cf) { $('#password-form-error').removeClass('hidden').text('All fields are required'); return }
-        if (nw !== cf) { $('#password-form-error').removeClass('hidden').text('Passwords do not match'); return }
+        const cur = $('#currentPassword').val(),
+            nw = $('#newPassword').val(),
+            cf = $('#confirmPassword').val();
+        if (!cur || !nw || !cf) {
+            $('#password-form-error').removeClass('hidden').text('All fields are required');
+            return;
+        }
+        if (nw !== cf) {
+            $('#password-form-error').removeClass('hidden').text('Passwords do not match');
+            return;
+        }
         if (!(nw.length >= 8 && /[A-Z]/.test(nw) && /[a-z]/.test(nw) && /\d/.test(nw) && /[^A-Za-z0-9]/.test(nw))) {
             $('#password-form-error').removeClass('hidden').text('Password does not meet requirements');
             return;
         }
-        const btn = $('#changePasswordForm button[type="submit"]'), orig = btn.html();
+        const btn = $('#changePasswordForm button[type="submit"]'),
+            orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating…').prop('disabled', true);
 
         $.ajax({
             url: BASE_URL + 'account/fetch/manageProfile.php?action=changePassword',
-            method: 'POST', contentType: 'application/json',
+            method: 'POST',
+            contentType: 'application/json',
             data: JSON.stringify({ current_password: cur, new_password: nw }),
             dataType: 'json',
             success(r) {
@@ -370,21 +453,51 @@ ob_start();
             error(xhr) {
                 btn.html(orig).prop('disabled', false);
                 let msg = 'Server error. Try again.';
-                try { msg = JSON.parse(xhr.responseText).message || msg } catch { }
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
                 $('#password-form-error').removeClass('hidden').text(msg);
                 showErrorNotification(msg);
             }
         });
     }
 
-    function showModal(id) { $('#' + id).removeClass('hidden') }
-    function hideModal(id) { $('#' + id).addClass('hidden') }
+    function doDeleteAccount() {
+        const btnConfirm = $('#deleteAccountConfirmBtn'),
+            btnCancel = $('#deleteAccountCancelBtn');
+        btnConfirm.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Deleting…');
+        btnCancel.prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=deleteAccount',
+            method: 'POST',
+            dataType: 'json',
+            success(r) {
+                if (r.success) {
+                    hideModal('deleteAccountModal');
+                    showSuccessNotification(r.message);
+                    setTimeout(() => window.location.href = BASE_URL, 1500);
+                } else {
+                    showErrorNotification(r.message);
+                    btnConfirm.prop('disabled', false).html('Delete Account');
+                    btnCancel.prop('disabled', false);
+                }
+            },
+            error() {
+                showErrorNotification('Failed to delete account. Please try again.');
+                btnConfirm.prop('disabled', false).html('Delete Account');
+                btnCancel.prop('disabled', false);
+            }
+        });
+    }
+
+    function showModal(id) { $('#' + id).removeClass('hidden'); }
+    function hideModal(id) { $('#' + id).addClass('hidden'); }
 
     function showSuccessNotification(m) {
         const n = $('#successNotification'), t = $('#successMessage');
         t.text(m); n.removeClass('hidden');
         setTimeout(() => n.addClass('hidden'), 3000);
     }
+
     function showErrorNotification(m) {
         const n = $('#errorNotification'), t = $('#errorMessage');
         t.text(m); n.removeClass('hidden');
@@ -393,12 +506,14 @@ ob_start();
 
     function checkPasswordStrength(p) {
         let s = 0;
-        if (p.length >= 8) { s += 20; $('#length-check').removeClass('text-gray-400').addClass('text-green-600') } else { $('#length-check').removeClass('text-green-600').addClass('text-gray-400') }
-        if (/[A-Z]/.test(p)) { s += 20; $('#uppercase-check').removeClass('text-gray-400').addClass('text-green-600') } else { $('#uppercase-check').removeClass('text-green-600').addClass('text-gray-400') }
-        if (/[a-z]/.test(p)) { s += 20; $('#lowercase-check').removeClass('text-gray-400').addClass('text-green-600') } else { $('#lowercase-check').removeClass('text-green-600').addClass('text-gray-400') }
-        if (/\d/.test(p)) { s += 20; $('#number-check').removeClass('text-gray-400').addClass('text-green-600') } else { $('#number-check').removeClass('text-green-600').addClass('text-gray-400') }
-        if (/[^A-Za-z0-9]/.test(p)) { s += 20; $('#special-check').removeClass('text-gray-400').addClass('text-green-600') } else { $('#special-check').removeClass('text-green-600').addClass('text-gray-400') }
-        const b = $('#passwordStrength'); b.css('width', s + '%');
+        if (p.length >= 8) { s += 20; $('#length-check').removeClass('text-gray-400').addClass('text-green-600'); } else { $('#length-check').removeClass('text-green-600').addClass('text-gray-400'); }
+        if (/[A-Z]/.test(p)) { s += 20; $('#uppercase-check').removeClass('text-gray-400').addClass('text-green-600'); } else { $('#uppercase-check').removeClass('text-green-600').addClass('text-gray-400'); }
+        if (/[a-z]/.test(p)) { s += 20; $('#lowercase-check').removeClass('text-gray-400').addClass('text-green-600'); } else { $('#lowercase-check').removeClass('text-green-600').addClass('text-gray-400'); }
+        if (/\d/.test(p)) { s += 20; $('#number-check').removeClass('text-gray-400').addClass('text-green-600'); } else { $('#number-check').removeClass('text-green-600').addClass('text-gray-400'); }
+        if (/[^A-Za-z0-9]/.test(p)) { s += 20; $('#special-check').removeClass('text-gray-400').addClass('text-green-600'); } else { $('#special-check').removeClass('text-green-600').addClass('text-gray-400'); }
+
+        const b = $('#passwordStrength');
+        b.css('width', s + '%');
         b.removeClass('bg-red-500 bg-yellow-500 bg-green-500');
         if (s < 40) b.addClass('bg-red-500'); else if (s < 80) b.addClass('bg-yellow-500'); else b.addClass('bg-green-500');
     }

@@ -3,6 +3,12 @@ require_once __DIR__ . '/../../config/config.php';
 
 header('Content-Type: application/json');
 
+// Ensure session is running (config.php may start it)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Authentication check
 if (empty($_SESSION['user']['logged_in'])) {
     http_response_code(401);
     echo json_encode([
@@ -36,6 +42,10 @@ try {
             changePassword($pdo, $userId, $data);
             break;
 
+        case 'deleteAccount':
+            deleteAccount($pdo, $userId);
+            break;
+
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
@@ -47,8 +57,8 @@ try {
         'success' => false,
         'message' => 'Server error: ' . $e->getMessage()
     ]);
+    exit;
 }
-
 
 
 function getUserDetails(PDO $pdo, string $userId): void
@@ -63,8 +73,8 @@ function getUserDetails(PDO $pdo, string $userId): void
             status,
             profile_pic_url,
             DATE_FORMAT(current_login, '%Y-%m-%d %H:%i:%s') AS current_login,
-            DATE_FORMAT(last_login, '%Y-%m-%d %H:%i:%s') AS last_login,
-            DATE_FORMAT(created_at, '%Y-%m-%d')           AS created_at
+            DATE_FORMAT(last_login, '%Y-%m-%d %H:%i:%s')   AS last_login,
+            DATE_FORMAT(created_at, '%Y-%m-%d')            AS created_at
         FROM zzimba_users
         WHERE id = :user_id
     ");
@@ -83,9 +93,7 @@ function getUserDetails(PDO $pdo, string $userId): void
 
 function updateProfile(PDO $pdo, string $userId, array $data): void
 {
-    if (
-        !isset($data['first_name'], $data['last_name'], $data['email'], $data['phone'])
-    ) {
+    if (!isset($data['first_name'], $data['last_name'], $data['email'], $data['phone'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Missing required fields']);
         return;
@@ -108,7 +116,6 @@ function updateProfile(PDO $pdo, string $userId, array $data): void
         return;
     }
 
-    // Perform the update without uniqueness checks
     $now = (new DateTime('now'))->format('Y-m-d H:i:s');
 
     $stmt = $pdo->prepare("
@@ -129,7 +136,6 @@ function updateProfile(PDO $pdo, string $userId, array $data): void
         ':user_id' => $userId
     ]);
 
-    // Update session email if changed
     $_SESSION['user']['email'] = $email;
 
     echo json_encode(['success' => true, 'message' => 'Profile updated successfully']);
@@ -194,4 +200,27 @@ function changePassword(PDO $pdo, string $userId, array $data): void
     ]);
 
     echo json_encode(['success' => true, 'message' => 'Password changed successfully']);
+}
+
+
+function deleteAccount(PDO $pdo, string $userId): void
+{
+    // Soft-delete: set status to 'deleted'
+    $now = (new DateTime('now'))->format('Y-m-d H:i:s');
+    $stmt = $pdo->prepare("
+        UPDATE zzimba_users
+        SET status     = 'deleted',
+            updated_at = :updated_at
+        WHERE id = :user_id
+    ");
+    $stmt->execute([
+        ':updated_at' => $now,
+        ':user_id' => $userId
+    ]);
+
+    // Destroy session to log user out
+    session_unset();
+    session_destroy();
+
+    echo json_encode(['success' => true, 'message' => 'Account deleted successfully']);
 }
