@@ -13,8 +13,10 @@ ob_start();
     <!-- Profile Header -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div class="md:flex">
-            <div class="md:w-1/3 bg-gradient-to-r from-user-primary to-blue-700 p-6 flex flex-col items-center justify-center text-white">
-                <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 flex items-center justify-center bg-white text-user-primary text-5xl font-bold" id="user-initials">
+            <div
+                class="md:w-1/3 bg-gradient-to-r from-user-primary to-blue-700 p-6 flex flex-col items-center justify-center text-white">
+                <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 flex items-center justify-center bg-white text-user-primary text-5xl font-bold"
+                    id="user-initials">
                     <span>...</span>
                 </div>
                 <h1 class="text-2xl font-bold" id="user-fullname">Loading...</h1>
@@ -41,11 +43,13 @@ ob_start();
                     </div>
                 </div>
                 <div class="mt-6 flex flex-wrap gap-3">
-                    <button id="editProfileBtn" class="h-10 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors flex items-center gap-2">
+                    <button id="editProfileBtn"
+                        class="h-10 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors flex items-center gap-2">
                         <i class="fas fa-user-edit"></i>
                         <span>Edit Profile</span>
                     </button>
-                    <button id="changePasswordBtn" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
+                    <button id="changePasswordBtn"
+                        class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
                         <i class="fas fa-lock"></i>
                         <span>Change Password</span>
                     </button>
@@ -65,24 +69,33 @@ ob_start();
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                        <input type="text" id="firstName" name="first_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
+                        <input type="text" id="firstName" name="first_name"
+                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                            autocomplete="off">
                     </div>
                     <div>
                         <label for="lastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                        <input type="text" id="lastName" name="last_name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
+                        <input type="text" id="lastName" name="last_name"
+                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                            autocomplete="off">
                     </div>
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                        <input type="email" id="email" name="email" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
+                        <input type="email" id="email" name="email"
+                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                            autocomplete="off">
                     </div>
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
+                        <input type="tel" id="phone" name="phone"
+                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                            autocomplete="off">
                         <div id="phone-error" class="text-red-500 text-xs mt-1 hidden"></div>
                     </div>
                 </div>
                 <div class="mt-6">
-                    <button type="submit" class="h-10 px-6 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                    <button type="submit"
+                        class="h-10 px-6 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                         Save Changes
                     </button>
                     <div id="profile-form-error" class="text-red-500 text-sm mt-2 hidden"></div>
@@ -96,7 +109,8 @@ ob_start();
 <!-- Change Password Modal -->
 <div id="changePasswordModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/20" onclick="hideModal('changePasswordModal')"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
         <div class="p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-secondary">Change Password</h3>
@@ -107,19 +121,29 @@ ob_start();
             <form id="changePasswordForm" autocomplete="off">
                 <div class="space-y-4">
                     <div>
-                        <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                        <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">Current
+                            Password</label>
                         <div class="relative">
-                            <input type="password" id="currentPassword" name="current_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
-                            <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-target="currentPassword">
+                            <input type="password" id="currentPassword" name="current_password"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                                autocomplete="off">
+                            <button type="button"
+                                class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                data-target="currentPassword">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
                     </div>
                     <div>
-                        <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                        <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">New
+                            Password</label>
                         <div class="relative">
-                            <input type="password" id="newPassword" name="new_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
-                            <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-target="newPassword">
+                            <input type="password" id="newPassword" name="new_password"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                                autocomplete="off">
+                            <button type="button"
+                                class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                data-target="newPassword">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -131,10 +155,15 @@ ob_start();
                         </div>
                     </div>
                     <div>
-                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm New
+                            Password</label>
                         <div class="relative">
-                            <input type="password" id="confirmPassword" name="confirm_password" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary" autocomplete="off">
-                            <button type="button" class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-target="confirmPassword">
+                            <input type="password" id="confirmPassword" name="confirm_password"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                                autocomplete="off">
+                            <button type="button"
+                                class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                data-target="confirmPassword">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
@@ -150,7 +179,8 @@ ob_start();
                         </ul>
                     </div>
                     <div id="password-form-error" class="text-red-500 text-sm hidden"></div>
-                    <button type="submit" class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                    <button type="submit"
+                        class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
                         Update Password
                     </button>
                 </div>
@@ -160,7 +190,8 @@ ob_start();
 </div>
 
 <!-- Success Notification -->
-<div id="successNotification" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
+<div id="successNotification"
+    class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-2"></i>
         <span id="successMessage"></span>
@@ -168,7 +199,8 @@ ob_start();
 </div>
 
 <!-- Error Notification -->
-<div id="errorNotification" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
+<div id="errorNotification"
+    class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-exclamation-circle mr-2"></i>
         <span id="errorMessage"></span>
@@ -196,10 +228,8 @@ ob_start();
         </div>
     </div>`;
 
-    // Add the modal to the document
     document.body.insertAdjacentHTML('beforeend', sessionExpiredModalHTML);
 
-    // Function to handle session expiration
     function handleSessionExpiration() {
         const modal = document.getElementById('sessionExpiredModal');
         const countdownEl = document.getElementById('countdown');
@@ -221,27 +251,23 @@ ob_start();
         }, 1000);
     }
 
-    // Function to redirect to login page
     function redirectToLogin() {
         window.location.href = BASE_URL;
     }
 
-    // Add session expiration handling to AJAX requests
-    $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+    $(document).ajaxError(function (event, jqXHR) {
         if (jqXHR.status === 401 && jqXHR.responseJSON && jqXHR.responseJSON.session_expired) {
             handleSessionExpiration();
         }
     });
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js">
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js"></script>
 
 <script>
-    // Initialize phone input with country selector
     let phoneInput;
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         // Initialize the international telephone input
         const phoneInputField = document.querySelector("#phone");
         phoneInput = window.intlTelInput(phoneInputField, {
@@ -251,30 +277,25 @@ ob_start();
             autoPlaceholder: "polite"
         });
 
-        // Style the country selector to match our design
         $('.iti').addClass('w-full');
 
-        // Validate phone on blur
-        phoneInputField.addEventListener("blur", function() {
+        phoneInputField.addEventListener("blur", function () {
             validatePhoneNumber();
         });
 
-        // Fetch user details
         fetchUserDetails();
 
-        // Open modals
-        $('#editProfileBtn').click(function() {
+        $('#editProfileBtn').click(function () {
             $('html, body').animate({
                 scrollTop: $('#personalInfoForm').offset().top - 100
             }, 500);
         });
 
-        $('#changePasswordBtn, #changePasswordBtn2').click(function() {
+        $('#changePasswordBtn').click(function () {
             showModal('changePasswordModal');
         });
 
-        // Toggle password visibility
-        $('.toggle-password').click(function() {
+        $('.toggle-password').click(function () {
             const target = $(this).data('target');
             const input = $(`#${target}`);
 
@@ -287,27 +308,23 @@ ob_start();
             }
         });
 
-        // Password strength checker
-        $('#newPassword').on('input', function() {
-            const password = $(this).val();
-            checkPasswordStrength(password);
+        $('#newPassword').on('input', function () {
+            checkPasswordStrength($(this).val());
         });
 
-        // Form submissions
-        $('#personalInfoForm').submit(function(e) {
+        $('#personalInfoForm').submit(function (e) {
             e.preventDefault();
             if (validatePhoneNumber()) {
                 updateProfile();
             }
         });
 
-        $('#changePasswordForm').submit(function(e) {
+        $('#changePasswordForm').submit(function (e) {
             e.preventDefault();
             changePassword();
         });
     });
 
-    // Validate phone number
     function validatePhoneNumber() {
         const phoneError = document.getElementById("phone-error");
         phoneError.classList.add("hidden");
@@ -323,60 +340,49 @@ ob_start();
         return false;
     }
 
-    // Fetch user details from the server
     function fetchUserDetails() {
         $.ajax({
-            url: BASE_URL + 'fetch/manageProfile/getUserDetails',
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=getUserDetails',
             type: 'GET',
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     const user = response.data;
 
-                    // Update profile form
                     $('#firstName').val(user.first_name || '');
                     $('#lastName').val(user.last_name || '');
                     $('#email').val(user.email || '');
-
-                    // Set phone number with country code
                     if (user.phone) {
                         phoneInput.setNumber(user.phone);
                     }
 
-                    // Update profile header
                     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User';
                     $('#user-fullname').text(fullName);
                     $('#user-username').text('@' + (user.username || ''));
 
-                    // Generate initials
                     let initials = '';
                     if (user.first_name) initials += user.first_name.charAt(0).toUpperCase();
                     if (user.last_name) initials += user.last_name.charAt(0).toUpperCase();
                     if (!initials) initials = (user.username || 'U').charAt(0).toUpperCase();
                     $('#user-initials span').text(initials);
 
-                    // Format dates
                     const joinDate = new Date(user.created_at);
-                    const joinDateFormatted = joinDate.toLocaleDateString('en-US', {
+                    $('#user-joined').text('Member since ' + joinDate.toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
-                    });
-                    $('#user-joined').text('Member since ' + joinDateFormatted);
+                    }));
 
                     if (user.last_login) {
                         const lastLogin = new Date(user.last_login);
-                        const timeAgo = getTimeAgo(lastLogin);
-                        $('#user-lastlogin').text('Last login: ' + timeAgo);
+                        $('#user-lastlogin').text('Last login: ' + getTimeAgo(lastLogin));
                     } else {
                         $('#user-lastlogin').text('First login');
                     }
 
-                    // Update overview section
                     $('#overview-email').text(user.email || 'Not set');
                     $('#overview-phone').text(user.phone || 'Not set');
 
-                    // Format status with proper styling
                     let statusHtml = '';
                     if (user.status === 'active') {
                         statusHtml = '<span class="text-green-600">Active</span>';
@@ -390,20 +396,16 @@ ob_start();
                     $('#overview-status').html(statusHtml);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 console.error('Error fetching user details:', xhr);
                 showErrorNotification('Failed to load user details. Please refresh the page.');
             }
         });
     }
 
-    // Update user profile
     function updateProfile() {
-        // Hide previous messages
-        $('#profile-form-error').addClass('hidden').text('');
-        $('#profile-form-success').addClass('hidden').text('');
+        $('#profile-form-error, #profile-form-success').addClass('hidden').text('');
 
-        // Get form data
         const formData = {
             first_name: $('#firstName').val().trim(),
             last_name: $('#lastName').val().trim(),
@@ -411,72 +413,59 @@ ob_start();
             phone: phoneInput.getNumber()
         };
 
-        // Basic validation
         if (!formData.first_name || !formData.last_name || !formData.email) {
             $('#profile-form-error').removeClass('hidden').text('First name, last name, and email are required');
             return;
         }
 
-        // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
             $('#profile-form-error').removeClass('hidden').text('Please enter a valid email address');
             return;
         }
 
-        // Disable submit button
         const submitBtn = $('#personalInfoForm button[type="submit"]');
         const originalBtnText = submitBtn.html();
         submitBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving...').prop('disabled', true);
 
-        // Send AJAX request
         $.ajax({
-            url: BASE_URL + 'fetch/manageProfile/updateProfile',
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=updateProfile',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(formData),
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 submitBtn.html(originalBtnText).prop('disabled', false);
 
                 if (response.success) {
                     $('#profile-form-success').removeClass('hidden').text(response.message);
                     showSuccessNotification(response.message);
-
-                    // Refresh user details to update the UI
                     fetchUserDetails();
                 } else {
                     $('#profile-form-error').removeClass('hidden').text(response.message);
                     showErrorNotification(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 submitBtn.html(originalBtnText).prop('disabled', false);
-
+                let errMsg = 'Server error. Please try again later.';
                 try {
-                    const response = JSON.parse(xhr.responseText);
-                    const errorMessage = response.message || 'An error occurred';
-                    $('#profile-form-error').removeClass('hidden').text(errorMessage);
-                    showErrorNotification(errorMessage);
-                } catch (e) {
-                    $('#profile-form-error').removeClass('hidden').text('Server error. Please try again later.');
-                    showErrorNotification('Server error. Please try again later.');
-                }
+                    const resp = JSON.parse(xhr.responseText);
+                    errMsg = resp.message || errMsg;
+                } catch { }
+                $('#profile-form-error').removeClass('hidden').text(errMsg);
+                showErrorNotification(errMsg);
             }
         });
     }
 
-    // Change password
     function changePassword() {
-        // Hide previous error
         $('#password-form-error').addClass('hidden').text('');
 
-        // Get form data
         const currentPassword = $('#currentPassword').val();
         const newPassword = $('#newPassword').val();
         const confirmPassword = $('#confirmPassword').val();
 
-        // Validation
         if (!currentPassword || !newPassword || !confirmPassword) {
             $('#password-form-error').removeClass('hidden').text('All fields are required');
             return;
@@ -487,24 +476,21 @@ ob_start();
             return;
         }
 
-        // Password strength validation
         if (!(newPassword.length >= 8 &&
-                /[A-Z]/.test(newPassword) &&
-                /[a-z]/.test(newPassword) &&
-                /\d/.test(newPassword) &&
-                /[^A-Za-z0-9]/.test(newPassword))) {
+            /[A-Z]/.test(newPassword) &&
+            /[a-z]/.test(newPassword) &&
+            /\d/.test(newPassword) &&
+            /[^A-Za-z0-9]/.test(newPassword))) {
             $('#password-form-error').removeClass('hidden').text('Password does not meet the requirements');
             return;
         }
 
-        // Disable submit button
         const submitBtn = $('#changePasswordForm button[type="submit"]');
         const originalBtnText = submitBtn.html();
         submitBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating...').prop('disabled', true);
 
-        // Send AJAX request
         $.ajax({
-            url: BASE_URL + 'fetch/manageProfile/changePassword',
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=changePassword',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({
@@ -512,133 +498,74 @@ ob_start();
                 new_password: newPassword
             }),
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 submitBtn.html(originalBtnText).prop('disabled', false);
 
                 if (response.success) {
-                    // Clear form
                     $('#changePasswordForm')[0].reset();
-
-                    // Hide modal
                     hideModal('changePasswordModal');
-
-                    // Show success notification
                     showSuccessNotification(response.message);
                 } else {
                     $('#password-form-error').removeClass('hidden').text(response.message);
                     showErrorNotification(response.message);
                 }
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 submitBtn.html(originalBtnText).prop('disabled', false);
-
+                let errMsg = 'Server error. Please try again later.';
                 try {
-                    const response = JSON.parse(xhr.responseText);
-                    const errorMessage = response.message || 'An error occurred';
-                    $('#password-form-error').removeClass('hidden').text(errorMessage);
-                    showErrorNotification(errorMessage);
-                } catch (e) {
-                    $('#password-form-error').removeClass('hidden').text('Server error. Please try again later.');
-                    showErrorNotification('Server error. Please try again later.');
-                }
+                    const resp = JSON.parse(xhr.responseText);
+                    errMsg = resp.message || errMsg;
+                } catch { }
+                $('#password-form-error').removeClass('hidden').text(errMsg);
+                showErrorNotification(errMsg);
             }
         });
     }
 
-    // Show modal
     function showModal(modalId) {
         document.getElementById(modalId).classList.remove('hidden');
     }
 
-    // Hide modal
     function hideModal(modalId) {
         document.getElementById(modalId).classList.add('hidden');
     }
 
-    // Show success notification
     function showSuccessNotification(message) {
         const notification = document.getElementById('successNotification');
         const messageEl = document.getElementById('successMessage');
-
-        // Set message
         messageEl.textContent = message;
-
-        // Show notification
         notification.classList.remove('hidden');
-
-        // Hide after 3 seconds
-        setTimeout(() => {
-            notification.classList.add('hidden');
-        }, 3000);
+        setTimeout(() => notification.classList.add('hidden'), 3000);
     }
 
-    // Show error notification
     function showErrorNotification(message) {
         const notification = document.getElementById('errorNotification');
         const messageEl = document.getElementById('errorMessage');
-
-        // Set message
         messageEl.textContent = message;
-
-        // Show notification
         notification.classList.remove('hidden');
-
-        // Hide after 3 seconds
-        setTimeout(() => {
-            notification.classList.add('hidden');
-        }, 3000);
+        setTimeout(() => notification.classList.add('hidden'), 3000);
     }
 
-    // Check password strength
     function checkPasswordStrength(password) {
-        // Initialize strength
         let strength = 0;
+        if (password.length >= 8) { strength += 20; $('#length-check').removeClass('text-gray-400').addClass('text-green-600'); }
+        else { $('#length-check').removeClass('text-green-600').addClass('text-gray-400'); }
 
-        // Check length
-        if (password.length >= 8) {
-            strength += 20;
-            $('#length-check').removeClass('text-gray-400').addClass('text-green-600');
-        } else {
-            $('#length-check').removeClass('text-green-600').addClass('text-gray-400');
-        }
+        if (/[A-Z]/.test(password)) { strength += 20; $('#uppercase-check').removeClass('text-gray-400').addClass('text-green-600'); }
+        else { $('#uppercase-check').removeClass('text-green-600').addClass('text-gray-400'); }
 
-        // Check uppercase
-        if (/[A-Z]/.test(password)) {
-            strength += 20;
-            $('#uppercase-check').removeClass('text-gray-400').addClass('text-green-600');
-        } else {
-            $('#uppercase-check').removeClass('text-green-600').addClass('text-gray-400');
-        }
+        if (/[a-z]/.test(password)) { strength += 20; $('#lowercase-check').removeClass('text-gray-400').addClass('text-green-600'); }
+        else { $('#lowercase-check').removeClass('text-green-600').addClass('text-gray-400'); }
 
-        // Check lowercase
-        if (/[a-z]/.test(password)) {
-            strength += 20;
-            $('#lowercase-check').removeClass('text-gray-400').addClass('text-green-600');
-        } else {
-            $('#lowercase-check').removeClass('text-green-600').addClass('text-gray-400');
-        }
+        if (/\d/.test(password)) { strength += 20; $('#number-check').removeClass('text-gray-400').addClass('text-green-600'); }
+        else { $('#number-check').removeClass('text-green-600').addClass('text-gray-400'); }
 
-        // Check numbers
-        if (/\d/.test(password)) {
-            strength += 20;
-            $('#number-check').removeClass('text-gray-400').addClass('text-green-600');
-        } else {
-            $('#number-check').removeClass('text-green-600').addClass('text-gray-400');
-        }
+        if (/[^A-Za-z0-9]/.test(password)) { strength += 20; $('#special-check').removeClass('text-gray-400').addClass('text-green-600'); }
+        else { $('#special-check').removeClass('text-green-600').addClass('text-gray-400'); }
 
-        // Check special characters
-        if (/[^A-Za-z0-9]/.test(password)) {
-            strength += 20;
-            $('#special-check').removeClass('text-gray-400').addClass('text-green-600');
-        } else {
-            $('#special-check').removeClass('text-green-600').addClass('text-gray-400');
-        }
-
-        // Update strength indicator
         const strengthBar = $('#passwordStrength');
         strengthBar.css('width', strength + '%');
-
-        // Update color based on strength
         if (strength < 40) {
             strengthBar.removeClass('bg-yellow-500 bg-green-500').addClass('bg-red-500');
         } else if (strength < 80) {
@@ -648,35 +575,28 @@ ob_start();
         }
     }
 
-    // Get time ago string from date
     function getTimeAgo(date) {
         const seconds = Math.floor((new Date() - date) / 1000);
-
         let interval = Math.floor(seconds / 31536000);
         if (interval > 1) return interval + ' years ago';
         if (interval === 1) return '1 year ago';
-
         interval = Math.floor(seconds / 2592000);
         if (interval > 1) return interval + ' months ago';
         if (interval === 1) return '1 month ago';
-
         interval = Math.floor(seconds / 86400);
         if (interval > 1) return interval + ' days ago';
         if (interval === 1) return '1 day ago';
-
         interval = Math.floor(seconds / 3600);
         if (interval > 1) return interval + ' hours ago';
         if (interval === 1) return '1 hour ago';
-
         interval = Math.floor(seconds / 60);
         if (interval > 1) return interval + ' minutes ago';
         if (interval === 1) return '1 minute ago';
-
         if (seconds < 10) return 'just now';
-
         return Math.floor(seconds) + ' seconds ago';
     }
 </script>
+
 <?php
 $mainContent = ob_get_clean();
 include __DIR__ . '/master.php';

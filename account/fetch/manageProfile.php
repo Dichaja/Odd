@@ -6,8 +6,8 @@ header('Content-Type: application/json');
 if (empty($_SESSION['user']['logged_in'])) {
     http_response_code(401);
     echo json_encode([
-        'success'         => false,
-        'message'         => 'Your session has expired due to inactivity. Please log in again.',
+        'success' => false,
+        'message' => 'Your session has expired due to inactivity. Please log in again.',
         'session_expired' => true
     ]);
     exit;
@@ -18,7 +18,7 @@ $userId = $_SESSION['user']['user_id'];
 date_default_timezone_set('Africa/Kampala');
 
 $action = $_GET['action'] ?? '';
-$data   = json_decode(file_get_contents('php://input'), true);
+$data = json_decode(file_get_contents('php://input'), true);
 
 try {
 
@@ -92,9 +92,9 @@ function updateProfile(PDO $pdo, string $userId, array $data): void
     }
 
     $firstName = $data['first_name'];
-    $lastName  = $data['last_name'];
-    $email     = $data['email'];
-    $phone     = $data['phone'];
+    $lastName = $data['last_name'];
+    $email = $data['email'];
+    $phone = $data['phone'];
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         http_response_code(400);
@@ -108,32 +108,7 @@ function updateProfile(PDO $pdo, string $userId, array $data): void
         return;
     }
 
-    // check email uniqueness
-    $stmt = $pdo->prepare("
-        SELECT id
-        FROM zzimba_users
-        WHERE email = :email AND id != :user_id
-    ");
-    $stmt->execute([':email' => $email, ':user_id' => $userId]);
-    if ($stmt->rowCount() > 0) {
-        http_response_code(409);
-        echo json_encode(['success' => false, 'message' => 'Email is already registered to another account']);
-        return;
-    }
-
-    // check phone uniqueness
-    $stmt = $pdo->prepare("
-        SELECT id
-        FROM zzimba_users
-        WHERE phone = :phone AND id != :user_id
-    ");
-    $stmt->execute([':phone'   => $phone, ':user_id' => $userId]);
-    if ($stmt->rowCount() > 0) {
-        http_response_code(409);
-        echo json_encode(['success' => false, 'message' => 'Phone number is already registered to another account']);
-        return;
-    }
-
+    // Perform the update without uniqueness checks
     $now = (new DateTime('now'))->format('Y-m-d H:i:s');
 
     $stmt = $pdo->prepare("
@@ -147,13 +122,14 @@ function updateProfile(PDO $pdo, string $userId, array $data): void
     ");
     $stmt->execute([
         ':first_name' => $firstName,
-        ':last_name'  => $lastName,
-        ':email'      => $email,
-        ':phone'      => $phone,
+        ':last_name' => $lastName,
+        ':email' => $email,
+        ':phone' => $phone,
         ':updated_at' => $now,
-        ':user_id'    => $userId
+        ':user_id' => $userId
     ]);
 
+    // Update session email if changed
     $_SESSION['user']['email'] = $email;
 
     echo json_encode(['success' => true, 'message' => 'Profile updated successfully']);
@@ -169,15 +145,17 @@ function changePassword(PDO $pdo, string $userId, array $data): void
     }
 
     $current = $data['current_password'];
-    $new     = $data['new_password'];
+    $new = $data['new_password'];
 
-    if (!(
-        strlen($new) >= 8 &&
-        preg_match('/[A-Z]/', $new) &&
-        preg_match('/[a-z]/', $new) &&
-        preg_match('/[0-9]/', $new) &&
-        preg_match('/[^A-Za-z0-9]/', $new)
-    )) {
+    if (
+        !(
+            strlen($new) >= 8 &&
+            preg_match('/[A-Z]/', $new) &&
+            preg_match('/[a-z]/', $new) &&
+            preg_match('/[0-9]/', $new) &&
+            preg_match('/[^A-Za-z0-9]/', $new)
+        )
+    ) {
         http_response_code(400);
         echo json_encode([
             'success' => false,
@@ -201,7 +179,7 @@ function changePassword(PDO $pdo, string $userId, array $data): void
     }
 
     $hashed = password_hash($new, PASSWORD_DEFAULT);
-    $now    = (new DateTime('now'))->format('Y-m-d H:i:s');
+    $now = (new DateTime('now'))->format('Y-m-d H:i:s');
 
     $stmt = $pdo->prepare("
         UPDATE zzimba_users
@@ -210,9 +188,9 @@ function changePassword(PDO $pdo, string $userId, array $data): void
         WHERE id = :user_id
     ");
     $stmt->execute([
-        ':password'   => $hashed,
+        ':password' => $hashed,
         ':updated_at' => $now,
-        ':user_id'    => $userId
+        ':user_id' => $userId
     ]);
 
     echo json_encode(['success' => true, 'message' => 'Password changed successfully']);

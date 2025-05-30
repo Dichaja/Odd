@@ -477,6 +477,12 @@ ob_start();
         });
     });
 
+    function escapeJsString(str) {
+        return String(str)
+            .replace(/\\/g, '\\\\')   // back-slashes  -> double back-slash
+            .replace(/'/g, '\\\'');   // single quotes -> back-slash +
+    }
+
     function loadNatureOfBusiness() {
         $.ajax({
             url: STORE_API_BASE + '?action=getNatureOfBusiness',
@@ -623,60 +629,56 @@ ob_start();
 
         if (!invitations || invitations.length === 0) {
             container.html(`
-                <div class="bg-gray-50 rounded-lg p-6 text-center">
-                    <p class="text-gray-500">No pending invitations</p>
-                </div>
-            `);
+            <div class="bg-gray-50 rounded-lg p-6 text-center">
+                <p class="text-gray-500">No pending invitations</p>
+            </div>
+        `);
             return;
         }
 
         let html = '<div class="grid grid-cols-1 gap-4">';
 
         invitations.forEach(invitation => {
-            const logoUrl = invitation.logo_url ?
-                BASE_URL + invitation.logo_url :
-                `https://placehold.co/100x100/f0f0f0/808080?text=${invitation.store_name.substring(0, 2)}`;
+            const logoUrl = invitation.logo_url
+                ? BASE_URL + invitation.logo_url
+                : `https://placehold.co/100x100/f0f0f0/808080?text=${invitation.store_name.substring(0, 2)}`;
+
+            /* NEW — make the store name safe for the inline JS call  */
+            const safeStoreNameJs = escapeJsString(invitation.store_name);
 
             html += `
-                <div class="invitation-card bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div class="p-4">
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                            <!-- Logo -->
-                            <div class="w-16 h-16 bg-gray-50 flex-shrink-0 rounded-lg flex items-center justify-center mx-auto sm:mx-0">
-                                <img src="${logoUrl}" alt="${escapeHtml(invitation.store_name)}" class="w-12 h-12 object-cover rounded">
-                            </div>
+        <div class="invitation-card bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div class="p-4">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <!-- Logo -->
+                    <div class="w-16 h-16 bg-gray-50 flex-shrink-0 rounded-lg flex items-center justify-center mx-auto sm:mx-0">
+                        <img src="${logoUrl}" alt="${escapeHtml(invitation.store_name)}" class="w-12 h-12 object-cover rounded">
+                    </div>
 
-                            <!-- Content -->
-                            <div class="flex-grow text-center sm:text-left">
-                                <h3 class="font-medium text-lg text-secondary">${escapeHtml(invitation.store_name)}</h3>
-                                <p class="text-sm text-gray-600">
-                                    <span class="font-medium">Role:</span> ${escapeHtml(invitation.role_display)}
-                                </p>
-                                <p class="text-sm text-gray-600">
-                                    <span class="font-medium">Invited by:</span> ${escapeHtml(invitation.owner_name)}
-                                </p>
-                                <p class="text-xs text-gray-500 mt-1">
-                                    Invited ${formatTimeAgo(new Date(invitation.created_at))}
-                                </p>
-                            </div>
+                    <!-- Content -->
+                    <div class="flex-grow text-center sm:text-left">
+                        <h3 class="font-medium text-lg text-secondary">${escapeHtml(invitation.store_name)}</h3>
+                        <p class="text-sm text-gray-600"><span class="font-medium">Role:</span> ${escapeHtml(invitation.role_display)}</p>
+                        <p class="text-sm text-gray-600"><span class="font-medium">Invited by:</span> ${escapeHtml(invitation.owner_name)}</p>
+                        <p class="text-xs text-gray-500 mt-1">Invited ${formatTimeAgo(new Date(invitation.created_at))}</p>
+                    </div>
 
-                            <!-- Buttons -->
-                            <div class="flex flex-col sm:flex-row gap-2 sm:justify-end sm:flex-shrink-0 w-full sm:w-auto">
-                                <button 
-                                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-                                    onclick="confirmInvitationResponse('approve', '${invitation.manager_id}', '${escapeHtml(invitation.store_name)}')">
-                                    Approve
-                                </button>
-                                <button 
-                                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-                                    onclick="confirmInvitationResponse('decline', '${invitation.manager_id}', '${escapeHtml(invitation.store_name)}')">
-                                    Decline
-                                </button>
-                            </div>
-                        </div>
+                    <!-- Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-2 sm:justify-end sm:flex-shrink-0 w-full sm:w-auto">
+                        <button
+                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                            onclick="confirmInvitationResponse('approve', '${invitation.manager_id}', '${safeStoreNameJs}')">
+                            Approve
+                        </button>
+                        <button
+                            class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                            onclick="confirmInvitationResponse('decline', '${invitation.manager_id}', '${safeStoreNameJs}')">
+                            Decline
+                        </button>
                     </div>
                 </div>
-            `;
+            </div>
+        </div>`;
         });
 
         html += '</div>';
