@@ -65,7 +65,7 @@ ob_start();
                     </button>
                     <button id="deleteAccountBtn"
                         class="h-10 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
-                        <i class="fas fa-user-slash"></i><span>Delete Account</span>
+                        <i class="fas fa-user-slash"></i><span>Opt-Out</span>
                     </button>
                 </div>
             </div>
