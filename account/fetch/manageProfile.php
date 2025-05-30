@@ -1,9 +1,10 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/NotificationService.php';
 
 header('Content-Type: application/json');
 
-// Ensure session is running (config.php may start it)
+// Ensure session is running
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -20,13 +21,16 @@ if (empty($_SESSION['user']['logged_in'])) {
 }
 
 $userId = $_SESSION['user']['user_id'];
+$username = $_SESSION['user']['username'];
 
 date_default_timezone_set('Africa/Kampala');
 
-$action = $_GET['action'] ?? '';
-$data = json_decode(file_get_contents('php://input'), true);
-
 try {
+    // instantiate notification service once
+    $ns = new NotificationService($pdo);
+
+    $action = $_GET['action'] ?? '';
+    $data = json_decode(file_get_contents('php://input'), true);
 
     switch ($action) {
 
@@ -35,15 +39,15 @@ try {
             break;
 
         case 'updateProfile':
-            updateProfile($pdo, $userId, $data);
+            updateProfile($pdo, $ns, $userId, $username, $data);
             break;
 
         case 'changePassword':
-            changePassword($pdo, $userId, $data);
+            changePassword($pdo, $ns, $userId, $username, $data);
             break;
 
         case 'deleteAccount':
-            deleteAccount($pdo, $userId);
+            deleteAccount($pdo, $ns, $userId, $username);
             break;
 
         default:
@@ -51,6 +55,7 @@ try {
             echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
             break;
     }
+
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
@@ -91,13 +96,22 @@ function getUserDetails(PDO $pdo, string $userId): void
 }
 
 
-function updateProfile(PDO $pdo, string $userId, array $data): void
+function updateProfile(PDO $pdo, NotificationService $ns, string $userId, string $username, array $data): void
 {
     if (!isset($data['first_name'], $data['last_name'], $data['email'], $data['phone'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Missing required fields']);
         return;
     }
+
+    // fetch current values
+    $stmtCur = $pdo->prepare("
+        SELECT first_name, last_name, email, phone
+        FROM zzimba_users
+        WHERE id = :user_id
+    ");
+    $stmtCur->execute([':user_id' => $userId]);
+    $current = $stmtCur->fetch(PDO::FETCH_ASSOC);
 
     $firstName = $data['first_name'];
     $lastName = $data['last_name'];
@@ -116,33 +130,64 @@ function updateProfile(PDO $pdo, string $userId, array $data): void
         return;
     }
 
-    $now = (new DateTime('now'))->format('Y-m-d H:i:s');
+    // determine what changed
+    $changes = [];
+    if ($current['first_name'] !== $firstName || $current['last_name'] !== $lastName) {
+        $oldNames = trim($current['first_name'] . ' ' . $current['last_name']);
+        $newNames = trim($firstName . ' ' . $lastName);
+        $changes[] = "names: '{$oldNames}' → '{$newNames}'";
+    }
+    if ($current['email'] !== $email) {
+        $changes[] = "email: '{$current['email']}' → '{$email}'";
+    }
+    if ($current['phone'] !== $phone) {
+        $changes[] = "phone: '{$current['phone']}' → '{$phone}'";
+    }
 
-    $stmt = $pdo->prepare("
-        UPDATE zzimba_users
-        SET first_name = :first_name,
-            last_name  = :last_name,
-            email      = :email,
-            phone      = :phone,
-            updated_at = :updated_at
-        WHERE id = :user_id
-    ");
-    $stmt->execute([
-        ':first_name' => $firstName,
-        ':last_name' => $lastName,
-        ':email' => $email,
-        ':phone' => $phone,
-        ':updated_at' => $now,
-        ':user_id' => $userId
-    ]);
+    // perform update only if there are changes
+    if (!empty($changes)) {
+        $now = (new DateTime('now'))->format('Y-m-d H:i:s');
 
+        $stmt = $pdo->prepare("
+            UPDATE zzimba_users
+            SET first_name = :first_name,
+                last_name  = :last_name,
+                email      = :email,
+                phone      = :phone,
+                updated_at = :updated_at
+            WHERE id = :user_id
+        ");
+        $stmt->execute([
+            ':first_name' => $firstName,
+            ':last_name' => $lastName,
+            ':email' => $email,
+            ':phone' => $phone,
+            ':updated_at' => $now,
+            ':user_id' => $userId
+        ]);
+
+        // notify admin
+        $message = "$username updated their profile: " . implode(', ', $changes);
+        $ns->create(
+            'info',
+            'User Profile Updated',
+            [
+                ['type' => 'admin', 'id' => 'admin-global', 'message' => $message]
+            ],
+            null,
+            'normal',
+            $userId
+        );
+    }
+
+    // keep session in sync
     $_SESSION['user']['email'] = $email;
 
     echo json_encode(['success' => true, 'message' => 'Profile updated successfully']);
 }
 
 
-function changePassword(PDO $pdo, string $userId, array $data): void
+function changePassword(PDO $pdo, NotificationService $ns, string $userId, string $username, array $data): void
 {
     if (!isset($data['current_password'], $data['new_password'])) {
         http_response_code(400);
@@ -199,13 +244,26 @@ function changePassword(PDO $pdo, string $userId, array $data): void
         ':user_id' => $userId
     ]);
 
+    // notify admin of password change
+    $message = "$username changed their password.";
+    $ns->create(
+        'info',
+        'User Password Changed',
+        [
+            ['type' => 'admin', 'id' => 'admin-global', 'message' => $message]
+        ],
+        null,
+        'high',
+        $userId
+    );
+
     echo json_encode(['success' => true, 'message' => 'Password changed successfully']);
 }
 
 
-function deleteAccount(PDO $pdo, string $userId): void
+function deleteAccount(PDO $pdo, NotificationService $ns, string $userId, string $username): void
 {
-    // Soft-delete: set status to 'deleted'
+    // record deletion
     $now = (new DateTime('now'))->format('Y-m-d H:i:s');
     $stmt = $pdo->prepare("
         UPDATE zzimba_users
@@ -218,7 +276,20 @@ function deleteAccount(PDO $pdo, string $userId): void
         ':user_id' => $userId
     ]);
 
-    // Destroy session to log user out
+    // notify admin
+    $message = "$username deleted their account.";
+    $ns->create(
+        'info',
+        'Account Deleted',
+        [
+            ['type' => 'admin', 'id' => 'admin-global', 'message' => $message]
+        ],
+        null,
+        'high',
+        $userId
+    );
+
+    // destroy user session
     session_unset();
     session_destroy();
 

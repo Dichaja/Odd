@@ -145,7 +145,7 @@ function sendManagerInvitationEmail(string $email, string $firstName, string $la
             <p>If you don\'t have a Zzimba Online account yet, please register first using this email address.</p>
             
             <div style="margin:20px 0;text-align:center;">
-                <a href="https://zzimbaonline.com/login" style="display:inline-block;padding:12px 24px;background-color:#D92B13;color:#ffffff;text-decoration:none;font-weight:500;border-radius:4px;">
+                <a href="https://zzimbaonline.com/" style="display:inline-block;padding:12px 24px;background-color:#D92B13;color:#ffffff;text-decoration:none;font-weight:500;border-radius:4px;">
                     Log In to Zzimba Online
                 </a>
             </div>
