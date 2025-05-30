@@ -286,11 +286,11 @@ $menuItems = [
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
                         <button id="sidebarToggle" class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-500
-                   hover:text-user-primary rounded-lg hover:bg-gray-50">
+                            hover:text-user-primary rounded-lg hover:bg-gray-50">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
                         <h1 class="text-xl font-semibold text-secondary truncate whitespace-nowrap overflow-hidden
-               max-w-[8rem] sm:max-w-none" title="<?= htmlspecialchars($storeName) ?>">
+                            max-w-[8rem] sm:max-w-none" title="<?= htmlspecialchars($storeName) ?>">
                             <?= htmlspecialchars($storeName) ?>
                         </h1>
                     </div>
