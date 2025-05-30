@@ -674,7 +674,7 @@ ob_start();
                             class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
                             onclick="confirmInvitationResponse('decline', '${invitation.manager_id}', '${safeStoreNameJs}')">
                             Decline
-                        </button> 
+                        </button>
                     </div>
                 </div>
             </div>
