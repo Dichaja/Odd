@@ -212,18 +212,21 @@ $menuItems = [
                             <i class="fas fa-bars text-xl"></i>
                         </button>
                         <h1 class="text-xl font-semibold text-secondary">
-                            <?= htmlspecialchars($pageTitle ?? 'Dashboard') ?></h1>
+                            <?= htmlspecialchars($pageTitle ?? 'Dashboard') ?>
+                        </h1>
                     </div>
                     <div class="flex items-center gap-2">
-                        <div x-data="notifComponent()" class="relative mr-2">
-                            <button @click="toggle"
-                                class="relative w-10 h-10 flex items-center justify-center text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
+
+                        <!-- SSE‐powered Notifications -->
+                        <div x-data="notifComponent()" x-init="init()" class="relative mr-2">
+                            <button @click="toggle" class="relative w-10 h-10 flex items-center justify-center text-gray-500
+                                       hover:text-primary rounded-lg hover:bg-gray-50">
                                 <i class="fas fa-bell text-xl"></i>
-                                <span x-show="count>0" x-text="count"
-                                    class="absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-primary rounded-full h-4 w-4 grid place-items-center"></span>
+                                <span x-show="count>0" x-text="count" class="absolute -top-1 -right-1 text-[10px] font-semibold text-white
+                                           bg-primary rounded-full h-4 w-4 grid place-items-center"></span>
                             </button>
-                            <div x-show="open" @click.away="open=false" x-transition
-                                class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-100 z-50 max-h-96 overflow-auto">
+                            <div x-show="open" @click.away="open=false" x-transition class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg
+                                       border border-gray-100 z-50 max-h-96 overflow-auto">
                                 <template x-for="note in notes" :key="note.target_id">
                                     <div :class="note.is_seen==0?'bg-primary/5':'bg-white'"
                                         class="relative group border-b last:border-none">
@@ -236,16 +239,18 @@ $menuItems = [
                                             <span class="text-[10px] text-gray-400"
                                                 x-text="formatDate(note.created_at)"></span>
                                         </a>
-                                        <button @click.stop="dismiss(note.target_id)"
-                                            class="absolute top-2 right-2 text-gray-300 hover:text-primary opacity-0 group-hover:opacity-100 transition">
+                                        <button @click.stop="dismiss(note.target_id)" class="absolute top-2 right-2 text-gray-300 hover:text-primary
+                                                   opacity-0 group-hover:opacity-100 transition">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
                                 </template>
-                                <div x-show="notes.length===0" class="p-4 text-sm text-center text-gray-500">No
-                                    notifications</div>
+                                <div x-show="notes.length===0" class="p-4 text-sm text-center text-gray-500">
+                                    No notifications
+                                </div>
                             </div>
                         </div>
+
                         <div class="relative" id="userDropdown">
                             <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2"
                                 title="Last login: <?= htmlspecialchars($formattedLastLogin) ?>">
@@ -260,7 +265,8 @@ $menuItems = [
                                     <p class="text-sm font-medium"><?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500"><?= htmlspecialchars($userEmail) ?></p>
                                     <p class="text-xs text-gray-400 mt-1">Last login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
+                                        <?= htmlspecialchars($formattedLastLogin) ?>
+                                    </p>
                                 </div>
                                 <a href="<?= BASE_URL ?>admin/profile"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
@@ -285,9 +291,12 @@ $menuItems = [
     </div>
 
     <script>
+        // Sidebar toggle & user dropdown
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
-        const overlay = Object.assign(document.createElement('div'), { className: 'fixed inset-0 bg-black/20 z-40 lg:hidden hidden' });
+        const overlay = Object.assign(document.createElement('div'), {
+            className: 'fixed inset-0 bg-black/20 z-40 lg:hidden hidden'
+        });
         document.body.appendChild(overlay);
         sidebarToggle.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
@@ -296,43 +305,66 @@ $menuItems = [
             sidebar.classList.toggle('-translate-x-full', open);
             overlay.classList.toggle('hidden', open);
             document.body.classList.toggle('overflow-hidden', !open);
-            if (!open) { sidebar.classList.add('animate-slide-in'); setTimeout(() => sidebar.classList.remove('animate-slide-in'), 300); }
+            if (!open) {
+                sidebar.classList.add('animate-slide-in');
+                setTimeout(() => sidebar.classList.remove('animate-slide-in'), 300);
+            }
         }
-
         const userDropdown = document.getElementById('userDropdown');
         const userDropdownMenu = document.getElementById('userDropdownMenu');
-        userDropdown.addEventListener('click', e => { e.stopPropagation(); userDropdownMenu.classList.toggle('hidden'); });
-        document.addEventListener('click', () => userDropdownMenu.classList.add('hidden'));
-        window.addEventListener('resize', () => { if (innerWidth >= 1024) { sidebar.classList.remove('-translate-x-full'); overlay.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); } });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const active = document.querySelector('.active-nav-item');
-            const nav = document.getElementById('sidebarNav');
-            if (active && nav) nav.scrollTo({ top: active.offsetTop - nav.offsetTop - 20, behavior: 'smooth' });
+        userDropdown.addEventListener('click', e => {
+            e.stopPropagation();
+            userDropdownMenu.classList.toggle('hidden');
         });
-
+        document.addEventListener('click', () => userDropdownMenu.classList.add('hidden'));
+        window.addEventListener('resize', () => {
+            if (innerWidth >= 1024) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        });
         function logoutUser() {
             fetch('<?= BASE_URL ?>auth/logout', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             })
-                .then(r => r.json()).then(d => d.success ? location.href = '<?= BASE_URL ?>' : alert('Logout failed: ' + d.message))
+                .then(r => r.json())
+                .then(d => d.success ? location.href = '<?= BASE_URL ?>' : alert('Logout failed: ' + d.message))
                 .catch(() => alert('Error during logout. Try again.'));
         }
 
+        // Alpine SSE‐powered notification component
         function notifComponent() {
             return {
                 open: false,
                 notes: [],
                 count: 0,
-                toggle() { this.open = !this.open; if (this.open) this.load(); },
-                load() {
-                    fetch('<?= BASE_URL ?>fetch/manageNotifications.php?action=fetch&limit=50')
-                        .then(r => r.json()).then(res => {
-                            this.notes = res.data || [];
-                            this.count = this.notes.filter(n => n.is_seen == 0).length;
-                        });
+                evtSource: null,
+
+                toggle() {
+                    this.open = !this.open;
                 },
+
+                init() {
+                    this.evtSource = new EventSource('<?= BASE_URL ?>fetch/manageNotifications.php?action=stream');
+                    this.evtSource.onmessage = e => {
+                        try {
+                            const data = JSON.parse(e.data);
+                            this.notes = data;
+                            this.count = this.notes.filter(n => n.is_seen == 0).length;
+                        } catch (err) {
+                            console.error('SSE parse error', err);
+                        }
+                    };
+                    this.evtSource.onerror = err => {
+                        console.error('SSE connection error', err);
+                    };
+                },
+
                 markSeenReq(id) {
                     fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
                         method: 'POST',
@@ -340,28 +372,36 @@ $menuItems = [
                         body: new URLSearchParams({ action: 'markSeen', target_id: id })
                     });
                 },
+
                 handleClick(note) {
                     if (note.is_seen == 0) this.markSeenReq(note.target_id);
                     if (note.link_url) location.href = note.link_url;
                 },
+
                 dismiss(id) {
                     fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: new URLSearchParams({ action: 'dismiss', target_id: id })
-                    }).then(() => this.load());
+                    });
+                    this.notes = this.notes.filter(n => n.target_id !== id);
+                    this.count = this.notes.filter(n => n.is_seen == 0).length;
                 },
+
                 formatDate(ts) {
-                    const d = new Date(ts.replace(' ', 'T')), now = new Date(), diff = (now - d) / 1000;
+                    const d = new Date(ts.replace(' ', 'T'));
+                    const now = new Date();
+                    const diff = (now - d) / 1000;
                     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+                    const yesterday = new Date(today);
+                    yesterday.setDate(today.getDate() - 1);
                     const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
                     if (diff < 60) return 'Now';
                     if (d >= today) return 'Today ' + time;
                     if (d >= yesterday && d < today) return 'Yesterday ' + time;
                     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-                },
-                init() { this.load(); setInterval(() => this.load(), 5000); }
+                }
             }
         }
     </script>

@@ -91,8 +91,9 @@ class NotificationService
         $storeId = $_SESSION['store_session_id'] ?? null;
         $isAdmin = $sess['is_admin'] ?? false;
 
-        if (!$userId)
+        if (!$userId) {
             return [];
+        }
 
         $clauses = [];
         $params = [];
@@ -105,8 +106,9 @@ class NotificationService
             $params[] = $storeId;
         }
 
-        if ($isAdmin)
+        if ($isAdmin) {
             $clauses[] = "(recipient_type='admin')";
+        }
 
         $sql = "SELECT nt.id target_id,n.id notification_id,n.type,n.title,nt.message,n.link_url,
                        n.priority,n.created_at,nt.is_seen,nt.is_dismissed
