@@ -1,13 +1,21 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
+
+/*
+|------------------------------------------------------------------
+| Session bootstrap
+|------------------------------------------------------------------
+*/
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+/*--------------------------------------------------------------
+| 1)  Guard – unauthenticated users → logout → home
+---------------------------------------------------------------*/
 if (
     !isset($_SESSION['user']) ||
-    !isset($_SESSION['user']['logged_in']) ||
-    !$_SESSION['user']['logged_in']
+    empty($_SESSION['user']['logged_in'])
 ) {
     session_unset();
     session_destroy();
@@ -15,11 +23,17 @@ if (
     exit;
 }
 
-if ($_SESSION['user']['is_admin']) {
+/*--------------------------------------------------------------
+| 2)  Guard – admin users → admin dashboard
+---------------------------------------------------------------*/
+if (!empty($_SESSION['user']['is_admin'])) {
     header('Location: ' . BASE_URL . 'admin/dashboard');
     exit;
 }
 
+/*--------------------------------------------------------------
+| 3)  Guard – session idle timeout (30-min)
+---------------------------------------------------------------*/
 if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)) {
     session_unset();
     session_destroy();
@@ -28,19 +42,56 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 }
 $_SESSION['last_activity'] = time();
 
-$stmt = $pdo->prepare("SELECT last_login FROM zzimba_users WHERE id = :user_id");
-$stmt->bindParam(':user_id', $_SESSION['user']['user_id'], PDO::PARAM_LOB);
-$stmt->execute();
-$result = $stmt->fetch(PDO::FETCH_ASSOC);
-$lastLogin = $result['last_login'] ?? '';
+/*--------------------------------------------------------------
+| 4)  Pull the user row once – we need more than last_login now
+---------------------------------------------------------------*/
+$stmt = $pdo->prepare("
+    SELECT 
+        first_name,
+        email,
+        phone,
+        last_login
+    FROM zzimba_users
+    WHERE id = :user_id
+");
+$stmt->execute([':user_id' => $_SESSION['user']['user_id']]);
+$userRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+/*--------------------------------------------------------------
+| 5)  Mandatory-profile check
+|     – first_name, email, phone must all be set.
+|     – If any is NULL / '', redirect to /account/profile
+|     – BUT don’t loop if we are already on that page
+---------------------------------------------------------------*/
+$needsProfileCompletion =
+    empty($userRow['first_name']) ||
+    empty($userRow['email']) ||
+    empty($userRow['phone']);
+
+if ($needsProfileCompletion) {
+    $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';
+    if (strpos($currentPath, '/account/profile') === false) {
+        header('Location: ' . BASE_URL . 'account/profile');
+        exit;
+    }
+}
+
+/*--------------------------------------------------------------
+| 6)  Continue building page variables
+---------------------------------------------------------------*/
+$lastLogin = $userRow['last_login'] ?? '';
 $formattedLastLogin = $lastLogin
     ? date('M d, Y g:i A', strtotime($lastLogin))
     : 'First login';
 
-$title = isset($pageTitle) ? $pageTitle . ' | User Dashboard - Zzimba Online' : 'User Dashboard';
+$title = isset($pageTitle)
+    ? $pageTitle . ' | User Dashboard - Zzimba Online'
+    : 'User Dashboard';
 $activeNav = $activeNav ?? 'dashboard';
 $userName = $_SESSION['user']['username'];
 $userEmail = $_SESSION['user']['email'];
+
+/* initials from username */
 $userInitials = '';
 foreach (explode(' ', $userName) as $part) {
     if ($part !== '') {
@@ -48,19 +99,22 @@ foreach (explode(' ', $userName) as $part) {
     }
 }
 
+/*--------------------------------------------------------------
+| 7)  Sidebar menu map
+---------------------------------------------------------------*/
 $menuItems = [
     'main' => [
         'title' => 'Main',
         'items' => [
             'dashboard' => ['title' => 'Dashboard', 'icon' => 'fa-home', 'notifications' => 0],
             'order-history' => ['title' => 'Order History', 'icon' => 'fa-history', 'notifications' => 0],
-        ]
+        ],
     ],
     'finance' => [
         'title' => 'Finance',
         'items' => [
             'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card', 'notifications' => 0],
-        ]
+        ],
     ],
     'shopping' => [
         'title' => 'Shopping',
@@ -68,10 +122,11 @@ $menuItems = [
             'zzimba-stores' => ['title' => 'Zzimba Store', 'icon' => 'fa-shopping-cart', 'notifications' => 0],
             'wishlist' => ['title' => 'Wishlist', 'icon' => 'fa-heart', 'notifications' => 0],
             'saved-items' => ['title' => 'Saved Items', 'icon' => 'fa-bookmark', 'notifications' => 0],
-        ]
-    ]
+        ],
+    ],
 ];
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
