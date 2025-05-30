@@ -50,8 +50,7 @@ ob_start();
 
             <div id="all-stores-container">
                 <div class="flex justify-center items-center py-12">
-                    <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin">
-                    </div>
+                    <!-- <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin"></div> -->
                 </div>
             </div>
         </div>
