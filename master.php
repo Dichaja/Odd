@@ -696,7 +696,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
     <div class="main-area flex-grow">
         <?= $mainContent ?? '' ?>
     </div>
-    <footer class="hidden sm:block bg-secondary text-white mt-auto">
+    <footer class="bg-secondary text-white mt-auto">
         <div class="container mx-auto px-4 py-16">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>

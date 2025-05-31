@@ -366,15 +366,24 @@ ob_start();
             <div class="partners-carousel relative">
                 <div class="swiper partners-slider">
                     <div class="swiper-wrapper">
-                        <?php foreach (array_chunk($activePartners, 5) as $partnerGroup): ?>
+                        <?php
+                        $isMobile = isset($_SERVER['HTTP_USER_AGENT']) && preg_match('/Mobile|Android|iP(hone|od|ad)/i', $_SERVER['HTTP_USER_AGENT']);
+                        $mobileChunkSize = 2;
+                        $desktopChunkSize = 5;
+                        $chunkSize = $isMobile ? $mobileChunkSize : $desktopChunkSize;
+                        $partnerChunks = array_chunk($activePartners, $chunkSize);
+                        ?>
+
+                        <?php foreach ($partnerChunks as $partnerGroup): ?>
                             <div class="swiper-slide">
-                                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
+                                <div
+                                    class="grid grid-cols-<?= $isMobile ? 2 : 2 ?> md:grid-cols-<?= $desktopChunkSize ?> gap-4 md:gap-6">
                                     <?php foreach ($partnerGroup as $partner): ?>
                                         <?php
                                         $partnerLink = '#';
                                         $targetAttr = '';
                                         if (isset($partner['hasLink']) && $partner['hasLink'] && !empty($partner['redirectLink'])) {
-                                            $partnerLink = $partner['redirectLink']; // Direct URL, not prefixed with BASE_URL
+                                            $partnerLink = $partner['redirectLink'];
                                             $targetAttr = 'target="_blank"';
                                         }
                                         ?>
