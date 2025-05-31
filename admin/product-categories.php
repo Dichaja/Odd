@@ -18,11 +18,13 @@ ob_start();
             <p class="text-sm text-gray-text mt-1">Manage product categories and their metadata</p>
         </div>
         <div class="flex flex-col md:flex-row items-center gap-3">
-            <button id="addCategoryBtn" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+            <button id="addCategoryBtn"
+                class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
                 <i class="fas fa-plus"></i>
                 <span>Add Category</span>
             </button>
-            <a href="products" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+            <a href="products"
+                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
                 <i class="fas fa-arrow-left"></i>
                 <span>Back to Products</span>
             </a>
@@ -39,11 +41,13 @@ ob_start();
             </div>
             <div class="flex flex-col md:flex-row items-center gap-3">
                 <div class="relative w-full md:w-auto">
-                    <input type="text" id="searchCategories" placeholder="Search categories..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                    <input type="text" id="searchCategories" placeholder="Search categories..."
+                        class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 </div>
                 <div class="flex items-center gap-2 w-full md:w-auto">
-                    <select id="filterStatus" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
+                    <select id="filterStatus"
+                        class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
                         <option value="">All Statuses</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
@@ -73,17 +77,20 @@ ob_start();
 
         <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="text-sm text-gray-text">
-                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span id="total-categories">0</span> categories
+                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span
+                    id="total-categories">0</span> categories
             </div>
             <div class="flex items-center gap-2"> categories
             </div>
             <div class="flex items-center gap-2">
-                <button id="prev-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button id="prev-page"
+                    class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fas fa-chevron-left"></i>
                 </button>
                 <div id="pagination-numbers" class="flex items-center">
                 </div>
-                <button id="next-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button id="next-page"
+                    class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
@@ -109,16 +116,23 @@ ob_start();
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Category Name <span class="text-red-500">*</span></label>
-                        <input type="text" id="name" name="name" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter category name" required>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Category Name <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" id="name" name="name"
+                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            placeholder="Enter category name" required>
                     </div>
 
                     <div>
                         <label for="status-toggle" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <div class="flex items-center space-x-3">
-                            <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                <input type="checkbox" id="status-toggle" class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary" checked>
-                                <label for="status-toggle" class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                            <div
+                                class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                <input type="checkbox" id="status-toggle"
+                                    class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                    checked>
+                                <label for="status-toggle"
+                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
                             </div>
                             <span id="status-text" class="text-sm font-medium text-gray-700">Active</span>
                             <input type="hidden" id="status" name="status" value="active">
@@ -128,7 +142,9 @@ ob_start();
 
                 <div>
                     <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea id="description" name="description" rows="3" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter category description"></textarea>
+                    <textarea id="description" name="description" rows="3"
+                        class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                        placeholder="Enter category description"></textarea>
                 </div>
 
                 <div class="border-t border-gray-100 pt-6">
@@ -136,14 +152,20 @@ ob_start();
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                         <div>
-                            <label for="meta_title" class="block text-sm font-medium text-gray-700 mb-1">Meta Title</label>
-                            <input type="text" id="meta_title" name="meta_title" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter meta title">
+                            <label for="meta_title" class="block text-sm font-medium text-gray-700 mb-1">Meta
+                                Title</label>
+                            <input type="text" id="meta_title" name="meta_title"
+                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                placeholder="Enter meta title">
                         </div>
 
                         <div>
-                            <label for="keywords-input" class="block text-sm font-medium text-gray-700 mb-1">Meta Keywords</label>
+                            <label for="keywords-input" class="block text-sm font-medium text-gray-700 mb-1">Meta
+                                Keywords</label>
                             <div class="relative">
-                                <input type="text" id="keywords-input" class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Type and press Enter to add keywords">
+                                <input type="text" id="keywords-input"
+                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                    placeholder="Type and press Enter to add keywords">
                                 <input type="hidden" id="meta_keywords" name="meta_keywords" value="">
                             </div>
                             <div id="keywords-container" class="flex flex-wrap gap-2 mt-2"></div>
@@ -152,8 +174,11 @@ ob_start();
                     </div>
 
                     <div class="mb-4">
-                        <label for="meta_description" class="block text-sm font-medium text-gray-700 mb-1">Meta Description</label>
-                        <textarea id="meta_description" name="meta_description" rows="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Enter meta description"></textarea>
+                        <label for="meta_description" class="block text-sm font-medium text-gray-700 mb-1">Meta
+                            Description</label>
+                        <textarea id="meta_description" name="meta_description" rows="2"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            placeholder="Enter meta description"></textarea>
                     </div>
                 </div>
 
@@ -169,17 +194,21 @@ ob_start();
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Upload Image</label>
                                 <div class="flex items-center gap-2">
-                                    <label for="image" class="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <label for="image"
+                                        class="cursor-pointer px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                                         <i class="fas fa-upload mr-2"></i>
                                         <span>Choose File</span>
                                     </label>
                                     <span id="selectedFileName" class="text-sm text-gray-500">No file selected</span>
-                                    <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden">
+                                    <input type="file" id="image" name="image"
+                                        accept="image/jpeg,image/png,image/webp,image/gif" class="hidden">
                                 </div>
-                                <p class="text-xs text-gray-500 mt-1">Recommended size: 1200×675 pixels (16:9). Max 5MB.</p>
+                                <p class="text-xs text-gray-500 mt-1">Recommended size: 1200×675 pixels (16:9). Max 5MB.
+                                </p>
                             </div>
                             <div id="uploadProgress" class="w-full bg-gray-200 rounded-full h-2.5 mb-4 hidden">
-                                <div id="uploadProgressBar" class="bg-primary h-2.5 rounded-full" style="width: 0%"></div>
+                                <div id="uploadProgressBar" class="bg-primary h-2.5 rounded-full" style="width: 0%">
+                                </div>
                             </div>
                         </div>
 
@@ -190,10 +219,12 @@ ob_start();
                                     <img id="cropperImage" src="" alt="Image to crop" class="max-w-full">
                                 </div>
                                 <div class="flex justify-end mt-3 space-x-2">
-                                    <button type="button" id="cancelCrop" class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <button type="button" id="cancelCrop"
+                                        class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                                         Cancel
                                     </button>
-                                    <button type="button" id="applyCrop" class="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                    <button type="button" id="applyCrop"
+                                        class="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
                                         Apply Crop
                                     </button>
                                 </div>
@@ -202,8 +233,10 @@ ob_start();
                             <div id="imagePreviewContainer" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Image Preview</label>
                                 <div class="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                                    <img id="imagePreview" src="" alt="Category image preview" class="w-full h-full object-cover">
-                                    <button type="button" id="removeImage" class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors">
+                                    <img id="imagePreview" src="" alt="Category image preview"
+                                        class="w-full h-full object-cover">
+                                    <button type="button" id="removeImageBtn"
+                                        class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors">
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
@@ -214,10 +247,12 @@ ob_start();
             </form>
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideCategoryModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+            <button onclick="hideCategoryModal()"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
                 Cancel
             </button>
-            <button id="submitCategory" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+            <button id="submitCategory"
+                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
                 Save Category
             </button>
         </div>
@@ -235,7 +270,8 @@ ob_start();
             </button>
         </div>
         <div class="p-6">
-            <p class="text-gray-600 mb-4">Are you sure you want to delete this category? This action cannot be undone.</p>
+            <p class="text-gray-600 mb-4">Are you sure you want to delete this category? This action cannot be undone.
+            </p>
             <div class="bg-gray-50 p-4 rounded-lg mb-4">
                 <div class="grid grid-cols-2 gap-2 text-sm">
                     <div class="text-gray-500">Category:</div>
@@ -246,7 +282,8 @@ ob_start();
             </div>
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideDeleteModal()" class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
+            <button onclick="hideDeleteModal()"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
                 Cancel
             </button>
             <button id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
@@ -268,7 +305,8 @@ ob_start();
                 <p class="text-sm text-gray-500 mt-1">Redirecting in <span id="countdown">10</span> seconds...</p>
             </div>
             <div class="flex justify-center mt-6">
-                <button onclick="redirectToLogin()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                <button onclick="redirectToLogin()"
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
                     Login Now
                 </button>
             </div>
@@ -277,14 +315,16 @@ ob_start();
 </div>
 
 <!-- Notifications -->
-<div id="successNotification" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
+<div id="successNotification"
+    class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-2"></i>
         <span id="successMessage"></span>
     </div>
 </div>
 
-<div id="errorNotification" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
+<div id="errorNotification"
+    class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-exclamation-circle mr-2"></i>
         <span id="errorMessage"></span>
@@ -314,7 +354,7 @@ ob_start();
     let cropper = null;
     let keywordsList = [];
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Initialize event listeners
         initializeEventListeners();
 
@@ -351,25 +391,34 @@ ob_start();
 
         document.getElementById('cancelCrop').addEventListener('click', cancelCrop);
         document.getElementById('applyCrop').addEventListener('click', applyCrop);
-        document.getElementById('removeImage').addEventListener('click', function() {
+
+        // Remove image button (renamed to removeImageBtn)
+        document.getElementById('removeImageBtn').addEventListener('click', function () {
+            // Set the hidden removeImage input value to "1"
             document.getElementById('removeImage').value = "1";
+            // Clear any temporary image path
+            document.getElementById('tempImagePath').value = '';
+            // Hide preview container
             document.getElementById('imagePreviewContainer').classList.add('hidden');
+            // Reset the file input
+            document.getElementById('image').value = '';
+            // Update filename indicator
             document.getElementById('selectedFileName').textContent = 'Image will be removed';
         });
 
         // Search and filter
-        document.getElementById('searchCategories').addEventListener('input', function(e) {
+        document.getElementById('searchCategories').addEventListener('input', function (e) {
             const query = e.target.value.toLowerCase();
             filterCategories(query, document.getElementById('filterStatus').value);
         });
 
-        document.getElementById('filterStatus').addEventListener('change', function(e) {
+        document.getElementById('filterStatus').addEventListener('change', function (e) {
             const status = e.target.value;
             filterCategories(document.getElementById('searchCategories').value.toLowerCase(), status);
         });
 
         // Pagination
-        document.getElementById('prev-page').addEventListener('click', function() {
+        document.getElementById('prev-page').addEventListener('click', function () {
             if (currentPage > 1) {
                 currentPage--;
                 renderPagination();
@@ -377,7 +426,7 @@ ob_start();
             }
         });
 
-        document.getElementById('next-page').addEventListener('click', function() {
+        document.getElementById('next-page').addEventListener('click', function () {
             if (currentPage < totalPages) {
                 currentPage++;
                 renderPagination();
@@ -394,7 +443,7 @@ ob_start();
         const keywordsContainer = document.getElementById('keywords-container');
         const metaKeywordsInput = document.getElementById('meta_keywords');
 
-        keywordsInput.addEventListener('keydown', function(e) {
+        keywordsInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
 
@@ -421,7 +470,7 @@ ob_start();
                     </button>
                 `;
 
-                keywordElement.querySelector('button').addEventListener('click', function() {
+                keywordElement.querySelector('button').addEventListener('click', function () {
                     const index = parseInt(this.getAttribute('data-index'));
                     keywordsList.splice(index, 1);
                     renderKeywords();
@@ -437,7 +486,7 @@ ob_start();
         const statusText = document.getElementById('status-text');
         const statusInput = document.getElementById('status');
 
-        statusToggle.addEventListener('change', function() {
+        statusToggle.addEventListener('change', function () {
             if (this.checked) {
                 statusText.textContent = 'Active';
                 statusInput.value = 'active';
@@ -457,6 +506,7 @@ ob_start();
 
         // Reset remove flag since we're uploading a new image
         document.getElementById('removeImage').value = "0";
+        document.getElementById('tempImagePath').value = '';
 
         // Check file type and size
         const fileType = file.type;
@@ -476,7 +526,7 @@ ob_start();
 
         // Initialize cropper
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             const cropperImage = document.getElementById('cropperImage');
             const cropperContainer = document.getElementById('cropperContainer');
             const imagePreviewContainer = document.getElementById('imagePreviewContainer');
@@ -540,7 +590,7 @@ ob_start();
         cropperContainer.classList.add('hidden');
 
         // Convert to blob and upload
-        canvas.toBlob(function(blob) {
+        canvas.toBlob(function (blob) {
             uploadCroppedImage(blob);
         }, 'image/jpeg', 0.9);
 
@@ -561,14 +611,14 @@ ob_start();
 
         const xhr = new XMLHttpRequest();
 
-        xhr.upload.addEventListener('progress', function(e) {
+        xhr.upload.addEventListener('progress', function (e) {
             if (e.lengthComputable) {
                 const percentComplete = (e.loaded / e.total) * 100;
                 uploadProgressBar.style.width = percentComplete + '%';
             }
         });
 
-        xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 uploadProgress.classList.add('hidden');
                 hideLoading();
@@ -749,9 +799,9 @@ ob_start();
                 </button>
             `;
 
-            keywordElement.querySelector('button').addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                keywordsList.splice(index, 1);
+            keywordElement.querySelector('button').addEventListener('click', function () {
+                const idx = parseInt(this.getAttribute('data-index'));
+                keywordsList.splice(idx, 1);
                 renderKeywords();
             });
 
@@ -787,12 +837,12 @@ ob_start();
         showLoading(`${actionText} category...`);
 
         fetch(`${BASE_URL}admin/fetch/manageProductCategories/${endpoint}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(categoryData)
-            })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(categoryData)
+        })
             .then(response => {
                 if (response.status === 401) {
                     hideLoading();
@@ -908,7 +958,7 @@ ob_start();
             'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
         button.textContent = pageNumber;
 
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             currentPage = pageNumber;
             renderPagination();
             renderCategories(categoriesData);
@@ -977,21 +1027,21 @@ ob_start();
 
         // Add event listeners to buttons
         document.querySelectorAll('.btn-edit').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 const categoryId = this.getAttribute('data-id');
                 showEditCategoryModal(categoryId);
             });
         });
 
         document.querySelectorAll('.btn-delete').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 const categoryId = this.getAttribute('data-id');
                 showDeleteModal(categoryId);
             });
         });
 
         document.querySelectorAll('.status-toggle').forEach(toggle => {
-            toggle.addEventListener('change', function() {
+            toggle.addEventListener('change', function () {
                 const categoryId = this.getAttribute('data-id');
                 const newStatus = this.checked ? 'active' : 'inactive';
                 updateCategoryStatus(categoryId, newStatus);
@@ -1016,12 +1066,12 @@ ob_start();
         };
 
         fetch(`${BASE_URL}admin/fetch/manageProductCategories/updateCategory`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(categoryData)
-            })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(categoryData)
+        })
             .then(response => {
                 if (response.status === 401) {
                     hideLoading();
@@ -1086,14 +1136,14 @@ ob_start();
         showLoading('Deleting category...');
 
         fetch(`${BASE_URL}admin/fetch/manageProductCategories/deleteCategory`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: categoryId
-                })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: categoryId
             })
+        })
             .then(response => {
                 if (response.status === 401) {
                     hideLoading();
