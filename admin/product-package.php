@@ -47,41 +47,8 @@ ob_start();
 
     <!-- Package Names Tab Content -->
     <div id="content-package-names" class="space-y-6">
-        <!-- Package Name Form Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-            <div class="p-6 border-b border-gray-100">
-                <h2 class="text-lg font-semibold text-primary" id="packageNameFormTitle">Add New Package Name</h2>
-                <p class="text-sm text-gray-text mt-1">Create a new package name for products</p>
-            </div>
-
-            <div class="p-6">
-                <form id="packageNameForm" class="space-y-4" autocomplete="off">
-                    <input type="hidden" id="packageNameId" name="packageNameId" value="">
-
-                    <div>
-                        <label for="package_name" class="block text-sm font-medium text-gray-700 mb-1">Package
-                            Name</label>
-                        <input type="text" id="package_name" name="package_name"
-                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                            placeholder="Enter package name">
-                    </div>
-
-                    <div class="flex justify-end mt-4">
-                        <button type="button" id="cancelPackageNameForm"
-                            class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2 hidden">
-                            Cancel
-                        </button>
-                        <button type="submit" id="submitPackageNameButton"
-                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                            Save Package Name
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
         <!-- Package Names List Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
             <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-semibold text-secondary">Package Names</h2>
@@ -90,6 +57,11 @@ ob_start();
                     </p>
                 </div>
                 <div class="flex flex-col md:flex-row items-center gap-3">
+                    <button id="openPackageNameModal"
+                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Add New</span>
+                    </button>
                     <div class="relative w-full md:w-auto">
                         <input type="text" id="searchPackageNames" placeholder="Search package names..."
                             class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
@@ -142,40 +114,8 @@ ob_start();
 
     <!-- SI Units Tab Content -->
     <div id="content-si-units" class="space-y-6 hidden">
-        <!-- SI Unit Form Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-            <div class="p-6 border-b border-gray-100">
-                <h2 class="text-lg font-semibold text-primary" id="siUnitFormTitle">Add New SI Unit</h2>
-                <p class="text-sm text-gray-text mt-1">Create a new SI unit for products</p>
-            </div>
-
-            <div class="p-6">
-                <form id="siUnitForm" class="space-y-4" autocomplete="off">
-                    <input type="hidden" id="siUnitId" name="siUnitId" value="">
-
-                    <div>
-                        <label for="si_unit" class="block text-sm font-medium text-gray-700 mb-1">SI Unit</label>
-                        <input type="text" id="si_unit" name="si_unit"
-                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                            placeholder="Enter SI unit">
-                    </div>
-
-                    <div class="flex justify-end mt-4">
-                        <button type="button" id="cancelSIUnitForm"
-                            class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2 hidden">
-                            Cancel
-                        </button>
-                        <button type="submit" id="submitSIUnitButton"
-                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                            Save SI Unit
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
         <!-- SI Units List Card -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 mt-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100">
             <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-semibold text-secondary">SI Units</h2>
@@ -184,6 +124,11 @@ ob_start();
                     </p>
                 </div>
                 <div class="flex flex-col md:flex-row items-center gap-3">
+                    <button id="openSIUnitModal"
+                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Add New</span>
+                    </button>
                     <div class="relative w-full md:w-auto">
                         <input type="text" id="searchSIUnits" placeholder="Search SI units..."
                             class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
@@ -235,11 +180,72 @@ ob_start();
     </div>
 </div>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[999] hidden">
-    <div class="bg-white p-5 rounded-lg shadow-lg flex items-center gap-3">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span id="loadingMessage" class="text-gray-700 font-medium">Loading...</span>
+<!-- Package Name Modal -->
+<div id="packageNameModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/20" onclick="hidePackageNameModal()"></div>
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-secondary" id="packageNameModalTitle">Add New Package Name</h3>
+            <button onclick="hidePackageNameModal()" class="text-gray-400 hover:text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <form id="packageNameModalForm" class="space-y-4" autocomplete="off">
+                <input type="hidden" id="packageNameModalId" name="packageNameId" value="">
+                <div>
+                    <label for="package_name_modal" class="block text-sm font-medium text-gray-700 mb-1">Package
+                        Name</label>
+                    <input type="text" id="package_name_modal" name="package_name"
+                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                        placeholder="Enter package name">
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button type="button" onclick="hidePackageNameModal()"
+                        class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submitPackageNameModalButton"
+                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                        Save Package Name
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- SI Unit Modal -->
+<div id="siUnitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+    <div class="absolute inset-0 bg-black/20" onclick="hideSIUnitModal()"></div>
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-secondary" id="siUnitModalTitle">Add New SI Unit</h3>
+            <button onclick="hideSIUnitModal()" class="text-gray-400 hover:text-gray-500">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <form id="siUnitModalForm" class="space-y-4" autocomplete="off">
+                <input type="hidden" id="siUnitModalId" name="siUnitId" value="">
+                <div>
+                    <label for="si_unit_modal" class="block text-sm font-medium text-gray-700 mb-1">SI Unit</label>
+                    <input type="text" id="si_unit_modal" name="si_unit"
+                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                        placeholder="Enter SI unit">
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button type="button" onclick="hideSIUnitModal()"
+                        class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mr-2">
+                        Cancel
+                    </button>
+                    <button type="submit" id="submitSIUnitModalButton"
+                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                        Save SI Unit
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -363,7 +369,7 @@ ob_start();
     let filteredSIUnits = [];
 
     document.addEventListener('DOMContentLoaded', function () {
-        // Tab switching
+        /* Tab switching */
         const tabPackageNames = document.getElementById('tab-package-names');
         const tabSIUnits = document.getElementById('tab-si-units');
         const contentPackageNames = document.getElementById('content-package-names');
@@ -374,7 +380,6 @@ ob_start();
             tabPackageNames.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
             tabSIUnits.classList.remove('border-primary', 'text-primary');
             tabSIUnits.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
-
             contentPackageNames.classList.remove('hidden');
             contentSIUnits.classList.add('hidden');
         });
@@ -384,74 +389,65 @@ ob_start();
             tabSIUnits.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
             tabPackageNames.classList.remove('border-primary', 'text-primary');
             tabPackageNames.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
-
             contentSIUnits.classList.remove('hidden');
             contentPackageNames.classList.add('hidden');
         });
 
-        // Package Name Form
-        const packageNameForm = document.getElementById('packageNameForm');
-        const cancelPackageNameFormBtn = document.getElementById('cancelPackageNameForm');
+        /* Open Modals */
+        document.getElementById('openPackageNameModal').addEventListener('click', function () {
+            resetPackageNameModalForm();
+            showPackageNameModal();
+        });
+        document.getElementById('openSIUnitModal').addEventListener('click', function () {
+            resetSIUnitModalForm();
+            showSIUnitModal();
+        });
 
-        packageNameForm.addEventListener('submit', function (e) {
+        /* Package Name Modal Form Submission */
+        document.getElementById('packageNameModalForm').addEventListener('submit', function (e) {
             e.preventDefault();
-
-            const packageNameId = document.getElementById('packageNameId').value;
-            const packageName = document.getElementById('package_name').value.trim();
-
-            if (!packageName) {
+            const id = document.getElementById('packageNameModalId').value;
+            const name = document.getElementById('package_name_modal').value.trim();
+            if (!name) {
                 showErrorNotification('Please enter a package name');
                 return;
             }
-
-            if (packageNameId) {
-                updatePackageName(packageNameId, packageName);
+            if (id) {
+                updatePackageName(id, name);
             } else {
-                createPackageName(packageName);
+                createPackageName(name);
             }
+            hidePackageNameModal();
         });
 
-        cancelPackageNameFormBtn.addEventListener('click', function () {
-            resetPackageNameForm();
-        });
-
-        // SI Unit Form
-        const siUnitForm = document.getElementById('siUnitForm');
-        const cancelSIUnitFormBtn = document.getElementById('cancelSIUnitForm');
-
-        siUnitForm.addEventListener('submit', function (e) {
+        /* SI Unit Modal Form Submission */
+        document.getElementById('siUnitModalForm').addEventListener('submit', function (e) {
             e.preventDefault();
-
-            const siUnitId = document.getElementById('siUnitId').value;
-            const siUnit = document.getElementById('si_unit').value.trim();
-
-            if (!siUnit) {
+            const id = document.getElementById('siUnitModalId').value;
+            const unit = document.getElementById('si_unit_modal').value.trim();
+            if (!unit) {
                 showErrorNotification('Please enter an SI unit');
                 return;
             }
-
-            if (siUnitId) {
-                updateSIUnit(siUnitId, siUnit);
+            if (id) {
+                updateSIUnit(id, unit);
             } else {
-                createSIUnit(siUnit);
+                createSIUnit(unit);
             }
+            hideSIUnitModal();
         });
 
-        cancelSIUnitFormBtn.addEventListener('click', function () {
-            resetSIUnitForm();
-        });
-
-        // Search Package Names
+        /* Search Package Names */
         document.getElementById('searchPackageNames').addEventListener('input', function () {
             filterPackageNames();
         });
 
-        // Search SI Units
+        /* Search SI Units */
         document.getElementById('searchSIUnits').addEventListener('input', function () {
             filterSIUnits();
         });
 
-        // Pagination for Package Names
+        /* Pagination for Package Names */
         document.getElementById('prev-page-package-names').addEventListener('click', function () {
             if (currentPackageNamesPage > 1) {
                 currentPackageNamesPage--;
@@ -459,7 +455,6 @@ ob_start();
                 renderPackageNames(filteredPackageNames);
             }
         });
-
         document.getElementById('next-page-package-names').addEventListener('click', function () {
             if (currentPackageNamesPage < totalPackageNamesPages) {
                 currentPackageNamesPage++;
@@ -468,7 +463,7 @@ ob_start();
             }
         });
 
-        // Pagination for SI Units
+        /* Pagination for SI Units */
         document.getElementById('prev-page-si-units').addEventListener('click', function () {
             if (currentSIUnitsPage > 1) {
                 currentSIUnitsPage--;
@@ -476,7 +471,6 @@ ob_start();
                 renderSIUnits(filteredSIUnits);
             }
         });
-
         document.getElementById('next-page-si-units').addEventListener('click', function () {
             if (currentSIUnitsPage < totalSIUnitsPages) {
                 currentSIUnitsPage++;
@@ -485,19 +479,18 @@ ob_start();
             }
         });
 
-        // Delete confirmations
+        /* Delete confirmations */
         document.getElementById('confirmDeletePackageName').addEventListener('click', confirmDeletePackageName);
         document.getElementById('confirmDeleteSIUnit').addEventListener('click', confirmDeleteSIUnit);
 
-        // Load data
+        /* Load initial data */
         loadPackageNames();
         loadSIUnits();
     });
 
-    // Package Names Functions
+    /* ===== Package Names Functions ===== */
     function loadPackageNames() {
         showLoading('Loading package names...');
-
         fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=getPackageNames`)
             .then(response => {
                 if (!response.ok) {
@@ -513,10 +506,8 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     packageNamesData = data.packageNames;
-                    // Sort by updated_at in descending order
                     packageNamesData.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
                     filteredPackageNames = [...packageNamesData];
-
                     totalPackageNamesPages = Math.ceil(filteredPackageNames.length / itemsPerPage);
                     renderPackageNamesPagination();
                     renderPackageNames(filteredPackageNames);
@@ -535,11 +526,9 @@ ob_start();
 
     function filterPackageNames() {
         const searchQuery = document.getElementById('searchPackageNames').value.toLowerCase();
-
         filteredPackageNames = packageNamesData.filter(pkg =>
             pkg.package_name.toLowerCase().includes(searchQuery)
         );
-
         currentPackageNamesPage = 1;
         totalPackageNamesPages = Math.ceil(filteredPackageNames.length / itemsPerPage);
         renderPackageNamesPagination();
@@ -547,98 +536,66 @@ ob_start();
     }
 
     function renderPackageNamesPagination() {
-        const paginationContainer = document.getElementById('pagination-numbers-package-names');
-        paginationContainer.innerHTML = '';
-
+        const container = document.getElementById('pagination-numbers-package-names');
+        container.innerHTML = '';
         const prevButton = document.getElementById('prev-page-package-names');
         const nextButton = document.getElementById('next-page-package-names');
-
         prevButton.disabled = currentPackageNamesPage === 1;
         nextButton.disabled = currentPackageNamesPage === totalPackageNamesPages || totalPackageNamesPages === 0;
 
         if (totalPackageNamesPages <= 5) {
             for (let i = 1; i <= totalPackageNamesPages; i++) {
-                paginationContainer.appendChild(createPaginationButton(i, 'package-names'));
+                container.appendChild(createPaginationButton(i, 'package-names'));
             }
         } else {
-            paginationContainer.appendChild(createPaginationButton(1, 'package-names'));
+            container.appendChild(createPaginationButton(1, 'package-names'));
 
             if (currentPackageNamesPage > 3) {
                 const ellipsis = document.createElement('span');
                 ellipsis.className = 'px-2';
                 ellipsis.textContent = '...';
-                paginationContainer.appendChild(ellipsis);
+                container.appendChild(ellipsis);
             }
 
             for (let i = Math.max(2, currentPackageNamesPage - 1); i <= Math.min(totalPackageNamesPages - 1, currentPackageNamesPage + 1); i++) {
-                paginationContainer.appendChild(createPaginationButton(i, 'package-names'));
+                container.appendChild(createPaginationButton(i, 'package-names'));
             }
 
             if (currentPackageNamesPage < totalPackageNamesPages - 2) {
                 const ellipsis = document.createElement('span');
                 ellipsis.className = 'px-2';
                 ellipsis.textContent = '...';
-                paginationContainer.appendChild(ellipsis);
+                container.appendChild(ellipsis);
             }
 
             if (totalPackageNamesPages > 1) {
-                paginationContainer.appendChild(createPaginationButton(totalPackageNamesPages, 'package-names'));
+                container.appendChild(createPaginationButton(totalPackageNamesPages, 'package-names'));
             }
         }
-    }
-
-    function createPaginationButton(pageNumber, type) {
-        const button = document.createElement('button');
-        const isActive = pageNumber === (type === 'package-names' ? currentPackageNamesPage : currentSIUnitsPage);
-
-        button.className = isActive ?
-            'px-3 py-2 rounded-lg bg-primary text-white' :
-            'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
-        button.textContent = pageNumber;
-
-        button.addEventListener('click', function () {
-            if (type === 'package-names') {
-                currentPackageNamesPage = pageNumber;
-                renderPackageNamesPagination();
-                renderPackageNames(filteredPackageNames);
-            } else {
-                currentSIUnitsPage = pageNumber;
-                renderSIUnitsPagination();
-                renderSIUnits(filteredSIUnits);
-            }
-        });
-
-        return button;
     }
 
     function renderPackageNames(packageNames) {
         const tableBody = document.getElementById('package-names-table-body');
         tableBody.innerHTML = '';
-
         document.getElementById('package-name-count').textContent = packageNames.length;
-
         const start = (currentPackageNamesPage - 1) * itemsPerPage;
         const end = Math.min(start + itemsPerPage, packageNames.length);
-
         document.getElementById('showing-start-package-names').textContent = packageNames.length > 0 ? start + 1 : 0;
         document.getElementById('showing-end-package-names').textContent = end;
         document.getElementById('total-package-names').textContent = packageNames.length;
+        const paginated = packageNames.slice(start, end);
 
-        const paginatedPackageNames = packageNames.slice(start, end);
-
-        if (paginatedPackageNames.length === 0) {
+        if (paginated.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">No package names found</td></tr>';
             return;
         }
 
-        paginatedPackageNames.forEach((pkg, index) => {
+        paginated.forEach((pkg, index) => {
             const row = document.createElement('tr');
             row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
 
-            // Format dates in 12-hour format without seconds
             const createdDate = new Date(pkg.created_at);
             const updatedDate = new Date(pkg.updated_at);
-
             const createdAt = createdDate.toLocaleDateString() + ' ' +
                 createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
             const updatedAt = updatedDate.toLocaleDateString() + ' ' +
@@ -660,36 +617,31 @@ ob_start();
                     </div>
                 </td>
             `;
-
             tableBody.appendChild(row);
         });
 
         document.querySelectorAll('.btn-edit-package-name').forEach(button => {
             button.addEventListener('click', function () {
-                const packageNameId = this.getAttribute('data-id');
-                editPackageName(packageNameId);
+                const id = this.getAttribute('data-id');
+                editPackageName(id);
+                showPackageNameModal();
             });
         });
 
         document.querySelectorAll('.btn-delete-package-name').forEach(button => {
             button.addEventListener('click', function () {
-                const packageNameId = this.getAttribute('data-id');
-                showDeletePackageNameModal(packageNameId);
+                const id = this.getAttribute('data-id');
+                showDeletePackageNameModal(id);
             });
         });
     }
 
-    function createPackageName(packageName) {
+    function createPackageName(name) {
         showLoading('Creating package name...');
-
         fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createPackageName`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                package_name: packageName
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ package_name: name })
         })
             .then(response => {
                 if (response.status === 401) {
@@ -702,7 +654,6 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'Package name created successfully!');
-                    resetPackageNameForm();
                     loadPackageNames();
                 } else {
                     showErrorNotification(data.message || 'Failed to create package name');
@@ -717,18 +668,12 @@ ob_start();
             });
     }
 
-    function updatePackageName(id, packageName) {
+    function updatePackageName(id, name) {
         showLoading('Updating package name...');
-
         fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=updatePackageName`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: id,
-                package_name: packageName
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, package_name: name })
         })
             .then(response => {
                 if (response.status === 401) {
@@ -741,7 +686,6 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'Package name updated successfully!');
-                    resetPackageNameForm();
                     loadPackageNames();
                 } else {
                     showErrorNotification(data.message || 'Failed to update package name');
@@ -756,24 +700,21 @@ ob_start();
             });
     }
 
-    function editPackageName(packageNameId) {
-        const packageName = packageNamesData.find(p => p.id === packageNameId);
-
-        if (packageName) {
-            document.getElementById('packageNameFormTitle').textContent = 'Edit Package Name';
-            document.getElementById('packageNameId').value = packageNameId;
-            document.getElementById('package_name').value = packageName.package_name;
-            document.getElementById('submitPackageNameButton').textContent = 'Update Package Name';
-            document.getElementById('cancelPackageNameForm').classList.remove('hidden');
+    function editPackageName(id) {
+        const pkg = packageNamesData.find(p => p.id === id);
+        if (pkg) {
+            document.getElementById('packageNameModalTitle').textContent = 'Edit Package Name';
+            document.getElementById('packageNameModalId').value = id;
+            document.getElementById('package_name_modal').value = pkg.package_name;
+            document.getElementById('submitPackageNameModalButton').textContent = 'Update Package Name';
         }
     }
 
-    function showDeletePackageNameModal(packageNameId) {
-        const packageName = packageNamesData.find(p => p.id === packageNameId);
-
-        if (packageName) {
-            document.getElementById('delete-package-name').textContent = packageName.package_name;
-            document.getElementById('confirmDeletePackageName').setAttribute('data-id', packageNameId);
+    function showDeletePackageNameModal(id) {
+        const pkg = packageNamesData.find(p => p.id === id);
+        if (pkg) {
+            document.getElementById('delete-package-name').textContent = pkg.package_name;
+            document.getElementById('confirmDeletePackageName').setAttribute('data-id', id);
             document.getElementById('deletePackageNameModal').classList.remove('hidden');
         }
     }
@@ -783,19 +724,13 @@ ob_start();
     }
 
     function confirmDeletePackageName() {
-        const packageNameId = document.getElementById('confirmDeletePackageName').getAttribute('data-id');
-
+        const id = document.getElementById('confirmDeletePackageName').getAttribute('data-id');
         showLoading('Deleting package name...');
         hideDeletePackageNameModal();
-
         fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=deletePackageName`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: packageNameId
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
         })
             .then(response => {
                 if (response.status === 401) {
@@ -822,18 +757,24 @@ ob_start();
             });
     }
 
-    function resetPackageNameForm() {
-        document.getElementById('packageNameForm').reset();
-        document.getElementById('packageNameId').value = '';
-        document.getElementById('packageNameFormTitle').textContent = 'Add New Package Name';
-        document.getElementById('submitPackageNameButton').textContent = 'Save Package Name';
-        document.getElementById('cancelPackageNameForm').classList.add('hidden');
+    function resetPackageNameModalForm() {
+        document.getElementById('packageNameModalForm').reset();
+        document.getElementById('packageNameModalId').value = '';
+        document.getElementById('packageNameModalTitle').textContent = 'Add New Package Name';
+        document.getElementById('submitPackageNameModalButton').textContent = 'Save Package Name';
     }
 
-    // SI Units Functions
+    function showPackageNameModal() {
+        document.getElementById('packageNameModal').classList.remove('hidden');
+    }
+
+    function hidePackageNameModal() {
+        document.getElementById('packageNameModal').classList.add('hidden');
+    }
+
+    /* ===== SI Units Functions ===== */
     function loadSIUnits() {
         showLoading('Loading SI units...');
-
         fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=getSIUnits`)
             .then(response => {
                 if (!response.ok) {
@@ -849,10 +790,8 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     siUnitsData = data.siUnits;
-                    // Sort by updated_at in descending order
                     siUnitsData.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
                     filteredSIUnits = [...siUnitsData];
-
                     totalSIUnitsPages = Math.ceil(filteredSIUnits.length / itemsPerPage);
                     renderSIUnitsPagination();
                     renderSIUnits(filteredSIUnits);
@@ -870,12 +809,10 @@ ob_start();
     }
 
     function filterSIUnits() {
-        const searchQuery = document.getElementById('searchSIUnits').value.toLowerCase();
-
+        const query = document.getElementById('searchSIUnits').value.toLowerCase();
         filteredSIUnits = siUnitsData.filter(unit =>
-            unit.si_unit.toLowerCase().includes(searchQuery)
+            unit.si_unit.toLowerCase().includes(query)
         );
-
         currentSIUnitsPage = 1;
         totalSIUnitsPages = Math.ceil(filteredSIUnits.length / itemsPerPage);
         renderSIUnitsPagination();
@@ -883,74 +820,65 @@ ob_start();
     }
 
     function renderSIUnitsPagination() {
-        const paginationContainer = document.getElementById('pagination-numbers-si-units');
-        paginationContainer.innerHTML = '';
-
+        const container = document.getElementById('pagination-numbers-si-units');
+        container.innerHTML = '';
         const prevButton = document.getElementById('prev-page-si-units');
         const nextButton = document.getElementById('next-page-si-units');
-
         prevButton.disabled = currentSIUnitsPage === 1;
         nextButton.disabled = currentSIUnitsPage === totalSIUnitsPages || totalSIUnitsPages === 0;
 
         if (totalSIUnitsPages <= 5) {
             for (let i = 1; i <= totalSIUnitsPages; i++) {
-                paginationContainer.appendChild(createPaginationButton(i, 'si-units'));
+                container.appendChild(createPaginationButton(i, 'si-units'));
             }
         } else {
-            paginationContainer.appendChild(createPaginationButton(1, 'si-units'));
+            container.appendChild(createPaginationButton(1, 'si-units'));
 
             if (currentSIUnitsPage > 3) {
                 const ellipsis = document.createElement('span');
                 ellipsis.className = 'px-2';
                 ellipsis.textContent = '...';
-                paginationContainer.appendChild(ellipsis);
+                container.appendChild(ellipsis);
             }
 
             for (let i = Math.max(2, currentSIUnitsPage - 1); i <= Math.min(totalSIUnitsPages - 1, currentSIUnitsPage + 1); i++) {
-                paginationContainer.appendChild(createPaginationButton(i, 'si-units'));
+                container.appendChild(createPaginationButton(i, 'si-units'));
             }
 
             if (currentSIUnitsPage < totalSIUnitsPages - 2) {
                 const ellipsis = document.createElement('span');
                 ellipsis.className = 'px-2';
                 ellipsis.textContent = '...';
-                paginationContainer.appendChild(ellipsis);
+                container.appendChild(ellipsis);
             }
 
             if (totalSIUnitsPages > 1) {
-                paginationContainer.appendChild(createPaginationButton(totalSIUnitsPages, 'si-units'));
+                container.appendChild(createPaginationButton(totalSIUnitsPages, 'si-units'));
             }
         }
     }
 
-    function renderSIUnits(siUnits) {
+    function renderSIUnits(units) {
         const tableBody = document.getElementById('si-units-table-body');
         tableBody.innerHTML = '';
-
-        document.getElementById('si-unit-count').textContent = siUnits.length;
-
+        document.getElementById('si-unit-count').textContent = units.length;
         const start = (currentSIUnitsPage - 1) * itemsPerPage;
-        const end = Math.min(start + itemsPerPage, siUnits.length);
-
-        document.getElementById('showing-start-si-units').textContent = siUnits.length > 0 ? start + 1 : 0;
+        const end = Math.min(start + itemsPerPage, units.length);
+        document.getElementById('showing-start-si-units').textContent = units.length > 0 ? start + 1 : 0;
         document.getElementById('showing-end-si-units').textContent = end;
-        document.getElementById('total-si-units').textContent = siUnits.length;
+        document.getElementById('total-si-units').textContent = units.length;
+        const paginated = units.slice(start, end);
 
-        const paginatedSIUnits = siUnits.slice(start, end);
-
-        if (paginatedSIUnits.length === 0) {
+        if (paginated.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">No SI units found</td></tr>';
             return;
         }
 
-        paginatedSIUnits.forEach((unit, index) => {
+        paginated.forEach((unit, index) => {
             const row = document.createElement('tr');
             row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
-
-            // Format dates in 12-hour format without seconds
             const createdDate = new Date(unit.created_at);
             const updatedDate = new Date(unit.updated_at);
-
             const createdAt = createdDate.toLocaleDateString() + ' ' +
                 createdDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
             const updatedAt = updatedDate.toLocaleDateString() + ' ' +
@@ -972,36 +900,31 @@ ob_start();
                     </div>
                 </td>
             `;
-
             tableBody.appendChild(row);
         });
 
         document.querySelectorAll('.btn-edit-si-unit').forEach(button => {
             button.addEventListener('click', function () {
-                const siUnitId = this.getAttribute('data-id');
-                editSIUnit(siUnitId);
+                const id = this.getAttribute('data-id');
+                editSIUnit(id);
+                showSIUnitModal();
             });
         });
 
         document.querySelectorAll('.btn-delete-si-unit').forEach(button => {
             button.addEventListener('click', function () {
-                const siUnitId = this.getAttribute('data-id');
-                showDeleteSIUnitModal(siUnitId);
+                const id = this.getAttribute('data-id');
+                showDeleteSIUnitModal(id);
             });
         });
     }
 
-    function createSIUnit(siUnit) {
+    function createSIUnit(unit) {
         showLoading('Creating SI unit...');
-
         fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=createSIUnit`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                si_unit: siUnit
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ si_unit: unit })
         })
             .then(response => {
                 if (response.status === 401) {
@@ -1014,7 +937,6 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'SI unit created successfully!');
-                    resetSIUnitForm();
                     loadSIUnits();
                 } else {
                     showErrorNotification(data.message || 'Failed to create SI unit');
@@ -1029,18 +951,12 @@ ob_start();
             });
     }
 
-    function updateSIUnit(id, siUnit) {
+    function updateSIUnit(id, unit) {
         showLoading('Updating SI unit...');
-
         fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=updateSIUnit`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: id,
-                si_unit: siUnit
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id, si_unit: unit })
         })
             .then(response => {
                 if (response.status === 401) {
@@ -1053,7 +969,6 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'SI unit updated successfully!');
-                    resetSIUnitForm();
                     loadSIUnits();
                 } else {
                     showErrorNotification(data.message || 'Failed to update SI unit');
@@ -1068,24 +983,21 @@ ob_start();
             });
     }
 
-    function editSIUnit(siUnitId) {
-        const siUnit = siUnitsData.find(u => u.id === siUnitId);
-
-        if (siUnit) {
-            document.getElementById('siUnitFormTitle').textContent = 'Edit SI Unit';
-            document.getElementById('siUnitId').value = siUnitId;
-            document.getElementById('si_unit').value = siUnit.si_unit;
-            document.getElementById('submitSIUnitButton').textContent = 'Update SI Unit';
-            document.getElementById('cancelSIUnitForm').classList.remove('hidden');
+    function editSIUnit(id) {
+        const unit = siUnitsData.find(u => u.id === id);
+        if (unit) {
+            document.getElementById('siUnitModalTitle').textContent = 'Edit SI Unit';
+            document.getElementById('siUnitModalId').value = id;
+            document.getElementById('si_unit_modal').value = unit.si_unit;
+            document.getElementById('submitSIUnitModalButton').textContent = 'Update SI Unit';
         }
     }
 
-    function showDeleteSIUnitModal(siUnitId) {
-        const siUnit = siUnitsData.find(u => u.id === siUnitId);
-
-        if (siUnit) {
-            document.getElementById('delete-si-unit').textContent = siUnit.si_unit;
-            document.getElementById('confirmDeleteSIUnit').setAttribute('data-id', siUnitId);
+    function showDeleteSIUnitModal(id) {
+        const unit = siUnitsData.find(u => u.id === id);
+        if (unit) {
+            document.getElementById('delete-si-unit').textContent = unit.si_unit;
+            document.getElementById('confirmDeleteSIUnit').setAttribute('data-id', id);
             document.getElementById('deleteSIUnitModal').classList.remove('hidden');
         }
     }
@@ -1095,19 +1007,13 @@ ob_start();
     }
 
     function confirmDeleteSIUnit() {
-        const siUnitId = document.getElementById('confirmDeleteSIUnit').getAttribute('data-id');
-
+        const id = document.getElementById('confirmDeleteSIUnit').getAttribute('data-id');
         showLoading('Deleting SI unit...');
         hideDeleteSIUnitModal();
-
         fetch(`${BASE_URL}admin/fetch/manageProductPackages.php?action=deleteSIUnit`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id: siUnitId
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
         })
             .then(response => {
                 if (response.status === 401) {
@@ -1134,15 +1040,43 @@ ob_start();
             });
     }
 
-    function resetSIUnitForm() {
-        document.getElementById('siUnitForm').reset();
-        document.getElementById('siUnitId').value = '';
-        document.getElementById('siUnitFormTitle').textContent = 'Add New SI Unit';
-        document.getElementById('submitSIUnitButton').textContent = 'Save SI Unit';
-        document.getElementById('cancelSIUnitForm').classList.add('hidden');
+    function resetSIUnitModalForm() {
+        document.getElementById('siUnitModalForm').reset();
+        document.getElementById('siUnitModalId').value = '';
+        document.getElementById('siUnitModalTitle').textContent = 'Add New SI Unit';
+        document.getElementById('submitSIUnitModalButton').textContent = 'Save SI Unit';
     }
 
-    // Utility Functions
+    function showSIUnitModal() {
+        document.getElementById('siUnitModal').classList.remove('hidden');
+    }
+
+    function hideSIUnitModal() {
+        document.getElementById('siUnitModal').classList.add('hidden');
+    }
+
+    /* ===== Utility & UI Functions ===== */
+    function createPaginationButton(pageNumber, type) {
+        const button = document.createElement('button');
+        const isActive = pageNumber === (type === 'package-names' ? currentPackageNamesPage : currentSIUnitsPage);
+        button.className = isActive ?
+            'px-3 py-2 rounded-lg bg-primary text-white' :
+            'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
+        button.textContent = pageNumber;
+        button.addEventListener('click', function () {
+            if (type === 'package-names') {
+                currentPackageNamesPage = pageNumber;
+                renderPackageNamesPagination();
+                renderPackageNames(filteredPackageNames);
+            } else {
+                currentSIUnitsPage = pageNumber;
+                renderSIUnitsPagination();
+                renderSIUnits(filteredSIUnits);
+            }
+        });
+        return button;
+    }
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -1150,26 +1084,39 @@ ob_start();
     }
 
     function showLoading(message = 'Loading...') {
+        let overlay = document.getElementById('loadingOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.className = 'fixed inset-0 bg-black/30 flex items-center justify-center z-[999]';
+            overlay.innerHTML = `
+                <div class="bg-white p-5 rounded-lg shadow-lg flex items-center gap-3">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span id="loadingMessage" class="text-gray-700 font-medium">${message}</span>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
         document.getElementById('loadingMessage').textContent = message;
-        document.getElementById('loadingOverlay').classList.remove('hidden');
+        overlay.classList.remove('hidden');
     }
 
     function hideLoading() {
-        document.getElementById('loadingOverlay').classList.add('hidden');
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.classList.add('hidden');
+        }
     }
 
     function showSessionExpiredModal() {
         const modal = document.getElementById('sessionExpiredModal');
         modal.classList.remove('hidden');
-
         let countdown = 10;
         const countdownElement = document.getElementById('countdown');
         countdownElement.textContent = countdown;
-
         const timer = setInterval(() => {
             countdown--;
             countdownElement.textContent = countdown;
-
             if (countdown <= 0) {
                 clearInterval(timer);
                 redirectToLogin();
@@ -1184,10 +1131,8 @@ ob_start();
     function showSuccessNotification(message) {
         const notification = document.getElementById('successNotification');
         const messageEl = document.getElementById('successMessage');
-
         messageEl.textContent = message;
         notification.classList.remove('hidden');
-
         setTimeout(() => {
             notification.classList.add('hidden');
         }, 3000);
@@ -1196,22 +1141,11 @@ ob_start();
     function showErrorNotification(message) {
         const notification = document.getElementById('errorNotification');
         const messageEl = document.getElementById('errorMessage');
-
         messageEl.textContent = message;
         notification.classList.remove('hidden');
-
         setTimeout(() => {
             notification.classList.add('hidden');
         }, 3000);
-    }
-
-    // Generate UUID for new entities if needed
-    function generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            const r = Math.random() * 16 | 0;
-            const v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
     }
 </script>
 
