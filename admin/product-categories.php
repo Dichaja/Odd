@@ -62,6 +62,7 @@ ob_start();
                     <tr class="text-left border-b border-gray-100">
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">#</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Name</th>
+                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Products</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Status</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Created</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text w-32">Actions</th>
@@ -1008,6 +1009,7 @@ ob_start();
                     <div class="text-xs text-gray-500 mt-1">${category.description ? escapeHtml(truncateText(category.description, 50)) : ''}</div>
                     ${category.image_url ? '<div class="text-xs text-blue-500 mt-1"><i class="fas fa-image mr-1"></i>Has image</div>' : ''}
                 </td>
+                <td class="px-6 py-4 text-sm text-gray-700">${category.product_count || 0}</td>
                 <td class="px-6 py-4">${statusToggle}</td>
                 <td class="px-6 py-4 text-sm text-gray-text">${formatDate(category.created_at)}</td>
                 <td class="px-6 py-4 text-sm">

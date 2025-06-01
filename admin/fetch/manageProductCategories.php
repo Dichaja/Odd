@@ -80,15 +80,32 @@ try {
 function getCategories(PDO $pdo)
 {
     try {
+        // Fetch categories along with the count of products in each
         $stmt = $pdo->query(
-            'SELECT id, name, description, meta_title, meta_description, meta_keywords, status, created_at, updated_at
-             FROM product_categories
-             ORDER BY name'
+            "SELECT 
+                pc.id,
+                pc.name,
+                pc.description,
+                pc.meta_title,
+                pc.meta_description,
+                pc.meta_keywords,
+                pc.status,
+                pc.created_at,
+                pc.updated_at,
+                (
+                    SELECT COUNT(*) 
+                    FROM products p 
+                    WHERE p.category_id = pc.id
+                ) AS product_count
+             FROM product_categories pc
+             ORDER BY pc.name"
         );
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($categories as &$c) {
             // Add image URL without removing the ID
             $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
+            // Ensure product_count is an integer
+            $c['product_count'] = (int) $c['product_count'];
         }
         echo json_encode(['success' => true, 'categories' => $categories]);
     } catch (Exception $e) {
@@ -107,9 +124,23 @@ function getCategory(PDO $pdo)
     }
     try {
         $stmt = $pdo->prepare(
-            'SELECT id, name, description, meta_title, meta_description, meta_keywords, status, created_at, updated_at
-             FROM product_categories
-             WHERE id = :id'
+            'SELECT 
+                pc.id,
+                pc.name,
+                pc.description,
+                pc.meta_title,
+                pc.meta_description,
+                pc.meta_keywords,
+                pc.status,
+                pc.created_at,
+                pc.updated_at,
+                (
+                    SELECT COUNT(*) 
+                    FROM products p 
+                    WHERE p.category_id = pc.id
+                ) AS product_count
+             FROM product_categories pc
+             WHERE pc.id = :id'
         );
         $stmt->execute([':id' => $_GET['id']]);
         $c = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -121,6 +152,7 @@ function getCategory(PDO $pdo)
         // Add image URL and has_image flag without removing the ID
         $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
         $c['has_image'] = doesCategoryImageExist($c['id'], $c['name']);
+        $c['product_count'] = (int) $c['product_count'];
 
         echo json_encode(['success' => true, 'data' => $c]);
     } catch (Exception $e) {
