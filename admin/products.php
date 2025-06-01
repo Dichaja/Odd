@@ -336,7 +336,7 @@ ob_start();
         <div class="p-6">
             <div class="mb-4">
                 <div id="image-cropper-container" class="max-h-[60vh] overflow-hidden">
-                    <img id="image-to-crop" src="/placeholder.svg" alt="Image to crop">
+                    <img id="image-to-crop" src="" alt="Image to crop">
                 </div>
             </div>
         </div>
@@ -1123,7 +1123,7 @@ ob_start();
 
     function createProductCard(prod) {
         const card = document.createElement('div');
-        card.className = 'product-item bg-white rounded-lg border border-gray-100 overflow-hidden hover:shadow-md transition-shadow';
+        card.className = 'product-item bg-white/70 rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col';
 
         // Main image or placeholder
         let mainImage = 'https://placehold.co/600x400?text=No+Image';
@@ -1133,50 +1133,48 @@ ob_start();
 
         // Image slider HTML
         let sliderHtml = `
-            <div class="swiper-container h-full">
-                <div class="swiper-wrapper">
-        `;
+        <div class="swiper-container h-full">
+            <div class="swiper-wrapper">
+    `;
 
         if (prod.images && prod.images.length > 0) {
             prod.images.forEach(img => {
                 sliderHtml += `
-                    <div class="swiper-slide">
-                        <img src="${img}" alt="${escapeHtml(prod.title)}" class="w-full h-64 object-cover">
-                    </div>
-                `;
+                <div class="swiper-slide">
+                    <img src="${img}" alt="${escapeHtml(prod.title)}" class="w-full h-64 object-cover">
+                </div>
+            `;
             });
         } else {
             sliderHtml += `
-                <div class="swiper-slide">
-                    <img src="https://placehold.co/600x400?text=No+Image" alt="No Image" class="w-full h-64 object-cover">
-                </div>
-            `;
+            <div class="swiper-slide">
+                <img src="https://placehold.co/600x400?text=No+Image" alt="No Image" class="w-full h-64 object-cover">
+            </div>
+        `;
         }
 
         sliderHtml += `
-                </div>
-                <div class="swiper-pagination"></div>
-                <div class="swiper-button-prev custom-nav-btn"></div>
-                <div class="swiper-button-next custom-nav-btn"></div>
             </div>
-        `;
+            <div class="swiper-pagination"></div>
+        </div>
+    `;
 
         // Package names display
         let packageNamesHtml = '';
         if (prod.package_names && prod.package_names.length > 0) {
             packageNamesHtml = `
-                <div class="flex flex-wrap gap-1 mt-2">
-                    ${prod.package_names.map(pkg => `
-                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                            ${escapeHtml(pkg.package_name)}
-                        </span>
-                    `).join('')}
-                </div>
-            `;
+            <div class="flex flex-wrap gap-1 mt-2">
+                ${prod.package_names.map(pkg => `
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                        ${escapeHtml(pkg.package_name)}
+                    </span>
+                `).join('')}
+            </div>
+        `;
         }
 
         card.innerHTML = `
-            <div class="relative bg-gray-100 h-64">
+            <div class="relative bg-gray-100 h-64 shrink-0">
                 <div class="product-image-slider h-full">
                     ${sliderHtml}
                 </div>
@@ -1188,7 +1186,9 @@ ob_start();
                     <div class="text-white/80 text-sm truncate">${escapeHtml(prod.category_name || '')}</div>
                 </div>
             </div>
-            <div class="p-4">
+
+            <div class="flex flex-col justify-between flex-1 p-4"> <!-- Flex wrapper for content and buttons -->
+                <div>
                 <h3 class="text-lg font-semibold mb-1 truncate">${escapeHtml(prod.title)}</h3>
 
                 <div class="flex items-center text-gray-500 mb-2">
@@ -1197,10 +1197,11 @@ ob_start();
                 </div>
 
                 <div class="text-sm text-gray-600 mb-3 line-clamp-2">${escapeHtml(prod.description || 'No description available')}</div>
-                
-                ${packageNamesHtml}
 
-                <div class="flex justify-end gap-2 mt-3">
+                ${packageNamesHtml}
+                </div>
+
+                <div class="flex justify-end gap-2 mt-4">
                     <button class="btn-edit w-10 h-10 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center justify-center" data-id="${prod.id}" title="Edit Product">
                         <i class="fas fa-edit"></i>
                     </button>
