@@ -123,6 +123,7 @@ function getStepTitle($mode, $step)
         <form id="empty-password-options-form" class="space-y-4" autocomplete="off" data-mode="empty_password"
             data-step="options">
             <div>
+                <p class="mb-4 text-sm text-gray-600">Logging in as <strong id="empty-username-display"></strong></p>
                 <p class="mb-4 text-sm text-gray-600">Please select how you would like to verify your account ownership:
                 </p>
                 <div class="space-y-3">
@@ -205,9 +206,9 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
+        <p class="mb-4 text-sm text-gray-600">Creating account for <strong id="register-username-display"></strong></p>
         <form id="register-email-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="email">
             <div>
-                <p class="mb-4">Creating account for <strong id="register-username-display"></strong></p>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <div class="relative">
                     <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -239,22 +240,21 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
+        <p class="mb-4 text-center text-sm text-gray-600">Verifying for <strong
+                id="register-username-display-verify"></strong></p>
+        <p class="mb-4 text-center">We've sent a verification code to <strong id="register-email-display"></strong></p>
+        <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
         <form id="register-email-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
             data-step="email-verify">
-            <div>
-                <p class="mb-4 text-center">We've sent a verification code to <strong
-                        id="register-email-display"></strong></p>
-                <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-                <div id="email-otp-inputs"></div>
-                <input type="hidden" id="email-otp" value="">
-                <div id="email-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                <p class="mt-2 text-sm text-gray-500 text-center">
-                    Didn't receive the code?
-                    <button type="button" id="resend-email-otp"
-                        class="text-primary hover:text-red-700 text-sm">Resend</button>
-                    <span id="email-otp-timer" class="text-sm"></span>
-                </p>
-            </div>
+            <div id="email-otp-inputs"></div>
+            <input type="hidden" id="email-otp" value="">
+            <div id="email-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <p class="mt-2 text-sm text-gray-500 text-center">
+                Didn't receive the code?
+                <button type="button" id="resend-email-otp"
+                    class="text-primary hover:text-red-700 text-sm">Resend</button>
+                <span id="email-otp-timer" class="text-sm"></span>
+            </p>
             <button type="button" id="email-otp-submit-btn" onclick="handleEmailOTPSubmit()"
                 class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
                 Verify Email
@@ -271,6 +271,14 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
+        <p class="mb-4 text-center text-sm text-gray-600">
+            <a href="javascript:void(0)" onclick="showRegisterStep('email')"
+                class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
+        </p>
+        <p class="mb-4 text-sm text-gray-600">Creating account for <strong
+                id="register-username-display-phone"></strong></p>
         <form id="register-phone-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="phone">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
@@ -300,22 +308,21 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
+        <p class="mb-4 text-sm text-gray-600">Creating account for <strong
+                id="register-username-display-phone-verify"></strong></p>
+        <p class="mb-4 text-center">We've sent a verification code to <strong id="register-phone-display"></strong></p>
+        <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
         <form id="register-phone-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
             data-step="phone-verify">
-            <div>
-                <p class="mb-4 text-center">We've sent a verification code to <strong
-                        id="register-phone-display"></strong></p>
-                <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-                <div id="phone-otp-inputs"></div>
-                <input type="hidden" id="phone-otp" value="">
-                <div id="phone-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                <p class="mt-2 text-sm text-gray-500 text-center">
-                    Didn't receive the code?
-                    <button type="button" id="resend-phone-otp"
-                        class="text-primary hover:text-red-700 text-sm">Resend</button>
-                    <span id="phone-otp-timer" class="text-sm"></span>
-                </p>
-            </div>
+            <div id="phone-otp-inputs"></div>
+            <input type="hidden" id="phone-otp" value="">
+            <div id="phone-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <p class="mt-2 text-sm text-gray-500 text-center">
+                Didn't receive the code?
+                <button type="button" id="resend-phone-otp"
+                    class="text-primary hover:text-red-700 text-sm">Resend</button>
+                <span id="phone-otp-timer" class="text-sm"></span>
+            </p>
             <button type="button" id="phone-otp-submit-btn" onclick="handlePhoneOTPSubmit()"
                 class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
                 Verify Phone
@@ -338,6 +345,8 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
+        <p class="mb-4 text-sm text-gray-600">Creating account for <strong
+                id="register-username-display-password"></strong></p>
         <form id="register-password-form" class="space-y-4" autocomplete="off" data-mode="register"
             data-step="password">
             <div>
@@ -402,6 +411,7 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
+        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong id="forgot-username-display"></strong></p>
         <form id="forgot-password-options-form" class="space-y-4" autocomplete="off" data-mode="forgot_password"
             data-step="options">
             <div>
@@ -452,6 +462,8 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
+        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
+                id="forgot-username-display-email"></strong></p>
         <form id="forgot-password-email-form-element" class="space-y-4" autocomplete="off" data-mode="forgot_password"
             data-step="email">
             <div>
@@ -486,6 +498,8 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
+        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
+                id="forgot-username-display-phone"></strong></p>
         <form id="forgot-password-phone-form-element" class="space-y-4" autocomplete="off" data-mode="forgot_password"
             data-step="phone">
             <div>
@@ -515,22 +529,21 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
+        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
+                id="forgot-username-display-reset"></strong></p>
+        <p class="mb-4 text-center">We've sent a verification code to <strong id="reset-contact-display"></strong></p>
+        <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
         <form id="reset-verify-form" class="space-y-4" autocomplete="off" data-mode="reset_password"
             data-step="verify_otp">
-            <div>
-                <p class="mb-4 text-center">We've sent a verification code to <strong
-                        id="reset-contact-display"></strong></p>
-                <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-                <div id="reset-otp-inputs"></div>
-                <input type="hidden" id="reset-otp" value="">
-                <div id="reset-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                <p class="mt-2 text-sm text-gray-500 text-center">
-                    Didn't receive the code?
-                    <button type="button" id="resend-reset-otp"
-                        class="text-primary hover:text-red-700 text-sm">Resend</button>
-                    <span id="reset-otp-timer" class="text-sm"></span>
-                </p>
-            </div>
+            <div id="reset-otp-inputs"></div>
+            <input type="hidden" id="reset-otp" value="">
+            <div id="reset-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <p class="mt-2 text-sm text-gray-500 text-center">
+                Didn't receive the code?
+                <button type="button" id="resend-reset-otp"
+                    class="text-primary hover:text-red-700 text-sm">Resend</button>
+                <span id="reset-otp-timer" class="text-sm"></span>
+            </p>
             <button type="button" id="reset-otp-submit-btn" onclick="handleResetOTPSubmit()"
                 class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
                 Verify Code
@@ -553,6 +566,8 @@ function getStepTitle($mode, $step)
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
+        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
+                id="forgot-username-display-reset-form"></strong></p>
         <form id="reset-password-form-element" class="space-y-4" autocomplete="off" data-mode="reset_password"
             data-step="new_password">
             <div>
@@ -593,6 +608,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
+
 <script>
     (function () {
         document.querySelectorAll('form').forEach(form => {
@@ -697,6 +713,8 @@ function getStepTitle($mode, $step)
         hideAllForms();
         const opt = document.getElementById('forgot-password-options');
         if (opt) {
+            // Display the username the user entered
+            document.getElementById('forgot-username-display').textContent = loginData.identifier || '';
             opt.style.display = 'block';
             setTimeout(() => {
                 opt.classList.add('active');
@@ -708,6 +726,8 @@ function getStepTitle($mode, $step)
         hideAllForms();
         const opt = document.getElementById('empty-password-options');
         if (opt) {
+            // Display the username the user entered
+            document.getElementById('empty-username-display').textContent = loginData.identifier || '';
             opt.style.display = 'block';
             setTimeout(() => {
                 opt.classList.add('active');
@@ -737,6 +757,7 @@ function getStepTitle($mode, $step)
         if (m === 'email') {
             const ef = document.getElementById('forgot-password-email-form');
             if (ef) {
+                document.getElementById('forgot-username-display-email').textContent = loginData.identifier || '';
                 ef.style.display = 'block';
                 setTimeout(() => {
                     ef.classList.add('active');
@@ -745,6 +766,7 @@ function getStepTitle($mode, $step)
         } else if (m === 'phone') {
             const pf = document.getElementById('forgot-password-phone-form');
             if (pf) {
+                document.getElementById('forgot-username-display-phone').textContent = loginData.identifier || '';
                 pf.style.display = 'block';
                 setTimeout(() => {
                     pf.classList.add('active');
@@ -757,6 +779,7 @@ function getStepTitle($mode, $step)
         hideAllForms();
         const rv = document.getElementById('reset-password-verify');
         if (rv) {
+            document.getElementById('forgot-username-display-reset').textContent = loginData.identifier || '';
             rv.style.display = 'block';
             setTimeout(() => {
                 rv.classList.add('active');
@@ -771,6 +794,7 @@ function getStepTitle($mode, $step)
         hideAllForms();
         const rf = document.getElementById('reset-password-form');
         if (rf) {
+            document.getElementById('forgot-username-display-reset-form').textContent = loginData.identifier || '';
             rf.style.display = 'block';
             setTimeout(() => {
                 rf.classList.add('active');
@@ -1066,6 +1090,10 @@ function getStepTitle($mode, $step)
                 if (response.success) {
                     registrationData.username = u;
                     document.getElementById('register-username-display').textContent = u;
+                    document.getElementById('register-username-display-verify').textContent = u;
+                    document.getElementById('register-username-display-phone').textContent = u;
+                    document.getElementById('register-username-display-phone-verify').textContent = u;
+                    document.getElementById('register-username-display-password').textContent = u;
                     showRegisterStep('email');
                 } else {
                     showError('register-username-error', response.message || 'Username is already taken');
@@ -1405,6 +1433,7 @@ function getStepTitle($mode, $step)
             url: BASE_URL + 'auth/sendResetEmail',
             type: 'POST',
             data: JSON.stringify({
+                username: loginData.identifier,
                 email: e
             }),
             contentType: 'application/json',
@@ -1414,6 +1443,7 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 if (response.success) {
                     notifications.success('Reset code sent to your email');
+                    forgotPasswordData.username = loginData.identifier;
                     forgotPasswordData.email = e;
                     forgotPasswordData.contact = e;
                     document.getElementById('reset-contact-display').textContent = e;
@@ -1459,6 +1489,7 @@ function getStepTitle($mode, $step)
             url: BASE_URL + 'auth/sendResetPhone',
             type: 'POST',
             data: JSON.stringify({
+                username: loginData.identifier,
                 phone: pn
             }),
             contentType: 'application/json',
@@ -1468,6 +1499,7 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 if (response.success) {
                     notifications.success('Reset code sent to your phone');
+                    forgotPasswordData.username = loginData.identifier;
                     forgotPasswordData.phone = pn;
                     forgotPasswordData.contact = pn;
                     document.getElementById('reset-contact-display').textContent = pn;
@@ -1565,6 +1597,7 @@ function getStepTitle($mode, $step)
             url: BASE_URL + 'auth/resetPassword',
             type: 'POST',
             data: JSON.stringify({
+                username: forgotPasswordData.username,
                 contact: forgotPasswordData.contact,
                 contactType: resetMethod,
                 password: np

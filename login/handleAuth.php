@@ -726,11 +726,13 @@ try {
             break;
 
         case 'sendResetPhone':
-            if (!isset($data['phone'])) {
+            // Now require username + phone, and ensure they match
+            if (!isset($data['username'], $data['phone'])) {
                 http_response_code(400);
-                die(json_encode(['success' => false, 'message' => 'Missing phone number']));
+                die(json_encode(['success' => false, 'message' => 'Missing username or phone number']));
             }
 
+            $username = $data['username'];
             $phone = $data['phone'];
 
             if (!isValidPhone($phone)) {
@@ -739,36 +741,54 @@ try {
                 break;
             }
 
-            $stmt = $pdo->prepare('SELECT id, username FROM admin_users WHERE phone = :phone');
-            $stmt->execute([':phone' => $phone]);
+            // Check admin_users first
+            $stmt = $pdo->prepare('SELECT id, phone FROM admin_users WHERE username = :username');
+            $stmt->execute([':username' => $username]);
             $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $stmt = $pdo->prepare('SELECT id, username FROM zzimba_users WHERE phone = :phone');
-            $stmt->execute([':phone' => $phone]);
-            $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($adminUser) {
+                if ($adminUser['phone'] !== $phone) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Phone number does not match the specified username']);
+                    break;
+                }
+                $userId = $adminUser['id'];
+            } else {
+                // Check zzimba_users
+                $stmt = $pdo->prepare('SELECT id, phone FROM zzimba_users WHERE username = :username');
+                $stmt->execute([':username' => $username]);
+                $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$adminUser && !$zzimbaUser) {
-                $recipients = [
-                    [
-                        'type' => 'admin',
-                        'id' => 'admin-global',
-                        'message' => "Password reset attempt for non-existent phone: $phone"
-                    ]
-                ];
-                $ns->create(
-                    'password_reset',
-                    'Failed Password Reset Attempt',
-                    $recipients,
-                    null,
-                    'normal'
-                );
+                if (!$zzimbaUser) {
+                    $recipients = [
+                        [
+                            'type' => 'admin',
+                            'id' => 'admin-global',
+                            'message' => "Password reset attempt for non-existent user: $username"
+                        ]
+                    ];
+                    $ns->create(
+                        'password_reset',
+                        'Failed Password Reset Attempt',
+                        $recipients,
+                        null,
+                        'normal'
+                    );
 
-                http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'Phone number not found']);
-                break;
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'User not found']);
+                    break;
+                }
+
+                if ($zzimbaUser['phone'] !== $phone) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Phone number does not match the specified username']);
+                    break;
+                }
+                $userId = $zzimbaUser['id'];
             }
 
-            $user = $adminUser ?: $zzimbaUser;
+            // All good: generate OTP and send
             $otp = createOTP('phone', $phone, $pdo);
 
             if (!sendPasswordResetSmsOTP($phone, $otp)) {
@@ -781,7 +801,7 @@ try {
                 [
                     'type' => 'admin',
                     'id' => 'admin-global',
-                    'message' => "Password reset initiated via phone for user: {$user['username']}"
+                    'message' => "Password reset initiated via phone for user: {$username}"
                 ]
             ];
             $ns->create(
@@ -790,7 +810,7 @@ try {
                 $recipients,
                 null,
                 'normal',
-                $user['id']
+                $userId
             );
 
             echo json_encode(['success' => true, 'message' => 'Reset code sent to phone']);
@@ -899,11 +919,13 @@ try {
             break;
 
         case 'sendResetEmail':
-            if (!isset($data['email'])) {
+            // Now require username + email, and ensure they match
+            if (!isset($data['username'], $data['email'])) {
                 http_response_code(400);
-                die(json_encode(['success' => false, 'message' => 'Missing email']));
+                die(json_encode(['success' => false, 'message' => 'Missing username or email']));
             }
 
+            $username = $data['username'];
             $email = $data['email'];
 
             if (!isValidEmail($email)) {
@@ -912,36 +934,54 @@ try {
                 break;
             }
 
-            $stmt = $pdo->prepare('SELECT id, username FROM admin_users WHERE email = :email');
-            $stmt->execute([':email' => $email]);
+            // Check admin_users first
+            $stmt = $pdo->prepare('SELECT id, email FROM admin_users WHERE username = :username');
+            $stmt->execute([':username' => $username]);
             $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $stmt = $pdo->prepare('SELECT id, username FROM zzimba_users WHERE email = :email');
-            $stmt->execute([':email' => $email]);
-            $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($adminUser) {
+                if ($adminUser['email'] !== $email) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Email does not match the specified username']);
+                    break;
+                }
+                $userId = $adminUser['id'];
+            } else {
+                // Check zzimba_users
+                $stmt = $pdo->prepare('SELECT id, email FROM zzimba_users WHERE username = :username');
+                $stmt->execute([':username' => $username]);
+                $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$adminUser && !$zzimbaUser) {
-                $recipients = [
-                    [
-                        'type' => 'admin',
-                        'id' => 'admin-global',
-                        'message' => "Password reset attempt for non-existent email: $email"
-                    ]
-                ];
-                $ns->create(
-                    'password_reset',
-                    'Failed Password Reset Attempt',
-                    $recipients,
-                    null,
-                    'normal'
-                );
+                if (!$zzimbaUser) {
+                    $recipients = [
+                        [
+                            'type' => 'admin',
+                            'id' => 'admin-global',
+                            'message' => "Password reset attempt for non-existent user: $username"
+                        ]
+                    ];
+                    $ns->create(
+                        'password_reset',
+                        'Failed Password Reset Attempt',
+                        $recipients,
+                        null,
+                        'normal'
+                    );
 
-                http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'Email not found']);
-                break;
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'User not found']);
+                    break;
+                }
+
+                if ($zzimbaUser['email'] !== $email) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Email does not match the specified username']);
+                    break;
+                }
+                $userId = $zzimbaUser['id'];
             }
 
-            $user = $adminUser ?: $zzimbaUser;
+            // All good: generate OTP and send
             $otp = createOTP('email', $email, $pdo);
 
             if (!sendPasswordResetOTP($email, $otp)) {
@@ -954,7 +994,7 @@ try {
                 [
                     'type' => 'admin',
                     'id' => 'admin-global',
-                    'message' => "Password reset initiated via email for user: {$user['username']}"
+                    'message' => "Password reset initiated via email for user: {$username}"
                 ]
             ];
             $ns->create(
@@ -963,7 +1003,7 @@ try {
                 $recipients,
                 null,
                 'normal',
-                $user['id']
+                $userId
             );
 
             echo json_encode(['success' => true, 'message' => 'Reset code sent to email']);
@@ -1026,11 +1066,12 @@ try {
             break;
 
         case 'resetPassword':
-            if (!isset($data['contact'], $data['contactType'], $data['password'])) {
+            if (!isset($data['username'], $data['contact'], $data['contactType'], $data['password'])) {
                 http_response_code(400);
                 die(json_encode(['success' => false, 'message' => 'Missing required fields']));
             }
 
+            $usernameInput = $data['username'];
             $contact = $data['contact'];
             $contactType = $data['contactType'];
             $password = $data['password'];
@@ -1051,27 +1092,28 @@ try {
                 break;
             }
 
+            // Look up by username + contact
             if ($contactType === 'email') {
-                $stmt = $pdo->prepare('SELECT id, username, phone FROM admin_users WHERE email = :contact');
-                $stmt->execute([':contact' => $contact]);
+                $stmt = $pdo->prepare('SELECT id, username, phone FROM admin_users WHERE username = :username AND email = :contact');
+                $stmt->execute([':username' => $usernameInput, ':contact' => $contact]);
                 $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                $stmt = $pdo->prepare('SELECT id, username, phone FROM zzimba_users WHERE email = :contact');
-                $stmt->execute([':contact' => $contact]);
+                $stmt = $pdo->prepare('SELECT id, username, phone FROM zzimba_users WHERE username = :username AND email = :contact');
+                $stmt->execute([':username' => $usernameInput, ':contact' => $contact]);
                 $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
             } else {
-                $stmt = $pdo->prepare('SELECT id, username, email FROM admin_users WHERE phone = :contact');
-                $stmt->execute([':contact' => $contact]);
+                $stmt = $pdo->prepare('SELECT id, username, email FROM admin_users WHERE username = :username AND phone = :contact');
+                $stmt->execute([':username' => $usernameInput, ':contact' => $contact]);
                 $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                $stmt = $pdo->prepare('SELECT id, username, email FROM zzimba_users WHERE phone = :contact');
-                $stmt->execute([':contact' => $contact]);
+                $stmt = $pdo->prepare('SELECT id, username, email FROM zzimba_users WHERE username = :username AND phone = :contact');
+                $stmt->execute([':username' => $usernameInput, ':contact' => $contact]);
                 $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
             }
 
             if (!$adminUser && !$zzimbaUser) {
                 http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'User not found']);
+                echo json_encode(['success' => false, 'message' => 'No matching user for that username and contact']);
                 break;
             }
 
@@ -1081,35 +1123,35 @@ try {
             if ($adminUser) {
                 $stmt = $pdo->prepare('UPDATE admin_users SET password = :password, updated_at = :updated_at WHERE id = :id');
                 $stmt->execute([':password' => $hashedPassword, ':updated_at' => $now, ':id' => $adminUser['id']]);
-                $username = $adminUser['username'];
+                $foundUsername = $adminUser['username'];
                 $userId = $adminUser['id'];
 
                 if ($contactType === 'email') {
-                    sendPasswordChangedEmail($contact, $username);
-                    if (isset($adminUser['phone'])) {
-                        sendPasswordChangedSms($adminUser['phone'], $username);
+                    sendPasswordChangedEmail($contact, $foundUsername);
+                    if (!empty($adminUser['phone'])) {
+                        sendPasswordChangedSms($adminUser['phone'], $foundUsername);
                     }
                 } else {
-                    sendPasswordChangedSms($contact, $username);
-                    if (isset($adminUser['email'])) {
-                        sendPasswordChangedEmail($adminUser['email'], $username);
+                    sendPasswordChangedSms($contact, $foundUsername);
+                    if (!empty($adminUser['email'])) {
+                        sendPasswordChangedEmail($adminUser['email'], $foundUsername);
                     }
                 }
             } else {
                 $stmt = $pdo->prepare('UPDATE zzimba_users SET password = :password, updated_at = :updated_at WHERE id = :id');
                 $stmt->execute([':password' => $hashedPassword, ':updated_at' => $now, ':id' => $zzimbaUser['id']]);
-                $username = $zzimbaUser['username'];
+                $foundUsername = $zzimbaUser['username'];
                 $userId = $zzimbaUser['id'];
 
                 if ($contactType === 'email') {
-                    sendPasswordChangedEmail($contact, $username);
-                    if (isset($zzimbaUser['phone'])) {
-                        sendPasswordChangedSms($zzimbaUser['phone'], $username);
+                    sendPasswordChangedEmail($contact, $foundUsername);
+                    if (!empty($zzimbaUser['phone'])) {
+                        sendPasswordChangedSms($zzimbaUser['phone'], $foundUsername);
                     }
                 } else {
-                    sendPasswordChangedSms($contact, $username);
-                    if (isset($zzimbaUser['email'])) {
-                        sendPasswordChangedEmail($zzimbaUser['email'], $username);
+                    sendPasswordChangedSms($contact, $foundUsername);
+                    if (!empty($zzimbaUser['email'])) {
+                        sendPasswordChangedEmail($zzimbaUser['email'], $foundUsername);
                     }
                 }
             }
@@ -1123,7 +1165,7 @@ try {
                 [
                     'type' => 'admin',
                     'id' => 'admin-global',
-                    'message' => "Password successfully reset for user: $username"
+                    'message' => "Password successfully reset for user: $foundUsername"
                 ]
             ];
             $ns->create(
