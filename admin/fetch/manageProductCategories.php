@@ -23,6 +23,7 @@ if (
 date_default_timezone_set('Africa/Kampala');
 
 try {
+    // Ensure 'featured' column exists in creation
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS product_categories (
             id VARCHAR(26) PRIMARY KEY,
@@ -32,6 +33,7 @@ try {
             meta_description TEXT,
             meta_keywords VARCHAR(255),
             status ENUM('active','inactive') NOT NULL DEFAULT 'active',
+            featured TINYINT(1) NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             UNIQUE KEY name_unique (name)
@@ -63,6 +65,9 @@ try {
         case 'deleteCategory':
             deleteCategory($pdo);
             break;
+        case 'updateFeatured':
+            updateFeatured($pdo);
+            break;
         case 'uploadImage':
             uploadImage();
             break;
@@ -80,7 +85,7 @@ try {
 function getCategories(PDO $pdo)
 {
     try {
-        // Fetch categories along with the count of products in each
+        // Fetch categories along with the count of products and featured flag
         $stmt = $pdo->query(
             "SELECT 
                 pc.id,
@@ -90,6 +95,7 @@ function getCategories(PDO $pdo)
                 pc.meta_description,
                 pc.meta_keywords,
                 pc.status,
+                pc.featured,
                 pc.created_at,
                 pc.updated_at,
                 (
@@ -104,8 +110,9 @@ function getCategories(PDO $pdo)
         foreach ($categories as &$c) {
             // Add image URL without removing the ID
             $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
-            // Ensure product_count is an integer
+            // Ensure product_count and featured are proper types
             $c['product_count'] = (int) $c['product_count'];
+            $c['featured'] = (int) $c['featured'];
         }
         echo json_encode(['success' => true, 'categories' => $categories]);
     } catch (Exception $e) {
@@ -132,6 +139,7 @@ function getCategory(PDO $pdo)
                 pc.meta_description,
                 pc.meta_keywords,
                 pc.status,
+                pc.featured,
                 pc.created_at,
                 pc.updated_at,
                 (
@@ -153,6 +161,7 @@ function getCategory(PDO $pdo)
         $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
         $c['has_image'] = doesCategoryImageExist($c['id'], $c['name']);
         $c['product_count'] = (int) $c['product_count'];
+        $c['featured'] = (int) $c['featured'];
 
         echo json_encode(['success' => true, 'data' => $c]);
     } catch (Exception $e) {
@@ -176,6 +185,7 @@ function createCategory(PDO $pdo)
     $metaDescription = trim($data['meta_description'] ?? '');
     $metaKeywords = trim($data['meta_keywords'] ?? '');
     $status = in_array($data['status'] ?? '', ['active', 'inactive']) ? $data['status'] : 'active';
+    $featured = isset($data['featured']) && (int) $data['featured'] === 1 ? 1 : 0;
     $tempImagePath = trim($data['temp_image_path'] ?? '');
     try {
         $stmt = $pdo->prepare('SELECT id FROM product_categories WHERE name = :name');
@@ -189,9 +199,9 @@ function createCategory(PDO $pdo)
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
         $stmt = $pdo->prepare(
             'INSERT INTO product_categories
-             (id,name,description,meta_title,meta_description,meta_keywords,status,created_at,updated_at)
+             (id,name,description,meta_title,meta_description,meta_keywords,status,featured,created_at,updated_at)
              VALUES
-             (:id,:name,:description,:meta_title,:meta_description,:meta_keywords,:status,:created_at,:updated_at)'
+             (:id,:name,:description,:meta_title,:meta_description,:meta_keywords,:status,:featured,:created_at,:updated_at)'
         );
         $stmt->execute([
             ':id' => $id,
@@ -201,6 +211,7 @@ function createCategory(PDO $pdo)
             ':meta_description' => $metaDescription,
             ':meta_keywords' => $metaKeywords,
             ':status' => $status,
+            ':featured' => $featured,
             ':created_at' => $now,
             ':updated_at' => $now
         ]);
@@ -236,6 +247,7 @@ function updateCategory(PDO $pdo)
     $metaDescription = trim($data['meta_description'] ?? '');
     $metaKeywords = trim($data['meta_keywords'] ?? '');
     $status = in_array($data['status'] ?? '', ['active', 'inactive']) ? $data['status'] : 'active';
+    $featured = isset($data['featured']) && (int) $data['featured'] === 1 ? 1 : 0;
     $tempImagePath = trim($data['temp_image_path'] ?? '');
     $removeImage = !empty($data['remove_image']);
     try {
@@ -265,6 +277,7 @@ function updateCategory(PDO $pdo)
              meta_description = :meta_description,
              meta_keywords = :meta_keywords,
              status = :status,
+             featured = :featured,
              updated_at = :updated_at
              WHERE id = :id'
         );
@@ -275,6 +288,7 @@ function updateCategory(PDO $pdo)
             ':meta_description' => $metaDescription,
             ':meta_keywords' => $metaKeywords,
             ':status' => $status,
+            ':featured' => $featured,
             ':updated_at' => $now,
             ':id' => $id
         ]);
@@ -325,6 +339,43 @@ function deleteCategory(PDO $pdo)
         error_log($e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Error deleting category']);
+    }
+}
+
+function updateFeatured(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (empty($data['id']) || !isset($data['featured'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing category ID or featured flag']);
+        return;
+    }
+    $id = $data['id'];
+    $featured = (int) $data['featured'] === 1 ? 1 : 0;
+    try {
+        $stmt = $pdo->prepare('SELECT id FROM product_categories WHERE id = :id');
+        $stmt->execute([':id' => $id]);
+        if (!$stmt->fetchColumn()) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Category not found']);
+            return;
+        }
+        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+        $stmt = $pdo->prepare(
+            'UPDATE product_categories
+             SET featured = :featured, updated_at = :updated_at
+             WHERE id = :id'
+        );
+        $stmt->execute([
+            ':featured' => $featured,
+            ':updated_at' => $now,
+            ':id' => $id
+        ]);
+        echo json_encode(['success' => true, 'message' => 'Featured flag updated']);
+    } catch (Exception $e) {
+        error_log($e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error updating featured flag']);
     }
 }
 

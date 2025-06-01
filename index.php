@@ -45,7 +45,7 @@ function getFeaturedProducts($pdo, $limit = 8)
     }
 }
 
-// Function to fetch categories from database based on the provided schema
+// Function to fetch **only featured** categories from database
 function getCategories($pdo, $limit = 8)
 {
     try {
@@ -53,6 +53,7 @@ function getCategories($pdo, $limit = 8)
             "SELECT id, name, description, meta_title, meta_description, meta_keywords, status
              FROM product_categories 
              WHERE status = 'active' 
+               AND featured = 1
              ORDER BY name ASC
              LIMIT :limit"
         );
@@ -68,7 +69,7 @@ function getCategories($pdo, $limit = 8)
 
         return $categories;
     } catch (Exception $e) {
-        error_log("Error fetching categories: " . $e->getMessage());
+        error_log("Error fetching featured categories: " . $e->getMessage());
         return [];
     }
 }
@@ -159,11 +160,12 @@ usort($activePartners, function ($a, $b) {
 // Fetch featured products from database
 $featuredProducts = getFeaturedProducts($pdo, 8);
 
-// Fetch categories from database
+// Fetch **only featured** categories from database
 $categories = getCategories($pdo, 8);
 
 ob_start();
 ?>
+
 <div class="swiper hero-slider">
     <div class="swiper-wrapper" id="hero-slider-wrapper">
         <?php foreach ($activeHeroSlides as $slide): ?>

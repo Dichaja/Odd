@@ -3,7 +3,13 @@ require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Product Categories';
 $activeNav = 'product-categories';
 
-if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
+if (
+    !isset($_SESSION['user']) ||
+    !isset($_SESSION['user']['logged_in']) ||
+    !$_SESSION['user']['logged_in'] ||
+    !isset($_SESSION['user']['is_admin']) ||
+    !$_SESSION['user']['is_admin']
+) {
     header('Location: ' . BASE_URL . 'login/login.php');
     exit;
 }
@@ -60,7 +66,7 @@ ob_start();
             <table class="w-full" id="categories-table">
                 <thead>
                     <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">#</th>
+                        <th class="px-6 py-3 text-sm font-semibold text-gray-text text-center">Featured</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Name</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Products</th>
                         <th class="px-6 py-3 text-sm font-semibold text-gray-text">Status</th>
@@ -78,8 +84,8 @@ ob_start();
 
         <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="text-sm text-gray-text">
-                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span
-                    id="total-categories">0</span> categories
+                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of
+                <span id="total-categories">0</span> categories
             </div>
             <div class="flex items-center gap-2"> categories
             </div>
@@ -1003,7 +1009,13 @@ ob_start();
             `;
 
             row.innerHTML = `
-                <td class="px-6 py-4 text-sm text-gray-text">${start + index + 1}</td>
+                <td class="px-6 py-4 text-center">
+                    <button class="btn-feature" data-id="${category.id}">
+                        ${category.featured
+                    ? '<i class="fas fa-heart text-red-500"></i>'
+                    : '<i class="far fa-heart text-gray-400"></i>'}
+                    </button>
+                </td>
                 <td class="px-6 py-4">
                     <div class="font-medium text-gray-900">${escapeHtml(category.name)}</div>
                     <div class="text-xs text-gray-500 mt-1">${category.description ? escapeHtml(truncateText(category.description, 50)) : ''}</div>
@@ -1047,6 +1059,71 @@ ob_start();
                 const categoryId = this.getAttribute('data-id');
                 const newStatus = this.checked ? 'active' : 'inactive';
                 updateCategoryStatus(categoryId, newStatus);
+            });
+        });
+
+        // Add event listeners to feature toggles
+        document.querySelectorAll('.btn-feature').forEach(button => {
+            button.addEventListener('click', function () {
+                const categoryId = this.getAttribute('data-id');
+                const category = categoriesData.find(c => c.id === categoryId);
+                if (!category) return;
+
+                const oldFeatured = category.featured;
+                const newFeatured = oldFeatured ? 0 : 1;
+
+                // Update UI icon immediately
+                const icon = this.querySelector('i');
+                if (newFeatured) {
+                    icon.className = 'fas fa-heart text-red-500';
+                } else {
+                    icon.className = 'far fa-heart text-gray-400';
+                }
+                // Update local data
+                category.featured = newFeatured;
+
+                // Send update request
+                fetch(`${BASE_URL}admin/fetch/manageProductCategories/updateFeatured`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: categoryId,
+                        featured: newFeatured
+                    })
+                })
+                    .then(response => {
+                        if (response.status === 401) {
+                            showSessionExpiredModal();
+                            throw new Error('Session expired');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!data.success) {
+                            // revert UI and data on error
+                            category.featured = oldFeatured;
+                            if (oldFeatured) {
+                                icon.className = 'fas fa-heart text-red-500';
+                            } else {
+                                icon.className = 'far fa-heart text-gray-400';
+                            }
+                            showErrorNotification(data.message || 'Failed to update featured');
+                        }
+                    })
+                    .catch(err => {
+                        if (err.message !== 'Session expired') {
+                            // revert UI and data on error
+                            category.featured = oldFeatured;
+                            if (oldFeatured) {
+                                icon.className = 'fas fa-heart text-red-500';
+                            } else {
+                                icon.className = 'far fa-heart text-gray-400';
+                            }
+                            showErrorNotification('Failed to update featured. Try again.');
+                        }
+                    });
             });
         });
     }
