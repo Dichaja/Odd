@@ -4,7 +4,7 @@ $pageTitle = 'User Management';
 $activeNav = 'users';
 
 if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
-    header('Location: ' . BASE_URL . 'login/login.php');
+    header('Location: ' . BASE_URL);
     exit;
 }
 

@@ -10,7 +10,7 @@ if (
     !isset($_SESSION['user']['is_admin']) ||
     !$_SESSION['user']['is_admin']
 ) {
-    header('Location: ' . BASE_URL . 'login/login.php');
+    header('Location: ' . BASE_URL);
     exit;
 }
 
