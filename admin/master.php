@@ -220,32 +220,56 @@ $menuItems = [
                         <!-- SSE‐powered Notifications -->
                         <div x-data="notifComponent()" x-init="init()" class="relative mr-2">
                             <button @click="toggle" class="relative w-10 h-10 flex items-center justify-center text-gray-500
-                   hover:text-primary rounded-lg hover:bg-gray-50">
+                                    hover:text-primary rounded-lg hover:bg-gray-50">
                                 <i class="fas fa-bell text-xl"></i>
                                 <span x-show="count > 0" x-text="count" class="absolute -top-1 -right-1 text-[10px] font-semibold text-white
-                     bg-primary rounded-full h-4 w-4 grid place-items-center">
+                                    bg-primary rounded-full h-4 w-4 grid place-items-center">
                                 </span>
                             </button>
 
                             <div x-show="open" @click.away="open = false" x-transition class="fixed top-14 left-2 right-2 w-auto max-w-full
-                sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2
-                sm:w-80 sm:max-w-none
-                bg-white rounded-lg shadow-lg border border-gray-100
-                z-50 max-h-96 overflow-auto">
+                                sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2
+                                sm:w-80 sm:max-w-none
+                                bg-white rounded-lg shadow-lg border border-gray-100
+                                z-50 max-h-96 overflow-auto">
+                                <!-- Bulk action toolbar -->
+                                <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+                                    <div class="flex items-center gap-2">
+                                        <input type="checkbox" id="selectAll" @change="selectAll($event)"
+                                            class="h-4 w-4 text-primary border-gray-300 rounded">
+                                        <label for="selectAll" class="text-xs text-gray-600">Select All</label>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button @click="markBulkSeen"
+                                            class="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition">
+                                            Mark Read
+                                        </button>
+                                        <button @click="dismissBulk"
+                                            class="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-opacity-90 transition">
+                                            Dismiss
+                                        </button>
+                                    </div>
+                                </div>
                                 <template x-for="note in notes" :key="note.target_id">
                                     <div :class="note.is_seen == 0 ? 'bg-primary/5' : 'bg-white'"
-                                        class="relative group border-b last:border-none">
-                                        <a :href="note.link_url || '#'" class="block px-4 py-3"
-                                            @click.prevent="handleClick(note)">
-                                            <p class="text-sm font-medium" x-text="note.title"></p>
-                                            <p class="text-xs mt-1"
-                                                :class="note.is_seen == 0 ? 'text-secondary' : 'text-gray-500'"
-                                                x-text="note.message"></p>
-                                            <span class="text-[10px] text-gray-400"
-                                                x-text="formatDate(note.created_at)"></span>
-                                        </a>
+                                        class="relative group border-b last:border-none flex items-start">
+                                        <div class="px-3 py-3">
+                                            <input type="checkbox" :value="note.target_id" x-model="selected"
+                                                class="h-4 w-4 text-primary border-gray-300 rounded">
+                                        </div>
+                                        <div class="flex-1">
+                                            <a :href="note.link_url || '#'" class="block px-0 py-3"
+                                                @click.prevent="handleClick(note)">
+                                                <p class="text-sm font-medium" x-text="note.title"></p>
+                                                <p class="text-xs mt-1"
+                                                    :class="note.is_seen == 0 ? 'text-secondary' : 'text-gray-500'"
+                                                    x-text="note.message"></p>
+                                                <span class="text-[10px] text-gray-400"
+                                                    x-text="formatDate(note.created_at)"></span>
+                                            </a>
+                                        </div>
                                         <button @click.stop="dismiss(note.target_id)" class="absolute top-2 right-2 text-gray-300 hover:text-primary
-                               opacity-0 group-hover:opacity-100 transition">
+                                            opacity-0 group-hover:opacity-100 transition">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -342,12 +366,13 @@ $menuItems = [
                 .catch(() => alert('Error during logout. Try again.'));
         }
 
-        // Alpine SSE‐powered notification component
+        // Alpine SSE‐powered notification component with persistent selections
         function notifComponent() {
             return {
                 open: false,
                 notes: [],
                 count: 0,
+                selected: [],
                 evtSource: null,
 
                 toggle() {
@@ -359,8 +384,18 @@ $menuItems = [
                     this.evtSource.onmessage = e => {
                         try {
                             const data = JSON.parse(e.data);
+                            // Preserve selections: keep only those IDs still present
+                            const newIds = data.map(n => n.target_id);
+                            this.selected = this.selected.filter(id => newIds.includes(id));
+
                             this.notes = data;
                             this.count = this.notes.filter(n => n.is_seen == 0).length;
+
+                            // Update "Select All" checkbox state
+                            const selectAllBox = document.getElementById('selectAll');
+                            if (selectAllBox) {
+                                selectAllBox.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                            }
                         } catch (err) {
                             console.error('SSE parse error', err);
                         }
@@ -370,11 +405,46 @@ $menuItems = [
                     };
                 },
 
+                selectAll(event) {
+                    if (event.target.checked) {
+                        this.selected = this.notes.map(n => n.target_id);
+                    } else {
+                        this.selected = [];
+                    }
+                },
+
                 markSeenReq(id) {
+                    const params = new URLSearchParams();
+                    params.append('action', 'markSeen');
+                    params.append('target_id', id);
                     fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({ action: 'markSeen', target_id: id })
+                        body: params
+                    }).then(() => {
+                        const note = this.notes.find(n => n.target_id === id);
+                        if (note) note.is_seen = 1;
+                        this.count = this.notes.filter(n => n.is_seen == 0).length;
+                    });
+                },
+
+                markBulkSeen() {
+                    if (this.selected.length === 0) return;
+                    const params = new URLSearchParams();
+                    params.append('action', 'markSeen');
+                    this.selected.forEach(id => params.append('target_id[]', id));
+                    fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    }).then(() => {
+                        this.notes.forEach(n => {
+                            if (this.selected.includes(n.target_id)) n.is_seen = 1;
+                        });
+                        this.count = this.notes.filter(n => n.is_seen == 0).length;
+                        this.selected = [];
+                        const selectAllBox = document.getElementById('selectAll');
+                        if (selectAllBox) selectAllBox.checked = false;
                     });
                 },
 
@@ -384,13 +454,38 @@ $menuItems = [
                 },
 
                 dismiss(id) {
+                    const params = new URLSearchParams();
+                    params.append('action', 'dismiss');
+                    params.append('target_id', id);
                     fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({ action: 'dismiss', target_id: id })
+                        body: params
+                    }).then(() => {
+                        this.notes = this.notes.filter(n => n.target_id !== id);
+                        this.count = this.notes.filter(n => n.is_seen == 0).length;
+                        this.selected = this.selected.filter(sid => sid !== id);
+                        const selectAllBox = document.getElementById('selectAll');
+                        if (selectAllBox) selectAllBox.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
                     });
-                    this.notes = this.notes.filter(n => n.target_id !== id);
-                    this.count = this.notes.filter(n => n.is_seen == 0).length;
+                },
+
+                dismissBulk() {
+                    if (this.selected.length === 0) return;
+                    const params = new URLSearchParams();
+                    params.append('action', 'dismiss');
+                    this.selected.forEach(id => params.append('target_id[]', id));
+                    fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    }).then(() => {
+                        this.notes = this.notes.filter(n => !this.selected.includes(n.target_id));
+                        this.count = this.notes.filter(n => n.is_seen == 0).length;
+                        this.selected = [];
+                        const selectAllBox = document.getElementById('selectAll');
+                        if (selectAllBox) selectAllBox.checked = false;
+                    });
                 },
 
                 formatDate(ts) {

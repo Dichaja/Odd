@@ -125,19 +125,55 @@ class NotificationService
         return $st->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function markSeen(string $targetId): void
+    /**
+     * Mark one or multiple notification_targets as seen.
+     *
+     * @param string|array $targetIds A single target ID or an array of target IDs.
+     */
+    public function markSeen($targetIds): void
     {
         $now = (new DateTime())->format('Y-m-d H:i:s');
-        $this->db->prepare(
-            "UPDATE notification_targets SET is_seen=1, seen_at=?, updated_at=? WHERE id=?"
-        )->execute([$now, $now, $targetId]);
+
+        if (is_array($targetIds)) {
+            // Bulk update: build placeholders and bind parameters
+            $placeholders = implode(',', array_fill(0, count($targetIds), '?'));
+            $params = array_merge([$now, $now], $targetIds);
+            $sql = "UPDATE notification_targets
+                    SET is_seen = 1, seen_at = ?, updated_at = ?
+                    WHERE id IN ($placeholders)";
+            $this->db->prepare($sql)->execute($params);
+        } else {
+            // Single ID
+            $sql = "UPDATE notification_targets
+                    SET is_seen = 1, seen_at = ?, updated_at = ?
+                    WHERE id = ?";
+            $this->db->prepare($sql)->execute([$now, $now, $targetIds]);
+        }
     }
 
-    public function dismiss(string $targetId): void
+    /**
+     * Dismiss one or multiple notification_targets.
+     *
+     * @param string|array $targetIds A single target ID or an array of target IDs.
+     */
+    public function dismiss($targetIds): void
     {
         $now = (new DateTime())->format('Y-m-d H:i:s');
-        $this->db->prepare(
-            "UPDATE notification_targets SET is_dismissed=1, updated_at=? WHERE id=?"
-        )->execute([$now, $targetId]);
+
+        if (is_array($targetIds)) {
+            // Bulk update: build placeholders and bind parameters
+            $placeholders = implode(',', array_fill(0, count($targetIds), '?'));
+            $params = array_merge([$now], $targetIds);
+            $sql = "UPDATE notification_targets
+                    SET is_dismissed = 1, updated_at = ?
+                    WHERE id IN ($placeholders)";
+            $this->db->prepare($sql)->execute($params);
+        } else {
+            // Single ID
+            $sql = "UPDATE notification_targets
+                    SET is_dismissed = 1, updated_at = ?
+                    WHERE id = ?";
+            $this->db->prepare($sql)->execute([$now, $targetIds]);
+        }
     }
 }

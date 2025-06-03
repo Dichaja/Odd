@@ -62,9 +62,11 @@ switch ($action) {
             echo json_encode(['status' => 'error', 'message' => 'Method Not Allowed']);
             exit;
         }
-        $targetId = $_POST['target_id'] ?? '';
-        if ($targetId) {
-            $ns->markSeen($targetId);
+        // Accept either a single 'target_id' (string) or multiple 'target_id' as an array
+        $targetIds = $_POST['target_id'] ?? null;
+
+        if ($targetIds) {
+            $ns->markSeen($targetIds);
         }
         echo json_encode(['status' => 'success']);
         break;
@@ -75,9 +77,11 @@ switch ($action) {
             echo json_encode(['status' => 'error', 'message' => 'Method Not Allowed']);
             exit;
         }
-        $targetId = $_POST['target_id'] ?? '';
-        if ($targetId) {
-            $ns->dismiss($targetId);
+        // Accept either a single 'target_id' (string) or multiple 'target_id' as an array
+        $targetIds = $_POST['target_id'] ?? null;
+
+        if ($targetIds) {
+            $ns->dismiss($targetIds);
         }
         echo json_encode(['status' => 'success']);
         break;
