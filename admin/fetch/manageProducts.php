@@ -125,7 +125,7 @@ function getProducts(PDO $pdo)
     echo json_encode(['success' => true, 'products' => $products]);
 }
 
-function getProduct(PDO $pdo)
+function getProduct(PDO $pdo) 
 {
     if (!isset($_GET['id'])) {
         http_response_code(400);

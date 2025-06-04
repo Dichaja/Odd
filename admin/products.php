@@ -1121,7 +1121,7 @@ ob_start();
         });
     }
 
-    function createProductCard(prod) {
+    function createProductCard(prod) { 
         const card = document.createElement('div');
         card.className = 'product-item bg-white/70 rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col';
 
