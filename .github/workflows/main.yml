@@ -17,7 +17,7 @@ jobs:
     - name: 📤 FTP Deploy
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        server: ftp.zzimbaonline.com
+        server: ftp.temug.com
         username: zzimba@newzzimba.zzimbaonline.com
         password: Syscontrol.1##
         port: 21
