@@ -166,7 +166,7 @@ ob_start();
     </div>
 
     <div class="content-section">
-        <div class="p-6">
+        <div class="px-6">
             <a href="#" target="_blank" class="block">
                 <img src="https://placehold.co/1200x200/f0f0f0/808080?text=Vendor+Banner+Here" alt="Vendor Banner"
                     class="w-full h-auto rounded-lg">

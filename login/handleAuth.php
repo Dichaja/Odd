@@ -422,14 +422,13 @@ try {
             }
 
             if (trim($user['password']) === '') {
-                $otp = createOTP('email', $user['email'], $pdo);
-                if (!sendLoginOTP($user['email'], $otp)) {
-                    http_response_code(500);
-                    echo json_encode(['success' => false, 'message' => 'Failed to send OTP. Please try again.']);
-                    break;
-                }
                 http_response_code(401);
-                echo json_encode(['success' => false, 'errorCode' => 'EMPTY_PASSWORD', 'email' => $user['email'], 'phone' => $user['phone']]);
+                echo json_encode([
+                    'success' => false,
+                    'errorCode' => 'EMPTY_PASSWORD',
+                    'email' => $user['email'],
+                    'phone' => $user['phone']
+                ]);
                 break;
             }
 

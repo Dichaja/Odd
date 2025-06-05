@@ -127,16 +127,18 @@ function getStepTitle($mode, $step)
                 <p class="mb-4 text-sm text-gray-600">Please select how you would like to verify your account ownership:
                 </p>
                 <div class="space-y-3">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="verify_method" value="email"
+                    <label id="empty-password-email-option"
+                        class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input id="empty-password-email" type="radio" name="verify_method" value="email"
                             class="mr-3 text-primary focus:ring-primary" checked>
                         <div>
                             <p class="font-medium">Email</p>
                             <p class="text-sm text-gray-500">Receive a verification code via email</p>
                         </div>
                     </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="verify_method" value="phone"
+                    <label id="empty-password-phone-option"
+                        class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input id="empty-password-phone" type="radio" name="verify_method" value="phone"
                             class="mr-3 text-primary focus:ring-primary">
                         <div>
                             <p class="font-medium">Phone</p>
@@ -145,10 +147,12 @@ function getStepTitle($mode, $step)
                     </label>
                 </div>
             </div>
-            <button type="button" onclick="handleEmptyPasswordVerification()"
+            <div id="empty-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <button id="empty-password-continue" type="button"
                 class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
                 Continue
             </button>
+            <div id="empty-password-loading" class="text-sm text-gray-500 mt-2 hidden">Sending OTP...</div>
         </form>
         <p class="mt-4 text-center text-sm text-gray-600">Need assistance?
             <a href="javascript:void(0)" onclick="showLoginStep('username')"
@@ -713,7 +717,6 @@ function getStepTitle($mode, $step)
         hideAllForms();
         const opt = document.getElementById('forgot-password-options');
         if (opt) {
-            // Display the username the user entered
             document.getElementById('forgot-username-display').textContent = loginData.identifier || '';
             opt.style.display = 'block';
             setTimeout(() => {
@@ -724,16 +727,70 @@ function getStepTitle($mode, $step)
 
     function showEmptyPasswordOptions() {
         hideAllForms();
-        const opt = document.getElementById('empty-password-options');
-        if (opt) {
-            // Display the username the user entered
-            document.getElementById('empty-username-display').textContent = loginData.identifier || '';
-            opt.style.display = 'block';
-            setTimeout(() => {
-                opt.classList.add('active');
-            }, 10);
+        const container = document.getElementById('empty-password-options');
+        container.style.display = 'block';
+        setTimeout(() => {
+            container.classList.add('active');
+        }, 10);
+
+        const emailOption = document.getElementById('empty-password-email-option');
+        const phoneOption = document.getElementById('empty-password-phone-option');
+        const emailInput = document.getElementById('empty-password-email');
+        const phoneInput = document.getElementById('empty-password-phone');
+
+        const hasEmail = !!loginData.email;
+        const hasPhone = !!loginData.phone;
+
+        if (hasEmail && hasPhone) {
+            emailOption.style.display = 'flex';
+            phoneOption.style.display = 'flex';
+            emailInput.checked = true;
+        } else if (hasEmail) {
+            emailOption.style.display = 'flex';
+            phoneOption.style.display = 'none';
+            emailInput.checked = true;
+        } else if (hasPhone) {
+            phoneOption.style.display = 'flex';
+            emailOption.style.display = 'none';
+            phoneInput.checked = true;
         }
+
+        document.getElementById('empty-username-display').textContent = loginData.identifier || '';
     }
+
+    function showLoading(elementId) {
+        const el = document.getElementById(elementId);
+        if (el) el.classList.remove('hidden');
+    }
+
+    function hideLoading(elementId) {
+        const el = document.getElementById(elementId);
+        if (el) el.classList.add('hidden');
+    }
+
+    $(document).ready(function () {
+        const continueBtn = document.getElementById('empty-password-continue');
+        if (continueBtn) {
+            continueBtn.addEventListener('click', () => {
+                const method = document.getElementById('empty-password-email').checked ? 'email' : 'phone';
+                const identifier = method === 'email' ? loginData.email : loginData.phone;
+
+                if (!identifier) {
+                    showError('empty-password-error', 'No contact method available.');
+                    return;
+                }
+
+                hideError('empty-password-error');
+                showLoading('empty-password-loading');
+
+                if (method === 'email') {
+                    sendResetEmail(identifier);
+                } else {
+                    sendResetPhone(identifier);
+                }
+            });
+        }
+    });
 
     function handleForgotPasswordMethodSubmit() {
         const methodRadios = document.getElementsByName('reset_method');
@@ -818,13 +875,13 @@ function getStepTitle($mode, $step)
                     class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
                     data-otp-target="${target}">
                 <input type="text" maxlength="1"
-                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                    class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
                     data-otp-target="${target}">
                 <input type="text" maxlength="1"
-                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                    class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
                     data-otp-target="${target}">
                 <input type="text" maxlength="1"
-                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                    class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
                     data-otp-target="${target}">
             </div>
         `;
@@ -841,8 +898,7 @@ function getStepTitle($mode, $step)
         let iv = setInterval(() => {
             r--;
             if (te) {
-                const m = Math.floor(r / 60);
-                const s = r % 60;
+                const m = Math.floor(r / 60); const s = r % 60;
                 te.textContent = `(${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')})`;
             }
             if (r <= 0) {
@@ -855,7 +911,6 @@ function getStepTitle($mode, $step)
             }
         }, 1000);
 
-        // Clear previous timer if exists
         if (type === 'email-otp') {
             if (emailOTPTimer) clearInterval(emailOTPTimer);
             emailOTPTimer = iv;
@@ -1031,11 +1086,7 @@ function getStepTitle($mode, $step)
         }
 
         const endpoint = resetMethod === 'email' ? 'sendResetEmail' : 'sendResetPhone';
-        const dataPayload = resetMethod === 'email' ? {
-            email: forgotPasswordData.contact
-        } : {
-            phone: forgotPasswordData.contact
-        };
+        const dataPayload = resetMethod === 'email' ? { email: forgotPasswordData.contact } : { phone: forgotPasswordData.contact };
 
         $.ajax({
             url: BASE_URL + 'auth/' + endpoint,
@@ -1079,9 +1130,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/checkUsername',
             type: 'POST',
-            data: JSON.stringify({
-                username: u
-            }),
+            data: JSON.stringify({ username: u }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1130,9 +1179,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/checkEmail',
             type: 'POST',
-            data: JSON.stringify({
-                email: e
-            }),
+            data: JSON.stringify({ email: e }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1142,9 +1189,7 @@ function getStepTitle($mode, $step)
                     $.ajax({
                         url: BASE_URL + 'auth/sendEmailOTP',
                         type: 'POST',
-                        data: JSON.stringify({
-                            email: e
-                        }),
+                        data: JSON.stringify({ email: e }),
                         contentType: 'application/json',
                         dataType: 'json',
                         success: function (otpResponse) {
@@ -1205,10 +1250,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/verifyEmailOTP',
             type: 'POST',
-            data: JSON.stringify({
-                email: registrationData.email,
-                otp: o
-            }),
+            data: JSON.stringify({ email: registrationData.email, otp: o }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1251,9 +1293,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/checkPhone',
             type: 'POST',
-            data: JSON.stringify({
-                phone: pn
-            }),
+            data: JSON.stringify({ phone: pn }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1265,9 +1305,7 @@ function getStepTitle($mode, $step)
                     $.ajax({
                         url: BASE_URL + 'auth/sendPhoneOTP',
                         type: 'POST',
-                        data: JSON.stringify({
-                            phone: pn
-                        }),
+                        data: JSON.stringify({ phone: pn }),
                         contentType: 'application/json',
                         dataType: 'json',
                         success: function (otpResponse) {
@@ -1322,10 +1360,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/verifyPhoneOTP',
             type: 'POST',
-            data: JSON.stringify({
-                phone: registrationData.phone,
-                otp: o
-            }),
+            data: JSON.stringify({ phone: registrationData.phone, otp: o }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1432,10 +1467,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/sendResetEmail',
             type: 'POST',
-            data: JSON.stringify({
-                username: loginData.identifier,
-                email: e
-            }),
+            data: JSON.stringify({ username: loginData.identifier, email: e }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1488,10 +1520,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/sendResetPhone',
             type: 'POST',
-            data: JSON.stringify({
-                username: loginData.identifier,
-                phone: pn
-            }),
+            data: JSON.stringify({ username: loginData.identifier, phone: pn }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1542,11 +1571,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/verifyResetOTP',
             type: 'POST',
-            data: JSON.stringify({
-                contact: forgotPasswordData.contact,
-                contactType: resetMethod,
-                otp: o
-            }),
+            data: JSON.stringify({ contact: forgotPasswordData.contact, contactType: resetMethod, otp: o }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1674,15 +1699,11 @@ function getStepTitle($mode, $step)
     });
 
     $(document).on('click', '#resend-email-otp', function () {
-        resendOtp('sendEmailOTP', {
-            email: registrationData.email
-        }, 'email-otp', 'Verification code resent to your email', 'Failed to resend code. Please try again.');
+        resendOtp('sendEmailOTP', { email: registrationData.email }, 'email-otp', 'Verification code resent to your email', 'Failed to resend code. Please try again.');
     });
 
     $(document).on('click', '#resend-phone-otp', function () {
-        resendOtp('sendPhoneOTP', {
-            phone: registrationData.phone
-        }, 'phone-otp', 'Verification code resent to your phone', 'Failed to resend code. Please try again.');
+        resendOtp('sendPhoneOTP', { phone: registrationData.phone }, 'phone-otp', 'Verification code resent to your phone', 'Failed to resend code. Please try again.');
     });
 
     $(document).on('click', '#resend-reset-otp', function () {
@@ -1690,11 +1711,7 @@ function getStepTitle($mode, $step)
             resetMethod = 'email';
         }
         const endpoint = resetMethod === 'email' ? 'sendResetEmail' : 'sendResetPhone';
-        const dataPayload = resetMethod === 'email' ? {
-            email: forgotPasswordData.contact
-        } : {
-            phone: forgotPasswordData.contact
-        };
+        const dataPayload = resetMethod === 'email' ? { email: forgotPasswordData.contact } : { phone: forgotPasswordData.contact };
         resendOtp(endpoint, dataPayload, 'reset-otp', 'Verification code resent', 'Failed to resend code. Please try again.');
     });
 
@@ -1725,74 +1742,62 @@ function getStepTitle($mode, $step)
             return;
         }
 
-        // Calculate strength
         let strength = 0;
         let feedback = [];
 
-        // Length check
         if (password.length >= 8) {
             strength += 25;
         } else {
             feedback.push('at least 8 characters');
         }
 
-        // Uppercase check
         if (/[A-Z]/.test(password)) {
             strength += 25;
         } else {
             feedback.push('uppercase letter');
         }
 
-        // Lowercase check
         if (/[a-z]/.test(password)) {
             strength += 25;
         } else {
             feedback.push('lowercase letter');
         }
 
-        // Number check
         if (/[0-9]/.test(password)) {
             strength += 12.5;
         } else {
             feedback.push('number');
         }
 
-        // Special character check
         if (/[^A-Za-z0-9]/.test(password)) {
             strength += 12.5;
         } else {
             feedback.push('special character');
         }
 
-        // Update meter
         meter.style.width = strength + '%';
 
-        // Set color and text based on strength
         if (strength < 40) {
-            meter.style.backgroundColor = '#f44336'; // Red
+            meter.style.backgroundColor = '#f44336';
             text.textContent = 'Weak password';
         } else if (strength < 70) {
-            meter.style.backgroundColor = '#ff9800'; // Orange
+            meter.style.backgroundColor = '#ff9800';
             text.textContent = 'Moderate password';
         } else {
-            meter.style.backgroundColor = '#4caf50'; // Green
+            meter.style.backgroundColor = '#4caf50';
             text.textContent = 'Strong password';
         }
 
-        // Add missing requirements if not strong
         if (feedback.length > 0) {
             text.textContent += ' - Add ' + feedback.join(', ');
         }
     }
 
-    // Initialize phone input fields when document is ready
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize OTP input containers
         renderOtpInputs('email-otp');
         renderOtpInputs('phone-otp');
         renderOtpInputs('reset-otp');
 
-        // Initialize phone input for registration
         const phoneInput = document.querySelector("#phone");
         if (phoneInput) {
             window.intlTelInput(phoneInput, {
@@ -1809,7 +1814,6 @@ function getStepTitle($mode, $step)
             });
         }
 
-        // Initialize phone input for forgot password
         const forgotPhoneInput = document.querySelector("#forgot-phone");
         if (forgotPhoneInput) {
             window.intlTelInput(forgotPhoneInput, {
