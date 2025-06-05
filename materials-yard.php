@@ -330,13 +330,6 @@ ob_start();
     .dropdown-item:last-child {
         border-bottom: none;
     }
-
-    @media (max-width: 768px) {
-        .product-details-btn {
-            opacity: 1;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-    }
 </style>
 
 <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden">
