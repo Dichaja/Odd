@@ -279,7 +279,7 @@ $menuItems = [
         </aside>
 
         <!-- Main -->
-        <div class="flex-1 lg:ml-64">
+        <div class="flex-1 lg:ml-64 flex flex-col justify-between">
 
             <!-- Header -->
             <header class="user-header sticky top-0 z-40 border-b border-gray-100">
@@ -400,7 +400,7 @@ $menuItems = [
             </header>
 
             <!-- Content -->
-            <main class="main-content-area p-6">
+            <main class="main-content-area p-6 h-[100%]">
                 <?= $mainContent ?? '' ?>
             </main>
             <footer class="bg-white border-t border-gray-100 py-4 px-6 text-center text-sm text-gray-500">
