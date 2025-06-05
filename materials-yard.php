@@ -1,556 +1,649 @@
 <?php
-$pageTitle = "Materials Yard";
-$activeNav = "materials";
 require_once __DIR__ . '/config/config.php';
 
-// Define categories and products data in PHP
-$categoriesData = [
-    [
-        'id' => 1,
-        'name' => "Branded Steel Materials",
-        'icon' => 'fas fa-hammer',
-        'products' => [
-            [
-                'name' => "Uganda Baati Binding wire",
-                'views' => 67,
-                'price' => 75000,
-                'unit' => "Per Roll",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Uganda+Wire"
-            ],
-            [
-                'name' => "Steel and Tube Ring bars",
-                'views' => 51,
-                'price' => 25000,
-                'unit' => "Per Rebar",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Steel+Ring"
-            ],
-            [
-                'name' => "SMILE Hoop iron Bundle",
-                'views' => 94,
-                'price' => 145000,
-                'unit' => "Per Bundle",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Hoop+Iron"
-            ]
-        ]
-    ],
-    [
-        'id' => 2,
-        'name' => "Building Glass Materials",
-        'icon' => 'fas fa-glass-martini-alt',
-        'products' => [
-            [
-                'name' => "GENERIC Blue One way Glass",
-                'views' => 94,
-                'price' => 175000,
-                'unit' => "Per Sheet",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Blue+Glass"
-            ],
-            [
-                'name' => "GENERIC one way Brown Glass",
-                'views' => 69,
-                'price' => 120000,
-                'unit' => "Per Sheet",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Brown+Glass"
-            ],
-            [
-                'name' => "Perfect Putty glass seal",
-                'views' => 41,
-                'price' => 80000,
-                'unit' => "Per Can",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Putty+Seal"
-            ]
-        ]
-    ],
-    [
-        'id' => 3,
-        'name' => "Utility Supplies",
-        'icon' => 'fas fa-tools',
-        'products' => [
-            [
-                'name' => "Water Hose Pipe",
-                'views' => 23,
-                'price' => 45000,
-                'unit' => "Per Roll",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Hose+Pipe"
-            ],
-            [
-                'name' => "Generic PVC Pipes",
-                'views' => 12,
-                'price' => 55000,
-                'unit' => "Per Bundle",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=PVC+Pipes"
-            ],
-            [
-                'name' => "Dr Fixit Liquid",
-                'views' => 30,
-                'price' => 60000,
-                'unit' => "Per Container",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Fixit+Liquid"
-            ]
-        ]
-    ],
-    [
-        'id' => 4,
-        'name' => "Construction Tools",
-        'icon' => 'fas fa-wrench',
-        'products' => [
-            [
-                'name' => "Ladder 10ft",
-                'views' => 65,
-                'price' => 85000,
-                'unit' => "Per Piece",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Ladder"
-            ],
-            [
-                'name' => "Hammer Heavy Duty",
-                'views' => 40,
-                'price' => 25000,
-                'unit' => "Each",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Hammer"
-            ],
-            [
-                'name' => "Wheelbarrow",
-                'views' => 55,
-                'price' => 78000,
-                'unit' => "Each",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Wheelbarrow"
-            ]
-        ]
-    ],
-    [
-        'id' => 5,
-        'name' => "Plumbing Implements",
-        'icon' => 'fas fa-faucet',
-        'products' => [
-            [
-                'name' => "Copper Taps",
-                'views' => 22,
-                'price' => 40000,
-                'unit' => "Each",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Copper+Taps"
-            ],
-            [
-                'name' => "Drain Pipe Filter",
-                'views' => 10,
-                'price' => 15000,
-                'unit' => "Each",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Drain+Filter"
-            ],
-            [
-                'name' => "Stop Valve",
-                'views' => 38,
-                'price' => 29000,
-                'unit' => "Each",
-                'image' => "https://dummyimage.com/200x150/e3e3e3/ffffff&text=Stop+Valve"
-            ]
-        ]
-    ]
-];
+function getProductImage($productId)
+{
+    $productDir = __DIR__ . '/img/products/' . $productId . '/';
+    $jsonFile = $productDir . 'images.json';
 
-// Calculate total products
-$totalProducts = 0;
-foreach ($categoriesData as $category) {
-    $totalProducts += count($category['products']);
+    if (file_exists($jsonFile)) {
+        $jsonContent = file_get_contents($jsonFile);
+        $imageData = json_decode($jsonContent, true);
+
+        if (isset($imageData['images']) && !empty($imageData['images'])) {
+            $firstImage = $imageData['images'][0];
+            $imagePath = $productDir . $firstImage;
+
+            if (file_exists($imagePath)) {
+                return BASE_URL . 'img/products/' . $productId . '/' . $firstImage;
+            }
+        }
+    }
+
+    return null;
+}
+
+function getCategoryImage($categoryId)
+{
+    $categoryDir = __DIR__ . '/img/product-categories/' . $categoryId . '/';
+
+    if (is_dir($categoryDir)) {
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $files = scandir($categoryDir);
+
+        foreach ($files as $file) {
+            if ($file !== '.' && $file !== '..') {
+                $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (in_array($extension, $allowedExtensions)) {
+                    return BASE_URL . 'img/product-categories/' . $categoryId . '/' . $file;
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+$categoryId = isset($_GET['categoryId']) ? $_GET['categoryId'] : '';
+$pageTitle = "Building Materials";
+$activeNav = "materials";
+
+if (!empty($categoryId)) {
+    $stmt = $pdo->prepare("
+        SELECT id, name, description, meta_title, meta_description, featured
+        FROM product_categories 
+        WHERE id = ? AND status = 'active'
+    ");
+    $stmt->execute([$categoryId]);
+    $category = $stmt->fetch();
+
+    if ($category) {
+        $pageTitle = $category['name'];
+    } else {
+        $categoryId = '';
+    }
+}
+
+$categoryImageUrl = null;
+if (!empty($categoryId) && isset($category)) {
+    $categoryImageUrl = getCategoryImage($categoryId);
+}
+
+if (!$categoryImageUrl) {
+    $categoryImageUrl = "https://placehold.co/1920x640/334155/f8fafc?text=" . urlencode(!empty($categoryId) && isset($category) ? $category['name'] : 'Building Materials');
+}
+
+$allCategoriesStmt = $pdo->prepare("
+    SELECT id, name, description
+    FROM product_categories 
+    WHERE status = 'active'
+    ORDER BY CASE WHEN id = ? THEN 0 ELSE 1 END, name ASC
+");
+$allCategoriesStmt->execute([$categoryId]);
+$allCategories = $allCategoriesStmt->fetchAll();
+
+if (!empty($categoryId)) {
+    $productsStmt = $pdo->prepare("
+        SELECT p.id, p.title, p.description, p.views, 
+               (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image
+        FROM products p
+        WHERE p.category_id = ? AND p.status = 'published'
+        ORDER BY p.featured DESC, p.views DESC
+        
+    ");
+    $productsStmt->execute([$categoryId]);
+} else {
+    $productsStmt = $pdo->prepare("
+        SELECT p.id, p.title, p.description, p.views, 
+               (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image
+        FROM products p
+        WHERE p.status = 'published'
+        ORDER BY p.featured DESC, p.views DESC
+        
+    ");
+    $productsStmt->execute();
+}
+
+$products = [];
+while ($row = $productsStmt->fetch()) {
+    $productImageUrl = getProductImage($row['id']);
+
+    if ($productImageUrl) {
+        $row['primary_image'] = $productImageUrl;
+    } elseif (empty($row['primary_image'])) {
+        $row['primary_image'] = "https://placehold.co/600x400/e2e8f0/1e293b?text=" . urlencode($row['title']);
+    }
+
+    $products[] = $row;
 }
 
 ob_start();
 ?>
 
 <style>
-    .skeleton-item {
-        background-color: #e2e8f0;
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-clamp: 2;
     }
 
-    .skeleton-animate {
-        animation: pulse 1.5s ease-in-out infinite;
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-clamp: 3;
     }
 
-    @keyframes pulse {
-        0% {
-            opacity: 1;
-        }
-
-        50% {
-            opacity: 0.4;
-        }
-
-        100% {
-            opacity: 1;
-        }
+    .share-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
-    .product-card {
-        transition: all 0.3s ease;
+    .share-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #4B5563;
     }
 
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    .share-buttons {
+        display: flex;
+        gap: 0.5rem;
     }
 
-    .category-dropdown {
-        display: none;
-    }
-
-    @media (max-width: 768px) {
-        .category-sidebar {
-            display: none;
-        }
-
-        .category-dropdown {
-            display: block;
-        }
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .fade-in {
-        animation: fadeIn 0.5s ease-out forwards;
-    }
-
-    .category-item {
-        border-left: 5px solid #e53e3e;
-    }
-
-    .category-badge {
+    .share-button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background-color: #f3f4f6;
-        color: #374151;
+        width: 1.5rem;
+        height: 1.5rem;
         border-radius: 9999px;
-        padding: 0.25rem 0.75rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        transition: all 0.2s;
+        color: #DC2626;
+        border: 1.5px solid #DC2626;
+        background-color: transparent;
+        transition: all 0.2s ease;
+        position: relative;
     }
 
-    .category-badge:hover {
-        background-color: #e53e3e;
+    .share-button .fa-solid,
+    .share-button .fa-brands {
+        font-size: 10px !important;
+    }
+
+    .share-button:hover {
+        background-color: rgba(220, 38, 38, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .tooltip {
+        position: absolute;
+        bottom: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #1F2937;
         color: white;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s, visibility 0.2s;
+        z-index: 10;
     }
 
-    .view-counter {
+    .tooltip::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        width: 8px;
+        height: 8px;
+        background-color: #1F2937;
+    }
+
+    .share-button:hover .tooltip {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .product-card {
+        position: relative;
+        border: 1px solid #E5E7EB;
+        border-radius: 0.75rem;
+        background-color: #ffffff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .product-details-btn {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7);
         display: flex;
         align-items: center;
-        gap: 0.25rem;
-        color: #6b7280;
-        font-size: 0.875rem;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
 
-    .category-sidebar-item {
-        transition: all 0.2s;
-        border-left: 3px solid transparent;
+    .product-card:hover .product-details-btn {
+        opacity: 1;
     }
 
-    .category-sidebar-item:hover,
-    .category-sidebar-item.active {
-        border-left-color: #e53e3e;
-        background-color: #f9fafb;
+    .category-item {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .category-item:hover {
+        background-color: #F9FAFB;
+    }
+
+    .category-item.active {
+        background-color: #FEF2F2;
+        color: #DC2626;
+    }
+
+    .category-item.active:hover {
+        background-color: #FEE2E2;
+    }
+
+    .category-item.active .category-text {
+        border-bottom: 2px solid #DC2626;
+        padding-bottom: 1px;
+    }
+
+    .category-item:hover .category-text {
+        border-bottom: 2px solid #E5E7EB;
+        padding-bottom: 1px;
+    }
+
+    .category-item.active:hover .category-text {
+        border-bottom: 2px solid #DC2626;
+    }
+
+    .checkbox-custom {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #D1D5DB;
+        border-radius: 3px;
+        position: relative;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .checkbox-custom.checked {
+        background-color: #DC2626;
+        border-color: #DC2626;
+    }
+
+    .checkbox-custom.checked::after {
+        content: '✓';
+        position: absolute;
+        top: -2px;
+        left: 1px;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .mobile-search-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-top: none;
+        border-radius: 0 0 0.5rem 0.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 50;
+        display: none;
+    }
+
+    .mobile-search-dropdown.show {
+        display: block;
+    }
+
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border-bottom: 1px solid #F3F4F6;
+    }
+
+    .dropdown-item:hover {
+        background-color: #F9FAFB;
+    }
+
+    .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    @media (max-width: 768px) {
+        .product-details-btn {
+            opacity: 1;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
     }
 </style>
 
-<div class="breadcrumb-container relative bg-cover bg-center" style="background-image: url('https://dummyimage.com/1920x350/e3e3e3/ffffff&text=Materials+Yard')">
-    <div class="absolute inset-0 bg-black bg-opacity-50"></div>
-    <div class="container mx-auto px-4 py-10 relative z-10 text-white">
-        <h1 class="text-4xl md:text-5xl font-bold">Building Materials</h1>
-        <nav class="text-sm mt-4 space-x-2">
-            <a href="<?= BASE_URL ?>" class="hover:underline text-gray-200">Zzimba Online</a>
-            <span>/</span>
-            <span class="font-semibold">Building Materials</span>
-        </nav>
+<div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800 z-10"></div>
+    <img src="<?= $categoryImageUrl ?>"
+        alt="<?= htmlspecialchars(!empty($categoryId) && isset($category) ? $category['name'] : 'Building Materials') ?> Banner"
+        class="w-full h-full object-cover opacity-20">
+    <div class="container mx-auto px-4 absolute inset-0 flex flex-col justify-start pt-8 md:pt-12 z-20">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-xl md:text-3xl font-bold text-white mb-4">
+                    <?= htmlspecialchars(!empty($categoryId) && isset($category) ? $category['name'] : 'Building Materials') ?>
+                </h1>
+                <nav class="flex text-xs md:text-sm text-gray-300 overflow-hidden whitespace-nowrap">
+                    <a href="<?= BASE_URL ?>" class="hover:text-white transition-colors truncate max-w-[30%]">Zzimba
+                        Online</a>
+                    <span class="mx-2">/</span>
+                    <a href="<?= BASE_URL ?>materials-yard"
+                        class="hover:text-white transition-colors truncate max-w-[30%]">Building Materials</a>
+                    <?php if (!empty($categoryId) && isset($category)): ?>
+                        <span class="mx-2">/</span>
+                        <span
+                            class="text-white font-medium truncate max-w-[40%]"><?= htmlspecialchars($category['name']) ?></span>
+                    <?php endif; ?>
+                </nav>
+                <?php if (!empty($categoryId) && isset($category) && !empty($category['description'])): ?>
+                    <p class="text-gray-200 mt-2 line-clamp-3 max-w-2xl hidden md:block">
+                        <?= htmlspecialchars($category['description']) ?>
+                    </p>
+                <?php elseif (empty($categoryId)): ?>
+                    <p class="text-gray-200 mt-2 line-clamp-3 max-w-2xl hidden md:block">
+                        Discover a comprehensive range of high-quality building materials for all your construction needs.
+                        From foundation materials to finishing touches, find everything you need to bring your construction
+                        projects to life.
+                    </p>
+                <?php endif; ?>
+            </div>
+
+            <div class="share-container mt-4 md:mt-0 hidden md:flex">
+                <span class="share-label text-white">SHARE</span>
+                <div class="share-buttons">
+                    <button onclick="copyLink()" class="share-button">
+                        <i class="fa-solid fa-link"></i>
+                        <span class="tooltip">Copy link to clipboard</span>
+                    </button>
+                    <button onclick="shareOnWhatsApp()" class="share-button">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <span class="tooltip">Share on WhatsApp</span>
+                    </button>
+                    <button onclick="shareOnFacebook()" class="share-button">
+                        <i class="fa-brands fa-facebook-f"></i>
+                        <span class="tooltip">Share on Facebook</span>
+                    </button>
+                    <button onclick="shareOnTwitter()" class="share-button">
+                        <i class="fa-brands fa-x-twitter"></i>
+                        <span class="tooltip">Post on X</span>
+                    </button>
+                    <button onclick="shareOnLinkedIn()" class="share-button">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                        <span class="tooltip">Share on LinkedIn</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="container mx-auto px-4 py-12">
-    <div class="flex flex-col md:flex-row md:space-x-8">
-        <!-- Enhanced Category Sidebar -->
-        <aside class="category-sidebar md:w-1/4 w-full mb-8 md:mb-0">
-            <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-4">
-                    <h2 class="text-xl font-bold">Product Categories</h2>
-                    <p class="text-sm mt-1 text-white text-opacity-80">Browse our extensive collection</p>
-                </div>
-                <div class="p-4">
-                    <div class="relative">
-                        <input type="text" id="category-search" placeholder="Search categories..." class="w-full p-2 pl-8 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+<div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <div class="w-full lg:w-1/4 order-2 lg:order-1 hidden lg:block">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 sticky top-4">
+                <div class="p-4 border-b border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-800 mb-4">Categories</h2>
+
+                    <?php if (!empty($categoryId)): ?>
+                        <button onclick="clearSelection()"
+                            class="category-item flex items-center justify-between px-3 py-2 rounded-md mb-4 bg-gray-50 hover:bg-gray-100 w-full text-left">
+                            <span class="font-medium text-gray-600">
+                                <i class="fas fa-times-circle mr-2"></i> Clear Selection
+                            </span>
+                        </button>
+                    <?php endif; ?>
+
+                    <div class="relative mb-4">
+                        <input type="text" id="categorySearch" placeholder="Search categories..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent">
+                        <i class="fas fa-search absolute right-3 top-2.5 text-gray-400"></i>
                     </div>
                 </div>
-                <ul id="side-categories" class="divide-y">
-                    <!-- Categories will be populated here -->
-                </ul>
-                <div class="p-4 bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-gray-500">Total Products</span>
-                        <span class="text-sm font-bold text-red-600"><?= $totalProducts ?> items</span>
-                    </div>
+
+                <div class="p-4 max-h-[500px] overflow-y-auto">
+                    <?php foreach ($allCategories as $cat): ?>
+                        <a href="<?= BASE_URL ?>view/category/<?= $cat['id'] ?>"
+                            class="category-item flex items-center justify-between px-3 py-2 rounded-md mb-1 <?= ($cat['id'] === $categoryId) ? 'active' : '' ?>"
+                            data-category-name="<?= strtolower(htmlspecialchars($cat['name'])) ?>"
+                            title="<?= htmlspecialchars($cat['name']) ?>">
+                            <span class="category-text font-medium flex-1 truncate pr-3">
+                                <?= htmlspecialchars($cat['name']) ?>
+                            </span>
+                            <div class="checkbox-custom ml-2 <?= ($cat['id'] === $categoryId) ? 'checked' : '' ?>"></div>
+                        </a>
+                    <?php endforeach; ?>
                 </div>
             </div>
-        </aside>
-
-        <!-- Mobile Category Dropdown -->
-        <div class="category-dropdown w-full mb-8">
-            <select id="category-select" class="w-full p-3 border rounded-lg shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                <option value="all">All Categories</option>
-                <!-- Options will be populated here -->
-            </select>
         </div>
 
-        <!-- Main Content Area -->
-        <div class="md:w-3/4 w-full">
-            <!-- Loading Skeleton -->
-            <div id="loading-skeleton" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                <?php for ($i = 0; $i < 6; $i++) : ?>
-                    <div class="border p-4 rounded-lg shadow skeleton-item skeleton-animate h-80"></div>
-                <?php endfor; ?>
-            </div>
+        <div class="w-full lg:w-3/4 order-1 lg:order-2">
+            <div class="lg:hidden mb-6">
+                <div class="relative">
+                    <input type="text" id="mobileSearch"
+                        placeholder="<?= !empty($categoryId) && isset($category) ? 'Search categories...' : 'Search categories...' ?>"
+                        value="<?= !empty($categoryId) && isset($category) ? htmlspecialchars($category['name']) : '' ?>"
+                        class="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent bg-white">
 
-            <!-- Categories and Products -->
-            <div id="category-list" class="space-y-12 hidden">
-                <!-- Categories will be populated here -->
-            </div>
+                    <?php if (!empty($categoryId) && isset($category)): ?>
+                        <button onclick="clearSelection()" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    <?php else: ?>
+                        <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                    <?php endif; ?>
 
-            <!-- End of Content Message -->
-            <div id="end-of-content" class="text-center mt-12 hidden">
-                <div class="inline-block p-6 bg-gray-50 rounded-lg shadow-sm">
-                    <i class="fas fa-check-circle text-green-500 text-3xl mb-3"></i>
-                    <p class="text-gray-600 font-medium">You've seen all available categories</p>
-                    <p class="text-sm text-gray-500 mt-1">Need something specific? Contact our support team</p>
+                    <div id="mobileDropdown" class="mobile-search-dropdown">
+                        <?php foreach ($allCategories as $cat): ?>
+                            <div class="dropdown-item" data-category-id="<?= $cat['id'] ?>"
+                                data-category-name="<?= htmlspecialchars($cat['name']) ?>">
+                                <?= htmlspecialchars($cat['name']) ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4 md:p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="text-sm text-gray-500">
+                        <?= count($products) ?> products found
+                    </div>
+                </div>
+
+                <?php if (count($products) === 0): ?>
+                    <div class="text-center py-12">
+                        <div class="text-gray-400 mb-3">
+                            <i class="fas fa-box-open text-4xl"></i>
+                        </div>
+                        <p class="text-gray-600 font-medium">No products found</p>
+                        <p class="text-gray-500 text-sm mt-1">Try selecting a different category or check back later</p>
+                    </div>
+                <?php else: ?>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        <?php foreach ($products as $product): ?>
+                            <div
+                                class="product-card transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
+                                <div class="relative">
+                                    <img src="<?= $product['primary_image'] ?>" alt="<?= htmlspecialchars($product['title']) ?>"
+                                        class="w-full h-40 md:h-48 object-cover">
+
+                                    <div class="product-details-btn">
+                                        <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>"
+                                            class="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium hover:bg-rose-600 hover:text-white transition-colors text-sm">
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="p-3 md:p-5 flex flex-col justify-between flex-1">
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
+                                            <?= htmlspecialchars($product['title']) ?>
+                                        </h3>
+
+                                        <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
+                                            <?= htmlspecialchars($product['description']) ?>
+                                        </p>
+
+                                        <div class="flex items-center text-gray-500 text-xs md:text-sm mb-4">
+                                            <i class="fas fa-eye mr-1"></i>
+                                            <span><?= number_format($product['views']) ?> views</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex space-x-2 mt-auto">
+                                        <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=buy"
+                                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
+                                            <i class="fas fa-shopping-cart mr-1"></i> Buy
+                                        </a>
+                                        <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=sell"
+                                            class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
+                                            <i class="fas fa-tag mr-1"></i> Sell
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Get categories data from PHP
-    let categoriesData = <?= json_encode($categoriesData) ?>;
-    let filteredCategories = [];
-    let loadedCount = 0;
-    let loadStep = 1;
-    let activeCategory = 'all';
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('categorySearch');
+        const categoryItems = document.querySelectorAll('.category-item[data-category-name]');
+        const mobileSearch = document.getElementById('mobileSearch');
+        const mobileDropdown = document.getElementById('mobileDropdown');
 
-    function loadCategories() {
-        let sideContainer = document.getElementById('side-categories');
-        let dropdownContainer = document.getElementById('category-select');
-        let totalProducts = <?= $totalProducts ?>;
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
 
-        // Populate sidebar categories
-        sideContainer.innerHTML = `
-            <li class="category-sidebar-item p-4 cursor-pointer ${activeCategory === 'all' ? 'active' : ''}" onclick="filterCategory('all')">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <i class="fas fa-th-large mr-3 text-red-500"></i>
-                        <span class="font-medium">All Categories</span>
-                    </div>
-                    <span class="category-badge">${totalProducts}</span>
-                </div>
-            </li>
-            ${categoriesData.map(c => `
-                <li class="category-sidebar-item p-4 cursor-pointer ${activeCategory == c.id ? 'active' : ''}" onclick="filterCategory(${c.id})">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <i class="${c.icon} mr-3 text-red-500"></i>
-                            <span class="font-medium">${c.name}</span>
-                        </div>
-                        <span class="category-badge">${c.products.length}</span>
-                    </div>
-                </li>
-            `).join('')}
-        `;
-
-        // Populate dropdown for mobile
-        dropdownContainer.innerHTML = `
-            <option value="all">All Categories (${totalProducts})</option>
-            ${categoriesData.map(c => `
-                <option value="${c.id}">${c.name} (${c.products.length})</option>
-            `).join('')}
-        `;
-    }
-
-    function showSkeleton(show) {
-        let skeleton = document.getElementById('loading-skeleton');
-        let categoryList = document.getElementById('category-list');
-        if (show) {
-            skeleton.classList.remove('hidden');
-            categoryList.classList.add('hidden');
-        } else {
-            skeleton.classList.add('hidden');
-            categoryList.classList.remove('hidden');
-        }
-    }
-
-    function renderCategories(startIndex, endIndex) {
-        let container = document.getElementById('category-list');
-        for (let i = startIndex; i < endIndex; i++) {
-            if (i >= filteredCategories.length) break;
-            let cat = filteredCategories[i];
-            let catHTML = `
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden category-item fade-in">
-                    <div class="bg-gradient-to-r from-red-600 to-red-700 p-6 flex justify-between items-center">
-                        <div>
-                            <h2 class="text-2xl font-bold text-white flex items-center">
-                                <i class="${cat.icon} mr-3"></i>
-                                ${cat.name}
-                            </h2>
-                            <p class="text-white text-opacity-80 mt-1">Premium quality materials</p>
-                        </div>
-                        <span class="bg-white text-red-600 px-4 py-1 rounded-full font-bold text-sm">
-                            ${cat.products.length} Products
-                        </span>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                        ${cat.products.map(p => `
-                            <div class="bg-white rounded-xl overflow-hidden product-card flex flex-col justify-between shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                                <div class="relative">
-                                    <img src="${p.image}" alt="${p.name}" class="w-full h-48 object-cover">
-                                    <div class="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-semibold">HOT</div>
-                                </div>
-                                <div class="p-5">
-                                    <h3 class="font-bold text-lg mb-2">${p.name}</h3>
-                                    <div class="view-counter mb-3">
-                                        <i class="fas fa-eye text-gray-400"></i>
-                                        <span>${p.views} Views</span>
-                                    </div>
-                                    <p class="text-gray-700 mb-4">Price ${p.unit} - <span class="text-red-600 font-bold text-xl">UGX ${p.price.toLocaleString()}</span></p>
-                                    <div class="flex space-x-2">
-                                        <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center flex-1 justify-center">
-                                            <i class="fas fa-shopping-cart mr-1"></i> Buy
-                                        </button>
-                                        <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center flex-1 justify-center">
-                                            <i class="fas fa-tag mr-1"></i> Sell
-                                        </button>
-                                    </div>
-                                    <button class="mt-3 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm px-4 py-2 rounded-lg transition-colors duration-300 w-full flex items-center justify-center">
-                                        <i class="fas fa-info-circle mr-1"></i> Product Details
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="bg-gray-50 p-6 text-center">
-                        <button onclick="viewMoreInCategory(${cat.id})" class="bg-white border border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-medium py-2 px-6 rounded-lg transition-colors duration-300 inline-flex items-center">
-                            <span>View All in ${cat.name}</span>
-                            <i class="fas fa-arrow-right ml-2"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            let wrapper = document.createElement('div');
-            wrapper.innerHTML = catHTML;
-            container.appendChild(wrapper);
-        }
-    }
-
-    function loadMore() {
-        if (loadedCount < filteredCategories.length) {
-            showSkeleton(true);
-            setTimeout(() => {
-                let nextIndex = loadedCount + loadStep;
-                renderCategories(loadedCount, nextIndex);
-                loadedCount = nextIndex;
-                showSkeleton(false);
-                if (loadedCount >= filteredCategories.length) {
-                    document.getElementById('end-of-content').classList.remove('hidden');
-                }
-            }, 1000);
-        }
-    }
-
-    function filterCategory(categoryId) {
-        activeCategory = categoryId;
-        showSkeleton(true);
-        document.getElementById('category-list').innerHTML = '';
-        document.getElementById('end-of-content').classList.add('hidden');
-
-        // Update active class in sidebar
-        document.querySelectorAll('.category-sidebar-item').forEach(item => {
-            item.classList.remove('active');
-        });
-
-        // Find the clicked item and add active class
-        if (categoryId === 'all') {
-            document.querySelector('.category-sidebar-item:first-child').classList.add('active');
-            filteredCategories = [...categoriesData];
-        } else {
-            document.querySelector(`.category-sidebar-item:nth-child(${parseInt(categoryId) + 1})`).classList.add('active');
-            filteredCategories = categoriesData.filter(cat => cat.id === parseInt(categoryId));
+                categoryItems.forEach(item => {
+                    const categoryName = item.getAttribute('data-category-name');
+                    item.style.display = categoryName.includes(searchTerm) ? 'flex' : 'none';
+                });
+            });
         }
 
-        loadedCount = 0;
-        setTimeout(() => {
-            renderCategories(0, loadStep);
-            loadedCount = loadStep;
-            showSkeleton(false);
-        }, 1000);
-    }
+        if (mobileSearch && mobileDropdown) {
+            mobileSearch.addEventListener('focus', function () {
+                mobileDropdown.classList.add('show');
+            });
 
-    function viewMoreInCategory(categoryId) {
-        filterCategory(categoryId);
-        // Scroll to top of results
-        document.getElementById('category-list').scrollIntoView({
-            behavior: 'smooth'
-        });
-    }
+            mobileSearch.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                const dropdownItems = mobileDropdown.querySelectorAll('.dropdown-item');
 
-    function handleScroll() {
-        let scrollTop = window.scrollY;
-        let viewportHeight = window.innerHeight;
-        let fullHeight = document.documentElement.scrollHeight;
-        if (scrollTop + viewportHeight >= fullHeight - 100) {
-            loadMore();
-        }
-    }
+                dropdownItems.forEach(item => {
+                    const categoryName = item.getAttribute('data-category-name').toLowerCase();
+                    item.style.display = categoryName.includes(searchTerm) ? 'block' : 'none';
+                });
 
-    // Search functionality for categories
-    function setupCategorySearch() {
-        const searchInput = document.getElementById('category-search');
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const categoryItems = document.querySelectorAll('.category-sidebar-item');
+                mobileDropdown.classList.add('show');
+            });
 
-            categoryItems.forEach(item => {
-                const categoryName = item.querySelector('.font-medium').textContent.toLowerCase();
-                if (categoryName.includes(searchTerm) || searchTerm === '') {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
+            document.addEventListener('click', function (e) {
+                if (!mobileSearch.contains(e.target) && !mobileDropdown.contains(e.target)) {
+                    mobileDropdown.classList.remove('show');
                 }
             });
+
+            const dropdownItems = mobileDropdown.querySelectorAll('.dropdown-item');
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', function () {
+                    const categoryId = this.getAttribute('data-category-id');
+                    const categoryName = this.getAttribute('data-category-name');
+
+                    window.location.href = `<?= BASE_URL ?>view/category/${categoryId}`;
+                });
+            });
+        }
+    });
+
+    function clearSelection() {
+        window.location.href = '<?= BASE_URL ?>materials-yard';
+    }
+
+    function copyLink() {
+        const currentUrl = window.location.href;
+        navigator.clipboard.writeText(currentUrl).then(() => {
+            showToast('Link copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+            showToast('Failed to copy link', 'error');
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        filteredCategories = [...categoriesData];
-        loadCategories();
-        setupCategorySearch();
-        showSkeleton(true);
-        setTimeout(() => {
-            renderCategories(0, 3); // Initially show 3 categories
-            loadedCount = 3;
-            showSkeleton(false);
-            setTimeout(() => {
-                loadMore(); // Load remaining categories after 6 seconds
-            }, 6000);
-        }, 1000);
-        window.addEventListener('scroll', handleScroll);
+    function shareOnWhatsApp() {
+        const currentUrl = window.location.href;
+        const categoryName = "<?= !empty($categoryId) && isset($category) ? addslashes($category['name']) : 'Building Materials' ?>";
+        const message = `Check out ${categoryName} products on Zzimba Online: ${currentUrl}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    }
 
-        // Add event listener for dropdown
-        document.getElementById('category-select').addEventListener('change', function() {
-            filterCategory(this.value);
-        });
-    });
+    function shareOnFacebook() {
+        const currentUrl = window.location.href;
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`, '_blank');
+    }
+
+    function shareOnTwitter() {
+        const currentUrl = window.location.href;
+        const categoryName = "<?= !empty($categoryId) && isset($category) ? addslashes($category['name']) : 'Building Materials' ?>";
+        const message = `Check out ${categoryName} products on Zzimba Online:`;
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(currentUrl)}`, '_blank');
+    }
+
+    function shareOnLinkedIn() {
+        const currentUrl = window.location.href;
+        const categoryName = "<?= !empty($categoryId) && isset($category) ? addslashes($category['name']) : 'Building Materials' ?>";
+        const message = `Check out ${categoryName} products on Zzimba Online.`;
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(categoryName)}&summary=${encodeURIComponent(message)}`, '_blank');
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity duration-300`;
+        toast.textContent = message;
+
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('opacity-100'), 10);
+
+        setTimeout(() => {
+            toast.classList.remove('opacity-100');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
 </script>
 
 <?php
