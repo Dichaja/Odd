@@ -1,53 +1,6 @@
 RewriteEngine On
 
 ##############################################
-# 1. Enable Browser Caching
-##############################################
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresDefault "access plus 1 month"
-
-  # Stylesheets & Scripts
-  ExpiresByType text/css "access plus 1 week"
-  ExpiresByType application/javascript "access plus 1 week"
-  ExpiresByType text/javascript "access plus 1 week"
-  ExpiresByType application/json "access plus 1 week"
-
-  # Images
-  ExpiresByType image/jpeg "access plus 6 hours"
-  ExpiresByType image/png "access plus 6 hours"
-  ExpiresByType image/gif "access plus 6 hours"
-  ExpiresByType image/svg+xml "access plus 6 hours"
-  ExpiresByType image/webp "access plus 6 hours"
-  ExpiresByType image/x-icon "access plus 6 hours"
-
-  # Fonts
-  ExpiresByType application/font-woff "access plus 1 year"
-  ExpiresByType application/font-woff2 "access plus 1 year"
-  ExpiresByType font/ttf "access plus 1 year"
-  ExpiresByType font/otf "access plus 1 year"
-
-  # Pages
-  ExpiresByType text/html "access plus 2 hours"
-</IfModule>
-
-<IfModule mod_headers.c>
-  <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico)$">
-    Header set Cache-Control "max-age=21600, public"
-  </FilesMatch>
-
-  <FilesMatch "\.(css|js)$">
-    Header set Cache-Control "max-age=604800, public"
-  </FilesMatch>
-
-  <FilesMatch "\.(php)$">
-    Header set Cache-Control "no-cache, no-store, must-revalidate"
-    Header set Pragma "no-cache"
-    Header set Expires 0
-  </FilesMatch>
-</IfModule>
-
-##############################################
 # 2. Block Sensitive Folders
 ##############################################
 RewriteRule ^config(/.*)?$ - [F,L]
