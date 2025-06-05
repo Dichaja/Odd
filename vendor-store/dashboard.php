@@ -148,6 +148,23 @@ ob_start();
         </div>
     </div>
 
+    <!-- Cash-in Delivery Section -->
+    <div class="content-section">
+        <div class="p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center">
+                <i class="fas fa-truck-loading text-user-primary text-xl mr-3"></i>
+                <h2 class="text-lg font-semibold text-secondary">Cash-in Delivery</h2>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <button id="sendToken"
+                    class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 justify-center w-full sm:w-auto">
+                    <i class="fas fa-coins"></i>
+                    <span>Send Token</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="content-section">
         <div class="p-6">
             <a href="#" target="_blank" class="block">
@@ -157,7 +174,66 @@ ob_start();
         </div>
     </div>
 
+    <!-- Token Modal -->
+    <div id="tokenModal" class="fixed inset-0 z-50 hidden !m-0">
+        <div class="absolute inset-0 bg-black/20" onclick="hideModal('tokenModal')"></div>
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-secondary">Enter Token No</h3>
+                    <button onclick="hideModal('tokenModal')" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="tokenMessage" class="mb-4 text-center"></div>
+                <form id="tokenForm">
+                    <div class="mb-4">
+                        <input type="text" id="token" placeholder="Token No"
+                            class="w-full h-12 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary text-center text-lg">
+                    </div>
+                    <button type="submit"
+                        class="w-full h-12 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors text-lg">
+                        Redeem Payment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<script>
+    $(document).ready(function () {
+
+        // Token modal
+        $('#sendToken').click(function () {
+            showModal('tokenModal');
+        });
+
+        $('#tokenForm').submit(function (e) {
+            e.preventDefault();
+            showLoading();
+
+            // Simulate form submission
+            setTimeout(function () {
+                hideLoading();
+                hideModal('tokenModal');
+                showSuccessNotification('Token redeemed successfully!');
+            }, 1500);
+        });
+    });
+
+    // Show modal
+    function showModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    // Hide modal
+    function hideModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+</script>
 
 <?php
 $mainContent = ob_get_clean();
