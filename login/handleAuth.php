@@ -296,6 +296,34 @@ function verifyOTP(string $type, string $account, string $otp, PDO $pdo): bool
     return true;
 }
 
+function maskEmail($email)
+{
+    if (empty($email))
+        return null;
+
+    $parts = explode("@", $email);
+    $name = $parts[0];
+    $domain = $parts[1];
+
+    $maskedName = substr($name, 0, 1) . str_repeat('*', max(strlen($name) - 2, 1)) . substr($name, -1);
+    return $maskedName . '@' . $domain;
+}
+
+function maskPhone($phone)
+{
+    if (empty($phone))
+        return null;
+
+    // Show first 4 digits and last 2 digits only
+    $digits = preg_replace('/\D/', '', $phone); // Strip non-digits
+    $len = strlen($digits);
+
+    if ($len < 6)
+        return str_repeat('*', $len); // Too short to reveal anything
+
+    return substr($digits, 0, 4) . str_repeat('*', $len - 6) . substr($digits, -2);
+}
+
 $action = $_GET['action'] ?? '';
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -426,8 +454,8 @@ try {
                 echo json_encode([
                     'success' => false,
                     'errorCode' => 'EMPTY_PASSWORD',
-                    'email' => $user['email'],
-                    'phone' => $user['phone']
+                    'email' => maskEmail($user['email']),
+                    'phone' => maskPhone($user['phone'])
                 ]);
                 break;
             }

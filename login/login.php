@@ -133,7 +133,9 @@ function getStepTitle($mode, $step)
                             class="mr-3 text-primary focus:ring-primary" checked>
                         <div>
                             <p class="font-medium">Email</p>
-                            <p class="text-sm text-gray-500">Receive a verification code via email</p>
+                            <p class="text-sm text-gray-500">
+                                Receive a verification code via <span id="empty-password-email-hint"></span>
+                            </p>
                         </div>
                     </label>
                     <label id="empty-password-phone-option"
@@ -142,7 +144,9 @@ function getStepTitle($mode, $step)
                             class="mr-3 text-primary focus:ring-primary">
                         <div>
                             <p class="font-medium">Phone</p>
-                            <p class="text-sm text-gray-500">Receive a verification code via SMS</p>
+                            <p class="text-sm text-gray-500">
+                                Receive a verification code via <span id="empty-password-phone-hint"></span>
+                            </p>
                         </div>
                     </label>
                 </div>
@@ -756,6 +760,13 @@ function getStepTitle($mode, $step)
         }
 
         document.getElementById('empty-username-display').textContent = loginData.identifier || '';
+
+        // Update hint text
+        const emailHintSpan = document.getElementById('empty-password-email-hint');
+        const phoneHintSpan = document.getElementById('empty-password-phone-hint');
+
+        emailHintSpan.textContent = loginData.email || '';
+        phoneHintSpan.textContent = loginData.phone || '';
     }
 
     function showLoading(elementId) {
@@ -783,11 +794,21 @@ function getStepTitle($mode, $step)
                 hideError('empty-password-error');
                 showLoading('empty-password-loading');
 
+                // Instead of calling undefined sendResetEmail/sendResetPhone,
+                // reuse the forgot-password flow:
                 if (method === 'email') {
-                    sendResetEmail(identifier);
+                    showForgotPasswordForm('email');
+                    // Prefill the email field:
+                    document.getElementById('forgot-email').value = identifier;
                 } else {
-                    sendResetPhone(identifier);
+                    showForgotPasswordForm('phone');
+                    // Prefill the phone field using intlTelInput:
+                    const phoneInput = document.getElementById('forgot-phone');
+                    const itiPhone = window.intlTelInputGlobals.getInstance(phoneInput);
+                    itiPhone.setNumber(identifier);
                 }
+
+                hideLoading('empty-password-loading');
             });
         }
     });
@@ -866,23 +887,23 @@ function getStepTitle($mode, $step)
         container.innerHTML = `
             <div class="flex justify-between gap-2 mb-2">
                 <input type="text" maxlength="1"
-                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                    data-otp-target="${target}" autofocus>
+                       class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                       data-otp-target="${target}" autofocus>
                 <input type="text" maxlength="1"
-                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                    data-otp-target="${target}">
+                       class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                       data-otp-target="${target}">
                 <input type="text" maxlength="1"
-                    class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                    data-otp-target="${target}">
+                       class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                       data-otp-target="${target}">
                 <input type="text" maxlength="1"
-                    class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                    data-otp-target="${target}">
+                       class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                       data-otp-target="${target}">
                 <input type="text" maxlength="1"
-                    class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                    data-otp-target="${target}">
+                       class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                       data-otp-target="${target}">
                 <input type="text" maxlength="1"
-                    class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                    data-otp-target="${target}">
+                       class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
+                       data-otp-target="${target}">
             </div>
         `;
     }
@@ -974,9 +995,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/checkUser',
             type: 'POST',
-            data: JSON.stringify({
-                identifier: u
-            }),
+            data: JSON.stringify({ identifier: u }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1025,11 +1044,7 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/login',
             type: 'POST',
-            data: JSON.stringify({
-                identifier: loginData.identifier,
-                password: p,
-                userType: loginData.userType
-            }),
+            data: JSON.stringify({ identifier: loginData.identifier, password: p, userType: loginData.userType }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
