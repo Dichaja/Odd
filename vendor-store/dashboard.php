@@ -11,33 +11,47 @@ if (!$storeId) {
 
 try {
     $stmt = $pdo->prepare("
-        SELECT COUNT(*) FROM buy_in_store_requests bisr
-        JOIN product_pricing  pp ON bisr.product_pricing_id = pp.id
-        JOIN store_products   sp ON pp.store_products_id    = sp.id
-        JOIN store_categories sc ON sp.store_category_id    = sc.id
-        WHERE sc.store_id = :sid AND bisr.status = 'pending'
+        SELECT COUNT(*) 
+        FROM buy_in_store_requests bisr
+        JOIN product_pricing pp ON bisr.pricing_id = pp.id
+        JOIN store_products sp  ON pp.store_products_id = sp.id
+        JOIN store_categories sc ON sp.store_category_id = sc.id
+        WHERE sc.store_id = :sid 
+          AND bisr.status = 'pending'
     ");
     $stmt->execute([':sid' => $storeId]);
     $pendingRequests = (int) $stmt->fetchColumn();
 
     $stmt = $pdo->prepare("
-        SELECT COUNT(DISTINCT sp.id) FROM store_products sp
+        SELECT COUNT(*) 
+        FROM product_pricing pp
+        JOIN store_products sp  ON pp.store_products_id = sp.id
         JOIN store_categories sc ON sp.store_category_id = sc.id
-        WHERE sc.store_id = :sid AND sp.status <> 'deleted'
+        WHERE sc.store_id = :sid
+          AND sc.status = 'active'
+          AND sp.status = 'active'
     ");
     $stmt->execute([':sid' => $storeId]);
     $totalProducts = (int) $stmt->fetchColumn();
 
     $stmt = $pdo->prepare("
-        SELECT COUNT(*) FROM store_categories
-        WHERE store_id = :sid AND status = 'active'
+        SELECT COUNT(DISTINCT sc.id)
+        FROM store_categories sc
+        JOIN store_products sp  ON sc.id = sp.store_category_id
+        JOIN product_pricing pp ON pp.store_products_id = sp.id
+        WHERE sc.store_id = :sid
+          AND sc.status = 'active'
+          AND sp.status = 'active'
     ");
     $stmt->execute([':sid' => $storeId]);
     $totalCategories = (int) $stmt->fetchColumn();
 
     $stmt = $pdo->prepare("
-        SELECT COUNT(*) FROM store_managers
-        WHERE store_id = :sid AND status = 'active' AND approved = 1
+        SELECT COUNT(*) 
+        FROM store_managers
+        WHERE store_id = :sid 
+          AND status = 'active' 
+          AND approved = 1
     ");
     $stmt->execute([':sid' => $storeId]);
     $totalManagers = (int) $stmt->fetchColumn();
@@ -66,7 +80,7 @@ ob_start();
         <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <a href="<?= BASE_URL ?>vendor-store/orders"
-                class="user-card hover:shadow-md transition-shadow duration-300">
+                class="user-card bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-xl transition-shadow duration-300">
                 <div class="p-6 flex flex-col items-center text-center">
                     <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
                         <i class="fas fa-shopping-bag text-blue-600 text-2xl"></i>
@@ -77,7 +91,7 @@ ob_start();
             </a>
 
             <a href="<?= BASE_URL ?>vendor-store/requests"
-                class="user-card hover:shadow-md transition-shadow duration-300">
+                class="user-card bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-xl transition-shadow duration-300">
                 <div class="p-6 flex flex-col items-center text-center">
                     <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mb-4">
                         <i class="fas fa-calendar-check text-yellow-600 text-2xl"></i>
@@ -88,7 +102,7 @@ ob_start();
             </a>
 
             <a href="<?= BASE_URL ?>vendor-store/products"
-                class="user-card hover:shadow-md transition-shadow duration-300">
+                class="user-card bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-xl transition-shadow duration-300">
                 <div class="p-6 flex flex-col items-center text-center">
                     <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
                         <i class="fas fa-box-open text-red-600 text-2xl"></i>
@@ -99,7 +113,7 @@ ob_start();
             </a>
 
             <a href="<?= BASE_URL ?>vendor-store/categories"
-                class="user-card hover:shadow-md transition-shadow duration-300">
+                class="user-card bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-xl transition-shadow duration-300">
                 <div class="p-6 flex flex-col items-center text-center">
                     <div class="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-4">
                         <i class="fas fa-tags text-purple-600 text-2xl"></i>
@@ -110,7 +124,7 @@ ob_start();
             </a>
 
             <a href="<?= BASE_URL ?>vendor-store/managers"
-                class="user-card hover:shadow-md transition-shadow duration-300">
+                class="user-card bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-xl transition-shadow duration-300">
                 <div class="p-6 flex flex-col items-center text-center">
                     <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
                         <i class="fas fa-users text-green-600 text-2xl"></i>
@@ -121,7 +135,7 @@ ob_start();
             </a>
 
             <a href="<?= BASE_URL ?>vendor-store/zzimba-credit"
-                class="user-card hover:shadow-md transition-shadow duration-300">
+                class="user-card bg-white rounded-lg border border-gray-100 shadow-md hover:shadow-xl transition-shadow duration-300">
                 <div class="p-6 flex flex-col items-center text-center">
                     <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mb-4">
                         <i class="fas fa-credit-card text-indigo-600 text-2xl"></i>

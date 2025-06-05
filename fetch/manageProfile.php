@@ -62,11 +62,6 @@ try {
             deleteProduct($pdo, $_POST['id'] ?? '', $currentUser);
             break;
 
-        case 'getStoreStats':
-            requireLogin();
-            getStoreStats($pdo, $_GET['id'] ?? '', $currentUser);
-            break;
-
         case 'increaseStoreViews':
             increaseStoreViews($pdo, $_GET['id'] ?? null);
             break;
@@ -797,19 +792,6 @@ function deleteProduct(PDO $pdo, string $storeProductId, ?string $currentUser)
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Error deleting product']);
     }
-}
-
-function getStoreStats(PDO $pdo, ?string $storeId, ?string $currentUser)
-{
-    echo json_encode([
-        'success' => true,
-        'stats' => [
-            'product_count' => 12,
-            'category_count' => 3,
-            'total_views' => 0,
-            'top_products' => []
-        ]
-    ]);
 }
 
 function increaseStoreViews(PDO $pdo, ?string $storeId)
