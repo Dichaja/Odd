@@ -8,8 +8,8 @@ function loadContactData()
 {
     $filePath = __DIR__ . '/../page-data/contact-us/contact-us.json';
 
-    if (file_exists($filePath)) {
-        $jsonData = file_get_contents($filePath);
+    if (file_exists($jsonFile = $filePath)) {
+        $jsonData = file_get_contents($jsonFile);
         return json_decode($jsonData, true) ?: [];
     }
 
@@ -147,9 +147,6 @@ $contactData = loadContactData();
 $contactInfo = $contactData['contactInfo'] ?? [];
 $formSettings = $contactData['formSettings'] ?? [];
 
-// Handle active tab
-$activeTab = $_GET['tab'] ?? 'contact-info';
-
 ob_start();
 ?>
 
@@ -169,22 +166,23 @@ ob_start();
     </div>
 
     <div class="bg-white rounded-lg shadow-sm border border-gray-100">
+        <!-- Tab Navigation -->
         <div class="p-6 border-b border-gray-100">
             <nav class="flex overflow-x-auto py-2" aria-label="Tabs">
-                <a href="?tab=contact-info"
-                    class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap <?= $activeTab === 'contact-info' ? 'bg-primary text-white' : 'text-gray-text hover:text-primary hover:bg-gray-50' ?>">
+                <button data-tab="contact-info"
+                    class="tab-button px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap bg-primary text-white">
                     Contact Information
-                </a>
-                <a href="?tab=form-settings"
-                    class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ml-2 <?= $activeTab === 'form-settings' ? 'bg-primary text-white' : 'text-gray-text hover:text-primary hover:bg-gray-50' ?>">
-                    Form & Map Settings
-                </a>
+                </button>
+                <button data-tab="form-settings"
+                    class="tab-button px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ml-2 text-gray-text hover:text-primary hover:bg-gray-50">
+                    Form &amp; Map Settings
+                </button>
             </nav>
         </div>
 
         <div class="p-6">
-            <?php if ($activeTab === 'contact-info'): ?>
-                <!-- Contact Information Tab -->
+            <!-- Contact Information Tab Content -->
+            <div id="contact-info" class="tab-content">
                 <div class="mb-6">
                     <h2 class="text-lg font-semibold text-secondary">Contact Information Ribbon</h2>
                     <p class="text-sm text-gray-text mt-1">Manage contact information displayed in the ribbon</p>
@@ -218,15 +216,15 @@ ob_start();
 
                     <div id="phones-container" class="space-y-4">
                         <?php foreach ($contactInfo['phones'] ?? [] as $phone): ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4" data-id="<?= $phone['id'] ?>"
-                                data-order="<?= $phone['order'] ?>">
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                data-id="<?= $phone['id'] ?>" data-order="<?= $phone['order'] ?>">
                                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div class="flex items-center gap-3">
                                         <div class="text-primary">
                                             <i class="fas fa-phone-alt text-xl"></i>
                                         </div>
                                         <div>
-                                            <p class="font-medium"><?= $phone['number'] ?></p>
+                                            <p class="font-medium"><?= htmlspecialchars($phone['number']) ?></p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -278,15 +276,15 @@ ob_start();
 
                     <div id="emails-container" class="space-y-4">
                         <?php foreach ($contactInfo['emails'] ?? [] as $email): ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4" data-id="<?= $email['id'] ?>"
-                                data-order="<?= $email['order'] ?>">
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                data-id="<?= $email['id'] ?>" data-order="<?= $email['order'] ?>">
                                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div class="flex items-center gap-3">
                                         <div class="text-amber-500">
                                             <i class="fas fa-envelope text-xl"></i>
                                         </div>
                                         <div>
-                                            <p class="font-medium"><?= $email['address'] ?></p>
+                                            <p class="font-medium"><?= htmlspecialchars($email['address']) ?></p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -346,7 +344,7 @@ ob_start();
                                             <i class="fas fa-map-marker-alt text-xl"></i>
                                         </div>
                                         <div>
-                                            <p class="font-medium"><?= $location['line'] ?></p>
+                                            <p class="font-medium"><?= htmlspecialchars($location['line']) ?></p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -415,8 +413,8 @@ ob_start();
                                 'order' => array_search($platform, array_keys($socialPlatforms)) + 1
                             ];
                             ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4" data-id="<?= $social['id'] ?>"
-                                data-order="<?= $social['order'] ?>">
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                data-id="<?= htmlspecialchars($social['id']) ?>" data-order="<?= $social['order'] ?>">
                                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div class="flex items-center gap-3">
                                         <div class="text-gray-700">
@@ -424,7 +422,7 @@ ob_start();
                                         </div>
                                         <div>
                                             <p class="font-medium"><?= $info['name'] ?></p>
-                                            <p class="text-sm text-gray-500"><?= $social['url'] ?></p>
+                                            <p class="text-sm text-gray-500"><?= htmlspecialchars($social['url']) ?></p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -433,7 +431,7 @@ ob_start();
                                                 class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
                                                 <input type="checkbox"
                                                     class="social-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                                    data-id="<?= $social['id'] ?>" <?= $social['active'] ? 'checked' : '' ?>>
+                                                    data-id="<?= htmlspecialchars($social['id']) ?>" <?= $social['active'] ? 'checked' : '' ?>>
                                                 <label
                                                     class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
                                             </div>
@@ -444,7 +442,8 @@ ob_start();
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <button class="btn-edit-social text-blue-600 hover:text-blue-800"
-                                                data-id="<?= $social['id'] ?>" data-platform="<?= $platform ?>">
+                                                data-id="<?= htmlspecialchars($social['id']) ?>"
+                                                data-platform="<?= $platform ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <span
@@ -458,9 +457,10 @@ ob_start();
                         <?php endforeach; ?>
                     </div>
                 </div>
+            </div>
 
-            <?php elseif ($activeTab === 'form-settings'): ?>
-                <!-- Form & Map Settings Tab -->
+            <!-- Form & Map Settings Tab Content -->
+            <div id="form-settings" class="tab-content hidden">
                 <div class="mb-6">
                     <h2 class="text-lg font-semibold text-secondary">Contact Form Settings</h2>
                     <p class="text-sm text-gray-text mt-1">Configure the contact form and map settings</p>
@@ -473,7 +473,8 @@ ob_start();
                         </div>
                         <div class="ml-3">
                             <p class="text-sm text-blue-700">
-                                Customize the contact form title, description, field labels, placeholders, and button text.
+                                Customize the contact form title, description, field labels, placeholders, and button
+                                text.
                                 You can also set the map coordinates to display your location.
                             </p>
                         </div>
@@ -482,14 +483,14 @@ ob_start();
 
                 <!-- Form Title & Description -->
                 <div class="mb-8">
-                    <h3 class="text-md font-semibold text-gray-700 mb-4">Form Title & Description</h3>
+                    <h3 class="text-md font-semibold text-gray-700 mb-4">Form Title &amp; Description</h3>
                     <form id="formTitleForm" class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div class="grid grid-cols-1 gap-6">
                             <div>
                                 <label for="form-title" class="block text-sm font-medium text-gray-700 mb-1">Form Title
                                     <span class="text-red-500">*</span></label>
                                 <input type="text" id="form-title" name="title"
-                                    value="<?= $formSettings['title'] ?? 'Get in Touch' ?>"
+                                    value="<?= htmlspecialchars($formSettings['title'] ?? 'Get in Touch') ?>"
                                     class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                                     required>
                             </div>
@@ -497,13 +498,14 @@ ob_start();
                                 <label for="form-description" class="block text-sm font-medium text-gray-700 mb-1">Form
                                     Description</label>
                                 <textarea id="form-description" name="description" rows="3"
-                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"><?= $formSettings['description'] ?? '' ?></textarea>
+                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"><?= htmlspecialchars($formSettings['description'] ?? '') ?></textarea>
                             </div>
                             <div>
-                                <label for="button-text" class="block text-sm font-medium text-gray-700 mb-1">Button Text
+                                <label for="button-text" class="block text-sm font-medium text-gray-700 mb-1">Button
+                                    Text
                                     <span class="text-red-500">*</span></label>
                                 <input type="text" id="button-text" name="buttonText"
-                                    value="<?= $formSettings['buttonText'] ?? 'Send Message' ?>"
+                                    value="<?= htmlspecialchars($formSettings['buttonText'] ?? 'Send Message') ?>"
                                     class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                                     required>
                             </div>
@@ -530,17 +532,19 @@ ob_start();
 
                     <div id="fields-container" class="space-y-4">
                         <?php foreach ($formSettings['fields'] ?? [] as $field): ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4" data-id="<?= $field['id'] ?>"
-                                data-order="<?= $field['order'] ?>">
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                data-id="<?= htmlspecialchars($field['id']) ?>" data-order="<?= $field['order'] ?>">
                                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div class="flex items-center gap-3">
                                         <div class="text-primary">
                                             <i class="fas fa-keyboard text-xl"></i>
                                         </div>
                                         <div>
-                                            <p class="font-medium"><?= $field['label'] ?></p>
-                                            <p class="text-sm text-gray-500">ID: <?= $field['id'] ?>, Placeholder:
-                                                <?= $field['placeholder'] ?></p>
+                                            <p class="font-medium"><?= htmlspecialchars($field['label']) ?></p>
+                                            <p class="text-sm text-gray-500">ID: <?= htmlspecialchars($field['id']) ?>,
+                                                Placeholder:
+                                                <?= htmlspecialchars($field['placeholder']) ?>
+                                            </p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-3">
@@ -552,11 +556,11 @@ ob_start();
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <button class="btn-edit-field text-blue-600 hover:text-blue-800"
-                                                data-id="<?= $field['id'] ?>">
+                                                data-id="<?= htmlspecialchars($field['id']) ?>">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <button class="btn-delete-field text-red-600 hover:text-red-800"
-                                                data-id="<?= $field['id'] ?>">
+                                                data-id="<?= htmlspecialchars($field['id']) ?>">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                             <span
@@ -574,29 +578,32 @@ ob_start();
                 <!-- Map Settings -->
                 <div class="mb-8">
                     <h3 class="text-md font-semibold text-gray-700 mb-4">Map Settings</h3>
-                    <form id="mapSettingsForm" class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <form id="mapSettingsForm"
+                        class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                             <div>
                                 <label for="map-latitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude
                                     <span class="text-red-500">*</span></label>
                                 <input type="text" id="map-latitude" name="latitude"
-                                    value="<?= $formSettings['mapCoordinates']['latitude'] ?? '0.31654191425996444' ?>"
+                                    value="<?= htmlspecialchars($formSettings['mapCoordinates']['latitude'] ?? '0.31654191425996444') ?>"
                                     class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                                     required>
                             </div>
                             <div>
-                                <label for="map-longitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude
+                                <label for="map-longitude"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Longitude
                                     <span class="text-red-500">*</span></label>
                                 <input type="text" id="map-longitude" name="longitude"
-                                    value="<?= $formSettings['mapCoordinates']['longitude'] ?? '32.629696775378866' ?>"
+                                    value="<?= htmlspecialchars($formSettings['mapCoordinates']['longitude'] ?? '32.629696775378866') ?>"
                                     class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                                     required>
                             </div>
                             <div>
-                                <label for="map-zoom" class="block text-sm font-medium text-gray-700 mb-1">Zoom Level <span
-                                        class="text-red-500">*</span></label>
+                                <label for="map-zoom" class="block text-sm font-medium text-gray-700 mb-1">Zoom Level
+                                    <span class="text-red-500">*</span></label>
                                 <input type="number" id="map-zoom" name="zoom"
-                                    value="<?= $formSettings['mapCoordinates']['zoom'] ?? '15' ?>" min="1" max="20" step="1"
+                                    value="<?= htmlspecialchars($formSettings['mapCoordinates']['zoom'] ?? '15') ?>"
+                                    min="1" max="20" step="1"
                                     class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                                     required>
                             </div>
@@ -630,7 +637,7 @@ ob_start();
                         </div>
                     </div>
                 </div>
-            <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
@@ -967,18 +974,50 @@ ob_start();
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
 <script>
     const BASE_URL = '<?= BASE_URL ?>';
     let deleteItemType = '';
     let deleteItemId = '';
 
     document.addEventListener('DOMContentLoaded', function () {
+        initializeTabs();
         initializeEventListeners();
         initializeSortable();
         initializeStatusToggles();
         updateMapPreview();
     });
+
+    // Tab functionality
+    function initializeTabs() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        function showTab(tabName) {
+            tabButtons.forEach(btn => {
+                if (btn.getAttribute('data-tab') === tabName) {
+                    btn.classList.add('bg-primary', 'text-white');
+                    btn.classList.remove('text-gray-text', 'hover:text-primary', 'hover:bg-gray-50');
+                } else {
+                    btn.classList.remove('bg-primary', 'text-white');
+                    btn.classList.add('text-gray-text', 'hover:text-primary', 'hover:bg-gray-50');
+                }
+            });
+            tabContents.forEach(content => {
+                content.id === tabName
+                    ? content.classList.remove('hidden')
+                    : content.classList.add('hidden');
+            });
+        }
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                showTab(this.getAttribute('data-tab'));
+            });
+        });
+
+        // Show default tab
+        showTab('contact-info');
+    }
 
     function showLoading(message = 'Loading...') {
         document.getElementById('loadingMessage').textContent = message;
@@ -1144,70 +1183,6 @@ ob_start();
     }
 
     function initializeStatusToggles() {
-        const phoneStatusToggle = document.getElementById('phone-status-toggle');
-        if (phoneStatusToggle) {
-            phoneStatusToggle.addEventListener('change', function () {
-                const statusText = document.getElementById('phone-status-text');
-                const statusInput = document.getElementById('phone-status');
-
-                if (this.checked) {
-                    statusText.textContent = 'Active';
-                    statusInput.value = 'active';
-                } else {
-                    statusText.textContent = 'Inactive';
-                    statusInput.value = 'inactive';
-                }
-            });
-        }
-
-        const emailStatusToggle = document.getElementById('email-status-toggle');
-        if (emailStatusToggle) {
-            emailStatusToggle.addEventListener('change', function () {
-                const statusText = document.getElementById('email-status-text');
-                const statusInput = document.getElementById('email-status');
-
-                if (this.checked) {
-                    statusText.textContent = 'Active';
-                    statusInput.value = 'active';
-                } else {
-                    statusText.textContent = 'Inactive';
-                    statusInput.value = 'inactive';
-                }
-            });
-        }
-
-        const locationStatusToggle = document.getElementById('location-status-toggle');
-        if (locationStatusToggle) {
-            locationStatusToggle.addEventListener('change', function () {
-                const statusText = document.getElementById('location-status-text');
-                const statusInput = document.getElementById('location-status');
-
-                if (this.checked) {
-                    statusText.textContent = 'Active';
-                    statusInput.value = 'active';
-                } else {
-                    statusText.textContent = 'Inactive';
-                    statusInput.value = 'inactive';
-                }
-            });
-        }
-
-        const socialStatusToggle = document.getElementById('social-status-toggle');
-        if (socialStatusToggle) {
-            socialStatusToggle.addEventListener('change', function () {
-                const statusText = document.getElementById('social-status-text');
-                const statusInput = document.getElementById('social-status');
-
-                if (this.checked) {
-                    statusText.textContent = 'Active';
-                    statusInput.value = 'active';
-                } else {
-                    statusText.textContent = 'Inactive';
-                    statusInput.value = 'inactive';
-                }
-            });
-        }
-
         document.querySelectorAll('.phone-status-toggle').forEach(toggle => {
             toggle.addEventListener('change', function () {
                 const phoneId = this.getAttribute('data-id');
