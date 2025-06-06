@@ -115,6 +115,7 @@ function getProducts(PDO $pdo)
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($products as &$prod) {
+        $prod['featured'] = (int) $prod['featured'];
         $prod['category'] = $prod['category_id'];
         unset($prod['category_id']);
         $prod['images'] = getProductImages($prod['id']);
@@ -125,7 +126,7 @@ function getProducts(PDO $pdo)
     echo json_encode(['success' => true, 'products' => $products]);
 }
 
-function getProduct(PDO $pdo) 
+function getProduct(PDO $pdo)
 {
     if (!isset($_GET['id'])) {
         http_response_code(400);
@@ -151,6 +152,7 @@ function getProduct(PDO $pdo)
         return;
     }
 
+    $product['featured'] = (int) $product['featured'];
     $product['category'] = $product['category_id'];
     unset($product['category_id']);
     $product['images'] = getProductImages($product['id']);
