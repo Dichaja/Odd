@@ -83,7 +83,7 @@ function ensureProductPricingTable(PDO $pdo)
             `store_products_id` VARCHAR(26) NOT NULL,
             `package_mapping_id` VARCHAR(26) NOT NULL,
             `si_unit_id` VARCHAR(26) NOT NULL,
-            `package_size` int(5) NOT NULL DEFAULT 1,
+            `package_size` VARCHAR(20) NOT NULL DEFAULT '1',
             `created_by` VARCHAR(26) NOT NULL,
             `price` DECIMAL(10,2) NOT NULL,
             `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail',
@@ -267,6 +267,7 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
         ");
         $countStmt->execute([$storeId]);
         $total = (int) $countStmt->fetchColumn();
+
         $stmt = $pdo->prepare("
             SELECT
                 p.id               AS product_id,
@@ -302,6 +303,7 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
         ");
         $stmt->execute([$storeId, $limit, $offset]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         $products = [];
         foreach ($rows as $r) {
             $pid = $r['product_id'];
@@ -324,12 +326,13 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                     'price' => (float) ($r['price'] ?? 0),
                     'price_category' => $r['price_category'] ?? 'retail',
                     'delivery_capacity' => $r['delivery_capacity'] !== null ? (int) $r['delivery_capacity'] : null,
-                    'package_size' => (int) ($r['package_size'] ?? 1),
+                    'package_size' => $r['package_size'] ?? '1',
                     'package_mapping_id' => $r['package_mapping_id'] ?? null,
                     'si_unit_id' => $r['si_unit_id'] ?? null
                 ];
             }
         }
+
         echo json_encode([
             'success' => true,
             'products' => array_values($products),
@@ -428,7 +431,7 @@ function addStoreProduct(PDO $pdo, string $currentUser)
             foreach ($lineItems as $item) {
                 $pmId = $item['package_mapping_id'] ?? '';
                 $siId = $item['si_unit_id'] ?? '';
-                $packageSize = intval($item['package_size'] ?? 1);
+                $packageSize = trim($item['package_size'] ?? '1');
                 $price = floatval($item['price'] ?? 0);
                 $cat = $item['price_category'] ?? 'retail';
                 $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
@@ -493,11 +496,13 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
         ");
         $existingStmt->execute([$storeProductId]);
         $existingPricing = $existingStmt->fetchAll(PDO::FETCH_ASSOC);
+
         $existingByKey = [];
         foreach ($existingPricing as $item) {
             $key = $item['package_mapping_id'] . '_' . $item['si_unit_id'] . '_' . $item['price_category'];
             $existingByKey[$key] = $item;
         }
+
         $updatedIds = [];
         if (is_array($lineItems) && count($lineItems) > 0) {
             $updateStmt = $pdo->prepare("
@@ -513,7 +518,7 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
             foreach ($lineItems as $item) {
                 $pmId = $item['package_mapping_id'] ?? '';
                 $siId = $item['si_unit_id'] ?? '';
-                $packageSize = intval($item['package_size'] ?? 1);
+                $packageSize = trim($item['package_size'] ?? '1');
                 $price = floatval($item['price'] ?? 0);
                 $cat = $item['price_category'] ?? 'retail';
                 $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
@@ -546,6 +551,7 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                 }
             }
         }
+
         if (!empty($existingPricing)) {
             $toDelete = [];
             foreach ($existingPricing as $item) {
@@ -559,6 +565,7 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                 $deleteStmt->execute($toDelete);
             }
         }
+
         updateEmptyCategories($pdo);
         $pdo->commit();
         echo json_encode(['success' => true, 'message' => 'Product pricing updated']);

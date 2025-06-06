@@ -525,7 +525,7 @@ ob_start();
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Unit Size</label>
-                    <input type="number" name="package_size" value="1" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                    <input type="text" name="package_size" value="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Price Category</label>
@@ -602,7 +602,7 @@ ob_start();
             }
         }
 
-        pkgSize.value = existingData.package_size || 1;
+        pkgSize.value = existingData.package_size || '1';
         priceCategory.value = existingData.price_category || '';
         price.value = existingData.price || '';
 

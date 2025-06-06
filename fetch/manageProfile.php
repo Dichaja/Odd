@@ -113,7 +113,7 @@ function ensureProductPricingTable(PDO $pdo)
             `store_products_id` VARCHAR(26) NOT NULL,
             `package_mapping_id` VARCHAR(26) NOT NULL,
             `si_unit_id` VARCHAR(26) NOT NULL,
-            `package_size` int(5) NOT NULL DEFAULT 1,
+            `package_size` VARCHAR(20) NOT NULL DEFAULT '1',
             `created_by` VARCHAR(26) NOT NULL,
             `price` DECIMAL(10,2) NOT NULL,
             `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail',
@@ -417,7 +417,7 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                     'price' => (float) ($r['price'] ?? 0),
                     'price_category' => $r['price_category'] ?? 'retail',
                     'delivery_capacity' => $r['delivery_capacity'] !== null ? (int) $r['delivery_capacity'] : null,
-                    'package_size' => (int) ($r['package_size'] ?? 1),
+                    'package_size' => $r['package_size'] ?? '1',
                     'package_mapping_id' => $r['package_mapping_id'] ?? null,
                     'si_unit_id' => $r['si_unit_id'] ?? null
                 ];
@@ -481,7 +481,6 @@ function updateCategoryStatus(PDO $pdo, string $currentUser)
     }
 }
 
-
 function addStoreProduct(PDO $pdo, string $currentUser)
 {
     $storeId = $_POST['store_id'] ?? '';
@@ -526,7 +525,7 @@ function addStoreProduct(PDO $pdo, string $currentUser)
 
         // If category doesn't exist for this store, add it
         if (!$scId) {
-            $scId = generateUlid();
+            $scId = Ulid::generate();
             $pdo->prepare("
                 INSERT INTO store_categories
                     (id, store_id, category_id, status, created_at, updated_at)
@@ -560,7 +559,7 @@ function addStoreProduct(PDO $pdo, string $currentUser)
                 ")->execute([$spId]);
             }
         } else {
-            $spId = generateUlid();
+            $spId = Ulid::generate();
             $pdo->prepare("
                 INSERT INTO store_products
                     (id, store_category_id, product_id, status, created_at, updated_at)
@@ -577,7 +576,7 @@ function addStoreProduct(PDO $pdo, string $currentUser)
             foreach ($lineItems as $item) {
                 $pmId = $item['package_mapping_id'] ?? '';
                 $siId = $item['si_unit_id'] ?? '';
-                $packageSize = intval($item['package_size'] ?? 1);
+                $packageSize = trim($item['package_size'] ?? '1');
                 $price = floatval($item['price'] ?? 0);
                 $cat = $item['price_category'] ?? 'retail';
                 $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
@@ -586,7 +585,7 @@ function addStoreProduct(PDO $pdo, string $currentUser)
                     throw new Exception('Invalid line item data');
                 }
 
-                $ppId = generateUlid();
+                $ppId = Ulid::generate();
                 $pi->execute([
                     $ppId,
                     $spId,
@@ -615,7 +614,6 @@ function addStoreProduct(PDO $pdo, string $currentUser)
     }
 }
 
-// Modify the updateStoreProduct function to call updateEmptyCategories at the end
 function updateStoreProduct(PDO $pdo, string $currentUser)
 {
     $storeProductId = $_POST['store_product_id'] ?? '';
@@ -681,7 +679,7 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
             foreach ($lineItems as $item) {
                 $pmId = $item['package_mapping_id'] ?? '';
                 $siId = $item['si_unit_id'] ?? '';
-                $packageSize = intval($item['package_size'] ?? 1);
+                $packageSize = trim($item['package_size'] ?? '1');
                 $price = floatval($item['price'] ?? 0);
                 $cat = $item['price_category'] ?? 'retail';
                 $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
@@ -705,7 +703,7 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                     $updatedIds[] = $existingId;
                 } else {
                     // Insert new entry
-                    $ppId = generateUlid();
+                    $ppId = Ulid::generate();
                     $insertStmt->execute([
                         $ppId,
                         $storeProductId,
