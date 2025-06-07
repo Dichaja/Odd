@@ -303,8 +303,8 @@ ob_start();
         width: 1.5rem;
         height: 1.5rem;
         border-radius: 9999px;
-        color: #DC2626;
-        border: 1.5px solid #DC2626;
+        color: #ffffff;
+        border: 1.5px solid#ffffff;
         background-color: transparent;
         transition: all 0.2s ease;
         position: relative;
@@ -420,7 +420,7 @@ ob_start();
 <!-- Hero Banner with Share Buttons and Gradient Overlay -->
 <div class="relative h-50 md:h-64 w-full bg-gray-100 overflow-hidden">
     <!-- Gradient overlay to allow background image visibility -->
-    <div class="absolute inset-0 bg-gradient-to-r from-gray-900/70 via-gray-800/50 to-gray-900/70 z-10"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-800/70 to-gray-900/90 z-10"></div>
     <img src="<?= $productImages[0] ?>" alt="<?= htmlspecialchars($product['title']) ?> Banner"
         class="w-full h-full object-cover">
     <div class="container mx-auto px-4 absolute inset-0 flex flex-col justify-start pt-8 pb-10 md:pt-12 z-20">
