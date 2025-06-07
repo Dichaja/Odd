@@ -307,7 +307,8 @@ ob_start();
                         class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80 group-hover:opacity-90 transition-all">
                         <div class="absolute bottom-0 left-0 right-0 p-6">
                             <h3 class="text-white text-xl font-bold mb-2 truncate" title="<?= htmlspecialchars($c['name']) ?>">
-                                <?= htmlspecialchars($c['name']) ?></h3>
+                                <?= htmlspecialchars($c['name']) ?>
+                            </h3>
                             <div class="w-10 h-1 bg-red-600 mb-4 transform transition-all duration-300 group-hover:w-20"></div>
                             <div
                                 class="text-white bg-red-600 bg-opacity-0 group-hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100 inline-block">
@@ -476,16 +477,19 @@ ob_start();
         height: 30px !important;
     }
 
-    .partners-next:after,
-    .partners-prev:after {
-        font-size: 14px !important;
+    .product-details-btn {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        transition: opacity .3s;
     }
 
-    /* Text truncation utilities */
-    .truncate {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    .product-card:hover .product-details-btn {
+        opacity: 1;
     }
 
     .line-clamp-2 {
