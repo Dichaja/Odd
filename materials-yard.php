@@ -177,7 +177,7 @@ ob_start();
     .share-label {
         font-size: 12px;
         font-weight: 500;
-        color: #4B5563;
+        color: #ffffff;
     }
 
     .share-buttons {
@@ -192,8 +192,8 @@ ob_start();
         width: 1.5rem;
         height: 1.5rem;
         border-radius: 9999px;
-        color: #DC2626;
-        border: 1.5px solid #DC2626;
+        color: #ffffff;
+        border: 1.5px solid#ffffff;
         background-color: transparent;
         transition: all 0.2s ease;
         position: relative;
@@ -362,7 +362,7 @@ ob_start();
 </style>
 
 <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800 z-10"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-800/70 to-gray-900/90 z-10"></div>
     <img src="<?= $categoryImageUrl ?>"
         alt="<?= htmlspecialchars(!empty($categoryId) && isset($category) ? $category['name'] : 'Building Materials') ?> Banner"
         class="w-full h-full object-cover opacity-20">

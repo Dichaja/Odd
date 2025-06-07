@@ -77,29 +77,72 @@ $(function () {
         });
     }
 
-    function updateCoordsAndFlush() {
+    function updateCoordsAndFlush(useFallback = true) {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 pos => {
+                    const { latitude, longitude } = pos.coords;
                     const s = getSession();
-                    s.coords = {
-                        latitude: pos.coords.latitude,
-                        longitude: pos.coords.longitude
-                    };
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-                    const updated = logPageLoad();
-                    sendSessionToServer(updated);
+                    s.coords = { latitude, longitude };
+
+                    const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=3&addressdetails=1`;
+
+                    $.getJSON(nominatimUrl)
+                        .done(data => {
+                            const country = data.address?.country || 'Unknown';
+                            const shortName = data.address?.country_code || 'unknown';
+
+                            // Now fetch phone code from RestCountries API
+                            const restCountriesUrl = `https://restcountries.com/v3.1/alpha/${shortName}`;
+
+                            $.getJSON(restCountriesUrl)
+                                .done(rcData => {
+                                    const countryData = Array.isArray(rcData) ? rcData[0] : rcData;
+                                    const phoneCode = countryData?.idd?.root
+                                        ? countryData.idd.root + (countryData.idd.suffixes?.[0] || '')
+                                        : 'Unknown';
+
+                                    s.country = country;
+                                    s.shortName = shortName;
+                                    s.phoneCode = phoneCode;
+
+                                    const bd = getBrowserAndDevice();
+                                    s.browser = bd.browser;
+                                    s.device = bd.device;
+
+                                    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+                                    const updated = logPageLoad();
+                                    sendSessionToServer(updated);
+                                })
+                                .fail(() => {
+                                    s.country = country;
+                                    s.shortName = shortName;
+                                    s.phoneCode = 'Unknown';
+                                    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+                                    const updated = logPageLoad();
+                                    sendSessionToServer(updated);
+                                });
+                        })
+                        .fail(() => {
+                            const updated = logPageLoad();
+                            sendSessionToServer(updated);
+                        });
                 },
                 _err => {
-                    // user denied or error
-                    const updated = logPageLoad();
-                    sendSessionToServer(updated);
+                    if (useFallback) fetchIPAndLog();
+                    else {
+                        const updated = logPageLoad();
+                        sendSessionToServer(updated);
+                    }
                 },
                 { timeout: 10000 }
             );
         } else {
-            const updated = logPageLoad();
-            sendSessionToServer(updated);
+            if (useFallback) fetchIPAndLog();
+            else {
+                const updated = logPageLoad();
+                sendSessionToServer(updated);
+            }
         }
     }
 

@@ -419,7 +419,6 @@ ob_start();
 
 <!-- Hero Banner with Share Buttons and Gradient Overlay -->
 <div class="relative h-50 md:h-64 w-full bg-gray-100 overflow-hidden">
-    <!-- Gradient overlay to allow background image visibility -->
     <div class="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-800/70 to-gray-900/90 z-10"></div>
     <img src="<?= $productImages[0] ?>" alt="<?= htmlspecialchars($product['title']) ?> Banner"
         class="w-full h-full object-cover">
