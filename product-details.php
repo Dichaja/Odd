@@ -1,45 +1,241 @@
 <?php
-$pageTitle = "Retail Polythene Kavera G1000";
-$activeNav = "materials";
 require_once __DIR__ . '/config/config.php';
 
-// Define related products data in PHP
-$relatedProducts = [
+// Get product ID from URL parameter
+$productId = isset($_GET['id']) ? $_GET['id'] : '';
+
+if (empty($productId)) {
+    header('Location: ' . BASE_URL . 'materials-yard');
+    exit;
+}
+
+// Function to generate SEO meta tags for products
+function generateSeoMetaTags($product)
+{
+    $title = htmlspecialchars($product['title'] ?? 'Product') . ' | Zzimba Online';
+
+    // Truncated description for meta description (max 160 characters for SEO)
+    $metaDescription = '';
+    if (!empty($product['description'])) {
+        $description = strip_tags($product['description']);
+        if (strlen($description) > 160) {
+            $metaDescription = substr($description, 0, 157) . '...';
+        } else {
+            $metaDescription = $description;
+        }
+    } else {
+        $metaDescription = 'Discover quality ' . ($product['title'] ?? 'products') . ' on Zzimba Online. Your trusted marketplace for construction materials and more.';
+    }
+    $metaDescription = htmlspecialchars($metaDescription);
+
+    // Full description for og_description (no truncation)
+    $ogDescription = '';
+    if (!empty($product['description'])) {
+        $ogDescription = htmlspecialchars(strip_tags($product['description']));
+    } else {
+        $ogDescription = 'Discover quality ' . ($product['title'] ?? 'products') . ' on Zzimba Online. Your trusted marketplace for construction materials and more.';
+    }
+
+    // Determine OG image with fallback mechanism
+    $ogImage = '';
+    if (!empty($product['primary_image']) && !strpos($product['primary_image'], 'placehold.co')) {
+        $ogImage = $product['primary_image'];
+    } else {
+        $productName = urlencode($product['title'] ?? 'Product');
+        $ogImage = "https://placehold.co/1200x630/e2e8f0/1e293b?text={$productName}";
+    }
+
+    $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+
+    return [
+        'title' => $title,
+        'description' => $metaDescription,
+        'og_title' => $title,
+        'og_description' => $ogDescription,
+        'og_image' => $ogImage,
+        'og_url' => $currentUrl,
+        'og_type' => 'product'
+    ];
+}
+
+// Function to get product images
+function getProductImages($productId)
+{
+    $productDir = __DIR__ . '/img/products/' . $productId . '/';
+    $images = [];
+
+    if (is_dir($productDir)) {
+        $jsonFile = $productDir . 'images.json';
+
+        if (file_exists($jsonFile)) {
+            $jsonContent = file_get_contents($jsonFile);
+            $imageData = json_decode($jsonContent, true);
+
+            if (isset($imageData['images']) && !empty($imageData['images'])) {
+                foreach ($imageData['images'] as $imageName) {
+                    $imagePath = $productDir . $imageName;
+                    if (file_exists($imagePath)) {
+                        $images[] = BASE_URL . 'img/products/' . $productId . '/' . $imageName;
+                    }
+                }
+            }
+        } else {
+            // Scan directory for images if no JSON file
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $files = scandir($productDir);
+
+            foreach ($files as $file) {
+                if ($file !== '.' && $file !== '..') {
+                    $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    if (in_array($extension, $allowedExtensions)) {
+                        $images[] = BASE_URL . 'img/products/' . $productId . '/' . $file;
+                    }
+                }
+            }
+        }
+    }
+
+    // If no images found, use placeholder
+    if (empty($images)) {
+        $images[] = "https://placehold.co/800x600/e2e8f0/1e293b?text=" . urlencode("Product Image");
+    }
+
+    return $images;
+}
+
+// Function to get short description (2 lines max)
+function getShortDescription($description, $maxLength = 150)
+{
+    if (strlen($description) <= $maxLength) {
+        return $description;
+    }
+
+    $shortened = substr($description, 0, $maxLength);
+    $lastSpace = strrpos($shortened, ' ');
+
+    if ($lastSpace !== false) {
+        $shortened = substr($shortened, 0, $lastSpace);
+    }
+
+    return $shortened . '...';
+}
+
+// Fetch product details
+$stmt = $pdo->prepare("
+    SELECT 
+        p.id, 
+        p.title, 
+        p.description, 
+        p.views, 
+        p.featured,
+        p.category_id,
+        pc.name as category_name,
+        (SELECT image_url 
+         FROM product_images 
+         WHERE product_id = p.id 
+           AND is_primary = 1 
+         LIMIT 1) AS primary_image,
+        EXISTS(
+            SELECT 1 
+            FROM store_products sp
+            JOIN product_pricing pp ON pp.store_products_id = sp.id
+            WHERE sp.product_id = p.id
+        ) AS has_pricing,
+        (SELECT MIN(pp.price)
+         FROM store_products sp
+         JOIN product_pricing pp ON pp.store_products_id = sp.id
+         WHERE sp.product_id = p.id
+        ) AS min_price
+    FROM products p
+    LEFT JOIN product_categories pc ON p.category_id = pc.id
+    WHERE p.id = ? AND p.status = 'published'
+");
+
+$stmt->execute([$productId]);
+$product = $stmt->fetch();
+
+if (!$product) {
+    header('Location: ' . BASE_URL . 'materials-yard');
+    exit;
+}
+
+// Update view count
+$updateViews = $pdo->prepare("UPDATE products SET views = views + 1 WHERE id = ?");
+$updateViews->execute([$productId]);
+$product['views'] = $product['views'] + 1;
+
+// Get product images
+$productImages = getProductImages($productId);
+
+// Add primary image to product array for SEO
+$product['primary_image'] = $productImages[0];
+
+// Generate SEO meta tags
+$seoTags = generateSeoMetaTags($product);
+$pageTitle = $seoTags['title'];
+
+// Get short description
+$shortDescription = getShortDescription($product['description']);
+
+// Fetch 4 random products from same category (excluding current product)
+$relatedStmt = $pdo->prepare("
+    SELECT 
+        p.id, 
+        p.title, 
+        p.description, 
+        p.views, 
+        p.featured,
+        (SELECT image_url 
+         FROM product_images 
+         WHERE product_id = p.id 
+           AND is_primary = 1 
+         LIMIT 1) AS primary_image,
+        EXISTS(
+            SELECT 1 
+            FROM store_products sp
+            JOIN product_pricing pp ON pp.store_products_id = sp.id
+            WHERE sp.product_id = p.id
+        ) AS has_pricing
+    FROM products p
+    WHERE p.category_id = ? 
+      AND p.id != ? 
+      AND p.status = 'published'
+    ORDER BY RAND()
+    LIMIT 4
+");
+
+$relatedStmt->execute([$product['category_id'], $productId]);
+$relatedProducts = [];
+
+while ($row = $relatedStmt->fetch()) {
+    $relatedProductImages = getProductImages($row['id']);
+    $row['primary_image'] = $relatedProductImages[0];
+    $row['has_pricing'] = (bool) $row['has_pricing'];
+    $relatedProducts[] = $row;
+}
+
+// Set active navigation
+$activeNav = "materials";
+
+// Define dummy reviews for future expansion
+$reviews = [
     [
-        'name' => 'DAMPLAS DPC',
-        'price' => 35000,
-        'unit' => 'Per Roll',
-        'image' => 'https://placehold.co/600x400/e2e8f0/1e293b?text=DAMPLAS+DPC',
-        'rating' => 4.5,
-        'reviews' => 12
+        'name' => 'John Doe',
+        'rating' => 4,
+        'comment' => 'Great product, exactly what I needed for my construction project! The quality is consistent and it performs well.',
+        'date' => '2025-01-15',
+        'verified' => true
     ],
     [
-        'name' => 'Dr Fixit Powder Waterproof',
-        'price' => 45000,
-        'unit' => 'Per Bag',
-        'image' => 'https://placehold.co/600x400/e2e8f0/1e293b?text=Dr+Fixit+Powder',
-        'rating' => 4.2,
-        'reviews' => 8
-    ],
-    [
-        'name' => 'Dr Fixit LW+ Tonic For Cement',
-        'price' => 28000,
-        'unit' => 'Per Bottle',
-        'image' => 'https://placehold.co/600x400/e2e8f0/1e293b?text=Dr+Fixit+LW%2B',
-        'rating' => 4.7,
-        'reviews' => 15
-    ],
-    [
-        'name' => 'Elephant Barbed Wire',
-        'price' => 65000,
-        'unit' => 'Per Roll',
-        'image' => 'https://placehold.co/600x400/e2e8f0/1e293b?text=Elephant+Barbed+Wire',
-        'rating' => 4.0,
-        'reviews' => 6
+        'name' => 'Jane Smith',
+        'rating' => 5,
+        'comment' => 'Excellent quality and quick delivery! This product has saved me a lot of trouble. Highly recommended.',
+        'date' => '2025-02-01',
+        'verified' => true
     ]
 ];
 
-// Define store outlets
+// Define dummy store outlets for future expansion
 $storeOutlets = [
     [
         'name' => 'Zzimba Online Warehouse (Main Branch)',
@@ -61,66 +257,10 @@ $storeOutlets = [
     ]
 ];
 
-// Define reviews
-$reviews = [
-    [
-        'name' => 'John Doe',
-        'rating' => 4,
-        'comment' => 'Great product, exactly what I needed for my foundation work! The quality is consistent and it performs well even in wet conditions.',
-        'date' => '2025-01-15',
-        'verified' => true
-    ],
-    [
-        'name' => 'Jane Smith',
-        'rating' => 5,
-        'comment' => 'Excellent quality and quick delivery! This kavera has saved me a lot of trouble with moisture problems. Highly recommended for any construction project.',
-        'date' => '2025-02-01',
-        'verified' => true
-    ]
-];
-
 ob_start();
 ?>
 
-<!-- Only keeping custom CSS that can't be converted to Tailwind -->
 <style>
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .quantity-input::-webkit-outer-spin-button,
-    .quantity-input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    .fade-in {
-        animation: fadeIn 0.5s ease forwards;
-    }
-
-    /* Auto-scrolling gallery */
-    .gallery-container {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .gallery-scroll {
-        display: flex;
-        transition: transform 0.5s ease;
-    }
-
-    .gallery-scroll img {
-        flex-shrink: 0;
-    }
-
     .line-clamp-2 {
         display: -webkit-box;
         -webkit-box-orient: vertical;
@@ -128,6 +268,15 @@ ob_start();
         overflow: hidden;
         text-overflow: ellipsis;
         line-clamp: 2;
+    }
+
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-clamp: 3;
     }
 
     .share-container {
@@ -139,7 +288,7 @@ ob_start();
     .share-label {
         font-size: 12px;
         font-weight: 500;
-        color: #4B5563;
+        color: #ffffff;
     }
 
     .share-buttons {
@@ -203,84 +352,166 @@ ob_start();
         opacity: 1;
         visibility: visible;
     }
+
+    .product-card {
+        position: relative;
+        border: 1px solid #E5E7EB;
+        border-radius: 0.75rem;
+        background-color: #ffffff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .product-details-btn {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .product-card:hover .product-details-btn {
+        opacity: 1;
+    }
+
+    .quantity-input::-webkit-outer-spin-button,
+    .quantity-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .gallery-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .gallery-scroll {
+        display: flex;
+        transition: transform 0.5s ease;
+    }
+
+    .gallery-scroll img {
+        flex-shrink: 0;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
 </style>
 
-<!-- Hero Banner with Breadcrumbs - Matching vendor-profile.php style -->
-<div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800 z-10"></div>
-    <img src="https://placehold.co/1920x640/334155/f8fafc?text=Polythene+Kavera+G1000" alt="Product Hero Banner"
-        class="w-full h-full object-cover opacity-20">
-    <div class="container mx-auto px-4 absolute inset-0 flex flex-col justify-start pt-8 md:pt-12 z-20">
-        <h1 class="text-xl md:text-3xl font-bold text-white mb-4">Retail Polythene Kavera G1000</h1>
-        <nav class="flex text-xs md:text-sm text-gray-300 overflow-hidden whitespace-nowrap">
-            <a href="<?= BASE_URL ?>" class="hover:text-white transition-colors truncate max-w-[30%]">Zzimba Online</a>
-            <span class="mx-2">/</span>
-            <a href="<?= BASE_URL ?>materials-yard"
-                class="hover:text-white transition-colors truncate max-w-[30%]">Building Materials</a>
-            <span class="mx-2">/</span>
-            <span class="text-white font-medium truncate max-w-[40%]">Retail Polythene Kavera G1000</span>
-        </nav>
+<!-- Hero Banner with Share Buttons and Gradient Overlay -->
+<div class="relative h-50 md:h-64 w-full bg-gray-100 overflow-hidden">
+    <!-- Gradient overlay to allow background image visibility -->
+    <div class="absolute inset-0 bg-gradient-to-r from-gray-900/70 via-gray-800/50 to-gray-900/70 z-10"></div>
+    <img src="<?= $productImages[0] ?>" alt="<?= htmlspecialchars($product['title']) ?> Banner"
+        class="w-full h-full object-cover">
+    <div class="container mx-auto px-4 absolute inset-0 flex flex-col justify-start pt-8 pb-10 md:pt-12 z-20">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-xl md:text-3xl font-bold text-white mb-4">
+                    <?= htmlspecialchars($product['title']) ?>
+                </h1>
+                <nav class="flex text-xs md:text-sm text-gray-300 overflow-hidden whitespace-nowrap">
+                    <a href="<?= BASE_URL ?>" class="hover:text-white transition-colors truncate max-w-[30%]">Zzimba
+                        Online</a>
+                    <span class="mx-2">/</span>
+                    <a href="<?= BASE_URL ?>materials-yard"
+                        class="hover:text-white transition-colors truncate max-w-[30%]">Materials Yard</a>
+                    <span class="mx-2">/</span>
+                    <span
+                        class="text-white font-medium truncate max-w-[40%]"><?= htmlspecialchars($product['title']) ?></span>
+                </nav>
+            </div>
+
+            <!-- Share buttons in hero section -->
+            <div class="share-container mt-4 md:mt-0 hidden md:flex">
+                <span class="share-label">SHARE</span>
+                <div class="share-buttons">
+                    <button onclick="copyLink()" class="share-button">
+                        <i class="fa-solid fa-link"></i>
+                        <span class="tooltip">Copy link to clipboard</span>
+                    </button>
+                    <button onclick="shareOnWhatsApp()" class="share-button">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <span class="tooltip">Share on WhatsApp</span>
+                    </button>
+                    <button onclick="shareOnFacebook()" class="share-button">
+                        <i class="fa-brands fa-facebook-f"></i>
+                        <span class="tooltip">Share on Facebook</span>
+                    </button>
+                    <button onclick="shareOnTwitter()" class="share-button">
+                        <i class="fa-brands fa-x-twitter"></i>
+                        <span class="tooltip">Post on X</span>
+                    </button>
+                    <button onclick="shareOnLinkedIn()" class="share-button">
+                        <i class="fa-brands fa-linkedin-in"></i>
+                        <span class="tooltip">Share on LinkedIn</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Main Product Section - Overlapping the hero with negative margin -->
+<!-- Main Product Section -->
 <div class="container mx-auto px-4 -mt-10 lg:-mt-20 relative z-30">
     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <!-- Product Gallery with Auto-scroll -->
+            <!-- Product Gallery -->
             <div class="space-y-6">
                 <div class="relative rounded-2xl overflow-hidden bg-white shadow-lg">
                     <span
-                        class="absolute top-4 right-4 bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10">POPULAR</span>
-                    <img id="main-product-image" src="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+G1000"
-                        alt="Retail Polythene Kavera G1000" class="w-full h-auto object-cover rounded-2xl" />
+                        class="absolute top-4 right-4 bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10">
+                        <?= $product['featured'] ? 'FEATURED' : 'POPULAR' ?>
+                    </span>
+                    <img id="main-product-image" src="<?= $productImages[0] ?>"
+                        alt="<?= htmlspecialchars($product['title']) ?>"
+                        class="w-full h-auto object-cover rounded-2xl" />
                 </div>
-                <div class="gallery-container">
-                    <div class="gallery-scroll" id="gallery-scroll">
-                        <div class="gallery-thumb active cursor-pointer w-20 h-20 rounded-lg overflow-hidden border-2 border-rose-600 mx-1"
-                            data-image="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+G1000">
-                            <img src="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+G1000" alt="Main view"
-                                class="w-full h-full object-cover">
-                        </div>
-                        <div class="gallery-thumb cursor-pointer w-20 h-20 rounded-lg overflow-hidden border-2 border-transparent hover:border-rose-600 transition-colors mx-1"
-                            data-image="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+Side">
-                            <img src="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+Side" alt="Side view"
-                                class="w-full h-full object-cover">
-                        </div>
-                        <div class="gallery-thumb cursor-pointer w-20 h-20 rounded-lg overflow-hidden border-2 border-transparent hover:border-rose-600 transition-colors mx-1"
-                            data-image="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+Close">
-                            <img src="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+Close" alt="Close-up view"
-                                class="w-full h-full object-cover">
-                        </div>
-                        <div class="gallery-thumb cursor-pointer w-20 h-20 rounded-lg overflow-hidden border-2 border-transparent hover:border-rose-600 transition-colors mx-1"
-                            data-image="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+Usage">
-                            <img src="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+Usage" alt="Usage example"
-                                class="w-full h-full object-cover">
-                        </div>
-                        <!-- Duplicate images for continuous scrolling -->
-                        <div class="gallery-thumb cursor-pointer w-20 h-20 rounded-lg overflow-hidden border-2 border-transparent hover:border-rose-600 transition-colors mx-1"
-                            data-image="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+G1000">
-                            <img src="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+G1000" alt="Main view"
-                                class="w-full h-full object-cover">
-                        </div>
-                        <div class="gallery-thumb cursor-pointer w-20 h-20 rounded-lg overflow-hidden border-2 border-transparent hover:border-rose-600 transition-colors mx-1"
-                            data-image="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+Side">
-                            <img src="https://placehold.co/800x600/e2e8f0/1e293b?text=Kavera+Side" alt="Side view"
-                                class="w-full h-full object-cover">
+
+                <?php if (count($productImages) > 1): ?>
+                    <div class="gallery-container">
+                        <div class="gallery-scroll flex gap-2" id="gallery-scroll">
+                            <?php foreach ($productImages as $index => $image): ?>
+                                <div class="gallery-thumb cursor-pointer w-20 h-20 rounded-lg overflow-hidden border-2 <?= $index === 0 ? 'border-rose-600' : 'border-transparent hover:border-rose-600' ?> transition-colors flex-shrink-0"
+                                    data-image="<?= $image ?>">
+                                    <img src="<?= $image ?>" alt="Product view <?= $index + 1 ?>"
+                                        class="w-full h-full object-cover">
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
-                </div>
+                <?php endif; ?>
             </div>
 
             <!-- Product Details -->
             <div class="space-y-6">
                 <div class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
                     <span class="font-medium text-gray-500">Category:</span>
-                    <a href="#" class="font-semibold text-rose-600 hover:underline ml-1">Hardware Materials</a>
+                    <a href="<?= BASE_URL ?>view/category/<?= $product['category_id'] ?>"
+                        class="font-semibold text-rose-600 hover:underline ml-1"><?= htmlspecialchars($product['category_name']) ?></a>
                 </div>
 
                 <h2 class="text-3xl font-bold text-gray-900">
-                    Retail Polythene Kavera G1000
+                    <?= htmlspecialchars($product['title']) ?>
                 </h2>
 
                 <div class="flex flex-wrap items-center gap-6 text-sm">
@@ -296,28 +527,32 @@ ob_start();
                     </div>
                     <div class="flex items-center text-gray-600">
                         <i class="fas fa-eye mr-1"></i>
-                        <span>55 Views</span>
+                        <span><?= number_format($product['views']) ?> Views</span>
                     </div>
                 </div>
 
                 <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                    <!-- Description with 2-line limit and ellipsis -->
+                    <!-- Short description (2 lines max) -->
                     <p class="text-gray-700 leading-relaxed mb-6 line-clamp-2">
-                        A piece of GENERIC Polythene Sheeting locally known as kavera measured and cut to lengths per
-                        meter as desired. Strong plastic sheet for protective wrapping and damp proofing of foundations.
-                        This high-quality polythene sheeting is essential for construction projects where moisture
-                        protection is required.
+                        <?= htmlspecialchars($shortDescription) ?>
                     </p>
 
-                    <!-- Brand name instead of features -->
+                    <!-- Brand placeholder for future expansion -->
                     <div class="flex items-center mb-6">
                         <span class="text-sm font-medium text-gray-500 mr-2">Brand:</span>
                         <span class="text-sm font-semibold text-gray-800">GENERIC Construction Materials</span>
                     </div>
 
-                    <div class="text-3xl text-rose-600 font-bold mb-6">
-                        UGX 2,000 <span class="text-base font-normal ml-2 text-gray-500">1 LM Piece</span>
-                    </div>
+                    <?php if ($product['has_pricing'] && $product['min_price']): ?>
+                        <div class="text-3xl text-rose-600 font-bold mb-6">
+                            UGX <?= number_format($product['min_price']) ?> <span
+                                class="text-base font-normal ml-2 text-gray-500">Starting Price</span>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-lg text-gray-600 font-medium mb-6">
+                            Contact for pricing
+                        </div>
+                    <?php endif; ?>
 
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
@@ -336,40 +571,15 @@ ob_start();
                     </div>
 
                     <div class="flex flex-wrap gap-4">
-                        <button
-                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center flex-1 md:flex-none">
-                            <i class="fas fa-shopping-cart mr-2"></i> Buy
-                        </button>
+                        <?php if ($product['has_pricing']): ?>
+                            <button
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center flex-1 md:flex-none">
+                                <i class="fas fa-shopping-cart mr-2"></i> Buy
+                            </button>
+                        <?php endif; ?>
                         <button
                             class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center flex-1 md:flex-none">
                             <i class="fas fa-tag mr-2"></i> Sell
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Share buttons styled like vendor-profile.php -->
-                <div class="share-container">
-                    <span class="share-label">SHARE</span>
-                    <div class="share-buttons">
-                        <button onclick="copyLink()" class="share-button" title="Copy link">
-                            <i class="fa-solid fa-link"></i>
-                            <span class="tooltip">Copy link to clipboard</span>
-                        </button>
-                        <button onclick="shareOnWhatsApp()" class="share-button" title="Share on WhatsApp">
-                            <i class="fa-brands fa-whatsapp"></i>
-                            <span class="tooltip">Share this profile on WhatsApp</span>
-                        </button>
-                        <button onclick="shareOnFacebook()" class="share-button" title="Share on Facebook">
-                            <i class="fa-brands fa-facebook-f"></i>
-                            <span class="tooltip">Share this profile on Facebook</span>
-                        </button>
-                        <button onclick="shareOnTwitter()" class="share-button" title="Share on Twitter/X">
-                            <i class="fa-brands fa-x-twitter"></i>
-                            <span class="tooltip">Post this on your X</span>
-                        </button>
-                        <button onclick="shareOnLinkedIn()" class="share-button" title="Share on LinkedIn">
-                            <i class="fa-brands fa-linkedin-in"></i>
-                            <span class="tooltip">Share on LinkedIn</span>
                         </button>
                     </div>
                 </div>
@@ -404,34 +614,7 @@ ob_start();
         <div class="bg-white rounded-xl shadow-sm p-6 lg:p-8">
             <h3 class="text-xl font-semibold mb-6 text-gray-800">Product Description</h3>
             <div class="text-gray-700 leading-relaxed space-y-4">
-                <p>
-                    A piece of GENERIC Polythene Sheeting locally known as kavera measured and cut out to lengths per
-                    meter as desired. Strong Plastic Sheet, 1000 Gauge Poly Sheeting. Used for protective wrapping, damp
-                    proofing of foundations, and more.
-                </p>
-                <p>
-                    This high-quality polythene sheeting is essential for construction projects where moisture
-                    protection is required. The G1000 grade offers excellent durability and resistance to tearing,
-                    making it ideal for foundation work.
-                </p>
-
-                <h4 class="text-lg font-medium mt-8 mb-3 text-gray-800">Key Features:</h4>
-                <ul class="list-disc list-inside space-y-2 pl-2">
-                    <li>1000 gauge thickness for superior durability</li>
-                    <li>Waterproof and moisture resistant</li>
-                    <li>Flexible and easy to cut to size</li>
-                    <li>UV stabilized for longer outdoor life</li>
-                    <li>Ideal for damp proofing foundations</li>
-                </ul>
-
-                <h4 class="text-lg font-medium mt-8 mb-3 text-gray-800">Applications:</h4>
-                <ul class="list-disc list-inside space-y-2 pl-2">
-                    <li>Foundation damp proofing</li>
-                    <li>Temporary weather protection</li>
-                    <li>Dust and debris control</li>
-                    <li>Material protection during construction</li>
-                    <li>Moisture barrier for concrete curing</li>
-                </ul>
+                <p><?= nl2br(htmlspecialchars($product['description'])) ?></p>
             </div>
         </div>
     </div>
@@ -449,40 +632,30 @@ ob_start();
                     </div>
 
                     <div id="reviews-list" class="mb-6 max-h-[500px] overflow-y-auto pr-2 space-y-6">
-                        <?php if (count($reviews) === 0): ?>
-                            <div class="text-center py-12">
-                                <div class="text-gray-400 mb-3">
-                                    <i class="far fa-comment-dots text-4xl"></i>
-                                </div>
-                                <p class="text-gray-600 font-medium">No reviews yet</p>
-                                <p class="text-gray-500 text-sm mt-1">Be the first to review this product</p>
-                            </div>
-                        <?php else: ?>
-                            <?php foreach ($reviews as $review): ?>
-                                <div class="border-b border-gray-200 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in">
-                                    <div class="flex items-center mb-1">
+                        <?php foreach ($reviews as $review): ?>
+                            <div class="border-b border-gray-200 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in">
+                                <div class="flex items-center mb-1">
+                                    <span
+                                        class="font-semibold text-gray-800"><?= htmlspecialchars($review['name']) ?></span>
+                                    <?php if ($review['verified']): ?>
                                         <span
-                                            class="font-semibold text-gray-800"><?= htmlspecialchars($review['name']) ?></span>
-                                        <?php if ($review['verified']): ?>
-                                            <span
-                                                class="ml-2 bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-0.5 rounded-full">Verified
-                                                Purchase</span>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="text-gray-500 text-sm mb-2"><?= $review['date'] ?></div>
-                                    <div class="flex text-amber-400 mb-3">
-                                        <?php for ($i = 1; $i <= 5; $i++): ?>
-                                            <?php if ($i <= $review['rating']): ?>
-                                                <i class="fas fa-star"></i>
-                                            <?php else: ?>
-                                                <i class="far fa-star"></i>
-                                            <?php endif; ?>
-                                        <?php endfor; ?>
-                                    </div>
-                                    <p class="text-gray-700"><?= htmlspecialchars($review['comment']) ?></p>
+                                            class="ml-2 bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-0.5 rounded-full">Verified
+                                            Purchase</span>
+                                    <?php endif; ?>
                                 </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                                <div class="text-gray-500 text-sm mb-2"><?= $review['date'] ?></div>
+                                <div class="flex text-amber-400 mb-3">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <?php if ($i <= $review['rating']): ?>
+                                            <i class="fas fa-star"></i>
+                                        <?php else: ?>
+                                            <i class="far fa-star"></i>
+                                        <?php endif; ?>
+                                    <?php endfor; ?>
+                                </div>
+                                <p class="text-gray-700"><?= htmlspecialchars($review['comment']) ?></p>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
@@ -569,76 +742,70 @@ ob_start();
     </div>
 </div>
 
-<!-- Related Products Section -->
-<div class="bg-gray-50 py-12">
-    <div class="container mx-auto px-4">
-        <div class="flex items-center justify-between mb-8">
-            <h2 class="text-2xl font-bold text-gray-800">You May Also Like</h2>
-            <div class="flex space-x-2">
-                <button
-                    class="slider-arrow prev w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <button
-                    class="slider-arrow next w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+<!-- You May Also Like Section -->
+<?php if (!empty($relatedProducts)): ?>
+    <div class="bg-gray-50 py-12">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">You May Also Like</h2>
             </div>
-        </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <?php foreach ($relatedProducts as $product): ?>
-                <div class="group">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <?php foreach ($relatedProducts as $relatedProduct): ?>
                     <div
-                        class="bg-white rounded-xl shadow-sm overflow-hidden h-full transform transition-transform duration-300 group-hover:-translate-y-1">
+                        class="product-card transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
                         <div class="relative">
-                            <img src="<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>"
-                                class="w-full h-48 object-cover">
-                            <div
-                                class="absolute top-3 right-3 bg-rose-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                                HOT</div>
+                            <img src="<?= $relatedProduct['primary_image'] ?>"
+                                alt="<?= htmlspecialchars($relatedProduct['title']) ?>"
+                                class="w-full h-40 md:h-48 object-cover">
+
+                            <div class="product-details-btn">
+                                <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>"
+                                    class="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm">
+                                    View Details
+                                </a>
+                            </div>
                         </div>
-                        <div class="p-5">
-                            <h3 class="font-bold text-gray-800 mb-2 line-clamp-2"><?= htmlspecialchars($product['name']) ?>
-                            </h3>
-                            <div class="flex text-amber-400 mb-1">
-                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                    <?php if ($i <= floor($product['rating'])): ?>
-                                        <i class="fas fa-star"></i>
-                                    <?php elseif ($i - 0.5 <= $product['rating']): ?>
-                                        <i class="fas fa-star-half-alt"></i>
-                                    <?php else: ?>
-                                        <i class="far fa-star"></i>
-                                    <?php endif; ?>
-                                <?php endfor; ?>
-                                <span class="text-gray-500 text-sm ml-1">(<?= $product['reviews'] ?>)</span>
+
+                        <div class="p-3 md:p-5 flex flex-col justify-between flex-1">
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
+                                    <?= htmlspecialchars($relatedProduct['title']) ?>
+                                </h3>
+
+                                <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
+                                    <?= htmlspecialchars(getShortDescription($relatedProduct['description'], 100)) ?>
+                                </p>
+
+                                <div class="flex items-center text-gray-500 text-xs md:text-sm mb-4">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    <span><?= number_format($relatedProduct['views']) ?> views</span>
+                                </div>
                             </div>
-                            <div class="mt-3 mb-4">
-                                <span class="text-xl font-bold text-rose-600">UGX
-                                    <?= number_format($product['price']) ?></span>
-                                <span class="text-sm text-gray-500"> / <?= $product['unit'] ?></span>
-                            </div>
-                            <div class="flex space-x-2">
-                                <button
-                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-sm">
-                                    <i class="fas fa-shopping-cart mr-1"></i> Buy
-                                </button>
-                                <button
-                                    class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-sm">
+
+                            <div class="flex space-x-2 mt-auto">
+                                <?php if ($relatedProduct['has_pricing']): ?>
+                                    <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>?action=buy"
+                                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
+                                        <i class="fas fa-shopping-cart mr-1"></i> Buy
+                                    </a>
+                                <?php endif; ?>
+                                <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>?action=sell"
+                                    class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
                                     <i class="fas fa-tag mr-1"></i> Sell
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
         </div>
     </div>
-</div>
+<?php endif; ?>
 
 <script>
-    // Tab switching functionality - Fixed to work properly
     document.addEventListener('DOMContentLoaded', function () {
+        // Tab switching functionality
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
 
@@ -667,231 +834,121 @@ ob_start();
                 targetContent.classList.add('block');
             });
         });
-    });
 
-    // Reviews functionality
-    let reviews = <?= json_encode($reviews) ?>;
+        // Gallery functionality
+        const galleryThumbs = document.querySelectorAll('.gallery-thumb');
+        const mainImage = document.getElementById('main-product-image');
 
-    function renderReviews() {
-        const reviewsList = document.getElementById('reviews-list');
-        reviewsList.innerHTML = '';
-
-        if (reviews.length === 0) {
-            reviewsList.innerHTML = `
-                <div class="text-center py-12">
-                    <div class="text-gray-400 mb-3">
-                        <i class="far fa-comment-dots text-4xl"></i>
-                    </div>
-                    <p class="text-gray-600 font-medium">No reviews yet</p>
-                    <p class="text-gray-500 text-sm mt-1">Be the first to review this product</p>
-                </div>
-            `;
-            return;
-        }
-
-        reviews.forEach(review => {
-            const reviewItem = document.createElement('div');
-            reviewItem.classList.add('border-b', 'border-gray-200', 'pb-6', 'mb-6', 'last:border-0', 'last:pb-0', 'last:mb-0', 'fade-in');
-
-            let starsHTML = '';
-            for (let i = 1; i <= 5; i++) {
-                if (i <= review.rating) {
-                    starsHTML += '<i class="fas fa-star"></i> ';
-                } else {
-                    starsHTML += '<i class="far fa-star"></i> ';
-                }
-            }
-
-            reviewItem.innerHTML = `
-                <div class="flex items-center mb-1">
-                    <span class="font-semibold text-gray-800">${review.name}</span>
-                    ${review.verified ? '<span class="ml-2 bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-0.5 rounded-full">Verified Purchase</span>' : ''}
-                </div>
-                <div class="text-gray-500 text-sm mb-2">${review.date}</div>
-                <div class="flex text-amber-400 mb-3">${starsHTML}</div>
-                <p class="text-gray-700">${review.comment}</p>
-            `;
-
-            reviewsList.appendChild(reviewItem);
-        });
-    }
-
-    // Star rating functionality
-    const starElements = document.querySelectorAll('#review-stars i');
-    const ratingInput = document.getElementById('reviewRating');
-
-    starElements.forEach(star => {
-        star.addEventListener('mouseover', () => {
-            const val = parseInt(star.getAttribute('data-value'));
-            starElements.forEach(s => {
-                const sVal = parseInt(s.getAttribute('data-value'));
-                if (sVal <= val) {
-                    s.classList.add('text-amber-400');
-                }
-            });
-        });
-
-        star.addEventListener('mouseout', () => {
-            if (ratingInput.value === '0') {
-                starElements.forEach(s => s.classList.remove('text-amber-400'));
-            } else {
-                starElements.forEach(s => {
-                    const sVal = parseInt(s.getAttribute('data-value'));
-                    if (sVal > parseInt(ratingInput.value)) {
-                        s.classList.remove('text-amber-400');
-                    }
-                });
-            }
-        });
-
-        star.addEventListener('click', () => {
-            const val = parseInt(star.getAttribute('data-value'));
-            ratingInput.value = val;
-            starElements.forEach(s => {
-                const sVal = parseInt(s.getAttribute('data-value'));
-                s.classList.remove('fas', 'far', 'text-amber-400');
-                if (sVal <= val) {
-                    s.classList.add('fas', 'text-amber-400');
-                } else {
-                    s.classList.add('far');
-                }
-            });
-        });
-    });
-
-    // Review form submission
-    document.getElementById('review-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const name = document.getElementById('reviewerName').value.trim();
-        const rating = parseInt(document.getElementById('reviewRating').value);
-        const comment = document.getElementById('reviewComment').value.trim();
-
-        if (!name || !comment || rating < 1) {
-            alert('Please fill all fields and select a rating.');
-            return;
-        }
-
-        const newReview = {
-            name: name,
-            rating: rating,
-            comment: comment,
-            date: new Date().toISOString().split('T')[0],
-            verified: true
-        };
-
-        reviews.unshift(newReview);
-        renderReviews();
-
-        // Reset form
-        document.getElementById('reviewerName').value = '';
-        document.getElementById('reviewRating').value = 0;
-        document.getElementById('reviewComment').value = '';
-        document.getElementById('char-count').textContent = '200';
-
-        starElements.forEach(s => {
-            s.classList.remove('fas', 'text-amber-400');
-            s.classList.add('far');
-        });
-
-        // Update reviews count in tab
-        const reviewsTabButton = document.querySelector('[data-tab="reviews-tab"]');
-        reviewsTabButton.textContent = `Reviews (${reviews.length})`;
-
-        alert('Thank you for your review!');
-    });
-
-    // Character counter for review
-    const reviewComment = document.getElementById('reviewComment');
-    const charCount = document.getElementById('char-count');
-
-    reviewComment.addEventListener('input', () => {
-        const remaining = 200 - reviewComment.value.length;
-        charCount.textContent = remaining;
-    });
-
-    // Quantity selector
-    const quantityInput = document.getElementById('quantity');
-    const decreaseBtn = document.getElementById('decrease-quantity');
-    const increaseBtn = document.getElementById('increase-quantity');
-
-    decreaseBtn.addEventListener('click', () => {
-        const currentValue = parseInt(quantityInput.value);
-        if (currentValue > 1) {
-            quantityInput.value = currentValue - 1;
-        }
-    });
-
-    increaseBtn.addEventListener('click', () => {
-        const currentValue = parseInt(quantityInput.value);
-        quantityInput.value = currentValue + 1;
-    });
-
-    // Product gallery with auto-scroll
-    const galleryThumbs = document.querySelectorAll('.gallery-thumb');
-    const mainImage = document.getElementById('main-product-image');
-    const galleryScroll = document.getElementById('gallery-scroll');
-    let currentScrollPosition = 0;
-    let scrollInterval;
-    let currentThumbIndex = 0;
-    const thumbWidth = 84; // Width + margin
-
-    // Manual thumbnail click
-    galleryThumbs.forEach((thumb, index) => {
-        thumb.addEventListener('click', () => {
-            const imageUrl = thumb.getAttribute('data-image');
-            mainImage.src = imageUrl;
-            currentThumbIndex = index;
-
-            // Update active state
-            galleryThumbs.forEach(t => {
-                t.classList.remove('active', 'border-rose-600');
-                t.classList.add('border-transparent');
-            });
-            thumb.classList.add('active', 'border-rose-600');
-            thumb.classList.remove('border-transparent');
-
-            // Reset auto-scroll timer when manually clicked
-            clearInterval(scrollInterval);
-            startAutoScroll();
-        });
-    });
-
-    // Auto-scroll function
-    function startAutoScroll() {
-        scrollInterval = setInterval(() => {
-            // Move to next thumbnail
-            currentThumbIndex = (currentThumbIndex + 1) % galleryThumbs.length;
-
-            // If we're at the end of the original set, loop back
-            if (currentThumbIndex >= 4) {
-                currentThumbIndex = 0;
-            }
-
-            const activeThumb = galleryThumbs[currentThumbIndex];
-
-            if (activeThumb) {
-                const imageUrl = activeThumb.getAttribute('data-image');
+        galleryThumbs.forEach(thumb => {
+            thumb.addEventListener('click', function () {
+                const imageUrl = this.getAttribute('data-image');
                 mainImage.src = imageUrl;
 
                 // Update active state
                 galleryThumbs.forEach(t => {
-                    t.classList.remove('active', 'border-rose-600');
+                    t.classList.remove('border-rose-600');
                     t.classList.add('border-transparent');
                 });
-                activeThumb.classList.add('active', 'border-rose-600');
-                activeThumb.classList.remove('border-transparent');
+                this.classList.add('border-rose-600');
+                this.classList.remove('border-transparent');
+            });
+        });
 
-                // Scroll the gallery if needed
-                if (currentThumbIndex > 1) {
-                    galleryScroll.style.transform = `translateX(-${thumbWidth}px)`;
-                } else {
-                    galleryScroll.style.transform = 'translateX(0)';
-                }
+        // Quantity controls
+        const quantityInput = document.getElementById('quantity');
+        const decreaseBtn = document.getElementById('decrease-quantity');
+        const increaseBtn = document.getElementById('increase-quantity');
+
+        decreaseBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
             }
-        }, 5000);
-    }
+        });
 
-    // Social sharing functions from vendor-profile.php
+        increaseBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            quantityInput.value = currentValue + 1;
+        });
+
+        // Review functionality
+        const starElements = document.querySelectorAll('#review-stars i');
+        const ratingInput = document.getElementById('reviewRating');
+
+        starElements.forEach(star => {
+            star.addEventListener('mouseover', () => {
+                const val = parseInt(star.getAttribute('data-value'));
+                starElements.forEach(s => {
+                    const sVal = parseInt(s.getAttribute('data-value'));
+                    if (sVal <= val) {
+                        s.classList.add('text-amber-400');
+                    }
+                });
+            });
+
+            star.addEventListener('mouseout', () => {
+                if (ratingInput.value === '0') {
+                    starElements.forEach(s => s.classList.remove('text-amber-400'));
+                } else {
+                    starElements.forEach(s => {
+                        const sVal = parseInt(s.getAttribute('data-value'));
+                        if (sVal > parseInt(ratingInput.value)) {
+                            s.classList.remove('text-amber-400');
+                        }
+                    });
+                }
+            });
+
+            star.addEventListener('click', () => {
+                const val = parseInt(star.getAttribute('data-value'));
+                ratingInput.value = val;
+                starElements.forEach(s => {
+                    const sVal = parseInt(s.getAttribute('data-value'));
+                    s.classList.remove('fas', 'far', 'text-amber-400');
+                    if (sVal <= val) {
+                        s.classList.add('fas', 'text-amber-400');
+                    } else {
+                        s.classList.add('far');
+                    }
+                });
+            });
+        });
+
+        // Character counter for review
+        const reviewComment = document.getElementById('reviewComment');
+        const charCount = document.getElementById('char-count');
+
+        reviewComment.addEventListener('input', () => {
+            const remaining = 200 - reviewComment.value.length;
+            charCount.textContent = remaining;
+        });
+
+        // Review form submission
+        document.getElementById('review-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const name = document.getElementById('reviewerName').value.trim();
+            const rating = parseInt(document.getElementById('reviewRating').value);
+            const comment = document.getElementById('reviewComment').value.trim();
+
+            if (!name || !comment || rating < 1) {
+                alert('Please fill all fields and select a rating.');
+                return;
+            }
+
+            alert('Thank you for your review! (This is a demo - review not actually saved)');
+
+            // Reset form
+            this.reset();
+            document.getElementById('reviewRating').value = 0;
+            document.getElementById('char-count').textContent = '200';
+            starElements.forEach(s => {
+                s.classList.remove('fas', 'text-amber-400');
+                s.classList.add('far');
+            });
+        });
+    });
+
+    // Social sharing functions
     function copyLink() {
         const currentUrl = window.location.href;
         navigator.clipboard.writeText(currentUrl).then(() => {
@@ -904,35 +961,30 @@ ob_start();
 
     function shareOnWhatsApp() {
         const currentUrl = window.location.href;
-        const productName = "Retail Polythene Kavera G1000";
+        const productName = "<?= addslashes($product['title']) ?>";
         const message = `Check out ${productName} on Zzimba Online: ${currentUrl}`;
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     }
 
     function shareOnFacebook() {
         const currentUrl = window.location.href;
-        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
-        window.open(facebookUrl, '_blank');
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`, '_blank');
     }
 
     function shareOnTwitter() {
         const currentUrl = window.location.href;
-        const productName = "Retail Polythene Kavera G1000";
+        const productName = "<?= addslashes($product['title']) ?>";
         const message = `Check out ${productName} on Zzimba Online:`;
-        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(currentUrl)}`;
-        window.open(twitterUrl, '_blank');
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(currentUrl)}`, '_blank');
     }
 
     function shareOnLinkedIn() {
         const currentUrl = window.location.href;
-        const productName = "Retail Polythene Kavera G1000";
+        const productName = "<?= addslashes($product['title']) ?>";
         const message = `Check out ${productName} on Zzimba Online.`;
-        const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(productName)}&summary=${encodeURIComponent(message)}`;
-        window.open(linkedinUrl, '_blank');
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(productName)}&summary=${encodeURIComponent(message)}`, '_blank');
     }
 
-    // Toast notification function
     function showToast(message, type = 'success') {
         const toast = document.createElement('div');
         toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity duration-300`;
@@ -946,12 +998,6 @@ ob_start();
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
-
-    // Start auto-scroll on page load
-    document.addEventListener('DOMContentLoaded', () => {
-        renderReviews();
-        startAutoScroll();
-    });
 </script>
 
 <?php
