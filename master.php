@@ -3,11 +3,8 @@ require_once __DIR__ . '/config/config.php';
 $title = isset($pageTitle) ? $pageTitle . ' | Buy Online - Deliver On-site' : 'Zzimba Online Uganda | Buy Online - Deliver On-site';
 $activeNav = $activeNav ?? 'home';
 date_default_timezone_set('Africa/Kampala');
-$js_url = BASE_URL . "track/eventLog.js";
-$ch = curl_init($js_url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-$js_code = curl_exec($ch);
-curl_close($ch);
+
+$sessionUlid = generateUlid();
 
 $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 
@@ -69,11 +66,11 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
-    <script src="<?= BASE_URL ?>track/eventLog.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         const BASE_URL = "<?php echo BASE_URL; ?>";
+        const SESSION_ULID = "<?php echo $sessionUlid; ?>";
         const ACTIVE_NAV = <?php echo ($activeNav !== null) ? json_encode($activeNav) : "null"; ?>;
         const PAGE_TITLE = <?php echo ($pageTitle !== null) ? json_encode($pageTitle) : "null"; ?>;
         const IS_LOGGED_IN = <?php echo $isLoggedIn ? 'true' : 'false'; ?>;
@@ -104,6 +101,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
             }
         }
     </script>
+    <script src="<?= BASE_URL ?>track/eventLog.js"></script>
     <style>
         .nav-link {
             position: relative
