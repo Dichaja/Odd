@@ -298,10 +298,6 @@ ob_start();
                         <i class="fas fa-eye mr-1"></i>
                         <span>55 Views</span>
                     </div>
-                    <div class="flex items-center text-emerald-600">
-                        <i class="fas fa-check-circle mr-1"></i>
-                        <span>In Stock</span>
-                    </div>
                 </div>
 
                 <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
@@ -342,15 +338,11 @@ ob_start();
                     <div class="flex flex-wrap gap-4">
                         <button
                             class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center flex-1 md:flex-none">
-                            <i class="fas fa-shopping-cart mr-2"></i> Buy Now
+                            <i class="fas fa-shopping-cart mr-2"></i> Buy
                         </button>
                         <button
                             class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center flex-1 md:flex-none">
                             <i class="fas fa-tag mr-2"></i> Sell
-                        </button>
-                        <button
-                            class="border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 p-3 rounded-lg transition-colors">
-                            <i class="far fa-heart"></i>
                         </button>
                     </div>
                 </div>
