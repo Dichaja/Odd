@@ -82,24 +82,52 @@ $allCategoriesStmt = $pdo->prepare("
 $allCategoriesStmt->execute([$categoryId]);
 $allCategories = $allCategoriesStmt->fetchAll();
 
+// Fetch products, ordering priced items first
 if (!empty($categoryId)) {
     $productsStmt = $pdo->prepare("
-        SELECT p.id, p.title, p.description, p.views, 
-               (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image
+        SELECT 
+            p.id, 
+            p.title, 
+            p.description, 
+            p.views, 
+            (SELECT image_url 
+             FROM product_images 
+             WHERE product_id = p.id 
+               AND is_primary = 1 
+             LIMIT 1) AS primary_image,
+            EXISTS(
+                SELECT 1 
+                FROM store_products sp
+                JOIN product_pricing pp ON pp.store_products_id = sp.id
+                WHERE sp.product_id = p.id
+            ) AS has_pricing
         FROM products p
-        WHERE p.category_id = ? AND p.status = 'published'
-        ORDER BY p.featured DESC, p.views DESC
-        
+        WHERE p.category_id = ? 
+          AND p.status = 'published'
+        ORDER BY has_pricing DESC, p.featured DESC, p.views DESC
     ");
     $productsStmt->execute([$categoryId]);
 } else {
     $productsStmt = $pdo->prepare("
-        SELECT p.id, p.title, p.description, p.views, 
-               (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image
+        SELECT 
+            p.id, 
+            p.title, 
+            p.description, 
+            p.views, 
+            (SELECT image_url 
+             FROM product_images 
+             WHERE product_id = p.id 
+               AND is_primary = 1 
+             LIMIT 1) AS primary_image,
+            EXISTS(
+                SELECT 1 
+                FROM store_products sp
+                JOIN product_pricing pp ON pp.store_products_id = sp.id
+                WHERE sp.product_id = p.id
+            ) AS has_pricing
         FROM products p
         WHERE p.status = 'published'
-        ORDER BY p.featured DESC, p.views DESC
-        
+        ORDER BY has_pricing DESC, p.featured DESC, p.views DESC
     ");
     $productsStmt->execute();
 }
@@ -114,6 +142,7 @@ while ($row = $productsStmt->fetch()) {
         $row['primary_image'] = "https://placehold.co/600x400/e2e8f0/1e293b?text=" . urlencode($row['title']);
     }
 
+    $row['has_pricing'] = (bool) $row['has_pricing'];
     $products[] = $row;
 }
 
@@ -512,10 +541,12 @@ ob_start();
                                     </div>
 
                                     <div class="flex space-x-2 mt-auto">
-                                        <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=buy"
-                                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
-                                            <i class="fas fa-shopping-cart mr-1"></i> Buy
-                                        </a>
+                                        <?php if ($product['has_pricing']): ?>
+                                            <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=buy"
+                                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
+                                                <i class="fas fa-shopping-cart mr-1"></i> Buy
+                                            </a>
+                                        <?php endif; ?>
                                         <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=sell"
                                             class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
                                             <i class="fas fa-tag mr-1"></i> Sell
@@ -576,8 +607,6 @@ ob_start();
             dropdownItems.forEach(item => {
                 item.addEventListener('click', function () {
                     const categoryId = this.getAttribute('data-category-id');
-                    const categoryName = this.getAttribute('data-category-name');
-
                     window.location.href = `<?= BASE_URL ?>view/category/${categoryId}`;
                 });
             });
