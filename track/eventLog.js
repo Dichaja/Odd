@@ -1,7 +1,7 @@
 $(function () {
-    const SESSION_EXPIRY = 2 * 60 * 1000;           // 2 minutes
+    const SESSION_EXPIRY = 30 * 60 * 1000;           // 30 minutes
     const STORAGE_KEY = 'session_event_log';
-    const TRACKER_URL = BASE_URL + 'track/sessionTracker.php';
+    const TRACKER_URL = BASE_URL + 'track/s';
 
     function getBrowserAndDevice() {
         try {

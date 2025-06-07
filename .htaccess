@@ -64,7 +64,12 @@ RewriteRule ^view/product/([0-9A-HJKMNP-TV-Z]{26})$ product-details.php?id=$1 [L
 RewriteRule ^view/category/([0-9A-HJKMNP-TV-Z]{26})$ materials-yard.php?categoryId=$1 [L,QSA]
 
 ##############################################
-# 10. Custom Error Pages
+# 10. Clean URL for Session Tracker
+##############################################
+RewriteRule ^track/s$ track/sessionTracker.php [L,QSA]
+
+##############################################
+# 11. Custom Error Pages
 ##############################################
 ErrorDocument 404 /404.php
 ErrorDocument 403 /403.php

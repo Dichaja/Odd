@@ -51,7 +51,7 @@ if ($method === "POST") {
     }
 
     file_put_contents($logFile, json_encode($sessions, JSON_PRETTY_PRINT), LOCK_EX);
-    echo json_encode(["status" => "success", "message" => "Session logged."]);
+    echo json_encode(["status" => "success", "message" => "Logged"]);
     exit;
 }
 
