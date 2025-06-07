@@ -518,7 +518,7 @@ ob_start();
 
                                     <div class="product-details-btn">
                                         <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>"
-                                            class="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium hover:bg-rose-600 hover:text-white transition-colors text-sm">
+                                            class="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm">
                                             View Details
                                         </a>
                                     </div>
