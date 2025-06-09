@@ -415,6 +415,11 @@ ob_start();
 
 <!-- SHARED STYLES -->
 <style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
     .hero-aspect-ratio {
         position: relative;
     }

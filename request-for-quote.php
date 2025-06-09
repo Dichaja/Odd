@@ -10,6 +10,11 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
 
 <style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
     .form-group {
         position: relative;
     }
@@ -39,7 +44,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         width: 100%;
     }
 
-    /* Enhanced styling */
+    /* Enhanced Modern UI Styling */
     .page-header {
         background-image: linear-gradient(to right, rgba(239, 68, 68, 0.9), rgba(185, 28, 28, 0.8)),
             url('https://dummyimage.com/1920x350/e3e3e3/ffffff&text=Request+Quote');
@@ -60,40 +65,108 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
-    .item-row {
-        transition: all 0.3s ease;
+    /* Item Report Styling */
+    .item-report {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     }
 
-    .item-row:hover {
+    .item-report thead {
+        background-color: #f3f4f6;
+    }
+
+    .item-report th {
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        text-align: left;
+        color: #374151;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .item-report td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        color: #4b5563;
+    }
+
+    .item-report tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .item-report tbody tr:hover {
         background-color: #f9fafb;
     }
 
-    .add-btn {
-        background-image: linear-gradient(to right, #10b981, #059669);
+    .item-report tbody tr:last-child td {
+        border-bottom: none;
     }
 
-    .add-btn:hover {
-        background-image: linear-gradient(to right, #059669, #047857);
-    }
-
-    .submit-btn {
+    /* Button Styling */
+    .btn-primary {
         background-image: linear-gradient(to right, #ef4444, #dc2626);
-    }
-
-    .submit-btn:hover {
-        background-image: linear-gradient(to right, #dc2626, #b91c1c);
-    }
-
-    .info-card {
-        background-color: #f9fafb;
-        border-left: 4px solid #ef4444;
+        color: white;
         transition: all 0.3s ease;
     }
 
-    .info-card:hover {
-        transform: translateY(-5px);
+    .btn-primary:hover {
+        background-image: linear-gradient(to right, #dc2626, #b91c1c);
+        transform: translateY(-1px);
     }
 
+    .btn-secondary {
+        background-image: linear-gradient(to right, #10b981, #059669);
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        background-image: linear-gradient(to right, #059669, #047857);
+        transform: translateY(-1px);
+    }
+
+    /* Modal Styling */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .modal-content {
+        background-color: white;
+        border-radius: 0.75rem;
+        width: 100%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        transform: scale(0.95);
+        transition: all 0.3s ease;
+    }
+
+    .modal.active .modal-content {
+        transform: scale(1);
+    }
+
+    /* Animation Effects */
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -110,43 +183,70 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         animation: fadeIn 0.5s ease forwards;
     }
 
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+    }
+
+    .pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Empty State Styling */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+        text-align: center;
+        background-color: #f9fafb;
+        border-radius: 0.5rem;
+        border: 2px dashed #e5e7eb;
+    }
+
+    /* Utility Classes */
     .required-star {
         color: #ef4444;
         font-weight: bold;
     }
 
-    .float-label-input {
-        position: relative;
+    .action-icon {
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
 
-    .float-label-input input:focus,
-    .float-label-input input:not(:placeholder-shown) {
-        border-color: #ef4444;
+    .action-icon:hover {
+        transform: scale(1.2);
+    }
+
+    .edit-icon:hover {
+        color: #3b82f6;
+    }
+
+    .delete-icon:hover {
+        color: #ef4444;
     }
 </style>
 
-<!-- Page Header -->
-<div class="page-header relative text-white">
-    <div class="container mx-auto px-4">
-        <h1 class="text-3xl md:text-4xl font-bold mb-2">Request for Quote</h1>
-        <p class="text-white text-opacity-90 max-w-2xl">Get accurate pricing and availability information for your construction needs. Complete the form below for a detailed quote.</p>
-        <nav class="text-sm mt-4 space-x-2">
-            <a href="<?= BASE_URL ?>" class="hover:underline text-white text-opacity-80">Zzimba Online</a>
-            <span>/</span>
-            <span class="font-semibold">Request for Quote</span>
-        </nav>
-    </div>
-</div>
-
 <div class="max-w-7xl mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Form Column -->
         <div class="lg:col-span-2">
             <div class="form-card p-6 md:p-8 fade-in">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-2">Request Details</h2>
                 <p class="text-gray-600 mb-6">Fields marked with <span class="required-star">*</span> are required</p>
 
                 <form id="rfq-form" class="space-y-6" novalidate autocomplete="off">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <!-- Contact Information Section -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="form-group">
                             <input type="text" id="company" name="company" placeholder=" "
                                 class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
@@ -158,28 +258,25 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                             <input type="text" id="contact" name="contact" required placeholder=" "
                                 class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
                                 autocomplete="new-name" data-field-id="<?= uniqid('contact_') ?>">
-                            <label for="contact" class="floating-label text-gray-500">Contact Person <span class="required-star">*</span></label>
+                            <label for="contact" class="floating-label text-gray-500">Contact Person <span
+                                    class="required-star">*</span></label>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="form-group">
                             <input type="email" id="email" name="email" required placeholder=" "
                                 class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
                                 autocomplete="new-email" data-field-id="<?= uniqid('email_') ?>">
-                            <label for="email" class="floating-label text-gray-500">Email <span class="required-star">*</span></label>
+                            <label for="email" class="floating-label text-gray-500">Email <span
+                                    class="required-star">*</span></label>
                         </div>
 
                         <div class="form-group">
-                            <input
-                                type="tel"
-                                id="phone-whatsapp"
-                                name="phone"
-                                required
+                            <input type="tel" id="phone-whatsapp" name="phone" required
                                 placeholder="Phone/WhatsApp Contact *"
                                 class="block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500"
-                                autocomplete="new-phone"
-                                data-field-id="<?= uniqid('phone_') ?>">
+                                autocomplete="new-phone" data-field-id="<?= uniqid('phone_') ?>">
                         </div>
                     </div>
 
@@ -187,47 +284,50 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                         <input type="text" id="location" name="location" required placeholder=" "
                             class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
                             autocomplete="new-address" data-field-id="<?= uniqid('location_') ?>">
-                        <label for="location" class="floating-label text-gray-500">Site Location <span class="required-star">*</span></label>
+                        <label for="location" class="floating-label text-gray-500">Site Location <span
+                                class="required-star">*</span></label>
                     </div>
 
+                    <!-- Items Section -->
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-medium text-gray-800">List of Items <span class="required-star">*</span></h2>
-                            <button type="button" id="add-item"
-                                class="add-btn inline-flex items-center px-4 py-2 text-white text-sm font-medium rounded-md focus:outline-none transition-colors">
+                            <h2 class="text-lg font-medium text-gray-800">List of Items <span
+                                    class="required-star">*</span></h2>
+                            <button type="button" id="add-item-btn"
+                                class="btn-secondary inline-flex items-center px-4 py-2 text-white text-sm font-medium rounded-md focus:outline-none transition-colors shadow-sm">
                                 <i class="fas fa-plus mr-2"></i> Add Item
                             </button>
                         </div>
 
-                        <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                            <div class="grid grid-cols-6 gap-2 items-center text-sm font-medium text-gray-700 border-b border-gray-200 pb-2 mb-2">
-                                <div class="col-span-3">Brand/Material</div>
-                                <div class="col-span-2">Size/Specification</div>
-                                <div class="col-span-1">Quantity</div>
-                            </div>
-                            <div id="items-container" class="space-y-4">
-                                <div class="grid grid-cols-6 gap-2 items-center item-row rounded-lg">
-                                    <div class="col-span-3 form-group relative">
-                                        <input type="text" name="items[0][brand]" required placeholder=" "
-                                            class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                                            autocomplete="new-brand" data-field-id="<?= uniqid('brand_') ?>">
-                                        <label class="floating-label text-gray-500">Brand Name <span class="required-star">*</span></label>
-                                        <button type="button" class="remove-item hidden w-6 h-6 flex items-center justify-center text-red-500 hover:text-red-700 bg-white rounded-full shadow-sm absolute -top-2 -left-2 text-xs">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                        <!-- Items Report Table -->
+                        <div class="bg-white rounded-lg overflow-hidden">
+                            <div id="items-container" class="w-full">
+                                <table class="item-report">
+                                    <thead>
+                                        <tr>
+                                            <th class="w-5/12">Brand/Material</th>
+                                            <th class="w-4/12">Size/Specification</th>
+                                            <th class="w-2/12">Quantity</th>
+                                            <th class="w-1/12 text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="items-list">
+                                        <!-- Items will be dynamically added here -->
+                                    </tbody>
+                                </table>
+
+                                <!-- Empty State -->
+                                <div id="empty-items-state" class="empty-state">
+                                    <div class="text-gray-400 mb-3">
+                                        <i class="fas fa-clipboard-list text-4xl"></i>
                                     </div>
-                                    <div class="col-span-2 form-group">
-                                        <input type="text" name="items[0][size]" required placeholder=" "
-                                            class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                                            autocomplete="new-size" data-field-id="<?= uniqid('size_') ?>">
-                                        <label class="floating-label text-gray-500">Size <span class="required-star">*</span></label>
-                                    </div>
-                                    <div class="form-group">
-                                        <input type="number" name="items[0][quantity]" required placeholder=" "
-                                            class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                                            autocomplete="new-quantity" data-field-id="<?= uniqid('qty_') ?>">
-                                        <label class="floating-label text-gray-500">Qty <span class="required-star">*</span></label>
-                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-700 mb-1">No Items Added</h3>
+                                    <p class="text-sm text-gray-500 mb-4">Click the "Add Item" button to add materials
+                                        to your quote request</p>
+                                    <button type="button" id="empty-add-item-btn"
+                                        class="btn-secondary inline-flex items-center px-4 py-2 text-white text-sm font-medium rounded-md focus:outline-none transition-colors shadow-sm">
+                                        <i class="fas fa-plus mr-2"></i> Add First Item
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -237,11 +337,11 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
                     <div class="flex justify-end space-x-4 pt-4">
                         <button type="reset" id="reset-form"
-                            class="px-5 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors">
+                            class="px-5 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors shadow-sm">
                             <i class="fas fa-times-circle mr-2"></i> Cancel
                         </button>
                         <button type="submit"
-                            class="submit-btn px-5 py-3 text-sm font-medium text-white rounded-md focus:outline-none transition-colors">
+                            class="btn-primary px-5 py-3 text-sm font-medium text-white rounded-md focus:outline-none transition-colors shadow-sm">
                             <i class="fas fa-paper-plane mr-2"></i> Submit Request
                         </button>
                     </div>
@@ -249,9 +349,14 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             </div>
         </div>
 
-        <div class="lg:col-span-1" style="z-index: -50;">
-            <div class="info-card rounded-lg p-6 fade-in mb-6">
+        <!-- Sidebar Column -->
+        <div class="lg:col-span-1">
+            <div
+                class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 fade-in mb-6 border-l-4 border-red-500 shadow-sm">
                 <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-info-circle text-red-500"></i>
+                    </div>
                     <h2 class="text-lg font-semibold text-gray-900">Instructions</h2>
                 </div>
                 <div class="space-y-4 text-sm text-gray-600">
@@ -276,14 +381,17 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                         <span>Use the "Add Item" button to request multiple items.</span>
                     </p>
                     <p class="flex items-start">
-                        <i class="fas fa-times-circle mt-1 text-red-500 mr-3"></i>
-                        <span>Click the X button to remove unwanted items.</span>
+                        <i class="fas fa-edit mt-1 text-red-500 mr-3"></i>
+                        <span>Edit items by clicking the pencil icon in the actions column.</span>
                     </p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-sm p-6 fade-in">
+            <div class="bg-white rounded-xl shadow-sm p-6 fade-in">
                 <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-clipboard-check text-blue-500"></i>
+                    </div>
                     <h2 class="text-lg font-semibold text-gray-900">Item Details</h2>
                 </div>
                 <div class="space-y-3 text-sm text-gray-600">
@@ -314,13 +422,100 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
     </div>
 </div>
 
+<!-- Item Modal -->
+<div id="item-modal" class="modal">
+    <div class="modal-content p-0">
+        <div
+            class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 flex justify-between items-center border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800" id="modal-title">Add New Item</h3>
+            <button type="button" class="text-gray-400 hover:text-gray-600 focus:outline-none" id="close-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <form id="item-form" class="space-y-4">
+                <input type="hidden" id="item-index" value="-1">
+
+                <div class="form-group">
+                    <input type="text" id="item-brand" name="brand" required placeholder=" "
+                        class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
+                        autocomplete="off">
+                    <label for="item-brand" class="floating-label text-gray-500">Brand/Material <span
+                            class="required-star">*</span></label>
+                </div>
+
+                <div class="form-group">
+                    <input type="text" id="item-size" name="size" required placeholder=" "
+                        class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
+                        autocomplete="off">
+                    <label for="item-size" class="floating-label text-gray-500">Size/Specification <span
+                            class="required-star">*</span></label>
+                </div>
+
+                <div class="form-group">
+                    <input type="number" id="item-quantity" name="quantity" required placeholder=" " min="1"
+                        class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
+                        autocomplete="off">
+                    <label for="item-quantity" class="floating-label text-gray-500">Quantity <span
+                            class="required-star">*</span></label>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" id="cancel-item"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" id="save-item"
+                        class="btn-secondary px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors">
+                        <i class="fas fa-save mr-2"></i> Save Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="modal">
+    <div class="modal-content p-0">
+        <div
+            class="bg-gradient-to-r from-red-50 to-red-100 p-4 flex justify-between items-center border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Confirm Deletion</h3>
+            <button type="button" class="text-gray-400 hover:text-gray-600 focus:outline-none" id="close-delete-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                </div>
+            </div>
+            <p class="text-center text-gray-700 mb-6">Are you sure you want to remove this item from your quote request?
+            </p>
+            <input type="hidden" id="delete-item-index" value="-1">
+            <div class="flex justify-center space-x-3">
+                <button type="button" id="cancel-delete"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors">
+                    Cancel
+                </button>
+                <button type="button" id="confirm-delete"
+                    class="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md focus:outline-none transition-colors">
+                    <i class="fas fa-trash-alt mr-2"></i> Delete Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script src="https://www.google.com/recaptcha/api.js?render=<?= $recaptcha_site_key ?>"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const API_BASE = "<?php echo BASE_URL; ?>fetch/handleRFQ";
 
+        // Initialize phone input
         const phoneInputField = document.querySelector("#phone-whatsapp");
         const iti = window.intlTelInput(phoneInputField, {
             preferredCountries: ["ug", "rw", "ke", "tz"],
@@ -337,89 +532,174 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             input.setAttribute('data-random', randomAttr);
         });
 
-        let itemCount = 1;
-        const itemsContainer = document.getElementById('items-container');
-        const addItemButton = document.getElementById('add-item');
-        const form = document.getElementById('rfq-form');
+        // Items management
+        let items = [];
+        const itemsList = document.getElementById('items-list');
+        const emptyState = document.getElementById('empty-items-state');
 
-        addItemButton.addEventListener('click', function() {
-            const randomIdBrand = Math.random().toString(36).substring(2);
-            const randomIdSize = Math.random().toString(36).substring(2);
-            const randomIdQty = Math.random().toString(36).substring(2);
+        // Modal elements
+        const itemModal = document.getElementById('item-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const itemForm = document.getElementById('item-form');
+        const itemIndex = document.getElementById('item-index');
+        const itemBrand = document.getElementById('item-brand');
+        const itemSize = document.getElementById('item-size');
+        const itemQuantity = document.getElementById('item-quantity');
 
-            const newItem = document.createElement('div');
-            newItem.className = 'grid grid-cols-6 gap-2 items-center item-row rounded-lg fade-in';
-            newItem.innerHTML = `
-                <div class="col-span-3 form-group relative">
-                    <input type="text" name="items[${itemCount}][brand]" required placeholder=" "
-                        class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                        autocomplete="new-brand-${itemCount}" data-field-id="brand_${randomIdBrand}">
-                    <label class="floating-label text-gray-500">Brand Name <span class="required-star">*</span></label>
-                    <button type="button" class="remove-item w-6 h-6 flex items-center justify-center text-red-500 hover:text-red-700 bg-white rounded-full shadow-sm absolute -top-2 -left-2 text-xs">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="col-span-2 form-group">
-                    <input type="text" name="items[${itemCount}][size]" required placeholder=" "
-                        class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                        autocomplete="new-size-${itemCount}" data-field-id="size_${randomIdSize}">
-                    <label class="floating-label text-gray-500">Size <span class="required-star">*</span></label>
-                </div>
-                <div class="form-group">
-                    <input type="number" name="items[${itemCount}][quantity]" required placeholder=" "
-                        class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                        autocomplete="new-quantity-${itemCount}" data-field-id="qty_${randomIdQty}">
-                    <label class="floating-label text-gray-500">Qty <span class="required-star">*</span></label>
-                </div>
-            `;
-            itemsContainer.appendChild(newItem);
-            itemCount++;
-            if (itemCount > 1) {
-                const firstItemRemoveBtn = itemsContainer.querySelector('.remove-item');
-                if (firstItemRemoveBtn) {
-                    firstItemRemoveBtn.classList.remove('hidden');
-                }
+        // Delete modal elements
+        const deleteModal = document.getElementById('delete-modal');
+        const deleteItemIndex = document.getElementById('delete-item-index');
+
+        // Update items display
+        function updateItemsDisplay() {
+            itemsList.innerHTML = '';
+
+            if (items.length === 0) {
+                emptyState.style.display = 'flex';
+                return;
             }
-        });
 
-        itemsContainer.addEventListener('click', function(e) {
-            if (e.target.closest('.remove-item')) {
-                const item = e.target.closest('.grid');
-                item.remove();
-                itemCount--;
-                if (itemCount === 1) {
-                    const firstItemRemoveBtn = itemsContainer.querySelector('.remove-item');
-                    if (firstItemRemoveBtn) {
-                        firstItemRemoveBtn.classList.add('hidden');
-                    }
-                }
-            }
-        });
+            emptyState.style.display = 'none';
 
-        document.getElementById('reset-form').addEventListener('click', function(e) {
+            items.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.className = 'fade-in';
+                row.innerHTML = `
+                    <td class="align-middle">${item.brand}</td>
+                    <td class="align-middle">${item.size}</td>
+                    <td class="align-middle">${item.quantity}</td>
+                    <td class="align-middle text-center">
+                        <div class="flex justify-center space-x-3">
+                            <i class="fas fa-edit text-gray-500 hover:text-blue-500 cursor-pointer action-icon edit-icon" data-index="${index}" title="Edit Item"></i>
+                            <i class="fas fa-trash-alt text-gray-500 hover:text-red-500 cursor-pointer action-icon delete-icon" data-index="${index}" title="Remove Item"></i>
+                        </div>
+                    </td>
+                `;
+                itemsList.appendChild(row);
+            });
+
+            // Add event listeners to action icons
+            document.querySelectorAll('.edit-icon').forEach(icon => {
+                icon.addEventListener('click', function () {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    editItem(index);
+                });
+            });
+
+            document.querySelectorAll('.delete-icon').forEach(icon => {
+                icon.addEventListener('click', function () {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    showDeleteModal(index);
+                });
+            });
+        }
+
+        // Show item modal for adding
+        function showAddItemModal() {
+            modalTitle.textContent = 'Add New Item';
+            itemForm.reset();
+            itemIndex.value = -1;
+            itemModal.classList.add('active');
+        }
+
+        // Show item modal for editing
+        function editItem(index) {
+            const item = items[index];
+            modalTitle.textContent = 'Edit Item';
+            itemBrand.value = item.brand;
+            itemSize.value = item.size;
+            itemQuantity.value = item.quantity;
+            itemIndex.value = index;
+            itemModal.classList.add('active');
+        }
+
+        // Show delete confirmation modal
+        function showDeleteModal(index) {
+            deleteItemIndex.value = index;
+            deleteModal.classList.add('active');
+        }
+
+        // Save item (add or update)
+        function saveItem(e) {
             e.preventDefault();
+
+            const brand = itemBrand.value.trim();
+            const size = itemSize.value.trim();
+            const quantity = itemQuantity.value.trim();
+
+            if (!brand || !size || !quantity || parseInt(quantity) <= 0) {
+                notifications.error('Please fill in all required fields with valid values.', 'Validation Error');
+                return;
+            }
+
+            const index = parseInt(itemIndex.value);
+            const item = {
+                brand: brand,
+                size: size,
+                quantity: quantity
+            };
+
+            if (index === -1) {
+                // Add new item
+                items.push(item);
+            } else {
+                // Update existing item
+                items[index] = item;
+            }
+
+            updateItemsDisplay();
+            itemModal.classList.remove('active');
+        }
+
+        // Delete item
+        function deleteItem() {
+            const index = parseInt(deleteItemIndex.value);
+            if (index >= 0 && index < items.length) {
+                items.splice(index, 1);
+                updateItemsDisplay();
+            }
+            deleteModal.classList.remove('active');
+        }
+
+        // Event listeners for modals
+        document.getElementById('add-item-btn').addEventListener('click', showAddItemModal);
+        document.getElementById('empty-add-item-btn').addEventListener('click', showAddItemModal);
+        document.getElementById('close-modal').addEventListener('click', () => itemModal.classList.remove('active'));
+        document.getElementById('cancel-item').addEventListener('click', () => itemModal.classList.remove('active'));
+        document.getElementById('close-delete-modal').addEventListener('click', () => deleteModal.classList.remove('active'));
+        document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.remove('active'));
+        document.getElementById('confirm-delete').addEventListener('click', deleteItem);
+        itemForm.addEventListener('submit', saveItem);
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function (e) {
+            if (e.target === itemModal) {
+                itemModal.classList.remove('active');
+            }
+            if (e.target === deleteModal) {
+                deleteModal.classList.remove('active');
+            }
+        });
+
+        // Reset form
+        document.getElementById('reset-form').addEventListener('click', function (e) {
+            e.preventDefault();
+            const form = document.getElementById('rfq-form');
             form.reset();
             iti.setNumber('');
-            while (itemsContainer.children.length > 1) {
-                itemsContainer.removeChild(itemsContainer.lastChild);
-            }
-            itemCount = 1;
-            const firstItemRemoveBtn = itemsContainer.querySelector('.remove-item');
-            if (firstItemRemoveBtn) {
-                firstItemRemoveBtn.classList.add('hidden');
-            }
-
-            notifications.info('Form has been reset', 'Form Reset');
+            items = [];
+            updateItemsDisplay();
         });
 
-        form.addEventListener('submit', function(e) {
+        // Form submission
+        const form = document.getElementById('rfq-form');
+        form.addEventListener('submit', function (e) {
             e.preventDefault();
 
             let hasError = false;
             const contactInput = document.getElementById('contact');
             const emailInput = document.getElementById('email');
             const locationInput = document.getElementById('location');
-            const itemRows = document.querySelectorAll('#items-container .grid');
 
             if (contactInput.value.trim() === "") {
                 notifications.error('Contact person is required.', 'Input Required');
@@ -447,42 +727,12 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                 hasError = true;
             }
 
-            if (itemRows.length === 0) {
+            if (items.length === 0) {
                 notifications.error('Please add at least one item.', 'Input Required');
                 hasError = true;
-            } else {
-                itemRows.forEach((row) => {
-                    const brandInput = row.querySelector('input[name*="[brand]"]');
-                    const sizeInput = row.querySelector('input[name*="[size]"]');
-                    const quantityInput = row.querySelector('input[name*="[quantity]"]');
-                    if (!brandInput.value.trim()) {
-                        notifications.error('Brand name is required.', 'Input Required');
-                        hasError = true;
-                    }
-                    if (!sizeInput.value.trim()) {
-                        notifications.error('Size is required.', 'Input Required');
-                        hasError = true;
-                    }
-                    if (!quantityInput.value.trim() || parseInt(quantityInput.value) <= 0) {
-                        notifications.error('Please enter a valid quantity.', 'Input Required');
-                        hasError = true;
-                    }
-                });
             }
 
             if (hasError) return;
-
-            const items = [];
-            itemRows.forEach((row) => {
-                const brandInput = row.querySelector('input[name*="[brand]"]');
-                const sizeInput = row.querySelector('input[name*="[size]"]');
-                const quantityInput = row.querySelector('input[name*="[quantity]"]');
-                items.push({
-                    brand: brandInput.value.trim(),
-                    size: sizeInput.value.trim(),
-                    quantity: quantityInput.value.trim()
-                });
-            });
 
             const payload = {
                 company: document.getElementById('company').value.trim(),
@@ -501,30 +751,24 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
             grecaptcha.execute('<?= $recaptcha_site_key ?>', {
                 action: 'submit_rfq'
-            }).then(function(token) {
+            }).then(function (token) {
                 payload["g-recaptcha-response"] = token;
 
                 fetch(`${API_BASE}/submitRFQ`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    })
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
                             notifications.success('Thank you! Your quote request has been received. We will contact you shortly.', 'RFQ Submitted');
                             form.reset();
                             iti.setNumber('');
-                            while (itemsContainer.children.length > 1) {
-                                itemsContainer.removeChild(itemsContainer.lastChild);
-                            }
-                            itemCount = 1;
-                            const firstItemRemoveBtn = itemsContainer.querySelector('.remove-item');
-                            if (firstItemRemoveBtn) {
-                                firstItemRemoveBtn.classList.add('hidden');
-                            }
+                            items = [];
+                            updateItemsDisplay();
                         } else {
                             notifications.error('Submission failed. Please try again.', 'RFQ Error');
                         }
@@ -538,6 +782,9 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                     });
             });
         });
+
+        // Initialize the items display
+        updateItemsDisplay();
     });
 </script>
 

@@ -60,6 +60,13 @@ $isLoggedIn = !empty($_SESSION['user']['logged_in']);
 ob_start();
 ?>
 
+<style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+</style>
+
 <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden" id="vendor-cover-photo">
     <div id="vendor-cover" class="w-full h-full bg-center bg-cover"></div>
     <div id="cover-edit-button"

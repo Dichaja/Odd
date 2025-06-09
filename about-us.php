@@ -6,6 +6,11 @@ ob_start();
 ?>
 
 <style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
     .about-container {
         max-width: 1200px;
         margin: 2rem auto;
@@ -96,10 +101,15 @@ ob_start();
     <div class="about-section">
         <div class="about-content">
             <p class="about-text">
-                Once upon a time, in the heart of Uganda, we had a dream. A dream of a digital space where buyers and sellers could connect, where businesses could flourish, and communities could thrive. This dream gave birth to ZzimbaOnline.com, a digital marketplace that has since transformed the way people shop and sell.
+                Once upon a time, in the heart of Uganda, we had a dream. A dream of a digital space where buyers and
+                sellers could connect, where businesses could flourish, and communities could thrive. This dream gave
+                birth to ZzimbaOnline.com, a digital marketplace that has since transformed the way people shop and
+                sell.
             </p>
             <p class="about-text">
-                We started with a simple idea: to make it easier for people to find the products and services they need. We envisioned a platform that would connect local businesses with a wider audience, empowering them to grow and prosper.
+                We started with a simple idea: to make it easier for people to find the products and services they need.
+                We envisioned a platform that would connect local businesses with a wider audience, empowering them to
+                grow and prosper.
             </p>
         </div>
         <div class="about-image">
@@ -111,10 +121,14 @@ ob_start();
         <div class="about-content">
             <h2 class="about-subtitle">Marketplace</h2>
             <p class="about-text">
-                Today, Zzimba Online is a bustling hub of activity, bringing together a diverse community of buyers and sellers. We've witnessed countless success stories, from small businesses expanding their reach to individuals finding unique products they never knew existed.
+                Today, Zzimba Online is a bustling hub of activity, bringing together a diverse community of buyers and
+                sellers. We've witnessed countless success stories, from small businesses expanding their reach to
+                individuals finding unique products they never knew existed.
             </p>
             <p class="about-text">
-                But our journey is far from over. We're constantly striving to improve our platform and offer an even better experience for our users. We're committed to innovation, customer satisfaction, and building a strong, sustainable business.
+                But our journey is far from over. We're constantly striving to improve our platform and offer an even
+                better experience for our users. We're committed to innovation, customer satisfaction, and building a
+                strong, sustainable business.
             </p>
         </div>
         <div class="about-image">
@@ -126,7 +140,8 @@ ob_start();
         <div class="about-content">
             <h2 class="about-subtitle">Join Us on This Exciting Journey</h2>
             <p class="about-text">
-                Be a part of something special. Whether you're a buyer looking for unique products or a vendor aiming to expand your business, Zzimba Online is the place for you.
+                Be a part of something special. Whether you're a buyer looking for unique products or a vendor aiming to
+                expand your business, Zzimba Online is the place for you.
             </p>
             <a href="#" class="about-cta" id="join-zzimba-btn">Join Today</a>
         </div>
@@ -137,14 +152,14 @@ ob_start();
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         notifications.info('Discover the story behind Zzimba Online!', 'About Us');
 
         // Get the "Join Zzimba Online Today" button
         const joinButton = document.getElementById('join-zzimba-btn');
 
-        joinButton.addEventListener('click', function(e) {
-            e.preventDefault(); 
+        joinButton.addEventListener('click', function (e) {
+            e.preventDefault();
 
             openAuthModal();
 

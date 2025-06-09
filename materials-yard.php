@@ -150,6 +150,11 @@ ob_start();
 ?>
 
 <style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
     .line-clamp-2 {
         display: -webkit-box;
         -webkit-box-orient: vertical;
