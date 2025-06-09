@@ -221,7 +221,8 @@ function createCategory(PDO $pdo)
             if (!file_exists($dir)) {
                 mkdir($dir, 0755, true);
             }
-            $safe = sanitizeFileName($name) . ".$ext";
+            $timestamp = date('Ymd_His');
+            $safe = sanitizeFileName($name) . "_$timestamp.$ext";
             rename(__DIR__ . '/../../' . $tempImagePath, "$dir/$safe");
         }
         echo json_encode(['success' => true, 'message' => 'Category created', 'id' => $id]);
@@ -301,7 +302,8 @@ function updateCategory(PDO $pdo)
         } elseif ($tempImagePath && file_exists(__DIR__ . '/../../' . $tempImagePath)) {
             deleteAllCategoryImages($id);
             $ext = pathinfo($tempImagePath, PATHINFO_EXTENSION);
-            $safe = sanitizeFileName($name) . ".$ext";
+            $timestamp = date('Ymd_His');
+            $safe = sanitizeFileName($name) . "_$timestamp.$ext";
             rename(__DIR__ . '/../../' . $tempImagePath, "$dir/$safe");
         } elseif ($old !== $name) {
             renameExistingCategoryImage($id, $old, $name);

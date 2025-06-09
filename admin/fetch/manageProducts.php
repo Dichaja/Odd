@@ -606,7 +606,8 @@ function moveProductImages($uuid, array $temps)
         if (!file_exists($src))
             continue;
         $ext = pathinfo($src, PATHINFO_EXTENSION);
-        $dst = "$dir/" . uniqid('prod_') . ".$ext";
+        $timestamp = date('Ymd_His');
+        $dst = "$dir/prod_{$timestamp}_" . uniqid() . ".$ext";
         rename($src, $dst);
         $moved[] = basename($dst);
     }
