@@ -13,9 +13,9 @@
         <form id="calcForm" class="space-y-4">
             <div>
                 <label for="amount" class="block text-sm font-medium text-gray-700">Desired Amount (A)</label>
-                <input type="number" id="amount" name="amount" min="0" step="any"
+                <input type="text" id="amount" name="amount"
                     class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter amount you want to receive (e.g. 100000)">
+                    placeholder="Enter amount you want to receive (e.g. 100,000)">
             </div>
 
             <div>
@@ -45,15 +45,23 @@
         const grossedOutput = document.getElementById('grossed');
         const extraOutput = document.getElementById('extra');
 
+        function parseFormattedNumber(str) {
+            return parseFloat(str.replace(/,/g, ''));
+        }
+
+        function formatNumber(num) {
+            return num.toLocaleString('en-UG', { minimumFractionDigits: 0 });
+        }
+
         function updateCalculation() {
-            const A = parseFloat(amountInput.value);
+            const rawAmount = parseFormattedNumber(amountInput.value);
             const r = parseFloat(rateInput.value);
 
-            if (!isNaN(A) && !isNaN(r) && r < 100) {
+            if (!isNaN(rawAmount) && !isNaN(r) && r < 100) {
                 const rateDecimal = r / 100;
-                const P = A / (1 - rateDecimal);
+                const P = rawAmount / (1 - rateDecimal);
                 const grossed = Math.ceil(P);
-                const extra = grossed - A;
+                const extra = grossed - rawAmount;
 
                 grossedOutput.textContent = grossed.toLocaleString('en-UG', { style: 'currency', currency: 'UGX' });
                 extraOutput.textContent = extra.toLocaleString('en-UG', { style: 'currency', currency: 'UGX' });
@@ -63,7 +71,15 @@
             }
         }
 
-        amountInput.addEventListener('input', updateCalculation);
+        amountInput.addEventListener('input', (e) => {
+            const value = e.target.value.replace(/,/g, '').replace(/[^\d]/g, '');
+            if (value) {
+                const formatted = formatNumber(Number(value));
+                e.target.value = formatted;
+            }
+            updateCalculation();
+        });
+
         rateInput.addEventListener('input', updateCalculation);
     </script>
 </body>
