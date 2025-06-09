@@ -153,7 +153,6 @@ ob_start();
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        notifications.info('Discover the story behind Zzimba Online!', 'About Us');
 
         // Get the "Join Zzimba Online Today" button
         const joinButton = document.getElementById('join-zzimba-btn');
