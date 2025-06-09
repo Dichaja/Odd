@@ -885,9 +885,6 @@
             let hasHiddenPrices = false;
 
             if (filteredPricing.length > 0) {
-                const pricingContainer = document.createElement('div');
-                pricingContainer.className = 'pricing-container';
-
                 filteredPricing.forEach((pr, index) => {
                     const unitParts = pr.unit_name.split(' ');
                     const siUnit = unitParts[0] || '';
@@ -906,114 +903,90 @@
                         }
                     <?php endif; ?>
 
-                    const pricingId = pr.pricing_id || pr.id || '';
                     const hiddenClass = index >= 2 ? 'hidden hidden-price-row' : '';
-
-                    if (index >= 2) {
-                        hasHiddenPrices = true;
-                    }
+                    if (index >= 2) hasHiddenPrices = true;
 
                     pricingLines += `
-                        <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 rounded ${hiddenClass}" data-pricing-id="${pricingId}">
-                            <div class="flex flex-col">
-                                <span class="font-medium text-gray-700">${escapeHtml(formattedUnit)}</span>
-                                ${(categoryDisplay || deliveryCapacity) ?
-                            `<div class="flex items-center text-xs text-gray-500">
-                                        ${categoryDisplay ? `<span>${categoryDisplay}</span>` : ''}
-                                        ${deliveryCapacity}
-                                    </div>` : ''}
-                            </div>
-                            <div class="price-container">
-                                <span class="view-price-btn">View Price</span>
-                                <span class="price-hidden text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
-                            </div>
-                        </div>
-                    `;
+                <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 rounded ${hiddenClass}">
+                    <div class="flex flex-col">
+                        <span class="font-medium text-gray-700">${escapeHtml(formattedUnit)}</span>
+                        ${(categoryDisplay || deliveryCapacity) ? `
+                            <div class="flex items-center text-xs text-gray-500">
+                                ${categoryDisplay ? `<span>${categoryDisplay}</span>` : ''}
+                                ${deliveryCapacity}
+                            </div>` : ''}
+                    </div>
+                    <div class="price-container">
+                        <span class="view-price-btn">View Price</span>
+                        <span class="price-hidden text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
+                    </div>
+                </div>`;
                 });
 
                 if (hasHiddenPrices) {
                     pricingLines = `
-                        <div class="pricing-rows">
-                            ${pricingLines}
-                        </div>
-                        <div class="view-more-prices">View More Prices</div>
-                    `;
+                <div class="pricing-rows">
+                    ${pricingLines}
+                </div>
+                <div class="view-more-prices">View More Prices</div>`;
                 }
 
                 <?php if (!$isLoggedIn): ?>
                     if (hasRetailPrice) {
-                        pricingLines += `
-                        <div class="login-note">
-                            Login to view more price categories
-                        </div>
-                    `;
+                        pricingLines += `<div class="login-note">Login to view more price categories</div>`;
                     }
                 <?php endif; ?>
             } else {
                 <?php if (!$isLoggedIn): ?>
-                    pricingLines = `
-                    <button class="login-btn">
-                        Login to see Price Categories
-                    </button>
-                `;
+                    pricingLines = `<button class="login-btn">Login to see Price Categories</button>`;
                 <?php else: ?>
                     pricingLines = `<div class="text-sm text-gray-600 italic p-2">No price data</div>`;
                 <?php endif; ?>
             }
 
             const productCard = document.createElement('div');
-            productCard.className = 'product-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow';
-            productCard.dataset.lowestPrice = lowestPrice.toString();
+            productCard.className = 'product-card transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden';
 
-            // Create the HTML content for the product card
-            let cardContent = `
-                <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-48 object-cover">
-                <div class="p-4 flex flex-col flex-grow">
-                    <h3 class="text-lg font-bold text-gray-800 mb-2">${escapeHtml(product.name)}</h3>
-                    <p class="text-gray-500 text-sm mb-4 line-clamp-2">
-                        ${escapeHtml(product.description || '')}
-                    </p>
-                    <div class="border-t border-gray-200 pt-3 mb-3">
-                        ${pricingLines}
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mt-auto">
-            `;
+            productCard.innerHTML = `
+        <div class="relative group">
+            <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-40 md:h-48 object-cover">
 
-            // Add the Buy in Store button with proper conditional logic
-            <?php if ($isLoggedIn): ?>
-                cardContent += `
-                <button onclick="buyInStore('${product.store_product_id}')" class="bg-red-600 text-white py-2 px-3 rounded-md text-sm hover:bg-red-700 transition-colors w-full flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Buy in Store
-                </button>
-            `;
-            <?php else: ?>
-                cardContent += `
-                <button onclick="openAuthModal(); return false;" class="bg-red-600 text-white py-2 px-3 rounded-md text-sm hover:bg-red-700 transition-colors w-full flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Buy in Store
-                </button>
-            `;
-            <?php endif; ?>
-
-            // Add the Shop Now button and close the divs
-            cardContent += `
-                <a href="${BASE_URL}view/product/${product.store_product_id}" target="_blank" class="bg-white border border-gray-300 text-gray-700 py-2 px-3 rounded-md text-sm hover:bg-gray-100 transition-colors w-full flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    Shop Now
+            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                <a href="${BASE_URL}view/product/${product.id}" target="_blank"
+                   class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm">
+                   View Details
                 </a>
-                    </div>
-                </div>
-            `;
+            </div>
+        </div>
 
-            productCard.innerHTML = cardContent;
+        <div class="p-3 md:p-5 flex flex-col justify-between flex-1">
+            <div>
+                <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
+                    ${escapeHtml(product.name)}
+                </h3>
+                <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
+                    ${escapeHtml(product.description || '')}
+                </p>
+                <div class="border-t border-gray-200 pt-3 mb-3">${pricingLines}</div>
+            </div>
+
+            <div class="flex space-x-2 mt-auto">
+                <?php if ($isLoggedIn): ?>
+                <button onclick="buyInStore('${product.store_product_id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
+                    <i class="fas fa-shopping-cart mr-1"></i> Buy in Store
+                </button>
+                <?php else: ?>
+                <button onclick="openAuthModal(); return false;" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
+                    <i class="fas fa-shopping-cart mr-1"></i> Buy in Store
+                </button>
+                <?php endif; ?>
+                <a href="${BASE_URL}view/product/${product.id}?action=sell"
+                   class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
+                    <i class="fas fa-tag mr-1"></i> Sell
+                </a>
+            </div>
+        </div>`;
+
             container.appendChild(productCard);
         }
     }
