@@ -396,6 +396,23 @@ ob_start();
 
     function editCover() {
         openModal('edit-cover-modal');
+
+        if (storeData && storeData.vendor_cover_url) {
+            fetch(BASE_URL + storeData.vendor_cover_url)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], "cover.png", { type: blob.type });
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        initCoverCropper(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                })
+                .catch(err => {
+                    console.error('Error loading existing cover for crop:', err);
+                    showToast('Could not load existing cover', 'error');
+                });
+        }
     }
 
     function initCoverCropper(image) {
@@ -629,6 +646,23 @@ ob_start();
 
     function editLogo() {
         openModal('edit-logo-modal');
+
+        if (storeData && storeData.logo_url) {
+            fetch(BASE_URL + storeData.logo_url)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], "logo.png", { type: blob.type });
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        initCropper(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                })
+                .catch(err => {
+                    console.error('Error loading existing logo for crop:', err);
+                    showToast('Could not load existing logo', 'error');
+                });
+        }
     }
 
     function initCropper(image) {

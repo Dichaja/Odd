@@ -625,7 +625,7 @@ function createStore(PDO $pdo, string $userId): void
             $ext = pathinfo($data['temp_logo_path'], PATHINFO_EXTENSION);
             $dir = __DIR__ . '/../../img/stores/' . $storeId . '/logo';
             mkdir($dir, 0755, true);
-            $name = 'logo.' . $ext;
+            $name = 'logo_' . time() . '.' . $ext;
             rename(
                 __DIR__ . '/../../' . $data['temp_logo_path'],
                 "$dir/$name"
@@ -642,7 +642,7 @@ function createStore(PDO $pdo, string $userId): void
             $ext = pathinfo($data['temp_cover_path'], PATHINFO_EXTENSION);
             $dir = __DIR__ . '/../../img/stores/' . $storeId . '/cover';
             mkdir($dir, 0755, true);
-            $name = 'cover.' . $ext;
+            $name = 'cover_' . time() . '.' . $ext;
             rename(
                 __DIR__ . '/../../' . $data['temp_cover_path'],
                 "$dir/$name"
@@ -740,7 +740,7 @@ function updateStore(PDO $pdo, string $userId): void
             is_file($f) && unlink($f);
         }
         mkdir($dir, 0755, true);
-        $name = 'logo.' . $ext;
+        $name = 'logo_' . time() . '.' . $ext;
         rename(__DIR__ . '/../../' . $data['temp_logo_path'], "$dir/$name");
         $url = 'img/stores/' . $storeId . '/logo/' . $name;
         $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?")
@@ -763,7 +763,7 @@ function updateStore(PDO $pdo, string $userId): void
             is_file($f) && unlink($f);
         }
         mkdir($dir, 0755, true);
-        $name = 'cover.' . $ext;
+        $name = 'cover_' . time() . '.' . $ext;
         rename(__DIR__ . '/../../' . $data['temp_cover_path'], "$dir/$name");
         $url = 'img/stores/' . $storeId . '/cover/' . $name;
         $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = ? WHERE id = ?")
