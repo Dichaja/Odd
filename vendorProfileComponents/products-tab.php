@@ -154,7 +154,7 @@
                         <div class="mb-6">
                             <h3 id="productName" class="text-xl font-bold text-gray-800 mb-2"></h3>
                             <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-4">
-                                <img id="productImage" src="/placeholder.svg" alt="Product Image"
+                                <img id="productImage" src="" alt="Product Image"
                                     class="w-full h-48 object-cover">
                             </div>
                             <p id="productDescription" class="text-gray-600 text-sm line-clamp-2 mb-2"></p>
