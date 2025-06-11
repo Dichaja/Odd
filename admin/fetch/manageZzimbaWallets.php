@@ -1,0 +1,265 @@
+<?php
+ob_start();
+
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../logs/php-errors.log');
+
+require_once __DIR__ . '/../../config/config.php';
+
+header('Content-Type: application/json');
+
+if (
+    !isset($_SESSION['user']) ||
+    !$_SESSION['user']['logged_in'] ||
+    !$_SESSION['user']['is_admin']
+) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+    exit;
+}
+
+date_default_timezone_set('Africa/Kampala');
+
+// ───────────────────────────────────────────────────────────────────────────────
+//  Ensure the wallets table exists
+// ───────────────────────────────────────────────────────────────────────────────
+try {
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS zzimba_wallets (
+            wallet_id CHAR(26) NOT NULL PRIMARY KEY,
+            owner_type ENUM('USER','VENDOR','PLATFORM') NOT NULL,
+            user_id CHAR(26)  NULL,
+            vendor_id CHAR(26) NULL,
+            wallet_name VARCHAR(100) NOT NULL,
+            current_balance DECIMAL(18,2) NOT NULL DEFAULT 0,
+            status ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            UNIQUE KEY uq_wallet_user (user_id),
+            UNIQUE KEY uq_wallet_vendor (vendor_id),
+            CONSTRAINT fk_wallet_user FOREIGN KEY (user_id)
+                REFERENCES zzimba_users(id)
+                ON DELETE SET NULL ON UPDATE CASCADE,
+            CONSTRAINT fk_wallet_vendor FOREIGN KEY (vendor_id)
+                REFERENCES vendor_stores(id)
+                ON DELETE SET NULL ON UPDATE CASCADE
+        ) ENGINE=InnoDB
+    ");
+} catch (PDOException $e) {
+    error_log("Table creation error (zzimba_wallets): " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Database setup failed']);
+    exit;
+}
+
+$action = $_GET['action'] ?? '';
+
+try {
+    switch ($action) {
+        case 'getZzimbaWallets':
+            getZzimbaWallets($pdo);
+            break;
+        case 'getZzimbaWallet':
+            getZzimbaWallet($pdo);
+            break;
+        case 'createZzimbaWallet':
+            createZzimbaWallet($pdo);
+            break;
+        case 'updateZzimbaWallet':
+            updateZzimbaWallet($pdo);
+            break;
+        case 'deleteZzimbaWallet':
+            deleteZzimbaWallet($pdo);
+            break;
+        default:
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Endpoint not found: ' . $action]);
+    }
+} catch (Exception $e) {
+    error_log("Error in manageZzimbaWallets: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+//  Endpoints
+// ───────────────────────────────────────────────────────────────────────────────
+
+function getZzimbaWallets(PDO $pdo)
+{
+    $stmt = $pdo->prepare("
+        SELECT wallet_id, owner_type, user_id, vendor_id, wallet_name,
+               current_balance, status, created_at, updated_at
+          FROM zzimba_wallets
+         ORDER BY created_at DESC
+    ");
+    $stmt->execute();
+    $wallets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    echo json_encode(['success' => true, 'wallets' => $wallets]);
+}
+
+function getZzimbaWallet(PDO $pdo)
+{
+    if (empty($_GET['wallet_id'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing wallet ID']);
+        return;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT wallet_id, owner_type, user_id, vendor_id, wallet_name,
+               current_balance, status, created_at, updated_at
+          FROM zzimba_wallets
+         WHERE wallet_id = :wallet_id
+    ");
+    $stmt->execute([':wallet_id' => $_GET['wallet_id']]);
+    $w = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$w) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Wallet not found']);
+        return;
+    }
+
+    echo json_encode(['success' => true, 'wallet' => $w]);
+}
+
+function createZzimbaWallet(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $owner_type = $data['owner_type'] ?? '';
+    $name = trim($data['wallet_name'] ?? '');
+
+    if ($owner_type !== 'PLATFORM') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Can only create PLATFORM wallets']);
+        return;
+    }
+    if ($name === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Wallet name is required']);
+        return;
+    }
+
+    $wallet_id = generateUlid();
+    $created_at = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+    $updated_at = $created_at;
+
+    $pdo->beginTransaction();
+    try {
+        $ins = $pdo->prepare("
+            INSERT INTO zzimba_wallets
+                (wallet_id, owner_type, user_id, vendor_id, wallet_name, current_balance, status, created_at, updated_at)
+            VALUES
+                (:wallet_id, :owner_type, NULL, NULL, :wallet_name, 0, 'active', :created_at, :updated_at)
+        ");
+        $ins->execute([
+            ':wallet_id' => $wallet_id,
+            ':owner_type' => $owner_type,
+            ':wallet_name' => $name,
+            ':created_at' => $created_at,
+            ':updated_at' => $updated_at,
+        ]);
+        $pdo->commit();
+
+        echo json_encode(['success' => true, 'message' => 'Wallet created', 'wallet_id' => $wallet_id]);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Error creating wallet: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error creating wallet']);
+    }
+}
+
+function updateZzimbaWallet(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $wallet_id = $data['wallet_id'] ?? '';
+    $wallet_name = trim($data['wallet_name'] ?? '');
+    $status = $data['status'] ?? '';
+
+    $allowed = ['active', 'inactive', 'suspended'];
+    if ($wallet_id === '' || $wallet_name === '' || !in_array($status, $allowed, true)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Wallet ID, name, and valid status are required']);
+        return;
+    }
+
+    $chk = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE wallet_id = :wallet_id");
+    $chk->execute([':wallet_id' => $wallet_id]);
+    if ($chk->rowCount() === 0) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Wallet not found']);
+        return;
+    }
+
+    $updated_at = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+
+    $pdo->beginTransaction();
+    try {
+        $upd = $pdo->prepare("
+            UPDATE zzimba_wallets
+               SET wallet_name = :wallet_name,
+                   status      = :status,
+                   updated_at  = :updated_at
+             WHERE wallet_id  = :wallet_id
+        ");
+        $upd->execute([
+            ':wallet_name' => $wallet_name,
+            ':status' => $status,
+            ':updated_at' => $updated_at,
+            ':wallet_id' => $wallet_id,
+        ]);
+        $pdo->commit();
+
+        echo json_encode(['success' => true, 'message' => 'Wallet updated']);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Error updating wallet: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error updating wallet']);
+    }
+}
+
+function deleteZzimbaWallet(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $wallet_id = $data['wallet_id'] ?? '';
+
+    if ($wallet_id === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing wallet ID']);
+        return;
+    }
+
+    $stmt = $pdo->prepare("SELECT owner_type FROM zzimba_wallets WHERE wallet_id = :wallet_id");
+    $stmt->execute([':wallet_id' => $wallet_id]);
+    $w = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$w) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Wallet not found']);
+        return;
+    }
+    if ($w['owner_type'] !== 'PLATFORM') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Cannot delete non-platform wallets']);
+        return;
+    }
+
+    $pdo->beginTransaction();
+    try {
+        $del = $pdo->prepare("DELETE FROM zzimba_wallets WHERE wallet_id = :wallet_id");
+        $del->execute([':wallet_id' => $wallet_id]);
+        $pdo->commit();
+
+        echo json_encode(['success' => true, 'message' => 'Wallet deleted']);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Error deleting wallet: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error deleting wallet']);
+    }
+}

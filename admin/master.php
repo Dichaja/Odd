@@ -46,6 +46,7 @@ $menuItems = [
         'title' => 'Finance',
         'items' => [
             'cash-accounts' => ['title' => 'Cash Accounts', 'icon' => 'fa-wallet'],
+            'zzimba-wallets' => ['title' => 'Zzimba Wallets', 'icon' => 'fa-piggy-bank'],
             'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card']
         ]
     ],
