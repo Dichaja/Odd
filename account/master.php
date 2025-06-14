@@ -1,18 +1,10 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-/*
-|------------------------------------------------------------------
-| Session bootstrap
-|------------------------------------------------------------------
-*/
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-/*--------------------------------------------------------------
-| 1)  Guard – unauthenticated users → logout → home
----------------------------------------------------------------*/
 if (
     !isset($_SESSION['user']) ||
     empty($_SESSION['user']['logged_in'])
@@ -23,18 +15,12 @@ if (
     exit;
 }
 
-/*--------------------------------------------------------------
-| 2)  Guard – admin users → admin dashboard
----------------------------------------------------------------*/
 if (!empty($_SESSION['user']['is_admin'])) {
     header('Location: ' . BASE_URL . 'admin/dashboard');
     exit;
 }
 
-/*--------------------------------------------------------------
-| 3)  Guard – session idle timeout (30-min)
----------------------------------------------------------------*/
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)) {
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 7200)) {
     session_unset();
     session_destroy();
     header('Location: ' . BASE_URL);
@@ -42,9 +28,6 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 }
 $_SESSION['last_activity'] = time();
 
-/*--------------------------------------------------------------
-| 4)  Pull the user row once – we need more than last_login now
----------------------------------------------------------------*/
 $stmt = $pdo->prepare("
     SELECT 
         first_name,
@@ -57,12 +40,6 @@ $stmt = $pdo->prepare("
 $stmt->execute([':user_id' => $_SESSION['user']['user_id']]);
 $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
 
-/*--------------------------------------------------------------
-| 5)  Mandatory-profile check
-|     – first_name, email, phone must all be set.
-|     – If any is NULL / '', redirect to /account/profile
-|     – BUT don’t loop if we are already on that page
----------------------------------------------------------------*/
 $needsProfileCompletion =
     empty($userRow['first_name']) ||
     empty($userRow['email']) ||

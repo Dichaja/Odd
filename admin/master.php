@@ -10,7 +10,7 @@ if (
     exit;
 }
 
-if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)) {
+if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 7200)) {
     session_unset();
     session_destroy();
     header('Location: ' . BASE_URL);
