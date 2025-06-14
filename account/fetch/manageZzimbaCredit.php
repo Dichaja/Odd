@@ -23,22 +23,22 @@ if (empty($_SESSION['user']['logged_in'])) {
 
 date_default_timezone_set('Africa/Kampala');
 
-// Support both GET and POST
+// Support both GET and POST for parameters
 $action = $_REQUEST['action'] ?? '';
 
 try {
     switch ($action) {
         case 'validateMsisdn':
-            $msisdn = trim($_POST['msisdn'] ?? '');
+            $msisdn = trim($_REQUEST['msisdn'] ?? '');
             $result = CreditService::validateMsisdn($msisdn);
             echo json_encode($result);
             break;
 
         case 'makePayment':
             $opts = [
-                'msisdn' => trim($_POST['msisdn'] ?? ''),
-                'amount' => (float) ($_POST['amount'] ?? 0),
-                'description' => trim($_POST['description'] ?? ''),
+                'msisdn' => trim($_REQUEST['msisdn'] ?? ''),
+                'amount' => (float) ($_REQUEST['amount'] ?? 0),
+                'description' => trim($_REQUEST['description'] ?? ''),
                 'user_id' => $_SESSION['user']['user_id'],
             ];
             $result = CreditService::makeMobileMoneyPayment($opts);
@@ -46,7 +46,7 @@ try {
             break;
 
         case 'checkStatus':
-            $internalRef = trim($_POST['internal_reference'] ?? '');
+            $internalRef = trim($_REQUEST['internal_reference'] ?? '');
             $result = CreditService::checkRequestStatus($internalRef);
             echo json_encode($result);
             break;
@@ -54,6 +54,16 @@ try {
         case 'getWallet':
             $userId = $_SESSION['user']['user_id'];
             $result = CreditService::getWallet('USER', $userId);
+            echo json_encode($result);
+            break;
+
+        case 'getWalletStatement':
+            // Fetch a wallet statement: 'all' or 'range'
+            $userId = $_SESSION['user']['user_id'];
+            $filter = strtolower(trim($_REQUEST['filter'] ?? 'all'));
+            $start = $_REQUEST['start'] ?? null;  // expected YYYY-MM-DD or datetime
+            $end = $_REQUEST['end'] ?? null;  // expected YYYY-MM-DD or datetime
+            $result = CreditService::getWalletStatement($userId, $filter, $start, $end);
             echo json_encode($result);
             break;
 
