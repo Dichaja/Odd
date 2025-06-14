@@ -76,6 +76,7 @@ final class CreditService
               transaction_id     VARCHAR(26) NOT NULL,
               wallet_id          CHAR(26) DEFAULT NULL,
               cash_account_id    CHAR(26) DEFAULT NULL,
+              ref_entry_id       CHAR(26) DEFAULT NULL,
               entry_type         ENUM('DEBIT','CREDIT') NOT NULL,
               amount             DECIMAL(18,2) NOT NULL,
               balance_after      DECIMAL(18,2) NOT NULL,
@@ -91,9 +92,13 @@ final class CreditService
               CONSTRAINT fk_entry_cash FOREIGN KEY (cash_account_id)
                          REFERENCES zzimba_cash_accounts(id)
                          ON UPDATE CASCADE ON DELETE RESTRICT,
+              CONSTRAINT fk_entry_ref FOREIGN KEY (ref_entry_id)
+                         REFERENCES zzimba_transaction_entries(entry_id)
+                         ON UPDATE CASCADE ON DELETE RESTRICT,
               INDEX idx_entry_txn (transaction_id),
               INDEX idx_entry_wallet (wallet_id),
-              INDEX idx_entry_cash (cash_account_id)
+              INDEX idx_entry_cash (cash_account_id),
+              INDEX idx_entry_ref (ref_entry_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
 
         $createWallets = "
@@ -182,18 +187,6 @@ final class CreditService
             'vendor_id' => $opts['vendor_id'] ?? null
         ]);
 
-        if (!empty($opts['wallet_id']) || !empty($opts['cash_account_id'])) {
-            self::insertEntry([
-                'transaction_id' => $reference,
-                'wallet_id' => $opts['wallet_id'] ?? null,
-                'cash_account_id' => $opts['cash_account_id'] ?? null,
-                'entry_type' => 'DEBIT',
-                'amount' => $amount,
-                'balance_after' => 0,
-                'entry_note' => 'Request-to-pay initiated'
-            ]);
-        }
-
         return $res;
     }
 
@@ -201,6 +194,7 @@ final class CreditService
     {
         self::boot();
 
+        // 1. Fetch status from Relworx
         $raw = self::apiRequest(
             'https://payments.relworx.com/api/mobile-money/check-request-status',
             [
@@ -212,16 +206,17 @@ final class CreditService
         $res = json_decode($raw, true) ?? [];
         $status = strtoupper($res['request_status'] ?? $res['status'] ?? 'PENDING');
 
+        // 2. Update transaction record
         try {
-            $stmt = self::$pdo->prepare(
-                "UPDATE zzimba_financial_transactions
+            $updateTxn = self::$pdo->prepare("
+                UPDATE zzimba_financial_transactions
                    SET status            = :st,
                        note              = :nt,
                        external_metadata = :md,
                        updated_at        = NOW()
-                 WHERE external_reference = :er"
-            );
-            $stmt->execute([
+                 WHERE external_reference = :er
+            ");
+            $updateTxn->execute([
                 ':st' => $status,
                 ':nt' => $res['message'] ?? null,
                 ':md' => $raw,
@@ -229,6 +224,151 @@ final class CreditService
             ]);
         } catch (PDOException $e) {
             error_log('[ZzimbaCreditModule] txn update error: ' . $e->getMessage());
+        }
+
+        // 3. On SUCCESS, post ledger entries
+        if ($status === 'SUCCESS') {
+            try {
+                self::$pdo->beginTransaction();
+
+                // Fetch transaction context
+                $stmt = self::$pdo->prepare("
+                    SELECT transaction_id, amount_total, user_id
+                      FROM zzimba_financial_transactions
+                     WHERE external_reference = :er
+                ");
+                $stmt->execute([':er' => $internalRef]);
+                $txn = $stmt->fetch(PDO::FETCH_ASSOC);
+                $amount = (float) $txn['amount_total'];
+                $txnId = $txn['transaction_id'];
+                $userId = $txn['user_id'];
+
+                // PLATFORM withholding wallet
+                $withStmt = self::$pdo->query("
+                    SELECT platform_account_id
+                      FROM zzimba_platform_account_settings
+                     WHERE type = 'withholding'
+                     LIMIT 1
+                ");
+                $withholdingId = $withStmt->fetchColumn();
+                $stmt = self::$pdo->prepare("
+                    SELECT current_balance
+                      FROM zzimba_wallets
+                     WHERE wallet_id = :wid
+                       AND owner_type = 'PLATFORM'
+                       AND status     = 'active'
+                     LIMIT 1
+                ");
+                $stmt->execute([':wid' => $withholdingId]);
+                $withholdingBal = (float) $stmt->fetchColumn();
+
+                // GATEWAY cash account
+                $stmt = self::$pdo->query("
+                    SELECT id, current_balance
+                      FROM zzimba_cash_accounts
+                     WHERE type   = 'gateway'
+                       AND status = 'active'
+                     LIMIT 1
+                ");
+                $cash = $stmt->fetch(PDO::FETCH_ASSOC);
+                $cashId = $cash['id'];
+                $cashBal = (float) $cash['current_balance'];
+
+                // USER wallet
+                $stmt = self::$pdo->prepare("
+                    SELECT wallet_id, current_balance
+                      FROM zzimba_wallets
+                     WHERE owner_type = 'USER'
+                       AND user_id    = :uid
+                       AND status     = 'active'
+                     LIMIT 1
+                ");
+                $stmt->execute([':uid' => $userId]);
+                $userWallet = $stmt->fetch(PDO::FETCH_ASSOC);
+                $userWid = $userWallet['wallet_id'];
+                $userBal = (float) $userWallet['current_balance'];
+
+                // ENTRY 1: CREDIT withholding wallet
+                $newWithBal = $withholdingBal + $amount;
+                $e1 = self::insertEntry([
+                    'transaction_id' => $txnId,
+                    'wallet_id' => $withholdingId,
+                    'entry_type' => 'CREDIT',
+                    'amount' => $amount,
+                    'balance_after' => $newWithBal,
+                    'entry_note' => 'Mobile Money received via Gateway – Held in Withholding'
+                ]);
+                self::$pdo->prepare("
+                    UPDATE zzimba_wallets
+                       SET current_balance = :bal, updated_at = NOW()
+                     WHERE wallet_id = :wid
+                ")->execute([':bal' => $newWithBal, ':wid' => $withholdingId]);
+
+                // ENTRY 2: DEBIT withholding → gateway cash
+                $afterDebit = $newWithBal - $amount;
+                $e2 = self::insertEntry([
+                    'transaction_id' => $txnId,
+                    'wallet_id' => $withholdingId,
+                    'entry_type' => 'DEBIT',
+                    'amount' => $amount,
+                    'balance_after' => $afterDebit,
+                    'entry_note' => 'Transferred to Gateway Cash Account from Withholding'
+                ]);
+                self::$pdo->prepare("
+                    UPDATE zzimba_wallets
+                       SET current_balance = :bal, updated_at = NOW()
+                     WHERE wallet_id = :wid
+                ")->execute([':bal' => $afterDebit, ':wid' => $withholdingId]);
+
+                // ENTRY 3: DEBIT withholding → user wallet
+                $e3 = self::insertEntry([
+                    'transaction_id' => $txnId,
+                    'wallet_id' => $withholdingId,
+                    'entry_type' => 'DEBIT',
+                    'amount' => $amount,
+                    'balance_after' => $afterDebit,
+                    'entry_note' => 'Allocated to User Wallet from Withholding'
+                ]);
+
+                // ENTRY 4: CREDIT user wallet (refers to DEBIT entry 3)
+                $newUserBal = $userBal + $amount;
+                self::insertEntry([
+                    'transaction_id' => $txnId,
+                    'wallet_id' => $userWid,
+                    'entry_type' => 'CREDIT',
+                    'amount' => $amount,
+                    'balance_after' => $newUserBal,
+                    'entry_note' => 'Top-up from Mobile Money via Withholding',
+                    'ref_entry_id' => $e3
+                ]);
+                self::$pdo->prepare("
+                    UPDATE zzimba_wallets
+                       SET current_balance = :bal, updated_at = NOW()
+                     WHERE wallet_id = :wid
+                ")->execute([':bal' => $newUserBal, ':wid' => $userWid]);
+
+                // ENTRY 5: CREDIT gateway cash account (refers to DEBIT entry 2)
+                $newCashBal = $cashBal + $amount;
+                self::insertEntry([
+                    'transaction_id' => $txnId,
+                    'cash_account_id' => $cashId,
+                    'entry_type' => 'CREDIT',
+                    'amount' => $amount,
+                    'balance_after' => $newCashBal,
+                    'entry_note' => 'Cash received from Mobile Money – Gateway Deposit',
+                    'ref_entry_id' => $e2
+                ]);
+                self::$pdo->prepare("
+                    UPDATE zzimba_cash_accounts
+                       SET current_balance = :bal, updated_at = NOW()
+                     WHERE id = :cid
+                ")->execute([':bal' => $newCashBal, ':cid' => $cashId]);
+
+                self::$pdo->commit();
+            } catch (PDOException $e) {
+                self::$pdo->rollBack();
+                error_log('[ZzimbaCreditModule] ledger processing error: ' . $e->getMessage());
+            }
         }
 
         return $res;
@@ -380,7 +520,10 @@ final class CreditService
         }
     }
 
-    private static function insertEntry(array $row): void
+    /**
+     * Insert a ledger entry and return its entry_id.
+     */
+    private static function insertEntry(array $row): string
     {
         $row['entry_id'] = \generateUlid();
         $row['created_at'] = date('Y-m-d H:i:s');
@@ -391,8 +534,10 @@ final class CreditService
         try {
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute($row);
+            return $row['entry_id'];
         } catch (PDOException $e) {
             error_log('[ZzimbaCreditModule] insert entry error: ' . $e->getMessage());
+            return '';
         }
     }
 }
