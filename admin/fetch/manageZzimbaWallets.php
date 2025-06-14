@@ -23,7 +23,7 @@ if (
 date_default_timezone_set('Africa/Kampala');
 
 // ───────────────────────────────────────────────────────────────────────────────
-//  Ensure the wallets table exists
+//  Ensure the wallets and platform account settings tables exist
 // ───────────────────────────────────────────────────────────────────────────────
 try {
     $pdo->exec("
@@ -45,10 +45,21 @@ try {
             CONSTRAINT fk_wallet_vendor FOREIGN KEY (vendor_id)
                 REFERENCES vendor_stores(id)
                 ON DELETE SET NULL ON UPDATE CASCADE
-        ) ENGINE=InnoDB
+        ) ENGINE=InnoDB;
+        
+        CREATE TABLE IF NOT EXISTS zzimba_platform_account_settings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            platform_account_id CHAR(26) NOT NULL,
+            type ENUM('withholding','services','operations','communications') NOT NULL UNIQUE,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            CONSTRAINT fk_platform_account_settings_wallet FOREIGN KEY (platform_account_id)
+                REFERENCES zzimba_wallets(wallet_id)
+                ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB;
     ");
 } catch (PDOException $e) {
-    error_log("Table creation error (zzimba_wallets): " . $e->getMessage());
+    error_log("Table creation error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database setup failed']);
     exit;
@@ -73,6 +84,9 @@ try {
         case 'deleteZzimbaWallet':
             deleteZzimbaWallet($pdo);
             break;
+        case 'managePlatformAccounts':
+            managePlatformAccounts($pdo);
+            break;
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Endpoint not found: ' . $action]);
@@ -84,7 +98,7 @@ try {
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
-//  Endpoints
+//  Endpoints for wallets
 // ───────────────────────────────────────────────────────────────────────────────
 
 function getZzimbaWallets(PDO $pdo)
@@ -261,5 +275,141 @@ function deleteZzimbaWallet(PDO $pdo)
         error_log("Error deleting wallet: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Error deleting wallet']);
+    }
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+//  Endpoint for managing platform account settings
+// ───────────────────────────────────────────────────────────────────────────────
+function managePlatformAccounts(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $operation = $data['operation'] ?? '';
+
+    // LIST: optional filter by platform_account_id
+    if ($operation === 'list') {
+        if (!empty($data['platform_account_id'])) {
+            $stmt = $pdo->prepare("
+                SELECT id, platform_account_id, type, created_at, updated_at
+                  FROM zzimba_platform_account_settings
+                 WHERE platform_account_id = :platform_account_id
+                 ORDER BY created_at DESC
+            ");
+            $stmt->execute([':platform_account_id' => $data['platform_account_id']]);
+        } else {
+            $stmt = $pdo->query("
+                SELECT id, platform_account_id, type, created_at, updated_at
+                  FROM zzimba_platform_account_settings
+                 ORDER BY created_at DESC
+            ");
+        }
+        echo json_encode(['success' => true, 'settings' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+        return;
+    }
+
+    // For add/update/remove, validate platform_account_id
+    $accountId = $data['platform_account_id'] ?? '';
+    if (!in_array($operation, ['add', 'update', 'remove'], true)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid operation']);
+        return;
+    }
+
+    // Ensure the referenced wallet exists and is PLATFORM
+    $chk = $pdo->prepare("
+        SELECT wallet_id FROM zzimba_wallets
+         WHERE wallet_id = :wallet_id AND owner_type = 'PLATFORM'
+    ");
+    $chk->execute([':wallet_id' => $accountId]);
+    if ($chk->rowCount() === 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid platform account id']);
+        return;
+    }
+
+    $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+
+    if ($operation === 'add') {
+        $type = $data['type'] ?? '';
+        if ($type === '') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Type is required']);
+            return;
+        }
+        try {
+            $ins = $pdo->prepare("
+                INSERT INTO zzimba_platform_account_settings
+                    (platform_account_id, type, created_at, updated_at)
+                VALUES
+                    (:platform_account_id, :type, :created_at, :updated_at)
+            ");
+            $ins->execute([
+                ':platform_account_id' => $accountId,
+                ':type' => $type,
+                ':created_at' => $now,
+                ':updated_at' => $now,
+            ]);
+            echo json_encode(['success' => true, 'message' => 'Setting added']);
+        } catch (Exception $e) {
+            error_log("Error adding platform setting: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error adding setting']);
+        }
+        return;
+    }
+
+    if ($operation === 'update') {
+        $id = $data['id'] ?? 0;
+        $type = $data['type'] ?? '';
+        if (!$id || $type === '') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'ID and new type are required']);
+            return;
+        }
+        try {
+            $upd = $pdo->prepare("
+                UPDATE zzimba_platform_account_settings
+                   SET type = :type,
+                       updated_at = :updated_at
+                 WHERE id = :id AND platform_account_id = :platform_account_id
+            ");
+            $upd->execute([
+                ':type' => $type,
+                ':updated_at' => $now,
+                ':id' => $id,
+                ':platform_account_id' => $accountId,
+            ]);
+            echo json_encode(['success' => true, 'message' => 'Setting updated']);
+        } catch (Exception $e) {
+            error_log("Error updating platform setting: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error updating setting']);
+        }
+        return;
+    }
+
+    if ($operation === 'remove') {
+        $id = $data['id'] ?? 0;
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'ID is required to remove']);
+            return;
+        }
+        try {
+            $del = $pdo->prepare("
+                DELETE FROM zzimba_platform_account_settings
+                 WHERE id = :id AND platform_account_id = :platform_account_id
+            ");
+            $del->execute([
+                ':id' => $id,
+                ':platform_account_id' => $accountId,
+            ]);
+            echo json_encode(['success' => true, 'message' => 'Setting removed']);
+        } catch (Exception $e) {
+            error_log("Error removing platform setting: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Error removing setting']);
+        }
+        return;
     }
 }
