@@ -9,6 +9,7 @@ ini_set('error_log', __DIR__ . '/../../logs/php-errors.log');
 require_once __DIR__ . '/../../config/config.php';
 
 header('Content-Type: application/json');
+session_start();
 
 if (
     !isset($_SESSION['user']) ||
@@ -46,13 +47,14 @@ try {
                 REFERENCES vendor_stores(id)
                 ON DELETE SET NULL ON UPDATE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-        
+
         CREATE TABLE IF NOT EXISTS zzimba_platform_account_settings (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id CHAR(26) NOT NULL PRIMARY KEY,
             platform_account_id CHAR(26) NOT NULL,
             type ENUM('withholding','services','operations','communications') NOT NULL UNIQUE,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
+
             CONSTRAINT fk_platform_account_settings_wallet FOREIGN KEY (platform_account_id)
                 REFERENCES zzimba_wallets(wallet_id)
                 ON DELETE CASCADE ON UPDATE CASCADE
@@ -178,7 +180,11 @@ function createZzimbaWallet(PDO $pdo)
         ]);
         $pdo->commit();
 
-        echo json_encode(['success' => true, 'message' => 'Wallet created', 'wallet_id' => $wallet_id]);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Wallet created',
+            'wallet_id' => $wallet_id
+        ]);
     } catch (Exception $e) {
         $pdo->rollBack();
         error_log("Error creating wallet: " . $e->getMessage());
@@ -190,7 +196,7 @@ function createZzimbaWallet(PDO $pdo)
 function updateZzimbaWallet(PDO $pdo)
 {
     $data = json_decode(file_get_contents('php://input'), true);
-    $wallet_id = $data['wallet_id'] ?? '';
+    $wallet_id = trim($data['wallet_id'] ?? '');
     $wallet_name = trim($data['wallet_name'] ?? '');
     $status = $data['status'] ?? '';
 
@@ -240,7 +246,7 @@ function updateZzimbaWallet(PDO $pdo)
 function deleteZzimbaWallet(PDO $pdo)
 {
     $data = json_decode(file_get_contents('php://input'), true);
-    $wallet_id = $data['wallet_id'] ?? '';
+    $wallet_id = trim($data['wallet_id'] ?? '');
 
     if ($wallet_id === '') {
         http_response_code(400);
@@ -308,14 +314,13 @@ function managePlatformAccounts(PDO $pdo)
     }
 
     // For add/update/remove, validate platform_account_id
-    $accountId = $data['platform_account_id'] ?? '';
     if (!in_array($operation, ['add', 'update', 'remove'], true)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid operation']);
         return;
     }
 
-    // Ensure the referenced wallet exists and is PLATFORM
+    $accountId = trim($data['platform_account_id'] ?? '');
     $chk = $pdo->prepare("
         SELECT wallet_id FROM zzimba_wallets
          WHERE wallet_id = :wallet_id AND owner_type = 'PLATFORM'
@@ -330,26 +335,33 @@ function managePlatformAccounts(PDO $pdo)
     $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
     if ($operation === 'add') {
-        $type = $data['type'] ?? '';
+        $type = trim($data['type'] ?? '');
         if ($type === '') {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Type is required']);
             return;
         }
+
+        $id = generateUlid();
         try {
             $ins = $pdo->prepare("
                 INSERT INTO zzimba_platform_account_settings
-                    (platform_account_id, type, created_at, updated_at)
+                    (id, platform_account_id, type, created_at, updated_at)
                 VALUES
-                    (:platform_account_id, :type, :created_at, :updated_at)
+                    (:id, :platform_account_id, :type, :created_at, :updated_at)
             ");
             $ins->execute([
+                ':id' => $id,
                 ':platform_account_id' => $accountId,
                 ':type' => $type,
                 ':created_at' => $now,
                 ':updated_at' => $now,
             ]);
-            echo json_encode(['success' => true, 'message' => 'Setting added']);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Setting added',
+                'id' => $id
+            ]);
         } catch (Exception $e) {
             error_log("Error adding platform setting: " . $e->getMessage());
             http_response_code(500);
@@ -359,9 +371,9 @@ function managePlatformAccounts(PDO $pdo)
     }
 
     if ($operation === 'update') {
-        $id = $data['id'] ?? 0;
-        $type = $data['type'] ?? '';
-        if (!$id || $type === '') {
+        $id = trim($data['id'] ?? '');
+        $type = trim($data['type'] ?? '');
+        if ($id === '' || $type === '') {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'ID and new type are required']);
             return;
@@ -371,7 +383,8 @@ function managePlatformAccounts(PDO $pdo)
                 UPDATE zzimba_platform_account_settings
                    SET type = :type,
                        updated_at = :updated_at
-                 WHERE id = :id AND platform_account_id = :platform_account_id
+                 WHERE id = :id
+                   AND platform_account_id = :platform_account_id
             ");
             $upd->execute([
                 ':type' => $type,
@@ -389,8 +402,8 @@ function managePlatformAccounts(PDO $pdo)
     }
 
     if ($operation === 'remove') {
-        $id = $data['id'] ?? 0;
-        if (!$id) {
+        $id = trim($data['id'] ?? '');
+        if ($id === '') {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'ID is required to remove']);
             return;
@@ -398,7 +411,8 @@ function managePlatformAccounts(PDO $pdo)
         try {
             $del = $pdo->prepare("
                 DELETE FROM zzimba_platform_account_settings
-                 WHERE id = :id AND platform_account_id = :platform_account_id
+                 WHERE id = :id
+                   AND platform_account_id = :platform_account_id
             ");
             $del->execute([
                 ':id' => $id,
