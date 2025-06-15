@@ -45,79 +45,80 @@ final class CreditService
         self::$pdo = $pdo;
 
         // create tables if not exist
+        $createWallets = "
+            CREATE TABLE IF NOT EXISTS zzimba_wallets (
+                wallet_id       CHAR(26) NOT NULL PRIMARY KEY,
+                owner_type      ENUM('USER','VENDOR','PLATFORM') NOT NULL,
+                user_id         VARCHAR(26) DEFAULT NULL,
+                vendor_id       VARCHAR(26) DEFAULT NULL,
+                wallet_name     VARCHAR(100) NOT NULL,
+                current_balance DECIMAL(18,2) NOT NULL DEFAULT 0.00,
+                status          ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
+                created_at      DATETIME NOT NULL,
+                updated_at      DATETIME NOT NULL,
+                CONSTRAINT fk_wallet_user FOREIGN KEY (user_id)
+                    REFERENCES zzimba_users(id)
+                    ON UPDATE CASCADE ON DELETE SET NULL,
+                CONSTRAINT fk_wallet_vendor FOREIGN KEY (vendor_id)
+                    REFERENCES vendor_stores(id)
+                    ON UPDATE CASCADE ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
+
         $createFinancial = "
             CREATE TABLE IF NOT EXISTS zzimba_financial_transactions (
-              transaction_id      VARCHAR(26) NOT NULL PRIMARY KEY,
-              transaction_type    ENUM('TOPUP','PURCHASE','SUBSCRIPTION','SMS_PURCHASE','EMAIL_PURCHASE',
+                transaction_id      VARCHAR(26) NOT NULL PRIMARY KEY,
+                transaction_type    ENUM('TOPUP','PURCHASE','SUBSCRIPTION','SMS_PURCHASE','EMAIL_PURCHASE',
                                         'PREMIUM_FEATURE','REFUND','WITHDRAWAL') NOT NULL,
-              status              ENUM('PENDING','SUCCESS','FAILED','REFUNDED','DISPUTED') NOT NULL DEFAULT 'PENDING',
-              amount_total        DECIMAL(15,2) NOT NULL,
-              payment_method      ENUM('MOBILE_MONEY_GATEWAY','MOBILE_MONEY','CARD','WALLET') DEFAULT NULL,
-              external_reference  VARCHAR(100) DEFAULT NULL,
-              external_metadata   TEXT DEFAULT NULL,
-              user_id             VARCHAR(26) DEFAULT NULL,
-              vendor_id           VARCHAR(26) DEFAULT NULL,
-              original_txn_id     VARCHAR(26) DEFAULT NULL,
-              note                VARCHAR(255) DEFAULT NULL,
-              created_at          DATETIME NOT NULL,
-              updated_at          DATETIME NOT NULL,
-              CONSTRAINT fk_txn_user     FOREIGN KEY (user_id)     REFERENCES zzimba_users(id)
-                                           ON UPDATE CASCADE ON DELETE RESTRICT,
-              CONSTRAINT fk_txn_vendor   FOREIGN KEY (vendor_id)   REFERENCES vendor_stores(id)
-                                           ON UPDATE CASCADE ON DELETE RESTRICT,
-              CONSTRAINT fk_txn_original FOREIGN KEY (original_txn_id)
-                                           REFERENCES zzimba_financial_transactions(transaction_id)
-                                           ON UPDATE CASCADE ON DELETE RESTRICT
+                status              ENUM('PENDING','SUCCESS','FAILED','REFUNDED','DISPUTED') NOT NULL DEFAULT 'PENDING',
+                amount_total        DECIMAL(15,2) NOT NULL,
+                payment_method      ENUM('MOBILE_MONEY_GATEWAY','MOBILE_MONEY','CARD','WALLET') DEFAULT NULL,
+                external_reference  VARCHAR(100) DEFAULT NULL,
+                external_metadata   TEXT DEFAULT NULL,
+                user_id             VARCHAR(26) DEFAULT NULL,
+                vendor_id           VARCHAR(26) DEFAULT NULL,
+                original_txn_id     VARCHAR(26) DEFAULT NULL,
+                note                VARCHAR(255) DEFAULT NULL,
+                created_at          DATETIME NOT NULL,
+                updated_at          DATETIME NOT NULL,
+                CONSTRAINT fk_txn_user FOREIGN KEY (user_id)
+                    REFERENCES zzimba_users(id)
+                    ON UPDATE CASCADE ON DELETE SET NULL,
+                CONSTRAINT fk_txn_vendor FOREIGN KEY (vendor_id)
+                    REFERENCES vendor_stores(id)
+                    ON UPDATE CASCADE ON DELETE SET NULL,
+                CONSTRAINT fk_txn_original FOREIGN KEY (original_txn_id)
+                    REFERENCES zzimba_financial_transactions(transaction_id)
+                    ON UPDATE CASCADE ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
 
         $createEntries = "
             CREATE TABLE IF NOT EXISTS zzimba_transaction_entries (
-              entry_id           CHAR(26) NOT NULL,
-              transaction_id     VARCHAR(26) NOT NULL,
-              wallet_id          CHAR(26) DEFAULT NULL,
-              cash_account_id    CHAR(26) DEFAULT NULL,
-              ref_entry_id       CHAR(26) DEFAULT NULL,
-              entry_type         ENUM('DEBIT','CREDIT') NOT NULL,
-              amount             DECIMAL(18,2) NOT NULL,
-              balance_after      DECIMAL(18,2) NOT NULL,
-              entry_note         VARCHAR(255) DEFAULT NULL,
-              created_at         DATETIME NOT NULL,
-              PRIMARY KEY (entry_id),
-              CONSTRAINT fk_entry_transaction FOREIGN KEY (transaction_id)
-                         REFERENCES zzimba_financial_transactions(transaction_id)
-                         ON UPDATE CASCADE ON DELETE RESTRICT,
-              CONSTRAINT fk_entry_wallet FOREIGN KEY (wallet_id)
-                         REFERENCES zzimba_wallets(wallet_id)
-                         ON UPDATE CASCADE ON DELETE RESTRICT,
-              CONSTRAINT fk_entry_cash FOREIGN KEY (cash_account_id)
-                         REFERENCES zzimba_cash_accounts(id)
-                         ON UPDATE CASCADE ON DELETE RESTRICT,
-              CONSTRAINT fk_entry_ref FOREIGN KEY (ref_entry_id)
-                         REFERENCES zzimba_transaction_entries(entry_id)
-                         ON UPDATE CASCADE ON DELETE RESTRICT,
-              INDEX idx_entry_txn (transaction_id),
-              INDEX idx_entry_wallet (wallet_id),
-              INDEX idx_entry_cash (cash_account_id),
-              INDEX idx_entry_ref (ref_entry_id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
-
-        $createWallets = "
-            CREATE TABLE IF NOT EXISTS zzimba_wallets (
-              wallet_id       CHAR(26) NOT NULL PRIMARY KEY,
-              owner_type      ENUM('USER','VENDOR','PLATFORM') NOT NULL,
-              user_id         CHAR(26) DEFAULT NULL,
-              vendor_id       CHAR(26) DEFAULT NULL,
-              wallet_name     VARCHAR(100) NOT NULL,
-              current_balance DECIMAL(18,2) NOT NULL DEFAULT 0.00,
-              status          ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
-              created_at      DATETIME NOT NULL,
-              updated_at      DATETIME NOT NULL,
-              CONSTRAINT fk_wallet_user   FOREIGN KEY (user_id)
-                         REFERENCES zzimba_users(id)
-                         ON UPDATE CASCADE ON DELETE RESTRICT,
-              CONSTRAINT fk_wallet_vendor FOREIGN KEY (vendor_id)
-                         REFERENCES vendor_stores(id)
-                         ON UPDATE CASCADE ON DELETE RESTRICT
+                entry_id           CHAR(26) NOT NULL PRIMARY KEY,
+                transaction_id     VARCHAR(26) NOT NULL,
+                wallet_id          CHAR(26) DEFAULT NULL,
+                cash_account_id    CHAR(26) DEFAULT NULL,
+                ref_entry_id       CHAR(26) DEFAULT NULL,
+                entry_type         ENUM('DEBIT','CREDIT') NOT NULL,
+                amount             DECIMAL(18,2) NOT NULL,
+                balance_after      DECIMAL(18,2) NOT NULL,
+                entry_note         VARCHAR(255) DEFAULT NULL,
+                created_at         DATETIME NOT NULL,
+                CONSTRAINT fk_entry_transaction FOREIGN KEY (transaction_id)
+                    REFERENCES zzimba_financial_transactions(transaction_id)
+                    ON UPDATE CASCADE ON DELETE CASCADE,
+                CONSTRAINT fk_entry_wallet FOREIGN KEY (wallet_id)
+                    REFERENCES zzimba_wallets(wallet_id)
+                    ON UPDATE CASCADE ON DELETE SET NULL,
+                CONSTRAINT fk_entry_cash FOREIGN KEY (cash_account_id)
+                    REFERENCES zzimba_cash_accounts(id)
+                    ON UPDATE CASCADE ON DELETE SET NULL,
+                CONSTRAINT fk_entry_ref FOREIGN KEY (ref_entry_id)
+                    REFERENCES zzimba_transaction_entries(entry_id)
+                    ON UPDATE CASCADE ON DELETE SET NULL,
+                INDEX idx_entry_txn (transaction_id),
+                INDEX idx_entry_wallet (wallet_id),
+                INDEX idx_entry_cash (cash_account_id),
+                INDEX idx_entry_ref (ref_entry_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
 
         try {
