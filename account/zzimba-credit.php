@@ -68,11 +68,11 @@ function formatCurrency($amount)
                                         class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-500">
                                         <span class="flex items-center gap-1">
                                             <i class="fas fa-id-card text-xs"></i>
-                                            <strong>Wallet ID:</strong> <span id="walletId"></span>
+                                            <span id="walletId"></span>
                                         </span>
                                         <span class="flex items-center gap-1">
                                             <i class="fas fa-calendar text-xs"></i>
-                                            <strong>Created:</strong> <span id="createdDate"></span>
+                                            <span id="createdDate"></span>
                                         </span>
                                     </div>
                                 </div>
