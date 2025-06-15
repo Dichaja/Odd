@@ -195,7 +195,7 @@ final class CreditService
     {
         self::boot();
 
-        // 1. Fetch status from Relworx
+        // 1) Fetch status from Relworx
         $raw = self::apiRequest(
             'https://payments.relworx.com/api/mobile-money/check-request-status',
             [
@@ -207,41 +207,36 @@ final class CreditService
         $res = json_decode($raw, true) ?? [];
         $status = strtoupper($res['request_status'] ?? $res['status'] ?? 'PENDING');
 
-        // 2. Update transaction record
-        try {
-            $tx = self::$pdo->prepare("
-                UPDATE zzimba_financial_transactions
-                   SET status            = :st,
-                       note              = :nt,
-                       external_metadata = :md,
-                       updated_at        = NOW()
-                 WHERE external_reference = :er
-            ");
-            $tx->execute([
-                ':st' => $status,
-                ':nt' => $res['message'] ?? null,
-                ':md' => $raw,
-                ':er' => $internalRef
-            ]);
-        } catch (PDOException $e) {
-            error_log('[ZzimbaCreditModule] txn update error: ' . $e->getMessage());
-        }
+        // 2) Update financial_transactions
+        $upd = self::$pdo->prepare("
+            UPDATE zzimba_financial_transactions
+               SET status = :st,
+                   note   = :nt,
+                   external_metadata = :md,
+                   updated_at = NOW()
+             WHERE external_reference = :er
+        ");
+        $upd->execute([
+            ':st' => $status,
+            ':nt' => $res['message'] ?? null,
+            ':md' => $raw,
+            ':er' => $internalRef
+        ]);
 
-        // 3. On SUCCESS, idempotent ledger processing
+        // 3) On SUCCESS, one DEBIT then two CREDITs referencing it
         if ($status === 'SUCCESS') {
-            // fetch transaction
-            $stmt = self::$pdo->prepare("
+            $txnRow = self::$pdo->prepare("
                 SELECT transaction_id, amount_total, user_id
                   FROM zzimba_financial_transactions
                  WHERE external_reference = :er
             ");
-            $stmt->execute([':er' => $internalRef]);
-            $txn = $stmt->fetch(PDO::FETCH_ASSOC);
+            $txnRow->execute([':er' => $internalRef]);
+            $txn = $txnRow->fetch(PDO::FETCH_ASSOC);
             $txnId = $txn['transaction_id'];
             $amount = (float) $txn['amount_total'];
             $userId = $txn['user_id'];
 
-            // withholding wallet id
+            // get withholding wallet
             $wst = self::$pdo->query("
                 SELECT platform_account_id
                   FROM zzimba_platform_account_settings
@@ -250,7 +245,7 @@ final class CreditService
             ");
             $withholdingId = $wst->fetchColumn();
 
-            // idempotency: credited withholding?
+            // idempotency: skip if already credited withholding
             $chk = self::$pdo->prepare("
                 SELECT COUNT(*) FROM zzimba_transaction_entries
                  WHERE transaction_id = :tid
@@ -266,16 +261,16 @@ final class CreditService
             try {
                 self::$pdo->beginTransaction();
 
-                // balances
-                $stmt = self::$pdo->prepare("
+                // fetch balances
+                $balStmt = self::$pdo->prepare("
                     SELECT current_balance
                       FROM zzimba_wallets
                      WHERE wallet_id = :wid
                        AND owner_type = 'PLATFORM'
                        AND status     = 'active'
                 ");
-                $stmt->execute([':wid' => $withholdingId]);
-                $withBal = (float) $stmt->fetchColumn();
+                $balStmt->execute([':wid' => $withholdingId]);
+                $withBal = (float) $balStmt->fetchColumn();
 
                 $cash = self::$pdo->query("
                     SELECT id, current_balance
@@ -285,91 +280,81 @@ final class CreditService
                      LIMIT 1
                 ")->fetch(PDO::FETCH_ASSOC);
 
-                $stmt = self::$pdo->prepare("
+                $uStmt = self::$pdo->prepare("
                     SELECT wallet_id, current_balance
                       FROM zzimba_wallets
                      WHERE owner_type = 'USER'
                        AND user_id    = :uid
                        AND status     = 'active'
                 ");
-                $stmt->execute([':uid' => $userId]);
-                $uw = $stmt->fetch(PDO::FETCH_ASSOC);
+                $uStmt->execute([':uid' => $userId]);
+                $uRow = $uStmt->fetch(PDO::FETCH_ASSOC);
 
-                // 1) CREDIT withholding
-                $newW = $withBal + $amount;
-                $e1 = self::insertEntry([
+                // 3.1) CREDIT withholding
+                $newWithBal = $withBal + $amount;
+                self::insertEntry([
                     'transaction_id' => $txnId,
                     'wallet_id' => $withholdingId,
                     'entry_type' => 'CREDIT',
                     'amount' => $amount,
-                    'balance_after' => $newW,
+                    'balance_after' => $newWithBal,
                     'entry_note' => 'Mobile Money received via Gateway – Held in Withholding'
                 ]);
                 self::$pdo->prepare("
                     UPDATE zzimba_wallets
                        SET current_balance = :bal, updated_at = NOW()
                      WHERE wallet_id = :wid
-                ")->execute([':bal' => $newW, ':wid' => $withholdingId]);
+                ")->execute([':bal' => $newWithBal, ':wid' => $withholdingId]);
 
-                // 2) DEBIT withholding → gateway cash
-                $after = $newW - $amount;
-                $e2 = self::insertEntry([
+                // 3.2) SINGLE DEBIT withholding
+                $debitBal = $newWithBal - $amount;
+                $debitId = self::insertEntry([
                     'transaction_id' => $txnId,
                     'wallet_id' => $withholdingId,
                     'entry_type' => 'DEBIT',
                     'amount' => $amount,
-                    'balance_after' => $after,
-                    'entry_note' => 'Transferred to Gateway Cash Account from Withholding'
+                    'balance_after' => $debitBal,
+                    'entry_note' => 'Disbursed from Withholding'
                 ]);
                 self::$pdo->prepare("
                     UPDATE zzimba_wallets
                        SET current_balance = :bal, updated_at = NOW()
                      WHERE wallet_id = :wid
-                ")->execute([':bal' => $after, ':wid' => $withholdingId]);
+                ")->execute([':bal' => $debitBal, ':wid' => $withholdingId]);
 
-                // 3) DEBIT withholding → user wallet
-                $e3 = self::insertEntry([
-                    'transaction_id' => $txnId,
-                    'wallet_id' => $withholdingId,
-                    'entry_type' => 'DEBIT',
-                    'amount' => $amount,
-                    'balance_after' => $after,
-                    'entry_note' => 'Allocated to User Wallet from Withholding'
-                ]);
-
-                // 4) CREDIT user wallet
-                $newU = (float) $uw['current_balance'] + $amount;
+                // 3.3) CREDIT user wallet (ref to debit)
+                $newUserBal = (float) $uRow['current_balance'] + $amount;
                 self::insertEntry([
                     'transaction_id' => $txnId,
-                    'wallet_id' => $uw['wallet_id'],
+                    'wallet_id' => $uRow['wallet_id'],
                     'entry_type' => 'CREDIT',
                     'amount' => $amount,
-                    'balance_after' => $newU,
-                    'entry_note' => 'Top-up from Mobile Money via Withholding',
-                    'ref_entry_id' => $e3
+                    'balance_after' => $newUserBal,
+                    'entry_note' => 'Credited User Wallet from Withholding',
+                    'ref_entry_id' => $debitId
                 ]);
                 self::$pdo->prepare("
                     UPDATE zzimba_wallets
                        SET current_balance = :bal, updated_at = NOW()
                      WHERE wallet_id = :wid
-                ")->execute([':bal' => $newU, ':wid' => $uw['wallet_id']]);
+                ")->execute([':bal' => $newUserBal, ':wid' => $uRow['wallet_id']]);
 
-                // 5) CREDIT cash account
-                $newC = (float) $cash['current_balance'] + $amount;
+                // 3.4) CREDIT gateway cash (ref to debit)
+                $newCashBal = (float) $cash['current_balance'] + $amount;
                 self::insertEntry([
                     'transaction_id' => $txnId,
                     'cash_account_id' => $cash['id'],
                     'entry_type' => 'CREDIT',
                     'amount' => $amount,
-                    'balance_after' => $newC,
-                    'entry_note' => 'Cash received from Mobile Money – Gateway Deposit',
-                    'ref_entry_id' => $e2
+                    'balance_after' => $newCashBal,
+                    'entry_note' => 'Credited Gateway Cash from Withholding',
+                    'ref_entry_id' => $debitId
                 ]);
                 self::$pdo->prepare("
                     UPDATE zzimba_cash_accounts
                        SET current_balance = :bal, updated_at = NOW()
                      WHERE id = :cid
-                ")->execute([':bal' => $newC, ':cid' => $cash['id']]);
+                ")->execute([':bal' => $newCashBal, ':cid' => $cash['id']]);
 
                 self::$pdo->commit();
             } catch (PDOException $e) {
@@ -485,128 +470,112 @@ final class CreditService
 
         // 1) verify wallet exists
         $wStmt = self::$pdo->prepare("
-            SELECT wallet_id, owner_type, user_id, vendor_id, wallet_name
-              FROM zzimba_wallets
-             WHERE wallet_id = :wid
-               AND status    = 'active'
-             LIMIT 1
-        ");
+        SELECT wallet_id, owner_type, user_id, vendor_id, wallet_name
+        FROM zzimba_wallets
+        WHERE wallet_id = :wid
+          AND status = 'active'
+        LIMIT 1
+    ");
         $wStmt->execute([':wid' => $walletId]);
         $wallet = $wStmt->fetch(PDO::FETCH_ASSOC);
         if (!$wallet) {
-            return ['success' => false, 'statement' => [], 'message' => 'Wallet not found or inactive'];
+            return [
+                'success' => false,
+                'statement' => [],
+                'message' => 'Wallet not found or inactive'
+            ];
         }
 
-        // 2) build base FIN txn query depending on owner_type
-        $sql = "
-            SELECT
-              ft.transaction_id,
-              ft.transaction_type,
-              ft.payment_method,
-              ft.status        AS txn_status,
-              ft.amount_total,
-              ft.note          AS txn_note,
-              ft.created_at    AS txn_created_at
-            FROM zzimba_financial_transactions ft
-        ";
-        $conds = [];
-        $params = [];
+        // 2) build the transaction query + params
+        $txnParams = [];
         if ($wallet['owner_type'] === 'USER') {
-            $conds[] = "ft.user_id = :oid";
-            $params[':oid'] = $wallet['user_id'];
+            $txnSql = "
+            SELECT *
+            FROM zzimba_financial_transactions
+            WHERE user_id = :uid
+        ";
+            $txnParams[':uid'] = $wallet['user_id'];
         } elseif ($wallet['owner_type'] === 'VENDOR') {
-            $conds[] = "ft.vendor_id = :oid";
-            $params[':oid'] = $wallet['vendor_id'];
-        } else { // PLATFORM
-            $sql = "
-                SELECT DISTINCT
-                  ft.transaction_id,
-                  ft.transaction_type,
-                  ft.payment_method,
-                  ft.status        AS txn_status,
-                  ft.amount_total,
-                  ft.note          AS txn_note,
-                  ft.created_at    AS txn_created_at
-                FROM zzimba_financial_transactions ft
-                JOIN zzimba_transaction_entries e
-                  ON ft.transaction_id = e.transaction_id
-            ";
-            $conds[] = "e.wallet_id = :wid";
-            $params[':wid'] = $walletId;
+            $txnSql = "
+            SELECT *
+            FROM zzimba_financial_transactions
+            WHERE vendor_id = :vid
+        ";
+            $txnParams[':vid'] = $wallet['vendor_id'];
+        } else { // PLATFORM: pull any txn that has an entry on this wallet
+            $txnSql = "
+            SELECT DISTINCT ft.*
+            FROM zzimba_financial_transactions ft
+            JOIN zzimba_transaction_entries e
+              ON ft.transaction_id = e.transaction_id
+            WHERE e.wallet_id = :wid
+        ";
+            $txnParams[':wid'] = $walletId;
         }
-        if (!empty($conds)) {
-            $sql .= ' WHERE ' . implode(' AND ', $conds);
-        }
-        if ($filter === 'range' && $start !== null && $end !== null) {
-            $sql .= empty($conds) ? ' WHERE ' : ' AND ';
-            $sql .= "ft.created_at BETWEEN :start AND :end";
-            $params[':start'] = $start;
-            $params[':end'] = $end;
-        }
-        $sql .= " ORDER BY ft.created_at DESC";
 
-        $stmt = self::$pdo->prepare($sql);
-        $stmt->execute($params);
-        $txns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // 2a) date‐range filter if requested
+        if ($filter === 'range') {
+            if (!$start || !$end) {
+                return [
+                    'success' => false,
+                    'statement' => [],
+                    'message' => 'When using range filter, both start and end are required'
+                ];
+            }
+            $txnSql .= " AND created_at BETWEEN :startDate AND :endDate";
+            $txnParams[':startDate'] = $start;
+            $txnParams[':endDate'] = $end;
+        }
 
-        // 3) for each transaction, fetch entries for this wallet and their related children
+        $txnSql .= " ORDER BY created_at DESC";
+
+        $txnStmt = self::$pdo->prepare($txnSql);
+        $txnStmt->execute($txnParams);
+        $txns = $txnStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 3) prepare statements for entries and related entries
+        $entryStmt = self::$pdo->prepare("
+        SELECT *
+        FROM zzimba_transaction_entries
+        WHERE transaction_id = :tid
+          AND wallet_id = :wid
+        ORDER BY created_at ASC
+    ");
+        $relatedStmt = self::$pdo->prepare("
+        SELECT
+            e.*,
+            COALESCE(ca.name, w.wallet_name) AS account_or_wallet_name,
+            w.owner_type
+        FROM zzimba_transaction_entries e
+        LEFT JOIN zzimba_cash_accounts ca
+          ON e.cash_account_id = ca.id
+        LEFT JOIN zzimba_wallets w
+          ON e.wallet_id = w.wallet_id
+        WHERE e.ref_entry_id = :eid
+        ORDER BY e.created_at ASC
+    ");
+
+        // 4) build the statement array
         $statement = [];
-        $eSql = "
-            SELECT
-              entry_id,
-              cash_account_id,
-              entry_type,
-              amount,
-              balance_after,
-              entry_note,
-              created_at AS entry_created_at,
-              ref_entry_id
-            FROM zzimba_transaction_entries
-            WHERE transaction_id = :tid
-              AND wallet_id       = :wid
-            ORDER BY created_at ASC
-        ";
-        $eStmt = self::$pdo->prepare($eSql);
-
-        $childSql = "
-            SELECT
-              entry_id,
-              wallet_id,
-              cash_account_id,
-              entry_type,
-              amount,
-              balance_after,
-              entry_note,
-              created_at AS entry_created_at
-            FROM zzimba_transaction_entries
-            WHERE ref_entry_id = :eid
-            ORDER BY created_at ASC
-        ";
-        $childStmt = self::$pdo->prepare($childSql);
-
         foreach ($txns as $txn) {
-            // primary entries for this wallet
-            $eStmt->execute([
+            // fetch all primary entries for this wallet
+            $entryStmt->execute([
                 ':tid' => $txn['transaction_id'],
                 ':wid' => $walletId
             ]);
-            $entries = $eStmt->fetchAll(PDO::FETCH_ASSOC);
+            $entries = $entryStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // attach related child entries to each
+            // for each entry, fetch its related entries
             foreach ($entries as &$entry) {
-                $childStmt->execute([':eid' => $entry['entry_id']]);
-                $entry['related_entries'] = $childStmt->fetchAll(PDO::FETCH_ASSOC);
+                $relatedStmt->execute([':eid' => $entry['entry_id']]);
+                $entry['related_entries'] = $relatedStmt->fetchAll(PDO::FETCH_ASSOC);
             }
 
+            // inject entries directly into the transaction object
+            $txn['entries'] = $entries;
+
             $statement[] = [
-                'transaction_id' => $txn['transaction_id'],
-                'type' => $txn['transaction_type'],
-                'payment_method' => $txn['payment_method'],
-                'status' => $txn['txn_status'],
-                'amount_total' => $txn['amount_total'],
-                'note' => $txn['txn_note'],
-                'created_at' => $txn['txn_created_at'],
-                'entries' => $entries
+                'transaction' => $txn
             ];
         }
 
@@ -615,11 +584,12 @@ final class CreditService
             'wallet' => [
                 'wallet_id' => $wallet['wallet_id'],
                 'owner_type' => $wallet['owner_type'],
-                'wallet_name' => $wallet['wallet_name']
+                'wallet_name' => $wallet['wallet_name'],
             ],
-            'statement' => $statement
+            'statement' => $statement,
         ];
     }
+
 
     /* ------------------------------------------------------------------ */
     /*  Internal helpers                                                   */

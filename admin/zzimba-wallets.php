@@ -74,13 +74,13 @@ function formatCurrency($amount)
             <div class="border-b border-gray-200">
                 <nav class="flex space-x-8 px-6" aria-label="Tabs">
                     <button id="wallets-tab"
-                        class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200"
+                        class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-primary text-primary"
                         onclick="switchTab('wallets')">
                         <i class="fas fa-wallet mr-2"></i>
                         Wallet Management
                     </button>
                     <button id="platform-accounts-tab"
-                        class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200"
+                        class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
                         onclick="switchTab('platform-accounts')">
                         <i class="fas fa-cogs mr-2"></i>
                         Platform Account Settings
@@ -89,7 +89,7 @@ function formatCurrency($amount)
             </div>
         </div>
 
-        <div id="wallets-content" class="tab-content active">
+        <div id="wallets-content" class="tab-content block">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
                 <div class="p-6 border-b border-gray-100">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -283,16 +283,17 @@ function formatCurrency($amount)
                 </div>
             </div>
 
-            <div id="statementTable" class="hidden overflow-auto flex-1">
+            <div id="statementTable" class="hidden overflow-auto flex-1 max-h-[calc(90vh-200px)]">
                 <table class="w-full" id="statementTableElement">
-                    <thead class="bg-user-accent border-b border-gray-200 sticky top-0">
+                    <thead class="bg-white border-b border-gray-200 sticky top-0">
                         <tr>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Date/Time</th>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                Transaction ID</th>
+                                Entry ID
+                            </th>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Description</th>
@@ -315,7 +316,8 @@ function formatCurrency($amount)
                 </table>
             </div>
 
-            <div id="statementMobile" class="lg:hidden p-4 space-y-4 hidden overflow-auto flex-1">
+            <div id="statementMobile"
+                class="lg:hidden p-4 space-y-4 hidden overflow-auto flex-1 max-h-[calc(90vh-200px)]">
             </div>
 
             <div id="statementEmpty" class="hidden text-center py-16">
@@ -422,8 +424,8 @@ function formatCurrency($amount)
                             class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
                         <div class="grid grid-cols-3 gap-3">
                             <label
-                                class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200">
-                                <input type="radio" name="editWalletStatus" value="active" class="sr-only peer">
+                                class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                <input type="radio" name="editWalletStatus" value="active" class="sr-only">
                                 <div
                                     class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
                                     <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
@@ -432,8 +434,8 @@ function formatCurrency($amount)
                             </label>
 
                             <label
-                                class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200">
-                                <input type="radio" name="editWalletStatus" value="inactive" class="sr-only peer">
+                                class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                <input type="radio" name="editWalletStatus" value="inactive" class="sr-only">
                                 <div
                                     class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
                                     <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
@@ -442,8 +444,8 @@ function formatCurrency($amount)
                             </label>
 
                             <label
-                                class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200">
-                                <input type="radio" name="editWalletStatus" value="suspended" class="sr-only peer">
+                                class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                <input type="radio" name="editWalletStatus" value="suspended" class="sr-only">
                                 <div
                                     class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
                                     <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
@@ -628,174 +630,6 @@ function formatCurrency($amount)
     </div>
 </div>
 
-<style>
-    .tab-button {
-        border-bottom-color: transparent;
-        color: #6b7280;
-    }
-
-    .tab-button.active {
-        border-bottom-color: #8c5e2a;
-        color: #8c5e2a;
-    }
-
-    .tab-button:hover {
-        color: #8c5e2a;
-        border-bottom-color: rgba(140, 94, 42, 0.3);
-    }
-
-    .tab-content {
-        display: none;
-    }
-
-    .tab-content.active {
-        display: block;
-    }
-
-    .wallet-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .badge-USER {
-        background-color: #bbf7d0;
-        color: #065f46;
-    }
-
-    .badge-VENDOR {
-        background-color: #f3e8ff;
-        color: #6b21a8;
-    }
-
-    .badge-PLATFORM {
-        background-color: #cffafe;
-        color: #155e75;
-    }
-
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    .status-active {
-        background-color: #bbf7d0;
-        color: #065f46;
-    }
-
-    .status-inactive {
-        background-color: #f3f4f6;
-        color: #1f2937;
-    }
-
-    .status-suspended {
-        background-color: #fee2e2;
-        color: #991b1b;
-    }
-
-    .type-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .type-withholding {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
-
-    .type-services {
-        background-color: #dbeafe;
-        color: #1e40af;
-    }
-
-    .type-operations {
-        background-color: #d1fae5;
-        color: #065f46;
-    }
-
-    .type-communications {
-        background-color: #e0e7ff;
-        color: #3730a3;
-    }
-
-    input[type="radio"]:checked+div {
-        border-color: #8c5e2a;
-        background-color: #8c5e2a;
-    }
-
-    input[type="radio"]:checked+div>div {
-        opacity: 1;
-    }
-
-    .transaction-group {
-        border-left: 3px solid #e5e7eb;
-        margin-left: 1rem;
-        padding-left: 1rem;
-    }
-
-    .transaction-group.first-in-group {
-        border-left-color: #3b82f6;
-    }
-
-    .related-entry {
-        background-color: #f8fafc;
-        border-left: 2px solid #cbd5e1;
-        margin-left: 1rem;
-        padding: 0.5rem;
-        font-size: 0.875rem;
-    }
-
-    .related-entry-icon {
-        color: #64748b;
-    }
-
-    .entry-type-credit {
-        color: #059669;
-        font-weight: 600;
-    }
-
-    .entry-type-debit {
-        color: #dc2626;
-        font-weight: 600;
-    }
-
-    .transaction-id-cell {
-        max-width: 120px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .description-cell {
-        max-width: 250px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    /* Scrollable modal content */
-    #statementTable {
-        max-height: calc(90vh - 200px);
-        overflow-y: auto;
-    }
-
-    #statementMobile {
-        max-height: calc(90vh - 200px);
-        overflow-y: auto;
-    }
-</style>
-
 <script>
     const API_URL = '<?= BASE_URL ?>admin/fetch/manageZzimbaWallets.php';
     let wallets = [];
@@ -815,29 +649,47 @@ function formatCurrency($amount)
 
     function getOwnerTypeBadge(type) {
         const badges = {
-            'USER': '<span class="wallet-badge badge-USER"><i class="fas fa-user mr-2"></i>User</span>',
-            'VENDOR': '<span class="wallet-badge badge-VENDOR"><i class="fas fa-store mr-2"></i>Vendor</span>',
-            'PLATFORM': '<span class="wallet-badge badge-PLATFORM"><i class="fas fa-building mr-2"></i>Platform</span>'
+            'USER': '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-user mr-2"></i>User</span>',
+            'VENDOR': '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"><i class="fas fa-store mr-2"></i>Vendor</span>',
+            'PLATFORM': '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800"><i class="fas fa-building mr-2"></i>Platform</span>'
         };
-        return badges[type] || '<span class="wallet-badge">Unknown</span>';
+        return badges[type] || '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
     }
 
     function getStatusBadge(status) {
         const statusText = status.charAt(0).toUpperCase() + status.slice(1);
-        return `<span class="status-badge status-${status}">${statusText}</span>`;
+        const statusClasses = {
+            'active': 'bg-green-100 text-green-800',
+            'inactive': 'bg-gray-100 text-gray-800',
+            'suspended': 'bg-red-100 text-red-800'
+        };
+        const className = statusClasses[status] || 'bg-gray-100 text-gray-800';
+        return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${className}">${statusText}</span>`;
     }
 
     function getTypeBadge(type) {
         const typeText = type.charAt(0).toUpperCase() + type.slice(1);
-        return `<span class="type-badge type-${type}">${typeText}</span>`;
+        const typeClasses = {
+            'withholding': 'bg-yellow-100 text-yellow-800',
+            'services': 'bg-blue-100 text-blue-800',
+            'operations': 'bg-green-100 text-green-800',
+            'communications': 'bg-indigo-100 text-indigo-800'
+        };
+        const className = typeClasses[type] || 'bg-gray-100 text-gray-800';
+        return `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${className}">${typeText}</span>`;
     }
 
     function switchTab(tabName) {
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`${tabName}-tab`).classList.add('active');
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('border-b-primary', 'text-primary');
+            btn.classList.add('border-b-transparent', 'text-gray-500');
+        });
+        const activeTab = document.getElementById(`${tabName}-tab`);
+        activeTab.classList.remove('border-b-transparent', 'text-gray-500');
+        activeTab.classList.add('border-b-primary', 'text-primary');
 
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(`${tabName}-content`).classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+        document.getElementById(`${tabName}-content`).classList.remove('hidden');
 
         currentTab = tabName;
 
@@ -1209,13 +1061,23 @@ function formatCurrency($amount)
     function transformStatementData(statement) {
         const transformedEntries = [];
 
-        statement.forEach(transaction => {
+        // Sort transactions by date (newest first) before processing
+        const sortedStatement = statement.sort((a, b) =>
+            new Date(b.transaction.created_at) - new Date(a.transaction.created_at)
+        );
+
+        sortedStatement.forEach(transactionBlock => {
+            const transaction = transactionBlock.transaction;
+
             if (transaction.entries && transaction.entries.length > 0) {
-                // Group entries by transaction_id
-                transaction.entries.forEach((entry, entryIndex) => {
+                // Reverse the entries array to show last entry first
+                const reversedEntries = [...transaction.entries].reverse();
+
+                // Process each entry in reverse order
+                reversedEntries.forEach((entry, entryIndex) => {
                     const transformedEntry = {
                         transaction_id: transaction.transaction_id,
-                        transaction_type: transaction.type,
+                        transaction_type: transaction.transaction_type,
                         payment_method: transaction.payment_method,
                         status: transaction.status,
                         amount_total: parseFloat(transaction.amount_total),
@@ -1226,7 +1088,7 @@ function formatCurrency($amount)
                         amount: parseFloat(entry.amount),
                         balance_after: parseFloat(entry.balance_after),
                         entry_note: entry.entry_note,
-                        entry_date: entry.entry_created_at,
+                        entry_date: entry.created_at,
                         related_entries: entry.related_entries || [],
                         is_first_in_group: entryIndex === 0,
                         group_size: transaction.entries.length
@@ -1237,7 +1099,7 @@ function formatCurrency($amount)
                 // Handle transactions with no entries (usually failed transactions)
                 transformedEntries.push({
                     transaction_id: transaction.transaction_id,
-                    transaction_type: transaction.type,
+                    transaction_type: transaction.transaction_type,
                     payment_method: transaction.payment_method,
                     status: transaction.status,
                     amount_total: parseFloat(transaction.amount_total),
@@ -1246,7 +1108,7 @@ function formatCurrency($amount)
                     entry_id: null,
                     entry_type: null,
                     amount: 0,
-                    balance_after: 0,
+                    balance_after: null,
                     entry_note: null,
                     entry_date: null,
                     related_entries: [],
@@ -1256,8 +1118,7 @@ function formatCurrency($amount)
             }
         });
 
-        // Sort by transaction date (newest first)
-        return transformedEntries.sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
+        return transformedEntries;
     }
 
     function renderWalletStatement(entries) {
@@ -1271,6 +1132,7 @@ function formatCurrency($amount)
             const tr = document.createElement('tr');
             tr.className = `${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`;
 
+            // Add visual indicator for transaction groups
             if (entry.is_first_in_group && entry.group_size > 1) {
                 tr.classList.add('border-l-4', 'border-blue-400');
             }
@@ -1302,24 +1164,24 @@ function formatCurrency($amount)
                     <div class="text-xs text-gray-500">${timeStr}</div>
                 </td>
                 <td class="px-4 py-3 text-sm">
-                    <div class="transaction-id-cell font-mono text-gray-700" title="${entry.transaction_id}">
-                        ${entry.transaction_id}
+                    <div class="max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap font-mono text-gray-700" title="${entry.entry_id || ''}">
+                        ${entry.entry_id || ''}
                     </div>
                 </td>
                 <td class="px-4 py-3 text-sm">
-                    <div class="description-cell" title="${description}">
+                    <div class="max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap" title="${description}">
                         <div class="font-medium text-gray-900">${description}</div>
                         ${entry.payment_method ? `<div class="text-xs text-gray-500">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
                     </div>
                 </td>
                 <td class="px-4 py-3 text-sm text-right">
-                    ${debitAmount > 0 ? `<span class="entry-type-debit">-${formatCurrency(debitAmount)}</span>` : '<span class="text-gray-400">-</span>'}
+                    ${debitAmount > 0 ? `<span class="text-red-600 font-semibold">-${formatCurrency(debitAmount)}</span>` : '<span class="text-gray-400">-</span>'}
                 </td>
                 <td class="px-4 py-3 text-sm text-right">
-                    ${creditAmount > 0 ? `<span class="entry-type-credit">+${formatCurrency(creditAmount)}</span>` : '<span class="text-gray-400">-</span>'}
+                    ${creditAmount > 0 ? `<span class="text-green-600 font-semibold">+${formatCurrency(creditAmount)}</span>` : '<span class="text-gray-400">-</span>'}
                 </td>
                 <td class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
-                    ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
+                    ${entry.balance_after !== null ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
                 </td>
                 <td class="px-4 py-3 text-sm">
                     ${renderRelatedEntries(entry.related_entries)}
@@ -1338,14 +1200,14 @@ function formatCurrency($amount)
                         ${entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
                     </div>
                     <div class="text-right ml-3">
-                        ${debitAmount > 0 ? `<div class="entry-type-debit text-sm">-${formatCurrency(debitAmount)}</div>` : ''}
-                        ${creditAmount > 0 ? `<div class="entry-type-credit text-sm">+${formatCurrency(creditAmount)}</div>` : ''}
-                        <div class="text-xs text-gray-500 mt-1">Balance: ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '-'}</div>
+                        ${debitAmount > 0 ? `<div class="text-red-600 font-semibold text-sm">-${formatCurrency(debitAmount)}</div>` : ''}
+                        ${creditAmount > 0 ? `<div class="text-green-600 font-semibold text-sm">+${formatCurrency(creditAmount)}</div>` : ''}
+                        <div class="text-xs text-gray-500 mt-1">Balance: ${entry.balance_after !== null ? formatCurrency(entry.balance_after) : '-'}</div>
                     </div>
                 </div>
                 
                 <div class="text-xs text-gray-500 mb-2">
-                    <span class="font-mono">${entry.transaction_id}</span>
+                    <span class="font-mono">${entry.entry_id || 'No Entry ID'}</span>
                 </div>
                 
                 ${entry.related_entries.length > 0 ? `
@@ -1365,25 +1227,30 @@ function formatCurrency($amount)
         }
 
         return relatedEntries.map(related => {
-            const accountType = related.wallet_id ? 'Wallet' : 'Cash Account';
-            const accountId = related.wallet_id || related.cash_account_id;
-            const entryTypeClass = related.entry_type === 'CREDIT' ? 'entry-type-credit' : 'entry-type-debit';
+            let accountTypeLabel = 'Cash Account';
+            if (related.owner_type) {
+                const ownerType = related.owner_type.charAt(0).toUpperCase() + related.owner_type.slice(1).toLowerCase();
+                accountTypeLabel = `${ownerType} Wallet`;
+            }
+
+            const accountName = related.account_or_wallet_name || (related.wallet_id || related.cash_account_id);
+            const fullAccountName = `${accountTypeLabel}: ${accountName}`;
+            const entryTypeClass = related.entry_type === 'CREDIT' ? 'text-green-600' : 'text-red-600';
             const sign = related.entry_type === 'CREDIT' ? '+' : '-';
 
             return `
-                <div class="related-entry text-xs mb-1">
-                    <div class="flex items-center gap-1">
-                        <i class="fas fa-arrow-right related-entry-icon"></i>
-                        <span class="font-medium">${accountType}:</span>
-                        <span class="font-mono text-gray-600">${accountId}</span>
-                    </div>
-                    <div class="mt-1">
-                        <span class="${entryTypeClass}">${sign}${formatCurrency(related.amount)}</span>
-                        <span class="text-gray-500 ml-2">Balance: ${formatCurrency(related.balance_after)}</span>
-                    </div>
-                    ${related.entry_note ? `<div class="text-gray-600 mt-1">${related.entry_note}</div>` : ''}
+            <div class="bg-gray-50 border-l-2 border-gray-300 ml-4 pl-3 py-2 mb-2 text-xs">
+                <div class="flex items-center gap-1 mb-1">
+                    <i class="fas fa-arrow-right text-gray-400"></i>
+                    <span class="font-medium text-gray-700">${fullAccountName}</span>
                 </div>
-            `;
+                <div class="flex justify-between items-center">
+                    <span class="${entryTypeClass} font-semibold">${sign}${formatCurrency(related.amount)}</span>
+                    <span class="text-gray-500">Balance: ${formatCurrency(related.balance_after)}</span>
+                </div>
+                ${related.entry_note ? `<div class="text-gray-600 mt-1 italic">${related.entry_note}</div>` : ''}
+            </div>
+        `;
         }).join('');
     }
 
@@ -1393,21 +1260,27 @@ function formatCurrency($amount)
         }
 
         return relatedEntries.map(related => {
-            const accountType = related.wallet_id ? 'Wallet' : 'Cash Account';
-            const accountId = related.wallet_id || related.cash_account_id;
-            const entryTypeClass = related.entry_type === 'CREDIT' ? 'entry-type-credit' : 'entry-type-debit';
+            let accountTypeLabel = 'Cash Account';
+            if (related.owner_type) {
+                const ownerType = related.owner_type.charAt(0).toUpperCase() + related.owner_type.slice(1).toLowerCase();
+                accountTypeLabel = `${ownerType} Wallet`;
+            }
+
+            const accountName = related.account_or_wallet_name || (related.wallet_id || related.cash_account_id);
+            const fullAccountName = `${accountTypeLabel}: ${accountName}`;
+            const entryTypeClass = related.entry_type === 'CREDIT' ? 'text-green-600' : 'text-red-600';
             const sign = related.entry_type === 'CREDIT' ? '+' : '-';
 
             return `
-                <div class="bg-gray-50 rounded p-2 mb-2 text-xs">
-                    <div class="font-medium text-gray-700">${accountType}: <span class="font-mono">${accountId}</span></div>
-                    <div class="mt-1">
-                        <span class="${entryTypeClass}">${sign}${formatCurrency(related.amount)}</span>
-                        <span class="text-gray-500 ml-2">Balance: ${formatCurrency(related.balance_after)}</span>
-                    </div>
-                    ${related.entry_note ? `<div class="text-gray-600 mt-1">${related.entry_note}</div>` : ''}
+            <div class="bg-gray-50 rounded p-2 mb-2 text-xs border-l-2 border-gray-300">
+                <div class="font-medium text-gray-700 mb-1">${fullAccountName}</div>
+                <div class="flex justify-between items-center">
+                    <span class="${entryTypeClass} font-semibold">${sign}${formatCurrency(related.amount)}</span>
+                    <span class="text-gray-500">Balance: ${formatCurrency(related.balance_after)}</span>
                 </div>
-            `;
+                ${related.entry_note ? `<div class="text-gray-600 mt-1 italic">${related.entry_note}</div>` : ''}
+            </div>
+        `;
         }).join('');
     }
 
@@ -1430,6 +1303,9 @@ function formatCurrency($amount)
         if (entry.payment_method) {
             description += ` via ${methodMap[entry.payment_method] || entry.payment_method}`;
         }
+
+        // Add transaction ID and amount total
+        description += ` (TXN: ${entry.transaction_id}, Total: UGX ${formatCurrency(entry.amount_total)})`;
 
         return description;
     }

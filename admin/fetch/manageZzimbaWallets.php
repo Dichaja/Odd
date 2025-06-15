@@ -12,7 +12,6 @@ require_once __DIR__ . '/../../lib/ZzimbaCreditModule.php';
 use ZzimbaCreditModule\CreditService;
 
 header('Content-Type: application/json');
-session_start();
 
 if (
     !isset($_SESSION['user']) ||
