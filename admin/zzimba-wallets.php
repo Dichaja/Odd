@@ -244,7 +244,7 @@ function formatCurrency($amount)
 <div id="walletStatementModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
     <div
-        class="bg-white rounded-2xl shadow-2xl w-full max-w-7xl relative z-10 overflow-hidden max-h-[90vh] flex flex-col">
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-7xl relative z-10 overflow-hidden max-h-[100vh] flex flex-col">
         <div class="p-6 border-b border-gray-100 flex-shrink-0">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
@@ -283,7 +283,7 @@ function formatCurrency($amount)
                 </div>
             </div>
 
-            <div id="statementTable" class="hidden overflow-auto flex-1 max-h-[calc(90vh-200px)]">
+            <div id="statementTable" class="hidden overflow-auto flex-1 max-h-[calc(100vh-200px)]">
                 <table class="w-full" id="statementTableElement">
                     <thead class="bg-white border-b border-gray-200 sticky top-0">
                         <tr>
