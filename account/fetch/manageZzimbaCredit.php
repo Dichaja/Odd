@@ -58,13 +58,31 @@ try {
             break;
 
         case 'getWalletStatement':
-            // Fetch a wallet statement: 'all' or 'range'
+            // Fetch a wallet statement: 'all' or 'range' using wallet ID
             $userId = $_SESSION['user']['user_id'];
             $filter = strtolower(trim($_REQUEST['filter'] ?? 'all'));
             $start = $_REQUEST['start'] ?? null;  // expected YYYY-MM-DD or datetime
-            $end = $_REQUEST['end'] ?? null;  // expected YYYY-MM-DD or datetime
-            $result = CreditService::getWalletStatement($userId, $filter, $start, $end);
-            echo json_encode($result);
+            $end = $_REQUEST['end'] ?? null;      // expected YYYY-MM-DD or datetime
+
+            // Fetch the wallet ID from the zzimba_wallets table
+            try {
+                $stmt = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE owner_type = 'USER' AND user_id = :user_id LIMIT 1");
+                $stmt->execute(['user_id' => $userId]);
+                $wallet = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$wallet) {
+                    echo json_encode(['success' => false, 'message' => 'Wallet not found for this user.']);
+                    break;
+                }
+
+                $walletId = $wallet['wallet_id'];
+                $result = CreditService::getWalletStatement($walletId, $filter, $start, $end);
+                echo json_encode($result);
+
+            } catch (Exception $e) {
+                error_log("[getWalletStatement] Error: " . $e->getMessage());
+                echo json_encode(['success' => false, 'message' => 'Failed to fetch wallet statement.']);
+            }
             break;
 
         default:

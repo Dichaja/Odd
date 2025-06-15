@@ -7,6 +7,9 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../../logs/php-errors.log');
 
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/ZzimbaCreditModule.php';
+
+use ZzimbaCreditModule\CreditService;
 
 header('Content-Type: application/json');
 session_start();
@@ -85,6 +88,9 @@ try {
             break;
         case 'deleteZzimbaWallet':
             deleteZzimbaWallet($pdo);
+            break;
+        case 'getWalletStatement':
+            getWalletStatement($pdo);
             break;
         case 'managePlatformAccounts':
             managePlatformAccounts($pdo);
@@ -281,6 +287,30 @@ function deleteZzimbaWallet(PDO $pdo)
         error_log("Error deleting wallet: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Error deleting wallet']);
+    }
+}
+
+function getWalletStatement(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $walletId = trim($data['wallet_id'] ?? '');
+    $filter = strtolower(trim($data['filter'] ?? 'all'));
+    $start = $data['start'] ?? null;
+    $end = $data['end'] ?? null;
+
+    if ($walletId === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing wallet ID']);
+        return;
+    }
+
+    try {
+        $result = CreditService::getWalletStatement($walletId, $filter, $start, $end);
+        echo json_encode($result);
+    } catch (Exception $e) {
+        error_log("[getWalletStatement] " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to fetch wallet statement']);
     }
 }
 

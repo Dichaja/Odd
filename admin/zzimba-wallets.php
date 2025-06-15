@@ -3,10 +3,14 @@ require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Zzimba Wallets';
 $activeNav = 'zzimba-wallets';
 ob_start();
+
+function formatCurrency($amount)
+{
+    return number_format($amount, 2);
+}
 ?>
 
 <div class="min-h-screen bg-gray-50" id="app-container">
-    <!-- Header Section -->
     <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -22,7 +26,6 @@ ob_start();
                     </div>
                 </div>
 
-                <!-- Quick Stats -->
                 <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                     <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
                         <div class="flex items-center justify-between">
@@ -66,9 +69,7 @@ ob_start();
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Tab Navigation -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
             <div class="border-b border-gray-200">
                 <nav class="flex space-x-8 px-6" aria-label="Tabs">
@@ -88,9 +89,7 @@ ob_start();
             </div>
         </div>
 
-        <!-- Wallets Tab Content -->
         <div id="wallets-content" class="tab-content active">
-            <!-- Controls Section -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
                 <div class="p-6 border-b border-gray-100">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -100,7 +99,6 @@ ob_start();
                         </div>
 
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                            <!-- Search -->
                             <div class="relative flex-1 sm:w-80">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <i class="fas fa-search text-gray-400"></i>
@@ -110,7 +108,6 @@ ob_start();
                                     placeholder="Search wallets...">
                             </div>
 
-                            <!-- Filter -->
                             <select id="filterWallets"
                                 class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium">
                                 <option value="all">All Types</option>
@@ -119,7 +116,6 @@ ob_start();
                                 <option value="PLATFORM">Platform Wallets</option>
                             </select>
 
-                            <!-- Create Button -->
                             <button id="create-wallet-btn"
                                 class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
                                 <i class="fas fa-plus"></i>
@@ -130,44 +126,38 @@ ob_start();
                 </div>
             </div>
 
-            <!-- Wallets Grid/Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <!-- Desktop Table View -->
                 <div class="hidden lg:block overflow-x-auto">
                     <table class="w-full" id="wallets-table">
-                        <thead class="bg-gray-50 border-b border-gray-200">
+                        <thead class="bg-user-accent border-b border-gray-200">
                             <tr>
                                 <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Wallet Details</th>
                                 <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Owner Type</th>
                                 <th id="statusHeader"
-                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer">
+                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider cursor-pointer whitespace-nowrap">
                                     Status
                                     <i id="statusSortIcon" class="fas fa-sort text-gray-400 ml-1"></i>
                                 </th>
                                 <th
-                                    class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    class="px-3 py-2 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Balance</th>
                                 <th
-                                    class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    class="px-3 py-2 text-center text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Actions</th>
                             </tr>
                         </thead>
                         <tbody id="wallets-table-body" class="divide-y divide-gray-100">
-                            <!-- Populated via JavaScript -->
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Mobile Card View -->
                 <div class="lg:hidden p-4 space-y-4" id="wallets-mobile">
-                    <!-- Populated via JavaScript -->
                 </div>
 
-                <!-- Empty State -->
                 <div id="empty-state" class="hidden text-center py-16">
                     <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="fas fa-wallet text-gray-400 text-2xl"></i>
@@ -182,9 +172,7 @@ ob_start();
             </div>
         </div>
 
-        <!-- Platform Accounts Tab Content -->
         <div id="platform-accounts-content" class="tab-content hidden">
-            <!-- Controls Section -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
                 <div class="p-6 border-b border-gray-100">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -194,13 +182,11 @@ ob_start();
                         </div>
 
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                            <!-- Platform Account Filter -->
                             <select id="filterPlatformAccounts"
                                 class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium">
                                 <option value="">Select Platform Account</option>
                             </select>
 
-                            <!-- Create Button -->
                             <button id="create-platform-setting-btn"
                                 class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
                                 <i class="fas fa-plus"></i>
@@ -211,39 +197,33 @@ ob_start();
                 </div>
             </div>
 
-            <!-- Platform Settings Table -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <!-- Desktop Table View -->
                 <div class="hidden lg:block overflow-x-auto">
                     <table class="w-full" id="platform-settings-table">
-                        <thead class="bg-gray-50 border-b border-gray-200">
+                        <thead class="bg-user-accent border-b border-gray-200">
                             <tr>
                                 <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Platform Account</th>
                                 <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Type</th>
                                 <th
-                                    class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Created</th>
                                 <th
-                                    class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    class="px-3 py-2 text-center text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Actions</th>
                             </tr>
                         </thead>
                         <tbody id="platform-settings-table-body" class="divide-y divide-gray-100">
-                            <!-- Populated via JavaScript -->
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Mobile Card View -->
                 <div class="lg:hidden p-4 space-y-4" id="platform-settings-mobile">
-                    <!-- Populated via JavaScript -->
                 </div>
 
-                <!-- Empty State -->
                 <div id="platform-settings-empty-state" class="hidden text-center py-16">
                     <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="fas fa-cogs text-gray-400 text-2xl"></i>
@@ -260,6 +240,95 @@ ob_start();
     </div>
 </div>
 
+<!-- Enhanced Wallet Statement Modal -->
+<div id="walletStatementModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-7xl relative z-10 overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="p-6 border-b border-gray-100 flex-shrink-0">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-receipt text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-secondary font-rubik">Detailed Wallet Statement</h3>
+                        <p class="text-sm text-gray-500" id="statementWalletName"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select id="statementDateFilter"
+                        class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-sm">
+                        <option value="all">All transactions</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 3 months</option>
+                        <option value="180">Last 6 months</option>
+                        <option value="365">Last year</option>
+                    </select>
+                    <button onclick="hideWalletStatementModal()"
+                        class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-hidden">
+            <div id="statementLoading" class="p-6">
+                <div class="animate-pulse space-y-4">
+                    <div class="h-4 bg-gray-200 rounded w-full"></div>
+                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+            </div>
+
+            <div id="statementTable" class="hidden overflow-auto flex-1">
+                <table class="w-full" id="statementTableElement">
+                    <thead class="bg-user-accent border-b border-gray-200 sticky top-0">
+                        <tr>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Date/Time</th>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Transaction ID</th>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Description</th>
+                            <th
+                                class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Debit</th>
+                            <th
+                                class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Credit</th>
+                            <th
+                                class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Balance</th>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Related Entries</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statementTableBody" class="divide-y divide-gray-100">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="statementMobile" class="lg:hidden p-4 space-y-4 hidden overflow-auto flex-1">
+            </div>
+
+            <div id="statementEmpty" class="hidden text-center py-16">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-receipt text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No transactions found</h3>
+                <p class="text-gray-500">No transactions available for the selected period</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Create Wallet Modal -->
 <div id="createWalletOffcanvas" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="hideCreateWalletForm()">
@@ -267,7 +336,6 @@ ob_start();
     <div
         class="absolute inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out">
         <div class="flex flex-col h-full">
-            <!-- Header -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -281,7 +349,6 @@ ob_start();
                 </button>
             </div>
 
-            <!-- Form -->
             <div class="flex-1 overflow-y-auto p-6">
                 <form id="createWalletForm" class="space-y-6" onsubmit="return false;">
                     <div>
@@ -295,7 +362,6 @@ ob_start();
                 </form>
             </div>
 
-            <!-- Footer -->
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex gap-3">
                     <button onclick="hideCreateWalletForm()"
@@ -318,7 +384,6 @@ ob_start();
     <div
         class="absolute inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out">
         <div class="flex flex-col h-full">
-            <!-- Header -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -332,12 +397,10 @@ ob_start();
                 </button>
             </div>
 
-            <!-- Form -->
             <div class="flex-1 overflow-y-auto p-6">
                 <form id="editWalletForm" class="space-y-6" onsubmit="return false;">
                     <input type="hidden" id="editWalletId">
 
-                    <!-- Owner Type -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Owner Type</label>
                         <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700">
@@ -346,7 +409,6 @@ ob_start();
                         <input type="hidden" id="editWalletOwnerType">
                     </div>
 
-                    <!-- Wallet Name -->
                     <div>
                         <label for="editWalletName" class="block text-sm font-semibold text-gray-700 mb-2">Wallet
                             Name</label>
@@ -355,7 +417,6 @@ ob_start();
                             placeholder="Enter wallet name" required>
                     </div>
 
-                    <!-- Status -->
                     <div>
                         <label for="editWalletStatus"
                             class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
@@ -394,7 +455,6 @@ ob_start();
                 </form>
             </div>
 
-            <!-- Footer -->
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex gap-3">
                     <button onclick="hideEditWalletForm()"
@@ -418,7 +478,6 @@ ob_start();
     <div
         class="absolute inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out">
         <div class="flex flex-col h-full">
-            <!-- Header -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -432,7 +491,6 @@ ob_start();
                 </button>
             </div>
 
-            <!-- Form -->
             <div class="flex-1 overflow-y-auto p-6">
                 <form id="createPlatformSettingForm" class="space-y-6" onsubmit="return false;">
                     <div>
@@ -461,7 +519,6 @@ ob_start();
                 </form>
             </div>
 
-            <!-- Footer -->
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex gap-3">
                     <button onclick="hideCreatePlatformSettingForm()"
@@ -485,7 +542,6 @@ ob_start();
     <div
         class="absolute inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out">
         <div class="flex flex-col h-full">
-            <!-- Header -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -499,7 +555,6 @@ ob_start();
                 </button>
             </div>
 
-            <!-- Form -->
             <div class="flex-1 overflow-y-auto p-6">
                 <form id="editPlatformSettingForm" class="space-y-6" onsubmit="return false;">
                     <input type="hidden" id="editSettingId">
@@ -528,7 +583,6 @@ ob_start();
                 </form>
             </div>
 
-            <!-- Footer -->
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex gap-3">
                     <button onclick="hideEditPlatformSettingForm()"
@@ -596,74 +650,6 @@ ob_start();
 
     .tab-content.active {
         display: block;
-    }
-
-    .view-container {
-        transition: all 0.3s ease-in-out;
-    }
-
-    .view-container.hidden {
-        display: none;
-        opacity: 0;
-    }
-
-    .view-container.active {
-        display: block;
-        opacity: 1;
-    }
-
-    .mobile-card {
-        background-color: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 0.75rem;
-        padding: 1rem;
-        transition: all 0.2s;
-    }
-
-    .mobile-card:hover {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-    }
-
-    .mobile-card-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        margin-bottom: 0.75rem;
-    }
-
-    .mobile-card-content {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .mobile-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
-    }
-
-    .mobile-label {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    .mobile-value {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #111827;
-        margin-top: 0.25rem;
-    }
-
-    .mobile-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid #f3f4f6;
     }
 
     .wallet-badge {
@@ -751,6 +737,63 @@ ob_start();
     input[type="radio"]:checked+div>div {
         opacity: 1;
     }
+
+    .transaction-group {
+        border-left: 3px solid #e5e7eb;
+        margin-left: 1rem;
+        padding-left: 1rem;
+    }
+
+    .transaction-group.first-in-group {
+        border-left-color: #3b82f6;
+    }
+
+    .related-entry {
+        background-color: #f8fafc;
+        border-left: 2px solid #cbd5e1;
+        margin-left: 1rem;
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .related-entry-icon {
+        color: #64748b;
+    }
+
+    .entry-type-credit {
+        color: #059669;
+        font-weight: 600;
+    }
+
+    .entry-type-debit {
+        color: #dc2626;
+        font-weight: 600;
+    }
+
+    .transaction-id-cell {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .description-cell {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Scrollable modal content */
+    #statementTable {
+        max-height: calc(90vh - 200px);
+        overflow-y: auto;
+    }
+
+    #statementMobile {
+        max-height: calc(90vh - 200px);
+        overflow-y: auto;
+    }
 </style>
 
 <script>
@@ -759,6 +802,8 @@ ob_start();
     let platformSettings = [];
     let statusSortAsc = true;
     let currentTab = 'wallets';
+    let currentWalletStatement = [];
+    let currentStatementWalletId = null;
 
     function formatCurrency(amount) {
         return new Intl.NumberFormat('en-UG', {
@@ -788,17 +833,14 @@ ob_start();
     }
 
     function switchTab(tabName) {
-        // Update tab buttons
         document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
         document.getElementById(`${tabName}-tab`).classList.add('active');
 
-        // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         document.getElementById(`${tabName}-content`).classList.add('active');
 
         currentTab = tabName;
 
-        // Load data for the active tab
         if (tabName === 'wallets') {
             fetchWallets();
         } else if (tabName === 'platform-accounts') {
@@ -825,6 +867,7 @@ ob_start();
                 wallets = data.wallets || [];
                 renderWalletsTable(wallets);
                 updateQuickStats();
+                adjustTableFontSize();
             }
         } catch (err) {
             console.error('Error fetching wallets:', err);
@@ -845,6 +888,7 @@ ob_start();
             if (data.success) {
                 platformSettings = data.settings || [];
                 renderPlatformSettingsTable(platformSettings);
+                adjustTableFontSize();
             }
         } catch (err) {
             console.error('Error fetching platform settings:', err);
@@ -858,7 +902,6 @@ ob_start();
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
             if (select) {
-                // Keep the first option
                 const firstOption = select.querySelector('option');
                 select.innerHTML = '';
                 if (firstOption) select.appendChild(firstOption);
@@ -888,92 +931,110 @@ ob_start();
             emptyState.classList.add('hidden');
         }
 
-        list.forEach(wallet => {
-            // Desktop row
+        list.forEach((wallet, index) => {
             const tr = document.createElement('tr');
-            tr.className = 'hover:bg-gray-50 transition-colors';
+            tr.className = `${index % 2 === 0 ? 'bg-user-content' : 'bg-white'} hover:bg-user-secondary/20 transition-colors`;
+
+            const maxDetailsLength = 30;
+            let displayName = wallet.wallet_name;
+            if (displayName.length > maxDetailsLength) {
+                displayName = displayName.substring(0, maxDetailsLength) + '...';
+            }
+
             tr.innerHTML = `
-                <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
+                <td class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
                     wallet.owner_type === 'VENDOR' ? 'bg-purple-100' : 'bg-cyan-100'
                 }">
                             <i class="${wallet.owner_type === 'USER' ? 'fas fa-user text-green-600' :
                     wallet.owner_type === 'VENDOR' ? 'fas fa-store text-purple-600' : 'fas fa-building text-cyan-600'
-                }"></i>
+                } text-xs"></i>
                         </div>
-                        <div>
-                            <div class="font-semibold text-gray-900">${wallet.wallet_name}</div>
-                            <div class="text-sm text-gray-500">ID: ${wallet.wallet_id}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-medium text-gray-900 leading-tight" title="${wallet.wallet_name}">${displayName}</div>
+                            <div class="text-xs text-gray-500 mt-0.5 font-mono">${wallet.wallet_id}</div>
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4">${getOwnerTypeBadge(wallet.owner_type)}</td>
-                <td class="px-6 py-4">${getStatusBadge(wallet.status)}</td>
-                <td class="px-6 py-4 text-right">
-                    <div class="font-bold text-lg text-gray-900">UGX ${formatCurrency(wallet.current_balance)}</div>
+                <td class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                    ${getOwnerTypeBadge(wallet.owner_type)}
                 </td>
-                <td class="px-6 py-4">
-                    <div class="flex items-center justify-center gap-2">
+                <td class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                    ${getStatusBadge(wallet.status)}
+                </td>
+                <td class="px-3 py-2 text-right text-xs font-semibold text-gray-900 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                    UGX ${formatCurrency(wallet.current_balance)}
+                </td>
+                <td class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                    <div class="flex items-center justify-center gap-1">
+                        <button onclick="showWalletStatement('${wallet.wallet_id}', '${wallet.wallet_name}')" 
+                            class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" 
+                            title="View Statement">
+                            <i class="fas fa-receipt text-xs"></i>
+                        </button>
                         <button onclick="showEditWalletForm('${wallet.wallet_id}')" 
-                            class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" 
+                            class="w-6 h-6 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" 
                             title="Edit Wallet">
-                            <i class="fas fa-edit text-sm"></i>
+                            <i class="fas fa-edit text-xs"></i>
                         </button>
                         ${wallet.owner_type === 'PLATFORM' ? `
                             <button onclick="showDeleteConfirm('wallet', '${wallet.wallet_id}')" 
-                                class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" 
+                                class="w-6 h-6 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" 
                                 title="Delete Wallet">
-                                <i class="fas fa-trash-alt text-sm"></i>
+                                <i class="fas fa-trash-alt text-xs"></i>
                             </button>
                         ` : ''}
                     </div>
                 </td>`;
             tbody.appendChild(tr);
 
-            // Mobile card
             const card = document.createElement('div');
-            card.className = 'mobile-card';
+            card.className = 'bg-gray-50 rounded-xl p-4 border border-gray-100';
             card.innerHTML = `
-                <div class="mobile-card-header">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
                     wallet.owner_type === 'VENDOR' ? 'bg-purple-100' : 'bg-cyan-100'
                 }">
                             <i class="${wallet.owner_type === 'USER' ? 'fas fa-user text-green-600' :
                     wallet.owner_type === 'VENDOR' ? 'fas fa-store text-purple-600' : 'fas fa-building text-cyan-600'
                 }"></i>
                         </div>
-                        <div>
-                            <div class="font-semibold text-gray-900">${wallet.wallet_name}</div>
-                            <div class="text-xs text-gray-500">ID: ${wallet.wallet_id}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-medium text-gray-900 text-sm truncate" title="${wallet.wallet_name}">${wallet.wallet_name}</div>
+                            <div class="text-xs text-gray-500 font-mono">${wallet.wallet_id}</div>
                         </div>
                     </div>
                     ${getOwnerTypeBadge(wallet.owner_type)}
                 </div>
-                <div class="mobile-card-content">
-                    <div class="mobile-grid">
-                        <div>
-                            <span class="mobile-label">Status</span>
-                            <div class="mt-1">${getStatusBadge(wallet.status)}</div>
-                        </div>
-                        <div>
-                            <span class="mobile-label">Balance</span>
-                            <span class="mobile-value">UGX ${formatCurrency(wallet.current_balance)}</span>
-                        </div>
+                
+                <div class="grid grid-cols-2 gap-4 text-xs mb-4">
+                    <div>
+                        <span class="text-gray-500 uppercase tracking-wide">Status</span>
+                        <div class="mt-1">${getStatusBadge(wallet.status)}</div>
                     </div>
-                    <div class="mobile-actions">
-                        <button onclick="showEditWalletForm('${wallet.wallet_id}')" 
-                            class="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                            <i class="fas fa-edit mr-1"></i>Edit
+                    <div class="text-right">
+                        <span class="text-gray-500 uppercase tracking-wide">Balance</span>
+                        <div class="font-semibold text-gray-900 mt-1">UGX ${formatCurrency(wallet.current_balance)}</div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="showWalletStatement('${wallet.wallet_id}', '${wallet.wallet_name}')" 
+                        class="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
+                        <i class="fas fa-receipt mr-1"></i>Statement
+                    </button>
+                    <button onclick="showEditWalletForm('${wallet.wallet_id}')" 
+                        class="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                    ${wallet.owner_type === 'PLATFORM' ? `
+                        <button onclick="showDeleteConfirm('wallet', '${wallet.wallet_id}')" 
+                            class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
+                            <i class="fas fa-trash-alt mr-1"></i>Delete
                         </button>
-                        ${wallet.owner_type === 'PLATFORM' ? `
-                            <button onclick="showDeleteConfirm('wallet', '${wallet.wallet_id}')" 
-                                class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
-                                <i class="fas fa-trash-alt mr-1"></i>Delete
-                            </button>
-                        ` : ''}
-                    </div>
+                    ` : ''}
                 </div>`;
             mobile.appendChild(card);
         });
@@ -994,81 +1055,415 @@ ob_start();
             emptyState.classList.add('hidden');
         }
 
-        list.forEach(setting => {
+        list.forEach((setting, index) => {
             const wallet = wallets.find(w => w.wallet_id === setting.platform_account_id);
             const walletName = wallet ? wallet.wallet_name : setting.platform_account_id;
 
-            // Desktop row
+            const maxDetailsLength = 25;
+            let displayName = walletName;
+            if (displayName.length > maxDetailsLength) {
+                displayName = displayName.substring(0, maxDetailsLength) + '...';
+            }
+
             const tr = document.createElement('tr');
-            tr.className = 'hover:bg-gray-50 transition-colors';
+            tr.className = `${index % 2 === 0 ? 'bg-user-content' : 'bg-white'} hover:bg-user-secondary/20 transition-colors`;
             tr.innerHTML = `
-                <td class="px-6 py-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-100">
-                            <i class="fas fa-building text-cyan-600"></i>
+                <td class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-lg flex items-center justify-center bg-cyan-100">
+                            <i class="fas fa-building text-cyan-600 text-xs"></i>
                         </div>
-                        <div>
-                            <div class="font-semibold text-gray-900">${walletName}</div>
-                            <div class="text-sm text-gray-500">ID: ${setting.platform_account_id}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-medium text-gray-900 leading-tight" title="${walletName}">${displayName}</div>
+                            <div class="text-xs text-gray-500 mt-0.5 font-mono">${setting.platform_account_id}</div>
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4">${getTypeBadge(setting.type)}</td>
-                <td class="px-6 py-4 text-sm text-gray-600">
+                <td class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                    ${getTypeBadge(setting.type)}
+                </td>
+                <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
                     ${new Date(setting.created_at).toLocaleDateString()}
                 </td>
-                <td class="px-6 py-4">
-                    <div class="flex items-center justify-center gap-2">
+                <td class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                    <div class="flex items-center justify-center gap-1">
                         <button onclick="showEditPlatformSettingForm(${setting.id})" 
-                            class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" 
+                            class="w-6 h-6 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" 
                             title="Edit Setting">
-                            <i class="fas fa-edit text-sm"></i>
+                            <i class="fas fa-edit text-xs"></i>
                         </button>
                         <button onclick="showDeleteConfirm('setting', ${setting.id})" 
-                            class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" 
+                            class="w-6 h-6 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" 
                             title="Delete Setting">
-                            <i class="fas fa-trash-alt text-sm"></i>
+                            <i class="fas fa-trash-alt text-xs"></i>
                         </button>
                     </div>
                 </td>`;
             tbody.appendChild(tr);
 
-            // Mobile card
             const card = document.createElement('div');
-            card.className = 'mobile-card';
+            card.className = 'bg-gray-50 rounded-xl p-4 border border-gray-100';
             card.innerHTML = `
-                <div class="mobile-card-header">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-100">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-cyan-100">
                             <i class="fas fa-building text-cyan-600"></i>
                         </div>
-                        <div>
-                            <div class="font-semibold text-gray-900">${walletName}</div>
-                            <div class="text-xs text-gray-500">ID: ${setting.platform_account_id}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-medium text-gray-900 text-sm truncate" title="${walletName}">${walletName}</div>
+                            <div class="text-xs text-gray-500 font-mono">${setting.platform_account_id}</div>
                         </div>
                     </div>
                     ${getTypeBadge(setting.type)}
                 </div>
-                <div class="mobile-card-content">
-                    <div class="mobile-grid">
-                        <div>
-                            <span class="mobile-label">Created</span>
-                            <span class="mobile-value">${new Date(setting.created_at).toLocaleDateString()}</span>
-                        </div>
+                
+                <div class="grid grid-cols-2 gap-4 text-xs mb-4">
+                    <div>
+                        <span class="text-gray-500 uppercase tracking-wide">Created</span>
+                        <div class="font-semibold text-gray-900 mt-1">${new Date(setting.created_at).toLocaleDateString()}</div>
                     </div>
-                    <div class="mobile-actions">
-                        <button onclick="showEditPlatformSettingForm(${setting.id})" 
-                            class="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                            <i class="fas fa-edit mr-1"></i>Edit
-                        </button>
-                        <button onclick="showDeleteConfirm('setting', ${setting.id})" 
-                            class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
-                            <i class="fas fa-trash-alt mr-1"></i>Delete
-                        </button>
-                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="showEditPlatformSettingForm(${setting.id})" 
+                        class="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                    <button onclick="showDeleteConfirm('setting', ${setting.id})" 
+                        class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
+                        <i class="fas fa-trash-alt mr-1"></i>Delete
+                    </button>
                 </div>`;
             mobile.appendChild(card);
         });
+    }
+
+    async function showWalletStatement(walletId, walletName) {
+        currentStatementWalletId = walletId;
+        document.getElementById('statementWalletName').textContent = walletName;
+        document.getElementById('walletStatementModal').classList.remove('hidden');
+
+        document.getElementById('statementDateFilter').value = 'all';
+        await loadWalletStatement();
+    }
+
+    function hideWalletStatementModal() {
+        document.getElementById('walletStatementModal').classList.add('hidden');
+        currentStatementWalletId = null;
+        currentWalletStatement = [];
+    }
+
+    async function loadWalletStatement() {
+        if (!currentStatementWalletId) return;
+
+        const filter = document.getElementById('statementDateFilter').value;
+        let params = { wallet_id: currentStatementWalletId, filter: 'all' };
+
+        if (filter !== 'all') {
+            const days = parseInt(filter);
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - days);
+
+            params.filter = 'range';
+            params.start = startDate.toISOString().split('T')[0];
+            params.end = endDate.toISOString().split('T')[0];
+        }
+
+        document.getElementById('statementLoading').classList.remove('hidden');
+        document.getElementById('statementTable').classList.add('hidden');
+        document.getElementById('statementMobile').classList.add('hidden');
+        document.getElementById('statementEmpty').classList.add('hidden');
+
+        try {
+            const res = await fetch(`${API_URL}?action=getWalletStatement`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            });
+            const data = await res.json();
+
+            document.getElementById('statementLoading').classList.add('hidden');
+
+            if (data.success && data.statement) {
+                const transformedTransactions = transformStatementData(data.statement);
+                currentWalletStatement = transformedTransactions;
+
+                if (currentWalletStatement.length > 0) {
+                    renderWalletStatement(currentWalletStatement);
+                    document.getElementById('statementTable').classList.remove('hidden');
+                    document.getElementById('statementMobile').classList.remove('hidden');
+                } else {
+                    document.getElementById('statementEmpty').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('statementEmpty').classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error loading wallet statement:', error);
+            document.getElementById('statementLoading').classList.add('hidden');
+            document.getElementById('statementEmpty').classList.remove('hidden');
+        }
+    }
+
+    function transformStatementData(statement) {
+        const transformedEntries = [];
+
+        statement.forEach(transaction => {
+            if (transaction.entries && transaction.entries.length > 0) {
+                // Group entries by transaction_id
+                transaction.entries.forEach((entry, entryIndex) => {
+                    const transformedEntry = {
+                        transaction_id: transaction.transaction_id,
+                        transaction_type: transaction.type,
+                        payment_method: transaction.payment_method,
+                        status: transaction.status,
+                        amount_total: parseFloat(transaction.amount_total),
+                        transaction_note: transaction.note,
+                        transaction_date: transaction.created_at,
+                        entry_id: entry.entry_id,
+                        entry_type: entry.entry_type,
+                        amount: parseFloat(entry.amount),
+                        balance_after: parseFloat(entry.balance_after),
+                        entry_note: entry.entry_note,
+                        entry_date: entry.entry_created_at,
+                        related_entries: entry.related_entries || [],
+                        is_first_in_group: entryIndex === 0,
+                        group_size: transaction.entries.length
+                    };
+                    transformedEntries.push(transformedEntry);
+                });
+            } else {
+                // Handle transactions with no entries (usually failed transactions)
+                transformedEntries.push({
+                    transaction_id: transaction.transaction_id,
+                    transaction_type: transaction.type,
+                    payment_method: transaction.payment_method,
+                    status: transaction.status,
+                    amount_total: parseFloat(transaction.amount_total),
+                    transaction_note: transaction.note,
+                    transaction_date: transaction.created_at,
+                    entry_id: null,
+                    entry_type: null,
+                    amount: 0,
+                    balance_after: 0,
+                    entry_note: null,
+                    entry_date: null,
+                    related_entries: [],
+                    is_first_in_group: true,
+                    group_size: 1
+                });
+            }
+        });
+
+        // Sort by transaction date (newest first)
+        return transformedEntries.sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
+    }
+
+    function renderWalletStatement(entries) {
+        const tbody = document.getElementById('statementTableBody');
+        const mobile = document.getElementById('statementMobile');
+
+        tbody.innerHTML = '';
+        mobile.innerHTML = '';
+
+        entries.forEach((entry, index) => {
+            const tr = document.createElement('tr');
+            tr.className = `${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`;
+
+            if (entry.is_first_in_group && entry.group_size > 1) {
+                tr.classList.add('border-l-4', 'border-blue-400');
+            }
+
+            const transactionDate = new Date(entry.transaction_date);
+            const dateStr = transactionDate.toLocaleDateString('en-GB', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            const timeStr = transactionDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+
+            const debitAmount = entry.entry_type === 'DEBIT' ? entry.amount : 0;
+            const creditAmount = entry.entry_type === 'CREDIT' ? entry.amount : 0;
+
+            // Create description with transaction context
+            let description = entry.entry_note || getTransactionDescription(entry);
+            if (entry.status === 'FAILED') {
+                description = `${entry.transaction_type} (FAILED) - ${entry.transaction_note}`;
+            }
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 text-sm">
+                    <div class="font-medium text-gray-900">${dateStr}</div>
+                    <div class="text-xs text-gray-500">${timeStr}</div>
+                </td>
+                <td class="px-4 py-3 text-sm">
+                    <div class="transaction-id-cell font-mono text-gray-700" title="${entry.transaction_id}">
+                        ${entry.transaction_id}
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-sm">
+                    <div class="description-cell" title="${description}">
+                        <div class="font-medium text-gray-900">${description}</div>
+                        ${entry.payment_method ? `<div class="text-xs text-gray-500">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-sm text-right">
+                    ${debitAmount > 0 ? `<span class="entry-type-debit">-${formatCurrency(debitAmount)}</span>` : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td class="px-4 py-3 text-sm text-right">
+                    ${creditAmount > 0 ? `<span class="entry-type-credit">+${formatCurrency(creditAmount)}</span>` : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                    ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td class="px-4 py-3 text-sm">
+                    ${renderRelatedEntries(entry.related_entries)}
+                </td>
+            `;
+            tbody.appendChild(tr);
+
+            // Mobile card
+            const card = document.createElement('div');
+            card.className = `bg-white rounded-lg p-4 border border-gray-200 ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
+            card.innerHTML = `
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900 text-sm mb-1">${description}</div>
+                        <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
+                        ${entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
+                    </div>
+                    <div class="text-right ml-3">
+                        ${debitAmount > 0 ? `<div class="entry-type-debit text-sm">-${formatCurrency(debitAmount)}</div>` : ''}
+                        ${creditAmount > 0 ? `<div class="entry-type-credit text-sm">+${formatCurrency(creditAmount)}</div>` : ''}
+                        <div class="text-xs text-gray-500 mt-1">Balance: ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '-'}</div>
+                    </div>
+                </div>
+                
+                <div class="text-xs text-gray-500 mb-2">
+                    <span class="font-mono">${entry.transaction_id}</span>
+                </div>
+                
+                ${entry.related_entries.length > 0 ? `
+                    <div class="mt-3">
+                        <div class="text-xs font-medium text-gray-700 mb-2">Related Entries:</div>
+                        ${renderRelatedEntriesMobile(entry.related_entries)}
+                    </div>
+                ` : ''}
+            `;
+            mobile.appendChild(card);
+        });
+    }
+
+    function renderRelatedEntries(relatedEntries) {
+        if (!relatedEntries || relatedEntries.length === 0) {
+            return '<span class="text-gray-400 text-xs">None</span>';
+        }
+
+        return relatedEntries.map(related => {
+            const accountType = related.wallet_id ? 'Wallet' : 'Cash Account';
+            const accountId = related.wallet_id || related.cash_account_id;
+            const entryTypeClass = related.entry_type === 'CREDIT' ? 'entry-type-credit' : 'entry-type-debit';
+            const sign = related.entry_type === 'CREDIT' ? '+' : '-';
+
+            return `
+                <div class="related-entry text-xs mb-1">
+                    <div class="flex items-center gap-1">
+                        <i class="fas fa-arrow-right related-entry-icon"></i>
+                        <span class="font-medium">${accountType}:</span>
+                        <span class="font-mono text-gray-600">${accountId}</span>
+                    </div>
+                    <div class="mt-1">
+                        <span class="${entryTypeClass}">${sign}${formatCurrency(related.amount)}</span>
+                        <span class="text-gray-500 ml-2">Balance: ${formatCurrency(related.balance_after)}</span>
+                    </div>
+                    ${related.entry_note ? `<div class="text-gray-600 mt-1">${related.entry_note}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderRelatedEntriesMobile(relatedEntries) {
+        if (!relatedEntries || relatedEntries.length === 0) {
+            return '<span class="text-gray-400">None</span>';
+        }
+
+        return relatedEntries.map(related => {
+            const accountType = related.wallet_id ? 'Wallet' : 'Cash Account';
+            const accountId = related.wallet_id || related.cash_account_id;
+            const entryTypeClass = related.entry_type === 'CREDIT' ? 'entry-type-credit' : 'entry-type-debit';
+            const sign = related.entry_type === 'CREDIT' ? '+' : '-';
+
+            return `
+                <div class="bg-gray-50 rounded p-2 mb-2 text-xs">
+                    <div class="font-medium text-gray-700">${accountType}: <span class="font-mono">${accountId}</span></div>
+                    <div class="mt-1">
+                        <span class="${entryTypeClass}">${sign}${formatCurrency(related.amount)}</span>
+                        <span class="text-gray-500 ml-2">Balance: ${formatCurrency(related.balance_after)}</span>
+                    </div>
+                    ${related.entry_note ? `<div class="text-gray-600 mt-1">${related.entry_note}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getTransactionDescription(entry) {
+        const typeMap = {
+            'TOPUP': 'Wallet Top-up',
+            'TRANSFER': 'Transfer',
+            'PAYMENT': 'Payment',
+            'WITHDRAWAL': 'Withdrawal'
+        };
+
+        const methodMap = {
+            'MOBILE_MONEY_GATEWAY': 'Mobile Money',
+            'BANK_TRANSFER': 'Bank Transfer',
+            'CARD_PAYMENT': 'Card Payment'
+        };
+
+        let description = typeMap[entry.transaction_type] || entry.transaction_type;
+
+        if (entry.payment_method) {
+            description += ` via ${methodMap[entry.payment_method] || entry.payment_method}`;
+        }
+
+        return description;
+    }
+
+    function adjustTableFontSize() {
+        const tables = ['wallets-table', 'platform-settings-table'];
+        tables.forEach(tableId => {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            const container = table.parentElement;
+            let fontSize = 14;
+
+            table.style.fontSize = fontSize + 'px';
+
+            while ((table.scrollWidth > container.clientWidth || hasOverflowingContent(table)) && fontSize > 8) {
+                fontSize -= 0.5;
+                table.style.fontSize = fontSize + 'px';
+            }
+
+            if (fontSize < 10) {
+                table.style.fontSize = '10px';
+            }
+        });
+    }
+
+    function hasOverflowingContent(table) {
+        const cells = table.querySelectorAll('td');
+        for (let cell of cells) {
+            if (cell.scrollHeight > cell.clientHeight || cell.scrollWidth > cell.clientWidth) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function sortByStatus() {
@@ -1084,9 +1479,9 @@ ob_start();
             ? 'fas fa-sort-up text-gray-400 ml-1'
             : 'fas fa-sort-down text-gray-400 ml-1';
         renderWalletsTable(wallets);
+        adjustTableFontSize();
     }
 
-    // Wallet Functions
     function showCreateWalletForm() {
         const offcanvas = document.getElementById('createWalletOffcanvas');
         const form = document.getElementById('createWalletForm');
@@ -1191,7 +1586,6 @@ ob_start();
         }
     }
 
-    // Platform Setting Functions
     function showCreatePlatformSettingForm() {
         const offcanvas = document.getElementById('createPlatformSettingOffcanvas');
         const form = document.getElementById('createPlatformSettingForm');
@@ -1305,7 +1699,6 @@ ob_start();
         }
     }
 
-    // Delete Functions
     function showDeleteConfirm(type, id) {
         const modal = document.getElementById('deleteModal');
         const message = document.getElementById('deleteMessage');
@@ -1408,6 +1801,7 @@ ob_start();
         }
 
         renderWalletsTable(filtered);
+        adjustTableFontSize();
     }
 
     function filterPlatformSettings() {
@@ -1415,30 +1809,29 @@ ob_start();
         fetchPlatformSettings(accountId);
     }
 
-    // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
-        // Initialize with wallets tab
         switchTab('wallets');
 
-        // Main buttons
         document.getElementById('create-wallet-btn').addEventListener('click', showCreateWalletForm);
         document.getElementById('create-platform-setting-btn').addEventListener('click', showCreatePlatformSettingForm);
         document.getElementById('statusHeader').addEventListener('click', sortByStatus);
 
-        // Form submissions
         document.getElementById('submitWalletForm').addEventListener('click', createWallet);
         document.getElementById('updateWalletForm').addEventListener('click', updateWallet);
         document.getElementById('submitPlatformSettingForm').addEventListener('click', createPlatformSetting);
         document.getElementById('updatePlatformSettingForm').addEventListener('click', updatePlatformSetting);
         document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
 
-        // Search and filter
         document.getElementById('filterWallets').addEventListener('change', filterWallets);
         document.getElementById('searchWallets').addEventListener('input', filterWallets);
         document.getElementById('filterPlatformAccounts').addEventListener('change', filterPlatformSettings);
+        document.getElementById('statementDateFilter').addEventListener('change', loadWalletStatement);
+
+        window.addEventListener('resize', () => {
+            adjustTableFontSize();
+        });
     });
 
-    // Global functions for onclick handlers
     window.switchTab = switchTab;
     window.showEditWalletForm = showEditWalletForm;
     window.showEditPlatformSettingForm = showEditPlatformSettingForm;
@@ -1450,6 +1843,8 @@ ob_start();
     window.hideCreatePlatformSettingForm = hideCreatePlatformSettingForm;
     window.hideEditPlatformSettingForm = hideEditPlatformSettingForm;
     window.showCreatePlatformSettingForm = showCreatePlatformSettingForm;
+    window.showWalletStatement = showWalletStatement;
+    window.hideWalletStatementModal = hideWalletStatementModal;
 </script>
 
 <?php

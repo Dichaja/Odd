@@ -466,96 +466,159 @@ final class CreditService
     }
 
     /**
-     * Retrieve a user's wallet statement.
+     * Retrieve a wallet's full statement by wallet ID.
      *
-     * @param string      $userId Database user_id
-     * @param string      $filter 'all' or 'range'
-     * @param string|null $start  'YYYY-MM-DD' or full datetime
-     * @param string|null $end    'YYYY-MM-DD' or full datetime
+     * Includes ALL transactions (PENDING, FAILED, SUCCESS) from
+     * zzimba_financial_transactions, and any related entries
+     * from zzimba_transaction_entries, grouping child credits
+     * by ref_entry_id under their debit.
+     *
+     * @param string      $walletId The ID of the wallet (USER, VENDOR, or PLATFORM)
+     * @param string      $filter   'all' or 'range'
+     * @param string|null $start    'YYYY-MM-DD' or full datetime
+     * @param string|null $end      'YYYY-MM-DD' or full datetime
      * @return array
      */
-    public static function getWalletStatement(string $userId, string $filter = 'all', ?string $start = null, ?string $end = null): array
+    public static function getWalletStatement(string $walletId, string $filter = 'all', ?string $start = null, ?string $end = null): array
     {
         self::boot();
 
-        // 1) find user wallet
-        $stmt = self::$pdo->prepare("
-            SELECT wallet_id
+        // 1) verify wallet exists
+        $wStmt = self::$pdo->prepare("
+            SELECT wallet_id, owner_type, user_id, vendor_id, wallet_name
               FROM zzimba_wallets
-             WHERE owner_type = 'USER'
-               AND user_id    = :uid
-               AND status     = 'active'
+             WHERE wallet_id = :wid
+               AND status    = 'active'
              LIMIT 1
         ");
-        $stmt->execute([':uid' => $userId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (empty($row['wallet_id'])) {
-            return ['success' => false, 'statement' => [], 'message' => 'No active wallet found'];
+        $wStmt->execute([':wid' => $walletId]);
+        $wallet = $wStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$wallet) {
+            return ['success' => false, 'statement' => [], 'message' => 'Wallet not found or inactive'];
         }
-        $wid = $row['wallet_id'];
 
-        // 2) fetch transactions
+        // 2) build base FIN txn query depending on owner_type
         $sql = "
             SELECT
-              transaction_id,
-              transaction_type,
-              payment_method,
-              status,
-              amount_total,
-              note,
-              created_at
-            FROM zzimba_financial_transactions
-           WHERE user_id = :uid
+              ft.transaction_id,
+              ft.transaction_type,
+              ft.payment_method,
+              ft.status        AS txn_status,
+              ft.amount_total,
+              ft.note          AS txn_note,
+              ft.created_at    AS txn_created_at
+            FROM zzimba_financial_transactions ft
         ";
-        $params = [':uid' => $userId];
-        if ($filter === 'range' && $start && $end) {
-            $sql .= " AND created_at BETWEEN :start AND :end";
+        $conds = [];
+        $params = [];
+        if ($wallet['owner_type'] === 'USER') {
+            $conds[] = "ft.user_id = :oid";
+            $params[':oid'] = $wallet['user_id'];
+        } elseif ($wallet['owner_type'] === 'VENDOR') {
+            $conds[] = "ft.vendor_id = :oid";
+            $params[':oid'] = $wallet['vendor_id'];
+        } else { // PLATFORM
+            $sql = "
+                SELECT DISTINCT
+                  ft.transaction_id,
+                  ft.transaction_type,
+                  ft.payment_method,
+                  ft.status        AS txn_status,
+                  ft.amount_total,
+                  ft.note          AS txn_note,
+                  ft.created_at    AS txn_created_at
+                FROM zzimba_financial_transactions ft
+                JOIN zzimba_transaction_entries e
+                  ON ft.transaction_id = e.transaction_id
+            ";
+            $conds[] = "e.wallet_id = :wid";
+            $params[':wid'] = $walletId;
+        }
+        if (!empty($conds)) {
+            $sql .= ' WHERE ' . implode(' AND ', $conds);
+        }
+        if ($filter === 'range' && $start !== null && $end !== null) {
+            $sql .= empty($conds) ? ' WHERE ' : ' AND ';
+            $sql .= "ft.created_at BETWEEN :start AND :end";
             $params[':start'] = $start;
             $params[':end'] = $end;
         }
-        $sql .= " ORDER BY created_at DESC";
+        $sql .= " ORDER BY ft.created_at DESC";
 
         $stmt = self::$pdo->prepare($sql);
         $stmt->execute($params);
         $txns = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // 3) build statement
+        // 3) for each transaction, fetch entries for this wallet and their related children
         $statement = [];
+        $eSql = "
+            SELECT
+              entry_id,
+              cash_account_id,
+              entry_type,
+              amount,
+              balance_after,
+              entry_note,
+              created_at AS entry_created_at,
+              ref_entry_id
+            FROM zzimba_transaction_entries
+            WHERE transaction_id = :tid
+              AND wallet_id       = :wid
+            ORDER BY created_at ASC
+        ";
+        $eStmt = self::$pdo->prepare($eSql);
+
+        $childSql = "
+            SELECT
+              entry_id,
+              wallet_id,
+              cash_account_id,
+              entry_type,
+              amount,
+              balance_after,
+              entry_note,
+              created_at AS entry_created_at
+            FROM zzimba_transaction_entries
+            WHERE ref_entry_id = :eid
+            ORDER BY created_at ASC
+        ";
+        $childStmt = self::$pdo->prepare($childSql);
+
         foreach ($txns as $txn) {
-            // fetch entries for this wallet
-            $eStmt = self::$pdo->prepare("
-                SELECT
-                  entry_id,
-                  cash_account_id,
-                  entry_type,
-                  amount,
-                  balance_after,
-                  entry_note,
-                  created_at
-                FROM zzimba_transaction_entries
-               WHERE transaction_id = :tid
-                 AND wallet_id      = :wid
-               ORDER BY created_at ASC
-            ");
+            // primary entries for this wallet
             $eStmt->execute([
                 ':tid' => $txn['transaction_id'],
-                ':wid' => $wid
+                ':wid' => $walletId
             ]);
             $entries = $eStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // attach related child entries to each
+            foreach ($entries as &$entry) {
+                $childStmt->execute([':eid' => $entry['entry_id']]);
+                $entry['related_entries'] = $childStmt->fetchAll(PDO::FETCH_ASSOC);
+            }
 
             $statement[] = [
                 'transaction_id' => $txn['transaction_id'],
                 'type' => $txn['transaction_type'],
                 'payment_method' => $txn['payment_method'],
-                'status' => $txn['status'],
+                'status' => $txn['txn_status'],
                 'amount_total' => $txn['amount_total'],
-                'note' => $txn['note'],
-                'created_at' => $txn['created_at'],
+                'note' => $txn['txn_note'],
+                'created_at' => $txn['txn_created_at'],
                 'entries' => $entries
             ];
         }
 
-        return ['success' => true, 'statement' => $statement];
+        return [
+            'success' => true,
+            'wallet' => [
+                'wallet_id' => $wallet['wallet_id'],
+                'owner_type' => $wallet['owner_type'],
+                'wallet_name' => $wallet['wallet_name']
+            ],
+            'statement' => $statement
+        ];
     }
 
     /* ------------------------------------------------------------------ */
