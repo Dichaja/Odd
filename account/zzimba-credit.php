@@ -42,11 +42,6 @@ function formatCurrency($amount)
                         class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 font-medium shadow-lg shadow-primary/25">
                         <i class="fas fa-plus"></i><span>Topup</span>
                     </button>
-                    <button
-                        class="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 flex items-center gap-2 font-medium">
-                        <i class="fas fa-download"></i>
-                        <span>Download Statement</span>
-                    </button>
                 </div>
             </div>
         </div>
