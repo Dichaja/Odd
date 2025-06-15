@@ -30,22 +30,22 @@ try {
         CREATE TABLE IF NOT EXISTS zzimba_wallets (
             wallet_id CHAR(26) NOT NULL PRIMARY KEY,
             owner_type ENUM('USER','VENDOR','PLATFORM') NOT NULL,
-            user_id CHAR(26)  NULL,
-            vendor_id CHAR(26) NULL,
+            user_id VARCHAR(26) DEFAULT NULL,
+            vendor_id VARCHAR(26) DEFAULT NULL,
             wallet_name VARCHAR(100) NOT NULL,
             current_balance DECIMAL(18,2) NOT NULL DEFAULT 0,
             status ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
-            UNIQUE KEY uq_wallet_user (user_id),
-            UNIQUE KEY uq_wallet_vendor (vendor_id),
+
             CONSTRAINT fk_wallet_user FOREIGN KEY (user_id)
                 REFERENCES zzimba_users(id)
                 ON DELETE SET NULL ON UPDATE CASCADE,
+
             CONSTRAINT fk_wallet_vendor FOREIGN KEY (vendor_id)
                 REFERENCES vendor_stores(id)
                 ON DELETE SET NULL ON UPDATE CASCADE
-        ) ENGINE=InnoDB;
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
         
         CREATE TABLE IF NOT EXISTS zzimba_platform_account_settings (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -56,7 +56,7 @@ try {
             CONSTRAINT fk_platform_account_settings_wallet FOREIGN KEY (platform_account_id)
                 REFERENCES zzimba_wallets(wallet_id)
                 ON DELETE CASCADE ON UPDATE CASCADE
-        ) ENGINE=InnoDB;
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     ");
 } catch (PDOException $e) {
     error_log("Table creation error: " . $e->getMessage());
