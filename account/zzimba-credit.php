@@ -140,29 +140,26 @@ function formatCurrency($amount)
                     <thead class="bg-user-accent border-b border-gray-200">
                         <tr>
                             <th
-                                class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                Transaction Details
-                            </th>
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Date/Time</th>
                             <th
-                                class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                Transaction ID
-                            </th>
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Entry ID</th>
                             <th
-                                class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                Date/Time
-                            </th>
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Description</th>
                             <th
-                                class="px-3 py-2 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                Amount
-                            </th>
+                                class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Debit</th>
                             <th
-                                class="px-3 py-2 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                Credit
-                            </th>
+                                class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Credit</th>
                             <th
-                                class="px-3 py-2 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                Balance
-                            </th>
+                                class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Balance</th>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Related Entries</th>
                         </tr>
                     </thead>
                     <tbody id="transactionsTableBody" class="divide-y divide-gray-100">
@@ -170,7 +167,7 @@ function formatCurrency($amount)
                 </table>
             </div>
 
-            <div id="transactionsMobile" class="lg:hidden p-4 space-y-4 hidden">
+            <div id="transactionsMobile" class="lg:hidden p-4 space-y-4 hidden overflow-auto flex-1">
             </div>
 
             <div id="transactionsEmpty" class="hidden text-center py-16">
@@ -538,27 +535,16 @@ function formatCurrency($amount)
     </div>
 </div>
 
-<style>
-    .transaction-details {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        line-height: 1.4;
-        max-height: 2.8em;
-    }
-
-    .payment-method-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-</style>
-
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const apiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageZzimbaCredit.php') ?>;
-        const ownerName = <?= json_encode(trim(($_SESSION['user']['first_name'] ?? '') . ' ' . ($_SESSION['user']['last_name'] ?? ''))) ?>;
+        const ownerName = <?= json_encode(
+            trim(
+                ($_SESSION['user']['first_name'] ?? '')
+                . ' '
+                . ($_SESSION['user']['last_name'] ?? '')
+            )
+        ) ?>;
 
         let validatedMsisdn = null;
         let customerName = null;
@@ -568,11 +554,27 @@ function formatCurrency($amount)
         let transactions = [];
         let selectedAccount = null;
 
+        // Switch between table and mobile view based on screen width
+        function displayTransactionsView() {
+            const tableWrapper = document.getElementById('transactionsTable');
+            const mobileWrapper = document.getElementById('transactionsMobile');
+            if (window.innerWidth >= 1024) {
+                tableWrapper.classList.remove('hidden');
+                mobileWrapper.classList.add('hidden');
+            } else {
+                tableWrapper.classList.add('hidden');
+                mobileWrapper.classList.remove('hidden');
+            }
+        }
+
         loadWalletData();
         loadTransactions();
+        displayTransactionsView();
 
-        adjustTableFontSize();
-        window.addEventListener('resize', adjustTableFontSize);
+        window.addEventListener('resize', function () {
+            adjustTableFontSize();
+            displayTransactionsView();
+        });
 
         function loadWalletData() {
             fetch(`${apiUrl}?action=getWallet`, {
@@ -595,10 +597,8 @@ function formatCurrency($amount)
                         const badge = document.getElementById('statusBadge');
                         const badgeText = badge.querySelector('span');
                         const badgeIcon = badge.querySelector('i');
-
                         badgeText.textContent = w.status.charAt(0).toUpperCase() + w.status.slice(1);
                         badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium';
-
                         if (w.status === 'active') {
                             badge.classList.add('bg-green-100', 'text-green-800');
                             badgeIcon.className = 'fas fa-check-circle mr-1';
@@ -629,13 +629,11 @@ function formatCurrency($amount)
         function loadTransactions() {
             const filter = document.getElementById('dateFilter').value;
             let params = { action: 'getWalletStatement' };
-
             if (filter !== 'all') {
                 const days = parseInt(filter);
                 const endDate = new Date();
                 const startDate = new Date();
                 startDate.setDate(startDate.getDate() - days);
-
                 params.filter = 'range';
                 params.start = startDate.toISOString().split('T')[0];
                 params.end = endDate.toISOString().split('T')[0];
@@ -657,18 +655,13 @@ function formatCurrency($amount)
                 .then(r => r.json())
                 .then(data => {
                     document.getElementById('transactionsLoading').classList.add('hidden');
-
                     if (data.success && data.statement) {
-                        const transformedTransactions = transformStatementData(data.statement);
-                        transactions = transformedTransactions;
-
+                        transactions = transformStatementData(data.statement);
                         if (transactions.length > 0) {
                             renderTransactions(transactions);
-                            document.getElementById('transactionsTable').classList.remove('hidden');
-                            document.getElementById('transactionsMobile').classList.remove('hidden');
-                            document.getElementById('transactionsPagination').classList.remove('hidden');
                             updatePaginationInfo(transactions.length);
                             adjustTableFontSize();
+                            displayTransactionsView();
                         } else {
                             document.getElementById('transactionsEmpty').classList.remove('hidden');
                         }
@@ -684,294 +677,264 @@ function formatCurrency($amount)
         }
 
         function transformStatementData(statement) {
-            const transformedTransactions = [];
-
-            statement.forEach(transaction => {
-                if (transaction.entries && transaction.entries.length > 0) {
-                    transaction.entries.forEach(entry => {
-                        transformedTransactions.push({
-                            transaction_id: transaction.transaction_id,
-                            transaction_details: getDetailedTransactionDescription(transaction, entry),
-                            payment_reference: transaction.transaction_id,
-                            value_date: transaction.created_at,
-                            entry_date: entry.created_at,
-                            credit: entry.entry_type === 'CREDIT' ? parseFloat(entry.amount) : 0,
-                            debit: entry.entry_type === 'DEBIT' ? parseFloat(entry.amount) : 0,
-                            balance: parseFloat(entry.balance_after),
-                            amount_total: parseFloat(transaction.amount_total),
-                            status: transaction.status,
-                            type: transaction.type,
-                            payment_method: transaction.payment_method,
-                            note: transaction.note,
-                            entry_note: entry.entry_note
+            const transformed = [];
+            statement.forEach(tx => {
+                if (tx.transaction && tx.transaction.entries?.length) {
+                    const rev = [...tx.transaction.entries].reverse();
+                    rev.forEach((e, i) => {
+                        transformed.push({
+                            transaction_id: tx.transaction.transaction_id,
+                            transaction_type: tx.transaction.transaction_type,
+                            payment_method: tx.transaction.payment_method,
+                            status: tx.transaction.status,
+                            amount_total: parseFloat(tx.transaction.amount_total),
+                            transaction_note: tx.transaction.note,
+                            transaction_date: tx.transaction.created_at,
+                            entry_id: e.entry_id,
+                            entry_type: e.entry_type,
+                            amount: parseFloat(e.amount),
+                            balance_after: parseFloat(e.balance_after),
+                            entry_note: e.entry_note,
+                            entry_date: e.created_at,
+                            related_entries: e.related_entries || [],
+                            is_first_in_group: i === 0,
+                            group_size: tx.transaction.entries.length
                         });
                     });
-                } else {
-                    transformedTransactions.push({
-                        transaction_id: transaction.transaction_id,
-                        transaction_details: getDetailedTransactionDescription(transaction, null),
-                        payment_reference: transaction.transaction_id,
-                        value_date: transaction.created_at,
+                } else if (tx.transaction) {
+                    transformed.push({
+                        transaction_id: tx.transaction.transaction_id,
+                        transaction_type: tx.transaction.transaction_type,
+                        payment_method: tx.transaction.payment_method,
+                        status: tx.transaction.status,
+                        amount_total: parseFloat(tx.transaction.amount_total),
+                        transaction_note: tx.transaction.note,
+                        transaction_date: tx.transaction.created_at,
+                        entry_id: null,
+                        entry_type: null,
+                        amount: 0,
+                        balance_after: 0,
+                        entry_note: null,
                         entry_date: null,
-                        credit: 0,
-                        debit: 0,
-                        balance: 0,
-                        amount_total: parseFloat(transaction.amount_total),
-                        status: transaction.status,
-                        type: transaction.type,
-                        payment_method: transaction.payment_method,
-                        note: transaction.note,
-                        entry_note: null
+                        related_entries: [],
+                        is_first_in_group: true,
+                        group_size: 1
                     });
                 }
             });
-
-            return transformedTransactions.sort((a, b) => new Date(b.value_date) - new Date(a.value_date));
+            return transformed.sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
         }
 
-        function getDetailedTransactionDescription(transaction, entry) {
-            const typeMap = {
-                'TOPUP': 'Wallet Top-up',
-                'TRANSFER': 'Transfer',
-                'PAYMENT': 'Payment',
-                'WITHDRAWAL': 'Withdrawal'
-            };
-
-            const methodMap = {
-                'MOBILE_MONEY_GATEWAY': 'Mobile Money',
-                'BANK_TRANSFER': 'Bank Transfer',
-                'CARD_PAYMENT': 'Card Payment'
-            };
-
-            let description = typeMap[transaction.type] || transaction.type;
-
-            if (transaction.payment_method) {
-                description += ` via ${methodMap[transaction.payment_method] || transaction.payment_method}`;
-            }
-
-            if (entry && entry.entry_note) {
-                description = entry.entry_note;
-            }
-
-            if (transaction.status === 'FAILED') {
-                description += ' (Failed)';
-                if (transaction.note && transaction.note !== 'Request payment completed successfully.') {
-                    let reason = transaction.note.replace(/_/g, ' ').toLowerCase();
-                    reason = reason.charAt(0).toUpperCase() + reason.slice(1);
-                    description += ` - ${reason}`;
-                }
-            }
-
-            return description;
-        }
-
-        function renderTransactions(transactionsList) {
+        function renderTransactions(entries) {
             const tbody = document.getElementById('transactionsTableBody');
             const mobile = document.getElementById('transactionsMobile');
-
             tbody.innerHTML = '';
             mobile.innerHTML = '';
 
-            transactionsList.forEach((transaction, index) => {
+            entries.forEach((entry, idx) => {
                 const tr = document.createElement('tr');
-                tr.className = `${index % 2 === 0 ? 'bg-user-content' : 'bg-white'} hover:bg-user-secondary/20 transition-colors`;
-
-                const credit = parseFloat(transaction.credit || 0);
-                const debit = parseFloat(transaction.debit || 0);
-                const balance = parseFloat(transaction.balance || 0);
-                const amountTotal = parseFloat(transaction.amount_total || 0);
-
-                const valueDate = new Date(transaction.value_date);
-                const dateStr = valueDate.toLocaleDateString('en-GB', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                });
-                const timeStr = valueDate.toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true
-                });
-
-                const maxDetailsLength = 45;
-                let displayDetails = transaction.transaction_details || 'N/A';
-                if (displayDetails.length > maxDetailsLength) {
-                    displayDetails = displayDetails.substring(0, maxDetailsLength) + '...';
+                tr.className = `${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`;
+                if (entry.is_first_in_group && entry.group_size > 1) {
+                    tr.classList.add('border-l-4', 'border-blue-400');
                 }
+                const dt = new Date(entry.transaction_date);
+                const dateStr = dt.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+                const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                const debit = entry.entry_type === 'DEBIT' ? entry.amount : 0;
+                const credit = entry.entry_type === 'CREDIT' ? entry.amount : 0;
+
+                // multi-line description
+                let raw = entry.entry_note || getTransactionDescription(entry);
+                if (entry.status === 'FAILED') {
+                    raw = `${entry.transaction_type} (TXN: ${entry.transaction_id}, UGX ${formatCurrency(entry.amount_total)}) - FAILED`;
+                    if (entry.transaction_note && entry.transaction_note !== 'Request payment completed successfully.') {
+                        raw += ` - ${entry.transaction_note}`;
+                    }
+                } else {
+                    raw += ` (TXN: ${entry.transaction_id}, UGX ${formatCurrency(entry.amount_total)})`;
+                }
+                const parts = raw.split(',').map(s => s.trim());
+                const descHtml = parts.map(line => `<div class="font-medium text-gray-900">${line}</div>`).join('') +
+                    (entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : '');
 
                 tr.innerHTML = `
-            <td class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-lg flex items-center justify-center ${credit > 0 ? 'bg-green-100' : transaction.status === 'FAILED' ? 'bg-gray-100' : 'bg-red-100'}">
-                        <i class="${credit > 0 ? 'fas fa-arrow-down text-green-600' : transaction.status === 'FAILED' ? 'fas fa-times text-gray-600' : 'fas fa-arrow-up text-red-600'} text-xs"></i>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="text-xs font-medium text-gray-900 leading-tight" title="${transaction.transaction_details}">${displayDetails}</div>
-                        <div class="text-xs text-gray-500 mt-0.5">${transaction.type} • ${transaction.payment_method?.replace('_', ' ') || 'N/A'}</div>
-                    </div>
-                </div>
-            </td>
-            <td class="px-3 py-2 text-gray-600 font-mono text-xs whitespace-nowrap ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                <div class="truncate max-w-24" title="${transaction.transaction_id}">${transaction.transaction_id}</div>
-            </td>
-            <td class="px-3 py-2 text-gray-600 text-xs whitespace-nowrap ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                <div class="leading-tight">
-                    <div class="font-medium">${dateStr}</div>
-                    <div class="text-gray-500">${timeStr}</div>
-                </div>
-            </td>
-            <td class="px-3 py-2 text-right text-xs whitespace-nowrap ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                <div class="font-semibold ${transaction.status === 'FAILED' ? 'text-red-600' : 'text-gray-900'}">
-                    ${transaction.status === 'FAILED' ? '-' : ''}${formatCurrency(amountTotal)}
-                </div>
-                ${transaction.status === 'FAILED' ? '<div class="text-xs text-red-500">(Failed)</div>' : ''}
-            </td>
-            <td class="px-3 py-2 text-right text-xs whitespace-nowrap ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                ${credit > 0 ? `<span class="font-semibold text-green-600">+${formatCurrency(credit)}</span>` : '<span class="text-gray-400">-</span>'}
-            </td>
-            <td class="px-3 py-2 text-right font-semibold text-gray-900 text-xs whitespace-nowrap ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                ${balance > 0 ? formatCurrency(balance) : '<span class="text-gray-400">-</span>'}
-            </td>
-        `;
+                    <td class="px-4 py-3 text-sm whitespace-nowrap">
+                        <div class="font-medium text-gray-900 whitespace-nowrap">${dateStr}</div>
+                        <div class="text-xs text-gray-500 whitespace-nowrap">${timeStr}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm">
+                        <div class="font-mono text-gray-700 truncate max-w-[10ch]" title="${entry.entry_id || ''}">
+                            ${entry.entry_id || ''}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-sm max-w-[20ch]">
+                        <div class="overflow-hidden whitespace-normal" title="${raw}">
+                            ${descHtml}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right">
+                        ${debit > 0 ? `<span class="font-semibold text-red-600">-${formatCurrency(debit)}</span>` : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right">
+                        ${credit > 0 ? `<span class="font-semibold text-green-600">+${formatCurrency(credit)}</span>` : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                        ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td class="px-4 py-3 text-sm">
+                        ${renderRelatedEntries(entry.related_entries)}
+                    </td>
+                `;
                 tbody.appendChild(tr);
 
+                // mobile card (unchanged)
                 const card = document.createElement('div');
-                card.className = 'bg-gray-50 rounded-xl p-4 border border-gray-100';
+                card.className = `bg-white rounded-lg p-4 border border-gray-200 ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
                 card.innerHTML = `
-            <div class="flex items-start justify-between mb-3">
-                <div class="flex items-center gap-3 min-w-0 flex-1">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center ${credit > 0 ? 'bg-green-100' : transaction.status === 'FAILED' ? 'bg-gray-100' : 'bg-red-100'}">
-                        <i class="${credit > 0 ? 'fas fa-arrow-down text-green-600' : transaction.status === 'FAILED' ? 'fas fa-times text-gray-600' : 'fas fa-arrow-up text-red-600'}"></i>
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900 text-sm mb-1">${raw.replace(/, /g, '\n')}</div>
+                            <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
+                            ${entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
+                        </div>
+                        <div class="text-right ml-3">
+                            ${debit > 0 ? `<div class="font-semibold text-red-600 text-sm">-${formatCurrency(debit)}</div>` : ''}
+                            ${credit > 0 ? `<div class="font-semibold text-green-600 text-sm">+${formatCurrency(credit)}</div>` : ''}
+                            <div class="text-xs text-gray-500 mt-1">Balance: ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '-'}</div>
+                        </div>
                     </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="font-medium text-gray-900 text-sm truncate" title="${transaction.transaction_details}">${displayDetails}</div>
-                        <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
-                    </div>
-                </div>
-                <div class="text-right ml-2">
-                    <div class="font-semibold text-sm ${transaction.status === 'FAILED' ? 'text-red-600' : credit > 0 ? 'text-green-600' : 'text-gray-900'}">
-                        ${transaction.status === 'FAILED' ? 'Failed' : credit > 0 ? `+${formatCurrency(credit)}` : `-${formatCurrency(debit)}`}
-                    </div>
-                    <div class="text-xs text-gray-500">
-                        Total: ${formatCurrency(amountTotal)}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 text-xs">
-                <div>
-                    <span class="text-gray-500 uppercase tracking-wide">Transaction ID</span>
-                    <div class="font-mono text-gray-700 mt-1 truncate" title="${transaction.transaction_id}">${transaction.transaction_id}</div>
-                </div>
-                <div class="text-right">
-                    <span class="text-gray-500 uppercase tracking-wide">Balance</span>
-                    <div class="font-semibold text-gray-900 mt-1">${balance > 0 ? formatCurrency(balance) : '-'}</div>
-                </div>
-            </div>
-            
-            ${transaction.status === 'FAILED' && transaction.note ? `
-            <div class="mt-3 p-2 bg-red-50 rounded-lg">
-                <div class="text-xs text-red-700">
-                    <strong>Reason:</strong> ${transaction.note.replace(/_/g, ' ').toLowerCase()}
-                </div>
-            </div>
-            ` : ''}
-        `;
+                    <div class="text-xs text-gray-500 mb-2"><span class="font-mono">${entry.entry_id || 'No Entry ID'}</span></div>
+                    ${entry.related_entries.length > 0 ? `
+                        <div class="mt-3">
+                            <div class="text-xs font-medium text-gray-700 mb-2">Related Entries:</div>
+                            ${renderRelatedEntriesMobile(entry.related_entries)}
+                        </div>
+                    ` : ''}
+                `;
                 mobile.appendChild(card);
             });
         }
 
-        function showTransactionsError(message) {
-            document.getElementById('transactionsLoading').innerHTML = `<div class="text-red-600 text-center p-6">${message}</div>`;
+        function renderRelatedEntries(rel) {
+            if (!rel?.length) return '<span class="text-gray-400 text-xs">None</span>';
+            return rel.map(r => {
+                const type = r.owner_type
+                    ? `${r.owner_type.charAt(0).toUpperCase()}${r.owner_type.slice(1).toLowerCase()} Wallet`
+                    : 'Cash Account';
+                const amtCls = r.entry_type === 'CREDIT' ? 'text-green-600' : 'text-red-600';
+                const sign = r.entry_type === 'CREDIT' ? '+' : '-';
+                return `
+                    <div class="bg-gray-50 rounded p-2 mb-1 text-xs">
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-arrow-right text-gray-400"></i>
+                            <span class="font-medium">${type}:</span>
+                            <span class="text-gray-600">${r.account_or_wallet_name || 'Unknown'}</span>
+                        </div>
+                        <div class="mt-1">
+                            <span class="font-semibold ${amtCls}">${sign}${formatCurrency(r.amount)}</span>
+                            <span class="text-gray-500 ml-2">Balance: ${formatCurrency(r.balance_after)}</span>
+                        </div>
+                        ${r.entry_note ? `<div class="text-gray-600 mt-1">${r.entry_note}</div>` : ''}
+                    </div>`;
+            }).join('');
         }
 
-        function updatePaginationInfo(count) {
-            document.getElementById('paginationInfo').textContent = `Showing 1-${count} of ${count} transactions`;
+        function renderRelatedEntriesMobile(rel) {
+            if (!rel?.length) return '<span class="text-gray-400">None</span>';
+            return rel.map(r => {
+                const type = r.owner_type
+                    ? `${r.owner_type.charAt(0).toUpperCase()}${r.owner_type.slice(1).toLowerCase()} Wallet`
+                    : 'Cash Account';
+                const amtCls = r.entry_type === 'CREDIT' ? 'text-green-600' : 'text-red-600';
+                const sign = r.entry_type === 'CREDIT' ? '+' : '-';
+                return `
+                    <div class="bg-gray-50 rounded p-2 mb-2 text-xs">
+                        <div class="font-medium text-gray-700">${type}: <span class="font-normal">${r.account_or_wallet_name || 'Unknown'}</span></div>
+                        <div class="mt-1">
+                            <span class="font-semibold ${amtCls}">${sign}${formatCurrency(r.amount)}</span>
+                            <span class="text-gray-500 ml-2">Balance: ${formatCurrency(r.balance_after)}</span>
+                        </div>
+                        ${r.entry_note ? `<div class="text-gray-600 mt-1">${r.entry_note}</div>` : ''}
+                    </div>`;
+            }).join('');
         }
 
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-UG', {
-                style: 'decimal',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(amount);
+        function getTransactionDescription(e) {
+            const types = { 'TOPUP': 'Wallet Top-up', 'TRANSFER': 'Transfer', 'PAYMENT': 'Payment', 'WITHDRAWAL': 'Withdrawal' };
+            const methods = { 'MOBILE_MONEY_GATEWAY': 'Mobile Money', 'BANK_TRANSFER': 'Bank Transfer', 'CARD_PAYMENT': 'Card Payment' };
+            let d = types[e.transaction_type] || e.transaction_type;
+            if (e.payment_method) d += ` via ${methods[e.payment_method] || e.payment_method}`;
+            return d;
+        }
+
+        function showTransactionsError(msg) {
+            document.getElementById('transactionsLoading').innerHTML = `<div class="text-red-600 text-center p-6">${msg}</div>`;
+        }
+
+        function updatePaginationInfo(cnt) {
+            document.getElementById('paginationInfo').textContent = `Showing 1-${cnt} of ${cnt} transactions`;
+        }
+
+        function formatCurrency(a) {
+            return new Intl.NumberFormat('en-UG', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a);
         }
 
         function adjustTableFontSize() {
-            const table = document.getElementById('transactionsTableElement');
-            if (!table) return;
-
-            const container = table.parentElement;
-            let fontSize = 14;
-
-            table.style.fontSize = fontSize + 'px';
-
-            while ((table.scrollWidth > container.clientWidth || hasOverflowingTransactionDetails()) && fontSize > 8) {
-                fontSize -= 0.5;
-                table.style.fontSize = fontSize + 'px';
+            const tbl = document.getElementById('transactionsTableElement');
+            if (!tbl) return;
+            const container = tbl.parentElement;
+            let fs = 14;
+            tbl.style.fontSize = fs + 'px';
+            while ((tbl.scrollWidth > container.clientWidth || hasOverflowingTransactionDetails()) && fs > 8) {
+                fs -= .5; tbl.style.fontSize = fs + 'px';
             }
-
-            if (fontSize < 10) {
-                table.style.fontSize = '10px';
-            }
+            if (fs < 10) tbl.style.fontSize = '10px';
         }
 
         function hasOverflowingTransactionDetails() {
-            const detailElements = document.querySelectorAll('.transaction-details');
-            for (let element of detailElements) {
-                if (element.scrollHeight > element.clientHeight) {
-                    return true;
-                }
+            for (const el of document.querySelectorAll('.transaction-details')) {
+                if (el.scrollHeight > el.clientHeight) return true;
             }
             return false;
         }
 
-        // Modal functions
+        // Modal & Payment methods
+
         window.showPaymentMethodModal = function () {
             document.getElementById('paymentMethodModal').classList.remove('hidden');
         };
-
         window.hidePaymentMethodModal = function () {
             document.getElementById('paymentMethodModal').classList.add('hidden');
         };
 
         window.selectPaymentMethod = function (accountId, type, name, accountNumber, provider) {
-            selectedAccount = { id: accountId, type: type, name: name, accountNumber: accountNumber, provider: provider };
+            selectedAccount = { id: accountId, type, name, accountNumber, provider };
             hidePaymentMethodModal();
-
             switch (type) {
-                case 'mobile_money':
-                    showMobileMoneyModal();
-                    break;
-                case 'bank':
-                    showBankTransferModal();
-                    break;
-                case 'gateway':
-                    showGatewayPaymentModal();
-                    break;
-                default:
-                    alert('This payment method is coming soon!');
-                    break;
+                case 'mobile_money': showMobileMoneyModal(); break;
+                case 'bank': showBankTransferModal(); break;
+                case 'gateway': showGatewayPaymentModal(); break;
+                default: alert('This payment method is coming soon!');
             }
         };
 
         window.showMobileMoneyModal = function () {
-            document.getElementById('mobileMoneyAccountName').textContent = `${selectedAccount.name} - ${selectedAccount.accountNumber}`;
+            document.getElementById('mobileMoneyAccountName').textContent =
+                `${selectedAccount.name} - ${selectedAccount.accountNumber}`;
             document.getElementById('mmDateTime').value = new Date().toISOString().slice(0, 16);
             document.getElementById('mobileMoneyModal').classList.remove('hidden');
         };
-
         window.hideMobileMoneyModal = function () {
             document.getElementById('mobileMoneyModal').classList.add('hidden');
             document.getElementById('mobileMoneyForm').reset();
         };
 
         window.showBankTransferModal = function () {
-            document.getElementById('bankAccountName').textContent = `${selectedAccount.name} - ${selectedAccount.accountNumber}`;
+            document.getElementById('bankAccountName').textContent =
+                `${selectedAccount.name} - ${selectedAccount.accountNumber}`;
             document.getElementById('btDateTime').value = new Date().toISOString().slice(0, 16);
             document.getElementById('bankTransferModal').classList.remove('hidden');
         };
-
         window.hideBankTransferModal = function () {
             document.getElementById('bankTransferModal').classList.add('hidden');
             document.getElementById('bankTransferForm').reset();
@@ -982,7 +945,6 @@ function formatCurrency($amount)
             document.getElementById('gatewayPaymentModal').classList.remove('hidden');
             resetGatewayForm();
         };
-
         window.hideGatewayPaymentModal = function () {
             document.getElementById('gatewayPaymentModal').classList.add('hidden');
             resetGatewayForm();
@@ -994,99 +956,75 @@ function formatCurrency($amount)
 
         function resetGatewayForm() {
             document.getElementById('gatewayPaymentForm').reset();
-            document.getElementById('gwCustomerName').classList.add('hidden');
-            document.getElementById('gwPhoneError').classList.add('hidden');
-            document.getElementById('gwAmountError').classList.add('hidden');
-            document.getElementById('gwPaymentStatus').classList.add('hidden');
-            document.getElementById('gwPhoneValidationSpinner').classList.add('hidden');
+            ['gwCustomerName', 'gwPhoneError', 'gwAmountError', 'gwPaymentStatus', 'gwPhoneValidationSpinner']
+                .forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById('gwSubmitPaymentBtn').disabled = true;
-            validatedMsisdn = null;
-            customerName = null;
-            currentPaymentReference = null;
-            if (validationTimeout) {
-                clearTimeout(validationTimeout);
-                validationTimeout = null;
-            }
+            validatedMsisdn = null; customerName = null; currentPaymentReference = null;
+            if (validationTimeout) { clearTimeout(validationTimeout); validationTimeout = null; }
         }
 
         window.submitMobileMoneyPayment = function () {
-            const formData = new FormData(document.getElementById('mobileMoneyForm'));
-            console.log('Mobile Money Payment:', Object.fromEntries(formData));
-            alert('Mobile Money payment submitted! (This is a dummy implementation)');
+            const fd = new FormData(document.getElementById('mobileMoneyForm'));
+            console.log('Mobile Money Payment:', Object.fromEntries(fd));
+            alert('Mobile Money payment submitted! (Dummy)');
             hideMobileMoneyModal();
         };
 
         window.submitBankTransferPayment = function () {
-            const formData = new FormData(document.getElementById('bankTransferForm'));
-            console.log('Bank Transfer Payment:', Object.fromEntries(formData));
-            alert('Bank transfer payment submitted! (This is a dummy implementation)');
+            const fd = new FormData(document.getElementById('bankTransferForm'));
+            console.log('Bank Transfer Payment:', Object.fromEntries(fd));
+            alert('Bank transfer payment submitted! (Dummy)');
             hideBankTransferModal();
         };
 
         async function validateGatewayPhoneNumber(phone = null) {
-            const phoneInput = document.getElementById('gwPhoneNumber');
+            const inp = document.getElementById('gwPhoneNumber');
             const spinner = document.getElementById('gwPhoneValidationSpinner');
-            const customerNameDiv = document.getElementById('gwCustomerName');
-            const phoneErrorDiv = document.getElementById('gwPhoneError');
-
-            const phoneValue = phone || phoneInput.value.trim();
-            if (!phoneValue) {
-                showGatewayPhoneError('Please enter a phone number');
-                return;
-            }
-
-            if (!/^\d{9}$/.test(phoneValue)) {
-                showGatewayPhoneError('Please enter exactly 9 digits');
-                return;
-            }
-
-            const formattedPhone = '+256' + phoneValue;
-
+            const nameDiv = document.getElementById('gwCustomerName');
+            const errDiv = document.getElementById('gwPhoneError');
+            const val = phone || inp.value.trim();
+            if (!val) return showGatewayPhoneError('Please enter a phone number');
+            if (!/^\d{9}$/.test(val)) return showGatewayPhoneError('Please enter exactly 9 digits');
+            const formatted = '+256' + val;
             spinner.classList.remove('hidden');
-            phoneErrorDiv.classList.add('hidden');
-            customerNameDiv.classList.add('hidden');
-
+            errDiv.classList.add('hidden');
+            nameDiv.classList.add('hidden');
             try {
-                const response = await fetch(`${apiUrl}?action=validateMsisdn`, {
+                const resp = await fetch(`${apiUrl}?action=validateMsisdn`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        msisdn: formattedPhone
-                    })
+                    body: new URLSearchParams({ msisdn: formatted })
                 });
-
-                const data = await response.json();
-
+                const data = await resp.json();
                 if (data.success) {
-                    validatedMsisdn = formattedPhone;
+                    validatedMsisdn = formatted;
                     customerName = data.customer_name;
-                    customerNameDiv.textContent = `✓ ${data.customer_name}`;
-                    customerNameDiv.classList.remove('hidden');
+                    nameDiv.textContent = `✓ ${data.customer_name}`;
+                    nameDiv.classList.remove('hidden');
                     checkGatewayFormValidity();
                 } else {
                     showGatewayPhoneError(data.message || 'Phone number validation failed');
                 }
-            } catch (error) {
+            } catch (_) {
                 showGatewayPhoneError('Network error. Please try again.');
             } finally {
                 spinner.classList.add('hidden');
             }
         }
 
-        function showGatewayPhoneError(message) {
-            const phoneErrorDiv = document.getElementById('gwPhoneError');
-            phoneErrorDiv.textContent = message;
-            phoneErrorDiv.classList.remove('hidden');
+        function showGatewayPhoneError(msg) {
+            const err = document.getElementById('gwPhoneError');
+            err.textContent = msg;
+            err.classList.remove('hidden');
             document.getElementById('gwCustomerName').classList.add('hidden');
             document.getElementById('gwSubmitPaymentBtn').disabled = true;
-            validatedMsisdn = null;
-            customerName = null;
+            validatedMsisdn = null; customerName = null;
         }
 
-        function showGatewayAmountError(message) {
-            const amountErrorDiv = document.getElementById('gwAmountError');
-            amountErrorDiv.textContent = message;
-            amountErrorDiv.classList.remove('hidden');
+        function showGatewayAmountError(msg) {
+            const err = document.getElementById('gwAmountError');
+            err.textContent = msg;
+            err.classList.remove('hidden');
             document.getElementById('gwSubmitPaymentBtn').disabled = true;
         }
 
@@ -1096,125 +1034,88 @@ function formatCurrency($amount)
         }
 
         function checkGatewayFormValidity() {
-            const amount = parseFloat(document.getElementById('gwAmount').value);
-            const submitBtn = document.getElementById('gwSubmitPaymentBtn');
-
-            if (validatedMsisdn && amount >= 500) {
-                submitBtn.disabled = false;
-            } else {
-                submitBtn.disabled = true;
-            }
+            const amt = parseFloat(document.getElementById('gwAmount').value);
+            const btn = document.getElementById('gwSubmitPaymentBtn');
+            btn.disabled = !(validatedMsisdn && amt >= 500);
         }
 
         window.submitGatewayPayment = async function () {
-            if (!validatedMsisdn) {
-                showGatewayPhoneError('Please validate the phone number first');
-                return;
-            }
-
-            const amount = parseFloat(document.getElementById('gwAmount').value);
-            const description = document.getElementById('gwDescription').value.trim() || 'Zzimba wallet top-up';
-
-            if (!amount || amount < 500) {
-                showGatewayAmountError('Please enter a valid amount (minimum 500 UGX)');
-                return;
-            }
-
-            const submitBtn = document.getElementById('gwSubmitPaymentBtn');
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Processing...';
-
+            if (!validatedMsisdn) return showGatewayPhoneError('Please validate the phone number first');
+            const amt = parseFloat(document.getElementById('gwAmount').value);
+            const desc = document.getElementById('gwDescription').value.trim() || 'Zzimba wallet top-up';
+            if (!amt || amt < 500) return showGatewayAmountError('Please enter a valid amount (minimum 500 UGX)');
+            const btn = document.getElementById('gwSubmitPaymentBtn');
+            btn.disabled = true; btn.textContent = 'Processing...';
             showGatewayPaymentStatus('processing', 'Processing Payment', 'Initiating payment request...');
-
             try {
-                const response = await fetch(`${apiUrl}?action=makePayment`, {
+                const resp = await fetch(`${apiUrl}?action=makePayment`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        msisdn: validatedMsisdn,
-                        amount: amount,
-                        description: description
-                    })
+                    body: new URLSearchParams({ msisdn: validatedMsisdn, amount: amt, description: desc })
                 });
-
-                const data = await response.json();
-
+                const data = await resp.json();
                 if (data.success) {
                     currentPaymentReference = data.internal_reference;
-                    showGatewayPaymentStatus('pending', 'Payment Request Sent', 'Please check your phone and enter your PIN to complete the payment.');
+                    showGatewayPaymentStatus('pending', 'Payment Request Sent', 'Please check your phone...');
                     startGatewayStatusChecking();
                 } else {
                     showGatewayPaymentStatus('error', 'Payment Failed', data.message || 'Failed to initiate payment');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Add Money';
+                    btn.disabled = false; btn.textContent = 'Add Money';
                 }
-            } catch (error) {
+            } catch (_) {
                 showGatewayPaymentStatus('error', 'Network Error', 'Please check your connection and try again.');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Add Money';
+                btn.disabled = false; btn.textContent = 'Add Money';
             }
         };
 
         function showGatewayPaymentStatus(type, title, message) {
-            const statusDiv = document.getElementById('gwPaymentStatus');
-            const statusIcon = document.getElementById('gwStatusIcon');
-            const statusTitle = document.getElementById('gwStatusTitle');
-            const statusMessage = document.getElementById('gwStatusMessage');
-
-            statusTitle.textContent = title;
-            statusMessage.textContent = message;
-
-            statusDiv.className = 'p-4 rounded-xl';
-            statusIcon.className = 'w-8 h-8 rounded-full flex items-center justify-center';
-
+            const div = document.getElementById('gwPaymentStatus');
+            const icon = document.getElementById('gwStatusIcon');
+            const t = document.getElementById('gwStatusTitle');
+            const m = document.getElementById('gwStatusMessage');
+            t.textContent = title; m.textContent = message;
+            div.className = 'p-4 rounded-xl';
+            icon.className = 'w-8 h-8 rounded-full flex items-center justify-center';
             switch (type) {
                 case 'processing':
-                    statusDiv.classList.add('bg-blue-50', 'border', 'border-blue-200');
-                    statusIcon.classList.add('bg-blue-100');
-                    statusIcon.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-600"></i>';
+                    div.classList.add('bg-blue-50', 'border', 'border-blue-200');
+                    icon.classList.add('bg-blue-100');
+                    icon.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-600"></i>';
                     break;
                 case 'pending':
-                    statusDiv.classList.add('bg-yellow-50', 'border', 'border-yellow-200');
-                    statusIcon.classList.add('bg-yellow-100');
-                    statusIcon.innerHTML = '<i class="fas fa-clock text-yellow-600"></i>';
+                    div.classList.add('bg-yellow-50', 'border', 'border-yellow-200');
+                    icon.classList.add('bg-yellow-100');
+                    icon.innerHTML = '<i class="fas fa-clock text-yellow-600"></i>';
                     break;
                 case 'success':
-                    statusDiv.classList.add('bg-green-50', 'border', 'border-green-200');
-                    statusIcon.classList.add('bg-green-100');
-                    statusIcon.innerHTML = '<i class="fas fa-check text-green-600"></i>';
+                    div.classList.add('bg-green-50', 'border', 'border-green-200');
+                    icon.classList.add('bg-green-100');
+                    icon.innerHTML = '<i class="fas fa-check text-green-600"></i>';
                     break;
                 case 'error':
-                    statusDiv.classList.add('bg-red-50', 'border', 'border-red-200');
-                    statusIcon.classList.add('bg-red-100');
-                    statusIcon.innerHTML = '<i class="fas fa-times text-red-600"></i>';
+                    div.classList.add('bg-red-50', 'border', 'border-red-200');
+                    icon.classList.add('bg-red-100');
+                    icon.innerHTML = '<i class="fas fa-times text-red-600"></i>';
                     break;
             }
-
-            statusDiv.classList.remove('hidden');
+            div.classList.remove('hidden');
         }
 
         function startGatewayStatusChecking() {
             if (!currentPaymentReference) return;
-
             statusCheckInterval = setInterval(async () => {
                 try {
-                    const response = await fetch(`${apiUrl}?action=checkStatus`, {
+                    const resp = await fetch(`${apiUrl}?action=checkStatus`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({
-                            internal_reference: currentPaymentReference
-                        })
+                        body: new URLSearchParams({ internal_reference: currentPaymentReference })
                     });
-
-                    const data = await response.json();
-
+                    const data = await resp.json();
                     if (data.success) {
                         if (data.status === 'success') {
                             clearInterval(statusCheckInterval);
                             statusCheckInterval = null;
-
                             hideGatewayPaymentModal();
-
                             setTimeout(() => {
                                 showTransactionResultModal('success', {
                                     title: 'Payment Successful!',
@@ -1228,18 +1129,11 @@ function formatCurrency($amount)
                                     completedAt: data.completed_at
                                 });
                             }, 300);
-
-                            setTimeout(() => {
-                                loadWalletData();
-                                loadTransactions();
-                            }, 1000);
-
+                            setTimeout(() => { loadWalletData(); loadTransactions(); }, 1000);
                         } else if (data.status === 'failed') {
                             clearInterval(statusCheckInterval);
                             statusCheckInterval = null;
-
                             hideGatewayPaymentModal();
-
                             setTimeout(() => {
                                 showTransactionResultModal('failed', {
                                     title: 'Payment Failed',
@@ -1251,15 +1145,15 @@ function formatCurrency($amount)
                                     reason: data.message
                                 });
                             }, 300);
-
                             setTimeout(() => {
-                                document.getElementById('gwSubmitPaymentBtn').disabled = false;
-                                document.getElementById('gwSubmitPaymentBtn').textContent = 'Add Money';
+                                const btn = document.getElementById('gwSubmitPaymentBtn');
+                                btn.disabled = false;
+                                btn.textContent = 'Add Money';
                             }, 1000);
                         }
                     }
-                } catch (error) {
-                    console.error('Status check error:', error);
+                } catch (e) {
+                    console.error('Status check error:', e);
                 }
             }, 3000);
         }
@@ -1268,80 +1162,43 @@ function formatCurrency($amount)
             const modal = document.getElementById('transactionResultModal');
             const icon = document.getElementById('resultIcon');
             const title = document.getElementById('resultTitle');
-            const message = document.getElementById('resultMessage');
-            const details = document.getElementById('resultDetails');
+            const msg = document.getElementById('resultMessage');
+            const det = document.getElementById('resultDetails');
 
             title.textContent = data.title;
-            message.textContent = data.message;
+            msg.textContent = data.message;
 
-            modal.querySelector('.modal-content').className = 'bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden modal-content';
+            const cont = modal.querySelector('.modal-content');
+            cont.className = 'bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden modal-content';
             icon.className = 'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4';
 
             if (type === 'success') {
-                modal.querySelector('.modal-content').classList.add('border-t-4', 'border-green-500');
+                cont.classList.add('border-t-4', 'border-green-500');
                 icon.classList.add('bg-green-100');
                 icon.innerHTML = '<i class="fas fa-check text-green-600 text-2xl"></i>';
-
-                details.innerHTML = `
+                det.innerHTML = `
                     <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Amount:</span>
-                            <span class="font-semibold">${data.currency} ${formatCurrency(data.amount)}</span>
-                        </div>
-                        ${data.charge ? `
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Transaction Fee:</span>
-                            <span class="font-semibold">${data.currency} ${formatCurrency(data.charge)}</span>
-                        </div>
-                        ` : ''}
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Provider:</span>
-                            <span class="font-semibold">${data.provider?.replace('_', ' ') || 'N/A'}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Transaction ID:</span>
-                            <span class="font-mono text-xs">${data.transactionId || 'N/A'}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Reference:</span>
-                            <span class="font-mono text-xs">${data.reference || 'N/A'}</span>
-                        </div>
-                        ${data.completedAt && data.completedAt !== 'N/A' ? `
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Completed:</span>
-                            <span class="text-xs">${new Date(data.completedAt).toLocaleString()}</span>
-                        </div>
-                        ` : ''}
+                        <div class="flex justify-between"><span class="text-gray-600">Amount:</span><span class="font-semibold">${data.currency} ${formatCurrency(data.amount)}</span></div>
+                        ${data.charge ? `<div class="flex justify-between"><span class="text-gray-600">Transaction Fee:</span><span class="font-semibold">${data.currency} ${formatCurrency(data.charge)}</span></div>` : ''}
+                        <div class="flex justify-between"><span class="text-gray-600">Provider:</span><span class="font-semibold">${data.provider?.replace('_', ' ') || 'N/A'}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Transaction ID:</span><span class="font-mono text-xs">${data.transactionId || 'N/A'}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Reference:</span><span class="font-mono text-xs">${data.reference || 'N/A'}</span></div>
+                        ${data.completedAt && data.completedAt !== 'N/A' ? `<div class="flex justify-between"><span class="text-gray-600">Completed:</span><span class="text-xs">${new Date(data.completedAt).toLocaleString()}</span></div>` : ''}
                     </div>
                 `;
             } else {
-                modal.querySelector('.modal-content').classList.add('border-t-4', 'border-red-500');
+                cont.classList.add('border-t-4', 'border-red-500');
                 icon.classList.add('bg-red-100');
                 icon.innerHTML = '<i class="fas fa-times text-red-600 text-2xl"></i>';
-
-                details.innerHTML = `
+                det.innerHTML = `
                     <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Amount:</span>
-                            <span class="font-semibold">${data.currency} ${formatCurrency(data.amount)}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Provider:</span>
-                            <span class="font-semibold">${data.provider?.replace('_', ' ') || 'N/A'}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Reference:</span>
-                            <span class="font-mono text-xs">${data.reference || 'N/A'}</span>
-                        </div>
-                        ${data.reason ? `
-                        <div class="mt-4 p-3 bg-red-50 rounded-lg">
-                            <p class="text-red-800 text-xs overflow-hidden"><strong>Reason:</strong> ${data.reason}</p>
-                        </div>
-                        ` : ''}
+                        <div class="flex justify-between"><span class="text-gray-600">Amount:</span><span class="font-semibold">${data.currency} ${formatCurrency(data.amount)}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Provider:</span><span class="font-semibold">${data.provider?.replace('_', ' ') || 'N/A'}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Reference:</span><span class="font-mono text-xs">${data.reference || 'N/A'}</span></div>
+                        ${data.reason ? `<div class="mt-4 p-3 bg-red-50 rounded-lg"><p class="text-red-800 text-xs overflow-hidden"><strong>Reason:</strong> ${data.reason}</p></div>` : ''}
                     </div>
                 `;
             }
-
             modal.classList.remove('hidden');
         }
 
@@ -1349,64 +1206,43 @@ function formatCurrency($amount)
             document.getElementById('transactionResultModal').classList.add('hidden');
         }
 
-        // Event listeners for gateway form
-        document.getElementById('gwPhoneNumber').addEventListener('blur', function (e) {
+        // Gateway event listeners
+        document.getElementById('gwPhoneNumber').addEventListener('blur', e => {
             const phone = e.target.value.trim();
             if (phone && phone !== validatedMsisdn) {
-                if (validationTimeout) {
-                    clearTimeout(validationTimeout);
-                }
-                validationTimeout = setTimeout(() => {
-                    validateGatewayPhoneNumber(phone);
-                }, 500);
+                if (validationTimeout) clearTimeout(validationTimeout);
+                validationTimeout = setTimeout(() => validateGatewayPhoneNumber(phone), 500);
             }
         });
-
-        document.getElementById('gwPhoneNumber').addEventListener('input', function (e) {
-            if (validatedMsisdn && e.target.value.trim() !== validatedMsisdn) {
+        document.getElementById('gwPhoneNumber').addEventListener('input', e => {
+            const val = e.target.value.trim();
+            if (validatedMsisdn && val !== validatedMsisdn) {
                 document.getElementById('gwCustomerName').classList.add('hidden');
                 document.getElementById('gwPhoneError').classList.add('hidden');
                 document.getElementById('gwSubmitPaymentBtn').disabled = true;
-                validatedMsisdn = null;
-                customerName = null;
+                validatedMsisdn = null; customerName = null;
             }
         });
-
-        document.getElementById('gwPhoneNumber').addEventListener('input', function (e) {
-            let value = e.target.value.replace(/\D/g, '');
-
-            if (value.length > 9) {
-                value = value.substring(0, 9);
-            }
-
-            e.target.value = value;
-
-            if (validatedMsisdn && ('+256' + value) !== validatedMsisdn) {
+        document.getElementById('gwPhoneNumber').addEventListener('input', e => {
+            let v = e.target.value.replace(/\D/g, '').slice(0, 9);
+            e.target.value = v;
+            if (validatedMsisdn && ('+256' + v) !== validatedMsisdn) {
                 document.getElementById('gwCustomerName').classList.add('hidden');
                 document.getElementById('gwPhoneError').classList.add('hidden');
                 document.getElementById('gwSubmitPaymentBtn').disabled = true;
-                validatedMsisdn = null;
-                customerName = null;
+                validatedMsisdn = null; customerName = null;
             }
         });
-
-        document.getElementById('gwAmount').addEventListener('input', function (e) {
-            const amount = parseFloat(e.target.value);
-            if (amount && amount < 500) {
-                showGatewayAmountError('Minimum amount is 500 UGX');
-            } else {
-                hideGatewayAmountError();
-            }
+        document.getElementById('gwAmount').addEventListener('input', e => {
+            const a = parseFloat(e.target.value);
+            if (a && a < 500) showGatewayAmountError('Minimum amount is 500 UGX');
+            else hideGatewayAmountError();
+        });
+        document.getElementById('gwPhoneNumber').addEventListener('keypress', e => {
+            if (e.key === 'Enter') { e.preventDefault(); validateGatewayPhoneNumber(); }
         });
 
-        document.getElementById('gwPhoneNumber').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                validateGatewayPhoneNumber();
-            }
-        });
-
-        // Make functions globally available
+        // Expose for external calls
         window.loadTransactions = loadTransactions;
         window.showTransactionResultModal = showTransactionResultModal;
         window.hideTransactionResultModal = hideTransactionResultModal;
