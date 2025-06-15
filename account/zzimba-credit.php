@@ -2,6 +2,17 @@
 require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Zzimba Credit';
 $activeNav = 'zzimba-credit';
+
+// Fetch active cash accounts
+$cashAccounts = [];
+try {
+    $stmt = $pdo->prepare("SELECT id, name, type, provider, account_number FROM zzimba_cash_accounts WHERE status = 'active' ORDER BY type, name");
+    $stmt->execute();
+    $cashAccounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    error_log("Error fetching cash accounts: " . $e->getMessage());
+}
+
 ob_start();
 
 function formatCurrency($amount)
@@ -11,7 +22,6 @@ function formatCurrency($amount)
 ?>
 
 <div class="min-h-screen bg-gray-50">
-    <!-- Header Section -->
     <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
         <div class="max-w-6xl mx-auto">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -27,9 +37,8 @@ function formatCurrency($amount)
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <button id="add-money-btn" onclick="showAddMoneyModal()"
+                    <button id="add-money-btn" onclick="showPaymentMethodModal()"
                         class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 font-medium shadow-lg shadow-primary/25">
                         <i class="fas fa-plus"></i><span>Add Money</span>
                     </button>
@@ -43,13 +52,10 @@ function formatCurrency($amount)
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Wallet Overview Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8 overflow-hidden">
             <div class="bg-gradient-to-r from-primary/5 to-primary/10 p-6 border-b border-gray-100">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Wallet Info -->
                     <div class="lg:col-span-2">
                         <div class="flex items-start gap-4">
                             <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
@@ -80,7 +86,6 @@ function formatCurrency($amount)
                         </div>
                     </div>
 
-                    <!-- Balance Display -->
                     <div class="lg:text-right">
                         <p class="text-sm font-medium text-gray-600 mb-1">Current Balance</p>
                         <div id="balanceLoading" class="animate-pulse">
@@ -100,9 +105,7 @@ function formatCurrency($amount)
             </div>
         </div>
 
-        <!-- Transaction Statement -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <!-- Statement Header -->
             <div class="p-6 border-b border-gray-100">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
@@ -110,7 +113,6 @@ function formatCurrency($amount)
                         <p class="text-sm text-gray-text mt-1">Recent transactions and account activity</p>
                     </div>
 
-                    <!-- Date Filter -->
                     <div class="flex items-center gap-3">
                         <select id="dateFilter" onchange="loadTransactions()"
                             class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-sm">
@@ -124,7 +126,6 @@ function formatCurrency($amount)
                 </div>
             </div>
 
-            <!-- Loading State -->
             <div id="transactionsLoading" class="p-6">
                 <div class="animate-pulse space-y-4">
                     <div class="h-4 bg-gray-200 rounded w-full"></div>
@@ -134,7 +135,6 @@ function formatCurrency($amount)
                 </div>
             </div>
 
-            <!-- Desktop Table View -->
             <div id="transactionsTable" class="hidden lg:block overflow-x-auto">
                 <table class="w-full" id="transactionsTableElement">
                     <thead class="bg-user-accent border-b border-gray-200">
@@ -166,34 +166,28 @@ function formatCurrency($amount)
                         </tr>
                     </thead>
                     <tbody id="transactionsTableBody" class="divide-y divide-gray-100">
-                        <!-- Populated via JavaScript -->
                     </tbody>
                 </table>
             </div>
 
-            <!-- Mobile Card View -->
             <div id="transactionsMobile" class="lg:hidden p-4 space-y-4 hidden">
-                <!-- Populated via JavaScript -->
             </div>
 
-            <!-- Empty State -->
             <div id="transactionsEmpty" class="hidden text-center py-16">
                 <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-receipt text-gray-400 text-2xl"></i>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">No transactions found</h3>
                 <p class="text-gray-500 mb-6">Start by adding money to your wallet</p>
-                <button onclick="showAddMoneyModal()"
+                <button onclick="showPaymentMethodModal()"
                     class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
                     Add Money
                 </button>
             </div>
 
-            <!-- Pagination -->
             <div id="transactionsPagination" class="hidden px-6 py-4 border-t border-gray-100 bg-gray-50">
                 <div class="flex items-center justify-between">
                     <div class="text-sm text-gray-600" id="paginationInfo">
-                        <!-- Populated via JavaScript -->
                     </div>
                     <div class="flex items-center gap-2">
                         <button
@@ -214,85 +208,303 @@ function formatCurrency($amount)
         </div>
     </div>
 
-    <!-- Add Money Modal -->
-    <div id="addMoneyModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideAddMoneyModal()"></div>
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+    <!-- Payment Method Selection Modal -->
+    <div id="paymentMethodModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden">
             <div class="p-6">
-                <!-- Header -->
-                <div class="flex items-center gap-4 mb-6">
-                    <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-plus text-primary text-xl"></i>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-credit-card text-primary text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Choose Payment Method</h3>
+                            <p class="text-sm text-gray-500">Select how you want to add money to your wallet</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-900">Add Money</h3>
-                        <p class="text-sm text-gray-500">Top up your Zzimba wallet</p>
-                    </div>
+                    <button onclick="hidePaymentMethodModal()"
+                        class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
                 </div>
 
-                <!-- Form -->
-                <form id="addMoneyForm" class="space-y-4">
-                    <!-- Phone Number -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="paymentMethodCards">
+                    <?php foreach ($cashAccounts as $account): ?>
+                        <div class="payment-method-card border-2 border-gray-200 rounded-xl p-4 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer"
+                            onclick="selectPaymentMethod('<?= htmlspecialchars($account['id']) ?>', '<?= htmlspecialchars($account['type']) ?>', '<?= htmlspecialchars($account['name']) ?>', '<?= htmlspecialchars($account['account_number']) ?>', '<?= htmlspecialchars($account['provider']) ?>')">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                                    <?php
+                                    $iconClass = 'fas fa-university';
+                                    switch ($account['type']) {
+                                        case 'mobile_money':
+                                            $iconClass = 'fas fa-mobile-alt';
+                                            break;
+                                        case 'bank':
+                                            $iconClass = 'fas fa-university';
+                                            break;
+                                        case 'gateway':
+                                            $iconClass = 'fas fa-credit-card';
+                                            break;
+                                    }
+                                    ?>
+                                    <i class="<?= $iconClass ?> text-gray-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900"><?= htmlspecialchars($account['name']) ?></h4>
+                                    <?php if ($account['type'] !== 'gateway'): ?>
+                                        <p class="text-sm text-gray-500"><?= htmlspecialchars($account['account_number']) ?></p>
+                                    <?php endif; ?>
+                                    <p class="text-xs text-gray-400 capitalize">
+                                        <?= str_replace('_', ' ', $account['type']) ?>
+                                    </p>
+                                </div>
+                                <div class="text-primary">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="flex justify-end mt-6">
+                    <button onclick="hidePaymentMethodModal()"
+                        class="px-6 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Money Form Modal -->
+    <div id="mobileMoneyModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-mobile-alt text-primary text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Mobile Money Payment</h3>
+                            <p class="text-sm text-gray-500" id="mobileMoneyAccountName"></p>
+                        </div>
+                    </div>
+                    <button onclick="hideMobileMoneyModal()"
+                        class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="mobileMoneyForm" class="space-y-4">
                     <div>
-                        <label for="phoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <label for="mmPhoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Phone Number Used
+                        </label>
+                        <div class="relative">
+                            <div class="absolute left-3 top-3 text-gray-500 font-medium">+256</div>
+                            <input type="tel" id="mmPhoneNumber" name="mmPhoneNumber"
+                                class="w-full pl-16 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                placeholder="771234567" maxlength="9" pattern="[0-9]{9}" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="mmAmount" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Amount Sent (UGX)
+                        </label>
+                        <input type="number" id="mmAmount" name="mmAmount" min="500" step="100"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            placeholder="Enter amount sent" required>
+                    </div>
+
+                    <div>
+                        <label for="mmTransactionId" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Transaction ID
+                        </label>
+                        <input type="text" id="mmTransactionId" name="mmTransactionId"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            placeholder="Enter transaction ID" required>
+                    </div>
+
+                    <div>
+                        <label for="mmDateTime" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Date & Time Sent
+                        </label>
+                        <input type="datetime-local" id="mmDateTime" name="mmDateTime"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            required>
+                    </div>
+                </form>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="hideMobileMoneyModal()"
+                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="submitMobileMoneyPayment()"
+                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
+                        Submit Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bank Transfer Form Modal -->
+    <div id="bankTransferModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-university text-primary text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Bank Transfer</h3>
+                            <p class="text-sm text-gray-500" id="bankAccountName"></p>
+                        </div>
+                    </div>
+                    <button onclick="hideBankTransferModal()"
+                        class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="bankTransferForm" class="space-y-4">
+                    <div>
+                        <label for="btAmount" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Amount Deposited (UGX)
+                        </label>
+                        <input type="number" id="btAmount" name="btAmount" min="500" step="100"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            placeholder="Enter amount deposited" required>
+                    </div>
+
+                    <div>
+                        <label for="btReference" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Bank Reference/Receipt Number
+                        </label>
+                        <input type="text" id="btReference" name="btReference"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            placeholder="Enter reference number" required>
+                    </div>
+
+                    <div>
+                        <label for="btDepositorName" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Depositor Name
+                        </label>
+                        <input type="text" id="btDepositorName" name="btDepositorName"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            placeholder="Name used for deposit" required>
+                    </div>
+
+                    <div>
+                        <label for="btDateTime" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Date & Time of Deposit
+                        </label>
+                        <input type="datetime-local" id="btDateTime" name="btDateTime"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            required>
+                    </div>
+                </form>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="hideBankTransferModal()"
+                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="submitBankTransferPayment()"
+                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
+                        Submit Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gateway Payment Modal (Original Implementation) -->
+    <div id="gatewayPaymentModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-credit-card text-primary text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Gateway Payment</h3>
+                            <p class="text-sm text-gray-500" id="gatewayAccountName"></p>
+                        </div>
+                    </div>
+                    <button onclick="hideGatewayPaymentModal()"
+                        class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="gatewayPaymentForm" class="space-y-4">
+                    <div>
+                        <label for="gwPhoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">
                             Phone Number
                         </label>
                         <div class="relative">
                             <div class="absolute left-3 top-3 text-gray-500 font-medium">+256</div>
-                            <input type="tel" id="phoneNumber" name="phoneNumber"
+                            <input type="tel" id="gwPhoneNumber" name="gwPhoneNumber"
                                 class="w-full pl-16 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                 placeholder="771234567" maxlength="9" pattern="[0-9]{9}" required>
-                            <div id="phoneValidationSpinner" class="absolute right-3 top-3 hidden">
+                            <div id="gwPhoneValidationSpinner" class="absolute right-3 top-3 hidden">
                                 <i class="fas fa-spinner fa-spin text-primary"></i>
                             </div>
                         </div>
                         <div class="mt-1 text-xs text-gray-500">Enter exactly 9 digits (without the leading 0)</div>
-                        <div id="customerName" class="mt-2 text-sm text-green-600 hidden"></div>
-                        <div id="phoneError" class="mt-2 text-sm text-red-600 hidden"></div>
+                        <div id="gwCustomerName" class="mt-2 text-sm text-green-600 hidden"></div>
+                        <div id="gwPhoneError" class="mt-2 text-sm text-red-600 hidden"></div>
                     </div>
 
-                    <!-- Amount -->
                     <div>
-                        <label for="amount" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <label for="gwAmount" class="block text-sm font-semibold text-gray-700 mb-2">
                             Amount (UGX)
                         </label>
-                        <input type="number" id="amount" name="amount" min="500" step="100"
+                        <input type="number" id="gwAmount" name="gwAmount" min="500" step="100"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                             placeholder="Enter amount (minimum 500)" required>
-                        <div id="amountError" class="mt-2 text-sm text-red-600 hidden"></div>
+                        <div id="gwAmountError" class="mt-2 text-sm text-red-600 hidden"></div>
                     </div>
 
-                    <!-- Description -->
                     <div>
-                        <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <label for="gwDescription" class="block text-sm font-semibold text-gray-700 mb-2">
                             Description (Optional)
                         </label>
-                        <input type="text" id="description" name="description"
+                        <input type="text" id="gwDescription" name="gwDescription"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                             placeholder="Payment description">
                     </div>
 
-                    <!-- Status Display -->
-                    <div id="paymentStatus" class="hidden p-4 rounded-xl">
+                    <div id="gwPaymentStatus" class="hidden p-4 rounded-xl">
                         <div class="flex items-center gap-3">
-                            <div id="statusIcon" class="w-8 h-8 rounded-full flex items-center justify-center">
+                            <div id="gwStatusIcon" class="w-8 h-8 rounded-full flex items-center justify-center">
                                 <i class="fas fa-spinner fa-spin"></i>
                             </div>
                             <div>
-                                <div id="statusTitle" class="font-medium text-gray-900">Processing Payment</div>
-                                <div id="statusMessage" class="text-sm text-gray-600">Please wait...</div>
+                                <div id="gwStatusTitle" class="font-medium text-gray-900">Processing Payment</div>
+                                <div id="gwStatusMessage" class="text-sm text-gray-600">Please wait...</div>
                             </div>
                         </div>
                     </div>
                 </form>
 
-                <!-- Actions -->
                 <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="hideAddMoneyModal()"
+                    <button type="button" onclick="hideGatewayPaymentModal()"
                         class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
                         Cancel
                     </button>
-                    <button type="button" id="submitPaymentBtn" onclick="submitPayment()" disabled
+                    <button type="button" id="gwSubmitPaymentBtn" onclick="submitGatewayPayment()" disabled
                         class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                         Add Money
                     </button>
@@ -303,24 +515,18 @@ function formatCurrency($amount)
 
     <!-- Transaction Result Modal -->
     <div id="transactionResultModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideTransactionResultModal()"></div>
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden modal-content">
             <div class="p-6 text-center">
-                <!-- Icon -->
                 <div id="resultIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <!-- Icon populated via JavaScript -->
                 </div>
 
-                <!-- Title and Message -->
                 <h3 id="resultTitle" class="text-xl font-semibold text-gray-900 mb-2"></h3>
                 <p id="resultMessage" class="text-gray-600 mb-6 overflow-hidden"></p>
 
-                <!-- Transaction Details -->
                 <div id="resultDetails" class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
-                    <!-- Details populated via JavaScript -->
                 </div>
 
-                <!-- Actions -->
                 <div class="flex gap-3">
                     <button onclick="hideTransactionResultModal()"
                         class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
@@ -341,7 +547,11 @@ function formatCurrency($amount)
         overflow: hidden;
         line-height: 1.4;
         max-height: 2.8em;
-        /* 2 lines * 1.4 line-height */
+    }
+
+    .payment-method-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 </style>
 
@@ -356,12 +566,11 @@ function formatCurrency($amount)
         let statusCheckInterval = null;
         let validationTimeout = null;
         let transactions = [];
+        let selectedAccount = null;
 
-        // Load initial data
         loadWalletData();
         loadTransactions();
 
-        // Initialize table font sizing
         adjustTableFontSize();
         window.addEventListener('resize', adjustTableFontSize);
 
@@ -398,7 +607,6 @@ function formatCurrency($amount)
                             badgeIcon.className = 'fas fa-times-circle mr-1';
                         }
 
-                        // Show wallet info and hide loading
                         document.getElementById('walletLoading').classList.add('hidden');
                         document.getElementById('balanceLoading').classList.add('hidden');
                         document.getElementById('walletInfo').classList.remove('hidden');
@@ -435,7 +643,6 @@ function formatCurrency($amount)
                 params.filter = 'all';
             }
 
-            // Show loading state
             document.getElementById('transactionsLoading').classList.remove('hidden');
             document.getElementById('transactionsTable').classList.add('hidden');
             document.getElementById('transactionsMobile').classList.add('hidden');
@@ -452,7 +659,6 @@ function formatCurrency($amount)
                     document.getElementById('transactionsLoading').classList.add('hidden');
 
                     if (data.success && data.statement) {
-                        // Transform the statement data into the expected format
                         const transformedTransactions = transformStatementData(data.statement);
                         transactions = transformedTransactions;
 
@@ -482,7 +688,6 @@ function formatCurrency($amount)
 
             statement.forEach(transaction => {
                 if (transaction.entries && transaction.entries.length > 0) {
-                    // Process each entry for successful transactions
                     transaction.entries.forEach(entry => {
                         transformedTransactions.push({
                             transaction_id: transaction.transaction_id,
@@ -502,7 +707,6 @@ function formatCurrency($amount)
                         });
                     });
                 } else {
-                    // For failed transactions or transactions without entries
                     transformedTransactions.push({
                         transaction_id: transaction.transaction_id,
                         transaction_details: getDetailedTransactionDescription(transaction, null),
@@ -545,16 +749,13 @@ function formatCurrency($amount)
                 description += ` via ${methodMap[transaction.payment_method] || transaction.payment_method}`;
             }
 
-            // Add entry note for successful transactions
             if (entry && entry.entry_note) {
                 description = entry.entry_note;
             }
 
-            // Add status and reason for failed transactions
             if (transaction.status === 'FAILED') {
                 description += ' (Failed)';
                 if (transaction.note && transaction.note !== 'Request payment completed successfully.') {
-                    // Clean up the note for display
                     let reason = transaction.note.replace(/_/g, ' ').toLowerCase();
                     reason = reason.charAt(0).toUpperCase() + reason.slice(1);
                     description += ` - ${reason}`;
@@ -572,7 +773,6 @@ function formatCurrency($amount)
             mobile.innerHTML = '';
 
             transactionsList.forEach((transaction, index) => {
-                // Desktop row
                 const tr = document.createElement('tr');
                 tr.className = `${index % 2 === 0 ? 'bg-user-content' : 'bg-white'} hover:bg-user-secondary/20 transition-colors`;
 
@@ -581,7 +781,6 @@ function formatCurrency($amount)
                 const balance = parseFloat(transaction.balance || 0);
                 const amountTotal = parseFloat(transaction.amount_total || 0);
 
-                // Format dates
                 const valueDate = new Date(transaction.value_date);
                 const dateStr = valueDate.toLocaleDateString('en-GB', {
                     year: 'numeric',
@@ -594,7 +793,6 @@ function formatCurrency($amount)
                     hour12: true
                 });
 
-                // Truncate transaction details if too long
                 const maxDetailsLength = 45;
                 let displayDetails = transaction.transaction_details || 'N/A';
                 if (displayDetails.length > maxDetailsLength) {
@@ -637,7 +835,6 @@ function formatCurrency($amount)
         `;
                 tbody.appendChild(tr);
 
-                // Mobile card
                 const card = document.createElement('div');
                 card.className = 'bg-gray-50 rounded-xl p-4 border border-gray-100';
                 card.innerHTML = `
@@ -684,25 +881,165 @@ function formatCurrency($amount)
             });
         }
 
-        async function validatePhoneNumber(phone = null) {
-            const phoneInput = document.getElementById('phoneNumber');
-            const spinner = document.getElementById('phoneValidationSpinner');
-            const customerNameDiv = document.getElementById('customerName');
-            const phoneErrorDiv = document.getElementById('phoneError');
+        function showTransactionsError(message) {
+            document.getElementById('transactionsLoading').innerHTML = `<div class="text-red-600 text-center p-6">${message}</div>`;
+        }
+
+        function updatePaginationInfo(count) {
+            document.getElementById('paginationInfo').textContent = `Showing 1-${count} of ${count} transactions`;
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-UG', {
+                style: 'decimal',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function adjustTableFontSize() {
+            const table = document.getElementById('transactionsTableElement');
+            if (!table) return;
+
+            const container = table.parentElement;
+            let fontSize = 14;
+
+            table.style.fontSize = fontSize + 'px';
+
+            while ((table.scrollWidth > container.clientWidth || hasOverflowingTransactionDetails()) && fontSize > 8) {
+                fontSize -= 0.5;
+                table.style.fontSize = fontSize + 'px';
+            }
+
+            if (fontSize < 10) {
+                table.style.fontSize = '10px';
+            }
+        }
+
+        function hasOverflowingTransactionDetails() {
+            const detailElements = document.querySelectorAll('.transaction-details');
+            for (let element of detailElements) {
+                if (element.scrollHeight > element.clientHeight) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Modal functions
+        window.showPaymentMethodModal = function () {
+            document.getElementById('paymentMethodModal').classList.remove('hidden');
+        };
+
+        window.hidePaymentMethodModal = function () {
+            document.getElementById('paymentMethodModal').classList.add('hidden');
+        };
+
+        window.selectPaymentMethod = function (accountId, type, name, accountNumber, provider) {
+            selectedAccount = { id: accountId, type: type, name: name, accountNumber: accountNumber, provider: provider };
+            hidePaymentMethodModal();
+
+            switch (type) {
+                case 'mobile_money':
+                    showMobileMoneyModal();
+                    break;
+                case 'bank':
+                    showBankTransferModal();
+                    break;
+                case 'gateway':
+                    showGatewayPaymentModal();
+                    break;
+                default:
+                    alert('This payment method is coming soon!');
+                    break;
+            }
+        };
+
+        window.showMobileMoneyModal = function () {
+            document.getElementById('mobileMoneyAccountName').textContent = `${selectedAccount.name} - ${selectedAccount.accountNumber}`;
+            document.getElementById('mmDateTime').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('mobileMoneyModal').classList.remove('hidden');
+        };
+
+        window.hideMobileMoneyModal = function () {
+            document.getElementById('mobileMoneyModal').classList.add('hidden');
+            document.getElementById('mobileMoneyForm').reset();
+        };
+
+        window.showBankTransferModal = function () {
+            document.getElementById('bankAccountName').textContent = `${selectedAccount.name} - ${selectedAccount.accountNumber}`;
+            document.getElementById('btDateTime').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('bankTransferModal').classList.remove('hidden');
+        };
+
+        window.hideBankTransferModal = function () {
+            document.getElementById('bankTransferModal').classList.add('hidden');
+            document.getElementById('bankTransferForm').reset();
+        };
+
+        window.showGatewayPaymentModal = function () {
+            document.getElementById('gatewayAccountName').textContent = selectedAccount.name;
+            document.getElementById('gatewayPaymentModal').classList.remove('hidden');
+            resetGatewayForm();
+        };
+
+        window.hideGatewayPaymentModal = function () {
+            document.getElementById('gatewayPaymentModal').classList.add('hidden');
+            resetGatewayForm();
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+                statusCheckInterval = null;
+            }
+        };
+
+        function resetGatewayForm() {
+            document.getElementById('gatewayPaymentForm').reset();
+            document.getElementById('gwCustomerName').classList.add('hidden');
+            document.getElementById('gwPhoneError').classList.add('hidden');
+            document.getElementById('gwAmountError').classList.add('hidden');
+            document.getElementById('gwPaymentStatus').classList.add('hidden');
+            document.getElementById('gwPhoneValidationSpinner').classList.add('hidden');
+            document.getElementById('gwSubmitPaymentBtn').disabled = true;
+            validatedMsisdn = null;
+            customerName = null;
+            currentPaymentReference = null;
+            if (validationTimeout) {
+                clearTimeout(validationTimeout);
+                validationTimeout = null;
+            }
+        }
+
+        window.submitMobileMoneyPayment = function () {
+            const formData = new FormData(document.getElementById('mobileMoneyForm'));
+            console.log('Mobile Money Payment:', Object.fromEntries(formData));
+            alert('Mobile Money payment submitted! (This is a dummy implementation)');
+            hideMobileMoneyModal();
+        };
+
+        window.submitBankTransferPayment = function () {
+            const formData = new FormData(document.getElementById('bankTransferForm'));
+            console.log('Bank Transfer Payment:', Object.fromEntries(formData));
+            alert('Bank transfer payment submitted! (This is a dummy implementation)');
+            hideBankTransferModal();
+        };
+
+        async function validateGatewayPhoneNumber(phone = null) {
+            const phoneInput = document.getElementById('gwPhoneNumber');
+            const spinner = document.getElementById('gwPhoneValidationSpinner');
+            const customerNameDiv = document.getElementById('gwCustomerName');
+            const phoneErrorDiv = document.getElementById('gwPhoneError');
 
             const phoneValue = phone || phoneInput.value.trim();
             if (!phoneValue) {
-                showPhoneError('Please enter a phone number');
+                showGatewayPhoneError('Please enter a phone number');
                 return;
             }
 
-            // Validate that it's exactly 9 digits
             if (!/^\d{9}$/.test(phoneValue)) {
-                showPhoneError('Please enter exactly 9 digits');
+                showGatewayPhoneError('Please enter exactly 9 digits');
                 return;
             }
 
-            // Format phone number with +256
             const formattedPhone = '+256' + phoneValue;
 
             spinner.classList.remove('hidden');
@@ -725,123 +1062,42 @@ function formatCurrency($amount)
                     customerName = data.customer_name;
                     customerNameDiv.textContent = `✓ ${data.customer_name}`;
                     customerNameDiv.classList.remove('hidden');
-                    checkFormValidity();
+                    checkGatewayFormValidity();
                 } else {
-                    showPhoneError(data.message || 'Phone number validation failed');
+                    showGatewayPhoneError(data.message || 'Phone number validation failed');
                 }
             } catch (error) {
-                showPhoneError('Network error. Please try again.');
+                showGatewayPhoneError('Network error. Please try again.');
             } finally {
                 spinner.classList.add('hidden');
             }
         }
 
-        function showTransactionsError(message) {
-            document.getElementById('transactionsLoading').innerHTML = `<div class="text-red-600 text-center p-6">${message}</div>`;
-        }
-
-        function updatePaginationInfo(count) {
-            document.getElementById('paginationInfo').textContent = `Showing 1-${count} of ${count} transactions`;
-        }
-
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-UG', {
-                style: 'decimal',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(amount);
-        }
-
-        function adjustTableFontSize() {
-            const table = document.getElementById('transactionsTableElement');
-            if (!table) return;
-
-            const container = table.parentElement;
-            let fontSize = 14; // Start with base font size
-
-            table.style.fontSize = fontSize + 'px';
-
-            // Check if table overflows horizontally or if transaction details exceed 2 lines
-            while ((table.scrollWidth > container.clientWidth || hasOverflowingTransactionDetails()) && fontSize > 8) {
-                fontSize -= 0.5;
-                table.style.fontSize = fontSize + 'px';
-            }
-
-            // Ensure minimum readable font size
-            if (fontSize < 10) {
-                table.style.fontSize = '10px';
-            }
-        }
-
-        function hasOverflowingTransactionDetails() {
-            const detailElements = document.querySelectorAll('.transaction-details');
-            for (let element of detailElements) {
-                if (element.scrollHeight > element.clientHeight) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // Modal functions
-        window.showAddMoneyModal = function () {
-            document.getElementById('addMoneyModal').classList.remove('hidden');
-            resetForm();
-        };
-
-        window.hideAddMoneyModal = function () {
-            document.getElementById('addMoneyModal').classList.add('hidden');
-            resetForm();
-            if (statusCheckInterval) {
-                clearInterval(statusCheckInterval);
-                statusCheckInterval = null;
-            }
-        };
-
-        function resetForm() {
-            document.getElementById('addMoneyForm').reset();
-            document.getElementById('customerName').classList.add('hidden');
-            document.getElementById('phoneError').classList.add('hidden');
-            document.getElementById('amountError').classList.add('hidden');
-            document.getElementById('paymentStatus').classList.add('hidden');
-            document.getElementById('phoneValidationSpinner').classList.add('hidden');
-            document.getElementById('submitPaymentBtn').disabled = true;
-            validatedMsisdn = null;
-            customerName = null;
-            currentPaymentReference = null;
-            if (validationTimeout) {
-                clearTimeout(validationTimeout);
-                validationTimeout = null;
-            }
-        }
-
-        // Phone validation with auto-trigger on blur
-
-        function showPhoneError(message) {
-            const phoneErrorDiv = document.getElementById('phoneError');
+        function showGatewayPhoneError(message) {
+            const phoneErrorDiv = document.getElementById('gwPhoneError');
             phoneErrorDiv.textContent = message;
             phoneErrorDiv.classList.remove('hidden');
-            document.getElementById('customerName').classList.add('hidden');
-            document.getElementById('submitPaymentBtn').disabled = true;
+            document.getElementById('gwCustomerName').classList.add('hidden');
+            document.getElementById('gwSubmitPaymentBtn').disabled = true;
             validatedMsisdn = null;
             customerName = null;
         }
 
-        function showAmountError(message) {
-            const amountErrorDiv = document.getElementById('amountError');
+        function showGatewayAmountError(message) {
+            const amountErrorDiv = document.getElementById('gwAmountError');
             amountErrorDiv.textContent = message;
             amountErrorDiv.classList.remove('hidden');
-            document.getElementById('submitPaymentBtn').disabled = true;
+            document.getElementById('gwSubmitPaymentBtn').disabled = true;
         }
 
-        function hideAmountError() {
-            document.getElementById('amountError').classList.add('hidden');
-            checkFormValidity();
+        function hideGatewayAmountError() {
+            document.getElementById('gwAmountError').classList.add('hidden');
+            checkGatewayFormValidity();
         }
 
-        function checkFormValidity() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            const submitBtn = document.getElementById('submitPaymentBtn');
+        function checkGatewayFormValidity() {
+            const amount = parseFloat(document.getElementById('gwAmount').value);
+            const submitBtn = document.getElementById('gwSubmitPaymentBtn');
 
             if (validatedMsisdn && amount >= 500) {
                 submitBtn.disabled = false;
@@ -850,26 +1106,25 @@ function formatCurrency($amount)
             }
         }
 
-        // Payment submission
-        window.submitPayment = async function () {
+        window.submitGatewayPayment = async function () {
             if (!validatedMsisdn) {
-                showPhoneError('Please validate the phone number first');
+                showGatewayPhoneError('Please validate the phone number first');
                 return;
             }
 
-            const amount = parseFloat(document.getElementById('amount').value);
-            const description = document.getElementById('description').value.trim() || 'Zzimba wallet top-up';
+            const amount = parseFloat(document.getElementById('gwAmount').value);
+            const description = document.getElementById('gwDescription').value.trim() || 'Zzimba wallet top-up';
 
             if (!amount || amount < 500) {
-                showAmountError('Please enter a valid amount (minimum 500 UGX)');
+                showGatewayAmountError('Please enter a valid amount (minimum 500 UGX)');
                 return;
             }
 
-            const submitBtn = document.getElementById('submitPaymentBtn');
+            const submitBtn = document.getElementById('gwSubmitPaymentBtn');
             submitBtn.disabled = true;
             submitBtn.textContent = 'Processing...';
 
-            showPaymentStatus('processing', 'Processing Payment', 'Initiating payment request...');
+            showGatewayPaymentStatus('processing', 'Processing Payment', 'Initiating payment request...');
 
             try {
                 const response = await fetch(`${apiUrl}?action=makePayment`, {
@@ -886,30 +1141,29 @@ function formatCurrency($amount)
 
                 if (data.success) {
                     currentPaymentReference = data.internal_reference;
-                    showPaymentStatus('pending', 'Payment Request Sent', 'Please check your phone and enter your PIN to complete the payment.');
-                    startStatusChecking();
+                    showGatewayPaymentStatus('pending', 'Payment Request Sent', 'Please check your phone and enter your PIN to complete the payment.');
+                    startGatewayStatusChecking();
                 } else {
-                    showPaymentStatus('error', 'Payment Failed', data.message || 'Failed to initiate payment');
+                    showGatewayPaymentStatus('error', 'Payment Failed', data.message || 'Failed to initiate payment');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Add Money';
                 }
             } catch (error) {
-                showPaymentStatus('error', 'Network Error', 'Please check your connection and try again.');
+                showGatewayPaymentStatus('error', 'Network Error', 'Please check your connection and try again.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Add Money';
             }
         };
 
-        function showPaymentStatus(type, title, message) {
-            const statusDiv = document.getElementById('paymentStatus');
-            const statusIcon = document.getElementById('statusIcon');
-            const statusTitle = document.getElementById('statusTitle');
-            const statusMessage = document.getElementById('statusMessage');
+        function showGatewayPaymentStatus(type, title, message) {
+            const statusDiv = document.getElementById('gwPaymentStatus');
+            const statusIcon = document.getElementById('gwStatusIcon');
+            const statusTitle = document.getElementById('gwStatusTitle');
+            const statusMessage = document.getElementById('gwStatusMessage');
 
             statusTitle.textContent = title;
             statusMessage.textContent = message;
 
-            // Reset classes
             statusDiv.className = 'p-4 rounded-xl';
             statusIcon.className = 'w-8 h-8 rounded-full flex items-center justify-center';
 
@@ -939,7 +1193,7 @@ function formatCurrency($amount)
             statusDiv.classList.remove('hidden');
         }
 
-        function startStatusChecking() {
+        function startGatewayStatusChecking() {
             if (!currentPaymentReference) return;
 
             statusCheckInterval = setInterval(async () => {
@@ -959,10 +1213,8 @@ function formatCurrency($amount)
                             clearInterval(statusCheckInterval);
                             statusCheckInterval = null;
 
-                            // Hide the add money modal first
-                            hideAddMoneyModal();
+                            hideGatewayPaymentModal();
 
-                            // Show success modal with transaction details
                             setTimeout(() => {
                                 showTransactionResultModal('success', {
                                     title: 'Payment Successful!',
@@ -977,7 +1229,6 @@ function formatCurrency($amount)
                                 });
                             }, 300);
 
-                            // Reload wallet and transaction data
                             setTimeout(() => {
                                 loadWalletData();
                                 loadTransactions();
@@ -987,10 +1238,8 @@ function formatCurrency($amount)
                             clearInterval(statusCheckInterval);
                             statusCheckInterval = null;
 
-                            // Hide the add money modal first
-                            hideAddMoneyModal();
+                            hideGatewayPaymentModal();
 
-                            // Show failure modal with error details
                             setTimeout(() => {
                                 showTransactionResultModal('failed', {
                                     title: 'Payment Failed',
@@ -1003,18 +1252,16 @@ function formatCurrency($amount)
                                 });
                             }, 300);
 
-                            // Reset the form for retry
                             setTimeout(() => {
-                                document.getElementById('submitPaymentBtn').disabled = false;
-                                document.getElementById('submitPaymentBtn').textContent = 'Add Money';
+                                document.getElementById('gwSubmitPaymentBtn').disabled = false;
+                                document.getElementById('gwSubmitPaymentBtn').textContent = 'Add Money';
                             }, 1000);
                         }
-                        // If status is still pending, continue checking
                     }
                 } catch (error) {
                     console.error('Status check error:', error);
                 }
-            }, 3000); // Check every 3 seconds
+            }, 3000);
         }
 
         function showTransactionResultModal(type, data) {
@@ -1027,7 +1274,6 @@ function formatCurrency($amount)
             title.textContent = data.title;
             message.textContent = data.message;
 
-            // Reset classes
             modal.querySelector('.modal-content').className = 'bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden modal-content';
             icon.className = 'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4';
 
@@ -1103,68 +1349,60 @@ function formatCurrency($amount)
             document.getElementById('transactionResultModal').classList.add('hidden');
         }
 
-        // Event listeners
-        document.getElementById('phoneNumber').addEventListener('blur', function (e) {
+        // Event listeners for gateway form
+        document.getElementById('gwPhoneNumber').addEventListener('blur', function (e) {
             const phone = e.target.value.trim();
             if (phone && phone !== validatedMsisdn) {
-                // Clear previous validation timeout
                 if (validationTimeout) {
                     clearTimeout(validationTimeout);
                 }
-                // Add small delay to avoid too frequent API calls
                 validationTimeout = setTimeout(() => {
-                    validatePhoneNumber(phone);
+                    validateGatewayPhoneNumber(phone);
                 }, 500);
             }
         });
 
-        document.getElementById('phoneNumber').addEventListener('input', function (e) {
-            // Reset validation when phone number changes
+        document.getElementById('gwPhoneNumber').addEventListener('input', function (e) {
             if (validatedMsisdn && e.target.value.trim() !== validatedMsisdn) {
-                document.getElementById('customerName').classList.add('hidden');
-                document.getElementById('phoneError').classList.add('hidden');
-                document.getElementById('submitPaymentBtn').disabled = true;
+                document.getElementById('gwCustomerName').classList.add('hidden');
+                document.getElementById('gwPhoneError').classList.add('hidden');
+                document.getElementById('gwSubmitPaymentBtn').disabled = true;
                 validatedMsisdn = null;
                 customerName = null;
             }
         });
 
-        // Restrict phone number input to digits only
-        document.getElementById('phoneNumber').addEventListener('input', function (e) {
-            // Remove any non-digit characters
+        document.getElementById('gwPhoneNumber').addEventListener('input', function (e) {
             let value = e.target.value.replace(/\D/g, '');
 
-            // Limit to 9 digits
             if (value.length > 9) {
                 value = value.substring(0, 9);
             }
 
             e.target.value = value;
 
-            // Reset validation when phone number changes
             if (validatedMsisdn && ('+256' + value) !== validatedMsisdn) {
-                document.getElementById('customerName').classList.add('hidden');
-                document.getElementById('phoneError').classList.add('hidden');
-                document.getElementById('submitPaymentBtn').disabled = true;
+                document.getElementById('gwCustomerName').classList.add('hidden');
+                document.getElementById('gwPhoneError').classList.add('hidden');
+                document.getElementById('gwSubmitPaymentBtn').disabled = true;
                 validatedMsisdn = null;
                 customerName = null;
             }
         });
 
-        document.getElementById('amount').addEventListener('input', function (e) {
+        document.getElementById('gwAmount').addEventListener('input', function (e) {
             const amount = parseFloat(e.target.value);
             if (amount && amount < 500) {
-                showAmountError('Minimum amount is 500 UGX');
+                showGatewayAmountError('Minimum amount is 500 UGX');
             } else {
-                hideAmountError();
+                hideGatewayAmountError();
             }
         });
 
-        // Enable Enter key for validation
-        document.getElementById('phoneNumber').addEventListener('keypress', function (e) {
+        document.getElementById('gwPhoneNumber').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                validatePhoneNumber();
+                validateGatewayPhoneNumber();
             }
         });
 
