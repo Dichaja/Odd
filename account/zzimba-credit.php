@@ -313,7 +313,7 @@ function formatCurrency($amount)
 
                 <!-- Title and Message -->
                 <h3 id="resultTitle" class="text-xl font-semibold text-gray-900 mb-2"></h3>
-                <p id="resultMessage" class="text-gray-600 mb-6"></p>
+                <p id="resultMessage" class="text-gray-600 mb-6 overflow-hidden"></p>
 
                 <!-- Transaction Details -->
                 <div id="resultDetails" class="bg-gray-50 rounded-xl p-4 mb-6 text-left">
@@ -1089,7 +1089,7 @@ function formatCurrency($amount)
                         </div>
                         ${data.reason ? `
                         <div class="mt-4 p-3 bg-red-50 rounded-lg">
-                            <p class="text-red-800 text-xs"><strong>Reason:</strong> ${data.reason}</p>
+                            <p class="text-red-800 text-xs overflow-hidden"><strong>Reason:</strong> ${data.reason}</p>
                         </div>
                         ` : ''}
                     </div>
