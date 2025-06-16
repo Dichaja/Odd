@@ -1,6 +1,5 @@
 <?php
 ob_start();
-
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
@@ -13,45 +12,32 @@ use ZzimbaCreditModule\CreditService;
 
 header('Content-Type: application/json');
 
-// ——————————————————————————————————————————————————————————————————————————
-//  Helpers
-// ——————————————————————————————————————————————————————————————————————————
-
-/**
- * Generate a 10-digit wallet number in the pattern:
- *   Y₁ S₀ Y₂ S₁ S₂ S₃ S₄ M₁ S₅ M₂
- * where Y₁,Y₂ = digits of date('y'), M₁,M₂ = digits of date('m'),
- * and S₀…S₅ is a 6-digit random sequence.
- */
+// helper to generate the 10-digit wallet number
 function generateWalletNumber(PDO $pdo, string $walletId): string
 {
-    $yy = date('y');        // two-digit year, e.g. "26"
-    $y1 = $yy[0];           // "2"
-    $y2 = $yy[1];           // "6"
+    $yy = date('y');       // e.g. "26"
+    $y1 = $yy[0];
+    $y2 = $yy[1];
 
-    $mm = date('m');        // two-digit month, e.g. "11"
-    $m1 = $mm[0];           // "1"
-    $m2 = $mm[1];           // "1"
+    $mm = date('m');       // e.g. "11"
+    $m1 = $mm[0];
+    $m2 = $mm[1];
 
     do {
-        // 6-digit random sequence
         $seq = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-        // assemble: Y₁ S₀ Y₂ S₁ S₂ S₃ S₄ M₁ S₅ M₂
         $walletNumber =
-            $y1           // pos1
-            . $seq[0]       // pos2
-            . $y2           // pos3
-            . $seq[1]       // pos4
-            . $seq[2]       // pos5
-            . $seq[3]       // pos6
-            . $seq[4]       // pos7
-            . $m1           // pos8
-            . $seq[5]       // pos9
-            . $m2;          // pos10
+            $y1
+            . $seq[0]
+            . $y2
+            . $seq[1]
+            . $seq[2]
+            . $seq[3]
+            . $seq[4]
+            . $m1
+            . $seq[5]
+            . $m2;
 
-        $check = $pdo->prepare(
-            'SELECT 1 FROM zzimba_wallets WHERE wallet_number = ? LIMIT 1'
-        );
+        $check = $pdo->prepare('SELECT 1 FROM zzimba_wallets WHERE wallet_number = ? LIMIT 1');
         $check->execute([$walletNumber]);
         $exists = (bool) $check->fetchColumn();
     } while ($exists);
@@ -59,6 +45,7 @@ function generateWalletNumber(PDO $pdo, string $walletId): string
     return $walletNumber;
 }
 
+session_start();
 if (
     !isset($_SESSION['user']) ||
     !$_SESSION['user']['logged_in'] ||
@@ -71,9 +58,6 @@ if (
 
 date_default_timezone_set('Africa/Kampala');
 
-// ——————————————————————————————————————————————————————————————————————————
-//  Ensure the tables exist 
-// ——————————————————————————————————————————————————————————————————————————
 try {
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS zzimba_wallets (
@@ -87,11 +71,9 @@ try {
             status          ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
             created_at      DATETIME NOT NULL,
             updated_at      DATETIME NOT NULL,
-
             CONSTRAINT fk_wallet_user FOREIGN KEY (user_id)
                 REFERENCES zzimba_users(id)
                 ON DELETE SET NULL ON UPDATE CASCADE,
-
             CONSTRAINT fk_wallet_vendor FOREIGN KEY (vendor_id)
                 REFERENCES vendor_stores(id)
                 ON DELETE SET NULL ON UPDATE CASCADE
@@ -103,7 +85,6 @@ try {
             type ENUM('withholding','services','operations','communications') NOT NULL UNIQUE,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
-
             CONSTRAINT fk_platform_account_settings_wallet FOREIGN KEY (platform_account_id)
                 REFERENCES zzimba_wallets(wallet_id)
                 ON DELETE CASCADE ON UPDATE CASCADE
@@ -116,7 +97,7 @@ try {
     exit;
 }
 
-$action = $_GET['action'] ?? '';
+$action = $_REQUEST['action'] ?? '';
 
 try {
     switch ($action) {
@@ -143,17 +124,13 @@ try {
             break;
         default:
             http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Endpoint not found: ' . $action]);
+            echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
     }
 } catch (Exception $e) {
     error_log("Error in manageZzimbaWallets: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Server error']);
 }
-
-// ───────────────────────────────────────────────────────────────────────────────
-//  Endpoints for wallets
-// ───────────────────────────────────────────────────────────────────────────────
 
 function getZzimbaWallets(PDO $pdo)
 {
@@ -174,15 +151,15 @@ function getZzimbaWallets(PDO $pdo)
     ");
     $stmt->execute();
     $wallets = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
     echo json_encode(['success' => true, 'wallets' => $wallets]);
 }
 
 function getZzimbaWallet(PDO $pdo)
 {
-    if (empty($_GET['wallet_id'])) {
+    $walletNumber = trim($_REQUEST['wallet_number'] ?? '');
+    if ($walletNumber === '') {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Missing wallet ID']);
+        echo json_encode(['success' => false, 'message' => 'Missing wallet_number']);
         return;
     }
 
@@ -199,9 +176,9 @@ function getZzimbaWallet(PDO $pdo)
             created_at,
             updated_at
         FROM zzimba_wallets
-        WHERE wallet_id = :wallet_id
+        WHERE wallet_number = :wallet_number
     ");
-    $stmt->execute([':wallet_id' => $_GET['wallet_id']]);
+    $stmt->execute([':wallet_number' => $walletNumber]);
     $w = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$w) {
@@ -219,48 +196,38 @@ function createZzimbaWallet(PDO $pdo)
     $owner_type = $data['owner_type'] ?? '';
     $name = trim($data['wallet_name'] ?? '');
 
-    if ($owner_type !== 'PLATFORM') {
+    if ($owner_type !== 'PLATFORM' || $name === '') {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Can only create PLATFORM wallets']);
-        return;
-    }
-    if ($name === '') {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Wallet name is required']);
+        echo json_encode(['success' => false, 'message' => 'Invalid owner_type or wallet_name']);
         return;
     }
 
     $wallet_id = generateUlid();
     $wallet_number = generateWalletNumber($pdo, $wallet_id);
-    $created_at = (new DateTime('now', new DateTimeZone('Africa/Kampala')))
-        ->format('Y-m-d H:i:s');
-    $updated_at = $created_at;
+    $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
     $pdo->beginTransaction();
     try {
-        $ins = $pdo->prepare("
+        $stmt = $pdo->prepare("
             INSERT INTO zzimba_wallets
               (wallet_id, wallet_number, owner_type, user_id, vendor_id,
                wallet_name, current_balance, status, created_at, updated_at)
             VALUES
               (:wallet_id, :wallet_number, :owner_type, NULL, NULL,
-               :wallet_name, 0, 'active', :created_at, :updated_at)
+               :wallet_name, 0, 'active', :now, :now)
         ");
-        $ins->execute([
+        $stmt->execute([
             ':wallet_id' => $wallet_id,
             ':wallet_number' => $wallet_number,
             ':owner_type' => $owner_type,
             ':wallet_name' => $name,
-            ':created_at' => $created_at,
-            ':updated_at' => $updated_at,
+            ':now' => $now,
         ]);
         $pdo->commit();
 
         echo json_encode([
             'success' => true,
-            'message' => 'Wallet created',
-            'wallet_id' => $wallet_id,
-            'wallet_number' => $wallet_number,
+            'wallet_number' => $wallet_number
         ]);
     } catch (Exception $e) {
         $pdo->rollBack();
@@ -273,46 +240,42 @@ function createZzimbaWallet(PDO $pdo)
 function updateZzimbaWallet(PDO $pdo)
 {
     $data = json_decode(file_get_contents('php://input'), true);
-    $wallet_id = trim($data['wallet_id'] ?? '');
+    $walletNumber = trim($data['wallet_number'] ?? '');
     $wallet_name = trim($data['wallet_name'] ?? '');
     $status = $data['status'] ?? '';
 
-    $allowed = ['active', 'inactive', 'suspended'];
-    if ($wallet_id === '' || $wallet_name === '' || !in_array($status, $allowed, true)) {
+    if ($walletNumber === '' || $wallet_name === '' || !in_array($status, ['active', 'inactive', 'suspended'], true)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Wallet ID, name, and valid status are required']);
+        echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
         return;
     }
 
-    $chk = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE wallet_id = :wallet_id");
-    $chk->execute([':wallet_id' => $wallet_id]);
-    if ($chk->rowCount() === 0) {
+    $stmt = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE wallet_number = :wallet_number");
+    $stmt->execute([':wallet_number' => $walletNumber]);
+    if (!$stmt->fetchColumn()) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Wallet not found']);
         return;
     }
 
-    $updated_at = (new DateTime('now', new DateTimeZone('Africa/Kampala')))
-        ->format('Y-m-d H:i:s');
-
+    $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
     $pdo->beginTransaction();
     try {
         $upd = $pdo->prepare("
             UPDATE zzimba_wallets
                SET wallet_name = :wallet_name,
                    status      = :status,
-                   updated_at  = :updated_at
-             WHERE wallet_id  = :wallet_id
+                   updated_at  = :now
+             WHERE wallet_number = :wallet_number
         ");
         $upd->execute([
             ':wallet_name' => $wallet_name,
             ':status' => $status,
-            ':updated_at' => $updated_at,
-            ':wallet_id' => $wallet_id,
+            ':now' => $now,
+            ':wallet_number' => $walletNumber,
         ]);
         $pdo->commit();
-
-        echo json_encode(['success' => true, 'message' => 'Wallet updated']);
+        echo json_encode(['success' => true]);
     } catch (Exception $e) {
         $pdo->rollBack();
         error_log("Error updating wallet: " . $e->getMessage());
@@ -324,36 +287,29 @@ function updateZzimbaWallet(PDO $pdo)
 function deleteZzimbaWallet(PDO $pdo)
 {
     $data = json_decode(file_get_contents('php://input'), true);
-    $wallet_id = trim($data['wallet_id'] ?? '');
+    $walletNumber = trim($data['wallet_number'] ?? '');
 
-    if ($wallet_id === '') {
+    if ($walletNumber === '') {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Missing wallet ID']);
+        echo json_encode(['success' => false, 'message' => 'Missing wallet_number']);
         return;
     }
 
-    $stmt = $pdo->prepare("SELECT owner_type FROM zzimba_wallets WHERE wallet_id = :wallet_id");
-    $stmt->execute([':wallet_id' => $wallet_id]);
+    $stmt = $pdo->prepare("SELECT owner_type FROM zzimba_wallets WHERE wallet_number = :wallet_number");
+    $stmt->execute([':wallet_number' => $walletNumber]);
     $w = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$w) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Wallet not found']);
-        return;
-    }
-    if ($w['owner_type'] !== 'PLATFORM') {
+    if (!$w || $w['owner_type'] !== 'PLATFORM') {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Cannot delete non-platform wallets']);
+        echo json_encode(['success' => false, 'message' => 'Cannot delete this wallet']);
         return;
     }
 
     $pdo->beginTransaction();
     try {
-        $del = $pdo->prepare("DELETE FROM zzimba_wallets WHERE wallet_id = :wallet_id");
-        $del->execute([':wallet_id' => $wallet_id]);
+        $del = $pdo->prepare("DELETE FROM zzimba_wallets WHERE wallet_number = :wallet_number");
+        $del->execute([':wallet_number' => $walletNumber]);
         $pdo->commit();
-
-        echo json_encode(['success' => true, 'message' => 'Wallet deleted']);
+        echo json_encode(['success' => true]);
     } catch (Exception $e) {
         $pdo->rollBack();
         error_log("Error deleting wallet: " . $e->getMessage());
@@ -365,14 +321,23 @@ function deleteZzimbaWallet(PDO $pdo)
 function getWalletStatement(PDO $pdo)
 {
     $data = json_decode(file_get_contents('php://input'), true);
-    $walletId = trim($data['wallet_id'] ?? '');
+    $walletNumber = trim($data['wallet_number'] ?? '');
     $filter = strtolower(trim($data['filter'] ?? 'all'));
     $start = $data['start'] ?? null;
     $end = $data['end'] ?? null;
 
-    if ($walletId === '') {
+    if ($walletNumber === '') {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Missing wallet ID']);
+        echo json_encode(['success' => false, 'message' => 'Missing wallet_number']);
+        return;
+    }
+
+    $stmt = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE wallet_number = :wallet_number");
+    $stmt->execute([':wallet_number' => $walletNumber]);
+    $walletId = $stmt->fetchColumn();
+    if (!$walletId) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Wallet not found']);
         return;
     }
 
@@ -386,27 +351,31 @@ function getWalletStatement(PDO $pdo)
     }
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
-//  Endpoint for managing platform account settings
-// ───────────────────────────────────────────────────────────────────────────────
 function managePlatformAccounts(PDO $pdo)
 {
     $data = json_decode(file_get_contents('php://input'), true);
     $operation = $data['operation'] ?? '';
+    $platformNumber = trim($data['platform_account_number'] ?? '');
 
-    // LIST: optional filter by platform_account_id
     if ($operation === 'list') {
-        if (!empty($data['platform_account_id'])) {
+        if ($platformNumber !== '') {
+            $stmt1 = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE wallet_number = :num");
+            $stmt1->execute([':num' => $platformNumber]);
+            $pid = $stmt1->fetchColumn();
+            if (!$pid) {
+                echo json_encode(['success' => false, 'message' => 'Invalid platform_account_number']);
+                return;
+            }
             $stmt = $pdo->prepare("
-                SELECT id, platform_account_id, type, created_at, updated_at
+                SELECT id, platform_account_id AS wallet_id, type, created_at, updated_at
                   FROM zzimba_platform_account_settings
-                 WHERE platform_account_id = :platform_account_id
+                 WHERE platform_account_id = :pid
                  ORDER BY created_at DESC
             ");
-            $stmt->execute([':platform_account_id' => $data['platform_account_id']]);
+            $stmt->execute([':pid' => $pid]);
         } else {
             $stmt = $pdo->query("
-                SELECT id, platform_account_id, type, created_at, updated_at
+                SELECT id, platform_account_id AS wallet_id, type, created_at, updated_at
                   FROM zzimba_platform_account_settings
                  ORDER BY created_at DESC
             ");
@@ -415,22 +384,24 @@ function managePlatformAccounts(PDO $pdo)
         return;
     }
 
-    // For add/update/remove, validate platform_account_id
     if (!in_array($operation, ['add', 'update', 'remove'], true)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid operation']);
         return;
     }
 
-    $accountId = trim($data['platform_account_id'] ?? '');
-    $chk = $pdo->prepare("
-        SELECT wallet_id FROM zzimba_wallets
-         WHERE wallet_id = :wallet_id AND owner_type = 'PLATFORM'
-    ");
-    $chk->execute([':wallet_id' => $accountId]);
-    if ($chk->rowCount() === 0) {
+    if ($platformNumber === '') {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Invalid platform account id']);
+        echo json_encode(['success' => false, 'message' => 'Missing platform_account_number']);
+        return;
+    }
+
+    $stmt2 = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE wallet_number = :num AND owner_type = 'PLATFORM'");
+    $stmt2->execute([':num' => $platformNumber]);
+    $accountId = $stmt2->fetchColumn();
+    if (!$accountId) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid platform_account_number']);
         return;
     }
 
@@ -443,29 +414,23 @@ function managePlatformAccounts(PDO $pdo)
             echo json_encode(['success' => false, 'message' => 'Type is required']);
             return;
         }
-
         $id = generateUlid();
         try {
             $ins = $pdo->prepare("
                 INSERT INTO zzimba_platform_account_settings
                     (id, platform_account_id, type, created_at, updated_at)
                 VALUES
-                    (:id, :platform_account_id, :type, :created_at, :updated_at)
+                    (:id, :pid, :type, :now, :now)
             ");
             $ins->execute([
                 ':id' => $id,
-                ':platform_account_id' => $accountId,
+                ':pid' => $accountId,
                 ':type' => $type,
-                ':created_at' => $now,
-                ':updated_at' => $now,
+                ':now' => $now
             ]);
-            echo json_encode([
-                'success' => true,
-                'message' => 'Setting added',
-                'id' => $id
-            ]);
+            echo json_encode(['success' => true, 'id' => $id]);
         } catch (Exception $e) {
-            error_log("Error adding platform setting: " . $e->getMessage());
+            error_log("Error adding setting: " . $e->getMessage());
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Error adding setting']);
         }
@@ -477,26 +442,19 @@ function managePlatformAccounts(PDO $pdo)
         $type = trim($data['type'] ?? '');
         if ($id === '' || $type === '') {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'ID and new type are required']);
+            echo json_encode(['success' => false, 'message' => 'ID and type required']);
             return;
         }
         try {
             $upd = $pdo->prepare("
                 UPDATE zzimba_platform_account_settings
-                   SET type = :type,
-                       updated_at = :updated_at
-                 WHERE id = :id
-                   AND platform_account_id = :platform_account_id
+                   SET type = :type, updated_at = :now
+                 WHERE id = :id AND platform_account_id = :pid
             ");
-            $upd->execute([
-                ':type' => $type,
-                ':updated_at' => $now,
-                ':id' => $id,
-                ':platform_account_id' => $accountId,
-            ]);
-            echo json_encode(['success' => true, 'message' => 'Setting updated']);
+            $upd->execute([':type' => $type, ':now' => $now, ':id' => $id, ':pid' => $accountId]);
+            echo json_encode(['success' => true]);
         } catch (Exception $e) {
-            error_log("Error updating platform setting: " . $e->getMessage());
+            error_log("Error updating setting: " . $e->getMessage());
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Error updating setting']);
         }
@@ -507,22 +465,18 @@ function managePlatformAccounts(PDO $pdo)
         $id = trim($data['id'] ?? '');
         if ($id === '') {
             http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'ID is required to remove']);
+            echo json_encode(['success' => false, 'message' => 'ID required']);
             return;
         }
         try {
             $del = $pdo->prepare("
                 DELETE FROM zzimba_platform_account_settings
-                 WHERE id = :id
-                   AND platform_account_id = :platform_account_id
+                 WHERE id = :id AND platform_account_id = :pid
             ");
-            $del->execute([
-                ':id' => $id,
-                ':platform_account_id' => $accountId,
-            ]);
-            echo json_encode(['success' => true, 'message' => 'Setting removed']);
+            $del->execute([':id' => $id, ':pid' => $accountId]);
+            echo json_encode(['success' => true]);
         } catch (Exception $e) {
-            error_log("Error removing platform setting: " . $e->getMessage());
+            error_log("Error removing setting: " . $e->getMessage());
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => 'Error removing setting']);
         }
