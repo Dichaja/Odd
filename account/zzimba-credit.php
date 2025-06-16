@@ -42,6 +42,10 @@ function formatCurrency($amount)
                         class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 font-medium shadow-lg shadow-primary/25">
                         <i class="fas fa-plus"></i><span>Topup</span>
                     </button>
+                    <button id="send-credit-btn" onclick="showSendCreditModal()"
+                        class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 font-medium shadow-lg shadow-primary/25">
+                        <i class="fas fa-paper-plane"></i><span>Send Credit</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1548,6 +1552,8 @@ function formatCurrency($amount)
 </script>
 
 <?php
+include __DIR__ . '/credit/send-credit.php';
+
 $mainContent = ob_get_clean();
 include __DIR__ . '/master.php';
 ?>
