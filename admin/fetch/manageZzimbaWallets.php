@@ -13,6 +13,52 @@ use ZzimbaCreditModule\CreditService;
 
 header('Content-Type: application/json');
 
+// ——————————————————————————————————————————————————————————————————————————
+//  Helpers
+// ——————————————————————————————————————————————————————————————————————————
+
+/**
+ * Generate a 10-digit wallet number in the pattern:
+ *   Y₁ S₀ Y₂ S₁ S₂ S₃ S₄ M₁ S₅ M₂
+ * where Y₁,Y₂ = digits of date('y'), M₁,M₂ = digits of date('m'),
+ * and S₀…S₅ is a 6-digit random sequence.
+ */
+function generateWalletNumber(PDO $pdo, string $walletId): string
+{
+    $yy = date('y');        // two-digit year, e.g. "26"
+    $y1 = $yy[0];           // "2"
+    $y2 = $yy[1];           // "6"
+
+    $mm = date('m');        // two-digit month, e.g. "11"
+    $m1 = $mm[0];           // "1"
+    $m2 = $mm[1];           // "1"
+
+    do {
+        // 6-digit random sequence
+        $seq = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        // assemble: Y₁ S₀ Y₂ S₁ S₂ S₃ S₄ M₁ S₅ M₂
+        $walletNumber =
+            $y1           // pos1
+            . $seq[0]       // pos2
+            . $y2           // pos3
+            . $seq[1]       // pos4
+            . $seq[2]       // pos5
+            . $seq[3]       // pos6
+            . $seq[4]       // pos7
+            . $m1           // pos8
+            . $seq[5]       // pos9
+            . $m2;          // pos10
+
+        $check = $pdo->prepare(
+            'SELECT 1 FROM zzimba_wallets WHERE wallet_number = ? LIMIT 1'
+        );
+        $check->execute([$walletNumber]);
+        $exists = (bool) $check->fetchColumn();
+    } while ($exists);
+
+    return $walletNumber;
+}
+
 if (
     !isset($_SESSION['user']) ||
     !$_SESSION['user']['logged_in'] ||
@@ -25,21 +71,22 @@ if (
 
 date_default_timezone_set('Africa/Kampala');
 
-// ───────────────────────────────────────────────────────────────────────────────
-//  Ensure the wallets and platform account settings tables exist
-// ───────────────────────────────────────────────────────────────────────────────
+// ——————————————————————————————————————————————————————————————————————————
+//  Ensure the tables exist 
+// ——————————————————————————————————————————————————————————————————————————
 try {
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS zzimba_wallets (
-            wallet_id CHAR(26) NOT NULL PRIMARY KEY,
-            owner_type ENUM('USER','VENDOR','PLATFORM') NOT NULL,
-            user_id VARCHAR(26) DEFAULT NULL,
-            vendor_id VARCHAR(26) DEFAULT NULL,
-            wallet_name VARCHAR(100) NOT NULL,
+            wallet_id       CHAR(26) NOT NULL PRIMARY KEY,
+            wallet_number   CHAR(10) NOT NULL UNIQUE,
+            owner_type      ENUM('USER','VENDOR','PLATFORM') NOT NULL,
+            user_id         VARCHAR(26) DEFAULT NULL,
+            vendor_id       VARCHAR(26) DEFAULT NULL,
+            wallet_name     VARCHAR(100) NOT NULL,
             current_balance DECIMAL(18,2) NOT NULL DEFAULT 0,
-            status ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
-            created_at DATETIME NOT NULL,
-            updated_at DATETIME NOT NULL,
+            status          ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
+            created_at      DATETIME NOT NULL,
+            updated_at      DATETIME NOT NULL,
 
             CONSTRAINT fk_wallet_user FOREIGN KEY (user_id)
                 REFERENCES zzimba_users(id)
@@ -101,7 +148,7 @@ try {
 } catch (Exception $e) {
     error_log("Error in manageZzimbaWallets: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Server error']);
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
@@ -111,13 +158,23 @@ try {
 function getZzimbaWallets(PDO $pdo)
 {
     $stmt = $pdo->prepare("
-        SELECT wallet_id, owner_type, user_id, vendor_id, wallet_name,
-               current_balance, status, created_at, updated_at
-          FROM zzimba_wallets
-         ORDER BY created_at DESC
+        SELECT
+            wallet_id,
+            wallet_number,
+            owner_type,
+            user_id,
+            vendor_id,
+            wallet_name,
+            current_balance,
+            status,
+            created_at,
+            updated_at
+        FROM zzimba_wallets
+        ORDER BY created_at DESC
     ");
     $stmt->execute();
     $wallets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     echo json_encode(['success' => true, 'wallets' => $wallets]);
 }
 
@@ -130,10 +187,19 @@ function getZzimbaWallet(PDO $pdo)
     }
 
     $stmt = $pdo->prepare("
-        SELECT wallet_id, owner_type, user_id, vendor_id, wallet_name,
-               current_balance, status, created_at, updated_at
-          FROM zzimba_wallets
-         WHERE wallet_id = :wallet_id
+        SELECT
+            wallet_id,
+            wallet_number,
+            owner_type,
+            user_id,
+            vendor_id,
+            wallet_name,
+            current_balance,
+            status,
+            created_at,
+            updated_at
+        FROM zzimba_wallets
+        WHERE wallet_id = :wallet_id
     ");
     $stmt->execute([':wallet_id' => $_GET['wallet_id']]);
     $w = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -165,19 +231,24 @@ function createZzimbaWallet(PDO $pdo)
     }
 
     $wallet_id = generateUlid();
-    $created_at = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+    $wallet_number = generateWalletNumber($pdo, $wallet_id);
+    $created_at = (new DateTime('now', new DateTimeZone('Africa/Kampala')))
+        ->format('Y-m-d H:i:s');
     $updated_at = $created_at;
 
     $pdo->beginTransaction();
     try {
         $ins = $pdo->prepare("
             INSERT INTO zzimba_wallets
-                (wallet_id, owner_type, user_id, vendor_id, wallet_name, current_balance, status, created_at, updated_at)
+              (wallet_id, wallet_number, owner_type, user_id, vendor_id,
+               wallet_name, current_balance, status, created_at, updated_at)
             VALUES
-                (:wallet_id, :owner_type, NULL, NULL, :wallet_name, 0, 'active', :created_at, :updated_at)
+              (:wallet_id, :wallet_number, :owner_type, NULL, NULL,
+               :wallet_name, 0, 'active', :created_at, :updated_at)
         ");
         $ins->execute([
             ':wallet_id' => $wallet_id,
+            ':wallet_number' => $wallet_number,
             ':owner_type' => $owner_type,
             ':wallet_name' => $name,
             ':created_at' => $created_at,
@@ -188,7 +259,8 @@ function createZzimbaWallet(PDO $pdo)
         echo json_encode([
             'success' => true,
             'message' => 'Wallet created',
-            'wallet_id' => $wallet_id
+            'wallet_id' => $wallet_id,
+            'wallet_number' => $wallet_number,
         ]);
     } catch (Exception $e) {
         $pdo->rollBack();
@@ -220,7 +292,8 @@ function updateZzimbaWallet(PDO $pdo)
         return;
     }
 
-    $updated_at = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+    $updated_at = (new DateTime('now', new DateTimeZone('Africa/Kampala')))
+        ->format('Y-m-d H:i:s');
 
     $pdo->beginTransaction();
     try {

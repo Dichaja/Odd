@@ -655,7 +655,7 @@ function formatCurrency($amount)
                         const w = data.wallet;
                         document.getElementById('walletName').textContent = w.wallet_name;
                         document.getElementById('ownerName').textContent = ownerName;
-                        document.getElementById('walletId').textContent = w.wallet_id;
+                        document.getElementById('walletId').textContent = w.wallet_number;
                         document.getElementById('createdDate').textContent =
                             new Date(w.created_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
                         document.getElementById('balanceText').textContent =
