@@ -1168,7 +1168,7 @@
         // Handle auto-close for success
         if (autoClose && success) {
             autoCloseCountdown.classList.remove('hidden');
-            let countdown = 10;
+            let countdown = 30;
             const countdownTimer = document.getElementById('countdownTimer');
 
             autoCloseTimer = setInterval(() => {
