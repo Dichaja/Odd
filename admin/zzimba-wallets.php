@@ -13,55 +13,61 @@ function formatCurrency($amount)
 <div class="min-h-screen bg-gray-50" id="app-container">
     <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
         <div class="max-w-7xl mx-auto">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-wallet text-primary text-lg"></i>
-                        </div>
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                    <div class="flex items-center justify-between">
                         <div>
-                            <h1 class="text-2xl font-bold text-secondary font-rubik">Zzimba Wallets</h1>
-                            <p class="text-sm text-gray-text">Manage user, vendor, and platform wallets</p>
+                            <p class="text-xs font-medium text-green-600 uppercase tracking-wide">User Wallets</p>
+                            <p class="text-lg font-bold text-green-900 whitespace-nowrap" id="user-wallets-count">0</p>
+                            <p class="text-sm font-medium text-green-700 whitespace-nowrap" id="user-wallets-total">UGX
+                                0.00</p>
+                        </div>
+                        <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-user text-green-600"></i>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                    <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-medium text-green-600 uppercase tracking-wide">User Wallets</p>
-                                <p class="text-lg font-bold text-green-900" id="user-wallets-count">0</p>
-                            </div>
-                            <div class="w-8 h-8 bg-green-200 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-user text-green-600 text-sm"></i>
-                            </div>
+                <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Vendor Wallets</p>
+                            <p class="text-lg font-bold text-purple-900 whitespace-nowrap" id="vendor-wallets-count">0
+                            </p>
+                            <p class="text-sm font-medium text-purple-700 whitespace-nowrap" id="vendor-wallets-total">
+                                UGX 0.00</p>
+                        </div>
+                        <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-store text-purple-600"></i>
                         </div>
                     </div>
+                </div>
 
-                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Vendor Wallets
-                                </p>
-                                <p class="text-lg font-bold text-purple-900" id="vendor-wallets-count">0</p>
-                            </div>
-                            <div class="w-8 h-8 bg-purple-200 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-store text-purple-600 text-sm"></i>
-                            </div>
+                <div class="bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl p-4 border border-cyan-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-cyan-600 uppercase tracking-wide">Platform Wallets</p>
+                            <p class="text-lg font-bold text-cyan-900 whitespace-nowrap" id="platform-wallets-count">0
+                            </p>
+                            <p class="text-sm font-medium text-cyan-700 whitespace-nowrap" id="platform-wallets-total">
+                                UGX 0.00</p>
+                        </div>
+                        <div class="w-10 h-10 bg-cyan-200 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-building text-cyan-600"></i>
                         </div>
                     </div>
+                </div>
 
-                    <div
-                        class="bg-gradient-to-r from-cyan-50 to-cyan-100 rounded-xl p-4 border border-cyan-200 col-span-2 lg:col-span-1">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-medium text-cyan-600 uppercase tracking-wide">Total Balance</p>
-                                <p class="text-lg font-bold text-cyan-900" id="total-balance">UGX 0</p>
-                            </div>
-                            <div class="w-8 h-8 bg-cyan-200 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-coins text-cyan-600 text-sm"></i>
-                            </div>
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Balance</p>
+                            <p class="text-lg font-bold text-blue-900 whitespace-nowrap" id="total-balance">UGX 0.00</p>
+                            <p class="text-sm font-medium text-blue-700 whitespace-nowrap" id="total-wallets-count">0
+                                Wallets</p>
+                        </div>
+                        <div class="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-coins text-blue-600"></i>
                         </div>
                     </div>
                 </div>
@@ -110,6 +116,60 @@ function formatCurrency($amount)
 
                         <!-- Type selector and button on Right -->
                         <div class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                            <div class="relative">
+                                <button id="viewColumnsBtn" onclick="toggleColumnSelector()"
+                                    class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-sm flex items-center gap-2 hover:bg-gray-50">
+                                    <i class="fas fa-eye text-xs"></i>
+                                    <span>View</span>
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </button>
+
+                                <div id="columnSelector"
+                                    class="hidden absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-48">
+                                    <div class="p-3 border-b border-gray-100">
+                                        <h4 class="text-sm font-semibold text-gray-900">Show Columns</h4>
+                                        <p class="text-xs text-gray-500 mt-1">Select at least 3 columns</p>
+                                    </div>
+                                    <div class="p-2 space-y-1" id="columnCheckboxes">
+                                        <label
+                                            class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                            <input type="checkbox"
+                                                class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                                data-column="details" checked>
+                                            <span class="text-sm text-gray-700">Wallet Details</span>
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                            <input type="checkbox"
+                                                class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                                data-column="owner" checked>
+                                            <span class="text-sm text-gray-700">Owner Type</span>
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                            <input type="checkbox"
+                                                class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                                data-column="status" checked>
+                                            <span class="text-sm text-gray-700">Status</span>
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                            <input type="checkbox"
+                                                class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                                data-column="balance" checked>
+                                            <span class="text-sm text-gray-700">Balance</span>
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                            <input type="checkbox"
+                                                class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                                data-column="actions" checked>
+                                            <span class="text-sm text-gray-700">Actions</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
                             <select id="filterWallets"
                                 class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium w-full sm:w-auto">
                                 <option value="all">All Types</option>
@@ -121,7 +181,7 @@ function formatCurrency($amount)
                             <button id="create-wallet-btn"
                                 class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 w-full sm:w-auto">
                                 <i class="fas fa-plus"></i>
-                                <span>Create Wallet</span>
+                                <span>Create</span>
                             </button>
                         </div>
                     </div>
@@ -133,21 +193,21 @@ function formatCurrency($amount)
                     <table class="w-full" id="wallets-table">
                         <thead class="bg-user-accent border-b border-gray-200">
                             <tr>
-                                <th
+                                <th data-column="details"
                                     class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Wallet Details</th>
-                                <th
+                                <th data-column="owner"
                                     class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Owner Type</th>
-                                <th id="statusHeader"
+                                <th data-column="status" id="statusHeader"
                                     class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider cursor-pointer whitespace-nowrap">
                                     Status
                                     <i id="statusSortIcon" class="fas fa-sort text-gray-400 ml-1"></i>
                                 </th>
-                                <th
+                                <th data-column="balance"
                                     class="px-3 py-2 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Balance</th>
-                                <th
+                                <th data-column="actions"
                                     class="px-3 py-2 text-center text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                     Actions</th>
                             </tr>
@@ -177,20 +237,19 @@ function formatCurrency($amount)
         <div id="platform-accounts-content" class="tab-content hidden">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
                 <div class="p-6 border-b border-gray-100">
-                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        <div>
-                            <h2 class="text-xl font-semibold text-secondary font-rubik">Platform Account Settings</h2>
-                            <p class="text-sm text-gray-text mt-1">Manage platform account configurations</p>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                        <!-- Left: Select -->
+                        <div class="w-full sm:w-auto">
                             <select id="filterPlatformAccounts"
-                                class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium">
+                                class="w-full sm:w-auto px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium">
                                 <option value="">Select Platform Account</option>
                             </select>
+                        </div>
 
+                        <!-- Right: Button -->
+                        <div class="w-full sm:w-auto flex justify-end">
                             <button id="create-platform-setting-btn"
-                                class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
+                                class="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center justify-center sm:justify-start gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
                                 <i class="fas fa-plus"></i>
                                 <span>Add Setting</span>
                             </button>
@@ -259,6 +318,66 @@ function formatCurrency($amount)
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <button id="viewStatementColumnsBtn" onclick="toggleStatementColumnSelector()"
+                            class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-sm flex items-center gap-2 hover:bg-gray-50">
+                            <i class="fas fa-eye text-xs"></i>
+                            <span>View</span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+
+                        <div id="statementColumnSelector"
+                            class="hidden absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-48">
+                            <div class="p-3 border-b border-gray-100">
+                                <h4 class="text-sm font-semibold text-gray-900">Show Columns</h4>
+                                <p class="text-xs text-gray-500 mt-1">Select at least 3 columns</p>
+                            </div>
+                            <div class="p-2 space-y-1" id="statementColumnCheckboxes">
+                                <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                    <input type="checkbox"
+                                        class="statement-column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                        data-column="datetime" checked>
+                                    <span class="text-sm text-gray-700">Date/Time</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                    <input type="checkbox"
+                                        class="statement-column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                        data-column="entryid" checked>
+                                    <span class="text-sm text-gray-700">Entry ID</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                    <input type="checkbox"
+                                        class="statement-column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                        data-column="description" checked>
+                                    <span class="text-sm text-gray-700">Description</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                    <input type="checkbox"
+                                        class="statement-column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                        data-column="debit" checked>
+                                    <span class="text-sm text-gray-700">Debit</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                    <input type="checkbox"
+                                        class="statement-column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                        data-column="credit" checked>
+                                    <span class="text-sm text-gray-700">Credit</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                    <input type="checkbox"
+                                        class="statement-column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                        data-column="balance" checked>
+                                    <span class="text-sm text-gray-700">Balance</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                    <input type="checkbox"
+                                        class="statement-column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                        data-column="related" checked>
+                                    <span class="text-sm text-gray-700">Related Entries</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                     <select id="statementDateFilter"
                         class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-sm">
                         <option value="all">All transactions</option>
@@ -285,30 +404,30 @@ function formatCurrency($amount)
                 </div>
             </div>
 
-            <div id="statementTable" class="hidden overflow-auto flex-1 max-h-[calc(100vh-200px)]">
+            <div id="statementTable" class="hidden lg:block overflow-auto flex-1 max-h-[calc(100vh-200px)]">
                 <table class="w-full" id="statementTableElement">
                     <thead class="bg-white border-b border-gray-200 sticky top-0">
                         <tr>
-                            <th
+                            <th data-column="datetime"
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Date/Time</th>
-                            <th
+                            <th data-column="entryid"
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Entry ID
                             </th>
-                            <th
+                            <th data-column="description"
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Description</th>
-                            <th
+                            <th data-column="debit"
                                 class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Debit</th>
-                            <th
+                            <th data-column="credit"
                                 class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Credit</th>
-                            <th
+                            <th data-column="balance"
                                 class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Balance</th>
-                            <th
+                            <th data-column="related"
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Related Entries</th>
                         </tr>
@@ -319,15 +438,15 @@ function formatCurrency($amount)
             </div>
 
             <div id="statementMobile"
-                class="lg:hidden p-4 space-y-4 hidden overflow-auto flex-1 max-h-[calc(90vh-200px)]">
-            </div>
+                class="hidden block lg:hidden p-4 space-y-4 overflow-auto flex-1 max-h-[calc(90vh-200px)]">
 
-            <div id="statementEmpty" class="hidden text-center py-16">
-                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-receipt text-gray-400 text-2xl"></i>
+                <div id="statementEmpty" class="hidden text-center py-16">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-receipt text-gray-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No transactions found</h3>
+                    <p class="text-gray-500">No transactions available for the selected period</p>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">No transactions found</h3>
-                <p class="text-gray-500">No transactions available for the selected period</p>
             </div>
         </div>
     </div>
@@ -384,7 +503,8 @@ function formatCurrency($amount)
 
 <!-- Edit Wallet Modal -->
 <div id="editWalletOffcanvas" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="hideEditWalletForm()"></div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="hideEditWalletForm()">
+    </div>
     <div
         class="absolute inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out">
         <div class="flex flex-col h-full">
@@ -430,7 +550,8 @@ function formatCurrency($amount)
                                 <input type="radio" name="editWalletStatus" value="active" class="sr-only">
                                 <div
                                     class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
+                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                    </div>
                                 </div>
                                 <div class="text-sm font-medium text-gray-900">Active</div>
                             </label>
@@ -440,7 +561,8 @@ function formatCurrency($amount)
                                 <input type="radio" name="editWalletStatus" value="inactive" class="sr-only">
                                 <div
                                     class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
+                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                    </div>
                                 </div>
                                 <div class="text-sm font-medium text-gray-900">Inactive</div>
                             </label>
@@ -450,7 +572,8 @@ function formatCurrency($amount)
                                 <input type="radio" name="editWalletStatus" value="suspended" class="sr-only">
                                 <div
                                     class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
+                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                    </div>
                                 </div>
                                 <div class="text-sm font-medium text-gray-900">Suspended</div>
                             </label>
@@ -641,6 +764,14 @@ function formatCurrency($amount)
     let currentWalletStatement = [];
     let currentStatementWalletId = null;
 
+    // Column visibility storage keys
+    const WALLETS_COLUMNS_STORAGE_KEY = 'zzimba_wallets_columns';
+    const STATEMENT_COLUMNS_STORAGE_KEY = 'zzimba_statement_columns';
+
+    // Default visible columns
+    let visibleWalletColumns = ['details', 'owner', 'status', 'balance', 'actions'];
+    let visibleStatementColumns = ['datetime', 'entryid', 'description', 'debit', 'credit', 'balance', 'related'];
+
     function formatCurrency(amount) {
         return new Intl.NumberFormat('en-UG', {
             style: 'decimal',
@@ -704,13 +835,26 @@ function formatCurrency($amount)
     }
 
     function updateQuickStats() {
-        const userWallets = wallets.filter(w => w.owner_type === 'USER').length;
-        const vendorWallets = wallets.filter(w => w.owner_type === 'VENDOR').length;
-        const totalBalance = wallets.reduce((sum, w) => sum + parseFloat(w.current_balance || 0), 0);
+        const userWallets = wallets.filter(w => w.owner_type === 'USER');
+        const vendorWallets = wallets.filter(w => w.owner_type === 'VENDOR');
+        const platformWallets = wallets.filter(w => w.owner_type === 'PLATFORM');
 
-        document.getElementById('user-wallets-count').textContent = userWallets;
-        document.getElementById('vendor-wallets-count').textContent = vendorWallets;
+        const userTotal = userWallets.reduce((sum, w) => sum + parseFloat(w.current_balance || 0), 0);
+        const vendorTotal = vendorWallets.reduce((sum, w) => sum + parseFloat(w.current_balance || 0), 0);
+        const platformTotal = platformWallets.reduce((sum, w) => sum + parseFloat(w.current_balance || 0), 0);
+        const totalBalance = userTotal + vendorTotal + platformTotal;
+
+        document.getElementById('user-wallets-count').textContent = userWallets.length;
+        document.getElementById('user-wallets-total').textContent = `UGX ${formatCurrency(userTotal)}`;
+
+        document.getElementById('vendor-wallets-count').textContent = vendorWallets.length;
+        document.getElementById('vendor-wallets-total').textContent = `UGX ${formatCurrency(vendorTotal)}`;
+
+        document.getElementById('platform-wallets-count').textContent = platformWallets.length;
+        document.getElementById('platform-wallets-total').textContent = `UGX ${formatCurrency(platformTotal)}`;
+
         document.getElementById('total-balance').textContent = `UGX ${formatCurrency(totalBalance)}`;
+        document.getElementById('total-wallets-count').textContent = `${wallets.length} Wallets`;
     }
 
     async function fetchWallets() {
@@ -796,7 +940,7 @@ function formatCurrency($amount)
             }
 
             tr.innerHTML = `
-                <td class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                <td data-column="details" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
                     <div class="flex items-center gap-2">
                         <div class="w-6 h-6 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
                     wallet.owner_type === 'VENDOR' ? 'bg-purple-100' : 'bg-cyan-100'
@@ -811,16 +955,16 @@ function formatCurrency($amount)
                         </div>
                     </div>
                 </td>
-                <td class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                <td data-column="owner" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
                     ${getOwnerTypeBadge(wallet.owner_type)}
                 </td>
-                <td class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                <td data-column="status" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
                     ${getStatusBadge(wallet.status)}
                 </td>
-                <td class="px-3 py-2 text-right text-xs font-semibold text-gray-900 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                <td data-column="balance" class="px-3 py-2 text-right text-xs font-semibold text-gray-900 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
                     UGX ${formatCurrency(wallet.current_balance)}
                 </td>
-                <td class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                <td data-column="actions" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
                     <div class="flex items-center justify-center gap-1">
                         <button onclick="showWalletStatement('${wallet.wallet_number}', '${wallet.wallet_name}')" 
                             class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" 
@@ -892,6 +1036,9 @@ function formatCurrency($amount)
                 </div>`;
             mobile.appendChild(card);
         });
+
+        // Apply column visibility
+        applyColumnVisibility('wallets-table', visibleWalletColumns);
     }
 
     function renderPlatformSettingsTable(list) {
@@ -910,8 +1057,8 @@ function formatCurrency($amount)
         }
 
         list.forEach((setting, index) => {
-            const wallet = wallets.find(w => w.wallet_number === setting.platform_account_id);
-            const walletName = wallet ? wallet.wallet_name : setting.platform_account_id;
+            const wallet = wallets.find(w => w.wallet_number === setting.wallet_number);
+            const walletName = wallet ? wallet.wallet_name : setting.wallet_number;
 
             const maxDetailsLength = 25;
             let displayName = walletName;
@@ -992,6 +1139,143 @@ function formatCurrency($amount)
         });
     }
 
+    // Column visibility functions
+    function loadColumnVisibility() {
+        const savedWalletColumns = localStorage.getItem(WALLETS_COLUMNS_STORAGE_KEY);
+        const savedStatementColumns = localStorage.getItem(STATEMENT_COLUMNS_STORAGE_KEY);
+
+        if (savedWalletColumns) {
+            visibleWalletColumns = JSON.parse(savedWalletColumns);
+        }
+
+        if (savedStatementColumns) {
+            visibleStatementColumns = JSON.parse(savedStatementColumns);
+        }
+
+        updateColumnCheckboxes();
+    }
+
+    function saveColumnVisibility() {
+        localStorage.setItem(WALLETS_COLUMNS_STORAGE_KEY, JSON.stringify(visibleWalletColumns));
+        localStorage.setItem(STATEMENT_COLUMNS_STORAGE_KEY, JSON.stringify(visibleStatementColumns));
+    }
+
+    function updateColumnCheckboxes() {
+        // Update wallet columns checkboxes
+        document.querySelectorAll('.column-checkbox').forEach(checkbox => {
+            const column = checkbox.getAttribute('data-column');
+            checkbox.checked = visibleWalletColumns.includes(column);
+        });
+
+        // Update statement columns checkboxes
+        document.querySelectorAll('.statement-column-checkbox').forEach(checkbox => {
+            const column = checkbox.getAttribute('data-column');
+            checkbox.checked = visibleStatementColumns.includes(column);
+        });
+    }
+
+    function applyColumnVisibility(tableId, visibleColumns) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+
+        // Show/hide header columns
+        const headers = table.querySelectorAll('thead th[data-column]');
+        headers.forEach(header => {
+            const column = header.getAttribute('data-column');
+            if (visibleColumns.includes(column)) {
+                header.style.display = '';
+            } else {
+                header.style.display = 'none';
+            }
+        });
+
+        // Show/hide body columns
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td[data-column]');
+            cells.forEach(cell => {
+                const column = cell.getAttribute('data-column');
+                if (visibleColumns.includes(column)) {
+                    cell.style.display = '';
+                } else {
+                    cell.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    function toggleColumnSelector() {
+        const selector = document.getElementById('columnSelector');
+        selector.classList.toggle('hidden');
+    }
+
+    function toggleStatementColumnSelector() {
+        const selector = document.getElementById('statementColumnSelector');
+        selector.classList.toggle('hidden');
+    }
+
+    // Close column selectors when clicking outside
+    document.addEventListener('click', function (event) {
+        const walletSelector = document.getElementById('columnSelector');
+        const walletBtn = document.getElementById('viewColumnsBtn');
+        const statementSelector = document.getElementById('statementColumnSelector');
+        const statementBtn = document.getElementById('viewStatementColumnsBtn');
+
+        if (!walletSelector.contains(event.target) && !walletBtn.contains(event.target)) {
+            walletSelector.classList.add('hidden');
+        }
+
+        if (!statementSelector.contains(event.target) && !statementBtn.contains(event.target)) {
+            statementSelector.classList.add('hidden');
+        }
+    });
+
+    // Handle column checkbox changes
+    document.addEventListener('change', function (event) {
+        if (event.target.classList.contains('column-checkbox')) {
+            const column = event.target.getAttribute('data-column');
+            const isChecked = event.target.checked;
+
+            if (isChecked) {
+                if (!visibleWalletColumns.includes(column)) {
+                    visibleWalletColumns.push(column);
+                }
+            } else {
+                // Prevent unchecking if it would result in less than 3 columns
+                if (visibleWalletColumns.length <= 3) {
+                    event.target.checked = true;
+                    return;
+                }
+                visibleWalletColumns = visibleWalletColumns.filter(col => col !== column);
+            }
+
+            applyColumnVisibility('wallets-table', visibleWalletColumns);
+            saveColumnVisibility();
+            adjustTableFontSize();
+        }
+
+        if (event.target.classList.contains('statement-column-checkbox')) {
+            const column = event.target.getAttribute('data-column');
+            const isChecked = event.target.checked;
+
+            if (isChecked) {
+                if (!visibleStatementColumns.includes(column)) {
+                    visibleStatementColumns.push(column);
+                }
+            } else {
+                // Prevent unchecking if it would result in less than 3 columns
+                if (visibleStatementColumns.length <= 3) {
+                    event.target.checked = true;
+                    return;
+                }
+                visibleStatementColumns = visibleStatementColumns.filter(col => col !== column);
+            }
+
+            applyColumnVisibility('statementTableElement', visibleStatementColumns);
+            saveColumnVisibility();
+        }
+    });
+
     async function showWalletStatement(walletId, walletName) {
         currentStatementWalletId = walletId;
         document.getElementById('statementWalletName').textContent = walletName;
@@ -1024,10 +1308,15 @@ function formatCurrency($amount)
             params.end = endDate.toISOString().split('T')[0];
         }
 
-        document.getElementById('statementLoading').classList.remove('hidden');
-        document.getElementById('statementTable').classList.add('hidden');
-        document.getElementById('statementMobile').classList.add('hidden');
-        document.getElementById('statementEmpty').classList.add('hidden');
+        const loading = document.getElementById('statementLoading');
+        const table = document.getElementById('statementTable');
+        const mobile = document.getElementById('statementMobile');
+        const empty = document.getElementById('statementEmpty');
+
+        if (loading) loading.classList.remove('hidden');
+        if (table) table.classList.add('hidden');
+        if (mobile) mobile.classList.add('hidden');
+        if (empty) empty.classList.add('hidden');
 
         try {
             const res = await fetch(`${API_URL}?action=getWalletStatement`, {
@@ -1047,6 +1336,7 @@ function formatCurrency($amount)
                     renderWalletStatement(currentWalletStatement);
                     document.getElementById('statementTable').classList.remove('hidden');
                     document.getElementById('statementMobile').classList.remove('hidden');
+                    applyColumnVisibility('statementTableElement', visibleStatementColumns);
                 } else {
                     document.getElementById('statementEmpty').classList.remove('hidden');
                 }
@@ -1161,31 +1451,31 @@ function formatCurrency($amount)
             }
 
             tr.innerHTML = `
-                <td class="px-4 py-3 text-sm">
+                <td data-column="datetime" class="px-4 py-3 text-sm">
                     <div class="font-medium text-gray-900">${dateStr}</div>
                     <div class="text-xs text-gray-500">${timeStr}</div>
                 </td>
-                <td class="px-4 py-3 text-sm">
+                <td data-column="entryid" class="px-4 py-3 text-sm">
                     <div class="max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap font-mono text-gray-700" title="${entry.entry_id || ''}">
                         ${entry.entry_id || ''}
                     </div>
                 </td>
-                <td class="px-4 py-3 text-sm">
+                <td data-column="description" class="px-4 py-3 text-sm">
                     <div class="max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap" title="${description}">
                         <div class="font-medium text-gray-900">${description}</div>
                         ${entry.payment_method ? `<div class="text-xs text-gray-500">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
                     </div>
                 </td>
-                <td class="px-4 py-3 text-sm text-right">
+                <td data-column="debit" class="px-4 py-3 text-sm text-right">
                     ${debitAmount > 0 ? `<span class="text-red-600 font-semibold">-${formatCurrency(debitAmount)}</span>` : '<span class="text-gray-400">-</span>'}
                 </td>
-                <td class="px-4 py-3 text-sm text-right">
+                <td data-column="credit" class="px-4 py-3 text-sm text-right">
                     ${creditAmount > 0 ? `<span class="text-green-600 font-semibold">+${formatCurrency(creditAmount)}</span>` : '<span class="text-gray-400">-</span>'}
                 </td>
-                <td class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                <td data-column="balance" class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
                     ${entry.balance_after !== null ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
                 </td>
-                <td class="px-4 py-3 text-sm">
+                <td data-column="related" class="px-4 py-3 text-sm">
                     ${renderRelatedEntries(entry.related_entries)}
                 </td>
             `;
@@ -1519,8 +1809,8 @@ function formatCurrency($amount)
         const setting = platformSettings.find(s => s.id == id);
         if (!setting) return;
 
-        const wallet = wallets.find(w => w.wallet_number === setting.platform_account_id);
-        const walletName = wallet ? wallet.wallet_name : setting.platform_account_id;
+        const wallet = wallets.find(w => w.wallet_number === setting.wallet_number);
+        const walletName = wallet ? wallet.wallet_name : setting.wallet_number;
 
         document.getElementById('editSettingId').value = setting.id;
         document.getElementById('editSettingAccountId').value = setting.platform_account_id;
@@ -1688,6 +1978,7 @@ function formatCurrency($amount)
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        loadColumnVisibility();
         switchTab('wallets');
 
         document.getElementById('create-wallet-btn').addEventListener('click', showCreateWalletForm);
@@ -1723,6 +2014,8 @@ function formatCurrency($amount)
     window.showCreatePlatformSettingForm = showCreatePlatformSettingForm;
     window.showWalletStatement = showWalletStatement;
     window.hideWalletStatementModal = hideWalletStatementModal;
+    window.toggleColumnSelector = toggleColumnSelector;
+    window.toggleStatementColumnSelector = toggleStatementColumnSelector;
 </script>
 
 <?php
