@@ -45,7 +45,6 @@ function generateWalletNumber(PDO $pdo, string $walletId): string
     return $walletNumber;
 }
 
-session_start();
 if (
     !isset($_SESSION['user']) ||
     !$_SESSION['user']['logged_in'] ||

@@ -514,17 +514,17 @@ final class CreditService
     }
 
 
-    public static function getWalletStatement(string $walletId, string $filter = 'all', ?string $start = null, ?string $end = null): array
-    {
+    public static function getWalletStatement(
+        string $walletId,
+        string $filter = 'all',
+        ?string $start = null,
+        ?string $end = null
+    ): array {
         self::boot();
 
+        // 1) Fetch wallet metadata
         $wStmt = self::$pdo->prepare("
-            SELECT wallet_id,
-                   wallet_number,
-                   owner_type,
-                   user_id,
-                   vendor_id,
-                   wallet_name
+            SELECT wallet_id, wallet_number, owner_type, user_id, vendor_id, wallet_name
               FROM zzimba_wallets
              WHERE wallet_id = :wid
                AND status    = 'active'
@@ -540,86 +540,73 @@ final class CreditService
             ];
         }
 
-        $txnParams = [];
-        if ($wallet['owner_type'] === 'USER') {
-            $txnSql = "
-            SELECT *
-            FROM zzimba_financial_transactions
-            WHERE user_id = :uid
-        ";
-            $txnParams[':uid'] = $wallet['user_id'];
-        } elseif ($wallet['owner_type'] === 'VENDOR') {
-            $txnSql = "
-            SELECT *
-            FROM zzimba_financial_transactions
-            WHERE vendor_id = :vid
-        ";
-            $txnParams[':vid'] = $wallet['vendor_id'];
-        } else {
-            $txnSql = "
-            SELECT DISTINCT ft.*
-            FROM zzimba_financial_transactions ft
-            JOIN zzimba_transaction_entries e
-              ON ft.transaction_id = e.transaction_id
-            WHERE e.wallet_id = :wid
-        ";
-            $txnParams[':wid'] = $walletId;
+        // 2) Collect all transaction IDs touching this wallet
+        $ftStmt = match ($wallet['owner_type']) {
+            'USER' => self::$pdo->prepare("SELECT transaction_id FROM zzimba_financial_transactions WHERE user_id = :uid"),
+            'VENDOR' => self::$pdo->prepare("SELECT transaction_id FROM zzimba_financial_transactions WHERE vendor_id = :vid"),
+            default => self::$pdo->prepare("
+                SELECT DISTINCT ft.transaction_id
+                  FROM zzimba_financial_transactions ft
+                  JOIN zzimba_transaction_entries e
+                    ON ft.transaction_id = e.transaction_id
+                 WHERE e.wallet_id = :wid
+            "),
+        };
+        $param = $wallet['owner_type'] === 'USER' ? [':uid' => $wallet['user_id']] :
+            ($wallet['owner_type'] === 'VENDOR' ? [':vid' => $wallet['vendor_id']] : [':wid' => $walletId]);
+        $ftStmt->execute($param);
+        $ftTxnIds = $ftStmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $etStmt = self::$pdo->prepare("
+            SELECT DISTINCT transaction_id
+              FROM zzimba_transaction_entries
+             WHERE wallet_id = :wid
+        ");
+        $etStmt->execute([':wid' => $walletId]);
+        $etTxnIds = $etStmt->fetchAll(PDO::FETCH_COLUMN);
+
+        $allTxnIds = array_unique(array_merge($ftTxnIds, $etTxnIds));
+        if (empty($allTxnIds)) {
+            return [
+                'success' => true,
+                'wallet' => [
+                    'wallet_id' => $wallet['wallet_id'],
+                    'wallet_number' => $wallet['wallet_number'],
+                    'owner_type' => $wallet['owner_type'],
+                    'wallet_name' => $wallet['wallet_name'],
+                ],
+                'statement' => []
+            ];
         }
 
+        // 3) Fetch those transactions
+        $placeholders = [];
+        $params = [];
+        foreach ($allTxnIds as $i => $tid) {
+            $key = ":tid{$i}";
+            $placeholders[] = $key;
+            $params[$key] = $tid;
+        }
+        $inList = implode(',', $placeholders);
+        $sql = "SELECT * FROM zzimba_financial_transactions WHERE transaction_id IN ($inList)";
         if ($filter === 'range') {
             if (!$start || !$end) {
-                return [
-                    'success' => false,
-                    'statement' => [],
-                    'message' => 'When using range filter, both start and end are required'
-                ];
+                return ['success' => false, 'statement' => [], 'message' => 'Both start and end required for range'];
             }
-            $txnSql .= " AND created_at BETWEEN :startDate AND :endDate";
-            $txnParams[':startDate'] = $start;
-            $txnParams[':endDate'] = $end;
+            $sql .= " AND created_at BETWEEN :startDate AND :endDate";
+            $params[':startDate'] = $start;
+            $params[':endDate'] = $end;
         }
+        $sql .= " ORDER BY created_at DESC";
 
-        $txnSql .= " ORDER BY created_at DESC";
-
-        $txnStmt = self::$pdo->prepare($txnSql);
-        $txnStmt->execute($txnParams);
+        $txnStmt = self::$pdo->prepare($sql);
+        $txnStmt->execute($params);
         $txns = $txnStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $entryStmt = self::$pdo->prepare("
-        SELECT *
-        FROM zzimba_transaction_entries
-        WHERE transaction_id = :tid
-          AND wallet_id = :wid
-        ORDER BY created_at ASC
-    ");
-        $relatedStmt = self::$pdo->prepare("
-        SELECT
-            e.*,
-            COALESCE(ca.name, w.wallet_name) AS account_or_wallet_name,
-            w.owner_type
-        FROM zzimba_transaction_entries e
-        LEFT JOIN zzimba_cash_accounts ca
-          ON e.cash_account_id = ca.id
-        LEFT JOIN zzimba_wallets w
-          ON e.wallet_id = w.wallet_id
-        WHERE e.ref_entry_id = :eid
-        ORDER BY e.created_at ASC
-    ");
-
+        // 4) Attach entries recursively _inside_ each transaction
         $statement = [];
         foreach ($txns as $txn) {
-            $entryStmt->execute([
-                ':tid' => $txn['transaction_id'],
-                ':wid' => $walletId
-            ]);
-            $entries = $entryStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            foreach ($entries as &$entry) {
-                $relatedStmt->execute([':eid' => $entry['entry_id']]);
-                $entry['related_entries'] = $relatedStmt->fetchAll(PDO::FETCH_ASSOC);
-            }
-
-            $txn['entries'] = $entries;
+            $txn['entries'] = self::fetchEntriesRecursively($txn['transaction_id'], $walletId);
             $statement[] = ['transaction' => $txn];
         }
 
@@ -631,10 +618,93 @@ final class CreditService
                 'owner_type' => $wallet['owner_type'],
                 'wallet_name' => $wallet['wallet_name'],
             ],
-            'statement' => $statement,
+            'statement' => $statement
         ];
     }
 
+    private static function fetchEntriesRecursively(string $txnId, string $walletId): array
+    {
+        $stmt = self::$pdo->prepare("
+            SELECT
+                e.*,
+                COALESCE(ca.name, w.wallet_name) AS account_or_wallet_name,
+                w.owner_type
+              FROM zzimba_transaction_entries e
+              LEFT JOIN zzimba_cash_accounts ca ON e.cash_account_id = ca.id
+              LEFT JOIN zzimba_wallets      w  ON e.wallet_id        = w.wallet_id
+             WHERE e.transaction_id = :tid
+               AND e.wallet_id      = :wid
+             ORDER BY e.created_at ASC
+        ");
+        $stmt->execute([':tid' => $txnId, ':wid' => $walletId]);
+
+        $entries = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $visited = [];
+
+        foreach ($entries as &$entry) {
+            $entry = self::buildEntryTree($entry, $visited);
+        }
+
+        return $entries;
+    }
+    
+    private static function buildEntryTree(array $entry, array &$visited): array
+    {
+        $id = $entry['entry_id'];
+        if (isset($visited[$id])) {
+            return $entry;
+        }
+        $visited[$id] = true;
+
+        // 1) Gather ancestor chain
+        $ancestors = [];
+        $parentId = $entry['ref_entry_id'];
+        while ($parentId) {
+            $pStmt = self::$pdo->prepare("
+                SELECT
+                    e.*,
+                    COALESCE(ca.name, w.wallet_name) AS account_or_wallet_name,
+                    w.owner_type
+                  FROM zzimba_transaction_entries e
+                  LEFT JOIN zzimba_cash_accounts ca ON e.cash_account_id = ca.id
+                  LEFT JOIN zzimba_wallets      w  ON e.wallet_id        = w.wallet_id
+                 WHERE e.entry_id = :eid
+                 LIMIT 1
+            ");
+            $pStmt->execute([':eid' => $parentId]);
+            $parent = $pStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$parent || isset($visited[$parent['entry_id']])) {
+                break;
+            }
+            $visited[$parent['entry_id']] = true;
+            $ancestors[] = $parent;
+            $parentId = $parent['ref_entry_id'];
+        }
+
+        // 2) Recursively gather descendants
+        $childrenStmt = self::$pdo->prepare("
+            SELECT
+                e.*,
+                COALESCE(ca.name, w.wallet_name) AS account_or_wallet_name,
+                w.owner_type
+              FROM zzimba_transaction_entries e
+              LEFT JOIN zzimba_cash_accounts ca ON e.cash_account_id = ca.id
+              LEFT JOIN zzimba_wallets      w  ON e.wallet_id        = w.wallet_id
+             WHERE e.ref_entry_id = :eid
+             ORDER BY e.created_at ASC
+        ");
+        $childrenStmt->execute([':eid' => $id]);
+        $children = $childrenStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($children as &$child) {
+            $child = self::buildEntryTree($child, $visited);
+        }
+
+        // 3) Merge ancestors + children under related_entries
+        $entry['related_entries'] = array_merge($ancestors, $children);
+
+        return $entry;
+    }
 
     public static function transfer(array $opts): array
     {
