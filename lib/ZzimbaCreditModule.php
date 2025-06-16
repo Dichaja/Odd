@@ -1,21 +1,5 @@
 <?php
-/**
- * ZzimbaCreditModule.php
- *
- * Namespace wrapper around Relworx mobile-money utilities plus the
- * local bookkeeping that Zzimba Online needs.
- *
- * Exposed public methods
- *   • validateMsisdn(string $msisdn): array
- *   • makeMobileMoneyPayment(array $opts): array
- *   • checkRequestStatus(string $internalRef): array
- *   • getWallet(string $ownerType, string $ownerId = null): array
- *   • getWalletStatement(string $walletId, string $filter = 'all', ?string $start = null, ?string $end = null): array
- *
- * Requirements
- *   • config.php provides $pdo and generateUlid()
- *   • PHP 8.1+
- */
+
 namespace ZzimbaCreditModule;
 
 use PDO;
@@ -25,9 +9,6 @@ require_once __DIR__ . '/../config/config.php';
 
 final class CreditService
 {
-    /* ------------------------------------------------------------------
-     *  Static configuration / bootstrap
-     * ------------------------------------------------------------------ */
     private const API_KEY = '56cded6ede99ac.BYJV1ceTwWbN_NzaqIchUw';
     private const ACCOUNT_NO = 'REL2C6A94761B';
     private const DEFAULT_CURRENCY = 'UGX';
@@ -41,11 +22,9 @@ final class CreditService
             return;
         }
 
-        /** @var PDO $pdo */
         global $pdo;
         self::$pdo = $pdo;
 
-        // create tables if not exist
         $createWallets = "
             CREATE TABLE IF NOT EXISTS zzimba_wallets (
                 wallet_id       CHAR(26) NOT NULL PRIMARY KEY,
@@ -135,37 +114,30 @@ final class CreditService
         self::$ready = true;
     }
 
-    /* ------------------------------------------------------------------
-     *  Wallet-number generator (10-digit Y₁S₀Y₂S₁S₂S₃S₄M₁S₅M₂)
-     * ------------------------------------------------------------------ */
     private static function generateWalletNumber(string $walletId): string
     {
-        // Year “yy” (e.g. “26”), Month “mm” (e.g. “11”)
-        $yy = date('y');       // "26"
-        $y1 = $yy[0];          // "2"
-        $y2 = $yy[1];          // "6"
-        $mm = date('m');       // "11"
-        $m1 = $mm[0];          // "1"
-        $m2 = $mm[1];          // "1"
+        $yy = date('y');
+        $y1 = $yy[0];
+        $y2 = $yy[1];
+        $mm = date('m');
+        $m1 = $mm[0];
+        $m2 = $mm[1];
 
         do {
-            // 6-digit random sequence
             $seq = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-            // Assemble: Y₁ S₀ Y₂ S₁ S₂ S₃ S₄ M₁ S₅ M₂
             $walletNumber =
-                $y1         // pos 1
-                . $seq[0]      // pos 2
-                . $y2         // pos 3
-                . $seq[1]      // pos 4
-                . $seq[2]      // pos 5
-                . $seq[3]      // pos 6
-                . $seq[4]      // pos 7
-                . $m1         // pos 8
-                . $seq[5]      // pos 9
-                . $m2;         // pos 10
+                $y1
+                . $seq[0]
+                . $y2
+                . $seq[1]
+                . $seq[2]
+                . $seq[3]
+                . $seq[4]
+                . $m1
+                . $seq[5]
+                . $m2;
 
-            // Ensure uniqueness against UNIQUE index
             $check = self::$pdo
                 ->prepare('SELECT 1 FROM zzimba_wallets WHERE wallet_number = ? LIMIT 1');
             $check->execute([$walletNumber]);
@@ -174,10 +146,6 @@ final class CreditService
 
         return $walletNumber;
     }
-
-    /* ------------------------------------------------------------------
-     *  Public API
-     * ------------------------------------------------------------------ */
 
     public static function validateMsisdn(string $msisdn): array
     {
@@ -237,7 +205,6 @@ final class CreditService
     {
         self::boot();
 
-        // 1) Fetch status from Relworx
         $raw = self::apiRequest(
             'https://payments.relworx.com/api/mobile-money/check-request-status',
             [
@@ -249,7 +216,6 @@ final class CreditService
         $res = json_decode($raw, true) ?? [];
         $status = strtoupper($res['request_status'] ?? $res['status'] ?? 'PENDING');
 
-        // 2) Update financial_transactions
         $upd = self::$pdo->prepare("
             UPDATE zzimba_financial_transactions
                SET status = :st,
@@ -265,7 +231,6 @@ final class CreditService
             ':er' => $internalRef
         ]);
 
-        // 3) On SUCCESS, one DEBIT then two CREDITs referencing it
         if ($status === 'SUCCESS') {
             $txnRow = self::$pdo->prepare("
                 SELECT transaction_id, amount_total, user_id
@@ -278,7 +243,6 @@ final class CreditService
             $amount = (float) $txn['amount_total'];
             $userId = $txn['user_id'];
 
-            // get withholding wallet
             $wst = self::$pdo->query("
                 SELECT platform_account_id
                   FROM zzimba_platform_account_settings
@@ -287,7 +251,6 @@ final class CreditService
             ");
             $withholdingId = $wst->fetchColumn();
 
-            // idempotency: skip if already credited withholding
             $chk = self::$pdo->prepare("
                 SELECT COUNT(*) FROM zzimba_transaction_entries
                  WHERE transaction_id = :tid
@@ -303,7 +266,6 @@ final class CreditService
             try {
                 self::$pdo->beginTransaction();
 
-                // fetch balances
                 $balStmt = self::$pdo->prepare("
                     SELECT current_balance
                       FROM zzimba_wallets
@@ -332,7 +294,6 @@ final class CreditService
                 $uStmt->execute([':uid' => $userId]);
                 $uRow = $uStmt->fetch(PDO::FETCH_ASSOC);
 
-                // 3.1) CREDIT withholding
                 $newWithBal = $withBal + $amount;
                 self::insertEntry([
                     'transaction_id' => $txnId,
@@ -348,7 +309,6 @@ final class CreditService
                      WHERE wallet_id = :wid
                 ")->execute([':bal' => $newWithBal, ':wid' => $withholdingId]);
 
-                // 3.2) SINGLE DEBIT withholding
                 $debitBal = $newWithBal - $amount;
                 $debitId = self::insertEntry([
                     'transaction_id' => $txnId,
@@ -364,7 +324,6 @@ final class CreditService
                      WHERE wallet_id = :wid
                 ")->execute([':bal' => $debitBal, ':wid' => $withholdingId]);
 
-                // 3.3) CREDIT user wallet (ref to debit)
                 $newUserBal = (float) $uRow['current_balance'] + $amount;
                 self::insertEntry([
                     'transaction_id' => $txnId,
@@ -381,7 +340,6 @@ final class CreditService
                      WHERE wallet_id = :wid
                 ")->execute([':bal' => $newUserBal, ':wid' => $uRow['wallet_id']]);
 
-                // 3.4) CREDIT gateway cash (ref to debit)
                 $newCashBal = (float) $cash['current_balance'] + $amount;
                 self::insertEntry([
                     'transaction_id' => $txnId,
@@ -412,7 +370,6 @@ final class CreditService
     {
         self::boot();
 
-        // 1) Try fetching existing
         if ($ownerType === 'PLATFORM') {
             $sql = "
                 SELECT wallet_id,
@@ -452,7 +409,6 @@ final class CreditService
             return ['success' => true, 'wallet' => $wallet];
         }
 
-        // 2) Create a new wallet (with wallet_number)
         $wid = \generateUlid();
         $wn = self::generateWalletNumber($wid);
         $now = date('Y-m-d H:i:s');
@@ -467,7 +423,6 @@ final class CreditService
             }
         }
 
-        // Build INSERT
         $fields = [
             'wallet_id',
             'wallet_number',
@@ -535,25 +490,10 @@ final class CreditService
         }
     }
 
-    /**
-     * Retrieve a wallet's full statement by wallet ID.
-     *
-     * Includes ALL transactions (PENDING, FAILED, SUCCESS) from
-     * zzimba_financial_transactions, and any related entries
-     * from zzimba_transaction_entries, grouping child credits
-     * by ref_entry_id under their debit.
-     *
-     * @param string      $walletId The ID of the wallet (USER, VENDOR, or PLATFORM)
-     * @param string      $filter   'all' or 'range'
-     * @param string|null $start    'YYYY-MM-DD' or full datetime
-     * @param string|null $end      'YYYY-MM-DD' or full datetime
-     * @return array
-     */
     public static function getWalletStatement(string $walletId, string $filter = 'all', ?string $start = null, ?string $end = null): array
     {
         self::boot();
 
-        // 1) Fetch wallet metadata (including wallet_number)
         $wStmt = self::$pdo->prepare("
             SELECT wallet_id,
                    wallet_number,
@@ -576,7 +516,6 @@ final class CreditService
             ];
         }
 
-        // 2) build the transaction query + params
         $txnParams = [];
         if ($wallet['owner_type'] === 'USER') {
             $txnSql = "
@@ -592,7 +531,7 @@ final class CreditService
             WHERE vendor_id = :vid
         ";
             $txnParams[':vid'] = $wallet['vendor_id'];
-        } else { // PLATFORM: pull any txn that has an entry on this wallet
+        } else {
             $txnSql = "
             SELECT DISTINCT ft.*
             FROM zzimba_financial_transactions ft
@@ -603,7 +542,6 @@ final class CreditService
             $txnParams[':wid'] = $walletId;
         }
 
-        // 2a) date‐range filter if requested
         if ($filter === 'range') {
             if (!$start || !$end) {
                 return [
@@ -623,7 +561,6 @@ final class CreditService
         $txnStmt->execute($txnParams);
         $txns = $txnStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // 3) prepare statements for entries and related entries
         $entryStmt = self::$pdo->prepare("
         SELECT *
         FROM zzimba_transaction_entries
@@ -645,28 +582,21 @@ final class CreditService
         ORDER BY e.created_at ASC
     ");
 
-        // 4) build the statement array
         $statement = [];
         foreach ($txns as $txn) {
-            // fetch all primary entries for this wallet
             $entryStmt->execute([
                 ':tid' => $txn['transaction_id'],
                 ':wid' => $walletId
             ]);
             $entries = $entryStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // for each entry, fetch its related entries
             foreach ($entries as &$entry) {
                 $relatedStmt->execute([':eid' => $entry['entry_id']]);
                 $entry['related_entries'] = $relatedStmt->fetchAll(PDO::FETCH_ASSOC);
             }
 
-            // inject entries directly into the transaction object
             $txn['entries'] = $entries;
-
-            $statement[] = [
-                'transaction' => $txn
-            ];
+            $statement[] = ['transaction' => $txn];
         }
 
         return [
@@ -680,11 +610,6 @@ final class CreditService
             'statement' => $statement,
         ];
     }
-
-
-    /* ------------------------------------------------------------------ */
-    /*  Internal helpers                                                   */
-    /* ------------------------------------------------------------------ */
 
     private static function apiRequest(string $url, array $data, string $method = 'POST'): string
     {
@@ -737,9 +662,6 @@ final class CreditService
         }
     }
 
-    /**
-     * Insert a ledger entry and return its entry_id.
-     */
     private static function insertEntry(array $row): string
     {
         $row['entry_id'] = \generateUlid();
