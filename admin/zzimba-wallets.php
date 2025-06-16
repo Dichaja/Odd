@@ -1076,7 +1076,7 @@ function formatCurrency($amount)
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="text-xs font-medium text-gray-900 leading-tight" title="${walletName}">${displayName}</div>
-                            <div class="text-xs text-gray-500 mt-0.5 font-mono">${setting.platform_account_id}</div>
+                            <div class="text-xs text-gray-500 mt-0.5 font-mono">${setting.wallet_number}</div>
                         </div>
                     </div>
                 </td>
