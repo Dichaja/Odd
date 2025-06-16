@@ -10,7 +10,7 @@
  *   • makeMobileMoneyPayment(array $opts): array
  *   • checkRequestStatus(string $internalRef): array
  *   • getWallet(string $ownerType, string $ownerId = null): array
- *   • getWalletStatement(string $userId, string $filter = 'all', ?string $start = null, ?string $end = null): array
+ *   • getWalletStatement(string $walletId, string $filter = 'all', ?string $start = null, ?string $end = null): array
  *
  * Requirements
  *   • config.php provides $pdo and generateUlid()
@@ -25,9 +25,9 @@ require_once __DIR__ . '/../config/config.php';
 
 final class CreditService
 {
-    /* ------------------------------------------------------------------ */
-    /*  Static configuration / bootstrap                                  */
-    /* ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------
+     *  Static configuration / bootstrap
+     * ------------------------------------------------------------------ */
     private const API_KEY = '56cded6ede99ac.BYJV1ceTwWbN_NzaqIchUw';
     private const ACCOUNT_NO = 'REL2C6A94761B';
     private const DEFAULT_CURRENCY = 'UGX';
@@ -40,6 +40,7 @@ final class CreditService
         if (self::$ready) {
             return;
         }
+
         /** @var PDO $pdo */
         global $pdo;
         self::$pdo = $pdo;
@@ -48,6 +49,7 @@ final class CreditService
         $createWallets = "
             CREATE TABLE IF NOT EXISTS zzimba_wallets (
                 wallet_id       CHAR(26) NOT NULL PRIMARY KEY,
+                wallet_number   CHAR(10) NOT NULL UNIQUE COMMENT 'Public 10-digit wallet number: Y₁S₀Y₂S₁S₂S₃S₄M₁S₅M₂',
                 owner_type      ENUM('USER','VENDOR','PLATFORM') NOT NULL,
                 user_id         VARCHAR(26) DEFAULT NULL,
                 vendor_id       VARCHAR(26) DEFAULT NULL,
@@ -133,9 +135,49 @@ final class CreditService
         self::$ready = true;
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Public API                                                         */
-    /* ------------------------------------------------------------------ */
+    /* ------------------------------------------------------------------
+     *  Wallet-number generator (10-digit Y₁S₀Y₂S₁S₂S₃S₄M₁S₅M₂)
+     * ------------------------------------------------------------------ */
+    private static function generateWalletNumber(string $walletId): string
+    {
+        // Year “yy” (e.g. “26”), Month “mm” (e.g. “11”)
+        $yy = date('y');       // "26"
+        $y1 = $yy[0];          // "2"
+        $y2 = $yy[1];          // "6"
+        $mm = date('m');       // "11"
+        $m1 = $mm[0];          // "1"
+        $m2 = $mm[1];          // "1"
+
+        do {
+            // 6-digit random sequence
+            $seq = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Assemble: Y₁ S₀ Y₂ S₁ S₂ S₃ S₄ M₁ S₅ M₂
+            $walletNumber =
+                $y1         // pos 1
+                . $seq[0]      // pos 2
+                . $y2         // pos 3
+                . $seq[1]      // pos 4
+                . $seq[2]      // pos 5
+                . $seq[3]      // pos 6
+                . $seq[4]      // pos 7
+                . $m1         // pos 8
+                . $seq[5]      // pos 9
+                . $m2;         // pos 10
+
+            // Ensure uniqueness against UNIQUE index
+            $check = self::$pdo
+                ->prepare('SELECT 1 FROM zzimba_wallets WHERE wallet_number = ? LIMIT 1');
+            $check->execute([$walletNumber]);
+            $exists = (bool) $check->fetchColumn();
+        } while ($exists);
+
+        return $walletNumber;
+    }
+
+    /* ------------------------------------------------------------------
+     *  Public API
+     * ------------------------------------------------------------------ */
 
     public static function validateMsisdn(string $msisdn): array
     {
@@ -369,54 +411,94 @@ final class CreditService
     public static function getWallet(string $ownerType, string $ownerId = null): array
     {
         self::boot();
+
+        // 1) Try fetching existing
         if ($ownerType === 'PLATFORM') {
-            $stmt = self::$pdo->prepare("
-                SELECT wallet_id, wallet_name, current_balance, status, created_at
+            $sql = "
+                SELECT wallet_id,
+                       wallet_number,
+                       wallet_name,
+                       current_balance,
+                       status,
+                       created_at
                   FROM zzimba_wallets
                  WHERE owner_type = 'PLATFORM'
                    AND status     = 'active'
-                 LIMIT 1"
-            );
+                 LIMIT 1
+            ";
+            $stmt = self::$pdo->prepare($sql);
             $stmt->execute();
         } else {
             $col = $ownerType === 'USER' ? 'user_id' : 'vendor_id';
-            $stmt = self::$pdo->prepare(
-                "
-                SELECT wallet_id, wallet_name, current_balance, status, created_at
+            $sql = "
+                SELECT wallet_id,
+                       wallet_number,
+                       wallet_name,
+                       current_balance,
+                       status,
+                       created_at
                   FROM zzimba_wallets
                  WHERE owner_type = :ot
-                   AND {$col}     = :oid
-                   AND status     = 'active'
-                 LIMIT 1"
-            );
+                   AND {$col}    = :oid
+                   AND status    = 'active'
+                 LIMIT 1
+            ";
+            $stmt = self::$pdo->prepare($sql);
             $stmt->execute([':ot' => $ownerType, ':oid' => $ownerId]);
         }
+
         $wallet = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($wallet) {
             return ['success' => true, 'wallet' => $wallet];
         }
-        // create if missing...
+
+        // 2) Create a new wallet (with wallet_number)
         $wid = \generateUlid();
-        $created = date('Y-m-d H:i:s');
+        $wn = self::generateWalletNumber($wid);
+        $now = date('Y-m-d H:i:s');
         $wname = 'My Wallet';
+
         if ($ownerType === 'USER') {
-            $u = self::$pdo->prepare("SELECT first_name, last_name FROM zzimba_users WHERE id = :oid");
-            $u->execute([':oid' => $ownerId]);
+            $u = self::$pdo
+                ->prepare("SELECT first_name, last_name FROM zzimba_users WHERE id = :uid");
+            $u->execute([':uid' => $ownerId]);
             if ($r = $u->fetch(PDO::FETCH_ASSOC)) {
                 $wname = trim($r['first_name'] . ' ' . $r['last_name']);
             }
         }
-        $fields = ['wallet_id', 'owner_type', 'wallet_name', 'current_balance', 'status', 'created_at', 'updated_at'];
-        $placeholders = [':wid', ':ot', ':wname', ':bal', ':st', ':created', ':updated'];
+
+        // Build INSERT
+        $fields = [
+            'wallet_id',
+            'wallet_number',
+            'owner_type',
+            'wallet_name',
+            'current_balance',
+            'status',
+            'created_at',
+            'updated_at'
+        ];
+        $placeholders = [
+            ':wid',
+            ':wn',
+            ':ot',
+            ':wname',
+            ':bal',
+            ':st',
+            ':created',
+            ' :updated'
+        ];
         $bind = [
             ':wid' => $wid,
+            ':wn' => $wn,
             ':ot' => $ownerType,
             ':wname' => $wname,
             ':bal' => 0.00,
             ':st' => 'active',
-            ':created' => $created,
-            ':updated' => $created
+            ':created' => $now,
+            ':updated' => $now
         ];
+
         if ($ownerType === 'USER') {
             $fields[] = 'user_id';
             $placeholders[] = ':oid';
@@ -426,22 +508,25 @@ final class CreditService
             $placeholders[] = ':oid';
             $bind[':oid'] = $ownerId;
         }
+
         $sql = sprintf(
             "INSERT INTO zzimba_wallets (%s) VALUES (%s)",
             implode(',', $fields),
             implode(',', $placeholders)
         );
+
         try {
-            $stmt = self::$pdo->prepare($sql);
-            $stmt->execute($bind);
+            $ins = self::$pdo->prepare($sql);
+            $ins->execute($bind);
             return [
                 'success' => true,
                 'wallet' => [
                     'wallet_id' => $wid,
+                    'wallet_number' => $wn,
                     'wallet_name' => $wname,
                     'current_balance' => 0.00,
                     'status' => 'active',
-                    'created_at' => $created
+                    'created_at' => $now
                 ]
             ];
         } catch (PDOException $e) {
@@ -468,14 +553,19 @@ final class CreditService
     {
         self::boot();
 
-        // 1) verify wallet exists
+        // 1) Fetch wallet metadata (including wallet_number)
         $wStmt = self::$pdo->prepare("
-        SELECT wallet_id, owner_type, user_id, vendor_id, wallet_name
-        FROM zzimba_wallets
-        WHERE wallet_id = :wid
-          AND status = 'active'
-        LIMIT 1
-    ");
+            SELECT wallet_id,
+                   wallet_number,
+                   owner_type,
+                   user_id,
+                   vendor_id,
+                   wallet_name
+              FROM zzimba_wallets
+             WHERE wallet_id = :wid
+               AND status    = 'active'
+             LIMIT 1
+        ");
         $wStmt->execute([':wid' => $walletId]);
         $wallet = $wStmt->fetch(PDO::FETCH_ASSOC);
         if (!$wallet) {
@@ -583,6 +673,7 @@ final class CreditService
             'success' => true,
             'wallet' => [
                 'wallet_id' => $wallet['wallet_id'],
+                'wallet_number' => $wallet['wallet_number'],
                 'owner_type' => $wallet['owner_type'],
                 'wallet_name' => $wallet['wallet_name'],
             ],
