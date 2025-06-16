@@ -109,6 +109,67 @@ function formatCurrency($amount)
                     </div>
 
                     <div class="flex items-center gap-3">
+                        <div class="relative">
+                            <button id="viewColumnsBtn" onclick="toggleColumnSelector()"
+                                class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-sm flex items-center gap-2 hover:bg-gray-50">
+                                <i class="fas fa-eye text-xs"></i>
+                                <span>View</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+
+                            <div id="columnSelector"
+                                class="hidden absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-48">
+                                <div class="p-3 border-b border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-900">Show Columns</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Select at least 3 columns</p>
+                                </div>
+                                <div class="p-2 space-y-1" id="columnCheckboxes">
+                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox"
+                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                            data-column="datetime" checked>
+                                        <span class="text-sm text-gray-700">Date/Time</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox"
+                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                            data-column="entryid" checked>
+                                        <span class="text-sm text-gray-700">Entry ID</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox"
+                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                            data-column="description" checked>
+                                        <span class="text-sm text-gray-700">Description</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox"
+                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                            data-column="debit" checked>
+                                        <span class="text-sm text-gray-700">Debit</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox"
+                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                            data-column="credit" checked>
+                                        <span class="text-sm text-gray-700">Credit</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox"
+                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                            data-column="balance" checked>
+                                        <span class="text-sm text-gray-700">Balance</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox"
+                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                            data-column="related" checked>
+                                        <span class="text-sm text-gray-700">Related Entries</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <select id="dateFilter" onchange="loadTransactions()"
                             class="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-sm">
                             <option value="all">All transactions</option>
@@ -134,25 +195,25 @@ function formatCurrency($amount)
                 <table class="w-full" id="transactionsTableElement">
                     <thead class="bg-user-accent border-b border-gray-200">
                         <tr>
-                            <th
+                            <th data-column="datetime"
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Date/Time</th>
-                            <th
+                            <th data-column="entryid"
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Entry ID</th>
-                            <th
+                            <th data-column="description"
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Description</th>
-                            <th
+                            <th data-column="debit"
                                 class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Debit</th>
-                            <th
+                            <th data-column="credit"
                                 class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Credit</th>
-                            <th
+                            <th data-column="balance"
                                 class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Balance</th>
-                            <th
+                            <th data-column="related"
                                 class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
                                 Related Entries</th>
                         </tr>
@@ -530,6 +591,13 @@ function formatCurrency($amount)
     </div>
 </div>
 
+<style>
+    #balanceText {
+        white-space: nowrap !important;
+        overflow: hidden;
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const apiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageZzimbaCredit.php') ?>;
@@ -606,6 +674,9 @@ function formatCurrency($amount)
                         document.getElementById('balanceLoading').classList.add('hidden');
                         document.getElementById('walletInfo').classList.remove('hidden');
                         document.getElementById('balanceInfo').classList.remove('hidden');
+
+                        // Trigger balance text sizing after showing
+                        setTimeout(adjustBalanceTextSize, 100);
                     } else {
                         showWalletError('Failed to load wallet data');
                     }
@@ -753,36 +824,36 @@ function formatCurrency($amount)
                     (entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : '');
 
                 tr.innerHTML = `
-                    <td class="px-4 py-3 text-sm whitespace-nowrap">
+                    <td data-column="datetime" class="px-4 py-3 text-sm whitespace-nowrap">
                         <div class="font-medium text-gray-900 whitespace-nowrap">${dateStr}</div>
                         <div class="text-xs text-gray-500 whitespace-nowrap">${timeStr}</div>
                     </td>
-                    <td class="px-4 py-3 text-sm">
+                    <td data-column="entryid" class="px-4 py-3 text-sm">
                         <div class="font-mono text-gray-700 truncate max-w-[10ch]" title="${entry.entry_id || ''}">
                             ${entry.entry_id || ''}
                         </div>
                     </td>
-                    <td class="px-4 py-3 text-sm max-w-[20ch]">
+                    <td data-column="description" class="px-4 py-3 text-sm max-w-[20ch]">
                         <div class="overflow-hidden whitespace-normal" title="${raw}">
                             ${descHtml}
                         </div>
                     </td>
-                    <td class="px-4 py-3 text-sm text-right">
+                    <td data-column="debit" class="px-4 py-3 text-sm text-right">
                         ${debit > 0 ? `<span class="font-semibold text-red-600">-${formatCurrency(debit)}</span>` : '<span class="text-gray-400">-</span>'}
                     </td>
-                    <td class="px-4 py-3 text-sm text-right">
+                    <td data-column="credit" class="px-4 py-3 text-sm text-right">
                         ${credit > 0 ? `<span class="font-semibold text-green-600">+${formatCurrency(credit)}</span>` : '<span class="text-gray-400">-</span>'}
                     </td>
-                    <td class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                    <td data-column="balance" class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
                         ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
                     </td>
-                    <td class="px-4 py-3 text-sm">
+                    <td data-column="related" class="px-4 py-3 text-sm">
                         ${renderRelatedEntries(entry.related_entries)}
                     </td>
                 `;
                 tbody.appendChild(tr);
 
-                // mobile card (unchanged)
+                // Mobile card remains unchanged
                 const card = document.createElement('div');
                 card.className = `bg-white rounded-lg p-4 border border-gray-200 ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
                 card.innerHTML = `
@@ -808,6 +879,9 @@ function formatCurrency($amount)
                 `;
                 mobile.appendChild(card);
             });
+
+            // Apply column visibility after rendering
+            applyColumnVisibility();
         }
 
         function renderRelatedEntries(rel) {
@@ -1237,10 +1311,239 @@ function formatCurrency($amount)
             if (e.key === 'Enter') { e.preventDefault(); validateGatewayPhoneNumber(); }
         });
 
-        // Expose for external calls
-        window.loadTransactions = loadTransactions;
-        window.showTransactionResultModal = showTransactionResultModal;
-        window.hideTransactionResultModal = hideTransactionResultModal;
+        // Column visibility management
+        const STORAGE_KEY = 'zzimba_credit_table_columns';
+        let visibleColumns = ['datetime', 'entryid', 'description', 'debit', 'credit', 'balance', 'related']; // All columns visible by default
+
+        function loadColumnSettings() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    visibleColumns = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Error loading column settings:', e);
+                }
+            }
+            updateColumnCheckboxes();
+            applyColumnVisibility();
+        }
+
+        function saveColumnSettings() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(visibleColumns));
+        }
+
+        function updateColumnCheckboxes() {
+            const checkboxes = document.querySelectorAll('.column-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = visibleColumns.includes(checkbox.dataset.column);
+            });
+        }
+
+        function applyColumnVisibility() {
+            const allColumns = ['datetime', 'entryid', 'description', 'debit', 'credit', 'balance', 'related'];
+
+            allColumns.forEach(column => {
+                const isVisible = visibleColumns.includes(column);
+                const headers = document.querySelectorAll(`th[data-column="${column}"]`);
+                const cells = document.querySelectorAll(`td[data-column="${column}"]`);
+
+                headers.forEach(header => {
+                    header.style.display = isVisible ? '' : 'none';
+                });
+                cells.forEach(cell => {
+                    cell.style.display = isVisible ? '' : 'none';
+                });
+            });
+        }
+
+        function toggleColumnSelector() {
+            const selector = document.getElementById('columnSelector');
+            const isHidden = selector.classList.contains('hidden');
+
+            if (isHidden) {
+                selector.classList.remove('hidden');
+                document.addEventListener('click', handleClickOutside);
+            } else {
+                selector.classList.add('hidden');
+                document.removeEventListener('click', handleClickOutside);
+            }
+        }
+
+        function handleClickOutside(event) {
+            const selector = document.getElementById('columnSelector');
+            const button = document.getElementById('viewColumnsBtn');
+
+            if (!selector.contains(event.target) && !button.contains(event.target)) {
+                selector.classList.add('hidden');
+                document.removeEventListener('click', handleClickOutside);
+            }
+        }
+
+        // Balance text auto-sizing
+        function adjustBalanceTextSize() {
+            const balanceInfo = document.getElementById('balanceInfo');
+            const balanceText = document.getElementById('balanceText');
+
+            if (!balanceInfo || !balanceText || balanceInfo.classList.contains('hidden')) {
+                return;
+            }
+
+            const container = balanceInfo.parentElement;
+            let fontSize = 48; // Start with lg:text-4xl equivalent (48px)
+
+            // Prevent text wrapping
+            balanceText.style.whiteSpace = 'nowrap';
+            balanceText.style.fontSize = fontSize + 'px';
+
+            // Check if text overflows container width
+            while (balanceText.scrollWidth > container.clientWidth && fontSize > 16) {
+                fontSize -= 2;
+                balanceText.style.fontSize = fontSize + 'px';
+            }
+
+            // Ensure minimum readable size
+            if (fontSize < 20) {
+                balanceText.style.fontSize = '20px';
+            }
+        }
+
+        loadColumnSettings();
+
+        // Add event listeners for column checkboxes
+        document.querySelectorAll('.column-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                const column = this.dataset.column;
+                const isChecked = this.checked;
+
+                if (isChecked) {
+                    if (!visibleColumns.includes(column)) {
+                        visibleColumns.push(column);
+                    }
+                } else {
+                    // Ensure at least 3 columns remain visible
+                    if (visibleColumns.length > 3) {
+                        visibleColumns = visibleColumns.filter(col => col !== column);
+                    } else {
+                        // Prevent unchecking if only 3 columns left
+                        this.checked = true;
+                        alert('At least 3 columns must be visible');
+                        return;
+                    }
+                }
+
+                saveColumnSettings();
+                applyColumnVisibility(); // Apply immediately
+                adjustTableFontSize(); // Readjust table font size after column changes
+            });
+        });
+
+        // Add resize observer for balance text
+        if (window.ResizeObserver) {
+            const balanceObserver = new ResizeObserver(adjustBalanceTextSize);
+            const balanceInfo = document.getElementById('balanceInfo');
+            if (balanceInfo) {
+                balanceObserver.observe(balanceInfo.parentElement);
+            }
+        }
+
+        // Fallback for browsers without ResizeObserver
+        window.addEventListener('resize', adjustBalanceTextSize);
+
+        // Update renderTransactions function to include data attributes
+        function renderTransactions(entries) {
+            const tbody = document.getElementById('transactionsTableBody');
+            const mobile = document.getElementById('transactionsMobile');
+            tbody.innerHTML = '';
+            mobile.innerHTML = '';
+
+            entries.forEach((entry, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = `${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`;
+                if (entry.is_first_in_group && entry.group_size > 1) {
+                    tr.classList.add('border-l-4', 'border-blue-400');
+                }
+                const dt = new Date(entry.transaction_date);
+                const dateStr = dt.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+                const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                const debit = entry.entry_type === 'DEBIT' ? entry.amount : 0;
+                const credit = entry.entry_type === 'CREDIT' ? entry.amount : 0;
+
+                let raw = entry.entry_note || getTransactionDescription(entry);
+                if (entry.status === 'FAILED') {
+                    raw = `${entry.transaction_type} (TXN: ${entry.transaction_id}, UGX ${formatCurrency(entry.amount_total)}) - FAILED`;
+                    if (entry.transaction_note && entry.transaction_note !== 'Request payment completed successfully.') {
+                        raw += ` - ${entry.transaction_note}`;
+                    }
+                } else {
+                    raw += ` (TXN: ${entry.transaction_id}, UGX ${formatCurrency(entry.amount_total)})`;
+                }
+                const parts = raw.split(',').map(s => s.trim());
+                const descHtml = parts.map(line => `<div class="font-medium text-gray-900">${line}</div>`).join('') +
+                    (entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : '');
+
+                tr.innerHTML = `
+                    <td data-column="datetime" class="px-4 py-3 text-sm whitespace-nowrap">
+                        <div class="font-medium text-gray-900 whitespace-nowrap">${dateStr}</div>
+                        <div class="text-xs text-gray-500 whitespace-nowrap">${timeStr}</div>
+                    </td>
+                    <td data-column="entryid" class="px-4 py-3 text-sm">
+                        <div class="font-mono text-gray-700 truncate max-w-[10ch]" title="${entry.entry_id || ''}">
+                            ${entry.entry_id || ''}
+                        </div>
+                    </td>
+                    <td data-column="description" class="px-4 py-3 text-sm max-w-[20ch]">
+                        <div class="overflow-hidden whitespace-normal" title="${raw}">
+                            ${descHtml}
+                        </div>
+                    </td>
+                    <td data-column="debit" class="px-4 py-3 text-sm text-right">
+                        ${debit > 0 ? `<span class="font-semibold text-red-600">-${formatCurrency(debit)}</span>` : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td data-column="credit" class="px-4 py-3 text-sm text-right">
+                        ${credit > 0 ? `<span class="font-semibold text-green-600">+${formatCurrency(credit)}</span>` : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td data-column="balance" class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                        ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td data-column="related" class="px-4 py-3 text-sm">
+                        ${renderRelatedEntries(entry.related_entries)}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Mobile card remains unchanged
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-lg p-4 border border-gray-200 ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900 text-sm mb-1">${raw.replace(/, /g, '\n')}</div>
+                            <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
+                            ${entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
+                        </div>
+                        <div class="text-right ml-3">
+                            ${debit > 0 ? `<div class="font-semibold text-red-600 text-sm">-${formatCurrency(debit)}</div>` : ''}
+                            ${credit > 0 ? `<div class="font-semibold text-green-600 text-sm">+${formatCurrency(credit)}</div>` : ''}
+                            <div class="text-xs text-gray-500 mt-1">Balance: ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '-'}</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 mb-2"><span class="font-mono">${entry.entry_id || 'No Entry ID'}</span></div>
+                    ${entry.related_entries.length > 0 ? `
+                        <div class="mt-3">
+                            <div class="text-xs font-medium text-gray-700 mb-2">Related Entries:</div>
+                            ${renderRelatedEntriesMobile(entry.related_entries)}
+                        </div>
+                    ` : ''}
+                `;
+                mobile.appendChild(card);
+            });
+
+            // Apply column visibility after rendering
+            applyColumnVisibility();
+        }
+
+        // Make toggleColumnSelector globally available
+        window.toggleColumnSelector = toggleColumnSelector;
     });
 </script>
 
