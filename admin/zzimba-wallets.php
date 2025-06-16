@@ -13,7 +13,7 @@ function formatCurrency($amount)
 <div class="min-h-screen bg-gray-50" id="app-container">
     <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
         <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                 <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
                     <div class="flex items-center justify-between">
                         <div>
