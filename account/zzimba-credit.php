@@ -1526,35 +1526,35 @@ function formatCurrency($amount)
                 // mobile view
                 const card = document.createElement('div');
                 card.className = `bg-white rounded-lg p-4 border border-gray-200
-            ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
-                card.innerHTML = `
-            <div class="flex items-start justify-between mb-3">
-                <div class="flex-1">
-                    <div class="font-medium text-gray-900 text-sm mb-1">${mainDesc}</div>
-                    <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
-                    ${entry.payment_method
-                        ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>`
-                        : ''
-                    }
-                </div>
-                <div class="text-right ml-3">
-                    ${debit > 0 ? `<div class="font-semibold text-red-600 text-sm">-${formatCurrency(debit)}</div>` : ''}
-                    ${credit > 0 ? `<div class="font-semibold text-green-600 text-sm">+${formatCurrency(credit)}</div>` : ''}
-                    <div class="text-xs text-gray-500 mt-1">
-                        Balance: ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '-'}
-                    </div>
-                </div>
-            </div>
-            <div class="text-xs text-gray-500 mb-2">
-                <span class="font-mono">${entry.entry_id || 'No Entry ID'}</span>
-            </div>
-            ${entry.related_entries.length > 0 ? `
-                <div class="mt-3">
-                    <div class="text-xs font-medium text-gray-700 mb-2">Related Entries:</div>
-                    ${renderRelatedEntriesMobile(entry.related_entries)}
-                </div>
-            ` : ''}
-        `;
+                    ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-900 text-sm mb-1 break-all max-w-full overflow-hidden">${mainDesc}</div>
+                                <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
+                                ${entry.payment_method
+                                            ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>`
+                                            : ''
+                                        }
+                            </div>
+                            <div class="text-right ml-3 shrink-0">
+                                ${debit > 0 ? `<div class="font-semibold text-red-600 text-sm">-${formatCurrency(debit)}</div>` : ''}
+                                ${credit > 0 ? `<div class="font-semibold text-green-600 text-sm">+${formatCurrency(credit)}</div>` : ''}
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Balance: ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '-'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 mb-2 break-all">
+                            <span class="font-mono break-all max-w-full inline-block overflow-hidden">${entry.entry_id || 'No Entry ID'}</span>
+                        </div>
+                        ${entry.related_entries.length > 0 ? `
+                            <div class="mt-3">
+                                <div class="text-xs font-medium text-gray-700 mb-2">Related Entries:</div>
+                                ${renderRelatedEntriesMobile(entry.related_entries)}
+                            </div>
+                        ` : ''}
+                    `;
                 mobile.appendChild(card);
             });
 
