@@ -876,10 +876,9 @@
         animateToStep('sendCreditConfirmStep', 'sendCreditAmountStep', 6);
     };
 
-    window.sendCredit = function () {
-        const amount = document.getElementById('sendCreditAmount').value;
-
-        // Clear previous errors
+    window.sendCredit = async function () {
+        const amountInput = document.getElementById('sendCreditAmount');
+        const amount = amountInput.value.trim();
         clearErrorMessages();
 
         if (!amount || parseFloat(amount) < 500) {
@@ -887,15 +886,49 @@
             return;
         }
 
-        // TODO: Implement actual credit sending
-        const confirmation = confirm(
-            `Send ${amount} UGX to ${selectedWallet.wallet_name}?\n\nAccount No: ${selectedWallet.wallet_number}\n\nThis action cannot be undone.`
-        );
+        if (!selectedWallet || !selectedWallet.wallet_number) {
+            showInputError('sendCreditAmount', 'amountError', 'No destination wallet selected');
+            return;
+        }
 
-        if (confirmation) {
-            // TODO: Replace with actual API call
-            alert(`Credit sent successfully!\n\nAmount: ${amount} UGX\nTo: ${selectedWallet.wallet_name}\nAccount No: ${selectedWallet.wallet_number}`);
-            hideSendCreditModal();
+        if (!confirm(
+            `Send ${amount} UGX to ${selectedWallet.wallet_name}?\n\n` +
+            `Account No: ${selectedWallet.wallet_number}\n\nThis action cannot be undone.`
+        )) {
+            return;
+        }
+
+        // build payload
+        const payload = new FormData();
+        payload.append('action', 'sendCredit');
+        payload.append('wallet_to', selectedWallet.wallet_number);
+        payload.append('amount', amount);
+
+        // disable button and show spinner
+        const sendBtn = document.querySelector('#amountForm button[type="submit"]');
+        const originalText = sendBtn.innerHTML;
+        sendBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i><span> Sending...</span>';
+        sendBtn.disabled = true;
+
+        try {
+            const res = await fetch(sendCreditApiUrl, {
+                method: 'POST',
+                body: payload
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                alert(`Credit sent successfully!\n\nTransaction ID: ${data.transaction_id}`);
+                hideSendCreditModal();
+            } else {
+                showInputError('sendCreditAmount', 'amountError', data.message || 'Transfer failed');
+            }
+        } catch (err) {
+            console.error('Transfer error:', err);
+            showInputError('sendCreditAmount', 'amountError', 'An error occurred. Please try again.');
+        } finally {
+            sendBtn.innerHTML = originalText;
+            sendBtn.disabled = false;
         }
     };
 

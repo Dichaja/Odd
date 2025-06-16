@@ -27,16 +27,16 @@ final class CreditService
 
         $createWallets = "
             CREATE TABLE IF NOT EXISTS zzimba_wallets (
-                wallet_id       CHAR(26) NOT NULL PRIMARY KEY,
-                wallet_number   CHAR(10) NOT NULL UNIQUE COMMENT 'Public 10-digit wallet number: Y₁S₀Y₂S₁S₂S₃S₄M₁S₅M₂',
-                owner_type      ENUM('USER','VENDOR','PLATFORM') NOT NULL,
-                user_id         VARCHAR(26) DEFAULT NULL,
-                vendor_id       VARCHAR(26) DEFAULT NULL,
-                wallet_name     VARCHAR(100) NOT NULL,
+                wallet_id CHAR(26) NOT NULL PRIMARY KEY,
+                wallet_number CHAR(10) NOT NULL UNIQUE,
+                owner_type ENUM('USER','VENDOR','PLATFORM') NOT NULL,
+                user_id VARCHAR(26) DEFAULT NULL,
+                vendor_id VARCHAR(26) DEFAULT NULL,
+                wallet_name VARCHAR(100) NOT NULL,
                 current_balance DECIMAL(18,2) NOT NULL DEFAULT 0.00,
-                status          ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
-                created_at      DATETIME NOT NULL,
-                updated_at      DATETIME NOT NULL,
+                status ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL,
                 CONSTRAINT fk_wallet_user FOREIGN KEY (user_id)
                     REFERENCES zzimba_users(id)
                     ON UPDATE CASCADE ON DELETE SET NULL,
@@ -47,20 +47,19 @@ final class CreditService
 
         $createFinancial = "
             CREATE TABLE IF NOT EXISTS zzimba_financial_transactions (
-                transaction_id      VARCHAR(26) NOT NULL PRIMARY KEY,
-                transaction_type    ENUM('TOPUP','PURCHASE','SUBSCRIPTION','SMS_PURCHASE','EMAIL_PURCHASE',
-                                        'PREMIUM_FEATURE','REFUND','WITHDRAWAL') NOT NULL,
-                status              ENUM('PENDING','SUCCESS','FAILED','REFUNDED','DISPUTED') NOT NULL DEFAULT 'PENDING',
-                amount_total        DECIMAL(15,2) NOT NULL,
-                payment_method      ENUM('MOBILE_MONEY_GATEWAY','MOBILE_MONEY','CARD','WALLET') DEFAULT NULL,
-                external_reference  VARCHAR(100) DEFAULT NULL,
-                external_metadata   TEXT DEFAULT NULL,
-                user_id             VARCHAR(26) DEFAULT NULL,
-                vendor_id           VARCHAR(26) DEFAULT NULL,
-                original_txn_id     VARCHAR(26) DEFAULT NULL,
-                note                VARCHAR(255) DEFAULT NULL,
-                created_at          DATETIME NOT NULL,
-                updated_at          DATETIME NOT NULL,
+                transaction_id VARCHAR(26) NOT NULL PRIMARY KEY,
+                transaction_type ENUM('TOPUP','PURCHASE','SUBSCRIPTION','SMS_PURCHASE','EMAIL_PURCHASE','PREMIUM_FEATURE','REFUND','WITHDRAWAL','TRANSFER') NOT NULL,
+                status ENUM('PENDING','SUCCESS','FAILED','REFUNDED','DISPUTED') NOT NULL DEFAULT 'PENDING',
+                amount_total DECIMAL(15,2) NOT NULL,
+                payment_method ENUM('MOBILE_MONEY_GATEWAY','MOBILE_MONEY','CARD','WALLET') DEFAULT NULL,
+                external_reference VARCHAR(100) DEFAULT NULL,
+                external_metadata TEXT DEFAULT NULL,
+                user_id VARCHAR(26) DEFAULT NULL,
+                vendor_id VARCHAR(26) DEFAULT NULL,
+                original_txn_id VARCHAR(26) DEFAULT NULL,
+                note VARCHAR(255) DEFAULT NULL,
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL,
                 CONSTRAINT fk_txn_user FOREIGN KEY (user_id)
                     REFERENCES zzimba_users(id)
                     ON UPDATE CASCADE ON DELETE SET NULL,
@@ -74,16 +73,16 @@ final class CreditService
 
         $createEntries = "
             CREATE TABLE IF NOT EXISTS zzimba_transaction_entries (
-                entry_id           CHAR(26) NOT NULL PRIMARY KEY,
-                transaction_id     VARCHAR(26) NOT NULL,
-                wallet_id          CHAR(26) DEFAULT NULL,
-                cash_account_id    CHAR(26) DEFAULT NULL,
-                ref_entry_id       CHAR(26) DEFAULT NULL,
-                entry_type         ENUM('DEBIT','CREDIT') NOT NULL,
-                amount             DECIMAL(18,2) NOT NULL,
-                balance_after      DECIMAL(18,2) NOT NULL,
-                entry_note         VARCHAR(255) DEFAULT NULL,
-                created_at         DATETIME NOT NULL,
+                entry_id CHAR(26) NOT NULL PRIMARY KEY,
+                transaction_id VARCHAR(26) NOT NULL,
+                wallet_id CHAR(26) DEFAULT NULL,
+                cash_account_id CHAR(26) DEFAULT NULL,
+                ref_entry_id CHAR(26) DEFAULT NULL,
+                entry_type ENUM('DEBIT','CREDIT') NOT NULL,
+                amount DECIMAL(18,2) NOT NULL,
+                balance_after DECIMAL(18,2) NOT NULL,
+                entry_note VARCHAR(255) DEFAULT NULL,
+                created_at DATETIME NOT NULL,
                 CONSTRAINT fk_entry_transaction FOREIGN KEY (transaction_id)
                     REFERENCES zzimba_financial_transactions(transaction_id)
                     ON UPDATE CASCADE ON DELETE CASCADE,
@@ -102,10 +101,29 @@ final class CreditService
                 INDEX idx_entry_ref (ref_entry_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
 
+        $createTransfers = "
+            CREATE TABLE IF NOT EXISTS zzimba_wallet_transfers (
+                id CHAR(26) NOT NULL PRIMARY KEY,
+                wallet_from CHAR(26) NOT NULL,
+                wallet_to CHAR(26) NOT NULL,
+                transaction_id VARCHAR(26) NOT NULL,
+                created_at DATETIME NOT NULL,
+                CONSTRAINT fk_transfer_from FOREIGN KEY (wallet_from)
+                    REFERENCES zzimba_wallets(wallet_id)
+                    ON UPDATE CASCADE ON DELETE CASCADE,
+                CONSTRAINT fk_transfer_to FOREIGN KEY (wallet_to)
+                    REFERENCES zzimba_wallets(wallet_id)
+                    ON UPDATE CASCADE ON DELETE CASCADE,
+                CONSTRAINT fk_transfer_txn FOREIGN KEY (transaction_id)
+                    REFERENCES zzimba_financial_transactions(transaction_id)
+                    ON UPDATE CASCADE ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
+
         try {
             self::$pdo->exec($createFinancial);
             self::$pdo->exec($createEntries);
             self::$pdo->exec($createWallets);
+            self::$pdo->exec($createTransfers);
         } catch (PDOException $e) {
             error_log('[ZzimbaCreditModule] table-creation error: ' . $e->getMessage());
         }
@@ -113,6 +131,7 @@ final class CreditService
         date_default_timezone_set('Africa/Kampala');
         self::$ready = true;
     }
+
 
     private static function generateWalletNumber(string $walletId): string
     {
@@ -147,6 +166,7 @@ final class CreditService
         return $walletNumber;
     }
 
+
     public static function validateMsisdn(string $msisdn): array
     {
         self::boot();
@@ -156,6 +176,7 @@ final class CreditService
         );
         return json_decode($resp, true);
     }
+
 
     public static function makeMobileMoneyPayment(array $opts): array
     {
@@ -200,6 +221,7 @@ final class CreditService
 
         return $res;
     }
+
 
     public static function checkRequestStatus(string $internalRef): array
     {
@@ -366,6 +388,7 @@ final class CreditService
         return $res;
     }
 
+
     public static function getWallet(string $ownerType, string $ownerId = null): array
     {
         self::boot();
@@ -441,7 +464,7 @@ final class CreditService
             ':bal',
             ':st',
             ':created',
-            ' :updated'
+            ':updated'
         ];
         $bind = [
             ':wid' => $wid,
@@ -489,6 +512,7 @@ final class CreditService
             return ['success' => false, 'message' => 'Could not create wallet'];
         }
     }
+
 
     public static function getWalletStatement(string $walletId, string $filter = 'all', ?string $start = null, ?string $end = null): array
     {
@@ -611,6 +635,220 @@ final class CreditService
         ];
     }
 
+
+    public static function transfer(array $opts): array
+    {
+        $walletTo = trim($opts['wallet_to'] ?? '');
+        $amount = (float) ($opts['amount'] ?? 0);
+
+        if ($walletTo === '' || $amount < 500) {
+            return ['success' => false, 'message' => 'Destination Account No. and amount greater or equal to 500 required'];
+        }
+
+        $userId = $_SESSION['user']['user_id'] ?? null;
+        if (!$userId) {
+            return ['success' => false, 'message' => 'Not authenticated'];
+        }
+
+        self::boot();
+
+        $sourceStmt = self::$pdo->prepare("
+            SELECT wallet_id, current_balance
+              FROM zzimba_wallets
+             WHERE owner_type = 'USER'
+               AND user_id    = :uid
+               AND status     = 'active'
+             LIMIT 1
+        ");
+        $sourceStmt->execute([':uid' => $userId]);
+        $sourceRow = $sourceStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$sourceRow) {
+            return ['success' => false, 'message' => 'Source wallet not found'];
+        }
+        $fromWalletId = $sourceRow['wallet_id'];
+        $fromBalance = (float) $sourceRow['current_balance'];
+
+        $destStmt = self::$pdo->prepare("
+            SELECT wallet_id, owner_type, user_id, vendor_id, current_balance
+              FROM zzimba_wallets
+             WHERE wallet_number = :wn
+               AND status        = 'active'
+             LIMIT 1
+        ");
+        $destStmt->execute([':wn' => $walletTo]);
+        $destRow = $destStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$destRow) {
+            return ['success' => false, 'message' => 'Destination wallet not found or inactive'];
+        }
+        $toWalletId = $destRow['wallet_id'];
+        $toOwnerType = $destRow['owner_type'];
+        $destBalance = (float) $destRow['current_balance'];
+
+        if ($fromWalletId === $toWalletId) {
+            return ['success' => false, 'message' => 'Cannot transfer to the same wallet'];
+        }
+        if ($fromBalance < $amount) {
+            return ['success' => false, 'message' => 'Insufficient funds'];
+        }
+
+        $txnId = \generateUlid();
+        self::insertTransaction([
+            'transaction_id' => $txnId,
+            'transaction_type' => 'TRANSFER',
+            'status' => 'PENDING',
+            'amount_total' => $amount,
+            'payment_method' => 'WALLET',
+            'external_reference' => null,
+            'external_metadata' => null,
+            'user_id' => $userId,
+            'vendor_id' => $toOwnerType === 'VENDOR' ? $destRow['vendor_id'] : null
+        ]);
+
+        $transferId = \generateUlid();
+        self::insertTransfer([
+            'id' => $transferId,
+            'wallet_from' => $fromWalletId,
+            'wallet_to' => $toWalletId,
+            'transaction_id' => $txnId,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        try {
+            self::$pdo->beginTransaction();
+
+            self::performTransferEntries($txnId, $fromWalletId, $toWalletId, $amount);
+
+            self::$pdo->prepare("
+                UPDATE zzimba_financial_transactions
+                   SET status = 'SUCCESS',
+                       updated_at = NOW()
+                 WHERE transaction_id = :tid
+            ")->execute([':tid' => $txnId]);
+
+            self::$pdo->commit();
+        } catch (PDOException $e) {
+            self::$pdo->rollBack();
+
+            error_log('[ZzimbaCreditModule] transfer error: ' . $e->getMessage());
+
+            self::$pdo->prepare("
+                UPDATE zzimba_financial_transactions
+                   SET status = 'FAILED',
+                       updated_at = NOW()
+                 WHERE transaction_id = :tid
+            ")->execute([':tid' => $txnId]);
+
+            return ['success' => false, 'message' => 'Transfer failed'];
+        }
+
+        return ['success' => true, 'transaction_id' => $txnId];
+    }
+
+
+    private static function getWithholdingAccountId(): string
+    {
+        $stmt = self::$pdo->query("
+            SELECT platform_account_id
+              FROM zzimba_platform_account_settings
+             WHERE type = 'withholding'
+             LIMIT 1
+        ");
+        return $stmt->fetchColumn();
+    }
+
+
+    private static function updateWalletBalance(string $walletId, float $balance): void
+    {
+        self::$pdo->prepare("
+            UPDATE zzimba_wallets
+               SET current_balance = :bal,
+                   updated_at = NOW()
+             WHERE wallet_id = :wid
+        ")->execute([':bal' => $balance, ':wid' => $walletId]);
+    }
+
+
+    private static function insertTransfer(array $row): void
+    {
+        $cols = implode(',', array_keys($row));
+        $params = ':' . implode(',:', array_keys($row));
+        $sql = "
+            INSERT INTO zzimba_wallet_transfers
+              ($cols)
+            VALUES
+              ($params)
+        ";
+        try {
+            $stmt = self::$pdo->prepare($sql);
+            $stmt->execute($row);
+        } catch (PDOException $e) {
+            error_log('[ZzimbaCreditModule] insert transfer error: ' . $e->getMessage());
+        }
+    }
+
+
+    private static function performTransferEntries(string $txnId, string $fromWalletId, string $toWalletId, float $amount): void
+    {
+        $withholdingId = self::getWithholdingAccountId();
+
+        $balStmt = self::$pdo->prepare("
+            SELECT current_balance
+              FROM zzimba_wallets
+             WHERE wallet_id = :wid
+        ");
+        $balStmt->execute([':wid' => $fromWalletId]);
+        $sourceBal = (float) $balStmt->fetchColumn();
+
+        $balStmt->execute([':wid' => $withholdingId]);
+        $withBal = (float) $balStmt->fetchColumn();
+
+        $balStmt->execute([':wid' => $toWalletId]);
+        $destBal = (float) $balStmt->fetchColumn();
+
+        $debitId1 = self::insertEntry([
+            'transaction_id' => $txnId,
+            'wallet_id' => $fromWalletId,
+            'entry_type' => 'DEBIT',
+            'amount' => $amount,
+            'balance_after' => $sourceBal - $amount,
+            'entry_note' => 'Transfer to ' . $toWalletId
+        ]);
+        self::updateWalletBalance($fromWalletId, $sourceBal - $amount);
+
+        $creditId1 = self::insertEntry([
+            'transaction_id' => $txnId,
+            'wallet_id' => $withholdingId,
+            'entry_type' => 'CREDIT',
+            'amount' => $amount,
+            'balance_after' => $withBal + $amount,
+            'entry_note' => 'Held in Withholding',
+            'ref_entry_id' => $debitId1
+        ]);
+        self::updateWalletBalance($withholdingId, $withBal + $amount);
+
+        $debitId2 = self::insertEntry([
+            'transaction_id' => $txnId,
+            'wallet_id' => $withholdingId,
+            'entry_type' => 'DEBIT',
+            'amount' => $amount,
+            'balance_after' => ($withBal + $amount) - $amount,
+            'entry_note' => 'Disbursed from Withholding'
+        ]);
+        self::updateWalletBalance($withholdingId, ($withBal + $amount) - $amount);
+
+        self::insertEntry([
+            'transaction_id' => $txnId,
+            'wallet_id' => $toWalletId,
+            'entry_type' => 'CREDIT',
+            'amount' => $amount,
+            'balance_after' => $destBal + $amount,
+            'entry_note' => 'Received Transfer',
+            'ref_entry_id' => $debitId2
+        ]);
+        self::updateWalletBalance($toWalletId, $destBal + $amount);
+    }
+
+
     private static function apiRequest(string $url, array $data, string $method = 'POST'): string
     {
         $ch = curl_init($url);
@@ -641,8 +879,10 @@ final class CreditService
             error_log('[ZzimbaCreditModule] API error: ' . ($resp ?: $err));
             return json_encode(['success' => false, 'message' => 'API request failed']);
         }
+
         return $resp;
     }
+
 
     private static function insertTransaction(array $row): void
     {
@@ -661,6 +901,7 @@ final class CreditService
             error_log('[ZzimbaCreditModule] insert txn error: ' . $e->getMessage());
         }
     }
+
 
     private static function insertEntry(array $row): string
     {
