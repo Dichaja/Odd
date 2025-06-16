@@ -1461,7 +1461,7 @@ function formatCurrency($amount)
                     </div>
                 </td>
                 <td data-column="description" class="px-4 py-3 text-sm">
-                    <div class="max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap" title="${description}">
+                    <div class="max-w-[250px] overflow-hidden text-ellipsis" title="${description}">
                         <div class="font-medium text-gray-900">${description}</div>
                         ${entry.payment_method ? `<div class="text-xs text-gray-500">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
                     </div>
