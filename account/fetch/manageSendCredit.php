@@ -25,9 +25,9 @@ function handleSearchWallet(PDO $pdo)
 
     // Validate inputs
     if (
-        !in_array($type, ['vendor', 'user'], true)
-        || !in_array($searchType, ['id', 'name'], true)
-        || $searchValue === ''
+        !in_array($type, ['vendor', 'user'], true) ||
+        !in_array($searchType, ['id', 'name'], true) ||
+        $searchValue === ''
     ) {
         echo json_encode([
             'success' => false,
@@ -37,18 +37,36 @@ function handleSearchWallet(PDO $pdo)
     }
 
     try {
-        $wallet = fetchWallet($pdo, $type, $searchType, $searchValue);
+        if ($searchType === 'name') {
+            // exact-name match → may be multiple
+            $wallets = fetchWalletsByName($pdo, $type, $searchValue);
 
-        if ($wallet) {
-            echo json_encode([
-                'success' => true,
-                'wallet' => $wallet
-            ]);
+            if (!empty($wallets)) {
+                echo json_encode([
+                    'success' => true,
+                    'wallets' => $wallets
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => ucfirst($type) . ' wallets not found'
+                ]);
+            }
         } else {
-            echo json_encode([
-                'success' => false,
-                'message' => ucfirst($type) . ' wallet not found'
-            ]);
+            // id search → single
+            $wallet = fetchWalletByNumber($pdo, $type, $searchValue);
+
+            if ($wallet) {
+                echo json_encode([
+                    'success' => true,
+                    'wallet' => $wallet
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => ucfirst($type) . ' wallet not found'
+                ]);
+            }
         }
     } catch (PDOException $e) {
         error_log('Error searching wallet: ' . $e->getMessage());
@@ -60,30 +78,59 @@ function handleSearchWallet(PDO $pdo)
 }
 
 /**
- * Fetch a single wallet by exact ID or name, filtered by owner_type.
- *
- * @param PDO    $pdo
- * @param string $type       'vendor' or 'user'
- * @param string $by         'id' or 'name'
- * @param string $val        search value (exact match)
- * @return array|null
+ * Single‐row lookup by wallet_number.
  */
-function fetchWallet(PDO $pdo, string $type, string $by, string $val): ?array
+function fetchWalletByNumber(PDO $pdo, string $type, string $number): ?array
 {
     $ownerType = $type === 'vendor' ? 'VENDOR' : 'USER';
-    $col = $by === 'id' ? 'wallet_id' : 'wallet_name';
 
-    $sql = "SELECT wallet_id, wallet_name
-             FROM zzimba_wallets
-             WHERE owner_type = :owner
-               AND {$col} = :value
-             LIMIT 1";
+    $sql = "
+        SELECT
+            wallet_id,
+            wallet_number,
+            wallet_name,
+            current_balance,
+            status,
+            created_at
+        FROM zzimba_wallets
+        WHERE owner_type   = :owner
+          AND wallet_number = :value
+        LIMIT 1
+    ";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        'owner' => $ownerType,
-        'value' => $val
+        ':owner' => $ownerType,
+        ':value' => $number
     ]);
 
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $row ?: null;
+    return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
+/**
+ * Multi‐row lookup by exact wallet_name.
+ */
+function fetchWalletsByName(PDO $pdo, string $type, string $name): array
+{
+    $ownerType = $type === 'vendor' ? 'VENDOR' : 'USER';
+
+    $sql = "
+        SELECT
+            wallet_id,
+            wallet_number,
+            wallet_name,
+            current_balance,
+            status,
+            created_at
+        FROM zzimba_wallets
+        WHERE owner_type  = :owner
+          AND wallet_name = :value
+        ORDER BY created_at DESC
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ':owner' => $ownerType,
+        ':value' => $name
+    ]);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
