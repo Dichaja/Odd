@@ -281,7 +281,7 @@
                 <div id="autoCloseCountdown" class="hidden text-center mt-4">
                     <p class="text-sm text-gray-500">
                         This window will close automatically in <span id="countdownTimer"
-                            class="font-semibold">10</span> seconds
+                            class="font-semibold">30</span> seconds
                     </p>
                 </div>
             </div>
@@ -1179,7 +1179,7 @@
                     clearInterval(autoCloseTimer);
                     hideSendCreditModal();
                 }
-            }, 1000);
+            }, 3000);
         } else {
             autoCloseCountdown.classList.add('hidden');
         }
