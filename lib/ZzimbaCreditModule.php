@@ -144,28 +144,14 @@ final class CreditService
 
         do {
             $seq = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-
-            $walletNumber =
-                $y1
-                . $seq[0]
-                . $y2
-                . $seq[1]
-                . $seq[2]
-                . $seq[3]
-                . $seq[4]
-                . $m1
-                . $seq[5]
-                . $m2;
-
-            $check = self::$pdo
-                ->prepare('SELECT 1 FROM zzimba_wallets WHERE wallet_number = ? LIMIT 1');
-            $check->execute([$walletNumber]);
-            $exists = (bool) $check->fetchColumn();
+            $walletNumber = $y1 . $seq[0] . $y2 . $seq[1] . $seq[2] . $seq[3] . $seq[4] . $m1 . $seq[5] . $m2;
+            $chk = self::$pdo->prepare('SELECT 1 FROM zzimba_wallets WHERE wallet_number = ? LIMIT 1');
+            $chk->execute([$walletNumber]);
+            $exists = (bool) $chk->fetchColumn();
         } while ($exists);
 
         return $walletNumber;
     }
-
 
     public static function validateMsisdn(string $msisdn): array
     {
@@ -647,7 +633,7 @@ final class CreditService
 
         return $entries;
     }
-    
+
     private static function buildEntryTree(array $entry, array &$visited): array
     {
         $id = $entry['entry_id'];
@@ -817,37 +803,28 @@ final class CreditService
 
     private static function getWithholdingAccountId(): string
     {
-        $stmt = self::$pdo->query("
+        return self::$pdo->query("
             SELECT platform_account_id
               FROM zzimba_platform_account_settings
              WHERE type = 'withholding'
              LIMIT 1
-        ");
-        return $stmt->fetchColumn();
+        ")->fetchColumn();
     }
-
 
     private static function updateWalletBalance(string $walletId, float $balance): void
     {
         self::$pdo->prepare("
             UPDATE zzimba_wallets
-               SET current_balance = :bal,
-                   updated_at = NOW()
+               SET current_balance = :bal, updated_at = NOW()
              WHERE wallet_id = :wid
         ")->execute([':bal' => $balance, ':wid' => $walletId]);
     }
-
 
     private static function insertTransfer(array $row): void
     {
         $cols = implode(',', array_keys($row));
         $params = ':' . implode(',:', array_keys($row));
-        $sql = "
-            INSERT INTO zzimba_wallet_transfers
-              ($cols)
-            VALUES
-              ($params)
-        ";
+        $sql = "INSERT INTO zzimba_wallet_transfers ($cols) VALUES ($params)";
         try {
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute($row);
@@ -856,66 +833,78 @@ final class CreditService
         }
     }
 
+    private static function performTransferEntries(
+        string $txnId,
+        string $fromWalletId,
+        string $toWalletId,
+        float $amount
+    ): void {
 
-    private static function performTransferEntries(string $txnId, string $fromWalletId, string $toWalletId, float $amount): void
-    {
         $withholdingId = self::getWithholdingAccountId();
 
-        $balStmt = self::$pdo->prepare("
-            SELECT current_balance
-              FROM zzimba_wallets
-             WHERE wallet_id = :wid
-        ");
+        $balStmt = self::$pdo->prepare("SELECT current_balance FROM zzimba_wallets WHERE wallet_id = :wid");
         $balStmt->execute([':wid' => $fromWalletId]);
-        $sourceBal = (float) $balStmt->fetchColumn();
+        $fromBal = (float) $balStmt->fetchColumn();
 
         $balStmt->execute([':wid' => $withholdingId]);
         $withBal = (float) $balStmt->fetchColumn();
 
         $balStmt->execute([':wid' => $toWalletId]);
-        $destBal = (float) $balStmt->fetchColumn();
+        $toBal = (float) $balStmt->fetchColumn();
 
-        $debitId1 = self::insertEntry([
+        /* fetch wallet numbers for notes */
+        $wnStmt = self::$pdo->prepare("SELECT wallet_number FROM zzimba_wallets WHERE wallet_id = :wid");
+        $wnStmt->execute([':wid' => $fromWalletId]);
+        $fromNo = $wnStmt->fetchColumn();
+        $wnStmt->execute([':wid' => $toWalletId]);
+        $toNo = $wnStmt->fetchColumn();
+
+        /* 1) Debit sender wallet */
+        $debitSenderId = self::insertEntry([
             'transaction_id' => $txnId,
             'wallet_id' => $fromWalletId,
             'entry_type' => 'DEBIT',
             'amount' => $amount,
-            'balance_after' => $sourceBal - $amount,
-            'entry_note' => 'Transfer to ' . $toWalletId
+            'balance_after' => $fromBal - $amount,
+            'entry_note' => 'Sending credit to Account No. ' . $toNo
         ]);
-        self::updateWalletBalance($fromWalletId, $sourceBal - $amount);
+        self::updateWalletBalance($fromWalletId, $fromBal - $amount);
 
-        $creditId1 = self::insertEntry([
+        /* 2) Credit withholding referencing sender debit */
+        $creditWithId = self::insertEntry([
             'transaction_id' => $txnId,
             'wallet_id' => $withholdingId,
             'entry_type' => 'CREDIT',
             'amount' => $amount,
             'balance_after' => $withBal + $amount,
-            'entry_note' => 'Held in Withholding',
-            'ref_entry_id' => $debitId1
+            'entry_note' => 'Account No. ' . $fromNo . ' sending credit to Account No. ' . $toNo,
+            'ref_entry_id' => $debitSenderId
         ]);
         self::updateWalletBalance($withholdingId, $withBal + $amount);
 
-        $debitId2 = self::insertEntry([
+        /* 3) Debit withholding referencing previous credit */
+        $debitWithId = self::insertEntry([
             'transaction_id' => $txnId,
             'wallet_id' => $withholdingId,
             'entry_type' => 'DEBIT',
             'amount' => $amount,
             'balance_after' => ($withBal + $amount) - $amount,
-            'entry_note' => 'Disbursed from Withholding'
+            'entry_note' => 'Account No. ' . $fromNo . ' sending credit to Account No. ' . $toNo,
+            'ref_entry_id' => $creditWithId
         ]);
         self::updateWalletBalance($withholdingId, ($withBal + $amount) - $amount);
 
+        /* 4) Credit receiver wallet referencing withholding debit */
         self::insertEntry([
             'transaction_id' => $txnId,
             'wallet_id' => $toWalletId,
             'entry_type' => 'CREDIT',
             'amount' => $amount,
-            'balance_after' => $destBal + $amount,
-            'entry_note' => 'Received Transfer',
-            'ref_entry_id' => $debitId2
+            'balance_after' => $toBal + $amount,
+            'entry_note' => 'Received from Account No. ' . $fromNo,
+            'ref_entry_id' => $debitWithId
         ]);
-        self::updateWalletBalance($toWalletId, $destBal + $amount);
+        self::updateWalletBalance($toWalletId, $toBal + $amount);
     }
 
 
@@ -958,12 +947,7 @@ final class CreditService
     {
         $cols = implode(',', array_keys($row));
         $params = ':' . implode(',:', array_keys($row));
-        $sql = "
-            INSERT INTO zzimba_financial_transactions
-              ($cols, created_at, updated_at)
-            VALUES
-              ($params, NOW(), NOW())
-        ";
+        $sql = "INSERT INTO zzimba_financial_transactions ($cols,created_at,updated_at) VALUES ($params,NOW(),NOW())";
         try {
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute($row);
@@ -972,7 +956,6 @@ final class CreditService
         }
     }
 
-
     private static function insertEntry(array $row): string
     {
         $row['entry_id'] = \generateUlid();
@@ -980,12 +963,7 @@ final class CreditService
 
         $cols = implode(',', array_keys($row));
         $params = ':' . implode(',:', array_keys($row));
-        $sql = "
-            INSERT INTO zzimba_transaction_entries
-              ($cols)
-            VALUES
-              ($params)
-        ";
+        $sql = "INSERT INTO zzimba_transaction_entries ($cols) VALUES ($params)";
         try {
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute($row);
