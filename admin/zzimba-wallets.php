@@ -237,20 +237,19 @@ function formatCurrency($amount)
         <div id="platform-accounts-content" class="tab-content hidden">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
                 <div class="p-6 border-b border-gray-100">
-                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        <div>
-                            <h2 class="text-xl font-semibold text-secondary font-rubik">Platform Account Settings</h2>
-                            <p class="text-sm text-gray-text mt-1">Manage platform account configurations</p>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                        <!-- Left: Select -->
+                        <div class="w-full sm:w-auto">
                             <select id="filterPlatformAccounts"
-                                class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium">
+                                class="w-full sm:w-auto px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium">
                                 <option value="">Select Platform Account</option>
                             </select>
+                        </div>
 
+                        <!-- Right: Button -->
+                        <div class="w-full sm:w-auto flex justify-end">
                             <button id="create-platform-setting-btn"
-                                class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
+                                class="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center justify-center sm:justify-start gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
                                 <i class="fas fa-plus"></i>
                                 <span>Add Setting</span>
                             </button>
