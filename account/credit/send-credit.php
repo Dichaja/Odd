@@ -452,6 +452,8 @@
         setTimeout(() => {
             modal.classList.add('hidden');
             resetToStep1();
+
+            location.reload();
         }, 300);
     };
 
@@ -1179,7 +1181,7 @@
                     clearInterval(autoCloseTimer);
                     hideSendCreditModal();
                 }
-            }, 3000);
+            }, 1000);
         } else {
             autoCloseCountdown.classList.add('hidden');
         }
