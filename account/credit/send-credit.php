@@ -209,12 +209,81 @@
                             class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium">
                             Back
                         </button>
-                        <button type="submit"
+                        <button type="submit" id="sendCreditBtn"
                             class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium">
                             Send Credit
                         </button>
                     </div>
                 </form>
+            </div>
+
+            <!-- Step 7: Confirmation Modal -->
+            <div id="sendCreditConfirmationStep"
+                class="hidden transition-all duration-300 transform translate-x-full opacity-0">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">Confirm Transfer</h4>
+                    <p class="text-sm text-gray-500">Please review the details before proceeding</p>
+                </div>
+
+                <div id="confirmationDetails" class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                    <!-- Confirmation details will be populated by JS -->
+                </div>
+
+                <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-6">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-sm mt-0.5"></i>
+                        <p class="text-sm text-red-700">
+                            <strong>Warning:</strong> This action cannot be undone. Please verify all details are
+                            correct.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="cancelConfirmation()"
+                        class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium">
+                        Cancel
+                    </button>
+                    <button onclick="confirmSendCredit()" id="confirmSendBtn"
+                        class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium">
+                        Confirm Send
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 8: Response/Result -->
+            <div id="sendCreditResponseStep"
+                class="hidden transition-all duration-300 transform translate-x-full opacity-0">
+                <div class="text-center mb-6">
+                    <div id="responseIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <!-- Icon will be populated by JS -->
+                    </div>
+                    <h4 id="responseTitle" class="text-lg font-semibold text-gray-900 mb-2">
+                        <!-- Title will be populated by JS -->
+                    </h4>
+                    <p id="responseSubtitle" class="text-sm text-gray-500">
+                        <!-- Subtitle will be populated by JS -->
+                    </p>
+                </div>
+
+                <div id="responseDetails" class="rounded-xl p-4 mb-6">
+                    <!-- Response details will be populated by JS -->
+                </div>
+
+                <div id="responseActions" class="flex gap-3">
+                    <!-- Actions will be populated by JS -->
+                </div>
+
+                <!-- Auto-close countdown for success -->
+                <div id="autoCloseCountdown" class="hidden text-center mt-4">
+                    <p class="text-sm text-gray-500">
+                        This window will close automatically in <span id="countdownTimer"
+                            class="font-semibold">10</span> seconds
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -323,6 +392,23 @@
     .animate-shake {
         animation: shake 0.5s ease-in-out;
     }
+
+    /* Pulse animation for processing */
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
 </style>
 
 <script>
@@ -333,6 +419,8 @@
     let selectedWallet = null;
     let lastSearchParams = null;
     let searchResults = [];
+    let pendingTransfer = null;
+    let autoCloseTimer = null;
 
     window.showSendCreditModal = function () {
         const modal = document.getElementById('sendCreditModal');
@@ -353,6 +441,12 @@
         const modal = document.getElementById('sendCreditModal');
         const modalContent = document.getElementById('sendCreditModalContent');
 
+        // Clear any auto-close timer
+        if (autoCloseTimer) {
+            clearInterval(autoCloseTimer);
+            autoCloseTimer = null;
+        }
+
         modalContent.classList.remove('modal-show');
 
         setTimeout(() => {
@@ -367,6 +461,13 @@
         selectedWallet = null;
         lastSearchParams = null;
         searchResults = [];
+        pendingTransfer = null;
+
+        // Clear any auto-close timer
+        if (autoCloseTimer) {
+            clearInterval(autoCloseTimer);
+            autoCloseTimer = null;
+        }
 
         // Reset visibility
         document.getElementById('sendCreditStep1').classList.remove('hidden', 'slide-out-left');
@@ -375,6 +476,8 @@
         document.getElementById('sendCreditNotFoundStep').classList.add('hidden');
         document.getElementById('sendCreditConfirmStep').classList.add('hidden');
         document.getElementById('sendCreditAmountStep').classList.add('hidden');
+        document.getElementById('sendCreditConfirmationStep').classList.add('hidden');
+        document.getElementById('sendCreditResponseStep').classList.add('hidden');
 
         // Reset titles
         document.getElementById('sendCreditTitle').textContent = 'Send Credit';
@@ -391,6 +494,9 @@
 
         // Reset search button
         resetSearchButton();
+
+        // Reset send button
+        resetSendButton();
 
         // Clear error messages
         clearErrorMessages();
@@ -419,6 +525,14 @@
         const searchBtn = document.getElementById('searchWalletBtn');
         searchBtn.innerHTML = '<i class="fas fa-search"></i><span>Search Wallet</span>';
         searchBtn.disabled = false;
+    }
+
+    function resetSendButton() {
+        const sendBtn = document.getElementById('sendCreditBtn');
+        if (sendBtn) {
+            sendBtn.innerHTML = 'Send Credit';
+            sendBtn.disabled = false;
+        }
     }
 
     window.selectSendDestination = function (type) {
@@ -463,7 +577,13 @@
     };
 
     window.sendCreditBack = function () {
-        if (currentStep === 6) {
+        if (currentStep === 8) {
+            // From response step, close modal
+            hideSendCreditModal();
+        } else if (currentStep === 7) {
+            // Go back to amount step
+            animateToStep('sendCreditConfirmationStep', 'sendCreditAmountStep', 6);
+        } else if (currentStep === 6) {
             // Go back to confirm step
             animateToStep('sendCreditAmountStep', 'sendCreditConfirmStep', 5);
         } else if (currentStep === 5) {
@@ -575,7 +695,7 @@
     // Handle amount form submission
     function handleAmountSubmit(event) {
         event.preventDefault();
-        sendCredit();
+        showConfirmation();
     }
 
     window.performSendCreditSearch = async function () {
@@ -876,7 +996,7 @@
         animateToStep('sendCreditConfirmStep', 'sendCreditAmountStep', 6);
     };
 
-    window.sendCredit = async function () {
+    function showConfirmation() {
         const amountInput = document.getElementById('sendCreditAmount');
         const amount = amountInput.value.trim();
         clearErrorMessages();
@@ -891,46 +1011,182 @@
             return;
         }
 
-        if (!confirm(
-            `Send ${amount} UGX to ${selectedWallet.wallet_name}?\n\n` +
-            `Account No: ${selectedWallet.wallet_number}\n\nThis action cannot be undone.`
-        )) {
+        // Store pending transfer details
+        pendingTransfer = {
+            amount: amount,
+            wallet: selectedWallet
+        };
+
+        // Populate confirmation details
+        const confirmationDetails = document.getElementById('confirmationDetails');
+        confirmationDetails.innerHTML = `
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-700">Amount:</span>
+                    <span class="text-lg font-bold text-gray-900">${amount} UGX</span>
+                </div>
+                <div class="border-t border-yellow-200 pt-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-${window.sendCreditType === 'vendor' ? 'store' : 'user'} text-primary text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">${selectedWallet.wallet_name}</p>
+                            <p class="text-xs text-gray-500">Account No: ${selectedWallet.wallet_number}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Update titles
+        document.getElementById('sendCreditTitle').textContent = 'Confirm Transfer';
+        document.getElementById('sendCreditSubtitle').textContent = 'Review details before sending';
+
+        // Animate to confirmation step
+        animateToStep('sendCreditAmountStep', 'sendCreditConfirmationStep', 7);
+    }
+
+    window.cancelConfirmation = function () {
+        // Go back to amount step
+        animateToStep('sendCreditConfirmationStep', 'sendCreditAmountStep', 6);
+    };
+
+    window.confirmSendCredit = async function () {
+        if (!pendingTransfer) {
+            showResponse(false, 'Error', 'No transfer details found', 'Please try again');
             return;
         }
 
-        // build payload
-        const payload = new FormData();
-        payload.append('action', 'sendCredit');
-        payload.append('wallet_to', selectedWallet.wallet_number);
-        payload.append('amount', amount);
-
-        // disable button and show spinner
-        const sendBtn = document.querySelector('#amountForm button[type="submit"]');
-        const originalText = sendBtn.innerHTML;
-        sendBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i><span> Sending...</span>';
-        sendBtn.disabled = true;
+        // Show processing state on button
+        const confirmBtn = document.getElementById('confirmSendBtn');
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i><span class="ml-2">Processing...</span>';
+        confirmBtn.disabled = true;
 
         try {
-            const res = await fetch(sendCreditApiUrl, {
+            // Build payload
+            const payload = new FormData();
+            payload.append('action', 'sendCredit');
+            payload.append('wallet_to', pendingTransfer.wallet.wallet_number);
+            payload.append('amount', pendingTransfer.amount);
+
+            // Make API call
+            const response = await fetch(sendCreditApiUrl, {
                 method: 'POST',
                 body: payload
             });
-            const data = await res.json();
+
+            const data = await response.json();
 
             if (data.success) {
-                alert(`Credit sent successfully!\n\nTransaction ID: ${data.transaction_id}`);
-                hideSendCreditModal();
+                showResponse(
+                    true,
+                    'Transfer Successful!',
+                    'Credit has been sent successfully',
+                    `Transaction ID: ${data.transaction_id || 'N/A'}`,
+                    true // Enable auto-close
+                );
             } else {
-                showInputError('sendCreditAmount', 'amountError', data.message || 'Transfer failed');
+                showResponse(
+                    false,
+                    'Transfer Failed',
+                    data.message || 'The transfer could not be completed',
+                    'Please check your details and try again'
+                );
             }
-        } catch (err) {
-            console.error('Transfer error:', err);
-            showInputError('sendCreditAmount', 'amountError', 'An error occurred. Please try again.');
+
+        } catch (error) {
+            console.error('Transfer error:', error);
+            showResponse(
+                false,
+                'Connection Error',
+                'Unable to process the transfer',
+                'Please check your internet connection and try again'
+            );
         } finally {
-            sendBtn.innerHTML = originalText;
-            sendBtn.disabled = false;
+            // Reset button
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
         }
     };
+
+    function showResponse(success, title, subtitle, details, autoClose = false) {
+        // Update response elements
+        const responseIcon = document.getElementById('responseIcon');
+        const responseTitle = document.getElementById('responseTitle');
+        const responseSubtitle = document.getElementById('responseSubtitle');
+        const responseDetails = document.getElementById('responseDetails');
+        const responseActions = document.getElementById('responseActions');
+        const autoCloseCountdown = document.getElementById('autoCloseCountdown');
+
+        // Set icon and colors based on success
+        if (success) {
+            responseIcon.className = 'w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4';
+            responseIcon.innerHTML = '<i class="fas fa-check text-green-600 text-xl"></i>';
+            responseDetails.className = 'bg-green-50 border border-green-200 rounded-xl p-4 mb-6';
+        } else {
+            responseIcon.className = 'w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4';
+            responseIcon.innerHTML = '<i class="fas fa-times text-red-600 text-xl"></i>';
+            responseDetails.className = 'bg-red-50 border border-red-200 rounded-xl p-4 mb-6';
+        }
+
+        // Set content
+        responseTitle.textContent = title;
+        responseSubtitle.textContent = subtitle;
+        responseDetails.innerHTML = `
+            <div class="text-center">
+                <p class="text-sm ${success ? 'text-green-700' : 'text-red-700'}">${details}</p>
+            </div>
+        `;
+
+        // Set actions
+        if (success) {
+            responseActions.innerHTML = `
+                <button onclick="hideSendCreditModal()" 
+                    class="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 font-medium">
+                    Close
+                </button>
+            `;
+        } else {
+            responseActions.innerHTML = `
+                <button onclick="sendCreditBack()" 
+                    class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium">
+                    Try Again
+                </button>
+                <button onclick="hideSendCreditModal()" 
+                    class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium">
+                    Close
+                </button>
+            `;
+        }
+
+        // Update titles
+        document.getElementById('sendCreditTitle').textContent = title;
+        document.getElementById('sendCreditSubtitle').textContent = subtitle;
+
+        // Handle auto-close for success
+        if (autoClose && success) {
+            autoCloseCountdown.classList.remove('hidden');
+            let countdown = 10;
+            const countdownTimer = document.getElementById('countdownTimer');
+
+            autoCloseTimer = setInterval(() => {
+                countdown--;
+                countdownTimer.textContent = countdown;
+
+                if (countdown <= 0) {
+                    clearInterval(autoCloseTimer);
+                    hideSendCreditModal();
+                }
+            }, 1000);
+        } else {
+            autoCloseCountdown.classList.add('hidden');
+        }
+
+        // Animate to response step
+        animateToStep('sendCreditConfirmationStep', 'sendCreditResponseStep', 8);
+    }
 
     // Real-time amount validation
     document.getElementById('sendCreditAmount').addEventListener('input', function (e) {

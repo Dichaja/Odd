@@ -1466,83 +1466,98 @@ function formatCurrency($amount)
                 if (entry.is_first_in_group && entry.group_size > 1) {
                     tr.classList.add('border-l-4', 'border-blue-400');
                 }
+
                 const dt = new Date(entry.transaction_date);
                 const dateStr = dt.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
                 const timeStr = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
                 const debit = entry.entry_type === 'DEBIT' ? entry.amount : 0;
                 const credit = entry.entry_type === 'CREDIT' ? entry.amount : 0;
 
-                let raw = entry.entry_note || getTransactionDescription(entry);
-                if (entry.status === 'FAILED') {
-                    raw = `${entry.transaction_type} (TXN: ${entry.transaction_id}, UGX ${formatCurrency(entry.amount_total)}) - FAILED`;
-                    if (entry.transaction_note && entry.transaction_note !== 'Request payment completed successfully.') {
-                        raw += ` - ${entry.transaction_note}`;
+                // ←── only use the transaction note (or entry note) and payment method
+                const mainDesc = entry.transaction_note || entry.entry_note || '';
+                const descHtml = `
+            <div class="font-medium text-gray-900">${mainDesc}</div>
+            ${entry.payment_method
+                        ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>`
+                        : ''
                     }
-                } else {
-                    raw += ` (TXN: ${entry.transaction_id}, UGX ${formatCurrency(entry.amount_total)})`;
-                }
-                const parts = raw.split(',').map(s => s.trim());
-                const descHtml = parts.map(line => `<div class="font-medium text-gray-900">${line}</div>`).join('') +
-                    (entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : '');
+        `;
 
                 tr.innerHTML = `
-                    <td data-column="datetime" class="px-4 py-3 text-sm whitespace-nowrap">
-                        <div class="font-medium text-gray-900 whitespace-nowrap">${dateStr}</div>
-                        <div class="text-xs text-gray-500 whitespace-nowrap">${timeStr}</div>
-                    </td>
-                    <td data-column="entryid" class="px-4 py-3 text-sm">
-                        <div class="font-mono text-gray-700 truncate max-w-[10ch]" title="${entry.entry_id || ''}">
-                            ${entry.entry_id || ''}
-                        </div>
-                    </td>
-                    <td data-column="description" class="px-4 py-3 text-sm max-w-[20ch]">
-                        <div class="overflow-hidden whitespace-normal" title="${raw}">
-                            ${descHtml}
-                        </div>
-                    </td>
-                    <td data-column="debit" class="px-4 py-3 text-sm text-right">
-                        ${debit > 0 ? `<span class="font-semibold text-red-600">-${formatCurrency(debit)}</span>` : '<span class="text-gray-400">-</span>'}
-                    </td>
-                    <td data-column="credit" class="px-4 py-3 text-sm text-right">
-                        ${credit > 0 ? `<span class="font-semibold text-green-600">+${formatCurrency(credit)}</span>` : '<span class="text-gray-400">-</span>'}
-                    </td>
-                    <td data-column="balance" class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
-                        ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
-                    </td>
-                    <td data-column="related" class="px-4 py-3 text-sm">
-                        ${renderRelatedEntries(entry.related_entries)}
-                    </td>
-                `;
+            <td data-column="datetime" class="px-4 py-3 text-sm whitespace-nowrap">
+                <div class="font-medium text-gray-900">${dateStr}</div>
+                <div class="text-xs text-gray-500">${timeStr}</div>
+            </td>
+            <td data-column="entryid" class="px-4 py-3 text-sm">
+                <div class="font-mono text-gray-700 truncate max-w-[10ch]" title="${entry.entry_id || ''}">
+                    ${entry.entry_id || ''}
+                </div>
+            </td>
+            <td data-column="description" class="px-4 py-3 text-sm max-w-[20ch]">
+                <div class="overflow-hidden whitespace-normal" title="${mainDesc}">
+                    ${descHtml}
+                </div>
+            </td>
+            <td data-column="debit" class="px-4 py-3 text-sm text-right">
+                ${debit > 0
+                        ? `<span class="font-semibold text-red-600">-${formatCurrency(debit)}</span>`
+                        : '<span class="text-gray-400">-</span>'
+                    }
+            </td>
+            <td data-column="credit" class="px-4 py-3 text-sm text-right">
+                ${credit > 0
+                        ? `<span class="font-semibold text-green-600">+${formatCurrency(credit)}</span>`
+                        : '<span class="text-gray-400">-</span>'
+                    }
+            </td>
+            <td data-column="balance" class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                ${entry.balance_after > 0
+                        ? formatCurrency(entry.balance_after)
+                        : '<span class="text-gray-400">-</span>'
+                    }
+            </td>
+            <td data-column="related" class="px-4 py-3 text-sm">
+                ${renderRelatedEntries(entry.related_entries)}
+            </td>
+        `;
                 tbody.appendChild(tr);
 
-                // Mobile card remains unchanged
+                // mobile view
                 const card = document.createElement('div');
-                card.className = `bg-white rounded-lg p-4 border border-gray-200 ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
+                card.className = `bg-white rounded-lg p-4 border border-gray-200
+            ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
                 card.innerHTML = `
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="flex-1">
-                            <div class="font-medium text-gray-900 text-sm mb-1">${raw.replace(/, /g, '\n')}</div>
-                            <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
-                            ${entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
-                        </div>
-                        <div class="text-right ml-3">
-                            ${debit > 0 ? `<div class="font-semibold text-red-600 text-sm">-${formatCurrency(debit)}</div>` : ''}
-                            ${credit > 0 ? `<div class="font-semibold text-green-600 text-sm">+${formatCurrency(credit)}</div>` : ''}
-                            <div class="text-xs text-gray-500 mt-1">Balance: ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '-'}</div>
-                        </div>
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                    <div class="font-medium text-gray-900 text-sm mb-1">${mainDesc}</div>
+                    <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
+                    ${entry.payment_method
+                        ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>`
+                        : ''
+                    }
+                </div>
+                <div class="text-right ml-3">
+                    ${debit > 0 ? `<div class="font-semibold text-red-600 text-sm">-${formatCurrency(debit)}</div>` : ''}
+                    ${credit > 0 ? `<div class="font-semibold text-green-600 text-sm">+${formatCurrency(credit)}</div>` : ''}
+                    <div class="text-xs text-gray-500 mt-1">
+                        Balance: ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '-'}
                     </div>
-                    <div class="text-xs text-gray-500 mb-2"><span class="font-mono">${entry.entry_id || 'No Entry ID'}</span></div>
-                    ${entry.related_entries.length > 0 ? `
-                        <div class="mt-3">
-                            <div class="text-xs font-medium text-gray-700 mb-2">Related Entries:</div>
-                            ${renderRelatedEntriesMobile(entry.related_entries)}
-                        </div>
-                    ` : ''}
-                `;
+                </div>
+            </div>
+            <div class="text-xs text-gray-500 mb-2">
+                <span class="font-mono">${entry.entry_id || 'No Entry ID'}</span>
+            </div>
+            ${entry.related_entries.length > 0 ? `
+                <div class="mt-3">
+                    <div class="text-xs font-medium text-gray-700 mb-2">Related Entries:</div>
+                    ${renderRelatedEntriesMobile(entry.related_entries)}
+                </div>
+            ` : ''}
+        `;
                 mobile.appendChild(card);
             });
 
-            // Apply column visibility after rendering
             applyColumnVisibility();
         }
 
