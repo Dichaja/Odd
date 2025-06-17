@@ -441,7 +441,7 @@ function formatCurrency($amount)
                     </div>
                 </div>
 
-                <div id="statementTable" class="hidden lg:block overflow-auto flex-1 max-h-[calc(100vh-200px)]">
+                <div id="statementTable" class="hidden lg:block overflow-auto flex-1 h-[100vh]">
                     <table class="w-full" id="statementTableElement">
                         <thead class="bg-white border-b border-gray-200 sticky top-0">
                             <tr>
@@ -475,7 +475,7 @@ function formatCurrency($amount)
                 </div>
 
                 <div id="statementMobile"
-                    class="hidden lg:hidden p-4 space-y-4 overflow-auto flex-1 max-h-[calc(90vh-200px)]">
+                    class="hidden lg:hidden p-4 space-y-4 overflow-auto flex-1 h-[100vh]">
 
                     <div id="statementEmpty" class="hidden text-center py-16">
                         <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
