@@ -412,7 +412,7 @@
 </style>
 
 <script>
-    const sendCreditApiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageSendCredit.php') ?>;
+    const sendCreditApiUrl = <?= json_encode(BASE_URL . 'vendor-store/fetch/manageSendCredit.php') ?>;
 
     let currentStep = 1;
     let maxStep = 1;
