@@ -432,6 +432,15 @@ final class CreditService
             }
         }
 
+        if ($ownerType === 'VENDOR') {
+            $v = self::$pdo
+                ->prepare("SELECT name FROM vendor_stores WHERE id = :vid");
+            $v->execute([':vid' => $ownerId]);
+            if ($r = $v->fetch(PDO::FETCH_ASSOC)) {
+                $wname = trim($r['name']);
+            }
+        }
+
         $fields = [
             'wallet_id',
             'wallet_number',
