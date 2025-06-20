@@ -51,7 +51,7 @@ final class CreditService
                 transaction_type ENUM('TOPUP','PURCHASE','SUBSCRIPTION','SMS_PURCHASE','EMAIL_PURCHASE','PREMIUM_FEATURE','REFUND','WITHDRAWAL','TRANSFER') NOT NULL,
                 status ENUM('PENDING','SUCCESS','FAILED','REFUNDED','DISPUTED') NOT NULL DEFAULT 'PENDING',
                 amount_total DECIMAL(15,2) NOT NULL,
-                payment_method ENUM('MOBILE_MONEY_GATEWAY','MOBILE_MONEY','CARD','WALLET') DEFAULT NULL,
+                payment_method ENUM('MOBILE_MONEY_GATEWAY','CARD_GATEWAY','MOBILE_MONEY','BANK','WALLET') DEFAULT NULL,
                 external_reference VARCHAR(100) DEFAULT NULL,
                 external_metadata TEXT DEFAULT NULL,
                 user_id VARCHAR(26) DEFAULT NULL,
@@ -373,7 +373,6 @@ final class CreditService
 
         return $res;
     }
-
 
     public static function getWallet(string $ownerType, string $ownerId = null): array
     {
@@ -809,7 +808,6 @@ final class CreditService
         return ['success' => true, 'transaction_id' => $txnId];
     }
 
-
     private static function getWithholdingAccountId(): string
     {
         return self::$pdo->query("
@@ -981,5 +979,183 @@ final class CreditService
             error_log('[ZzimbaCreditModule] insert entry error: ' . $e->getMessage());
             return '';
         }
+    }
+
+    public static function logCashTopup(array $opts): array
+    {
+        self::boot();
+
+        $cashAccountId = trim($opts['cash_account_id'] ?? '');
+        $amount = (float) ($opts['amount_total'] ?? 0);
+        $paymentMethod = strtoupper(trim($opts['payment_method'] ?? ''));
+        $externalRef = trim($opts['external_reference'] ?? '');
+        $userId = $opts['user_id'] ?? null;
+        $vendorId = $opts['vendor_id'] ?? null;
+        $note = trim($opts['note'] ?? '');
+
+        if (
+            !$cashAccountId ||
+            $amount <= 0 ||
+            !in_array($paymentMethod, ['BANK', 'MOBILE_MONEY'], true)
+        ) {
+            return ['success' => false, 'message' => 'Invalid parameters for cash top-up'];
+        }
+
+        $txnId = \generateUlid();
+        self::insertTransaction([
+            'transaction_id' => $txnId,
+            'transaction_type' => 'TOPUP',
+            'status' => 'PENDING',
+            'amount_total' => $amount,
+            'payment_method' => $paymentMethod,
+            'external_reference' => $externalRef,
+            'external_metadata' => json_encode($opts),
+            'user_id' => $userId,
+            'vendor_id' => $vendorId,
+            'note' => $note
+        ]);
+
+        return ['success' => true, 'transaction_id' => $txnId];
+    }
+
+    public static function acknowledgeCashTopup(string $transactionId, string $newStatus): array
+    {
+        self::boot();
+        $newStatus = strtoupper($newStatus);
+        if (!in_array($newStatus, ['SUCCESS', 'FAILED'], true)) {
+            return ['success' => false, 'message' => 'Invalid status'];
+        }
+
+        // 1) Mark transaction status
+        $upd = self::$pdo->prepare("
+            UPDATE zzimba_financial_transactions
+               SET status = :st, updated_at = NOW()
+             WHERE transaction_id = :tid
+        ");
+        $upd->execute([':st' => $newStatus, ':tid' => $transactionId]);
+
+        // 2) If failed, nothing more to do
+        if ($newStatus === 'FAILED') {
+            return ['success' => true, 'message' => 'Top-up marked as failed'];
+        }
+
+        // 3) Fetch transaction details (amount, metadata, owner)
+        $stmt = self::$pdo->prepare("
+            SELECT amount_total, external_metadata, user_id, vendor_id
+              FROM zzimba_financial_transactions
+             WHERE transaction_id = :tid
+        ");
+        $stmt->execute([':tid' => $transactionId]);
+        $txn = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$txn) {
+            return ['success' => false, 'message' => 'Transaction not found'];
+        }
+
+        $meta = json_decode($txn['external_metadata'], true);
+        $cashAccountId = $meta['cash_account_id'] ?? null;
+        $amount = (float) $txn['amount_total'];
+        $ownerType = $txn['user_id'] ? 'USER' : 'VENDOR';
+        $ownerId = $ownerType === 'USER' ? $txn['user_id'] : $txn['vendor_id'];
+
+        if (!$cashAccountId) {
+            return ['success' => false, 'message' => 'Cash account not specified'];
+        }
+
+        try {
+            self::$pdo->beginTransaction();
+
+            // ——— A) Credit PLATFORM withholding ———
+            $withholdingId = self::getWithholdingAccountId();
+            $balStmt = self::$pdo->prepare("
+                SELECT current_balance
+                  FROM zzimba_wallets
+                 WHERE wallet_id = :wid
+            ");
+            $balStmt->execute([':wid' => $withholdingId]);
+            $withBal = (float) $balStmt->fetchColumn();
+
+            $creditWithId = self::insertEntry([
+                'transaction_id' => $transactionId,
+                'wallet_id' => $withholdingId,
+                'entry_type' => 'CREDIT',
+                'amount' => $amount,
+                'balance_after' => $withBal + $amount,
+                'entry_note' => 'Cash top-up held in withholding'
+            ]);
+            self::updateWalletBalance($withholdingId, $withBal + $amount);
+
+            // ——— B) Debit PLATFORM withholding ———
+            $debitWithId = self::insertEntry([
+                'transaction_id' => $transactionId,
+                'wallet_id' => $withholdingId,
+                'entry_type' => 'DEBIT',
+                'amount' => $amount,
+                'balance_after' => $withBal,
+                'entry_note' => 'Disbursed from withholding',
+                'ref_entry_id' => $creditWithId
+            ]);
+            self::updateWalletBalance($withholdingId, $withBal);
+
+            // ——— C) Credit User/Vendor wallet ———
+            $walletRes = self::getWallet($ownerType, $ownerId);
+            if (!$walletRes['success']) {
+                throw new \Exception('Wallet retrieval failed');
+            }
+            $wallet = $walletRes['wallet'];
+            $currBal = (float) $wallet['current_balance'];
+            $newWBal = $currBal + $amount;
+            $note = sprintf(
+                '%s Wallet credited from withholding',
+                ucfirst(strtolower($ownerType))
+            );
+
+            self::insertEntry([
+                'transaction_id' => $transactionId,
+                'wallet_id' => $wallet['wallet_id'],
+                'entry_type' => 'CREDIT',
+                'amount' => $amount,
+                'balance_after' => $newWBal,
+                'entry_note' => $note,
+                'ref_entry_id' => $debitWithId
+            ]);
+            self::$pdo->prepare("
+                UPDATE zzimba_wallets
+                   SET current_balance = :bal, updated_at = NOW()
+                 WHERE wallet_id = :wid
+            ")->execute([':bal' => $newWBal, ':wid' => $wallet['wallet_id']]);
+
+            // ——— D) Credit Cash Account ———
+            $cStmt = self::$pdo->prepare("
+                SELECT current_balance
+                  FROM zzimba_cash_accounts
+                 WHERE id = :cid
+            ");
+            $cStmt->execute([':cid' => $cashAccountId]);
+            $cashBal = (float) $cStmt->fetchColumn();
+            $newCash = $cashBal + $amount;
+
+            self::insertEntry([
+                'transaction_id' => $transactionId,
+                'cash_account_id' => $cashAccountId,
+                'entry_type' => 'CREDIT',
+                'amount' => $amount,
+                'balance_after' => $newCash,
+                'entry_note' => 'Cash account credited from withholding',
+                'ref_entry_id' => $debitWithId
+            ]);
+            self::$pdo->prepare("
+                UPDATE zzimba_cash_accounts
+                   SET current_balance = :bal, updated_at = NOW()
+                 WHERE id = :cid
+            ")->execute([':bal' => $newCash, ':cid' => $cashAccountId]);
+
+            self::$pdo->commit();
+        } catch (\Throwable $e) {
+            self::$pdo->rollBack();
+            error_log('[ZzimbaCreditModule] top-up ledger error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Ledger processing failed'];
+        }
+
+        return ['success' => true];
     }
 }
