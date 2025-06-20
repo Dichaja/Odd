@@ -242,6 +242,25 @@ function formatCurrency($amount)
         white-space: nowrap !important;
         overflow: hidden;
     }
+
+    /* Status-based row styling */
+    .transaction-pending {
+        background-color: #fef3c7 !important;
+        /* Light yellow for pending */
+    }
+
+    .transaction-failed {
+        background-color: #fee2e2 !important;
+        /* Light red for failed */
+    }
+
+    .transaction-pending:hover {
+        background-color: #fde68a !important;
+    }
+
+    .transaction-failed:hover {
+        background-color: #fecaca !important;
+    }
 </style>
 
 <script>
@@ -433,7 +452,19 @@ function formatCurrency($amount)
 
             entries.forEach((entry, idx) => {
                 const tr = document.createElement('tr');
-                tr.className = `${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`;
+
+                // Base row styling
+                let rowClass = `${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`;
+
+                // Add status-based styling
+                if (entry.status === 'PENDING') {
+                    rowClass = 'transaction-pending';
+                } else if (entry.status === 'FAILED') {
+                    rowClass = 'transaction-failed';
+                }
+
+                tr.className = rowClass;
+
                 if (entry.is_first_in_group && entry.group_size > 1) {
                     tr.classList.add('border-l-4', 'border-blue-400');
                 }
@@ -446,13 +477,19 @@ function formatCurrency($amount)
                 const credit = entry.entry_type === 'CREDIT' ? entry.amount : 0;
 
                 const mainDesc = entry.transaction_note || entry.entry_note || '';
-                const descHtml = `
-                    <div class="font-medium text-gray-900">${mainDesc}</div>
-                    ${entry.payment_method
-                        ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>`
-                        : ''
-                    }
-                `;
+
+                // Build description with amount_total
+                let descHtml = `<div class="font-medium text-gray-900">${mainDesc}</div>`;
+
+                // Add amount_total below the main description
+                if (entry.amount_total > 0) {
+                    descHtml += `<div class="text-xs text-gray-600 mt-1">UGX ${formatCurrency(entry.amount_total)}</div>`;
+                }
+
+                // Add payment method
+                if (entry.payment_method) {
+                    descHtml += `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>`;
+                }
 
                 tr.innerHTML = `
                     <td data-column="datetime" class="px-4 py-3 text-sm whitespace-nowrap">
@@ -477,7 +514,7 @@ function formatCurrency($amount)
                     }
                     </td>
                     <td data-column="balance" class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
-                        ${entry.balance_after > 0
+                        ${(entry.entry_type === 'DEBIT' || entry.entry_type === 'CREDIT')
                         ? formatCurrency(entry.balance_after)
                         : '<span class="text-gray-400">-</span>'
                     }
@@ -486,12 +523,29 @@ function formatCurrency($amount)
                 tbody.appendChild(tr);
 
                 const card = document.createElement('div');
-                card.className = `bg-white rounded-lg p-4 border border-gray-200
+                let cardClass = `bg-white rounded-lg p-4 border border-gray-200
                     ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
+
+                // Add status-based styling for mobile cards
+                if (entry.status === 'PENDING') {
+                    cardClass = cardClass.replace('bg-white', 'bg-yellow-50 border-yellow-200');
+                } else if (entry.status === 'FAILED') {
+                    cardClass = cardClass.replace('bg-white', 'bg-red-50 border-red-200');
+                }
+
+                card.className = cardClass;
+
+                // Build mobile description with amount_total
+                let mobileDescHtml = `<div class="font-medium text-gray-900 text-sm mb-1 break-all max-w-full overflow-hidden">${mainDesc}</div>`;
+
+                if (entry.amount_total > 0) {
+                    mobileDescHtml += `<div class="text-xs text-gray-600 mb-1">UGX ${formatCurrency(entry.amount_total)}</div>`;
+                }
+
                 card.innerHTML = `
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex-1 min-w-0">
-                            <div class="font-medium text-gray-900 text-sm mb-1 break-all max-w-full overflow-hidden">${mainDesc}</div>
+                            ${mobileDescHtml}
                             <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
                             ${entry.payment_method
                         ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>`
@@ -502,7 +556,7 @@ function formatCurrency($amount)
                             ${debit > 0 ? `<div class="font-semibold text-red-600 text-sm">-${formatCurrency(debit)}</div>` : ''}
                             ${credit > 0 ? `<div class="font-semibold text-green-600 text-sm">+${formatCurrency(credit)}</div>` : ''}
                             <div class="text-xs text-gray-500 mt-1">
-                                Balance: ${entry.balance_after > 0 ? formatCurrency(entry.balance_after) : '-'}
+                                Balance: ${(entry.entry_type === 'DEBIT' || entry.entry_type === 'CREDIT') ? formatCurrency(entry.balance_after) : '-'}
                             </div>
                         </div>
                     </div>
