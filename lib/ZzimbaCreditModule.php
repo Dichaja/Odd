@@ -993,12 +993,30 @@ final class CreditService
         $vendorId = $opts['vendor_id'] ?? null;
         $note = trim($opts['note'] ?? '');
 
+        // method-specific fields
+        $mmPhoneNumber = trim($opts['mmPhoneNumber'] ?? '');
+        $mmDateTime = trim($opts['mmDateTime'] ?? '');
+        $btDepositorName = trim($opts['btDepositorName'] ?? '');
+        $btDateTime = trim($opts['btDateTime'] ?? '');
+
+        // basic validation
         if (
             !$cashAccountId ||
             $amount <= 0 ||
             !in_array($paymentMethod, ['BANK', 'MOBILE_MONEY'], true)
         ) {
             return ['success' => false, 'message' => 'Invalid parameters for cash top-up'];
+        }
+
+        // conditional validation
+        if ($paymentMethod === 'MOBILE_MONEY') {
+            if (!$mmPhoneNumber || !$mmDateTime) {
+                return ['success' => false, 'message' => 'Phone number and date/time required for mobile money top-up'];
+            }
+        } else { // BANK
+            if (!$btDepositorName || !$btDateTime) {
+                return ['success' => false, 'message' => 'Depositor name and date/time required for bank top-up'];
+            }
         }
 
         $txnId = \generateUlid();

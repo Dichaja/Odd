@@ -45,6 +45,7 @@ $menuItems = [
     'finance' => [
         'title' => 'Finance',
         'items' => [
+            'approve-transactions' => ['title' => 'Approve Transactions', 'icon' => 'fa-check-circle'],
             'cash-accounts' => ['title' => 'Cash Accounts', 'icon' => 'fa-wallet'],
             'zzimba-wallets' => ['title' => 'Zzimba Wallets', 'icon' => 'fa-piggy-bank'],
             'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card']

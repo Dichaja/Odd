@@ -20,14 +20,20 @@ switch ($action) {
 
 function handleLogTopup()
 {
-    // grab raw inputs
+    // common inputs
     $cashAccountId = trim($_POST['cash_account_id'] ?? '');
     $paymentMethod = strtoupper(trim($_POST['payment_method'] ?? ''));
     $amount = (float) ($_POST['amount_total'] ?? 0);
     $externalRef = trim($_POST['external_reference'] ?? '');
     $note = trim($_POST['note'] ?? '');
 
-    // build payload
+    // conditional inputs
+    $mmPhoneNumber = trim($_POST['mmPhoneNumber'] ?? '');
+    $mmDateTime = trim($_POST['mmDateTime'] ?? '');
+    $btDepositorName = trim($_POST['btDepositorName'] ?? '');
+    $btDateTime = trim($_POST['btDateTime'] ?? '');
+
+    // base payload
     $payload = [
         'cash_account_id' => $cashAccountId,
         'payment_method' => $paymentMethod,
@@ -38,7 +44,16 @@ function handleLogTopup()
         'vendor_id' => $_SESSION['active_store'] ?? null,
     ];
 
-    // delegate to CreditService
+    // add method-specific fields
+    if ($paymentMethod === 'MOBILE_MONEY') {
+        $payload['mmPhoneNumber'] = $mmPhoneNumber;
+        $payload['mmDateTime'] = $mmDateTime;
+    } elseif ($paymentMethod === 'BANK') {
+        $payload['btDepositorName'] = $btDepositorName;
+        $payload['btDateTime'] = $btDateTime;
+    }
+
+    // delegate to service
     $result = CreditService::logCashTopup($payload);
     echo json_encode($result);
 }
