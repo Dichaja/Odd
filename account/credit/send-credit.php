@@ -198,6 +198,60 @@
                 </form>
             </div>
 
+            <!-- NEW PASSWORD CONFIRMATION STEP -->
+            <div id="sendCreditPasswordStep"
+                class="hidden transition-all duration-300 transform translate-x-full opacity-0">
+
+                <form id="passwordForm" onsubmit="handlePasswordSubmit(event)">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-user text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium text-blue-900">Logged in as:</p>
+                                <p class="text-sm text-blue-700" id="currentUsername">
+                                    <?= htmlspecialchars($_SESSION['user']['username'] ?? 'Unknown') ?>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="confirmPassword" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Enter Your Password
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="confirmPassword" autocomplete="current-password"
+                                class="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 placeholder-gray-400"
+                                placeholder="Enter your password..." required>
+                            <button type="button" onclick="togglePasswordVisibility()"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                                <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                            </button>
+                        </div>
+                        <div id="passwordError" class="hidden mt-1 text-sm text-red-600">
+                        </div>
+                        <div id="attemptsWarning" class="hidden mt-1 text-sm text-orange-600">
+                        </div>
+                    </div>
+
+                    <div id="passwordTransferSummary" class="bg-gray-50 rounded-xl p-4 mb-6">
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" onclick="sendCreditBack()"
+                            class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium">
+                            Back
+                        </button>
+                        <button type="submit" id="verifyPasswordBtn"
+                            class="flex-1 px-4 py-3 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition-all duration-200 font-medium">
+                            Verify Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+
             <div id="sendCreditConfirmationStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
                 <div class="text-center mb-6">
@@ -245,6 +299,38 @@
                         This window will close automatically in <span id="countdownTimer"
                             class="font-semibold">30</span> seconds
                     </p>
+                </div>
+            </div>
+
+            <!-- BLOCKED USER STEP -->
+            <div id="sendCreditBlockedStep"
+                class="hidden transition-all duration-300 transform translate-x-full opacity-0">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-ban text-red-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">Access Blocked</h4>
+                    <p class="text-sm text-gray-500">Too many failed password attempts</p>
+                </div>
+
+                <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-2xl mb-3"></i>
+                        <p class="text-red-800 font-medium mb-2">Transfer Feature Temporarily Blocked</p>
+                        <p class="text-red-700 text-sm mb-3">
+                            You have exceeded the maximum number of password verification attempts (3).
+                        </p>
+                        <p class="text-red-600 text-sm">
+                            Please contact the administrator for assistance to restore access to the transfer feature.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex justify-center">
+                    <button onclick="hideSendCreditModal()"
+                        class="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
@@ -379,8 +465,42 @@
     let pendingTransfer = null;
     let autoCloseTimer = null;
     let currentBalance = null;
+    let securityToken = null;
+
+    // Password attempt tracking
+    const STORAGE_KEY = 'sendCredit_attempts';
+    const MAX_ATTEMPTS = 3;
+
+    function getPasswordAttempts() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) return { count: 0, timestamp: Date.now() };
+        return JSON.parse(stored);
+    }
+
+    function incrementPasswordAttempts() {
+        const attempts = getPasswordAttempts();
+        attempts.count += 1;
+        attempts.timestamp = Date.now();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(attempts));
+        return attempts;
+    }
+
+    function resetPasswordAttempts() {
+        localStorage.removeItem(STORAGE_KEY);
+    }
+
+    function isUserBlocked() {
+        const attempts = getPasswordAttempts();
+        return attempts.count >= MAX_ATTEMPTS;
+    }
 
     window.showSendCreditModal = function () {
+        // Check if user is blocked before showing modal
+        if (isUserBlocked()) {
+            showBlockedUserStep();
+            return;
+        }
+
         const modal = document.getElementById('sendCreditModal');
         const modalContent = document.getElementById('sendCreditModalContent');
 
@@ -392,6 +512,28 @@
 
         resetToStep1();
     };
+
+    function showBlockedUserStep() {
+        const modal = document.getElementById('sendCreditModal');
+        const modalContent = document.getElementById('sendCreditModalContent');
+
+        modal.classList.remove('hidden');
+
+        setTimeout(() => {
+            modalContent.classList.add('modal-show');
+        }, 10);
+
+        // Hide all other steps and show blocked step
+        document.querySelectorAll('[id^="sendCredit"][id$="Step"]').forEach(step => {
+            step.classList.add('hidden');
+        });
+
+        document.getElementById('sendCreditBlockedStep').classList.remove('hidden', 'translate-x-full', 'opacity-0');
+        document.getElementById('sendCreditBackBtn').classList.add('hidden');
+
+        document.getElementById('sendCreditTitle').textContent = 'Access Blocked';
+        document.getElementById('sendCreditSubtitle').textContent = 'Contact administrator for assistance';
+    }
 
     window.hideSendCreditModal = function () {
         const modal = document.getElementById('sendCreditModal');
@@ -419,6 +561,7 @@
         searchResults = [];
         pendingTransfer = null;
         currentBalance = null;
+        securityToken = null;
 
         if (autoCloseTimer) {
             clearInterval(autoCloseTimer);
@@ -431,8 +574,10 @@
         document.getElementById('sendCreditNotFoundStep').classList.add('hidden');
         document.getElementById('sendCreditConfirmStep').classList.add('hidden');
         document.getElementById('sendCreditAmountStep').classList.add('hidden');
+        document.getElementById('sendCreditPasswordStep').classList.add('hidden');
         document.getElementById('sendCreditConfirmationStep').classList.add('hidden');
         document.getElementById('sendCreditResponseStep').classList.add('hidden');
+        document.getElementById('sendCreditBlockedStep').classList.add('hidden');
 
         document.getElementById('sendCreditTitle').textContent = 'Send Credit';
         document.getElementById('sendCreditSubtitle').textContent = 'Select destination wallet type';
@@ -445,12 +590,14 @@
 
         resetSearchButton();
         resetSendButton();
+        resetPasswordButton();
         clearErrorMessages();
     }
 
     function clearAllForms() {
         document.getElementById('sendCreditSearchInput').value = '';
         document.getElementById('sendCreditAmount').value = '';
+        document.getElementById('confirmPassword').value = '';
     }
 
     function clearSearchInput() {
@@ -461,9 +608,12 @@
     function clearErrorMessages() {
         document.getElementById('searchInputError').classList.add('hidden');
         document.getElementById('amountError').classList.add('hidden');
+        document.getElementById('passwordError').classList.add('hidden');
+        document.getElementById('attemptsWarning').classList.add('hidden');
 
         document.getElementById('sendCreditSearchInput').classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
         document.getElementById('sendCreditAmount').classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
+        document.getElementById('confirmPassword').classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
     }
 
     function resetSearchButton() {
@@ -479,6 +629,29 @@
             sendBtn.disabled = false;
         }
     }
+
+    function resetPasswordButton() {
+        const passwordBtn = document.getElementById('verifyPasswordBtn');
+        if (passwordBtn) {
+            passwordBtn.innerHTML = 'Verify Password';
+            passwordBtn.disabled = false;
+        }
+    }
+
+    window.togglePasswordVisibility = function () {
+        const passwordInput = document.getElementById('confirmPassword');
+        const toggleIcon = document.getElementById('passwordToggleIcon');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    };
 
     window.selectSendDestination = function (type) {
         window.sendCreditType = type;
@@ -514,10 +687,12 @@
     };
 
     window.sendCreditBack = function () {
-        if (currentStep === 8) {
+        if (currentStep === 9) {
             hideSendCreditModal();
+        } else if (currentStep === 8) {
+            animateToStep('sendCreditConfirmationStep', 'sendCreditPasswordStep', 7);
         } else if (currentStep === 7) {
-            animateToStep('sendCreditConfirmationStep', 'sendCreditAmountStep', 6);
+            animateToStep('sendCreditPasswordStep', 'sendCreditAmountStep', 6);
         } else if (currentStep === 6) {
             animateToStep('sendCreditAmountStep', 'sendCreditConfirmStep', 5);
         } else if (currentStep === 5) {
@@ -579,6 +754,10 @@
                 setTimeout(() => {
                     document.getElementById('sendCreditAmount').focus();
                 }, 400);
+            } else if (stepNumber === 7) {
+                setTimeout(() => {
+                    document.getElementById('confirmPassword').focus();
+                }, 400);
             }
         }, 300);
     }
@@ -617,7 +796,12 @@
 
     function handleAmountSubmit(event) {
         event.preventDefault();
-        showConfirmation();
+        showPasswordConfirmation();
+    }
+
+    function handlePasswordSubmit(event) {
+        event.preventDefault();
+        verifyPassword();
     }
 
     window.performSendCreditSearch = async function () {
@@ -887,7 +1071,7 @@
         animateToStep('sendCreditConfirmStep', 'sendCreditAmountStep', 6);
     };
 
-    function showConfirmation() {
+    function showPasswordConfirmation() {
         const amountInput = document.getElementById('sendCreditAmount');
         const amount = amountInput.value.trim();
         clearErrorMessages();
@@ -913,19 +1097,120 @@
             searchType: lastSearchParams ? lastSearchParams.searchType : 'id'
         };
 
-        const confirmationDetails = document.getElementById('confirmationSummaryDetails');
+        // Show password confirmation step
+        const passwordSummary = document.getElementById('passwordTransferSummary');
         const walletTypeText = window.sendCreditType === 'vendor' ? 'Vendor' : 'User';
 
-        const formattedAmount = parseFloat(amount).toLocaleString('en-UG', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        });
+        passwordSummary.innerHTML = `
+            <div class="space-y-3">
+                <div class="text-center pb-3 border-b border-gray-200">
+                    <p class="text-lg font-bold text-gray-900">${pendingTransfer.formattedAmount} UGX</p>
+                    <p class="text-sm text-gray-500">to ${walletTypeText} Wallet</p>
+                </div>
+                
+                <div class="flex justify-between items-start">
+                    <span class="text-sm font-medium text-gray-600">Recipient:</span>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-900">${selectedWallet.wallet_name}</p>
+                        <p class="text-xs text-gray-500">Account: ${selectedWallet.wallet_number}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Show attempts warning if any previous attempts
+        const attempts = getPasswordAttempts();
+        if (attempts.count > 0) {
+            const attemptsWarning = document.getElementById('attemptsWarning');
+            const remaining = MAX_ATTEMPTS - attempts.count;
+            attemptsWarning.textContent = `Warning: ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account is blocked.`;
+            attemptsWarning.classList.remove('hidden');
+        }
+
+        document.getElementById('sendCreditTitle').textContent = 'Confirm with Password';
+        document.getElementById('sendCreditSubtitle').textContent = 'Enter your password to authorize';
+
+        animateToStep('sendCreditAmountStep', 'sendCreditPasswordStep', 7);
+    }
+
+    async function verifyPassword() {
+        const passwordInput = document.getElementById('confirmPassword');
+        const password = passwordInput.value.trim();
+
+        clearErrorMessages();
+
+        if (!password) {
+            showInputError('confirmPassword', 'passwordError', 'Please enter your password');
+            return;
+        }
+
+        const verifyBtn = document.getElementById('verifyPasswordBtn');
+        const originalText = verifyBtn.innerHTML;
+        verifyBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i><span class="ml-2">Verifying...</span>';
+        verifyBtn.disabled = true;
+
+        try {
+            const payload = new FormData();
+            payload.append('action', 'verifyPassword');
+            payload.append('password', password);
+
+            const response = await fetch(sendCreditApiUrl, {
+                method: 'POST',
+                body: payload
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Password verified successfully
+                securityToken = data.token;
+                resetPasswordAttempts(); // Clear attempts on success
+                showConfirmation();
+            } else {
+                // Password verification failed
+                const attempts = incrementPasswordAttempts();
+
+                if (attempts.count >= MAX_ATTEMPTS) {
+                    // User is now blocked
+                    showInputError('confirmPassword', 'passwordError', 'Too many failed attempts. Access blocked.');
+                    setTimeout(() => {
+                        hideSendCreditModal();
+                        setTimeout(() => {
+                            showBlockedUserStep();
+                        }, 500);
+                    }, 2000);
+                } else {
+                    const remaining = MAX_ATTEMPTS - attempts.count;
+                    showInputError('confirmPassword', 'passwordError',
+                        `Incorrect password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`);
+
+                    // Update attempts warning
+                    const attemptsWarning = document.getElementById('attemptsWarning');
+                    attemptsWarning.textContent = `Warning: ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account is blocked.`;
+                    attemptsWarning.classList.remove('hidden');
+                }
+
+                passwordInput.value = ''; // Clear password field
+            }
+
+        } catch (error) {
+            console.error('Password verification error:', error);
+            showInputError('confirmPassword', 'passwordError', 'Error verifying password. Please try again.');
+        } finally {
+            verifyBtn.innerHTML = originalText;
+            verifyBtn.disabled = false;
+        }
+    }
+
+    function showConfirmation() {
+        const confirmationDetails = document.getElementById('confirmationSummaryDetails');
+        const walletTypeText = window.sendCreditType === 'vendor' ? 'Vendor' : 'User';
 
         confirmationDetails.innerHTML = `
             <div class="space-y-4">
                 <div class="text-center pb-3 border-b border-yellow-200">
                     <h5 class="font-semibold text-gray-900 mb-1">Transfer Summary</h5>
-                    <p class="text-2xl font-bold text-gray-900">${formattedAmount} UGX</p>
+                    <p class="text-2xl font-bold text-gray-900">${pendingTransfer.formattedAmount} UGX</p>
                 </div>
                 
                 <div class="space-y-3">
@@ -944,7 +1229,12 @@
                     
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium text-gray-600">Amount:</span>
-                        <span class="text-sm font-bold text-gray-900">${amount} UGX</span>
+                        <span class="text-sm font-bold text-gray-900">${pendingTransfer.amount} UGX</span>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-600">Status:</span>
+                        <span class="text-sm font-semibold text-green-700">✓ Password Verified</span>
                     </div>
                 </div>
             </div>
@@ -953,16 +1243,16 @@
         document.getElementById('sendCreditTitle').textContent = 'Confirm Transfer';
         document.getElementById('sendCreditSubtitle').textContent = 'Review details before sending';
 
-        animateToStep('sendCreditAmountStep', 'sendCreditConfirmationStep', 7);
+        animateToStep('sendCreditPasswordStep', 'sendCreditConfirmationStep', 8);
     }
 
     window.cancelConfirmation = function () {
-        animateToStep('sendCreditConfirmationStep', 'sendCreditAmountStep', 6);
+        animateToStep('sendCreditConfirmationStep', 'sendCreditPasswordStep', 7);
     };
 
     window.confirmSendCredit = async function () {
-        if (!pendingTransfer) {
-            showResponse(false, 'Error', 'No transfer details found', 'Please try again');
+        if (!pendingTransfer || !securityToken) {
+            showResponse(false, 'Error', 'Security verification required', 'Please verify your password again');
             return;
         }
 
@@ -976,6 +1266,7 @@
             payload.append('action', 'sendCredit');
             payload.append('wallet_to', pendingTransfer.wallet.wallet_number);
             payload.append('amount', pendingTransfer.amount);
+            payload.append('security_token', securityToken);
 
             const response = await fetch(sendCreditApiUrl, {
                 method: 'POST',
@@ -1019,6 +1310,7 @@
         } finally {
             confirmBtn.innerHTML = originalText;
             confirmBtn.disabled = false;
+            securityToken = null; // Clear token after use
         }
     };
 
@@ -1121,7 +1413,7 @@
             autoCloseCountdown.classList.add('hidden');
         }
 
-        animateToStep('sendCreditConfirmationStep', 'sendCreditResponseStep', 8);
+        animateToStep('sendCreditConfirmationStep', 'sendCreditResponseStep', 9);
     }
 
     document.getElementById('sendCreditAmount').addEventListener('input', function (e) {
