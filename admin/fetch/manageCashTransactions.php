@@ -13,6 +13,9 @@ switch ($action) {
     case 'listPending':
         handleListPending();
         break;
+    case 'verifyAdminPassword':
+        verifyAdminPassword($pdo);
+        break;
     case 'acknowledge':
         handleAcknowledge();
         break;
@@ -48,11 +51,9 @@ function handleListPending()
 
     $results = [];
     foreach ($rows as $row) {
-        // parse metadata JSON
         $meta = json_decode($row['external_metadata'], true) ?: [];
         $cashAccountId = $meta['cash_account_id'] ?? null;
 
-        // fetch cash account name
         $accountName = null;
         if ($cashAccountId) {
             $aStmt = $pdo->prepare("SELECT name FROM zzimba_cash_accounts WHERE id = :id LIMIT 1");
@@ -60,7 +61,6 @@ function handleListPending()
             $accountName = $aStmt->fetchColumn();
         }
 
-        // fetch user or vendor details
         $userInfo = null;
         $vendorInfo = null;
         if (!empty($row['user_id'])) {
@@ -117,16 +117,122 @@ function handleListPending()
     echo json_encode(['success' => true, 'pending' => $results]);
 }
 
+function verifyAdminPassword(PDO $pdo)
+{
+    if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in'] || !$_SESSION['user']['is_admin']) {
+        echo json_encode(['success' => false, 'message' => 'Admin authentication required']);
+        return;
+    }
+
+    $password = $_POST['password'] ?? '';
+    $userId = $_SESSION['user']['user_id'];
+
+    if (empty($password)) {
+        echo json_encode(['success' => false, 'message' => 'Password is required']);
+        return;
+    }
+
+    try {
+        $sql = "SELECT password FROM admin_users WHERE id = :user_id AND status = 'active' LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':user_id' => $userId]);
+        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$admin) {
+            echo json_encode(['success' => false, 'message' => 'Admin not found or inactive']);
+            return;
+        }
+
+        if (password_verify($password, $admin['password'])) {
+            $token = generateAdminSecurityToken($userId);
+
+            $_SESSION['admin_security_token'] = [
+                'token' => $token,
+                'user_id' => $userId,
+                'created_at' => time(),
+                'expires_at' => time() + 300
+            ];
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'Admin password verified successfully',
+                'token' => $token
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Incorrect password']);
+        }
+
+    } catch (PDOException $e) {
+        error_log('Error verifying admin password: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'Database error']);
+    }
+}
+
+function generateAdminSecurityToken($userId)
+{
+    $data = 'admin_' . $userId . time() . bin2hex(random_bytes(16));
+    return hash('sha256', $data);
+}
+
+function verifyAdminSecurityToken($token, $userId)
+{
+    if (!isset($_SESSION['admin_security_token'])) {
+        return false;
+    }
+
+    $sessionToken = $_SESSION['admin_security_token'];
+
+    if ($sessionToken['token'] !== $token) {
+        return false;
+    }
+
+    if ($sessionToken['user_id'] !== $userId) {
+        return false;
+    }
+
+    if (time() > $sessionToken['expires_at']) {
+        unset($_SESSION['admin_security_token']);
+        return false;
+    }
+
+    return true;
+}
+
 function handleAcknowledge()
 {
+    if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in'] || !$_SESSION['user']['is_admin']) {
+        echo json_encode(['success' => false, 'message' => 'Admin authentication required']);
+        return;
+    }
+
     $transactionId = trim($_POST['transaction_id'] ?? '');
     $status = strtoupper(trim($_POST['status'] ?? ''));
+    $adminSecurityToken = $_POST['admin_security_token'] ?? '';
+    $userId = $_SESSION['user']['user_id'];
 
     if (!$transactionId || !in_array($status, ['SUCCESS', 'FAILED'], true)) {
         echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
         return;
     }
 
-    $result = CreditService::acknowledgeCashTopup($transactionId, $status);
-    echo json_encode($result);
+    if (empty($adminSecurityToken)) {
+        echo json_encode(['success' => false, 'message' => 'Admin security token required']);
+        return;
+    }
+
+    if (!verifyAdminSecurityToken($adminSecurityToken, $userId)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid or expired admin security token. Please verify your password again.']);
+        return;
+    }
+
+    try {
+        unset($_SESSION['admin_security_token']);
+
+        $result = CreditService::acknowledgeCashTopup($transactionId, $status);
+        echo json_encode($result);
+
+    } catch (Exception $e) {
+        error_log('Error in admin acknowledge: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'Transaction processing failed. Please try again.']);
+    }
 }

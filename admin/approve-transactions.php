@@ -193,7 +193,6 @@ function formatDateTime($dateTime)
     </div>
 </div>
 
-<!-- Transaction Details Modal -->
 <div id="transactionDetailsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
     <div
@@ -218,7 +217,6 @@ function formatDateTime($dateTime)
 
         <div class="flex-1 overflow-y-auto p-6">
             <div id="transactionDetailsContent" class="space-y-6">
-                <!-- Content will be populated by JavaScript -->
             </div>
         </div>
 
@@ -241,7 +239,107 @@ function formatDateTime($dateTime)
     </div>
 </div>
 
-<!-- Confirmation Modal -->
+<div id="adminPasswordModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+        <div class="p-6">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-shield-alt text-yellow-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Admin Authorization Required</h3>
+                    <p class="text-sm text-gray-500">Enter your password to authorize this action</p>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user-shield text-blue-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-blue-900">Admin:</p>
+                        <p class="text-sm text-blue-700">
+                            <?= htmlspecialchars($_SESSION['user']['username'] ?? 'Unknown') ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form id="adminPasswordForm" onsubmit="handleAdminPasswordSubmit(event)">
+                <div class="mb-6">
+                    <label for="adminPassword" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Enter Your Password
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="adminPassword" autocomplete="current-password"
+                            class="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 placeholder-gray-400"
+                            placeholder="Enter your password..." required>
+                        <button type="button" onclick="toggleAdminPasswordVisibility()"
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                            <i class="fas fa-eye" id="adminPasswordToggleIcon"></i>
+                        </button>
+                    </div>
+                    <div id="adminPasswordError" class="hidden mt-1 text-sm text-red-600">
+                    </div>
+                    <div id="adminAttemptsWarning" class="hidden mt-1 text-sm text-orange-600">
+                    </div>
+                </div>
+
+                <div id="adminActionSummary" class="bg-gray-50 rounded-xl p-4 mb-6">
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="hideAdminPasswordModal()"
+                        class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" id="verifyAdminPasswordBtn"
+                        class="flex-1 px-4 py-3 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition-all duration-200 font-medium">
+                        Verify Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="adminBlockedModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+        <div class="p-6">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-ban text-red-600 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Admin Access Blocked</h3>
+                <p class="text-sm text-gray-500">Too many failed password attempts</p>
+            </div>
+
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl mb-3"></i>
+                    <p class="text-red-800 font-medium mb-2">Transaction Approval Temporarily Blocked</p>
+                    <p class="text-red-700 text-sm mb-3">
+                        You have exceeded the maximum number of password verification attempts (3).
+                    </p>
+                    <p class="text-red-600 text-sm">
+                        Please contact the system administrator to restore access to transaction approval features.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button onclick="hideAdminBlockedModal()"
+                    class="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="confirmationModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
@@ -273,8 +371,210 @@ function formatDateTime($dateTime)
     const API_URL = '<?= BASE_URL ?>admin/fetch/manageCashTransactions.php';
     let pendingTransactions = [];
     let currentTransaction = null;
+    let pendingAction = null;
+    let adminSecurityToken = null;
     let visibleColumns = ['datetime', 'amount', 'method', 'account', 'user', 'actions'];
     const COLUMNS_STORAGE_KEY = 'approve_transactions_columns';
+    const ADMIN_ATTEMPTS_KEY = 'admin_approval_attempts';
+    const MAX_ADMIN_ATTEMPTS = 3;
+
+    function getAdminPasswordAttempts() {
+        const stored = localStorage.getItem(ADMIN_ATTEMPTS_KEY);
+        if (!stored) return { count: 0, timestamp: Date.now() };
+        return JSON.parse(stored);
+    }
+
+    function incrementAdminPasswordAttempts() {
+        const attempts = getAdminPasswordAttempts();
+        attempts.count += 1;
+        attempts.timestamp = Date.now();
+        localStorage.setItem(ADMIN_ATTEMPTS_KEY, JSON.stringify(attempts));
+        return attempts;
+    }
+
+    function resetAdminPasswordAttempts() {
+        localStorage.removeItem(ADMIN_ATTEMPTS_KEY);
+    }
+
+    function isAdminBlocked() {
+        const attempts = getAdminPasswordAttempts();
+        return attempts.count >= MAX_ADMIN_ATTEMPTS;
+    }
+
+    function showAdminBlockedModal() {
+        document.getElementById('adminBlockedModal').classList.remove('hidden');
+    }
+
+    function hideAdminBlockedModal() {
+        document.getElementById('adminBlockedModal').classList.add('hidden');
+    }
+
+    function showAdminPasswordModal(action, transaction) {
+        if (isAdminBlocked()) {
+            showAdminBlockedModal();
+            return;
+        }
+
+        // Use the passed transaction parameter instead of relying on currentTransaction
+        const targetTransaction = transaction || currentTransaction;
+        if (!targetTransaction) {
+            console.error('No transaction available for admin password modal');
+            return;
+        }
+
+        pendingAction = action;
+
+        const actionText = action === 'approve' ? 'Approve' : 'Reject';
+        const actionColor = action === 'approve' ? 'text-green-700' : 'text-red-700';
+        const amountFormatted = formatCurrency(targetTransaction.amount_total);
+
+        document.getElementById('adminActionSummary').innerHTML = `
+        <div class="space-y-3">
+            <div class="text-center pb-3 border-b border-gray-200">
+                <p class="text-lg font-bold text-gray-900">UGX ${amountFormatted}</p>
+                <p class="text-sm ${actionColor} font-medium">${actionText} Transaction</p>
+            </div>
+            
+            <div class="flex justify-between items-start">
+                <span class="text-sm font-medium text-gray-600">Transaction ID:</span>
+                <div class="text-right">
+                    <p class="text-sm font-mono text-gray-900">${targetTransaction.transaction_id.substring(0, 12)}...</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-start">
+                <span class="text-sm font-medium text-gray-600">Payment Method:</span>
+                <div class="text-right">
+                    <p class="text-sm font-semibold text-gray-900">${targetTransaction.payment_method === 'BANK' ? 'Bank Transfer' : 'Mobile Money'}</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+        const attempts = getAdminPasswordAttempts();
+        if (attempts.count > 0) {
+            const attemptsWarning = document.getElementById('adminAttemptsWarning');
+            const remaining = MAX_ADMIN_ATTEMPTS - attempts.count;
+            attemptsWarning.textContent = `Warning: ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before access is blocked.`;
+            attemptsWarning.classList.remove('hidden');
+        }
+
+        document.getElementById('adminPasswordModal').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('adminPassword').focus();
+        }, 100);
+    }
+
+    function hideAdminPasswordModal() {
+        document.getElementById('adminPasswordModal').classList.add('hidden');
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('adminPasswordError').classList.add('hidden');
+        document.getElementById('adminAttemptsWarning').classList.add('hidden');
+        // Don't reset currentTransaction here - keep it for the action buttons
+        pendingAction = null;
+    }
+
+    function toggleAdminPasswordVisibility() {
+        const passwordInput = document.getElementById('adminPassword');
+        const toggleIcon = document.getElementById('adminPasswordToggleIcon');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+
+    function handleAdminPasswordSubmit(event) {
+        event.preventDefault();
+        verifyAdminPassword();
+    }
+
+    async function verifyAdminPassword() {
+        const passwordInput = document.getElementById('adminPassword');
+        const password = passwordInput.value.trim();
+
+        document.getElementById('adminPasswordError').classList.add('hidden');
+
+        if (!password) {
+            showAdminPasswordError('Please enter your password');
+            return;
+        }
+
+        const verifyBtn = document.getElementById('verifyAdminPasswordBtn');
+        const originalText = verifyBtn.innerHTML;
+        verifyBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i><span class="ml-2">Verifying...</span>';
+        verifyBtn.disabled = true;
+
+        try {
+            const payload = new FormData();
+            payload.append('action', 'verifyAdminPassword');
+            payload.append('password', password);
+
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: payload
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                adminSecurityToken = data.token;
+                resetAdminPasswordAttempts();
+                // Store the pending action in a more reliable way
+                const actionToConfirm = pendingAction;
+                hideAdminPasswordModal();
+                showConfirmation(actionToConfirm);
+            } else {
+                const attempts = incrementAdminPasswordAttempts();
+
+                if (attempts.count >= MAX_ADMIN_ATTEMPTS) {
+                    showAdminPasswordError('Too many failed attempts. Access blocked.');
+                    setTimeout(() => {
+                        hideAdminPasswordModal();
+                        setTimeout(() => {
+                            showAdminBlockedModal();
+                        }, 500);
+                    }, 2000);
+                } else {
+                    const remaining = MAX_ADMIN_ATTEMPTS - attempts.count;
+                    showAdminPasswordError(`Incorrect password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`);
+
+                    const attemptsWarning = document.getElementById('adminAttemptsWarning');
+                    attemptsWarning.textContent = `Warning: ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before access is blocked.`;
+                    attemptsWarning.classList.remove('hidden');
+                }
+
+                passwordInput.value = '';
+            }
+
+        } catch (error) {
+            console.error('Admin password verification error:', error);
+            showAdminPasswordError('Error verifying password. Please try again.');
+        } finally {
+            verifyBtn.innerHTML = originalText;
+            verifyBtn.disabled = false;
+        }
+    }
+
+    function showAdminPasswordError(message) {
+        const input = document.getElementById('adminPassword');
+        const errorDiv = document.getElementById('adminPasswordError');
+
+        input.classList.add('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('hidden');
+
+        setTimeout(() => {
+            input.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
+        }, 3000);
+
+        input.focus();
+    }
 
     function formatCurrency(amount) {
         return new Intl.NumberFormat('en-UG', {
@@ -401,7 +701,6 @@ function formatDateTime($dateTime)
                     </td>`;
             tbody.appendChild(tr);
 
-            // Mobile card
             const card = document.createElement('div');
             card.className = 'bg-gray-50 rounded-xl p-4 border border-gray-100';
             card.innerHTML = `
@@ -529,7 +828,6 @@ function formatDateTime($dateTime)
                     </div>
                 </div>`;
 
-        // Add payment-specific details
         if (currentTransaction.payment_method === 'BANK' && metadata?.btDepositorName) {
             detailsHTML += `
                     <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
@@ -572,9 +870,8 @@ function formatDateTime($dateTime)
 
         content.innerHTML = detailsHTML;
 
-        // Set up action buttons
-        document.getElementById('approveTransactionBtn').onclick = () => showConfirmation('approve');
-        document.getElementById('rejectTransactionBtn').onclick = () => showConfirmation('reject');
+        document.getElementById('approveTransactionBtn').onclick = () => showAdminPasswordModal('approve', currentTransaction);
+        document.getElementById('rejectTransactionBtn').onclick = () => showAdminPasswordModal('reject', currentTransaction);
 
         document.getElementById('transactionDetailsModal').classList.remove('hidden');
     }
@@ -582,9 +879,12 @@ function formatDateTime($dateTime)
     function hideTransactionDetailsModal() {
         document.getElementById('transactionDetailsModal').classList.add('hidden');
         currentTransaction = null;
+        pendingAction = null;
+        adminSecurityToken = null;
     }
 
     function showConfirmation(action) {
+        // Use the passed action parameter instead of relying on pendingAction
         const modal = document.getElementById('confirmationModal');
         const title = document.getElementById('confirmationTitle');
         const message = document.getElementById('confirmationMessage');
@@ -600,7 +900,7 @@ function formatDateTime($dateTime)
             confirmBtn.className = 'flex-1 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium';
             confirmBtn.textContent = 'Affirm';
             confirmBtn.onclick = () => processTransaction('SUCCESS');
-        } else {
+        } else if (action === 'reject') {
             title.textContent = 'Reject Transaction';
             message.textContent = 'Are you sure you want to reject this transaction? This indicates the information provided is insufficient or incorrect.';
             icon.className = 'w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center';
@@ -618,7 +918,10 @@ function formatDateTime($dateTime)
     }
 
     async function processTransaction(status) {
-        if (!currentTransaction) return;
+        if (!currentTransaction || !adminSecurityToken) {
+            showNotification('Security verification required', 'error');
+            return;
+        }
 
         hideConfirmationModal();
 
@@ -627,6 +930,7 @@ function formatDateTime($dateTime)
             formData.append('action', 'acknowledge');
             formData.append('transaction_id', currentTransaction.transaction_id);
             formData.append('status', status);
+            formData.append('admin_security_token', adminSecurityToken);
 
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -639,7 +943,6 @@ function formatDateTime($dateTime)
                 hideTransactionDetailsModal();
                 fetchPendingTransactions();
 
-                // Show success message
                 const actionText = status === 'SUCCESS' ? 'approved' : 'rejected';
                 showNotification(`Transaction has been ${actionText} successfully`, 'success');
             } else {
@@ -648,11 +951,12 @@ function formatDateTime($dateTime)
         } catch (error) {
             console.error('Error processing transaction:', error);
             showNotification('An error occurred while processing the transaction', 'error');
+        } finally {
+            adminSecurityToken = null;
         }
     }
 
     function showNotification(message, type) {
-        // Create a simple notification
         const notification = document.createElement('div');
         notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-all duration-300 ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
             }`;
@@ -759,7 +1063,6 @@ function formatDateTime($dateTime)
         adjustTableFontSize();
     }
 
-    // Event listeners
     document.addEventListener('DOMContentLoaded', () => {
         loadColumnVisibility();
         fetchPendingTransactions();
@@ -767,7 +1070,6 @@ function formatDateTime($dateTime)
         document.getElementById('searchTransactions').addEventListener('input', filterTransactions);
         document.getElementById('filterTransactions').addEventListener('change', filterTransactions);
 
-        // Column visibility event listeners
         document.addEventListener('change', function (event) {
             if (event.target.classList.contains('column-checkbox')) {
                 const column = event.target.getAttribute('data-column');
@@ -791,7 +1093,6 @@ function formatDateTime($dateTime)
             }
         });
 
-        // Close column selector when clicking outside
         document.addEventListener('click', function (event) {
             const selector = document.getElementById('columnSelector');
             const btn = document.getElementById('viewColumnsBtn');
@@ -804,10 +1105,11 @@ function formatDateTime($dateTime)
         window.addEventListener('resize', adjustTableFontSize);
     });
 
-    // Global functions
     window.showTransactionDetails = showTransactionDetails;
     window.hideTransactionDetailsModal = hideTransactionDetailsModal;
     window.hideConfirmationModal = hideConfirmationModal;
+    window.hideAdminPasswordModal = hideAdminPasswordModal;
+    window.hideAdminBlockedModal = hideAdminBlockedModal;
     window.toggleColumnSelector = toggleColumnSelector;
 </script>
 
