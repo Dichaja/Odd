@@ -6,6 +6,7 @@ use PDO;
 use PDOException;
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../sms/SMS.php';
 
 final class CreditService
 {
@@ -1031,6 +1032,7 @@ final class CreditService
             }
         }
 
+        // 1) insert the pending transaction
         $txnId = \generateUlid();
         self::insertTransaction([
             'transaction_id' => $txnId,
@@ -1045,7 +1047,50 @@ final class CreditService
             'note' => $note
         ]);
 
-        return ['success' => true, 'transaction_id' => $txnId];
+        // 2) determine initiator for SMS
+        $initiator = $_SESSION['user']['username'] ?? 'Unknown';
+        if (isset($_SESSION['active_store'])) {
+            $storeIdStmt = self::$pdo->prepare("
+            SELECT name 
+              FROM vendor_stores 
+             WHERE id = :vid 
+             LIMIT 1
+        ");
+            $storeIdStmt->execute([':vid' => $_SESSION['active_store']]);
+            $storeName = $storeIdStmt->fetchColumn();
+            if ($storeName) {
+                $initiator = $storeName;
+            }
+        }
+
+        // 3) Notify all active admins via SMS
+        try {
+            $adminStmt = self::$pdo->prepare("
+            SELECT phone
+              FROM admin_users
+             WHERE status = 'active'
+        ");
+            $adminStmt->execute();
+            $phones = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($phones)) {
+                $message = sprintf(
+                    "%s initiated a cash top-up of %s UGX. Txn ID: %s. Login to confirm the details to complete top-up.",
+                    $initiator,
+                    number_format($amount, 2),
+                    $txnId
+                );
+                \SMS::sendBulk($phones, $message);
+            }
+        } catch (\Throwable $e) {
+            error_log('[ZzimbaCreditModule] SMS notification error on top-up: ' . $e->getMessage());
+        }
+
+        // 4) return success
+        return [
+            'success' => true,
+            'transaction_id' => $txnId
+        ];
     }
 
     public static function acknowledgeCashTopup(string $transactionId, string $newStatus): array
