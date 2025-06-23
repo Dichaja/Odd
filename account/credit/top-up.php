@@ -7,10 +7,92 @@ try {
 } catch (PDOException $e) {
     error_log("Error fetching cash accounts: " . $e->getMessage());
 }
+
+// Group accounts by type
+$groupedAccounts = [];
+foreach ($cashAccounts as $account) {
+    $groupedAccounts[$account['type']][] = $account;
+}
 ?>
 
-<!-- Payment Method Selection Modal -->
-<div id="paymentMethodModal"
+<!-- Payment Category Selection Modal -->
+<div id="paymentCategoryModal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] relative z-10 overflow-hidden transform transition-all duration-300 scale-95">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-wallet text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">Add Money to Wallet</h3>
+                        <p class="text-sm text-gray-500">Choose how you want to send money</p>
+                    </div>
+                </div>
+                <button onclick="hidePaymentCategoryModal()"
+                    class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Payment Categories -->
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Mobile Money Card -->
+                <div class="payment-category-card border-2 border-gray-200 rounded-xl p-6 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02] text-center"
+                    onclick="selectPaymentCategory('mobile_money')">
+                    <div class="mb-4">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/mobile-money-aq5vAN7gjMzVCMAX13RgwGNsqBiHzA.png"
+                            alt="Mobile Money" class="w-full h-20 object-contain rounded-lg">
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Send Mobile Money</h4>
+                    <p class="text-sm text-gray-500 mb-4">Send money via Airtel Money or MTN MoMo</p>
+                    <div class="text-primary">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <!-- Bank Deposits Card -->
+                <div class="payment-category-card border-2 border-gray-200 rounded-xl p-6 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02] text-center"
+                    onclick="selectPaymentCategory('bank')">
+                    <div class="mb-4 flex items-center justify-center">
+                        <div
+                            class="w-full h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-university text-white text-3xl"></i>
+                        </div>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Bank Deposits</h4>
+                    <p class="text-sm text-gray-500 mb-4">Deposit money directly to our bank accounts</p>
+                    <div class="text-primary">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <!-- Automated Instant Pay Card -->
+                <div class="payment-category-card border-2 border-gray-200 rounded-xl p-6 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02] text-center"
+                    onclick="selectPaymentCategory('gateway')">
+                    <div class="mb-4">
+                        <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/gateway-Af9MBR8GG0SKatA3E6O6Wiztol2kbE.png"
+                            alt="Card Payment" class="w-full h-20 object-contain rounded-lg">
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Instant Pay</h4>
+                    <p class="text-sm text-gray-500 mb-4">Pay instantly with mobile money or card</p>
+                    <div class="text-primary">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Account Selection Modal -->
+<div id="accountSelectionModal"
     class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
     <div
@@ -19,69 +101,98 @@ try {
         <div class="p-6 border-b border-gray-100">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
+                    <button onclick="accountSelectionBack()"
+                        class="shrink-0 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all duration-200 transform hover:scale-105">
+                        <i class="fas fa-chevron-left text-gray-600"></i>
+                    </button>
                     <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-credit-card text-primary text-xl"></i>
+                        <i id="accountSelectionIcon" class="fas fa-mobile-alt text-primary text-xl"></i>
                     </div>
                     <div>
-                        <h3 class="text-xl font-semibold text-gray-900">Choose Payment Method</h3>
-                        <p class="text-sm text-gray-500">Select how you want to add money to your wallet</p>
+                        <h3 id="accountSelectionTitle" class="text-xl font-semibold text-gray-900">Select Account</h3>
+                        <p id="accountSelectionSubtitle" class="text-sm text-gray-500">Choose your preferred account</p>
                     </div>
                 </div>
-                <button onclick="hidePaymentMethodModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <button onclick="hideAccountSelectionModal()"
+                    class="text-gray-400 hover:text-gray-600 transition-colors">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Scrollable Content -->
+        <!-- Account List -->
         <div class="overflow-y-auto max-h-[calc(90vh-200px)] p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="paymentMethodCards">
-                <?php foreach ($cashAccounts as $account): ?>
-                    <div class="payment-method-card border-2 border-gray-200 rounded-xl p-4 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02]"
-                        onclick="selectPaymentMethod('<?= htmlspecialchars($account['id']) ?>', '<?= htmlspecialchars($account['type']) ?>', '<?= htmlspecialchars($account['name']) ?>', '<?= htmlspecialchars($account['account_number']) ?>', '<?= htmlspecialchars($account['provider']) ?>')">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                                <?php
-                                $iconClass = 'fas fa-university';
-                                switch ($account['type']) {
-                                    case 'mobile_money':
-                                        $iconClass = 'fas fa-mobile-alt';
-                                        break;
-                                    case 'bank':
-                                        $iconClass = 'fas fa-university';
-                                        break;
-                                    case 'gateway':
-                                        $iconClass = 'fas fa-credit-card';
-                                        break;
-                                }
-                                ?>
-                                <i class="<?= $iconClass ?> text-gray-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="font-semibold text-gray-900"><?= htmlspecialchars($account['name']) ?></h4>
-                                <?php if ($account['type'] !== 'gateway'): ?>
-                                    <p class="text-sm text-gray-500"><?= htmlspecialchars($account['account_number']) ?></p>
-                                <?php endif; ?>
-                                <p class="text-xs text-gray-400 capitalize">
-                                    <?= str_replace('_', ' ', $account['type']) ?>
-                                </p>
-                            </div>
-                            <div class="text-primary">
-                                <i class="fas fa-chevron-right"></i>
-                            </div>
-                        </div>
+            <div class="grid grid-cols-1 gap-4" id="accountSelectionCards">
+                <!-- Accounts will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gateway Method Selection Modal -->
+<div id="gatewayMethodModal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] relative z-10 overflow-hidden transform transition-all duration-300 scale-95">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button onclick="gatewayMethodBack()"
+                        class="shrink-0 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all duration-200 transform hover:scale-105">
+                        <i class="fas fa-chevron-left text-gray-600"></i>
+                    </button>
+                    <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-credit-card text-primary text-xl"></i>
                     </div>
-                <?php endforeach; ?>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">Choose Payment Method</h3>
+                        <p class="text-sm text-gray-500">Select how you want to pay</p>
+                    </div>
+                </div>
+                <button onclick="hideGatewayMethodModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
         </div>
 
-        <!-- Footer -->
-        <div class="p-6 border-t border-gray-100">
-            <div class="flex justify-end">
-                <button onclick="hidePaymentMethodModal()"
-                    class="px-6 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
-                    Cancel
-                </button>
+        <!-- Payment Methods -->
+        <div class="p-6">
+            <div class="space-y-4">
+                <!-- Mobile Money Gateway -->
+                <div class="border-2 border-gray-200 rounded-xl p-4 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer"
+                    onclick="selectGatewayMethod('mobile_money')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-mobile-alt text-gray-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">Mobile Money</h4>
+                            <p class="text-sm text-gray-500">Pay with your mobile money account</p>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Payment -->
+                <div class="border-2 border-gray-200 rounded-xl p-4 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer"
+                    onclick="selectGatewayMethod('card')">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-credit-card text-gray-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">Card Payment</h4>
+                            <p class="text-sm text-gray-500">Pay with Visa or Mastercard</p>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -97,7 +208,6 @@ try {
         <div class="p-6 border-b border-gray-100">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <!-- Back Button -->
                     <button onclick="mobileMoneyBack()"
                         class="shrink-0 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all duration-200 transform hover:scale-105">
                         <i class="fas fa-chevron-left text-gray-600"></i>
@@ -106,7 +216,7 @@ try {
                         <i class="fas fa-mobile-alt text-primary text-xl"></i>
                     </div>
                     <div>
-                        <h3 class="text-xl font-semibold text-gray-900">Mobile Money Payment</h3>
+                        <h3 class="text-xl font-semibold text-gray-900">Account Number</h3>
                         <p class="text-sm text-gray-500" id="mobileMoneyAccountName"></p>
                     </div>
                 </div>
@@ -116,12 +226,29 @@ try {
             </div>
         </div>
 
-        <!-- Scrollable Content -->
-        <div class="overflow-y-auto max-h-[calc(90vh-200px)] p-6">
+        <!-- Instructions -->
+        <div class="px-6 py-4 bg-blue-50 border-b border-blue-100">
+            <div class="flex items-start gap-3">
+                <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i class="fas fa-info text-blue-600 text-xs"></i>
+                </div>
+                <div class="text-sm text-blue-800">
+                    <p class="font-medium mb-1">Instructions:</p>
+                    <ol class="list-decimal list-inside space-y-1 text-xs">
+                        <li>Send money to the account number above</li>
+                        <li>Fill in the details below after sending</li>
+                        <li>We'll verify and credit your account within the hour</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="overflow-y-auto max-h-[calc(90vh-300px)] p-6">
             <form id="mobileMoneyForm" class="space-y-4">
                 <div>
                     <label for="mmPhoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Phone Number Used <span class="text-red-500">*</span>
+                        Enter phone number used <span class="text-red-500">*</span>
                     </label>
                     <div class="relative">
                         <div class="absolute left-3 top-3 text-gray-500 font-medium">+256</div>
@@ -133,7 +260,7 @@ try {
 
                 <div>
                     <label for="mmAmount" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Amount Sent (UGX) <span class="text-red-500">*</span>
+                        Enter amount sent (UGX) <span class="text-red-500">*</span>
                     </label>
                     <input type="number" id="mmAmount" name="mmAmount" min="500" step="100"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
@@ -142,7 +269,7 @@ try {
 
                 <div>
                     <label for="mmTransactionId" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Transaction ID <span class="text-red-500">*</span>
+                        Enter transaction ID <span class="text-red-500">*</span>
                     </label>
                     <input type="text" id="mmTransactionId" name="mmTransactionId"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
@@ -150,7 +277,8 @@ try {
                 </div>
 
                 <div>
-                    <label for="mmNote" class="block text-sm font-semibold text-gray-700 mb-2">Note/Message</label>
+                    <label for="mmNote" class="block text-sm font-semibold text-gray-700 mb-2">Add a
+                        note/Message/reason</label>
                     <textarea id="mmNote" name="mmNote" rows="3"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                         placeholder="Optional note or message"></textarea>
@@ -193,7 +321,6 @@ try {
         <div class="p-6 border-b border-gray-100">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <!-- Back Button -->
                     <button onclick="bankTransferBack()"
                         class="shrink-0 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all duration-200 transform hover:scale-105">
                         <i class="fas fa-chevron-left text-gray-600"></i>
@@ -212,8 +339,26 @@ try {
             </div>
         </div>
 
-        <!-- Scrollable Content -->
-        <div class="overflow-y-auto max-h-[calc(90vh-200px)] p-6">
+        <!-- Instructions -->
+        <div class="px-6 py-4 bg-green-50 border-b border-green-100">
+            <div class="flex items-start gap-3">
+                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i class="fas fa-info text-green-600 text-xs"></i>
+                </div>
+                <div class="text-sm text-green-800">
+                    <p class="font-medium mb-1">Instructions:</p>
+                    <ol class="list-decimal list-inside space-y-1 text-xs">
+                        <li>Deposit money to the bank account above</li>
+                        <li>Keep your deposit slip/receipt</li>
+                        <li>Fill in the details below</li>
+                        <li>We'll verify and credit your account within the hour</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="overflow-y-auto max-h-[calc(90vh-300px)] p-6">
             <form id="bankTransferForm" class="space-y-4">
                 <div>
                     <label for="btAmount" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -243,7 +388,8 @@ try {
                 </div>
 
                 <div>
-                    <label for="btNote" class="block text-sm font-semibold text-gray-700 mb-2">Note/Message</label>
+                    <label for="btNote" class="block text-sm font-semibold text-gray-700 mb-2">Add a
+                        note/Message/reason</label>
                     <textarea id="btNote" name="btNote" rows="3"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                         placeholder="Optional note or message"></textarea>
@@ -276,7 +422,7 @@ try {
     </div>
 </div>
 
-<!-- Gateway Payment Modal -->
+<!-- Gateway Payment Modal (Mobile Money) -->
 <div id="gatewayPaymentModal"
     class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
@@ -286,16 +432,15 @@ try {
         <div class="p-6 border-b border-gray-100">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <!-- Back Button -->
                     <button onclick="gatewayPaymentBack()"
                         class="shrink-0 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all duration-200 transform hover:scale-105">
                         <i class="fas fa-chevron-left text-gray-600"></i>
                     </button>
                     <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-credit-card text-primary text-xl"></i>
+                        <i class="fas fa-mobile-alt text-primary text-xl"></i>
                     </div>
                     <div>
-                        <h3 class="text-xl font-semibold text-gray-900">Gateway Payment</h3>
+                        <h3 class="text-xl font-semibold text-gray-900">Mobile Money Payment</h3>
                         <p class="text-sm text-gray-500" id="gatewayAccountName"></p>
                     </div>
                 </div>
@@ -305,8 +450,26 @@ try {
             </div>
         </div>
 
-        <!-- Scrollable Content -->
-        <div class="overflow-y-auto max-h-[calc(90vh-200px)] p-6">
+        <!-- Instructions -->
+        <div class="px-6 py-4 bg-purple-50 border-b border-purple-100">
+            <div class="flex items-start gap-3">
+                <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i class="fas fa-info text-purple-600 text-xs"></i>
+                </div>
+                <div class="text-sm text-purple-800">
+                    <p class="font-medium mb-1">Instructions:</p>
+                    <ol class="list-decimal list-inside space-y-1 text-xs">
+                        <li>Enter your phone number and amount</li>
+                        <li>You'll receive a payment prompt on your phone</li>
+                        <li>Enter your mobile money PIN to complete</li>
+                        <li>Your account will be credited instantly</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="overflow-y-auto max-h-[calc(90vh-300px)] p-6">
             <form id="gatewayPaymentForm" class="space-y-4">
                 <div>
                     <label for="gwPhoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -374,6 +537,92 @@ try {
     </div>
 </div>
 
+<!-- Card Payment Modal -->
+<div id="cardPaymentModal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] relative z-10 overflow-hidden transform transition-all duration-300 scale-95">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <button onclick="cardPaymentBack()"
+                        class="shrink-0 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all duration-200 transform hover:scale-105">
+                        <i class="fas fa-chevron-left text-gray-600"></i>
+                    </button>
+                    <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-credit-card text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">Card Payment</h3>
+                        <p class="text-sm text-gray-500">Pay with Visa or Mastercard</p>
+                    </div>
+                </div>
+                <button onclick="hideCardPaymentModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="px-6 py-4 bg-indigo-50 border-b border-indigo-100">
+            <div class="flex items-start gap-3">
+                <div class="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i class="fas fa-info text-indigo-600 text-xs"></i>
+                </div>
+                <div class="text-sm text-indigo-800">
+                    <p class="font-medium mb-1">Instructions:</p>
+                    <ol class="list-decimal list-inside space-y-1 text-xs">
+                        <li>Enter the amount you want to add</li>
+                        <li>Click "Proceed to Payment"</li>
+                        <li>You'll be redirected to a secure payment page</li>
+                        <li>Your account will be credited upon successful payment</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="overflow-y-auto max-h-[calc(90vh-300px)] p-6">
+            <form id="cardPaymentForm" class="space-y-4">
+                <div>
+                    <label for="cardAmount" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Amount (UGX) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" id="cardAmount" name="cardAmount" min="500" step="100"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                        placeholder="Enter amount (minimum 500)" required>
+                    <div id="cardAmountError" class="mt-2 text-sm text-red-600 hidden"></div>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <div class="flex items-center gap-3 mb-3">
+                        <i class="fas fa-shield-alt text-green-600"></i>
+                        <span class="text-sm font-medium text-gray-900">Secure Payment</span>
+                    </div>
+                    <p class="text-xs text-gray-600">Your payment will be processed securely through our payment
+                        gateway. We do not store your card details.</p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-6 border-t border-gray-100">
+            <div class="flex gap-3">
+                <button type="button" onclick="hideCardPaymentModal()"
+                    class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
+                    Cancel
+                </button>
+                <button type="button" id="cardSubmitPaymentBtn" onclick="confirmCardPayment()" disabled
+                    class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                    Proceed to Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Confirmation Modal -->
 <div id="confirmationModal"
     class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
@@ -428,8 +677,11 @@ try {
     document.addEventListener('DOMContentLoaded', function () {
         const topupUrl = <?= json_encode(BASE_URL . 'account/fetch/manageTopup.php') ?>;
         const gatewayApiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageZzimbaCredit.php') ?>;
+        const groupedAccounts = <?= json_encode($groupedAccounts) ?>;
 
         let selectedAccount = null;
+        let selectedCategory = null;
+        let selectedGatewayMethod = null;
         let validatedMsisdn = null;
         let customerName = null;
         let currentPaymentReference = null;
@@ -492,31 +744,166 @@ try {
             return isValid;
         }
 
-        // Payment Method Modal
+        // Payment Category Modal
+        window.showPaymentCategoryModal = function () {
+            showModal('paymentCategoryModal');
+        };
+
+        // Backward compatibility - add this function
         window.showPaymentMethodModal = function () {
-            showModal('paymentMethodModal');
+            showPaymentCategoryModal();
         };
 
-        window.hidePaymentMethodModal = function () {
-            hideModal('paymentMethodModal');
+        window.hidePaymentCategoryModal = function () {
+            hideModal('paymentCategoryModal');
         };
 
-        window.selectPaymentMethod = function (accountId, type, name, accountNumber, provider) {
-            selectedAccount = { id: accountId, type, name, accountNumber, provider };
-            hideModal('paymentMethodModal');
+        window.selectPaymentCategory = function (category) {
+            selectedCategory = category;
+            hideModal('paymentCategoryModal');
 
             setTimeout(() => {
-                if (type === 'mobile_money') showMobileMoneyModal();
-                else if (type === 'bank') showBankTransferModal();
-                else if (type === 'gateway') showGatewayPaymentModal();
-                else showNotificationModal('info', 'Coming Soon', 'This payment method will be available soon!');
+                if (category === 'gateway') {
+                    showGatewayMethodModal();
+                } else {
+                    showAccountSelectionModal(category);
+                }
+            }, 300);
+        };
+
+        // Account Selection Modal
+        function showAccountSelectionModal(category) {
+            const accounts = groupedAccounts[category] || [];
+            const modal = document.getElementById('accountSelectionModal');
+            const title = document.getElementById('accountSelectionTitle');
+            const subtitle = document.getElementById('accountSelectionSubtitle');
+            const icon = document.getElementById('accountSelectionIcon');
+            const cardsContainer = document.getElementById('accountSelectionCards');
+
+            // Update header based on category
+            switch (category) {
+                case 'mobile_money':
+                    title.textContent = 'Select Mobile Money Account';
+                    subtitle.textContent = 'Choose your preferred mobile money provider';
+                    icon.className = 'fas fa-mobile-alt text-primary text-xl';
+                    break;
+                case 'bank':
+                    title.textContent = 'Select Bank Account';
+                    subtitle.textContent = 'Choose your preferred bank account';
+                    icon.className = 'fas fa-university text-primary text-xl';
+                    break;
+                case 'gateway':
+                    title.textContent = 'Select Account';
+                    subtitle.textContent = 'Choose your preferred account';
+                    icon.className = 'fas fa-credit-card text-primary text-xl';
+            }
+
+            // Populate accounts
+            cardsContainer.innerHTML = '';
+            accounts.forEach(account => {
+                const card = document.createElement('div');
+                card.className = 'border-2 border-gray-200 rounded-xl p-4 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02]';
+                card.onclick = () => selectAccount(account);
+
+                let iconClass = 'fas fa-university';
+                switch (account.type) {
+                    case 'mobile_money':
+                        iconClass = 'fas fa-mobile-alt';
+                        break;
+                    case 'bank':
+                        iconClass = 'fas fa-university';
+                        break;
+                    case 'gateway':
+                        iconClass = 'fas fa-credit-card';
+                        break;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <i class="${iconClass} text-gray-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">${account.name}</h4>
+                            <p class="text-sm text-gray-500">${account.account_number}</p>
+                            <p class="text-xs text-gray-400 capitalize">
+                                ${account.type.replace('_', ' ')}
+                            </p>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </div>
+                `;
+
+                cardsContainer.appendChild(card);
+            });
+
+            showModal('accountSelectionModal');
+        }
+
+        window.hideAccountSelectionModal = function () {
+            hideModal('accountSelectionModal');
+        };
+
+        window.accountSelectionBack = function () {
+            hideModal('accountSelectionModal');
+            setTimeout(() => {
+                showModal('paymentCategoryModal');
+            }, 300);
+        };
+
+        function selectAccount(account) {
+            selectedAccount = account;
+            hideModal('accountSelectionModal');
+
+            setTimeout(() => {
+                if (account.type === 'mobile_money') {
+                    showMobileMoneyModal();
+                } else if (account.type === 'bank') {
+                    showBankTransferModal();
+                }
+            }, 300);
+        }
+
+        // Gateway Method Modal
+        window.showGatewayMethodModal = function () {
+            showModal('gatewayMethodModal');
+        };
+
+        window.hideGatewayMethodModal = function () {
+            hideModal('gatewayMethodModal');
+        };
+
+        window.gatewayMethodBack = function () {
+            hideModal('gatewayMethodModal');
+            setTimeout(() => {
+                showModal('paymentCategoryModal');
+            }, 300);
+        };
+
+        window.selectGatewayMethod = function (method) {
+            selectedGatewayMethod = method;
+            hideModal('gatewayMethodModal');
+
+            setTimeout(() => {
+                if (method === 'mobile_money') {
+                    // Use the first gateway account for mobile money
+                    const gatewayAccounts = groupedAccounts['gateway'] || [];
+                    if (gatewayAccounts.length > 0) {
+                        selectedAccount = gatewayAccounts[0];
+                        showGatewayPaymentModal();
+                    }
+                } else if (method === 'card') {
+                    showCardPaymentModal();
+                }
             }, 300);
         };
 
         // Mobile Money Modal
         window.showMobileMoneyModal = function () {
             document.getElementById('mobileMoneyAccountName').textContent =
-                `${selectedAccount.name} - ${selectedAccount.accountNumber}`;
+                `${selectedAccount.name} - ${selectedAccount.account_number}`;
             document.getElementById('mmDateTime').value = getKampalaDateTimeLocal();
             showModal('mobileMoneyModal');
         };
@@ -531,7 +918,7 @@ try {
         window.mobileMoneyBack = function () {
             hideModal('mobileMoneyModal');
             setTimeout(() => {
-                showModal('paymentMethodModal');
+                showAccountSelectionModal(selectedCategory);
             }, 300);
         };
 
@@ -565,47 +952,10 @@ try {
             );
         };
 
-        window.submitMobileMoneyPayment = async function () {
-            try {
-                const resp = await fetch(topupUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams(pendingPaymentData.payload)
-                });
-                const data = await resp.json();
-
-                if (data.success) {
-                    showTransactionResultModal('success', {
-                        title: 'Payment Submitted Successfully!',
-                        message: 'Your mobile money payment has been submitted and is being processed.',
-                        transactionId: data.transaction_id,
-                        amount: pendingPaymentData.payload.amount_total,
-                        currency: 'UGX'
-                    });
-                    hideMobileMoneyModal();
-                    if (window.loadWalletData) window.loadWalletData();
-                    if (window.loadTransactions) window.loadTransactions();
-                } else {
-                    showTransactionResultModal('failed', {
-                        title: 'Payment Failed',
-                        message: data.message || 'Failed to process your payment.',
-                        reason: data.message
-                    });
-                }
-            } catch (e) {
-                console.error('Top-up error:', e);
-                showTransactionResultModal('failed', {
-                    title: 'Network Error',
-                    message: 'Please check your connection and try again.',
-                    reason: 'Network connection failed'
-                });
-            }
-        };
-
         // Bank Transfer Modal
         window.showBankTransferModal = function () {
             document.getElementById('bankAccountName').textContent =
-                `${selectedAccount.name} - ${selectedAccount.accountNumber}`;
+                `${selectedAccount.name} - ${selectedAccount.account_number}`;
             document.getElementById('btDateTime').value = getKampalaDateTimeLocal();
             showModal('bankTransferModal');
         };
@@ -620,7 +970,7 @@ try {
         window.bankTransferBack = function () {
             hideModal('bankTransferModal');
             setTimeout(() => {
-                showModal('paymentMethodModal');
+                showAccountSelectionModal(selectedCategory);
             }, 300);
         };
 
@@ -652,44 +1002,7 @@ try {
             );
         };
 
-        window.submitBankTransferPayment = async function () {
-            try {
-                const resp = await fetch(topupUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams(pendingPaymentData.payload)
-                });
-                const data = await resp.json();
-
-                if (data.success) {
-                    showTransactionResultModal('success', {
-                        title: 'Payment Submitted Successfully!',
-                        message: 'Your bank transfer payment has been submitted and is being processed.',
-                        transactionId: data.transaction_id,
-                        amount: pendingPaymentData.payload.amount_total,
-                        currency: 'UGX'
-                    });
-                    hideBankTransferModal();
-                    if (window.loadWalletData) window.loadWalletData();
-                    if (window.loadTransactions) window.loadTransactions();
-                } else {
-                    showTransactionResultModal('failed', {
-                        title: 'Payment Failed',
-                        message: data.message || 'Failed to process your payment.',
-                        reason: data.message
-                    });
-                }
-            } catch (e) {
-                console.error('Top-up error:', e);
-                showTransactionResultModal('failed', {
-                    title: 'Network Error',
-                    message: 'Please check your connection and try again.',
-                    reason: 'Network connection failed'
-                });
-            }
-        };
-
-        // Gateway Payment Modal
+        // Gateway Payment Modal (Mobile Money)
         window.showGatewayPaymentModal = function () {
             document.getElementById('gatewayAccountName').textContent = selectedAccount.name;
             showModal('gatewayPaymentModal');
@@ -710,9 +1023,88 @@ try {
         window.gatewayPaymentBack = function () {
             hideModal('gatewayPaymentModal');
             setTimeout(() => {
-                showModal('paymentMethodModal');
+                showGatewayMethodModal();
             }, 300);
         };
+
+        // Card Payment Modal
+        window.showCardPaymentModal = function () {
+            showModal('cardPaymentModal');
+            resetCardForm();
+        };
+
+        window.hideCardPaymentModal = function () {
+            hideModal('cardPaymentModal');
+            setTimeout(() => {
+                resetCardForm();
+            }, 300);
+        };
+
+        window.cardPaymentBack = function () {
+            hideModal('cardPaymentModal');
+            setTimeout(() => {
+                showGatewayMethodModal();
+            }, 300);
+        };
+
+        window.confirmCardPayment = function () {
+            if (!validateForm('cardPaymentForm')) return;
+
+            const amount = parseFloat(document.getElementById('cardAmount').value);
+            if (!amount || amount < 500) {
+                showCardAmountError('Please enter a valid amount (minimum 500 UGX)');
+                return;
+            }
+
+            // Redirect to secure payment link
+            const paymentUrl = `${BASE_URL}payment/card?amount=${amount}&description=Zzimba+wallet+top-up`;
+            window.open(paymentUrl, '_blank');
+
+            hideCardPaymentModal();
+            showTransactionResultModal('success', {
+                title: 'Redirected to Payment',
+                message: 'You have been redirected to our secure payment page. Complete the payment to add money to your wallet.',
+                amount: amount,
+                currency: 'UGX'
+            });
+        };
+
+        function resetCardForm() {
+            document.getElementById('cardPaymentForm').reset();
+            document.getElementById('cardAmountError').classList.add('hidden');
+            document.getElementById('cardSubmitPaymentBtn').disabled = true;
+        }
+
+        function showCardAmountError(msg) {
+            const err = document.getElementById('cardAmountError');
+            err.textContent = msg;
+            err.classList.remove('hidden');
+            document.getElementById('cardSubmitPaymentBtn').disabled = true;
+        }
+
+        function hideCardAmountError() {
+            document.getElementById('cardAmountError').classList.add('hidden');
+            checkCardFormValidity();
+        }
+
+        function checkCardFormValidity() {
+            const amt = parseFloat(document.getElementById('cardAmount').value);
+            const btn = document.getElementById('cardSubmitPaymentBtn');
+            btn.disabled = !(amt >= 500);
+        }
+
+        // Card amount validation
+        document.getElementById('cardAmount').addEventListener('input', function (e) {
+            const amount = parseFloat(e.target.value);
+            if (amount && amount < 500) {
+                showCardAmountError('Minimum amount is 500 UGX');
+            } else {
+                hideCardAmountError();
+            }
+        });
+
+        // Rest of the existing JavaScript functions remain the same...
+        // (Gateway functions, confirmation modal, transaction result modal, etc.)
 
         window.confirmGatewayPayment = function () {
             if (!validateForm('gatewayPaymentForm')) return;
@@ -747,6 +1139,106 @@ try {
             );
         };
 
+        // Confirmation Modal
+        function showConfirmationModal(message, details) {
+            document.getElementById('confirmationMessage').textContent = message;
+            document.getElementById('confirmationDetails').innerHTML = details;
+            showModal('confirmationModal');
+        }
+
+        window.hideConfirmationModal = function () {
+            hideModal('confirmationModal');
+        };
+
+        window.executePaymentSubmission = function () {
+            hideModal('confirmationModal');
+
+            setTimeout(() => {
+                if (pendingPaymentData.type === 'mobile_money') {
+                    submitMobileMoneyPayment();
+                } else if (pendingPaymentData.type === 'bank_transfer') {
+                    submitBankTransferPayment();
+                } else if (pendingPaymentData.type === 'gateway') {
+                    submitGatewayPayment();
+                }
+            }, 300);
+        };
+
+        // Submit functions
+        window.submitMobileMoneyPayment = async function () {
+            try {
+                const resp = await fetch(topupUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(pendingPaymentData.payload)
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    showTransactionResultModal('success', {
+                        title: 'Payment Submitted Successfully!',
+                        message: 'Your Zzimba credit account will be updated upon confirmation of funds within the hour.',
+                        transactionId: data.transaction_id,
+                        amount: pendingPaymentData.payload.amount_total,
+                        currency: 'UGX'
+                    });
+                    hideMobileMoneyModal();
+                    if (window.loadWalletData) window.loadWalletData();
+                    if (window.loadTransactions) window.loadTransactions();
+                } else {
+                    showTransactionResultModal('failed', {
+                        title: 'Payment Failed',
+                        message: data.message || 'Failed to process your payment.',
+                        reason: data.message
+                    });
+                }
+            } catch (e) {
+                console.error('Top-up error:', e);
+                showTransactionResultModal('failed', {
+                    title: 'Network Error',
+                    message: 'Please check your connection and try again.',
+                    reason: 'Network connection failed'
+                });
+            }
+        };
+
+        window.submitBankTransferPayment = async function () {
+            try {
+                const resp = await fetch(topupUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(pendingPaymentData.payload)
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    showTransactionResultModal('success', {
+                        title: 'Payment Submitted Successfully!',
+                        message: 'Your Zzimba credit account will be updated upon confirmation of funds within the hour.',
+                        transactionId: data.transaction_id,
+                        amount: pendingPaymentData.payload.amount_total,
+                        currency: 'UGX'
+                    });
+                    hideBankTransferModal();
+                    if (window.loadWalletData) window.loadWalletData();
+                    if (window.loadTransactions) window.loadTransactions();
+                } else {
+                    showTransactionResultModal('failed', {
+                        title: 'Payment Failed',
+                        message: data.message || 'Failed to process your payment.',
+                        reason: data.message
+                    });
+                }
+            } catch (e) {
+                console.error('Top-up error:', e);
+                showTransactionResultModal('failed', {
+                    title: 'Network Error',
+                    message: 'Please check your connection and try again.',
+                    reason: 'Network connection failed'
+                });
+            }
+        };
+
         window.submitGatewayPayment = async function () {
             const btn = document.getElementById('gwSubmitPaymentBtn');
             btn.disabled = true;
@@ -775,31 +1267,6 @@ try {
                 btn.disabled = false;
                 btn.textContent = 'Add Money';
             }
-        };
-
-        // Confirmation Modal
-        function showConfirmationModal(message, details) {
-            document.getElementById('confirmationMessage').textContent = message;
-            document.getElementById('confirmationDetails').innerHTML = details;
-            showModal('confirmationModal');
-        }
-
-        window.hideConfirmationModal = function () {
-            hideModal('confirmationModal');
-        };
-
-        window.executePaymentSubmission = function () {
-            hideModal('confirmationModal');
-
-            setTimeout(() => {
-                if (pendingPaymentData.type === 'mobile_money') {
-                    submitMobileMoneyPayment();
-                } else if (pendingPaymentData.type === 'bank_transfer') {
-                    submitBankTransferPayment();
-                } else if (pendingPaymentData.type === 'gateway') {
-                    submitGatewayPayment();
-                }
-            }, 300);
         };
 
         // Transaction Result Modal
@@ -998,7 +1465,7 @@ try {
                             setTimeout(() => {
                                 showTransactionResultModal('success', {
                                     title: 'Payment Successful!',
-                                    message: data.message || 'Your payment has been completed successfully.',
+                                    message: 'Your Zzimba credit account will be updated upon confirmation of funds within the hour.',
                                     amount: data.amount,
                                     currency: data.currency || 'UGX',
                                     provider: data.provider,
