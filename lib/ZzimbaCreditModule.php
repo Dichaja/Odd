@@ -717,13 +717,13 @@ final class CreditService
         self::boot();
 
         $sourceStmt = self::$pdo->prepare("
-            SELECT wallet_id, current_balance
-              FROM zzimba_wallets
-             WHERE owner_type = 'USER'
-               AND user_id    = :uid
-               AND status     = 'active'
-             LIMIT 1
-        ");
+        SELECT wallet_id, current_balance
+          FROM zzimba_wallets
+         WHERE owner_type = 'USER'
+           AND user_id    = :uid
+           AND status     = 'active'
+         LIMIT 1
+    ");
         $sourceStmt->execute([':uid' => $userId]);
         $sourceRow = $sourceStmt->fetch(PDO::FETCH_ASSOC);
         if (!$sourceRow) {
@@ -733,12 +733,12 @@ final class CreditService
         $fromBalance = (float) $sourceRow['current_balance'];
 
         $destStmt = self::$pdo->prepare("
-            SELECT wallet_id, owner_type, user_id, vendor_id, current_balance
-              FROM zzimba_wallets
-             WHERE wallet_number = :wn
-               AND status        = 'active'
-             LIMIT 1
-        ");
+        SELECT wallet_id, owner_type, user_id, vendor_id, current_balance
+          FROM zzimba_wallets
+         WHERE wallet_number = :wn
+           AND status        = 'active'
+         LIMIT 1
+    ");
         $destStmt->execute([':wn' => $walletTo]);
         $destRow = $destStmt->fetch(PDO::FETCH_ASSOC);
         if (!$destRow) {
@@ -746,7 +746,6 @@ final class CreditService
         }
         $toWalletId = $destRow['wallet_id'];
         $toOwnerType = $destRow['owner_type'];
-        $destBalance = (float) $destRow['current_balance'];
 
         if ($fromWalletId === $toWalletId) {
             return ['success' => false, 'message' => 'Cannot transfer to the same wallet'];
@@ -783,29 +782,42 @@ final class CreditService
             self::performTransferEntries($txnId, $fromWalletId, $toWalletId, $amount);
 
             self::$pdo->prepare("
-                UPDATE zzimba_financial_transactions
-                   SET status = 'SUCCESS',
-                       updated_at = NOW()
-                 WHERE transaction_id = :tid
-            ")->execute([':tid' => $txnId]);
+            UPDATE zzimba_financial_transactions
+               SET status     = 'SUCCESS',
+                   updated_at = NOW()
+             WHERE transaction_id = :tid
+        ")->execute([':tid' => $txnId]);
 
             self::$pdo->commit();
         } catch (PDOException $e) {
             self::$pdo->rollBack();
-
             error_log('[ZzimbaCreditModule] transfer error: ' . $e->getMessage());
-
             self::$pdo->prepare("
-                UPDATE zzimba_financial_transactions
-                   SET status = 'FAILED',
-                       updated_at = NOW()
-                 WHERE transaction_id = :tid
-            ")->execute([':tid' => $txnId]);
-
+            UPDATE zzimba_financial_transactions
+               SET status     = 'FAILED',
+                   updated_at = NOW()
+             WHERE transaction_id = :tid
+        ")->execute([':tid' => $txnId]);
             return ['success' => false, 'message' => 'Transfer failed'];
         }
 
-        return ['success' => true, 'transaction_id' => $txnId];
+        $balanceStmt = self::$pdo->prepare("
+        SELECT current_balance
+          FROM zzimba_wallets
+         WHERE wallet_id = :wid
+         LIMIT 1
+    ");
+        $balanceStmt->execute([':wid' => $fromWalletId]);
+        $balanceRow = $balanceStmt->fetch(PDO::FETCH_ASSOC);
+        $newBalance = isset($balanceRow['current_balance'])
+            ? (float) $balanceRow['current_balance']
+            : null;
+
+        return [
+            'success' => true,
+            'transaction_id' => $txnId,
+            'balance' => $newBalance
+        ];
     }
 
     private static function getWithholdingAccountId(): string

@@ -1,4 +1,3 @@
-<!-- Send Credit Modal -->
 <div id="sendCreditModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden transform transition-all duration-300 scale-95 opacity-0"
@@ -6,7 +5,6 @@
         <div class="p-6">
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-4">
-                    <!-- Back Button -->
                     <button id="sendCreditBackBtn" onclick="sendCreditBack()"
                         class="hidden shrink-0 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all duration-200 transform hover:scale-105">
                         <i class="fas fa-chevron-left text-gray-600"></i>
@@ -29,7 +27,6 @@
                 </button>
             </div>
 
-            <!-- Step 1: Choose wallet type -->
             <div id="sendCreditStep1" class="transition-all duration-300 transform">
                 <div class="grid grid-cols-1 gap-4">
                     <button type="button" onclick="selectSendDestination('vendor')"
@@ -43,10 +40,8 @@
                 </div>
             </div>
 
-            <!-- Step 2: Search for the target wallet -->
             <div id="sendCreditSearchStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
-                <!-- Search Options -->
                 <div class="mb-6">
                     <label class="block text-sm font-semibold text-gray-700 mb-3">Search By</label>
                     <div class="grid grid-cols-2 gap-3">
@@ -71,12 +66,10 @@
                     </div>
                 </div>
 
-                <!-- Search Input -->
                 <form id="searchForm" onsubmit="handleSearchSubmit(event)">
                     <div class="mb-4">
                         <label for="sendCreditSearchInput" class="block text-sm font-semibold text-gray-700 mb-2"
                             id="sendCreditSearchLabel">
-                            <!-- injected by JS -->
                         </label>
                         <div class="relative">
                             <input type="text" id="sendCreditSearchInput" autocomplete="off"
@@ -87,11 +80,9 @@
                             </div>
                         </div>
                         <div id="searchInputError" class="hidden mt-1 text-sm text-red-600">
-                            <!-- Error message will be shown here -->
                         </div>
                     </div>
 
-                    <!-- Search Button -->
                     <button type="submit" id="searchWalletBtn"
                         class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium transform hover:scale-[1.02] hover:shadow-lg flex items-center justify-center gap-2">
                         <i class="fas fa-search"></i>
@@ -100,7 +91,6 @@
                 </form>
             </div>
 
-            <!-- Step 3: Multiple Results Selection -->
             <div id="sendCreditMultipleResultsStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
                 <div class="text-center mb-6">
@@ -112,7 +102,6 @@
                 </div>
 
                 <div id="multipleResultsList" class="space-y-3 mb-6 max-h-64 overflow-y-auto">
-                    <!-- Multiple results will be populated by JS -->
                 </div>
 
                 <div class="flex gap-3">
@@ -123,7 +112,6 @@
                 </div>
             </div>
 
-            <!-- Step 4: Wallet Not Found -->
             <div id="sendCreditNotFoundStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
                 <div class="text-center mb-6">
@@ -135,7 +123,6 @@
                 </div>
 
                 <div id="searchDetails" class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                    <!-- Search details will be populated by JS -->
                 </div>
 
                 <div class="flex gap-3">
@@ -150,7 +137,6 @@
                 </div>
             </div>
 
-            <!-- Step 5: Confirm Wallet -->
             <div id="sendCreditConfirmStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
                 <div class="text-center mb-6">
@@ -162,7 +148,6 @@
                 </div>
 
                 <div id="walletDetails" class="bg-gray-50 rounded-xl p-4 mb-6">
-                    <!-- Wallet details will be populated by JS -->
                 </div>
 
                 <div class="flex gap-3">
@@ -177,7 +162,6 @@
                 </div>
             </div>
 
-            <!-- Step 6: Enter Amount -->
             <div id="sendCreditAmountStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
                 <form id="amountForm" onsubmit="handleAmountSubmit(event)">
@@ -195,13 +179,10 @@
                         </div>
                         <p class="text-xs text-gray-500 mt-1">Minimum amount: 500 UGX</p>
                         <div id="amountError" class="hidden mt-1 text-sm text-red-600">
-                            <!-- Error message will be shown here -->
                         </div>
                     </div>
 
-                    <!-- Selected Wallet Summary -->
                     <div id="selectedWalletSummary" class="bg-gray-50 rounded-xl p-4 mb-6">
-                        <!-- Summary will be populated by JS -->
                     </div>
 
                     <div class="flex gap-3">
@@ -217,7 +198,6 @@
                 </form>
             </div>
 
-            <!-- Step 7: Confirmation Modal -->
             <div id="sendCreditConfirmationStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
                 <div class="text-center mb-6">
@@ -228,18 +208,7 @@
                     <p class="text-sm text-gray-500">Please review the details before proceeding</p>
                 </div>
 
-                <div id="confirmationDetails" class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                    <!-- Confirmation details will be populated by JS -->
-                </div>
-
-                <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-6">
-                    <div class="flex items-start gap-2">
-                        <i class="fas fa-exclamation-triangle text-red-600 text-sm mt-0.5"></i>
-                        <p class="text-sm text-red-700">
-                            <strong>Warning:</strong> This action cannot be undone. Please verify all details are
-                            correct.
-                        </p>
-                    </div>
+                <div id="confirmationSummaryDetails" class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
                 </div>
 
                 <div class="flex gap-3">
@@ -254,30 +223,23 @@
                 </div>
             </div>
 
-            <!-- Step 8: Response/Result -->
             <div id="sendCreditResponseStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
                 <div class="text-center mb-6">
                     <div id="responseIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <!-- Icon will be populated by JS -->
                     </div>
                     <h4 id="responseTitle" class="text-lg font-semibold text-gray-900 mb-2">
-                        <!-- Title will be populated by JS -->
                     </h4>
                     <p id="responseSubtitle" class="text-sm text-gray-500">
-                        <!-- Subtitle will be populated by JS -->
                     </p>
                 </div>
 
                 <div id="responseDetails" class="rounded-xl p-4 mb-6">
-                    <!-- Response details will be populated by JS -->
                 </div>
 
                 <div id="responseActions" class="flex gap-3">
-                    <!-- Actions will be populated by JS -->
                 </div>
 
-                <!-- Auto-close countdown for success -->
                 <div id="autoCloseCountdown" class="hidden text-center mt-4">
                     <p class="text-sm text-gray-500">
                         This window will close automatically in <span id="countdownTimer"
@@ -290,7 +252,6 @@
 </div>
 
 <style>
-    /* Custom animations for smooth transitions */
     .slide-in-right {
         animation: slideInRight 0.3s ease-out forwards;
     }
@@ -355,13 +316,11 @@
         }
     }
 
-    /* Smooth modal appearance */
     .modal-show {
         transform: scale(1) !important;
         opacity: 1 !important;
     }
 
-    /* Loading animation */
     @keyframes spin {
         to {
             transform: rotate(360deg);
@@ -372,7 +331,6 @@
         animation: spin 1s linear infinite;
     }
 
-    /* Shake animation for validation errors */
     @keyframes shake {
 
         0%,
@@ -393,7 +351,6 @@
         animation: shake 0.5s ease-in-out;
     }
 
-    /* Pulse animation for processing */
     @keyframes pulse {
 
         0%,
@@ -421,6 +378,7 @@
     let searchResults = [];
     let pendingTransfer = null;
     let autoCloseTimer = null;
+    let currentBalance = null;
 
     window.showSendCreditModal = function () {
         const modal = document.getElementById('sendCreditModal');
@@ -428,12 +386,10 @@
 
         modal.classList.remove('hidden');
 
-        // Trigger animation after a small delay
         setTimeout(() => {
             modalContent.classList.add('modal-show');
         }, 10);
 
-        // Reset to step 1
         resetToStep1();
     };
 
@@ -441,7 +397,6 @@
         const modal = document.getElementById('sendCreditModal');
         const modalContent = document.getElementById('sendCreditModalContent');
 
-        // Clear any auto-close timer
         if (autoCloseTimer) {
             clearInterval(autoCloseTimer);
             autoCloseTimer = null;
@@ -452,7 +407,6 @@
         setTimeout(() => {
             modal.classList.add('hidden');
             resetToStep1();
-
             location.reload();
         }, 300);
     };
@@ -464,14 +418,13 @@
         lastSearchParams = null;
         searchResults = [];
         pendingTransfer = null;
+        currentBalance = null;
 
-        // Clear any auto-close timer
         if (autoCloseTimer) {
             clearInterval(autoCloseTimer);
             autoCloseTimer = null;
         }
 
-        // Reset visibility
         document.getElementById('sendCreditStep1').classList.remove('hidden', 'slide-out-left');
         document.getElementById('sendCreditSearchStep').classList.add('hidden');
         document.getElementById('sendCreditMultipleResultsStep').classList.add('hidden');
@@ -481,26 +434,17 @@
         document.getElementById('sendCreditConfirmationStep').classList.add('hidden');
         document.getElementById('sendCreditResponseStep').classList.add('hidden');
 
-        // Reset titles
         document.getElementById('sendCreditTitle').textContent = 'Send Credit';
         document.getElementById('sendCreditSubtitle').textContent = 'Select destination wallet type';
 
-        // Hide back button
         document.getElementById('sendCreditBackBtn').classList.add('hidden');
 
-        // Clear all forms
         clearAllForms();
 
-        // Reset radio buttons
         document.querySelector('input[name="searchType"][value="id"]').checked = true;
 
-        // Reset search button
         resetSearchButton();
-
-        // Reset send button
         resetSendButton();
-
-        // Clear error messages
         clearErrorMessages();
     }
 
@@ -518,7 +462,6 @@
         document.getElementById('searchInputError').classList.add('hidden');
         document.getElementById('amountError').classList.add('hidden');
 
-        // Remove error styling
         document.getElementById('sendCreditSearchInput').classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
         document.getElementById('sendCreditAmount').classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
     }
@@ -538,40 +481,32 @@
     }
 
     window.selectSendDestination = function (type) {
-        // Store selection for later
         window.sendCreditType = type;
         maxStep = Math.max(maxStep, 2);
 
-        // Clear forms when switching wallet types
         clearAllForms();
         clearErrorMessages();
 
-        // Animate step 1 out
         const step1 = document.getElementById('sendCreditStep1');
         step1.classList.add('slide-out-left');
 
         setTimeout(() => {
             step1.classList.add('hidden');
 
-            // Update titles
             const walletTypeText = type === 'vendor' ? 'Vendor' : 'User';
             document.getElementById('sendCreditTitle').textContent = `Send to ${walletTypeText}`;
             document.getElementById('sendCreditSubtitle').textContent = `Search for ${walletTypeText.toLowerCase()} wallet`;
 
-            // Update search label
             updateSearchLabel();
 
-            // Show back button
             document.getElementById('sendCreditBackBtn').classList.remove('hidden');
 
-            // Show search step with animation
             const searchStep = document.getElementById('sendCreditSearchStep');
             searchStep.classList.remove('hidden', 'translate-x-full', 'opacity-0');
             searchStep.classList.add('slide-in-right');
 
             currentStep = 2;
 
-            // Focus on search input
             setTimeout(() => {
                 document.getElementById('sendCreditSearchInput').focus();
             }, 400);
@@ -580,34 +515,27 @@
 
     window.sendCreditBack = function () {
         if (currentStep === 8) {
-            // From response step, close modal
             hideSendCreditModal();
         } else if (currentStep === 7) {
-            // Go back to amount step
             animateToStep('sendCreditConfirmationStep', 'sendCreditAmountStep', 6);
         } else if (currentStep === 6) {
-            // Go back to confirm step
             animateToStep('sendCreditAmountStep', 'sendCreditConfirmStep', 5);
         } else if (currentStep === 5) {
-            // Go back to search step (clear form)
             clearAllForms();
             clearErrorMessages();
             resetSearchButton();
             animateToStep('sendCreditConfirmStep', 'sendCreditSearchStep', 2);
         } else if (currentStep === 4) {
-            // Go back to search step (clear form)
             clearAllForms();
             clearErrorMessages();
             resetSearchButton();
             animateToStep('sendCreditNotFoundStep', 'sendCreditSearchStep', 2);
         } else if (currentStep === 3) {
-            // Go back to search step (clear form)
             clearAllForms();
             clearErrorMessages();
             resetSearchButton();
             animateToStep('sendCreditMultipleResultsStep', 'sendCreditSearchStep', 2);
         } else if (currentStep === 2) {
-            // Go back to step 1
             const searchStep = document.getElementById('sendCreditSearchStep');
             searchStep.classList.add('slide-out-right');
 
@@ -615,14 +543,11 @@
                 searchStep.classList.add('hidden', 'translate-x-full', 'opacity-0');
                 searchStep.classList.remove('slide-out-right');
 
-                // Reset titles
                 document.getElementById('sendCreditTitle').textContent = 'Send Credit';
                 document.getElementById('sendCreditSubtitle').textContent = 'Select destination wallet type';
 
-                // Hide back button
                 document.getElementById('sendCreditBackBtn').classList.add('hidden');
 
-                // Show step 1 with animation
                 const step1 = document.getElementById('sendCreditStep1');
                 step1.classList.remove('hidden', 'slide-out-left');
                 step1.classList.add('slide-in-left');
@@ -646,7 +571,6 @@
 
             currentStep = stepNumber;
 
-            // Focus appropriate input
             if (stepNumber === 2) {
                 setTimeout(() => {
                     document.getElementById('sendCreditSearchInput').focus();
@@ -668,12 +592,10 @@
             `Search ${walletType} Wallet by ${searchTypeText}`;
     }
 
-    // Update search label when radio button changes
     document.addEventListener('change', function (e) {
         if (e.target.name === 'searchType') {
             updateSearchLabel();
 
-            // Update placeholder
             const searchInput = document.getElementById('sendCreditSearchInput');
             const searchType = e.target.value;
 
@@ -688,13 +610,11 @@
         }
     });
 
-    // Handle search form submission
     function handleSearchSubmit(event) {
         event.preventDefault();
         performSendCreditSearch();
     }
 
-    // Handle amount form submission
     function handleAmountSubmit(event) {
         event.preventDefault();
         showConfirmation();
@@ -704,7 +624,6 @@
         const query = document.getElementById('sendCreditSearchInput').value.trim();
         const searchType = document.querySelector('input[name="searchType"]:checked').value;
 
-        // Clear previous errors
         clearErrorMessages();
 
         if (!query) {
@@ -712,30 +631,25 @@
             return;
         }
 
-        // Store search params for error display
         lastSearchParams = {
             query: query,
             searchType: searchType,
             walletType: window.sendCreditType
         };
 
-        // Show loading state
         const button = document.getElementById('searchWalletBtn');
         button.innerHTML = '<i class="fas fa-spinner animate-spin"></i><span>Searching...</span>';
         button.disabled = true;
 
         try {
-            // Simulate 3-second delay
             await new Promise(resolve => setTimeout(resolve, 3000));
 
-            // Prepare payload
             const payload = new FormData();
             payload.append('action', 'searchWallet');
             payload.append('type', window.sendCreditType);
             payload.append('searchType', searchType);
             payload.append('searchValue', query);
 
-            // Make API call
             const response = await fetch(sendCreditApiUrl, {
                 method: 'POST',
                 body: payload
@@ -745,19 +659,15 @@
 
             if (data.success) {
                 if (Array.isArray(data.wallets) && data.wallets.length > 1) {
-                    // Multiple results found
                     searchResults = data.wallets;
                     showMultipleResults(data.wallets);
                 } else if (Array.isArray(data.wallets) && data.wallets.length === 1) {
-                    // Single result found
                     selectedWallet = data.wallets[0];
                     showWalletConfirmation(data.wallets[0]);
                 } else if (data.wallet) {
-                    // Single wallet object (backward compatibility)
                     selectedWallet = data.wallet;
                     showWalletConfirmation(data.wallet);
                 } else {
-                    // No results found
                     showWalletNotFound();
                 }
             } else {
@@ -768,7 +678,6 @@
             console.error('Search error:', error);
             showInputError('sendCreditSearchInput', 'searchInputError', 'Error searching for wallet. Please try again.');
         } finally {
-            // Reset button
             resetSearchButton();
         }
     };
@@ -781,7 +690,6 @@
         errorDiv.textContent = message;
         errorDiv.classList.remove('hidden');
 
-        // Remove shake animation after it completes
         setTimeout(() => {
             input.classList.remove('animate-shake');
         }, 500);
@@ -790,7 +698,6 @@
     }
 
     function showMultipleResults(wallets) {
-        // Populate multiple results list
         const resultsList = document.getElementById('multipleResultsList');
         resultsList.innerHTML = '';
 
@@ -817,11 +724,9 @@
             resultsList.appendChild(resultCard);
         });
 
-        // Update titles
         document.getElementById('sendCreditTitle').textContent = 'Multiple Results';
         document.getElementById('sendCreditSubtitle').textContent = `Found ${wallets.length} matching wallets`;
 
-        // Animate to multiple results step
         const searchStep = document.getElementById('sendCreditSearchStep');
         searchStep.classList.add('slide-out-left');
 
@@ -843,7 +748,6 @@
     }
 
     function showWalletNotFound() {
-        // Populate search details
         const searchDetails = document.getElementById('searchDetails');
         const searchTypeText = lastSearchParams.searchType === 'id' ? 'Account No.' : 'Name';
         const walletTypeText = lastSearchParams.walletType === 'vendor' ? 'Vendor' : 'User';
@@ -864,11 +768,9 @@
             </div>
         `;
 
-        // Update titles
         document.getElementById('sendCreditTitle').textContent = 'Wallet Not Found';
         document.getElementById('sendCreditSubtitle').textContent = 'No matching wallet found';
 
-        // Animate to not found step
         const searchStep = document.getElementById('sendCreditSearchStep');
         searchStep.classList.add('slide-out-left');
 
@@ -885,7 +787,6 @@
     }
 
     function showWalletConfirmation(wallet) {
-        // Populate wallet details
         const walletDetails = document.getElementById('walletDetails');
         walletDetails.innerHTML = `
             <div class="flex items-center gap-3">
@@ -899,17 +800,14 @@
             </div>
         `;
 
-        // Update titles
         document.getElementById('sendCreditTitle').textContent = 'Confirm Wallet';
         document.getElementById('sendCreditSubtitle').textContent = 'Verify this is the correct wallet';
 
-        // Determine which step to animate from
         let fromStepId = 'sendCreditSearchStep';
         if (currentStep === 3) {
             fromStepId = 'sendCreditMultipleResultsStep';
         }
 
-        // Animate to confirmation step
         const fromStep = document.getElementById(fromStepId);
         fromStep.classList.add('slide-out-left');
 
@@ -926,7 +824,6 @@
     }
 
     window.searchAgain = function () {
-        // Clear forms and go back to search step
         clearAllForms();
         clearErrorMessages();
         resetSearchButton();
@@ -947,7 +844,6 @@
     };
 
     window.changeWalletType = function () {
-        // Go back to step 1 to change wallet type
         const currentStepElement = document.getElementById('sendCreditNotFoundStep');
         currentStepElement.classList.add('slide-out-right');
 
@@ -955,18 +851,14 @@
             currentStepElement.classList.add('hidden', 'translate-x-full', 'opacity-0');
             currentStepElement.classList.remove('slide-out-right');
 
-            // Reset titles
             document.getElementById('sendCreditTitle').textContent = 'Send Credit';
             document.getElementById('sendCreditSubtitle').textContent = 'Select destination wallet type';
 
-            // Hide back button
             document.getElementById('sendCreditBackBtn').classList.add('hidden');
 
-            // Clear forms
             clearAllForms();
             clearErrorMessages();
 
-            // Show step 1 with animation
             const step1 = document.getElementById('sendCreditStep1');
             step1.classList.remove('hidden', 'slide-out-left');
             step1.classList.add('slide-in-left');
@@ -976,11 +868,9 @@
     };
 
     window.proceedToAmount = function () {
-        // Update titles
         document.getElementById('sendCreditTitle').textContent = 'Enter Amount';
         document.getElementById('sendCreditSubtitle').textContent = 'Specify the amount to send';
 
-        // Populate selected wallet summary
         const summary = document.getElementById('selectedWalletSummary');
         summary.innerHTML = `
             <div class="flex items-center gap-3">
@@ -994,7 +884,6 @@
             </div>
         `;
 
-        // Animate to amount step
         animateToStep('sendCreditConfirmStep', 'sendCreditAmountStep', 6);
     };
 
@@ -1013,44 +902,61 @@
             return;
         }
 
-        // Store pending transfer details
         pendingTransfer = {
             amount: amount,
-            wallet: selectedWallet
+            formattedAmount: parseFloat(amount).toLocaleString('en-UG', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }),
+            wallet: selectedWallet,
+            walletType: window.sendCreditType,
+            searchType: lastSearchParams ? lastSearchParams.searchType : 'id'
         };
 
-        // Populate confirmation details
-        const confirmationDetails = document.getElementById('confirmationDetails');
+        const confirmationDetails = document.getElementById('confirmationSummaryDetails');
+        const walletTypeText = window.sendCreditType === 'vendor' ? 'Vendor' : 'User';
+
+        const formattedAmount = parseFloat(amount).toLocaleString('en-UG', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+
         confirmationDetails.innerHTML = `
             <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-medium text-gray-700">Amount:</span>
-                    <span class="text-lg font-bold text-gray-900">${amount} UGX</span>
+                <div class="text-center pb-3 border-b border-yellow-200">
+                    <h5 class="font-semibold text-gray-900 mb-1">Transfer Summary</h5>
+                    <p class="text-2xl font-bold text-gray-900">${formattedAmount} UGX</p>
                 </div>
-                <div class="border-t border-yellow-200 pt-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-${window.sendCreditType === 'vendor' ? 'store' : 'user'} text-primary text-sm"></i>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-600">Transfer Type:</span>
+                        <span class="text-sm font-semibold text-gray-900">Send to ${walletTypeText}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-start">
+                        <span class="text-sm font-medium text-gray-600">Recipient:</span>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-gray-900">${selectedWallet.wallet_name}</p>
+                            <p class="text-xs text-gray-500">Account: ${selectedWallet.wallet_number}</p>
                         </div>
-                        <div>
-                            <p class="font-medium text-gray-900">${selectedWallet.wallet_name}</p>
-                            <p class="text-xs text-gray-500">Account No: ${selectedWallet.wallet_number}</p>
-                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-600">Amount:</span>
+                        <span class="text-sm font-bold text-gray-900">${amount} UGX</span>
                     </div>
                 </div>
             </div>
         `;
 
-        // Update titles
         document.getElementById('sendCreditTitle').textContent = 'Confirm Transfer';
         document.getElementById('sendCreditSubtitle').textContent = 'Review details before sending';
 
-        // Animate to confirmation step
         animateToStep('sendCreditAmountStep', 'sendCreditConfirmationStep', 7);
     }
 
     window.cancelConfirmation = function () {
-        // Go back to amount step
         animateToStep('sendCreditConfirmationStep', 'sendCreditAmountStep', 6);
     };
 
@@ -1060,20 +966,17 @@
             return;
         }
 
-        // Show processing state on button
         const confirmBtn = document.getElementById('confirmSendBtn');
         const originalText = confirmBtn.innerHTML;
         confirmBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i><span class="ml-2">Processing...</span>';
         confirmBtn.disabled = true;
 
         try {
-            // Build payload
             const payload = new FormData();
             payload.append('action', 'sendCredit');
             payload.append('wallet_to', pendingTransfer.wallet.wallet_number);
             payload.append('amount', pendingTransfer.amount);
 
-            // Make API call
             const response = await fetch(sendCreditApiUrl, {
                 method: 'POST',
                 body: payload
@@ -1082,12 +985,19 @@
             const data = await response.json();
 
             if (data.success) {
+                currentBalance = data.balance;
                 showResponse(
                     true,
                     'Transfer Successful!',
                     'Credit has been sent successfully',
-                    `Transaction ID: ${data.transaction_id || 'N/A'}`,
-                    true // Enable auto-close
+                    {
+                        transactionId: data.transaction_id || 'N/A',
+                        amount: pendingTransfer.amount,
+                        recipient: pendingTransfer.wallet.wallet_name,
+                        recipientAccount: pendingTransfer.wallet.wallet_number,
+                        newBalance: data.balance
+                    },
+                    true
                 );
             } else {
                 showResponse(
@@ -1107,14 +1017,12 @@
                 'Please check your internet connection and try again'
             );
         } finally {
-            // Reset button
             confirmBtn.innerHTML = originalText;
             confirmBtn.disabled = false;
         }
     };
 
     function showResponse(success, title, subtitle, details, autoClose = false) {
-        // Update response elements
         const responseIcon = document.getElementById('responseIcon');
         const responseTitle = document.getElementById('responseTitle');
         const responseSubtitle = document.getElementById('responseSubtitle');
@@ -1122,7 +1030,6 @@
         const responseActions = document.getElementById('responseActions');
         const autoCloseCountdown = document.getElementById('autoCloseCountdown');
 
-        // Set icon and colors based on success
         if (success) {
             responseIcon.className = 'w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4';
             responseIcon.innerHTML = '<i class="fas fa-check text-green-600 text-xl"></i>';
@@ -1133,16 +1040,46 @@
             responseDetails.className = 'bg-red-50 border border-red-200 rounded-xl p-4 mb-6';
         }
 
-        // Set content
         responseTitle.textContent = title;
         responseSubtitle.textContent = subtitle;
-        responseDetails.innerHTML = `
-            <div class="text-center">
-                <p class="text-sm ${success ? 'text-green-700' : 'text-red-700'}">${details}</p>
-            </div>
-        `;
 
-        // Set actions
+        if (success && typeof details === 'object') {
+            responseDetails.innerHTML = `
+                <div class="space-y-3">
+                    <div class="text-center pb-3 border-b border-green-200">
+                        <div class="flex items-center justify-center gap-2 mb-2">
+                            <i class="fas fa-check-circle text-green-600"></i>
+                            <span class="font-semibold text-green-800">Transaction Completed</span>
+                        </div>
+                        <p class="text-sm text-green-700">Transaction ID: ${details.transactionId}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-green-600 font-medium">Amount Sent</p>
+                            <p class="text-green-800 font-bold">${details.amount} UGX</p>
+                        </div>
+                        <div>
+                            <p class="text-green-600 font-medium">Available Balance</p>
+                            <p class="text-green-800 font-bold">${details.newBalance ? details.newBalance.toLocaleString() : 'N/A'} UGX</p>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-2 border-t border-green-200">
+                        <p class="text-green-600 font-medium text-sm">Sent to:</p>
+                        <p class="text-green-800 font-semibold">${details.recipient}</p>
+                        <p class="text-green-600 text-xs">Account: ${details.recipientAccount}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            responseDetails.innerHTML = `
+                <div class="text-center">
+                    <p class="text-sm ${success ? 'text-green-700' : 'text-red-700'}">${typeof details === 'string' ? details : 'Transaction details unavailable'}</p>
+                </div>
+            `;
+        }
+
         if (success) {
             responseActions.innerHTML = `
                 <button onclick="hideSendCreditModal()" 
@@ -1163,11 +1100,9 @@
             `;
         }
 
-        // Update titles
         document.getElementById('sendCreditTitle').textContent = title;
         document.getElementById('sendCreditSubtitle').textContent = subtitle;
 
-        // Handle auto-close for success
         if (autoClose && success) {
             autoCloseCountdown.classList.remove('hidden');
             let countdown = 30;
@@ -1186,11 +1121,9 @@
             autoCloseCountdown.classList.add('hidden');
         }
 
-        // Animate to response step
         animateToStep('sendCreditConfirmationStep', 'sendCreditResponseStep', 8);
     }
 
-    // Real-time amount validation
     document.getElementById('sendCreditAmount').addEventListener('input', function (e) {
         const value = e.target.value;
         const errorDiv = document.getElementById('amountError');
