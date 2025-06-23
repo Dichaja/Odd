@@ -226,25 +226,26 @@ foreach ($cashAccounts as $account) {
             </div>
         </div>
 
-        <!-- Instructions -->
-        <div class="px-6 py-4 bg-blue-50 border-b border-blue-100">
-            <div class="flex items-start gap-3">
-                <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i class="fas fa-info text-blue-600 text-xs"></i>
-                </div>
-                <div class="text-sm text-blue-800">
-                    <p class="font-medium mb-1">Instructions:</p>
-                    <ol class="list-decimal list-inside space-y-1 text-xs">
-                        <li>Send money to the account number above</li>
-                        <li>Fill in the details below after sending</li>
-                        <li>We'll verify and credit your account within the hour</li>
-                    </ol>
+        <!-- Form -->
+        <div class="overflow-y-auto max-h-[calc(100vh-300px)] p-6">
+
+            <!-- Instructions -->
+            <div class="px-6 py-4 mb-4 bg-blue-50 border-b border-blue-100">
+                <div class="flex items-start gap-3">
+                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-info text-blue-600 text-xs"></i>
+                    </div>
+                    <div class="text-sm text-blue-800">
+                        <p class="font-medium mb-1">Instructions:</p>
+                        <ol class="list-decimal list-inside space-y-1 text-xs">
+                            <li>Send money to the account number above</li>
+                            <li>Fill in the details below after sending</li>
+                            <li>We'll verify and credit your account within the hour</li>
+                        </ol>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Form -->
-        <div class="overflow-y-auto max-h-[calc(90vh-300px)] p-6">
             <form id="mobileMoneyForm" class="space-y-4">
                 <div>
                     <label for="mmPhoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -339,26 +340,28 @@ foreach ($cashAccounts as $account) {
             </div>
         </div>
 
-        <!-- Instructions -->
-        <div class="px-6 py-4 bg-green-50 border-b border-green-100">
-            <div class="flex items-start gap-3">
-                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i class="fas fa-info text-green-600 text-xs"></i>
-                </div>
-                <div class="text-sm text-green-800">
-                    <p class="font-medium mb-1">Instructions:</p>
-                    <ol class="list-decimal list-inside space-y-1 text-xs">
-                        <li>Deposit money to the bank account above</li>
-                        <li>Keep your deposit slip/receipt</li>
-                        <li>Fill in the details below</li>
-                        <li>We'll verify and credit your account within the hour</li>
-                    </ol>
+        <!-- Form -->
+        <div class="overflow-y-auto max-h-[calc(100vh-300px)] p-6">
+
+            <!-- Instructions -->
+            <div class="px-6 py-4 mb-4 bg-green-50 border-b border-green-100">
+                <div class="flex items-start gap-3">
+                    <div
+                        class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-info text-green-600 text-xs"></i>
+                    </div>
+                    <div class="text-sm text-green-800">
+                        <p class="font-medium mb-1">Instructions:</p>
+                        <ol class="list-decimal list-inside space-y-1 text-xs">
+                            <li>Deposit money to the bank account above</li>
+                            <li>Keep your deposit slip/receipt</li>
+                            <li>Fill in the details below</li>
+                            <li>We'll verify and credit your account within the hour</li>
+                        </ol>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Form -->
-        <div class="overflow-y-auto max-h-[calc(90vh-300px)] p-6">
             <form id="bankTransferForm" class="space-y-4">
                 <div>
                     <label for="btAmount" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -450,26 +453,28 @@ foreach ($cashAccounts as $account) {
             </div>
         </div>
 
-        <!-- Instructions -->
-        <div class="px-6 py-4 bg-purple-50 border-b border-purple-100">
-            <div class="flex items-start gap-3">
-                <div class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i class="fas fa-info text-purple-600 text-xs"></i>
-                </div>
-                <div class="text-sm text-purple-800">
-                    <p class="font-medium mb-1">Instructions:</p>
-                    <ol class="list-decimal list-inside space-y-1 text-xs">
-                        <li>Enter your phone number and amount</li>
-                        <li>You'll receive a payment prompt on your phone</li>
-                        <li>Enter your mobile money PIN to complete</li>
-                        <li>Your account will be credited instantly</li>
-                    </ol>
+        <!-- Form -->
+        <div class="overflow-y-auto max-h-[calc(100vh-300px)] p-6">
+
+            <!-- Instructions -->
+            <div class="px-6 py-4 mb-4 bg-purple-50 border-b border-purple-100">
+                <div class="flex items-start gap-3">
+                    <div
+                        class="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-info text-purple-600 text-xs"></i>
+                    </div>
+                    <div class="text-sm text-purple-800">
+                        <p class="font-medium mb-1">Instructions:</p>
+                        <ol class="list-decimal list-inside space-y-1 text-xs">
+                            <li>Enter your phone number and amount</li>
+                            <li>You'll receive a payment prompt on your phone</li>
+                            <li>Enter your mobile money PIN to complete</li>
+                            <li>Your account will be credited instantly</li>
+                        </ol>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Form -->
-        <div class="overflow-y-auto max-h-[calc(90vh-300px)] p-6">
             <form id="gatewayPaymentForm" class="space-y-4">
                 <div>
                     <label for="gwPhoneNumber" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -565,26 +570,28 @@ foreach ($cashAccounts as $account) {
             </div>
         </div>
 
-        <!-- Instructions -->
-        <div class="px-6 py-4 bg-indigo-50 border-b border-indigo-100">
-            <div class="flex items-start gap-3">
-                <div class="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i class="fas fa-info text-indigo-600 text-xs"></i>
-                </div>
-                <div class="text-sm text-indigo-800">
-                    <p class="font-medium mb-1">Instructions:</p>
-                    <ol class="list-decimal list-inside space-y-1 text-xs">
-                        <li>Enter the amount you want to add</li>
-                        <li>Click "Proceed to Payment"</li>
-                        <li>You'll be redirected to a secure payment page</li>
-                        <li>Your account will be credited upon successful payment</li>
-                    </ol>
+        <!-- Form -->
+        <div class="overflow-y-auto max-h-[calc(100vh-300px)] p-6">
+
+            <!-- Instructions -->
+            <div class="px-6 py-4 mb-4 bg-indigo-50 border-b border-indigo-100">
+                <div class="flex items-start gap-3">
+                    <div
+                        class="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-info text-indigo-600 text-xs"></i>
+                    </div>
+                    <div class="text-sm text-indigo-800">
+                        <p class="font-medium mb-1">Instructions:</p>
+                        <ol class="list-decimal list-inside space-y-1 text-xs">
+                            <li>Enter the amount you want to add</li>
+                            <li>Click "Proceed to Payment"</li>
+                            <li>You'll be redirected to a secure payment page</li>
+                            <li>Your account will be credited upon successful payment</li>
+                        </ol>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Form -->
-        <div class="overflow-y-auto max-h-[calc(90vh-300px)] p-6">
             <form id="cardPaymentForm" class="space-y-4">
                 <div>
                     <label for="cardAmount" class="block text-sm font-semibold text-gray-700 mb-2">
