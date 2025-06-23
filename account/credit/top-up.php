@@ -379,7 +379,7 @@ try {
     class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
     <div
-        class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden transform transition-all duration-300 scale-95">
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-sm relative z-10 overflow-hidden transform transition-all duration-300 scale-95">
         <div class="p-6">
             <div class="text-center">
                 <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -557,7 +557,7 @@ try {
             };
 
             showConfirmationModal(
-                'Are you sure you want to submit this mobile money payment?',
+                'You have initiated the following mobile money topup to your Zzimba Credit Account.',
                 `Amount: UGX ${new Intl.NumberFormat().format(fd.get('mmAmount'))}<br>
                 Phone: ${formattedPhone}<br>
                 Transaction ID: ${fd.get('mmTransactionId')}<br>
@@ -644,7 +644,7 @@ try {
             };
 
             showConfirmationModal(
-                'Are you sure you want to submit this bank transfer payment?',
+                'You have initiated the following Bank topup to your Zzimba Credit Account.',
                 `Amount: UGX ${new Intl.NumberFormat().format(fd.get('btAmount'))}<br>
                 Reference: ${fd.get('btReference')}<br>
                 Depositor: ${fd.get('btDepositorName')}<br>
