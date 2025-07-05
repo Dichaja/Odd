@@ -226,13 +226,13 @@ final class CreditService
         $status = strtoupper($res['request_status'] ?? $res['status'] ?? 'PENDING');
 
         $upd = self::$pdo->prepare("
-            UPDATE zzimba_financial_transactions
-               SET status = :st,
-                   note   = :nt,
-                   external_metadata = :md,
-                   updated_at = NOW()
-             WHERE external_reference = :er
-        ");
+        UPDATE zzimba_financial_transactions
+           SET status = :st,
+               note   = :nt,
+               external_metadata = :md,
+               updated_at = NOW()
+         WHERE external_reference = :er
+    ");
         $upd->execute([
             ':st' => $status,
             ':nt' => $res['message'] ?? null,
@@ -242,10 +242,10 @@ final class CreditService
 
         if ($status === 'SUCCESS') {
             $txnRow = self::$pdo->prepare("
-                SELECT transaction_id, amount_total, user_id
-                  FROM zzimba_financial_transactions
-                 WHERE external_reference = :er
-            ");
+            SELECT transaction_id, amount_total, user_id
+              FROM zzimba_financial_transactions
+             WHERE external_reference = :er
+        ");
             $txnRow->execute([':er' => $internalRef]);
             $txn = $txnRow->fetch(PDO::FETCH_ASSOC);
             $txnId = $txn['transaction_id'];
@@ -253,20 +253,21 @@ final class CreditService
             $userId = $txn['user_id'];
 
             $wst = self::$pdo->query("
-                SELECT platform_account_id
-                  FROM zzimba_platform_account_settings
-                 WHERE type = 'withholding'
-                 LIMIT 1
-            ");
+            SELECT platform_account_id
+              FROM zzimba_platform_account_settings
+             WHERE type = 'withholding'
+             LIMIT 1
+        ");
             $withholdingId = $wst->fetchColumn();
 
             $chk = self::$pdo->prepare("
-                SELECT COUNT(*) FROM zzimba_transaction_entries
-                 WHERE transaction_id = :tid
-                   AND wallet_id      = :wid
-                   AND entry_type     = 'CREDIT'
-                   AND entry_note     = 'Mobile Money received via Gateway – Held in Withholding'
-            ");
+            SELECT COUNT(*)
+              FROM zzimba_transaction_entries
+             WHERE transaction_id = :tid
+               AND wallet_id      = :wid
+               AND entry_type     = 'CREDIT'
+               AND entry_note     = 'Zzimba Credit top-up'
+        ");
             $chk->execute([':tid' => $txnId, ':wid' => $withholdingId]);
             if ((int) $chk->fetchColumn() > 0) {
                 return $res;
@@ -276,62 +277,64 @@ final class CreditService
                 self::$pdo->beginTransaction();
 
                 $balStmt = self::$pdo->prepare("
-                    SELECT current_balance
-                      FROM zzimba_wallets
-                     WHERE wallet_id = :wid
-                       AND owner_type = 'PLATFORM'
-                       AND status     = 'active'
-                ");
+                SELECT current_balance
+                  FROM zzimba_wallets
+                 WHERE wallet_id = :wid
+                   AND owner_type = 'PLATFORM'
+                   AND status     = 'active'
+            ");
                 $balStmt->execute([':wid' => $withholdingId]);
                 $withBal = (float) $balStmt->fetchColumn();
 
                 $cash = self::$pdo->query("
-                    SELECT id, current_balance
-                      FROM zzimba_cash_accounts
-                     WHERE type   = 'gateway'
-                       AND status = 'active'
-                     LIMIT 1
-                ")->fetch(PDO::FETCH_ASSOC);
+                SELECT id, current_balance
+                  FROM zzimba_cash_accounts
+                 WHERE type   = 'gateway'
+                   AND status = 'active'
+                 LIMIT 1
+            ")->fetch(PDO::FETCH_ASSOC);
 
                 $uStmt = self::$pdo->prepare("
-                    SELECT wallet_id, current_balance
-                      FROM zzimba_wallets
-                     WHERE owner_type = 'USER'
-                       AND user_id    = :uid
-                       AND status     = 'active'
-                ");
+                SELECT wallet_id, wallet_number, current_balance
+                  FROM zzimba_wallets
+                 WHERE owner_type = 'USER'
+                   AND user_id    = :uid
+                   AND status     = 'active'
+            ");
                 $uStmt->execute([':uid' => $userId]);
                 $uRow = $uStmt->fetch(PDO::FETCH_ASSOC);
 
                 $newWithBal = $withBal + $amount;
-                self::insertEntry([
+                $creditId = self::insertEntry([
                     'transaction_id' => $txnId,
                     'wallet_id' => $withholdingId,
                     'entry_type' => 'CREDIT',
                     'amount' => $amount,
                     'balance_after' => $newWithBal,
-                    'entry_note' => 'Mobile Money received via Gateway – Held in Withholding'
+                    'entry_note' => 'Zzimba Credit top-up'
                 ]);
                 self::$pdo->prepare("
-                    UPDATE zzimba_wallets
-                       SET current_balance = :bal, updated_at = NOW()
-                     WHERE wallet_id = :wid
-                ")->execute([':bal' => $newWithBal, ':wid' => $withholdingId]);
+                UPDATE zzimba_wallets
+                   SET current_balance = :bal, updated_at = NOW()
+                 WHERE wallet_id = :wid
+            ")->execute([':bal' => $newWithBal, ':wid' => $withholdingId]);
 
                 $debitBal = $newWithBal - $amount;
+                $receiverNo = $uRow['wallet_number'];
                 $debitId = self::insertEntry([
                     'transaction_id' => $txnId,
                     'wallet_id' => $withholdingId,
                     'entry_type' => 'DEBIT',
                     'amount' => $amount,
                     'balance_after' => $debitBal,
-                    'entry_note' => 'Disbursed from Withholding'
+                    'entry_note' => 'Disbursed to ' . $receiverNo,
+                    'ref_entry_id' => $creditId
                 ]);
                 self::$pdo->prepare("
-                    UPDATE zzimba_wallets
-                       SET current_balance = :bal, updated_at = NOW()
-                     WHERE wallet_id = :wid
-                ")->execute([':bal' => $debitBal, ':wid' => $withholdingId]);
+                UPDATE zzimba_wallets
+                   SET current_balance = :bal, updated_at = NOW()
+                 WHERE wallet_id = :wid
+            ")->execute([':bal' => $debitBal, ':wid' => $withholdingId]);
 
                 $newUserBal = (float) $uRow['current_balance'] + $amount;
                 self::insertEntry([
@@ -344,10 +347,10 @@ final class CreditService
                     'ref_entry_id' => $debitId
                 ]);
                 self::$pdo->prepare("
-                    UPDATE zzimba_wallets
-                       SET current_balance = :bal, updated_at = NOW()
-                     WHERE wallet_id = :wid
-                ")->execute([':bal' => $newUserBal, ':wid' => $uRow['wallet_id']]);
+                UPDATE zzimba_wallets
+                   SET current_balance = :bal, updated_at = NOW()
+                 WHERE wallet_id = :wid
+            ")->execute([':bal' => $newUserBal, ':wid' => $uRow['wallet_id']]);
 
                 $newCashBal = (float) $cash['current_balance'] + $amount;
                 self::insertEntry([
@@ -360,10 +363,10 @@ final class CreditService
                     'ref_entry_id' => $debitId
                 ]);
                 self::$pdo->prepare("
-                    UPDATE zzimba_cash_accounts
-                       SET current_balance = :bal, updated_at = NOW()
-                     WHERE id = :cid
-                ")->execute([':bal' => $newCashBal, ':cid' => $cash['id']]);
+                UPDATE zzimba_cash_accounts
+                   SET current_balance = :bal, updated_at = NOW()
+                 WHERE id = :cid
+            ")->execute([':bal' => $newCashBal, ':cid' => $cash['id']]);
 
                 self::$pdo->commit();
             } catch (PDOException $e) {
@@ -1101,25 +1104,22 @@ final class CreditService
             return ['success' => false, 'message' => 'Invalid status'];
         }
 
-        // 1) Mark transaction status
         $upd = self::$pdo->prepare("
-            UPDATE zzimba_financial_transactions
-               SET status = :st, updated_at = NOW()
-             WHERE transaction_id = :tid
-        ");
+        UPDATE zzimba_financial_transactions
+           SET status = :st, updated_at = NOW()
+         WHERE transaction_id = :tid
+    ");
         $upd->execute([':st' => $newStatus, ':tid' => $transactionId]);
 
-        // 2) If failed, nothing more to do
         if ($newStatus === 'FAILED') {
             return ['success' => true, 'message' => 'Top-up marked as failed'];
         }
 
-        // 3) Fetch transaction details (amount, metadata, owner)
         $stmt = self::$pdo->prepare("
-            SELECT amount_total, external_metadata, user_id, vendor_id
-              FROM zzimba_financial_transactions
-             WHERE transaction_id = :tid
-        ");
+        SELECT amount_total, external_metadata, user_id, vendor_id
+          FROM zzimba_financial_transactions
+         WHERE transaction_id = :tid
+    ");
         $stmt->execute([':tid' => $transactionId]);
         $txn = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$txn) {
@@ -1139,13 +1139,12 @@ final class CreditService
         try {
             self::$pdo->beginTransaction();
 
-            // ——— A) Credit PLATFORM withholding ———
             $withholdingId = self::getWithholdingAccountId();
             $balStmt = self::$pdo->prepare("
-                SELECT current_balance
-                  FROM zzimba_wallets
-                 WHERE wallet_id = :wid
-            ");
+            SELECT current_balance
+              FROM zzimba_wallets
+             WHERE wallet_id = :wid
+        ");
             $balStmt->execute([':wid' => $withholdingId]);
             $withBal = (float) $balStmt->fetchColumn();
 
@@ -1155,56 +1154,51 @@ final class CreditService
                 'entry_type' => 'CREDIT',
                 'amount' => $amount,
                 'balance_after' => $withBal + $amount,
-                'entry_note' => 'Cash top-up held in withholding'
+                'entry_note' => 'Zzimba Credit top-up'
             ]);
             self::updateWalletBalance($withholdingId, $withBal + $amount);
 
-            // ——— B) Debit PLATFORM withholding ———
+            $walletRes = self::getWallet($ownerType, $ownerId);
+            if (!$walletRes['success']) {
+                throw new \Exception('Wallet retrieval failed');
+            }
+            $wallet = $walletRes['wallet'];
+            $receiverWalletId = $wallet['wallet_id'];
+            $receiverWalletNo = $wallet['wallet_number'];
+            $currBal = (float) $wallet['current_balance'];
+
             $debitWithId = self::insertEntry([
                 'transaction_id' => $transactionId,
                 'wallet_id' => $withholdingId,
                 'entry_type' => 'DEBIT',
                 'amount' => $amount,
                 'balance_after' => $withBal,
-                'entry_note' => 'Disbursed from withholding',
+                'entry_note' => 'Disbursed to ' . $receiverWalletNo,
                 'ref_entry_id' => $creditWithId
             ]);
             self::updateWalletBalance($withholdingId, $withBal);
 
-            // ——— C) Credit User/Vendor wallet ———
-            $walletRes = self::getWallet($ownerType, $ownerId);
-            if (!$walletRes['success']) {
-                throw new \Exception('Wallet retrieval failed');
-            }
-            $wallet = $walletRes['wallet'];
-            $currBal = (float) $wallet['current_balance'];
             $newWBal = $currBal + $amount;
-            $note = sprintf(
-                '%s Wallet credited from withholding',
-                ucfirst(strtolower($ownerType))
-            );
-
             self::insertEntry([
                 'transaction_id' => $transactionId,
-                'wallet_id' => $wallet['wallet_id'],
+                'wallet_id' => $receiverWalletId,
                 'entry_type' => 'CREDIT',
                 'amount' => $amount,
                 'balance_after' => $newWBal,
-                'entry_note' => $note,
+                'entry_note' => sprintf('%s Wallet credited from withholding', ucfirst(strtolower($ownerType))),
                 'ref_entry_id' => $debitWithId
             ]);
             self::$pdo->prepare("
-                UPDATE zzimba_wallets
-                   SET current_balance = :bal, updated_at = NOW()
-                 WHERE wallet_id = :wid
-            ")->execute([':bal' => $newWBal, ':wid' => $wallet['wallet_id']]);
+            UPDATE zzimba_wallets
+               SET current_balance = :bal, updated_at = NOW()
+             WHERE wallet_id = :wid
+        ")->execute([':bal' => $newWBal, ':wid' => $receiverWalletId]);
 
-            // ——— D) Credit Cash Account ———
             $cStmt = self::$pdo->prepare("
-                SELECT current_balance
-                  FROM zzimba_cash_accounts
-                 WHERE id = :cid
-            ");
+            SELECT current_balance
+              FROM zzimba_cash_accounts
+             WHERE id = :cid
+        ");
             $cStmt->execute([':cid' => $cashAccountId]);
             $cashBal = (float) $cStmt->fetchColumn();
             $newCash = $cashBal + $amount;
@@ -1219,10 +1213,10 @@ final class CreditService
                 'ref_entry_id' => $debitWithId
             ]);
             self::$pdo->prepare("
-                UPDATE zzimba_cash_accounts
-                   SET current_balance = :bal, updated_at = NOW()
-                 WHERE id = :cid
-            ")->execute([':bal' => $newCash, ':cid' => $cashAccountId]);
+            UPDATE zzimba_cash_accounts
+               SET current_balance = :bal, updated_at = NOW()
+             WHERE id = :cid
+        ")->execute([':bal' => $newCash, ':cid' => $cashAccountId]);
 
             self::$pdo->commit();
         } catch (\Throwable $e) {
