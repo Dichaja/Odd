@@ -1216,7 +1216,7 @@
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium text-gray-600">Transfer Type:</span>
-                        <span class="text-sm font-semibold text-gray-900">Send to ${walletTypeText}</span>
+                        <span class="text-sm font-semibold text-gray-900">Zzimba Credit - ${walletTypeText}</span>
                     </div>
                     
                     <div class="flex justify-between items-start">
