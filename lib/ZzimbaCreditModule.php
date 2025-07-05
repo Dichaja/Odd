@@ -889,7 +889,7 @@ final class CreditService
             'entry_type' => 'DEBIT',
             'amount' => $amount,
             'balance_after' => $fromBal - $amount,
-            'entry_note' => 'Zzimba Credit transfer initiated for ' . $toNo
+            'entry_note' => 'Zzimba Credit transfer to ' . $toNo
         ]);
         self::updateWalletBalance($fromWalletId, $fromBal - $amount);
 
