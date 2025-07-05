@@ -889,7 +889,7 @@ final class CreditService
             'entry_type' => 'DEBIT',
             'amount' => $amount,
             'balance_after' => $fromBal - $amount,
-            'entry_note' => 'Sending credit to Account No. ' . $toNo
+            'entry_note' => 'Zzimba Credit transfer initiated for ' . $toNo
         ]);
         self::updateWalletBalance($fromWalletId, $fromBal - $amount);
 
@@ -900,7 +900,7 @@ final class CreditService
             'entry_type' => 'CREDIT',
             'amount' => $amount,
             'balance_after' => $withBal + $amount,
-            'entry_note' => 'Account No. ' . $fromNo . ' sending credit to Account No. ' . $toNo,
+            'entry_note' => 'Credit transfer instruction from ' . $fromNo,
             'ref_entry_id' => $debitSenderId
         ]);
         self::updateWalletBalance($withholdingId, $withBal + $amount);
@@ -912,7 +912,7 @@ final class CreditService
             'entry_type' => 'DEBIT',
             'amount' => $amount,
             'balance_after' => ($withBal + $amount) - $amount,
-            'entry_note' => 'Account No. ' . $fromNo . ' sending credit to Account No. ' . $toNo,
+            'entry_note' => 'Credit transfer executed for ' . $toNo,
             'ref_entry_id' => $creditWithId
         ]);
         self::updateWalletBalance($withholdingId, ($withBal + $amount) - $amount);
@@ -924,7 +924,7 @@ final class CreditService
             'entry_type' => 'CREDIT',
             'amount' => $amount,
             'balance_after' => $toBal + $amount,
-            'entry_note' => 'Received from Account No. ' . $fromNo,
+            'entry_note' => 'Zzimba Credit transfer from ' . $fromNo,
             'ref_entry_id' => $debitWithId
         ]);
         self::updateWalletBalance($toWalletId, $toBal + $amount);
