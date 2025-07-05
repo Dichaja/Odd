@@ -342,7 +342,7 @@ final class CreditService
                     'balance_after' => $newUserBal,
                     'entry_note' => 'Credited User Wallet from Withholding',
                     'ref_entry_id' => $debitId
-                ]); 
+                ]);
                 self::$pdo->prepare("
                     UPDATE zzimba_wallets
                        SET current_balance = :bal, updated_at = NOW()
