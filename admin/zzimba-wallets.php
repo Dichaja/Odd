@@ -78,20 +78,74 @@ function formatCurrency($amount)
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
             <div class="border-b border-gray-200">
-                <nav class="flex space-x-8 px-6 overflow-x-auto pb-2" aria-label="Tabs">
-                    <button id="wallets-tab"
-                        class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-primary text-primary"
-                        onclick="switchTab('wallets')">
-                        <i class="fas fa-wallet mr-2"></i>
-                        Wallet Management
-                    </button>
-                    <button id="platform-accounts-tab"
-                        class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
-                        onclick="switchTab('platform-accounts')">
-                        <i class="fas fa-cogs mr-2"></i>
-                        Platform Account Settings
-                    </button>
-                </nav>
+                <div class="hidden md:block">
+                    <nav class="flex space-x-8 px-6 overflow-x-auto pb-2" aria-label="Tabs">
+                        <button id="platform-tab"
+                            class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-primary text-primary"
+                            onclick="switchOwnerTab('PLATFORM')">
+                            <i class="fas fa-building mr-2"></i>Platform Wallets
+                        </button>
+                        <button id="user-tab"
+                            class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
+                            onclick="switchOwnerTab('USER')">
+                            <i class="fas fa-user mr-2"></i>User Wallets
+                        </button>
+                        <button id="vendor-tab"
+                            class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
+                            onclick="switchOwnerTab('VENDOR')">
+                            <i class="fas fa-store mr-2"></i>Vendor Wallets
+                        </button>
+                        <button id="settings-tab"
+                            class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
+                            onclick="switchOwnerTab('settings')">
+                            <i class="fas fa-cogs mr-2"></i>Platform Settings
+                        </button>
+                    </nav>
+                </div>
+
+                <div class="md:hidden px-6 py-4">
+                    <div class="relative">
+                        <button id="mobile-tab-toggle"
+                            class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-building text-primary"></i>
+                                <span id="mobile-tab-label" class="font-medium text-gray-900">Platform Wallets</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"
+                                id="mobile-tab-chevron"></i>
+                        </button>
+
+                        <div id="mobile-tab-dropdown"
+                            class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+                            <div class="py-2">
+                                <button
+                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                    data-tab="PLATFORM">
+                                    <i class="fas fa-building text-cyan-600"></i>
+                                    <span>Platform Wallets</span>
+                                </button>
+                                <button
+                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                    data-tab="USER">
+                                    <i class="fas fa-user text-green-600"></i>
+                                    <span>User Wallets</span>
+                                </button>
+                                <button
+                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                    data-tab="VENDOR">
+                                    <i class="fas fa-store text-purple-600"></i>
+                                    <span>Vendor Wallets</span>
+                                </button>
+                                <button
+                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                    data-tab="settings">
+                                    <i class="fas fa-cogs text-gray-600"></i>
+                                    <span>Platform Settings</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -160,20 +214,19 @@ function formatCurrency($amount)
                                             class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
                                             <input type="checkbox"
                                                 class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
+                                                data-column="entries" checked>
+                                            <span class="text-sm text-gray-700">Recent Entries</span>
+                                        </label>
+                                        <label
+                                            class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                            <input type="checkbox"
+                                                class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
                                                 data-column="actions" checked>
                                             <span class="text-sm text-gray-700">Actions</span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
-
-                            <select id="filterWallets"
-                                class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium w-full sm:w-auto">
-                                <option value="all">All Types</option>
-                                <option value="USER">User Wallets</option>
-                                <option value="VENDOR">Vendor Wallets</option>
-                                <option value="PLATFORM">Platform Wallets</option>
-                            </select>
 
                             <button id="create-wallet-btn"
                                 class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 w-full sm:w-auto">
@@ -186,32 +239,37 @@ function formatCurrency($amount)
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="hidden lg:block overflow-x-auto">
-                    <table class="w-full" id="wallets-table">
-                        <thead class="bg-user-accent border-b border-gray-200">
-                            <tr>
-                                <th data-column="details"
-                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Wallet Details</th>
-                                <th data-column="owner"
-                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Owner Type</th>
-                                <th data-column="status" id="statusHeader"
-                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider cursor-pointer whitespace-nowrap">
-                                    Status
-                                    <i id="statusSortIcon" class="fas fa-sort text-gray-400 ml-1"></i>
-                                </th>
-                                <th data-column="balance"
-                                    class="px-3 py-2 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Balance</th>
-                                <th data-column="actions"
-                                    class="px-3 py-2 text-center text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="wallets-table-body" class="divide-y divide-gray-100">
-                        </tbody>
-                    </table>
+                <div class="hidden lg:block">
+                    <div class="overflow-x-auto max-h-[70vh]">
+                        <table class="w-full" id="wallets-table">
+                            <thead class="bg-user-accent border-b border-gray-200 sticky top-0">
+                                <tr>
+                                    <th data-column="details"
+                                        class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                        Wallet Details</th>
+                                    <th data-column="owner"
+                                        class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                        Owner Type</th>
+                                    <th data-column="status" id="statusHeader"
+                                        class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider cursor-pointer whitespace-nowrap">
+                                        Status
+                                        <i id="statusSortIcon" class="fas fa-sort text-gray-400 ml-1"></i>
+                                    </th>
+                                    <th data-column="balance"
+                                        class="px-3 py-2 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                        Balance</th>
+                                    <th data-column="entries"
+                                        class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                        Recent Entries</th>
+                                    <th data-column="actions"
+                                        class="px-3 py-2 text-center text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="wallets-table-body" class="divide-y divide-gray-100">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="lg:hidden p-4 space-y-4" id="wallets-mobile">
@@ -224,9 +282,8 @@ function formatCurrency($amount)
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">No wallets found</h3>
                     <p class="text-gray-500 mb-6">Create a new wallet or adjust your search filters</p>
                     <button onclick="showCreateWalletForm()"
-                        class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
-                        Create Wallet
-                    </button>
+                        class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">Create
+                        Wallet</button>
                 </div>
             </div>
         </div>
@@ -297,30 +354,32 @@ function formatCurrency($amount)
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="hidden lg:block overflow-x-auto">
-                    <table class="w-full" id="platform-settings-table">
-                        <thead class="bg-user-accent border-b border-gray-200">
-                            <tr>
-                                <th data-column="platformaccount"
-                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Platform Account</th>
-                                <th data-column="type"
-                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Type</th>
-                                <th data-column="created"
-                                    class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Created</th>
-                                <th data-column="actions"
-                                    class="px-3 py-2 text-center text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="platform-settings-table-body" class="divide-y divide-gray-100">
-                        </tbody>
-                    </table>
+                <div class="hidden lg:block">
+                    <div class="overflow-x-auto max-h-[70vh]">
+                        <table class="w-full" id="platform-settings-table">
+                            <thead class="bg-user-accent border-b border-gray-200 sticky top-0">
+                                <tr>
+                                    <th data-column="platformaccount"
+                                        class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                        Platform Account</th>
+                                    <th data-column="type"
+                                        class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                        Type</th>
+                                    <th data-column="created"
+                                        class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                        Created</th>
+                                    <th data-column="actions"
+                                        class="px-3 py-2 text-center text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="platform-settings-table-body" class="divide-y divide-gray-100">
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="lg:hidden p-4 space-y-4" id="platform-settings-mobile">
+                <div class="lg:hidden p-4 space-y-4 max-h-[70vh] overflow-y-auto" id="platform-settings-mobile">
                 </div>
 
                 <div id="platform-settings-empty-state" class="hidden text-center py-16">
@@ -330,9 +389,8 @@ function formatCurrency($amount)
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">No platform settings found</h3>
                     <p class="text-gray-500 mb-6">Add a new platform account setting to get started</p>
                     <button onclick="showCreatePlatformSettingForm()"
-                        class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
-                        Add Setting
-                    </button>
+                        class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">Add
+                        Setting</button>
                 </div>
             </div>
         </div>
@@ -430,61 +488,59 @@ function formatCurrency($amount)
                     </button>
                 </div>
             </div>
+        </div>
 
-            <div class="flex-1 overflow-hidden">
-                <div id="statementLoading" class="p-6">
-                    <div class="animate-pulse space-y-4">
-                        <div class="h-4 bg-gray-200 rounded w-full"></div>
-                        <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-                        <div class="h-4 bg-gray-200 rounded w-5/6"></div>
-                    </div>
+        <div class="flex-1 overflow-auto">
+            <div id="statementLoading" class="p-6">
+                <div class="animate-pulse space-y-4">
+                    <div class="h-4 bg-gray-200 rounded w-full"></div>
+                    <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div class="h-4 bg-gray-200 rounded w-5/6"></div>
                 </div>
+            </div>
 
-                <div id="statementTable" class="hidden lg:block overflow-auto flex-1 h-[100vh]">
-                    <table class="w-full" id="statementTableElement">
-                        <thead class="bg-white border-b border-gray-200 sticky top-0">
-                            <tr>
-                                <th data-column="datetime"
-                                    class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Date/Time</th>
-                                <th data-column="entryid"
-                                    class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Entry ID
-                                </th>
-                                <th data-column="description"
-                                    class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Description</th>
-                                <th data-column="debit"
-                                    class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Debit</th>
-                                <th data-column="credit"
-                                    class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Credit</th>
-                                <th data-column="balance"
-                                    class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Balance</th>
-                                <th data-column="related"
-                                    class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                    Related Entries</th>
-                            </tr>
-                        </thead>
-                        <tbody id="statementTableBody" class="divide-y divide-gray-100">
-                        </tbody>
-                    </table>
+            <div id="statementTable" class="hidden lg:block overflow-auto flex-1 h-full">
+                <table class="w-full" id="statementTableElement">
+                    <thead class="bg-white border-b border-gray-200 sticky top-0">
+                        <tr>
+                            <th data-column="datetime"
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Date/Time</th>
+                            <th data-column="entryid"
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Entry ID</th>
+                            <th data-column="description"
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Description</th>
+                            <th data-column="debit"
+                                class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Debit</th>
+                            <th data-column="credit"
+                                class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Credit</th>
+                            <th data-column="balance"
+                                class="px-4 py-3 text-right text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Balance</th>
+                            <th data-column="related"
+                                class="px-4 py-3 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                                Related Entries</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statementTableBody" class="divide-y divide-gray-100">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="statementMobile" class="lg:hidden p-4 space-y-4 overflow-auto flex-1 h-full">
+            </div>
+
+            <div id="statementEmpty" class="hidden text-center py-16">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-receipt text-gray-400 text-2xl"></i>
                 </div>
-
-                <div id="statementMobile"
-                    class="hidden lg:hidden p-4 space-y-4 overflow-auto flex-1 h-[100vh]">
-
-                    <div id="statementEmpty" class="hidden text-center py-16">
-                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-receipt text-gray-400 text-2xl"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No transactions found</h3>
-                        <p class="text-gray-500">No transactions available for the selected period</p>
-                    </div>
-                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No transactions found</h3>
+                <p class="text-gray-500">No transactions available for the selected period</p>
             </div>
         </div>
     </div>
@@ -525,13 +581,10 @@ function formatCurrency($amount)
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex gap-3">
                     <button onclick="hideCreateWalletForm()"
-                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
-                        Cancel
-                    </button>
+                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
                     <button id="submitWalletForm"
-                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25">
-                        Create Wallet
-                    </button>
+                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25">Create
+                        Wallet</button>
                 </div>
             </div>
         </div>
@@ -539,8 +592,7 @@ function formatCurrency($amount)
 </div>
 
 <div id="editWalletOffcanvas" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="hideEditWalletForm()">
-    </div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="hideEditWalletForm()"></div>
     <div
         class="absolute inset-y-0 right-0 w-full max-w-lg bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-out">
         <div class="flex flex-col h-full">
@@ -586,8 +638,7 @@ function formatCurrency($amount)
                                 <input type="radio" name="editWalletStatus" value="active" class="sr-only">
                                 <div
                                     class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                    </div>
+                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
                                 </div>
                                 <div class="text-sm font-medium text-gray-900">Active</div>
                             </label>
@@ -597,8 +648,7 @@ function formatCurrency($amount)
                                 <input type="radio" name="editWalletStatus" value="inactive" class="sr-only">
                                 <div
                                     class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                    </div>
+                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
                                 </div>
                                 <div class="text-sm font-medium text-gray-900">Inactive</div>
                             </label>
@@ -608,8 +658,7 @@ function formatCurrency($amount)
                                 <input type="radio" name="editWalletStatus" value="suspended" class="sr-only">
                                 <div
                                     class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                    </div>
+                                    <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
                                 </div>
                                 <div class="text-sm font-medium text-gray-900">Suspended</div>
                             </label>
@@ -621,13 +670,10 @@ function formatCurrency($amount)
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex gap-3">
                     <button onclick="hideEditWalletForm()"
-                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
-                        Cancel
-                    </button>
+                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
                     <button id="updateWalletForm"
-                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25">
-                        Update Wallet
-                    </button>
+                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25">Update
+                        Wallet</button>
                 </div>
             </div>
         </div>
@@ -684,13 +730,10 @@ function formatCurrency($amount)
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex gap-3">
                     <button onclick="hideCreatePlatformSettingForm()"
-                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
-                        Cancel
-                    </button>
+                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
                     <button id="submitPlatformSettingForm"
-                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25">
-                        Add Setting
-                    </button>
+                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25">Add
+                        Setting</button>
                 </div>
             </div>
         </div>
@@ -722,8 +765,7 @@ function formatCurrency($amount)
                     <input type="hidden" id="editSettingAccountId">
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Platform
-                            Account</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Platform Account</label>
                         <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700">
                             <span id="editSettingAccountDisplay" class="font-medium"></span>
                         </div>
@@ -748,13 +790,10 @@ function formatCurrency($amount)
             <div class="p-6 border-t border-gray-200 bg-gray-50">
                 <div class="flex gap-3">
                     <button onclick="hideEditPlatformSettingForm()"
-                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
-                        Cancel
-                    </button>
+                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
                     <button id="updatePlatformSettingForm"
-                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25">
-                        Update Setting
-                    </button>
+                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25">Update
+                        Setting</button>
                 </div>
             </div>
         </div>
@@ -777,13 +816,9 @@ function formatCurrency($amount)
             <p class="text-gray-600 mb-6" id="deleteMessage">Are you sure you want to delete this item?</p>
             <div class="flex gap-3">
                 <button onclick="hideDeleteConfirm()"
-                    class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
-                    Cancel
-                </button>
+                    class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
                 <button id="confirmDeleteBtn"
-                    class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium">
-                    Delete
-                </button>
+                    class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium">Delete</button>
             </div>
         </div>
     </div>
@@ -794,15 +829,16 @@ function formatCurrency($amount)
     let wallets = [];
     let platformSettings = [];
     let statusSortAsc = true;
-    let currentTab = 'wallets';
+    let currentOwnerTab = 'PLATFORM';
     let currentWalletStatement = [];
     let currentStatementWalletId = null;
+    let expandedEntries = new Set();
 
     const WALLETS_COLUMNS_STORAGE_KEY = 'zzimba_wallets_columns';
     const STATEMENT_COLUMNS_STORAGE_KEY = 'zzimba_statement_columns';
     const PLATFORM_SETTINGS_COLUMNS_STORAGE_KEY = 'zzimba_platform_settings_columns';
 
-    let visibleWalletColumns = ['details', 'owner', 'status', 'balance', 'actions'];
+    let visibleWalletColumns = ['details', 'owner', 'status', 'balance', 'entries', 'actions'];
     let visibleStatementColumns = ['datetime', 'entryid', 'description', 'debit', 'credit', 'balance', 'related'];
     let visiblePlatformSettingsColumns = ['platformaccount', 'type', 'created', 'actions'];
 
@@ -846,26 +882,64 @@ function formatCurrency($amount)
         return `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${className}">${typeText}</span>`;
     }
 
-    function switchTab(tabName) {
+    function switchOwnerTab(tabName) {
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('border-b-primary', 'text-primary');
             btn.classList.add('border-b-transparent', 'text-gray-500');
         });
-        const activeTab = document.getElementById(`${tabName}-tab`);
-        activeTab.classList.remove('border-b-transparent', 'text-gray-500');
-        activeTab.classList.add('border-b-primary', 'text-primary');
 
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-        document.getElementById(`${tabName}-content`).classList.remove('hidden');
-
-        currentTab = tabName;
-
-        if (tabName === 'wallets') {
-            fetchWallets();
-        } else if (tabName === 'platform-accounts') {
+        if (tabName === 'settings') {
+            document.getElementById('wallets-content').classList.add('hidden');
+            document.getElementById('platform-accounts-content').classList.remove('hidden');
+            const activeTab = document.getElementById('settings-tab');
+            if (activeTab) {
+                activeTab.classList.remove('border-b-transparent', 'text-gray-500');
+                activeTab.classList.add('border-b-primary', 'text-primary');
+            }
             fetchPlatformSettings();
             loadPlatformAccountsDropdown();
+            updateMobileTabLabel('Platform Settings', 'fas fa-cogs');
+        } else {
+            document.getElementById('platform-accounts-content').classList.add('hidden');
+            document.getElementById('wallets-content').classList.remove('hidden');
+
+            const tabId = `${tabName.toLowerCase()}-tab`;
+            const activeTab = document.getElementById(tabId);
+            if (activeTab) {
+                activeTab.classList.remove('border-b-transparent', 'text-gray-500');
+                activeTab.classList.add('border-b-primary', 'text-primary');
+            }
+
+            currentOwnerTab = tabName;
+            renderFilteredWallets();
+
+            const tabLabels = {
+                'USER': { label: 'User Wallets', icon: 'fas fa-user' },
+                'VENDOR': { label: 'Vendor Wallets', icon: 'fas fa-store' },
+                'PLATFORM': { label: 'Platform Wallets', icon: 'fas fa-building' }
+            };
+            const tabInfo = tabLabels[tabName] || tabLabels['PLATFORM'];
+            updateMobileTabLabel(tabInfo.label, tabInfo.icon);
         }
+    }
+
+    function updateMobileTabLabel(label, icon) {
+        const labelElement = document.getElementById('mobile-tab-label');
+        const toggleButton = document.getElementById('mobile-tab-toggle');
+        if (labelElement && toggleButton) {
+            labelElement.textContent = label;
+            const iconElement = toggleButton.querySelector('i');
+            if (iconElement) {
+                iconElement.className = `${icon} text-primary`;
+            }
+        }
+    }
+
+    function toggleMobileTabDropdown() {
+        const dropdown = document.getElementById('mobile-tab-dropdown');
+        const chevron = document.getElementById('mobile-tab-chevron');
+        dropdown.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
     }
 
     function updateQuickStats() {
@@ -897,7 +971,7 @@ function formatCurrency($amount)
             const data = await res.json();
             if (data.success) {
                 wallets = data.wallets || [];
-                renderWalletsTable(wallets);
+                renderFilteredWallets();
                 updateQuickStats();
                 adjustTableFontSize();
             }
@@ -948,6 +1022,21 @@ function formatCurrency($amount)
         });
     }
 
+    function renderFilteredWallets() {
+        let filteredWallets = wallets.filter(w => w.owner_type === currentOwnerTab);
+
+        const query = document.getElementById('searchWallets').value.trim().toLowerCase();
+        if (query) {
+            filteredWallets = filteredWallets.filter(w =>
+                w.wallet_name.toLowerCase().includes(query) ||
+                w.wallet_number.toLowerCase().includes(query)
+            );
+        }
+
+        renderWalletsTable(filteredWallets);
+        adjustTableFontSize();
+    }
+
     function renderWalletsTable(list) {
         const tbody = document.getElementById('wallets-table-body');
         const mobile = document.getElementById('wallets-mobile');
@@ -973,105 +1062,218 @@ function formatCurrency($amount)
                 displayName = displayName.substring(0, maxDetailsLength) + '...';
             }
 
+            const recentEntries = renderRecentEntries(wallet.wallet_number, wallet.recent_entries || []);
+
             tr.innerHTML = `
-                            <td data-column="details" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
+                <td data-column="details" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
                     wallet.owner_type === 'VENDOR' ? 'bg-purple-100' : 'bg-cyan-100'
                 }">
-                                        <i class="${wallet.owner_type === 'USER' ? 'fas fa-user text-green-600' :
+                            <i class="${wallet.owner_type === 'USER' ? 'fas fa-user text-green-600' :
                     wallet.owner_type === 'VENDOR' ? 'fas fa-store text-purple-600' : 'fas fa-building text-cyan-600'
                 } text-xs"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="text-xs font-medium text-gray-900 leading-tight" title="${wallet.wallet_name}">${displayName}</div>
-                                        <div class="text-xs text-gray-500 mt-0.5 font-mono">${wallet.wallet_number}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td data-column="owner" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                                ${getOwnerTypeBadge(wallet.owner_type)}
-                            </td>
-                            <td data-column="status" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                                ${getStatusBadge(wallet.status)}
-                            </td>
-                            <td data-column="balance" class="px-3 py-2 text-right text-xs font-semibold text-gray-900 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                                UGX ${formatCurrency(wallet.current_balance)}
-                            </td>
-                            <td data-column="actions" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                                <div class="flex items-center justify-center gap-1">
-                                    <button onclick="showWalletStatement('${wallet.wallet_number}', '${wallet.wallet_name}')" 
-                                        class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" 
-                                        title="View Statement">
-                                        <i class="fas fa-receipt text-xs"></i>
-                                    </button>
-                                    <button onclick="showEditWalletForm('${wallet.wallet_number}')" 
-                                        class="w-6 h-6 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" 
-                                        title="Edit Wallet">
-                                        <i class="fas fa-edit text-xs"></i>
-                                    </button>
-                                    ${wallet.owner_type === 'PLATFORM' ? `
-                                        <button onclick="showDeleteConfirm('wallet', '${wallet.wallet_number}')" 
-                                            class="w-6 h-6 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" 
-                                            title="Delete Wallet">
-                                            <i class="fas fa-trash-alt text-xs"></i>
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </td>`;
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-medium text-gray-900 leading-tight" title="${wallet.wallet_name}">${displayName}</div>
+                            <div class="text-xs text-gray-500 mt-0.5 font-mono">${wallet.wallet_number}</div>
+                        </div>
+                    </div>
+                </td>
+                <td data-column="owner" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                    ${getOwnerTypeBadge(wallet.owner_type)}
+                </td>
+                <td data-column="status" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                    ${getStatusBadge(wallet.status)}
+                </td>
+                <td data-column="balance" class="px-3 py-2 text-right text-xs font-semibold text-gray-900 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                    UGX ${formatCurrency(wallet.current_balance)}
+                </td>
+                <td data-column="entries" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                    ${recentEntries}
+                </td>
+                <td data-column="actions" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                    <div class="flex items-center justify-center gap-1">
+                        <button onclick="showWalletStatement('${wallet.wallet_number}', '${wallet.wallet_name}')" 
+                            class="w-6 h-6 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" 
+                            title="View Statement">
+                            <i class="fas fa-receipt text-xs"></i>
+                        </button>
+                        <button onclick="showEditWalletForm('${wallet.wallet_number}')" 
+                            class="w-6 h-6 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" 
+                            title="Edit Wallet">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        ${wallet.owner_type === 'PLATFORM' ? `
+                            <button onclick="showDeleteConfirm('wallet', '${wallet.wallet_number}')" 
+                                class="w-6 h-6 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" 
+                                title="Delete Wallet">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </td>`;
             tbody.appendChild(tr);
 
             const card = document.createElement('div');
             card.className = 'bg-gray-50 rounded-xl p-4 border border-gray-100';
             card.innerHTML = `
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex items-center gap-3 min-w-0 flex-1">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
                     wallet.owner_type === 'VENDOR' ? 'bg-purple-100' : 'bg-cyan-100'
                 }">
-                                        <i class="${wallet.owner_type === 'USER' ? 'fas fa-user text-green-600' :
+                            <i class="${wallet.owner_type === 'USER' ? 'fas fa-user text-green-600' :
                     wallet.owner_type === 'VENDOR' ? 'fas fa-store text-purple-600' : 'fas fa-building text-cyan-600'
                 }"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="font-medium text-gray-900 text-sm truncate" title="${wallet.wallet_name}">${wallet.wallet_name}</div>
-                                        <div class="text-xs text-gray-500 font-mono">${wallet.wallet_number}</div>
-                                    </div>
-                                </div>
-                                ${getOwnerTypeBadge(wallet.owner_type)}
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 text-xs mb-4">
-                                <div>
-                                    <span class="text-gray-500 uppercase tracking-wide">Status</span>
-                                    <div class="mt-1">${getStatusBadge(wallet.status)}</div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-gray-500 uppercase tracking-wide">Balance</span>
-                                    <div class="font-semibold text-gray-900 mt-1">UGX ${formatCurrency(wallet.current_balance)}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="showWalletStatement('${wallet.wallet_number}', '${wallet.wallet_name}')" 
-                                    class="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
-                                    <i class="fas fa-receipt mr-1"></i>Statement
-                                </button>
-                                <button onclick="showEditWalletForm('${wallet.wallet_number}')" 
-                                    class="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                                    <i class="fas fa-edit mr-1"></i>Edit
-                                </button>
-                                ${wallet.owner_type === 'PLATFORM' ? `
-                                    <button onclick="showDeleteConfirm('wallet', '${wallet.wallet_number}')" 
-                                        class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
-                                        <i class="fas fa-trash-alt mr-1"></i>Delete
-                                    </button>
-                                ` : ''}
-                            </div>`;
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-medium text-gray-900 text-sm truncate" title="${wallet.wallet_name}">${wallet.wallet_name}</div>
+                            <div class="text-xs text-gray-500 font-mono">${wallet.wallet_number}</div>
+                        </div>
+                    </div>
+                    ${getOwnerTypeBadge(wallet.owner_type)}
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 text-xs mb-4">
+                    <div>
+                        <span class="text-gray-500 uppercase tracking-wide">Status</span>
+                        <div class="mt-1">${getStatusBadge(wallet.status)}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-gray-500 uppercase tracking-wide">Balance</span>
+                        <div class="font-semibold text-gray-900 mt-1">UGX ${formatCurrency(wallet.current_balance)}</div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <span class="text-gray-500 uppercase tracking-wide text-xs">Recent Entries</span>
+                    <div class="mt-2">${renderRecentEntriesMobile(wallet.wallet_number, wallet.recent_entries || [])}</div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="showWalletStatement('${wallet.wallet_number}', '${wallet.wallet_name}')" 
+                        class="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
+                        <i class="fas fa-receipt mr-1"></i>Statement
+                    </button>
+                    <button onclick="showEditWalletForm('${wallet.wallet_number}')" 
+                        class="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                    ${wallet.owner_type === 'PLATFORM' ? `
+                        <button onclick="showDeleteConfirm('wallet', '${wallet.wallet_number}')" 
+                            class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
+                            <i class="fas fa-trash-alt mr-1"></i>Delete
+                        </button>
+                    ` : ''}
+                </div>`;
             mobile.appendChild(card);
         });
 
         applyColumnVisibility('wallets-table', visibleWalletColumns);
+    }
+
+    function renderRecentEntries(walletId, entries) {
+        if (!entries || entries.length === 0) {
+            return '<span class="text-gray-400 text-xs">No recent entries</span>';
+        }
+
+        const maxVisible = 2;
+        const visibleEntries = entries.slice(0, maxVisible);
+        const hasMore = entries.length > maxVisible;
+        const isExpanded = expandedEntries.has(walletId);
+
+        let html = '<div class="space-y-1">';
+
+        const entriesToShow = isExpanded ? entries : visibleEntries;
+        entriesToShow.forEach(entry => {
+            const entryTypeClass = entry.entry_type === 'CREDIT' ? 'text-green-600' : 'text-red-600';
+            const sign = entry.entry_type === 'CREDIT' ? '+' : '-';
+            const date = new Date(entry.created_at).toLocaleDateString('en-GB', {
+                month: 'short',
+                day: 'numeric'
+            });
+
+            html += `
+                <div class="flex items-center justify-between text-xs bg-gray-50 rounded px-2 py-1">
+                    <span class="text-gray-600 truncate flex-1 mr-2">${entry.entry_note || 'Transaction'}</span>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="${entryTypeClass} font-medium">${sign}${formatCurrency(entry.amount)}</span>
+                        <span class="text-gray-400">${date}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        if (hasMore) {
+            html += `
+                <button onclick="toggleEntriesExpansion('${walletId}')" 
+                    class="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1 mt-1">
+                    <i class="fas fa-chevron-${isExpanded ? 'up' : 'down'}"></i>
+                    ${isExpanded ? 'Show less' : `Show ${entries.length - maxVisible} more`}
+                </button>
+            `;
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function renderRecentEntriesMobile(walletId, entries) {
+        if (!entries || entries.length === 0) {
+            return '<span class="text-gray-400 text-xs">No recent entries</span>';
+        }
+
+        const maxVisible = 3;
+        const visibleEntries = entries.slice(0, maxVisible);
+        const hasMore = entries.length > maxVisible;
+        const isExpanded = expandedEntries.has(walletId);
+
+        let html = '<div class="space-y-2">';
+
+        const entriesToShow = isExpanded ? entries : visibleEntries;
+        entriesToShow.forEach(entry => {
+            const entryTypeClass = entry.entry_type === 'CREDIT' ? 'text-green-600' : 'text-red-600';
+            const sign = entry.entry_type === 'CREDIT' ? '+' : '-';
+            const date = new Date(entry.created_at).toLocaleDateString('en-GB', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            html += `
+                <div class="bg-white rounded-lg p-2 border border-gray-100">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-gray-700 text-xs font-medium truncate flex-1 mr-2">${entry.entry_note || 'Transaction'}</span>
+                        <span class="${entryTypeClass} font-semibold text-xs">${sign}${formatCurrency(entry.amount)}</span>
+                    </div>
+                    <div class="text-xs text-gray-400">${date}</div>
+                </div>
+            `;
+        });
+
+        if (hasMore) {
+            html += `
+                <button onclick="toggleEntriesExpansion('${walletId}')" 
+                    class="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1 w-full justify-center py-2 bg-primary/5 rounded-lg">
+                    <i class="fas fa-chevron-${isExpanded ? 'up' : 'down'}"></i>
+                    ${isExpanded ? 'Show less' : `Show ${entries.length - maxVisible} more`}
+                </button>
+            `;
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function toggleEntriesExpansion(walletId) {
+        if (expandedEntries.has(walletId)) {
+            expandedEntries.delete(walletId);
+        } else {
+            expandedEntries.add(walletId);
+        }
+        renderFilteredWallets();
     }
 
     function renderPlatformSettingsTable(list) {
@@ -1102,72 +1304,72 @@ function formatCurrency($amount)
             const tr = document.createElement('tr');
             tr.className = `${index % 2 === 0 ? 'bg-user-content' : 'bg-white'} hover:bg-user-secondary/20 transition-colors`;
             tr.innerHTML = `
-                            <td data-column="platformaccount" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-lg flex items-center justify-center bg-cyan-100">
-                                        <i class="fas fa-building text-cyan-600 text-xs"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="text-xs font-medium text-gray-900 leading-tight" title="${walletName}">${displayName}</div>
-                                        <div class="text-xs text-gray-500 mt-0.5 font-mono">${setting.wallet_number}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td data-column="type" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                                ${getTypeBadge(setting.type)}
-                            </td>
-                            <td data-column="created" class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                                ${new Date(setting.created_at).toLocaleDateString()}
-                            </td>
-                            <td data-column="actions" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                                <div class="flex items-center justify-center gap-1">
-                                    <button onclick="showEditPlatformSettingForm(${setting.id})" 
-                                        class="w-6 h-6 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" 
-                                        title="Edit Setting">
-                                        <i class="fas fa-edit text-xs"></i>
-                                    </button>
-                                    <button onclick="showDeleteConfirm('setting', ${setting.id})" 
-                                        class="w-6 h-6 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" 
-                                        title="Delete Setting">
-                                        <i class="fas fa-trash-alt text-xs"></i>
-                                    </button>
-                                </div>
-                            </td>`;
+                <td data-column="platformaccount" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-lg flex items-center justify-center bg-cyan-100">
+                            <i class="fas fa-building text-cyan-600 text-xs"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-medium text-gray-900 leading-tight" title="${walletName}">${displayName}</div>
+                            <div class="text-xs text-gray-500 mt-0.5 font-mono">${setting.wallet_number}</div>
+                        </div>
+                    </div>
+                </td>
+                <td data-column="type" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                    ${getTypeBadge(setting.type)}
+                </td>
+                <td data-column="created" class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                    ${new Date(setting.created_at).toLocaleDateString()}
+                </td>
+                <td data-column="actions" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                    <div class="flex items-center justify-center gap-1">
+                        <button onclick="showEditPlatformSettingForm(${setting.id})" 
+                            class="w-6 h-6 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" 
+                            title="Edit Setting">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        <button onclick="showDeleteConfirm('setting', ${setting.id})" 
+                            class="w-6 h-6 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" 
+                            title="Delete Setting">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                    </div>
+                </td>`;
             tbody.appendChild(tr);
 
             const card = document.createElement('div');
             card.className = 'bg-gray-50 rounded-xl p-4 border border-gray-100';
             card.innerHTML = `
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex items-center gap-3 min-w-0 flex-1">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-cyan-100">
-                                        <i class="fas fa-building text-cyan-600"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="font-medium text-gray-900 text-sm truncate" title="${walletName}">${walletName}</div>
-                                        <div class="text-xs text-gray-500 font-mono">${setting.platform_account_id}</div>
-                                    </div>
-                                </div>
-                                ${getTypeBadge(setting.type)}
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 text-xs mb-4">
-                                <div>
-                                    <span class="text-gray-500 uppercase tracking-wide">Created</span>
-                                    <div class="font-semibold text-gray-900 mt-1">${new Date(setting.created_at).toLocaleDateString()}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="flex flex-wrap gap-2">
-                                <button onclick="showEditPlatformSettingForm(${setting.id})" 
-                                    class="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                                    <i class="fas fa-edit mr-1"></i>Edit
-                                </button>
-                                <button onclick="showDeleteConfirm('setting', ${setting.id})" 
-                                    class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
-                                    <i class="fas fa-trash-alt mr-1"></i>Delete
-                                </button>
-                            </div>`;
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-cyan-100">
+                            <i class="fas fa-building text-cyan-600"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-medium text-gray-900 text-sm truncate" title="${walletName}">${walletName}</div>
+                            <div class="text-xs text-gray-500 font-mono">${setting.platform_account_id}</div>
+                        </div>
+                    </div>
+                    ${getTypeBadge(setting.type)}
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 text-xs mb-4">
+                    <div>
+                        <span class="text-gray-500 uppercase tracking-wide">Created</span>
+                        <div class="font-semibold text-gray-900 mt-1">${new Date(setting.created_at).toLocaleDateString()}</div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="showEditPlatformSettingForm(${setting.id})" 
+                        class="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                    <button onclick="showDeleteConfirm('setting', ${setting.id})" 
+                        class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
+                        <i class="fas fa-trash-alt mr-1"></i>Delete
+                    </button>
+                </div>`;
             mobile.appendChild(card);
         });
         applyColumnVisibility('platform-settings-table', visiblePlatformSettingsColumns);
@@ -1259,6 +1461,14 @@ function formatCurrency($amount)
         selector.classList.toggle('hidden');
     }
 
+    function disableBackgroundScroll() {
+        document.body.style.overflow = 'hidden';
+    }
+
+    function enableBackgroundScroll() {
+        document.body.style.overflow = '';
+    }
+
     document.addEventListener('click', function (event) {
         const walletSelector = document.getElementById('columnSelector');
         const walletBtn = document.getElementById('viewColumnsBtn');
@@ -1266,6 +1476,8 @@ function formatCurrency($amount)
         const statementBtn = document.getElementById('viewStatementColumnsBtn');
         const platformSettingsSelector = document.getElementById('platformSettingsColumnSelector');
         const platformSettingsBtn = document.getElementById('viewPlatformSettingsColumnsBtn');
+        const mobileDropdown = document.getElementById('mobile-tab-dropdown');
+        const mobileToggle = document.getElementById('mobile-tab-toggle');
 
         if (walletSelector && walletBtn && !walletSelector.contains(event.target) && !walletBtn.contains(event.target)) {
             walletSelector.classList.add('hidden');
@@ -1277,6 +1489,11 @@ function formatCurrency($amount)
 
         if (platformSettingsSelector && platformSettingsBtn && !platformSettingsSelector.contains(event.target) && !platformSettingsBtn.contains(event.target)) {
             platformSettingsSelector.classList.add('hidden');
+        }
+
+        if (mobileDropdown && mobileToggle && !mobileDropdown.contains(event.target) && !mobileToggle.contains(event.target)) {
+            mobileDropdown.classList.add('hidden');
+            document.getElementById('mobile-tab-chevron').classList.remove('rotate-180');
         }
     });
 
@@ -1348,14 +1565,16 @@ function formatCurrency($amount)
         currentStatementWalletId = walletId;
         document.getElementById('statementWalletName').textContent = walletName;
         document.getElementById('walletStatementModal').classList.remove('hidden');
+        disableBackgroundScroll();
 
         document.getElementById('statementDateFilter').value = 'all';
         await loadWalletStatement();
-        displayStatementView(); // Call to ensure correct view on modal open
+        displayStatementView();
     }
 
     function hideWalletStatementModal() {
         document.getElementById('walletStatementModal').classList.add('hidden');
+        enableBackgroundScroll();
         currentStatementWalletId = null;
         currentWalletStatement = [];
     }
@@ -1403,7 +1622,7 @@ function formatCurrency($amount)
 
                 if (currentWalletStatement.length > 0) {
                     renderWalletStatement(currentWalletStatement);
-                    displayStatementView(); // Ensure correct view after rendering
+                    displayStatementView();
                     applyColumnVisibility('statementTableElement', visibleStatementColumns);
                 } else {
                     document.getElementById('statementEmpty').classList.remove('hidden');
@@ -1525,63 +1744,63 @@ function formatCurrency($amount)
             }
 
             tr.innerHTML = `
-                            <td data-column="datetime" class="px-4 py-3 text-sm">
-                                <div class="font-medium text-gray-900">${dateStr}</div>
-                                <div class="text-xs text-gray-500">${timeStr}</div>
-                            </td>
-                            <td data-column="entryid" class="px-4 py-3 text-sm">
-                                <div class="max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap font-mono text-gray-700" title="${entry.entry_id || ''}">
-                                    ${entry.entry_id || ''}
-                                </div>
-                            </td>
-                            <td data-column="description" class="px-4 py-3 text-sm">
-                                <div class="max-w-[250px] overflow-hidden text-ellipsis" title="${description}">
-                                    <div class="font-medium text-gray-900">${description}</div>
-                                    ${entry.payment_method ? `<div class="text-xs text-gray-500">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
-                                </div>
-                            </td>
-                            <td data-column="debit" class="px-4 py-3 text-sm text-right">
-                                ${debitAmount > 0 ? `<span class="text-red-600 font-semibold">-${formatCurrency(debitAmount)}</span>` : '<span class="text-gray-400">-</span>'}
-                            </td>
-                            <td data-column="credit" class="px-4 py-3 text-sm text-right">
-                                ${creditAmount > 0 ? `<span class="text-green-600 font-semibold">+${formatCurrency(creditAmount)}</span>` : '<span class="text-gray-400">-</span>'}
-                            </td>
-                            <td data-column="balance" class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
-                                ${entry.balance_after !== null ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
-                            </td>
-                            <td data-column="related" class="px-4 py-3 text-sm">
-                                ${renderRelatedEntries(entry.related_entries)}
-                            </td>
-                        `;
+                <td data-column="datetime" class="px-4 py-3 text-sm">
+                    <div class="font-medium text-gray-900">${dateStr}</div>
+                    <div class="text-xs text-gray-500">${timeStr}</div>
+                </td>
+                <td data-column="entryid" class="px-4 py-3 text-sm">
+                    <div class="max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap font-mono text-gray-700" title="${entry.entry_id || ''}">
+                        ${entry.entry_id || ''}
+                    </div>
+                </td>
+                <td data-column="description" class="px-4 py-3 text-sm">
+                    <div class="max-w-[250px] overflow-hidden text-ellipsis" title="${description}">
+                        <div class="font-medium text-gray-900">${description}</div>
+                        ${entry.payment_method ? `<div class="text-xs text-gray-500">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
+                    </div>
+                </td>
+                <td data-column="debit" class="px-4 py-3 text-sm text-right">
+                    ${debitAmount > 0 ? `<span class="text-red-600 font-semibold">-${formatCurrency(debitAmount)}</span>` : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td data-column="credit" class="px-4 py-3 text-sm text-right">
+                    ${creditAmount > 0 ? `<span class="text-green-600 font-semibold">+${formatCurrency(creditAmount)}</span>` : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td data-column="balance" class="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                    ${entry.balance_after !== null ? formatCurrency(entry.balance_after) : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td data-column="related" class="px-4 py-3 text-sm">
+                    ${renderRelatedEntries(entry.related_entries)}
+                </td>
+            `;
             tbody.appendChild(tr);
 
             const card = document.createElement('div');
             card.className = `bg-white rounded-lg p-4 border border-gray-200 ${entry.is_first_in_group && entry.group_size > 1 ? 'border-l-4 border-l-blue-400' : ''}`;
             card.innerHTML = `
-                            <div class="flex items-start justify-between mb-3">
-                                <div class="flex-1">
-                                    <div class="font-medium text-gray-900 text-sm mb-1">${description}</div>
-                                    <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
-                                    ${entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
-                                </div>
-                                <div class="text-right ml-3">
-                                    ${debitAmount > 0 ? `<div class="text-red-600 font-semibold text-sm">-${formatCurrency(debitAmount)}</div>` : ''}
-                                    ${creditAmount > 0 ? `<div class="text-green-600 font-semibold text-sm">+${formatCurrency(creditAmount)}</div>` : ''}
-                                    <div class="text-xs text-gray-500 mt-1">Balance: ${entry.balance_after !== null ? formatCurrency(entry.balance_after) : '-'}</div>
-                                </div>
-                            </div>
-                            
-                            <div class="text-xs text-gray-500 mb-2">
-                                <span class="font-mono">${entry.entry_id || 'No Entry ID'}</span>
-                            </div>
-                            
-                            ${entry.related_entries.length > 0 ? `
-                                <div class="mt-3">
-                                    <div class="text-xs font-medium text-gray-700 mb-2">Related Entries:</div>
-                                    ${renderRelatedEntriesMobile(entry.related_entries)}
-                                </div>
-                            ` : ''}
-                        `;
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900 text-sm mb-1">${description}</div>
+                        <div class="text-xs text-gray-500">${dateStr} • ${timeStr}</div>
+                        ${entry.payment_method ? `<div class="text-xs text-gray-500 mt-1">${entry.payment_method.replace(/_/g, ' ')}</div>` : ''}
+                    </div>
+                    <div class="text-right ml-3">
+                        ${debitAmount > 0 ? `<div class="text-red-600 font-semibold text-sm">-${formatCurrency(debitAmount)}</div>` : ''}
+                        ${creditAmount > 0 ? `<div class="text-green-600 font-semibold text-sm">+${formatCurrency(creditAmount)}</div>` : ''}
+                        <div class="text-xs text-gray-500 mt-1">Balance: ${entry.balance_after !== null ? formatCurrency(entry.balance_after) : '-'}</div>
+                    </div>
+                </div>
+                
+                <div class="text-xs text-gray-500 mb-2">
+                    <span class="font-mono">${entry.entry_id || 'No Entry ID'}</span>
+                </div>
+                
+                ${entry.related_entries.length > 0 ? `
+                    <div class="mt-3">
+                        <div class="text-xs font-medium text-gray-700 mb-2">Related Entries:</div>
+                        ${renderRelatedEntriesMobile(entry.related_entries)}
+                    </div>
+                ` : ''}
+            `;
             mobile.appendChild(card);
         });
     }
@@ -1604,18 +1823,18 @@ function formatCurrency($amount)
             const sign = related.entry_type === 'CREDIT' ? '+' : '-';
 
             return `
-                        <div class="bg-gray-50 border-l-2 border-gray-300 ml-4 pl-3 py-2 mb-2 text-xs">
-                            <div class="flex items-center gap-1 mb-1">
-                                <i class="fas fa-arrow-right text-gray-400"></i>
-                                <span class="font-medium text-gray-700">${fullAccountName}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="${entryTypeClass} font-semibold">${sign}${formatCurrency(related.amount)}</span>
-                                <span class="text-gray-500">Balance: ${formatCurrency(related.balance_after)}</span>
-                            </div>
-                            ${related.entry_note ? `<div class="text-gray-600 mt-1 italic">${related.entry_note}</div>` : ''}
-                        </div>
-                    `;
+                <div class="bg-gray-50 border-l-2 border-gray-300 ml-4 pl-3 py-2 mb-2 text-xs">
+                    <div class="flex items-center gap-1 mb-1">
+                        <i class="fas fa-arrow-right text-gray-400"></i>
+                        <span class="font-medium text-gray-700">${fullAccountName}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="${entryTypeClass} font-semibold">${sign}${formatCurrency(related.amount)}</span>
+                        <span class="text-gray-500">Balance: ${formatCurrency(related.balance_after)}</span>
+                    </div>
+                    ${related.entry_note ? `<div class="text-gray-600 mt-1 italic">${related.entry_note}</div>` : ''}
+                </div>
+            `;
         }).join('');
     }
 
@@ -1637,15 +1856,15 @@ function formatCurrency($amount)
             const sign = related.entry_type === 'CREDIT' ? '+' : '-';
 
             return `
-                        <div class="bg-gray-50 rounded p-2 mb-2 text-xs border-l-2 border-gray-300">
-                            <div class="font-medium text-gray-700 mb-1">${fullAccountName}</div>
-                            <div class="flex justify-between items-center">
-                                <span class="${entryTypeClass} font-semibold">${sign}${formatCurrency(related.amount)}</span>
-                                <span class="text-gray-500">Balance: ${formatCurrency(related.balance_after)}</span>
-                            </div>
-                            ${related.entry_note ? `<div class="text-gray-600 mt-1 italic">${related.entry_note}</div>` : ''}
-                        </div>
-                    `;
+                <div class="bg-gray-50 rounded p-2 mb-2 text-xs border-l-2 border-gray-300">
+                    <div class="font-medium text-gray-700 mb-1">${fullAccountName}</div>
+                    <div class="flex justify-between items-center">
+                        <span class="${entryTypeClass} font-semibold">${sign}${formatCurrency(related.amount)}</span>
+                        <span class="text-gray-500">Balance: ${formatCurrency(related.balance_after)}</span>
+                    </div>
+                    ${related.entry_note ? `<div class="text-gray-600 mt-1 italic">${related.entry_note}</div>` : ''}
+                </div>
+            `;
         }).join('');
     }
 
@@ -1718,7 +1937,7 @@ function formatCurrency($amount)
         document.getElementById('statusSortIcon').className = statusSortAsc
             ? 'fas fa-sort-up text-gray-400 ml-1'
             : 'fas fa-sort-down text-gray-400 ml-1';
-        renderWalletsTable(wallets);
+        renderFilteredWallets();
         adjustTableFontSize();
     }
 
@@ -1727,6 +1946,7 @@ function formatCurrency($amount)
         const form = document.getElementById('createWalletForm');
         form.reset();
         offcanvas.classList.remove('hidden');
+        disableBackgroundScroll();
         setTimeout(() => {
             const panel = offcanvas.querySelector('.translate-x-full');
             if (panel) panel.classList.remove('translate-x-full');
@@ -1737,6 +1957,7 @@ function formatCurrency($amount)
         const offcanvas = document.getElementById('createWalletOffcanvas');
         const panel = offcanvas.querySelector('.transform');
         if (panel) panel.classList.add('translate-x-full');
+        enableBackgroundScroll();
         setTimeout(() => offcanvas.classList.add('hidden'), 300);
     }
 
@@ -1783,6 +2004,7 @@ function formatCurrency($amount)
 
         const offcanvas = document.getElementById('editWalletOffcanvas');
         offcanvas.classList.remove('hidden');
+        disableBackgroundScroll();
         setTimeout(() => {
             const panel = offcanvas.querySelector('.translate-x-full');
             if (panel) panel.classList.remove('translate-x-full');
@@ -1793,6 +2015,7 @@ function formatCurrency($amount)
         const offcanvas = document.getElementById('editWalletOffcanvas');
         const panel = offcanvas.querySelector('.transform');
         if (panel) panel.classList.add('translate-x-full');
+        enableBackgroundScroll();
         setTimeout(() => offcanvas.classList.add('hidden'), 300);
     }
 
@@ -1831,6 +2054,7 @@ function formatCurrency($amount)
         const form = document.getElementById('createPlatformSettingForm');
         form.reset();
         offcanvas.classList.remove('hidden');
+        disableBackgroundScroll();
         setTimeout(() => {
             const panel = offcanvas.querySelector('.translate-x-full');
             if (panel) panel.classList.remove('translate-x-full');
@@ -1841,6 +2065,7 @@ function formatCurrency($amount)
         const offcanvas = document.getElementById('createPlatformSettingOffcanvas');
         const panel = offcanvas.querySelector('.transform');
         if (panel) panel.classList.add('translate-x-full');
+        enableBackgroundScroll();
         setTimeout(() => offcanvas.classList.add('hidden'), 300);
     }
 
@@ -1891,6 +2116,7 @@ function formatCurrency($amount)
 
         const offcanvas = document.getElementById('editPlatformSettingOffcanvas');
         offcanvas.classList.remove('hidden');
+        disableBackgroundScroll();
         setTimeout(() => {
             const panel = offcanvas.querySelector('.translate-x-full');
             if (panel) panel.classList.remove('translate-x-full');
@@ -1901,6 +2127,7 @@ function formatCurrency($amount)
         const offcanvas = document.getElementById('editPlatformSettingOffcanvas');
         const panel = offcanvas.querySelector('.transform');
         if (panel) panel.classList.add('translate-x-full');
+        enableBackgroundScroll();
         setTimeout(() => offcanvas.classList.add('hidden'), 300);
     }
 
@@ -1955,10 +2182,12 @@ function formatCurrency($amount)
         }
 
         modal.classList.remove('hidden');
+        disableBackgroundScroll();
     }
 
     function hideDeleteConfirm() {
         document.getElementById('deleteModal').classList.add('hidden');
+        enableBackgroundScroll();
     }
 
     async function confirmDelete() {
@@ -2024,24 +2253,7 @@ function formatCurrency($amount)
     }
 
     function filterWallets() {
-        const query = document.getElementById('searchWallets').value.trim().toLowerCase();
-        const type = document.getElementById('filterWallets').value;
-
-        let filtered = wallets;
-
-        if (type !== 'all') {
-            filtered = filtered.filter(w => w.owner_type === type);
-        }
-
-        if (query) {
-            filtered = filtered.filter(w =>
-                w.wallet_name.toLowerCase().includes(query) ||
-                w.wallet_number.toLowerCase().includes(query)
-            );
-        }
-
-        renderWalletsTable(filtered);
-        adjustTableFontSize();
+        renderFilteredWallets();
     }
 
     function filterPlatformSettings() {
@@ -2051,7 +2263,8 @@ function formatCurrency($amount)
 
     document.addEventListener('DOMContentLoaded', () => {
         loadColumnVisibility();
-        switchTab('wallets');
+        fetchWallets();
+        switchOwnerTab('PLATFORM');
 
         document.getElementById('create-wallet-btn').addEventListener('click', showCreateWalletForm);
         document.getElementById('create-platform-setting-btn').addEventListener('click', showCreatePlatformSettingForm);
@@ -2063,18 +2276,27 @@ function formatCurrency($amount)
         document.getElementById('updatePlatformSettingForm').addEventListener('click', updatePlatformSetting);
         document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
 
-        document.getElementById('filterWallets').addEventListener('change', filterWallets);
         document.getElementById('searchWallets').addEventListener('input', filterWallets);
         document.getElementById('filterPlatformAccounts').addEventListener('change', filterPlatformSettings);
         document.getElementById('statementDateFilter').addEventListener('change', loadWalletStatement);
 
+        document.getElementById('mobile-tab-toggle').addEventListener('click', toggleMobileTabDropdown);
+
+        document.querySelectorAll('.mobile-tab-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const tab = e.currentTarget.getAttribute('data-tab');
+                switchOwnerTab(tab);
+                toggleMobileTabDropdown();
+            });
+        });
+
         window.addEventListener('resize', () => {
             adjustTableFontSize();
-            displayStatementView(); // Ensure statement view adjusts on resize
+            displayStatementView();
         });
     });
 
-    window.switchTab = switchTab;
+    window.switchOwnerTab = switchOwnerTab;
     window.showEditWalletForm = showEditWalletForm;
     window.showEditPlatformSettingForm = showEditPlatformSettingForm;
     window.showDeleteConfirm = showDeleteConfirm;
@@ -2090,6 +2312,7 @@ function formatCurrency($amount)
     window.toggleColumnSelector = toggleColumnSelector;
     window.toggleStatementColumnSelector = toggleStatementColumnSelector;
     window.togglePlatformSettingsColumnSelector = togglePlatformSettingsColumnSelector;
+    window.toggleEntriesExpansion = toggleEntriesExpansion;
 </script>
 
 <?php
