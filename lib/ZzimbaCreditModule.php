@@ -1185,7 +1185,7 @@ final class CreditService
                 'entry_type' => 'CREDIT',
                 'amount' => $amount,
                 'balance_after' => $newWBal,
-                'entry_note' => sprintf('%s Wallet credited from withholding', ucfirst(strtolower($ownerType))),
+                'entry_note' => 'Zzimba Credit top-up',
                 'ref_entry_id' => $debitWithId
             ]);
             self::$pdo->prepare("
