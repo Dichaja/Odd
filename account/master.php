@@ -93,12 +93,17 @@ $menuItems = [
             'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card', 'notifications' => 0],
         ],
     ],
+    'communication' => [
+        'title' => 'Communication',
+        'items' => [
+            'sms-center' => ['title' => 'SMS Center', 'icon' => 'fa-comment-dots', 'notifications' => 0],
+            'email-center' => ['title' => 'Email Center', 'icon' => 'fa-envelope', 'notifications' => 0],
+        ],
+    ],
     'shopping' => [
         'title' => 'Shopping',
         'items' => [
             'zzimba-stores' => ['title' => 'Zzimba Store', 'icon' => 'fa-shopping-cart', 'notifications' => 0],
-            'wishlist' => ['title' => 'Wishlist', 'icon' => 'fa-heart', 'notifications' => 0],
-            'saved-items' => ['title' => 'Saved Items', 'icon' => 'fa-bookmark', 'notifications' => 0],
         ],
     ],
 ];
