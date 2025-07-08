@@ -50,7 +50,7 @@ $menuItems = [
             'approve-transactions' => ['title' => 'Approve Transactions', 'icon' => 'fa-check-circle'],
             'cash-accounts' => ['title' => 'Cash Accounts', 'icon' => 'fa-wallet'],
             'zzimba-wallets' => ['title' => 'Zzimba Wallets', 'icon' => 'fa-piggy-bank'],
-            'zzimba-charges' => ['title' => 'Zzimba Charges', 'icon' => 'fa-receipt'],
+            'zzimba-credit-settings' => ['title' => 'Zzimba Credit Settings', 'icon' => 'fa-receipt'],
             'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card'],
         ]
     ],
