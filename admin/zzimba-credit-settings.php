@@ -23,7 +23,7 @@ function formatCurrency($amount)
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="flex gap-8">
             <div class="hidden lg:block w-64 flex-shrink-0">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4" id="desktop-nav">
+                <div id="desktop-nav">
                     <nav class="space-y-2" aria-label="Settings Navigation">
                         <button id="sms-tab"
                             class="tab-button active w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 bg-primary/10 text-primary border border-primary/20"

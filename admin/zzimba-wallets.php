@@ -81,7 +81,7 @@ function formatCurrency($amount)
 
         <div class="flex gap-8">
             <div class="hidden lg:block w-64 flex-shrink-0">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4" id="desktop-nav">
+                <div id="desktop-nav">
                     <nav class="space-y-2" aria-label="Wallet Navigation">
                         <button id="platform-tab"
                             class="tab-button active w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 bg-primary/10 text-primary border border-primary/20"
@@ -316,7 +316,7 @@ function formatCurrency($amount)
                                     <button id="create-setting-btn"
                                         class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 w-full sm:w-auto">
                                         <i class="fas fa-plus"></i>
-                                        <span>Add Platform Setting</span>
+                                        <span>Add Setting</span>
                                     </button>
                                 </div>
                             </div>
