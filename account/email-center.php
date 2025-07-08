@@ -1,13 +1,8 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-$pageTitle = 'SMS Center';
-$activeNav = 'sms-center';
+$pageTitle = 'Email Center';
+$activeNav = 'email-center';
 ob_start();
-
-function formatCurrency($amount)
-{
-    return number_format($amount, 2);
-}
 ?>
 
 <div class="min-h-screen bg-gray-50" id="app-container">
@@ -17,12 +12,12 @@ function formatCurrency($amount)
                 <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">SMS Credit</p>
-                            <p class="text-lg font-bold text-blue-900 whitespace-nowrap" id="sms-credit-count">0</p>
-                            <p class="text-sm font-medium text-blue-700 whitespace-nowrap">Messages Available</p>
+                            <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Sent Today</p>
+                            <p class="text-lg font-bold text-blue-900 whitespace-nowrap" id="sent-today-count">0</p>
+                            <p class="text-sm font-medium text-blue-700 whitespace-nowrap">Emails Delivered</p>
                         </div>
                         <div class="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-sms text-blue-600"></i>
+                            <i class="fas fa-envelope text-blue-600"></i>
                         </div>
                     </div>
                 </div>
@@ -30,13 +25,13 @@ function formatCurrency($amount)
                 <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Sent Today</p>
-                            <p class="text-lg font-bold text-green-900 whitespace-nowrap" id="sent-today-count">0</p>
-                            <p class="text-sm font-medium text-green-700 whitespace-nowrap" id="sent-today-cost">Sh.
-                                0.00</p>
+                            <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Opened Today</p>
+                            <p class="text-lg font-bold text-green-900 whitespace-nowrap" id="opened-today-count">0</p>
+                            <p class="text-sm font-medium text-green-700 whitespace-nowrap" id="open-rate-today">0% Open
+                                Rate</p>
                         </div>
                         <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-paper-plane text-green-600"></i>
+                            <i class="fas fa-envelope-open text-green-600"></i>
                         </div>
                     </div>
                 </div>
@@ -46,7 +41,7 @@ function formatCurrency($amount)
                         <div>
                             <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Scheduled</p>
                             <p class="text-lg font-bold text-purple-900 whitespace-nowrap" id="scheduled-count">0</p>
-                            <p class="text-sm font-medium text-purple-700 whitespace-nowrap">Pending Messages</p>
+                            <p class="text-sm font-medium text-purple-700 whitespace-nowrap">Pending Emails</p>
                         </div>
                         <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
                             <i class="fas fa-clock text-purple-600"></i>
@@ -57,12 +52,13 @@ function formatCurrency($amount)
                 <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">SMS Rate</p>
-                            <p class="text-lg font-bold text-orange-900 whitespace-nowrap">Sh. 35/=</p>
-                            <p class="text-sm font-medium text-orange-700 whitespace-nowrap">Per Message</p>
+                            <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">Total Sent</p>
+                            <p class="text-lg font-bold text-orange-900 whitespace-nowrap" id="total-sent-count">0</p>
+                            <p class="text-sm font-medium text-orange-700 whitespace-nowrap" id="overall-open-rate">0%
+                                Overall</p>
                         </div>
                         <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-tag text-orange-600"></i>
+                            <i class="fas fa-chart-line text-orange-600"></i>
                         </div>
                     </div>
                 </div>
@@ -78,22 +74,17 @@ function formatCurrency($amount)
                         <button id="send-tab"
                             class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-primary text-primary"
                             onclick="switchTab('send')">
-                            <i class="fas fa-paper-plane mr-2"></i>Send SMS
+                            <i class="fas fa-paper-plane mr-2"></i>Send Email
                         </button>
                         <button id="history-tab"
                             class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
                             onclick="switchTab('history')">
-                            <i class="fas fa-history mr-2"></i>SMS History
+                            <i class="fas fa-history mr-2"></i>Email History
                         </button>
                         <button id="templates-tab"
                             class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
                             onclick="switchTab('templates')">
                             <i class="fas fa-file-alt mr-2"></i>Templates
-                        </button>
-                        <button id="topup-tab"
-                            class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
-                            onclick="switchTab('topup')">
-                            <i class="fas fa-plus-circle mr-2"></i>Top Up Credit
                         </button>
                     </nav>
                 </div>
@@ -104,7 +95,7 @@ function formatCurrency($amount)
                             class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
                             <div class="flex items-center gap-2">
                                 <i class="fas fa-paper-plane text-primary"></i>
-                                <span id="mobile-tab-label" class="font-medium text-gray-900">Send SMS</span>
+                                <span id="mobile-tab-label" class="font-medium text-gray-900">Send Email</span>
                             </div>
                             <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"
                                 id="mobile-tab-chevron"></i>
@@ -117,31 +108,19 @@ function formatCurrency($amount)
                                     class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
                                     data-tab="send">
                                     <i class="fas fa-paper-plane text-blue-600"></i>
-                                    <span>Send SMS</span>
+                                    <span>Send Email</span>
                                 </button>
                                 <button
                                     class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
                                     data-tab="history">
                                     <i class="fas fa-history text-green-600"></i>
-                                    <span>SMS History</span>
+                                    <span>Email History</span>
                                 </button>
                                 <button
                                     class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
                                     data-tab="templates">
                                     <i class="fas fa-file-alt text-purple-600"></i>
                                     <span>Templates</span>
-                                </button>
-                                <button
-                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
-                                    data-tab="topup">
-                                    <i class="fas fa-plus-circle text-orange-600"></i>
-                                    <span>Top Up Credit</span>
-                                </button>
-                                <button
-                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
-                                    data-tab="credit">
-                                    <i class="fas fa-wallet text-indigo-600"></i>
-                                    <span>Credit Status</span>
                                 </button>
                             </div>
                         </div>
@@ -152,213 +131,210 @@ function formatCurrency($amount)
 
         <div id="tab-content">
             <div id="send-content" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-paper-plane text-blue-600"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-900">Send SMS</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-paper-plane text-blue-600"></i>
                         </div>
-
-                        <form id="sms-form" class="space-y-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Send Type</label>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <label
-                                        class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="sendType" value="single" class="sr-only" checked
-                                            onchange="toggleSendType()">
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                        <div class="text-sm font-medium text-gray-900">Single SMS</div>
-                                    </label>
-                                    <label
-                                        class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="sendType" value="bulk" class="sr-only"
-                                            onchange="toggleSendType()">
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                        <div class="text-sm font-medium text-gray-900">Bulk SMS</div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div id="single-recipient">
-                                <label for="recipient" class="block text-sm font-semibold text-gray-700 mb-2">Recipient
-                                    Phone Number</label>
-                                <input type="tel" id="recipient"
-                                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                    placeholder="0700123456" autocomplete="off">
-                            </div>
-
-                            <div id="bulk-recipients" class="hidden">
-                                <label for="bulk-number-input"
-                                    class="block text-sm font-semibold text-gray-700 mb-2">Add Recipients</label>
-                                <div class="flex gap-2">
-                                    <input type="tel" id="bulk-number-input"
-                                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                        placeholder="0700123456" autocomplete="off">
-                                    <button type="button" id="add-number-btn"
-                                        class="md:hidden px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                                <div id="recipient-tags" class="mt-3 flex flex-wrap gap-2"></div>
-                                <p class="text-xs text-gray-500 mt-2">Enter 10-digit phone numbers (e.g., 0700123456)
-                                </p>
-                            </div>
-
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <label for="message"
-                                        class="block text-sm font-semibold text-gray-700">Message</label>
-                                    <span class="text-xs text-gray-500" id="char-count">0/160 characters</span>
-                                </div>
-                                <textarea id="message" rows="4"
-                                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                    placeholder="Type your message here..." oninput="updateCharCount()"></textarea>
-                                <div class="flex items-center justify-between mt-2">
-                                    <p class="text-xs text-gray-500" id="sms-parts">1 SMS part</p>
-                                    <button type="button" onclick="showTemplateSelector()"
-                                        class="text-xs text-primary hover:text-primary/80 font-medium">Use
-                                        Template</button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Send Options</label>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <label
-                                        class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="sendOption" value="now" class="sr-only" checked
-                                            onchange="toggleSchedule()">
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                        <div class="text-sm font-medium text-gray-900">Send Now</div>
-                                    </label>
-                                    <label
-                                        class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="sendOption" value="schedule" class="sr-only"
-                                            onchange="toggleSchedule()">
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                        <div class="text-sm font-medium text-gray-900">Schedule</div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div id="schedule-options" class="hidden">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="schedule-date"
-                                            class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                                        <input type="date" id="schedule-date"
-                                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
-                                    </div>
-                                    <div>
-                                        <label for="schedule-time"
-                                            class="block text-sm font-semibold text-gray-700 mb-2">Time</label>
-                                        <input type="time" id="schedule-time"
-                                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="bg-gray-50 rounded-xl p-4">
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Estimated Cost:</span>
-                                    <span class="font-semibold text-gray-900" id="estimated-cost">Sh. 0.00</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm mt-2">
-                                    <span class="text-gray-600">Recipients:</span>
-                                    <span class="font-semibold text-gray-900" id="recipient-count">0</span>
-                                </div>
-                            </div>
-
-                            <button type="submit"
-                                class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
-                                <i class="fas fa-paper-plane mr-2"></i>
-                                <span id="send-button-text">Send SMS</span>
-                            </button>
-                        </form>
+                        <h3 class="text-xl font-semibold text-gray-900">Compose Email</h3>
                     </div>
 
-                    <div class="hidden lg:block">
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <i class="fas fa-wallet text-green-600"></i>
-                                </div>
-                                <h3 class="text-lg font-semibold text-gray-900">Credit Status</h3>
+                    <form id="email-form" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Send Type</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label
+                                    class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="sendType" value="single" class="sr-only" checked
+                                        onchange="toggleSendType()">
+                                    <div
+                                        class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
+                                        <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-900">Single Email</div>
+                                </label>
+                                <label
+                                    class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="sendType" value="bulk" class="sr-only"
+                                        onchange="toggleSendType()">
+                                    <div
+                                        class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
+                                        <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-900">Bulk Email</div>
+                                </label>
                             </div>
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-gray-600">Available Credits:</span>
-                                    <span class="font-semibold text-gray-900" id="available-credits">0</span>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-gray-600">Credit Value:</span>
-                                    <span class="font-semibold text-gray-900" id="credit-value">Sh. 0.00</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-primary h-2 rounded-full transition-all duration-300"
-                                        style="width: 0%" id="credit-bar"></div>
-                                </div>
-                                <button onclick="switchTab('topup')"
-                                    class="w-full px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors font-medium">
-                                    <i class="fas fa-plus mr-2"></i>Top Up Credits
+                        </div>
+
+                        <div id="single-recipient">
+                            <label for="recipient" class="block text-sm font-semibold text-gray-700 mb-2">Recipient
+                                Email</label>
+                            <input type="email" id="recipient"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                placeholder="recipient@example.com" autocomplete="off">
+                        </div>
+
+                        <div id="bulk-recipients" class="hidden">
+                            <label for="bulk-email-input" class="block text-sm font-semibold text-gray-700 mb-2">Add
+                                Recipients</label>
+                            <div class="flex gap-2">
+                                <input type="email" id="bulk-email-input"
+                                    class="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                    placeholder="recipient@example.com" autocomplete="off">
+                                <button type="button" id="add-email-btn"
+                                    class="md:hidden px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
+                                    <i class="fas fa-plus"></i>
                                 </button>
                             </div>
+                            <div id="recipient-tags" class="mt-3 flex flex-wrap gap-2"></div>
+                            <p class="text-xs text-gray-500 mt-2">Enter valid email addresses</p>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <div id="credit-content" class="tab-content hidden">
-                <div class="max-w-2xl mx-auto">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-wallet text-green-600"></i>
+                        <div>
+                            <label for="subject" class="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
+                            <input type="text" id="subject"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                placeholder="Enter email subject">
+                            <div class="flex items-center justify-end mt-2">
+                                <button type="button" onclick="showTemplateSelector()"
+                                    class="text-xs text-primary hover:text-primary/80 font-medium">Use Template</button>
                             </div>
-                            <h3 class="text-lg font-semibold text-gray-900">Credit Status</h3>
                         </div>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">Available Credits:</span>
-                                <span class="font-semibold text-gray-900" id="mobile-available-credits">0</span>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                            <div class="border border-gray-200 rounded-xl overflow-hidden">
+                                <div id="editor-toolbar"
+                                    class="bg-gray-50 border-b border-gray-200 p-3 flex flex-wrap gap-2">
+                                    <button type="button" onclick="formatText('bold')"
+                                        class="p-2 rounded hover:bg-gray-200 transition-colors" title="Bold">
+                                        <i class="fas fa-bold"></i>
+                                    </button>
+                                    <button type="button" onclick="formatText('italic')"
+                                        class="p-2 rounded hover:bg-gray-200 transition-colors" title="Italic">
+                                        <i class="fas fa-italic"></i>
+                                    </button>
+                                    <button type="button" onclick="formatText('underline')"
+                                        class="p-2 rounded hover:bg-gray-200 transition-colors" title="Underline">
+                                        <i class="fas fa-underline"></i>
+                                    </button>
+                                    <div class="w-px bg-gray-300 mx-1"></div>
+                                    <button type="button" onclick="formatText('justifyLeft')"
+                                        class="p-2 rounded hover:bg-gray-200 transition-colors" title="Align Left">
+                                        <i class="fas fa-align-left"></i>
+                                    </button>
+                                    <button type="button" onclick="formatText('justifyCenter')"
+                                        class="p-2 rounded hover:bg-gray-200 transition-colors" title="Align Center">
+                                        <i class="fas fa-align-center"></i>
+                                    </button>
+                                    <button type="button" onclick="formatText('justifyRight')"
+                                        class="p-2 rounded hover:bg-gray-200 transition-colors" title="Align Right">
+                                        <i class="fas fa-align-right"></i>
+                                    </button>
+                                    <div class="w-px bg-gray-300 mx-1"></div>
+                                    <button type="button" onclick="formatText('insertUnorderedList')"
+                                        class="p-2 rounded hover:bg-gray-200 transition-colors" title="Bullet List">
+                                        <i class="fas fa-list-ul"></i>
+                                    </button>
+                                    <button type="button" onclick="formatText('insertOrderedList')"
+                                        class="p-2 rounded hover:bg-gray-200 transition-colors" title="Numbered List">
+                                        <i class="fas fa-list-ol"></i>
+                                    </button>
+                                    <div class="w-px bg-gray-300 mx-1"></div>
+                                    <select onchange="formatText('fontSize', this.value)"
+                                        class="px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="">Font Size</option>
+                                        <option value="1">Small</option>
+                                        <option value="3">Normal</option>
+                                        <option value="5">Large</option>
+                                        <option value="7">Extra Large</option>
+                                    </select>
+                                    <input type="color" onchange="formatText('foreColor', this.value)"
+                                        class="w-8 h-8 border border-gray-300 rounded cursor-pointer"
+                                        title="Text Color">
+                                </div>
+                                <div id="email-editor" contenteditable="true"
+                                    class="min-h-[200px] p-4 focus:outline-none"
+                                    placeholder="Type your message here..."></div>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">Credit Value:</span>
-                                <span class="font-semibold text-gray-900" id="mobile-credit-value">Sh. 0.00</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3">
-                                <div class="bg-primary h-3 rounded-full transition-all duration-300" style="width: 0%"
-                                    id="mobile-credit-bar"></div>
-                            </div>
-                            <button onclick="switchTab('topup')"
-                                class="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                                <i class="fas fa-plus mr-2"></i>Top Up Credits
-                            </button>
                         </div>
-                    </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Attachments</label>
+                            <div
+                                class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary/50 transition-colors">
+                                <input type="file" id="attachments" multiple class="hidden"
+                                    onchange="handleFileSelect(event)">
+                                <button type="button" onclick="document.getElementById('attachments').click()"
+                                    class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-paperclip"></i>
+                                    <span>Choose Files</span>
+                                </button>
+                                <p class="text-sm text-gray-500 mt-2">Or drag and drop files here</p>
+                            </div>
+                            <div id="attachment-list" class="mt-3 space-y-2"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Send Options</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label
+                                    class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="sendOption" value="now" class="sr-only" checked
+                                        onchange="toggleSchedule()">
+                                    <div
+                                        class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
+                                        <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-900">Send Now</div>
+                                </label>
+                                <label
+                                    class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="sendOption" value="schedule" class="sr-only"
+                                        onchange="toggleSchedule()">
+                                    <div
+                                        class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
+                                        <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-900">Schedule</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="schedule-options" class="hidden">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="schedule-date"
+                                        class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                                    <input type="date" id="schedule-date"
+                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
+                                </div>
+                                <div>
+                                    <label for="schedule-time"
+                                        class="block text-sm font-semibold text-gray-700 mb-2">Time</label>
+                                    <input type="time" id="schedule-time"
+                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Recipients:</span>
+                                <span class="font-semibold text-gray-900" id="recipient-count">0</span>
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                            class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            <span id="send-button-text">Send Email</span>
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -373,7 +349,7 @@ function formatCurrency($amount)
                                     </div>
                                     <input type="text" id="searchHistory"
                                         class="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white"
-                                        placeholder="Search SMS history..." oninput="filterHistory()">
+                                        placeholder="Search email history..." oninput="filterHistory()">
                                 </div>
                             </div>
                             <div class="flex flex-col sm:flex-row gap-3">
@@ -382,6 +358,7 @@ function formatCurrency($amount)
                                     onchange="filterHistory()">
                                     <option value="">All Status</option>
                                     <option value="sent">Sent</option>
+                                    <option value="opened">Opened</option>
                                     <option value="scheduled">Scheduled</option>
                                     <option value="failed">Failed</option>
                                 </select>
@@ -393,7 +370,7 @@ function formatCurrency($amount)
                                     <option value="month">This Month</option>
                                     <option value="custom">Custom Range</option>
                                 </select>
-                                <button onclick="resetSMSData()"
+                                <button onclick="resetEmailData()"
                                     class="px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium">
                                     <i class="fas fa-refresh mr-2"></i>Reset Data
                                 </button>
@@ -428,7 +405,7 @@ function formatCurrency($amount)
                                     <tr>
                                         <th
                                             class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Message</th>
+                                            Subject</th>
                                         <th
                                             class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Recipients</th>
@@ -437,7 +414,7 @@ function formatCurrency($amount)
                                             Status</th>
                                         <th
                                             class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Cost</th>
+                                            Open Rate</th>
                                         <th
                                             class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Date</th>
@@ -459,11 +436,11 @@ function formatCurrency($amount)
                         <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="fas fa-history text-gray-400 text-2xl"></i>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No SMS history found</h3>
-                        <p class="text-gray-500 mb-6">Send your first SMS to see it here</p>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No email history found</h3>
+                        <p class="text-gray-500 mb-6">Send your first email to see it here</p>
                         <button onclick="switchTab('send')"
                             class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">Send
-                            SMS</button>
+                            Email</button>
                     </div>
                 </div>
             </div>
@@ -505,133 +482,6 @@ function formatCurrency($amount)
                         Template</button>
                 </div>
             </div>
-
-            <div id="topup-content" class="tab-content hidden">
-                <div class="max-w-2xl mx-auto">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-plus-circle text-orange-600"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-900">Top Up SMS Credits</h3>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-xl p-6 mb-6">
-                            <div class="text-center">
-                                <p class="text-sm text-gray-600 mb-2">Current SMS Rate</p>
-                                <p class="text-3xl font-bold text-gray-900">Sh. 35/=</p>
-                                <p class="text-sm text-gray-500">per SMS</p>
-                            </div>
-                        </div>
-
-                        <form id="topup-form" class="space-y-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Select Package</label>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <label
-                                        class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="package" value="100" class="sr-only"
-                                            onchange="updateTopupCalculation()">
-                                        <div class="flex-1">
-                                            <div class="font-semibold text-gray-900">100 SMS</div>
-                                            <div class="text-sm text-gray-500">Sh. 3,500</div>
-                                        </div>
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                    </label>
-                                    <label
-                                        class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="package" value="500" class="sr-only"
-                                            onchange="updateTopupCalculation()">
-                                        <div class="flex-1">
-                                            <div class="font-semibold text-gray-900">500 SMS</div>
-                                            <div class="text-sm text-gray-500">Sh. 17,500</div>
-                                        </div>
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                    </label>
-                                    <label
-                                        class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="package" value="1000" class="sr-only"
-                                            onchange="updateTopupCalculation()">
-                                        <div class="flex-1">
-                                            <div class="font-semibold text-gray-900">1,000 SMS</div>
-                                            <div class="text-sm text-gray-500">Sh. 35,000</div>
-                                            <div class="text-xs text-green-600 font-medium">Most Popular</div>
-                                        </div>
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                    </label>
-                                    <label
-                                        class="relative flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="package" value="custom" class="sr-only"
-                                            onchange="updateTopupCalculation()">
-                                        <div class="flex-1">
-                                            <div class="font-semibold text-gray-900">Custom Amount</div>
-                                            <div class="text-sm text-gray-500">Enter your amount</div>
-                                        </div>
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div id="custom-amount-section" class="hidden">
-                                <label for="custom-amount" class="block text-sm font-semibold text-gray-700 mb-2">Custom
-                                    Amount (Sh.)</label>
-                                <input type="number" id="custom-amount"
-                                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                    placeholder="Enter amount" min="1000" step="100" oninput="updateTopupCalculation()">
-                            </div>
-
-                            <div class="bg-gray-50 rounded-xl p-4">
-                                <div class="flex items-center justify-between text-sm mb-2">
-                                    <span class="text-gray-600">SMS Credits:</span>
-                                    <span class="font-semibold text-gray-900" id="topup-credits">0</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Total Cost:</span>
-                                    <span class="font-semibold text-gray-900" id="topup-cost">Sh. 0.00</span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="payment-method"
-                                    class="block text-sm font-semibold text-gray-700 mb-2">Payment Method</label>
-                                <select id="payment-method"
-                                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
-                                    <option value="">Select Payment Method</option>
-                                    <option value="mobile-money">Mobile Money</option>
-                                    <option value="bank-transfer">Bank Transfer</option>
-                                    <option value="card">Credit/Debit Card</option>
-                                </select>
-                            </div>
-
-                            <button type="submit"
-                                class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
-                                <i class="fas fa-credit-card mr-2"></i>
-                                Purchase Credits
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -657,7 +507,7 @@ function formatCurrency($amount)
 
 <div id="templateModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideTemplateModal()"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[90vh] overflow-hidden">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-gray-900" id="template-modal-title">Create Template</h3>
@@ -667,7 +517,7 @@ function formatCurrency($amount)
                 </button>
             </div>
         </div>
-        <div class="p-6">
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
             <form id="template-form" class="space-y-4">
                 <input type="hidden" id="template-id">
                 <div>
@@ -678,13 +528,45 @@ function formatCurrency($amount)
                         placeholder="Enter template name" required>
                 </div>
                 <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label for="template-message" class="block text-sm font-semibold text-gray-700">Message</label>
-                        <span class="text-xs text-gray-500" id="template-char-count">0/160 characters</span>
-                    </div>
-                    <textarea id="template-message" rows="4"
+                    <label for="template-subject" class="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
+                    <input type="text" id="template-subject"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                        placeholder="Enter template message" required oninput="updateTemplateCharCount()"></textarea>
+                        placeholder="Enter email subject" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                    <div class="border border-gray-200 rounded-xl overflow-hidden">
+                        <div id="template-editor-toolbar"
+                            class="bg-gray-50 border-b border-gray-200 p-3 flex flex-wrap gap-2">
+                            <button type="button" onclick="formatTemplateText('bold')"
+                                class="p-2 rounded hover:bg-gray-200 transition-colors" title="Bold">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button type="button" onclick="formatTemplateText('italic')"
+                                class="p-2 rounded hover:bg-gray-200 transition-colors" title="Italic">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button type="button" onclick="formatTemplateText('underline')"
+                                class="p-2 rounded hover:bg-gray-200 transition-colors" title="Underline">
+                                <i class="fas fa-underline"></i>
+                            </button>
+                            <div class="w-px bg-gray-300 mx-1"></div>
+                            <button type="button" onclick="formatTemplateText('justifyLeft')"
+                                class="p-2 rounded hover:bg-gray-200 transition-colors" title="Align Left">
+                                <i class="fas fa-align-left"></i>
+                            </button>
+                            <button type="button" onclick="formatTemplateText('justifyCenter')"
+                                class="p-2 rounded hover:bg-gray-200 transition-colors" title="Align Center">
+                                <i class="fas fa-align-center"></i>
+                            </button>
+                            <button type="button" onclick="formatTemplateText('justifyRight')"
+                                class="p-2 rounded hover:bg-gray-200 transition-colors" title="Align Right">
+                                <i class="fas fa-align-right"></i>
+                            </button>
+                        </div>
+                        <div id="template-editor" contenteditable="true" class="min-h-[150px] p-4 focus:outline-none"
+                            placeholder="Enter template message..."></div>
+                    </div>
                 </div>
                 <div class="flex gap-3 pt-4">
                     <button type="button" onclick="hideTemplateModal()"
@@ -698,46 +580,66 @@ function formatCurrency($amount)
     </div>
 </div>
 
-<div id="smsDetailsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideSMSDetails()"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[80vh] overflow-hidden">
+<div id="emailDetailsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideEmailDetails()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative z-10 max-h-[90vh] overflow-hidden">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">SMS Details</h3>
-                <button onclick="hideSMSDetails()"
+                <h3 class="text-lg font-semibold text-gray-900">Email Details</h3>
+                <button onclick="hideEmailDetails()"
                     class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
                     <i class="fas fa-times text-gray-500"></i>
                 </button>
             </div>
         </div>
-        <div class="p-6 overflow-y-auto" id="sms-details-content">
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]" id="email-details-content">
         </div>
     </div>
 </div>
 
 <div id="editScheduledModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideEditScheduled()"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[90vh] overflow-hidden">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Edit Scheduled SMS</h3>
+                <h3 class="text-lg font-semibold text-gray-900">Edit Scheduled Email</h3>
                 <button onclick="hideEditScheduled()"
                     class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
                     <i class="fas fa-times text-gray-500"></i>
                 </button>
             </div>
         </div>
-        <div class="p-6">
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
             <form id="edit-scheduled-form" class="space-y-4">
-                <input type="hidden" id="edit-sms-id">
+                <input type="hidden" id="edit-email-id">
                 <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label for="edit-sms-message" class="block text-sm font-semibold text-gray-700">Message</label>
-                        <span class="text-xs text-gray-500" id="edit-char-count">0/160 characters</span>
-                    </div>
-                    <textarea id="edit-sms-message" rows="4"
+                    <label for="edit-email-subject"
+                        class="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
+                    <input type="text" id="edit-email-subject"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                        required oninput="updateEditCharCount()"></textarea>
+                        required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                    <div class="border border-gray-200 rounded-xl overflow-hidden">
+                        <div id="edit-editor-toolbar"
+                            class="bg-gray-50 border-b border-gray-200 p-3 flex flex-wrap gap-2">
+                            <button type="button" onclick="formatEditText('bold')"
+                                class="p-2 rounded hover:bg-gray-200 transition-colors" title="Bold">
+                                <i class="fas fa-bold"></i>
+                            </button>
+                            <button type="button" onclick="formatEditText('italic')"
+                                class="p-2 rounded hover:bg-gray-200 transition-colors" title="Italic">
+                                <i class="fas fa-italic"></i>
+                            </button>
+                            <button type="button" onclick="formatEditText('underline')"
+                                class="p-2 rounded hover:bg-gray-200 transition-colors" title="Underline">
+                                <i class="fas fa-underline"></i>
+                            </button>
+                        </div>
+                        <div id="edit-email-editor" contenteditable="true" class="min-h-[150px] p-4 focus:outline-none">
+                        </div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -760,7 +662,7 @@ function formatCurrency($amount)
                         class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
                     <button type="submit"
                         class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">Update
-                        SMS</button>
+                        Email</button>
                 </div>
             </form>
         </div>
@@ -821,148 +723,131 @@ function formatCurrency($amount)
 </div>
 
 <script>
-    let smsHistory = [];
-    let smsTemplates = [];
-    let smsCredits = 0;
+    let emailHistory = [];
+    let emailTemplates = [];
     let currentTab = 'send';
     let bulkRecipients = [];
-
-    const SMS_RATE = 35;
+    let attachedFiles = [];
 
     function initializeDummyData() {
-        const savedHistory = localStorage.getItem('sms_history');
-        const savedTemplates = localStorage.getItem('sms_templates');
-        const savedCredits = localStorage.getItem('sms_credits');
+        const savedHistory = localStorage.getItem('email_history');
+        const savedTemplates = localStorage.getItem('email_templates');
 
         if (savedHistory) {
-            smsHistory = JSON.parse(savedHistory);
+            emailHistory = JSON.parse(savedHistory);
         } else {
-            smsHistory = [
+            emailHistory = [
                 {
                     id: 1,
-                    message: "Welcome to our service! Your account has been activated successfully.",
-                    recipients: ["0700000001"],
+                    subject: "Welcome to our platform!",
+                    message: "<p>Thank you for joining us. We're excited to have you on board!</p>",
+                    recipients: ["user1@example.com"],
                     type: "single",
-                    status: "sent",
-                    cost: 35,
+                    status: "opened",
                     sentAt: new Date(Date.now() - 86400000).toISOString(),
-                    scheduledAt: null
+                    scheduledAt: null,
+                    openedAt: new Date(Date.now() - 82800000).toISOString(),
+                    attachments: []
                 },
                 {
                     id: 2,
-                    message: "Your order #12345 has been confirmed and will be delivered within 2-3 business days.",
-                    recipients: ["0700000002", "0700000003"],
+                    subject: "Monthly Newsletter - December 2024",
+                    message: "<p>Here's what's new this month...</p>",
+                    recipients: ["user2@example.com", "user3@example.com"],
                     type: "bulk",
                     status: "sent",
-                    cost: 70,
                     sentAt: new Date(Date.now() - 172800000).toISOString(),
-                    scheduledAt: null
+                    scheduledAt: null,
+                    openedAt: null,
+                    attachments: ["newsletter.pdf"]
                 },
                 {
                     id: 3,
-                    message: "Reminder: Your appointment is scheduled for tomorrow at 2:00 PM.",
-                    recipients: ["0700000004"],
+                    subject: "Reminder: Meeting Tomorrow",
+                    message: "<p>Don't forget about our meeting scheduled for tomorrow at 2:00 PM.</p>",
+                    recipients: ["colleague@example.com"],
                     type: "single",
                     status: "scheduled",
-                    cost: 35,
                     sentAt: null,
-                    scheduledAt: new Date(Date.now() + 86400000).toISOString()
+                    scheduledAt: new Date(Date.now() + 86400000).toISOString(),
+                    openedAt: null,
+                    attachments: []
                 }
             ];
-            localStorage.setItem('sms_history', JSON.stringify(smsHistory));
+            localStorage.setItem('email_history', JSON.stringify(emailHistory));
         }
 
         if (savedTemplates) {
-            smsTemplates = JSON.parse(savedTemplates);
+            emailTemplates = JSON.parse(savedTemplates);
         } else {
-            smsTemplates = [
+            emailTemplates = [
                 {
                     id: 1,
-                    name: "Welcome Message",
-                    message: "Welcome to our service! Your account has been activated successfully.",
+                    name: "Welcome Email",
+                    subject: "Welcome to our platform!",
+                    message: "<p>Thank you for joining us. We're excited to have you on board!</p><p>Best regards,<br>The Team</p>",
                     createdAt: new Date().toISOString()
                 },
                 {
                     id: 2,
-                    name: "Order Confirmation",
-                    message: "Your order #{ORDER_ID} has been confirmed and will be delivered within 2-3 business days.",
+                    name: "Meeting Reminder",
+                    subject: "Reminder: Meeting {DATE}",
+                    message: "<p>This is a friendly reminder about our meeting scheduled for {DATE} at {TIME}.</p><p>Looking forward to seeing you there!</p>",
                     createdAt: new Date().toISOString()
                 },
                 {
                     id: 3,
-                    name: "Appointment Reminder",
-                    message: "Reminder: Your appointment is scheduled for {DATE} at {TIME}.",
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 4,
-                    name: "Payment Confirmation",
-                    message: "Payment of Sh. {AMOUNT} has been received successfully. Thank you!",
+                    name: "Thank You Note",
+                    subject: "Thank you for your business",
+                    message: "<p>We wanted to take a moment to thank you for choosing our services.</p><p>Your support means everything to us!</p>",
                     createdAt: new Date().toISOString()
                 }
             ];
-            localStorage.setItem('sms_templates', JSON.stringify(smsTemplates));
-        }
-
-        if (savedCredits) {
-            smsCredits = parseInt(savedCredits);
-        } else {
-            smsCredits = 150;
-            localStorage.setItem('sms_credits', smsCredits.toString());
+            localStorage.setItem('email_templates', JSON.stringify(emailTemplates));
         }
     }
 
     function saveData() {
-        localStorage.setItem('sms_history', JSON.stringify(smsHistory));
-        localStorage.setItem('sms_templates', JSON.stringify(smsTemplates));
-        localStorage.setItem('sms_credits', smsCredits.toString());
+        localStorage.setItem('email_history', JSON.stringify(emailHistory));
+        localStorage.setItem('email_templates', JSON.stringify(emailTemplates));
     }
 
-    function resetSMSData() {
-        showConfirmModal('Are you sure you want to reset all SMS data? This action cannot be undone.', () => {
-            localStorage.removeItem('sms_history');
-            localStorage.removeItem('sms_templates');
-            localStorage.removeItem('sms_credits');
+    function resetEmailData() {
+        showConfirmModal('Are you sure you want to reset all email data? This action cannot be undone.', () => {
+            localStorage.removeItem('email_history');
+            localStorage.removeItem('email_templates');
             initializeDummyData();
             updateStats();
             renderCurrentTab();
-            showMessageModal('Success', 'SMS data has been reset successfully!', 'success');
+            showMessageModal('Success', 'Email data has been reset successfully!', 'success');
         });
     }
 
     function updateStats() {
         const today = new Date().toDateString();
-        const sentToday = smsHistory.filter(sms =>
-            sms.status === 'sent' &&
-            new Date(sms.sentAt).toDateString() === today
+        const sentToday = emailHistory.filter(email =>
+            email.status === 'sent' &&
+            new Date(email.sentAt).toDateString() === today
         );
-        const scheduled = smsHistory.filter(sms => sms.status === 'scheduled');
+        const openedToday = emailHistory.filter(email =>
+            email.openedAt &&
+            new Date(email.openedAt).toDateString() === today
+        );
+        const scheduled = emailHistory.filter(email => email.status === 'scheduled');
+        const totalSent = emailHistory.filter(email => email.status === 'sent' || email.status === 'opened');
+        const totalOpened = emailHistory.filter(email => email.openedAt);
 
-        const sentTodayCount = sentToday.reduce((sum, sms) => sum + sms.recipients.length, 0);
-        const sentTodayCost = sentToday.reduce((sum, sms) => sum + sms.cost, 0);
+        const sentTodayCount = sentToday.reduce((sum, email) => sum + email.recipients.length, 0);
+        const openedTodayCount = openedToday.length;
+        const openRateToday = sentTodayCount > 0 ? Math.round((openedTodayCount / sentTodayCount) * 100) : 0;
+        const overallOpenRate = totalSent.length > 0 ? Math.round((totalOpened.length / totalSent.length) * 100) : 0;
 
-        document.getElementById('sms-credit-count').textContent = smsCredits;
         document.getElementById('sent-today-count').textContent = sentTodayCount;
-        document.getElementById('sent-today-cost').textContent = `Sh. ${formatCurrency(sentTodayCost)}`;
+        document.getElementById('opened-today-count').textContent = openedTodayCount;
+        document.getElementById('open-rate-today').textContent = `${openRateToday}% Open Rate`;
         document.getElementById('scheduled-count').textContent = scheduled.length;
-
-        document.getElementById('available-credits').textContent = smsCredits;
-        document.getElementById('credit-value').textContent = `Sh. ${formatCurrency(smsCredits * SMS_RATE)}`;
-
-        document.getElementById('mobile-available-credits').textContent = smsCredits;
-        document.getElementById('mobile-credit-value').textContent = `Sh. ${formatCurrency(smsCredits * SMS_RATE)}`;
-
-        const creditPercentage = Math.min((smsCredits / 1000) * 100, 100);
-        document.getElementById('credit-bar').style.width = `${creditPercentage}%`;
-        document.getElementById('mobile-credit-bar').style.width = `${creditPercentage}%`;
-    }
-
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-UG', {
-            style: 'decimal',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount);
+        document.getElementById('total-sent-count').textContent = totalSent.reduce((sum, email) => sum + email.recipients.length, 0);
+        document.getElementById('overall-open-rate').textContent = `${overallOpenRate}% Overall`;
     }
 
     function formatDateTime(dateString) {
@@ -1008,11 +893,9 @@ function formatCurrency($amount)
         renderCurrentTab();
 
         const tabLabels = {
-            'send': { label: 'Send SMS', icon: 'fas fa-paper-plane' },
-            'history': { label: 'SMS History', icon: 'fas fa-history' },
-            'templates': { label: 'Templates', icon: 'fas fa-file-alt' },
-            'topup': { label: 'Top Up Credit', icon: 'fas fa-plus-circle' },
-            'credit': { label: 'Credit Status', icon: 'fas fa-wallet' }
+            'send': { label: 'Send Email', icon: 'fas fa-paper-plane' },
+            'history': { label: 'Email History', icon: 'fas fa-history' },
+            'templates': { label: 'Templates', icon: 'fas fa-file-alt' }
         };
         const tabInfo = tabLabels[tabName] || tabLabels['send'];
         updateMobileTabLabel(tabInfo.label, tabInfo.icon);
@@ -1043,13 +926,10 @@ function formatCurrency($amount)
                 updateSendFormCalculations();
                 break;
             case 'history':
-                renderSMSHistory();
+                renderEmailHistory();
                 break;
             case 'templates':
                 renderTemplates();
-                break;
-            case 'topup':
-                updateTopupCalculation();
                 break;
         }
     }
@@ -1057,16 +937,16 @@ function formatCurrency($amount)
     function toggleSendType() {
         const sendType = document.querySelector('input[name="sendType"]:checked').value;
         const singleRecipient = document.getElementById('single-recipient');
-        const bulkRecipients = document.getElementById('bulk-recipients');
+        const bulkRecipientsDiv = document.getElementById('bulk-recipients');
 
         if (sendType === 'single') {
             singleRecipient.classList.remove('hidden');
-            bulkRecipients.classList.add('hidden');
+            bulkRecipientsDiv.classList.add('hidden');
             bulkRecipients = [];
             renderRecipientTags();
         } else {
             singleRecipient.classList.add('hidden');
-            bulkRecipients.classList.remove('hidden');
+            bulkRecipientsDiv.classList.remove('hidden');
         }
         updateSendFormCalculations();
     }
@@ -1078,65 +958,51 @@ function formatCurrency($amount)
 
         if (sendOption === 'schedule') {
             scheduleOptions.classList.remove('hidden');
-            sendButtonText.textContent = 'Schedule SMS';
+            sendButtonText.textContent = 'Schedule Email';
         } else {
             scheduleOptions.classList.add('hidden');
-            sendButtonText.textContent = 'Send SMS';
+            sendButtonText.textContent = 'Send Email';
         }
     }
 
-    function updateCharCount() {
-        const message = document.getElementById('message').value;
-        const charCount = document.getElementById('char-count');
-        const smsParts = document.getElementById('sms-parts');
-
-        charCount.textContent = `${message.length}/160 characters`;
-
-        const parts = Math.ceil(message.length / 160) || 1;
-        smsParts.textContent = `${parts} SMS part${parts > 1 ? 's' : ''}`;
-
-        updateSendFormCalculations();
-    }
-
-    function validatePhoneNumber(number) {
-        const cleaned = number.replace(/\s+/g, '');
-        return /^0[7][0-9]{8}$/.test(cleaned);
+    function validateEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
 
     function addBulkRecipient() {
-        const input = document.getElementById('bulk-number-input');
-        const number = input.value.trim();
+        const input = document.getElementById('bulk-email-input');
+        const email = input.value.trim();
 
-        if (!number) return;
+        if (!email) return;
 
-        if (!validatePhoneNumber(number)) {
-            showMessageModal('Invalid Number', 'Please enter a valid 10-digit phone number (e.g., 0700123456)', 'error');
+        if (!validateEmail(email)) {
+            showMessageModal('Invalid Email', 'Please enter a valid email address', 'error');
             return;
         }
 
-        if (bulkRecipients.includes(number)) {
-            showMessageModal('Duplicate Number', 'This number has already been added', 'warning');
+        if (bulkRecipients.includes(email)) {
+            showMessageModal('Duplicate Email', 'This email has already been added', 'warning');
             return;
         }
 
-        bulkRecipients.push(number);
+        bulkRecipients.push(email);
         input.value = '';
         renderRecipientTags();
         updateSendFormCalculations();
     }
 
-    function removeRecipient(number) {
-        bulkRecipients = bulkRecipients.filter(r => r !== number);
+    function removeRecipient(email) {
+        bulkRecipients = bulkRecipients.filter(r => r !== email);
         renderRecipientTags();
         updateSendFormCalculations();
     }
 
     function renderRecipientTags() {
         const container = document.getElementById('recipient-tags');
-        container.innerHTML = bulkRecipients.map(number => `
+        container.innerHTML = bulkRecipients.map(email => `
         <span class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm">
-            ${number}
-            <button type="button" onclick="removeRecipient('${number}')" class="hover:bg-primary/20 rounded-full p-1 transition-colors">
+            ${email}
+            <button type="button" onclick="removeRecipient('${email}')" class="hover:bg-primary/20 rounded-full p-1 transition-colors">
                 <i class="fas fa-times text-xs"></i>
             </button>
         </span>
@@ -1145,10 +1011,8 @@ function formatCurrency($amount)
 
     function updateSendFormCalculations() {
         const sendType = document.querySelector('input[name="sendType"]:checked').value;
-        const message = document.getElementById('message').value;
-        const parts = Math.ceil(message.length / 160) || 1;
-
         let recipientCount = 0;
+
         if (sendType === 'single') {
             const recipient = document.getElementById('recipient').value.trim();
             recipientCount = recipient ? 1 : 0;
@@ -1156,20 +1020,72 @@ function formatCurrency($amount)
             recipientCount = bulkRecipients.length;
         }
 
-        const totalCost = recipientCount * parts * SMS_RATE;
-
         document.getElementById('recipient-count').textContent = recipientCount;
-        document.getElementById('estimated-cost').textContent = `Sh. ${formatCurrency(totalCost)}`;
     }
 
-    document.getElementById('sms-form').addEventListener('submit', function (e) {
+    function formatText(command, value = null) {
+        document.execCommand(command, false, value);
+        document.getElementById('email-editor').focus();
+    }
+
+    function formatTemplateText(command, value = null) {
+        document.execCommand(command, false, value);
+        document.getElementById('template-editor').focus();
+    }
+
+    function formatEditText(command, value = null) {
+        document.execCommand(command, false, value);
+        document.getElementById('edit-email-editor').focus();
+    }
+
+    function handleFileSelect(event) {
+        const files = Array.from(event.target.files);
+        attachedFiles = [...attachedFiles, ...files];
+        renderAttachmentList();
+    }
+
+    function removeAttachment(index) {
+        attachedFiles.splice(index, 1);
+        renderAttachmentList();
+    }
+
+    function renderAttachmentList() {
+        const container = document.getElementById('attachment-list');
+        if (attachedFiles.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = attachedFiles.map((file, index) => `
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-paperclip text-gray-400"></i>
+                <div>
+                    <div class="text-sm font-medium text-gray-900">${file.name}</div>
+                    <div class="text-xs text-gray-500">${(file.size / 1024).toFixed(1)} KB</div>
+                </div>
+            </div>
+            <button type="button" onclick="removeAttachment(${index})" class="text-red-600 hover:text-red-800 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+    }
+
+    document.getElementById('email-form').addEventListener('submit', function (e) {
         e.preventDefault();
 
         const sendType = document.querySelector('input[name="sendType"]:checked').value;
-        const message = document.getElementById('message').value.trim();
+        const subject = document.getElementById('subject').value.trim();
+        const message = document.getElementById('email-editor').innerHTML.trim();
         const sendOption = document.querySelector('input[name="sendOption"]:checked').value;
 
-        if (!message) {
+        if (!subject) {
+            showMessageModal('Missing Subject', 'Please enter an email subject', 'error');
+            return;
+        }
+
+        if (!message || message === '<br>' || message === '<div><br></div>') {
             showMessageModal('Missing Message', 'Please enter a message', 'error');
             return;
         }
@@ -1178,11 +1094,11 @@ function formatCurrency($amount)
         if (sendType === 'single') {
             const recipient = document.getElementById('recipient').value.trim();
             if (!recipient) {
-                showMessageModal('Missing Recipient', 'Please enter a recipient phone number', 'error');
+                showMessageModal('Missing Recipient', 'Please enter a recipient email', 'error');
                 return;
             }
-            if (!validatePhoneNumber(recipient)) {
-                showMessageModal('Invalid Number', 'Please enter a valid 10-digit phone number', 'error');
+            if (!validateEmail(recipient)) {
+                showMessageModal('Invalid Email', 'Please enter a valid email address', 'error');
                 return;
             }
             recipients = [recipient];
@@ -1192,15 +1108,6 @@ function formatCurrency($amount)
                 return;
             }
             recipients = [...bulkRecipients];
-        }
-
-        const parts = Math.ceil(message.length / 160) || 1;
-        const totalCost = recipients.length * parts * SMS_RATE;
-        const requiredCredits = recipients.length * parts;
-
-        if (requiredCredits > smsCredits) {
-            showMessageModal('Insufficient Credits', `You need ${requiredCredits} credits but only have ${smsCredits}.`, 'error');
-            return;
         }
 
         let scheduledAt = null;
@@ -1216,50 +1123,50 @@ function formatCurrency($amount)
             scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
         }
 
-        const smsRecord = {
+        const emailRecord = {
             id: Date.now(),
+            subject: subject,
             message: message,
             recipients: recipients,
             type: sendType,
             status: sendOption === 'schedule' ? 'scheduled' : 'sent',
-            cost: totalCost,
             sentAt: sendOption === 'schedule' ? null : new Date().toISOString(),
-            scheduledAt: scheduledAt
+            scheduledAt: scheduledAt,
+            openedAt: null,
+            attachments: attachedFiles.map(file => file.name)
         };
 
-        smsHistory.unshift(smsRecord);
-
-        if (sendOption !== 'schedule') {
-            smsCredits -= requiredCredits;
-        }
-
+        emailHistory.unshift(emailRecord);
         saveData();
         updateStats();
 
-        document.getElementById('sms-form').reset();
+        document.getElementById('email-form').reset();
+        document.getElementById('email-editor').innerHTML = '';
         document.querySelector('input[name="sendType"][value="single"]').checked = true;
         document.querySelector('input[name="sendOption"][value="now"]').checked = true;
         bulkRecipients = [];
+        attachedFiles = [];
         toggleSendType();
         toggleSchedule();
-        updateCharCount();
+        renderAttachmentList();
 
-        showMessageModal('Success', `SMS ${sendOption === 'schedule' ? 'scheduled' : 'sent'} successfully!`, 'success');
+        showMessageModal('Success', `Email ${sendOption === 'schedule' ? 'scheduled' : 'sent'} successfully!`, 'success');
     });
 
     function showTemplateSelector() {
         const modal = document.getElementById('templateSelectorModal');
         const list = document.getElementById('template-selector-list');
 
-        if (smsTemplates.length === 0) {
+        if (emailTemplates.length === 0) {
             list.innerHTML = '<p class="text-center text-gray-500">No templates available</p>';
         } else {
-            list.innerHTML = smsTemplates.map(template => `
+            list.innerHTML = emailTemplates.map(template => `
             <button onclick="selectTemplate(${template.id})" class="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all">
                 <div class="font-medium text-gray-900">${template.name}</div>
-                <div class="text-sm text-gray-500 mt-1">${template.message}</div>
+                <div class="text-sm text-gray-600 mt-1">${template.subject}</div>
+                <div class="text-xs text-gray-500 mt-2">${template.message.replace(/<[^>]*>/g, '').substring(0, 100)}...</div>
             </button>
-        `).join('');
+            `).join('');
         }
 
         modal.classList.remove('hidden');
@@ -1272,10 +1179,10 @@ function formatCurrency($amount)
     }
 
     function selectTemplate(templateId) {
-        const template = smsTemplates.find(t => t.id === templateId);
+        const template = emailTemplates.find(t => t.id === templateId);
         if (template) {
-            document.getElementById('message').value = template.message;
-            updateCharCount();
+            document.getElementById('subject').value = template.subject;
+            document.getElementById('email-editor').innerHTML = template.message;
         }
         hideTemplateSelector();
     }
@@ -1284,7 +1191,7 @@ function formatCurrency($amount)
         const grid = document.getElementById('templates-grid');
         const emptyState = document.getElementById('templates-empty-state');
 
-        if (smsTemplates.length === 0) {
+        if (emailTemplates.length === 0) {
             grid.classList.add('hidden');
             emptyState.classList.remove('hidden');
             return;
@@ -1293,8 +1200,8 @@ function formatCurrency($amount)
         grid.classList.remove('hidden');
         emptyState.classList.add('hidden');
 
-        grid.innerHTML = smsTemplates.map(template => `
-        <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        grid.innerHTML = emailTemplates.map(template => `
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-start justify-between mb-4">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -1311,20 +1218,24 @@ function formatCurrency($amount)
                     </button>
                 </div>
             </div>
-            <p class="text-sm text-gray-600 mb-4">${template.message}</p>
+            <div class="mb-4">
+                <div class="text-sm font-medium text-gray-900 mb-2">${template.subject}</div>
+                <div class="text-sm text-gray-600">${template.message.replace(/<[^>]*>/g, '').substring(0, 100)}...</div>
+            </div>
             <div class="flex gap-2">
                 <button onclick="selectTemplate(${template.id}); switchTab('send')" class="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium">
                     <i class="fas fa-paper-plane mr-1"></i>Use Template
                 </button>
             </div>
         </div>
-    `).join('');
+            `).join('');
     }
 
     function filterTemplates() {
         const query = document.getElementById('searchTemplates').value.toLowerCase();
-        const filteredTemplates = smsTemplates.filter(template =>
+        const filteredTemplates = emailTemplates.filter(template =>
             template.name.toLowerCase().includes(query) ||
+            template.subject.toLowerCase().includes(query) ||
             template.message.toLowerCase().includes(query)
         );
 
@@ -1341,7 +1252,7 @@ function formatCurrency($amount)
         emptyState.classList.add('hidden');
 
         grid.innerHTML = filteredTemplates.map(template => `
-        <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-start justify-between mb-4">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -1358,36 +1269,39 @@ function formatCurrency($amount)
                     </button>
                 </div>
             </div>
-            <p class="text-sm text-gray-600 mb-4">${template.message}</p>
+            <div class="mb-4">
+                <div class="text-sm font-medium text-gray-900 mb-2">${template.subject}</div>
+                <div class="text-sm text-gray-600">${template.message.replace(/<[^>]*>/g, '').substring(0, 100)}...</div>
+            </div>
             <div class="flex gap-2">
                 <button onclick="selectTemplate(${template.id}); switchTab('send')" class="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium">
                     <i class="fas fa-paper-plane mr-1"></i>Use Template
                 </button>
             </div>
         </div>
-    `).join('');
+            `).join('');
     }
 
     function showCreateTemplateForm() {
         document.getElementById('template-modal-title').textContent = 'Create Template';
         document.getElementById('template-form').reset();
         document.getElementById('template-id').value = '';
+        document.getElementById('template-editor').innerHTML = '';
         document.getElementById('templateModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        updateTemplateCharCount();
     }
 
     function editTemplate(templateId) {
-        const template = smsTemplates.find(t => t.id === templateId);
+        const template = emailTemplates.find(t => t.id === templateId);
         if (!template) return;
 
         document.getElementById('template-modal-title').textContent = 'Edit Template';
         document.getElementById('template-id').value = template.id;
         document.getElementById('template-name').value = template.name;
-        document.getElementById('template-message').value = template.message;
+        document.getElementById('template-subject').value = template.subject;
+        document.getElementById('template-editor').innerHTML = template.message;
         document.getElementById('templateModal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        updateTemplateCharCount();
     }
 
     function hideTemplateModal() {
@@ -1395,30 +1309,26 @@ function formatCurrency($amount)
         document.body.style.overflow = '';
     }
 
-    function updateTemplateCharCount() {
-        const message = document.getElementById('template-message').value;
-        const charCount = document.getElementById('template-char-count');
-        charCount.textContent = `${message.length}/160 characters`;
-    }
-
     document.getElementById('template-form').addEventListener('submit', function (e) {
         e.preventDefault();
 
         const templateId = document.getElementById('template-id').value;
         const name = document.getElementById('template-name').value.trim();
-        const message = document.getElementById('template-message').value.trim();
+        const subject = document.getElementById('template-subject').value.trim();
+        const message = document.getElementById('template-editor').innerHTML.trim();
 
-        if (!name || !message) {
+        if (!name || !subject || !message) {
             showMessageModal('Missing Fields', 'Please fill in all fields', 'error');
             return;
         }
 
         if (templateId) {
-            const templateIndex = smsTemplates.findIndex(t => t.id === parseInt(templateId));
+            const templateIndex = emailTemplates.findIndex(t => t.id === parseInt(templateId));
             if (templateIndex !== -1) {
-                smsTemplates[templateIndex] = {
-                    ...smsTemplates[templateIndex],
+                emailTemplates[templateIndex] = {
+                    ...emailTemplates[templateIndex],
                     name: name,
+                    subject: subject,
                     message: message
                 };
             }
@@ -1426,10 +1336,11 @@ function formatCurrency($amount)
             const newTemplate = {
                 id: Date.now(),
                 name: name,
+                subject: subject,
                 message: message,
                 createdAt: new Date().toISOString()
             };
-            smsTemplates.unshift(newTemplate);
+            emailTemplates.unshift(newTemplate);
         }
 
         saveData();
@@ -1440,7 +1351,7 @@ function formatCurrency($amount)
 
     function deleteTemplate(templateId) {
         showConfirmModal('Are you sure you want to delete this template?', () => {
-            smsTemplates = smsTemplates.filter(t => t.id !== templateId);
+            emailTemplates = emailTemplates.filter(t => t.id !== templateId);
             saveData();
             renderTemplates();
             showMessageModal('Success', 'Template deleted successfully!', 'success');
@@ -1484,34 +1395,34 @@ function formatCurrency($amount)
         }
     }
 
-    function renderSMSHistory() {
+    function renderEmailHistory() {
         const tableBody = document.getElementById('history-table-body');
         const mobileContainer = document.getElementById('history-mobile');
         const emptyState = document.getElementById('history-empty-state');
 
-        let filteredHistory = [...smsHistory];
+        let filteredHistory = [...emailHistory];
 
         const query = document.getElementById('searchHistory').value.toLowerCase();
         const statusFilter = document.getElementById('statusFilter').value;
         const dateRange = document.getElementById('dateRangeFilter').value;
 
         if (query) {
-            filteredHistory = filteredHistory.filter(sms =>
-                sms.message.toLowerCase().includes(query) ||
-                sms.recipients.some(r => r.toLowerCase().includes(query))
+            filteredHistory = filteredHistory.filter(email =>
+                email.subject.toLowerCase().includes(query) ||
+                email.recipients.some(r => r.toLowerCase().includes(query))
             );
         }
 
         if (statusFilter) {
-            filteredHistory = filteredHistory.filter(sms => sms.status === statusFilter);
+            filteredHistory = filteredHistory.filter(email => email.status === statusFilter);
         }
 
         if (dateRange !== 'custom') {
             const range = getDateRange(dateRange);
             if (range) {
-                filteredHistory = filteredHistory.filter(sms => {
-                    const smsDate = new Date(sms.sentAt || sms.scheduledAt);
-                    return smsDate >= range.start && smsDate < range.end;
+                filteredHistory = filteredHistory.filter(email => {
+                    const emailDate = new Date(email.sentAt || email.scheduledAt);
+                    return emailDate >= range.start && emailDate < range.end;
                 });
             }
         } else {
@@ -1523,9 +1434,9 @@ function formatCurrency($amount)
                 const end = new Date(endDate);
                 end.setHours(23, 59, 59, 999);
 
-                filteredHistory = filteredHistory.filter(sms => {
-                    const smsDate = new Date(sms.sentAt || sms.scheduledAt);
-                    return smsDate >= start && smsDate <= end;
+                filteredHistory = filteredHistory.filter(email => {
+                    const emailDate = new Date(email.sentAt || email.scheduledAt);
+                    return emailDate >= start && emailDate <= end;
                 });
             }
         }
@@ -1539,70 +1450,73 @@ function formatCurrency($amount)
 
         emptyState.classList.add('hidden');
 
-        tableBody.innerHTML = filteredHistory.map((sms, index) => {
-            const statusBadge = getStatusBadge(sms.status);
-            const recipientText = sms.recipients.length === 1 ? sms.recipients[0] : `${sms.recipients.length} recipients`;
-            const dateText = sms.status === 'scheduled' ?
-                `Scheduled: ${formatDateTime(sms.scheduledAt)}` :
-                formatDateTime(sms.sentAt);
+        tableBody.innerHTML = filteredHistory.map((email, index) => {
+            const statusBadge = getStatusBadge(email.status);
+            const recipientText = email.recipients.length === 1 ? email.recipients[0] : `${email.recipients.length} recipients`;
+            const dateText = email.status === 'scheduled' ?
+                `Scheduled: ${formatDateTime(email.scheduledAt)}` :
+                formatDateTime(email.sentAt);
+            const openRate = email.recipients.length > 0 && email.openedAt ? '100%' : '0%';
 
             return `
             <tr class="${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors">
                 <td class="px-4 py-3">
                     <div class="max-w-xs">
-                        <div class="text-sm font-medium text-gray-900 truncate" title="${sms.message}">
-                            ${sms.message.substring(0, 50)}${sms.message.length > 50 ? '...' : ''}
+                        <div class="text-sm font-medium text-gray-900 truncate" title="${email.subject}">
+                            ${email.subject.substring(0, 50)}${email.subject.length > 50 ? '...' : ''}
                         </div>
-                        <div class="text-xs text-gray-500 mt-1">
-                            ${Math.ceil(sms.message.length / 160)} SMS part${Math.ceil(sms.message.length / 160) > 1 ? 's' : ''}
-                        </div>
+                        ${email.attachments.length > 0 ? `<div class="text-xs text-gray-500 mt-1"><i class="fas fa-paperclip mr-1"></i>${email.attachments.length} attachment${email.attachments.length > 1 ? 's' : ''}</div>` : ''}
                     </div>
                 </td>
                 <td class="px-4 py-3">
                     <div class="text-sm text-gray-900">${recipientText}</div>
-                    ${sms.type === 'bulk' ? `<div class="text-xs text-gray-500 mt-1">Bulk SMS</div>` : ''}
+                    ${email.type === 'bulk' ? `<div class="text-xs text-gray-500 mt-1">Bulk Email</div>` : ''}
                 </td>
                 <td class="px-4 py-3">${statusBadge}</td>
                 <td class="px-4 py-3">
-                    <div class="text-sm font-semibold text-gray-900">Sh. ${formatCurrency(sms.cost)}</div>
+                    <div class="text-sm font-semibold text-gray-900">${openRate}</div>
                 </td>
                 <td class="px-4 py-3">
                     <div class="text-sm text-gray-900">${dateText}</div>
                 </td>
                 <td class="px-4 py-3 text-center">
                     <div class="flex items-center justify-center gap-1">
-                        <button onclick="showSMSDetails(${sms.id})" class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" title="View Details">
+                        <button onclick="showEmailDetails(${email.id})" class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" title="View Details">
                             <i class="fas fa-eye text-xs"></i>
                         </button>
-                        ${sms.status === 'scheduled' ? `
-                            <button onclick="editScheduledSMS(${sms.id})" class="w-8 h-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex items-center justify-center" title="Edit">
+                        ${email.status === 'scheduled' ? `
+                            <button onclick="editScheduledEmail(${email.id})" class="w-8 h-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex items-center justify-center" title="Edit">
                                 <i class="fas fa-edit text-xs"></i>
                             </button>
-                            <button onclick="deleteScheduledSMS(${sms.id})" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" title="Delete">
+                            <button onclick="deleteScheduledEmail(${email.id})" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" title="Delete">
                                 <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
+                        ` : ''}
+                        ${email.status === 'sent' && !email.openedAt ? `
+                            <button onclick="markAsOpened(${email.id})" class="w-8 h-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex items-center justify-center" title="Mark as Opened">
+                                <i class="fas fa-envelope-open text-xs"></i>
                             </button>
                         ` : ''}
                     </div>
                 </td>
             </tr>
-        `;
+            `;
         }).join('');
 
-        mobileContainer.innerHTML = filteredHistory.map(sms => {
-            const statusBadge = getStatusBadge(sms.status);
-            const recipientText = sms.recipients.length === 1 ? sms.recipients[0] : `${sms.recipients.length} recipients`;
-            const dateText = sms.status === 'scheduled' ?
-                `Scheduled: ${formatDateTime(sms.scheduledAt)}` :
-                formatDateTime(sms.sentAt);
+        mobileContainer.innerHTML = filteredHistory.map(email => {
+            const statusBadge = getStatusBadge(email.status);
+            const recipientText = email.recipients.length === 1 ? email.recipients[0] : `${email.recipients.length} recipients`;
+            const dateText = email.status === 'scheduled' ?
+                `Scheduled: ${formatDateTime(email.scheduledAt)}` :
+                formatDateTime(email.sentAt);
+            const openRate = email.recipients.length > 0 && email.openedAt ? '100%' : '0%';
 
             return `
             <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
                 <div class="flex items-start justify-between mb-3">
                     <div class="flex-1 min-w-0">
-                        <div class="text-sm font-medium text-gray-900 mb-2">${sms.message}</div>
-                        <div class="text-xs text-gray-500">
-                            ${Math.ceil(sms.message.length / 160)} SMS part${Math.ceil(sms.message.length / 160) > 1 ? 's' : ''}
-                        </div>
+                        <div class="text-sm font-medium text-gray-900 mb-2">${email.subject}</div>
+                        ${email.attachments.length > 0 ? `<div class="text-xs text-gray-500"><i class="fas fa-paperclip mr-1"></i>${email.attachments.length} attachment${email.attachments.length > 1 ? 's' : ''}</div>` : ''}
                     </div>
                     ${statusBadge}
                 </div>
@@ -1613,35 +1527,41 @@ function formatCurrency($amount)
                         <div class="font-medium text-gray-900 mt-1">${recipientText}</div>
                     </div>
                     <div>
-                        <span class="text-gray-500 uppercase tracking-wide">Cost</span>
-                        <div class="font-semibold text-gray-900 mt-1">Sh. ${formatCurrency(sms.cost)}</div>
+                        <span class="text-gray-500 uppercase tracking-wide">Open Rate</span>
+                        <div class="font-semibold text-gray-900 mt-1">${openRate}</div>
                     </div>
                 </div>
 
                 <div class="flex items-center justify-between">
                     <div class="text-xs text-gray-500">${dateText}</div>
                     <div class="flex gap-2">
-                        <button onclick="showSMSDetails(${sms.id})" class="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
+                        <button onclick="showEmailDetails(${email.id})" class="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
                             <i class="fas fa-eye mr-1"></i>Details
                         </button>
-                        ${sms.status === 'scheduled' ? `
-                            <button onclick="editScheduledSMS(${sms.id})" class="px-3 py-2 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-medium">
+                        ${email.status === 'scheduled' ? `
+                            <button onclick="editScheduledEmail(${email.id})" class="px-3 py-2 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-medium">
                                 <i class="fas fa-edit mr-1"></i>Edit
                             </button>
-                            <button onclick="deleteScheduledSMS(${sms.id})" class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
+                            <button onclick="deleteScheduledEmail(${email.id})" class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
                                 <i class="fas fa-trash-alt mr-1"></i>Delete
+                            </button>
+                        ` : ''}
+                        ${email.status === 'sent' && !email.openedAt ? `
+                            <button onclick="markAsOpened(${email.id})" class="px-3 py-2 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-medium">
+                                <i class="fas fa-envelope-open mr-1"></i>Mark Opened
                             </button>
                         ` : ''}
                     </div>
                 </div>
             </div>
-        `;
+            `;
         }).join('');
     }
 
     function getStatusBadge(status) {
         const badges = {
-            'sent': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Sent</span>',
+            'sent': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Sent</span>',
+            'opened': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Opened</span>',
             'scheduled': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Scheduled</span>',
             'failed': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>'
         };
@@ -1649,53 +1569,72 @@ function formatCurrency($amount)
     }
 
     function filterHistory() {
-        renderSMSHistory();
+        renderEmailHistory();
     }
 
-    function showSMSDetails(smsId) {
-        const sms = smsHistory.find(s => s.id === smsId);
-        if (!sms) return;
+    function showEmailDetails(emailId) {
+        const email = emailHistory.find(e => e.id === emailId);
+        if (!email) return;
 
-        const modal = document.getElementById('smsDetailsModal');
-        const content = document.getElementById('sms-details-content');
+        const modal = document.getElementById('emailDetailsModal');
+        const content = document.getElementById('email-details-content');
 
-        const dateText = sms.status === 'scheduled' ?
-            `Scheduled for: ${formatDateTime(sms.scheduledAt)}` :
-            `Sent on: ${formatDateTime(sms.sentAt)}`;
+        const dateText = email.status === 'scheduled' ?
+            `Scheduled for: ${formatDateTime(email.scheduledAt)}` :
+            `Sent on: ${formatDateTime(email.sentAt)}`;
+
+        const openedText = email.openedAt ? `Opened on: ${formatDateTime(email.openedAt)}` : 'Not opened yet';
 
         content.innerHTML = `
-        <div class="space-y-6">
+            <div class="space-y-6">
             <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-2">Message</h4>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Subject</h4>
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-gray-900">${sms.message}</p>
-                </div>
-                <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-                    <span>${sms.message.length} characters</span>
-                    <span>${Math.ceil(sms.message.length / 160)} SMS part${Math.ceil(sms.message.length / 160) > 1 ? 's' : ''}</span>
+                    <p class="text-gray-900 font-medium">${email.subject}</p>
                 </div>
             </div>
 
             <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-2">Recipients (${sms.recipients.length})</h4>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Message</h4>
+                <div class="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                    <div class="text-gray-900">${email.message}</div>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 mb-2">Recipients (${email.recipients.length})</h4>
                 <div class="bg-gray-50 rounded-lg p-4 max-h-40 overflow-y-auto">
-                    ${sms.recipients.map(recipient => `
+                    ${email.recipients.map(recipient => `
                         <div class="flex items-center gap-2 py-1">
-                            <i class="fas fa-phone text-gray-400 text-xs"></i>
+                            <i class="fas fa-envelope text-gray-400 text-xs"></i>
                             <span class="text-gray-900">${recipient}</span>
                         </div>
                     `).join('')}
                 </div>
             </div>
 
+            ${email.attachments.length > 0 ? `
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Attachments (${email.attachments.length})</h4>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        ${email.attachments.map(attachment => `
+                            <div class="flex items-center gap-2 py-1">
+                                <i class="fas fa-paperclip text-gray-400 text-xs"></i>
+                                <span class="text-gray-900">${attachment}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <h4 class="text-sm font-semibold text-gray-700 mb-2">Status</h4>
-                    ${getStatusBadge(sms.status)}
+                    ${getStatusBadge(email.status)}
                 </div>
                 <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Cost</h4>
-                    <div class="text-lg font-semibold text-gray-900">Sh. ${formatCurrency(sms.cost)}</div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Open Status</h4>
+                    <div class="text-sm text-gray-900">${openedText}</div>
                 </div>
             </div>
 
@@ -1704,30 +1643,30 @@ function formatCurrency($amount)
                 <div class="text-gray-900">${dateText}</div>
             </div>
         </div>
-    `;
+            `;
 
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
 
-    function hideSMSDetails() {
-        document.getElementById('smsDetailsModal').classList.add('hidden');
+    function hideEmailDetails() {
+        document.getElementById('emailDetailsModal').classList.add('hidden');
         document.body.style.overflow = '';
     }
 
-    function editScheduledSMS(smsId) {
-        const sms = smsHistory.find(s => s.id === smsId);
-        if (!sms || sms.status !== 'scheduled') return;
+    function editScheduledEmail(emailId) {
+        const email = emailHistory.find(e => e.id === emailId);
+        if (!email || email.status !== 'scheduled') return;
 
         const modal = document.getElementById('editScheduledModal');
-        const scheduledDate = new Date(sms.scheduledAt);
+        const scheduledDate = new Date(email.scheduledAt);
 
-        document.getElementById('edit-sms-id').value = sms.id;
-        document.getElementById('edit-sms-message').value = sms.message;
+        document.getElementById('edit-email-id').value = email.id;
+        document.getElementById('edit-email-subject').value = email.subject;
+        document.getElementById('edit-email-editor').innerHTML = email.message;
         document.getElementById('edit-schedule-date').value = scheduledDate.toISOString().split('T')[0];
         document.getElementById('edit-schedule-time').value = scheduledDate.toTimeString().slice(0, 5);
 
-        updateEditCharCount();
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -1737,128 +1676,59 @@ function formatCurrency($amount)
         document.body.style.overflow = '';
     }
 
-    function updateEditCharCount() {
-        const message = document.getElementById('edit-sms-message').value;
-        const charCount = document.getElementById('edit-char-count');
-        charCount.textContent = `${message.length}/160 characters`;
-    }
-
     document.getElementById('edit-scheduled-form').addEventListener('submit', function (e) {
         e.preventDefault();
 
-        const smsId = parseInt(document.getElementById('edit-sms-id').value);
-        const message = document.getElementById('edit-sms-message').value.trim();
+        const emailId = parseInt(document.getElementById('edit-email-id').value);
+        const subject = document.getElementById('edit-email-subject').value.trim();
+        const message = document.getElementById('edit-email-editor').innerHTML.trim();
         const scheduleDate = document.getElementById('edit-schedule-date').value;
         const scheduleTime = document.getElementById('edit-schedule-time').value;
 
-        if (!message || !scheduleDate || !scheduleTime) {
+        if (!subject || !message || !scheduleDate || !scheduleTime) {
             showMessageModal('Missing Fields', 'Please fill in all fields', 'error');
             return;
         }
 
-        const smsIndex = smsHistory.findIndex(s => s.id === smsId);
-        if (smsIndex !== -1) {
+        const emailIndex = emailHistory.findIndex(e => e.id === emailId);
+        if (emailIndex !== -1) {
             const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
-            const parts = Math.ceil(message.length / 160) || 1;
-            const cost = smsHistory[smsIndex].recipients.length * parts * SMS_RATE;
 
-            smsHistory[smsIndex] = {
-                ...smsHistory[smsIndex],
+            emailHistory[emailIndex] = {
+                ...emailHistory[emailIndex],
+                subject: subject,
                 message: message,
-                scheduledAt: scheduledAt,
-                cost: cost
+                scheduledAt: scheduledAt
             };
 
             saveData();
             hideEditScheduled();
-            renderSMSHistory();
-            showMessageModal('Success', 'Scheduled SMS updated successfully!', 'success');
+            renderEmailHistory();
+            showMessageModal('Success', 'Scheduled email updated successfully!', 'success');
         }
     });
 
-    function deleteScheduledSMS(smsId) {
-        showConfirmModal('Are you sure you want to delete this scheduled SMS?', () => {
-            smsHistory = smsHistory.filter(s => s.id !== smsId);
+    function deleteScheduledEmail(emailId) {
+        showConfirmModal('Are you sure you want to delete this scheduled email?', () => {
+            emailHistory = emailHistory.filter(e => e.id !== emailId);
             saveData();
             updateStats();
-            renderSMSHistory();
-            showMessageModal('Success', 'Scheduled SMS deleted successfully!', 'success');
+            renderEmailHistory();
+            showMessageModal('Success', 'Scheduled email deleted successfully!', 'success');
         });
     }
 
-    function updateTopupCalculation() {
-        const selectedPackage = document.querySelector('input[name="package"]:checked');
-        const customAmountSection = document.getElementById('custom-amount-section');
-        const customAmountInput = document.getElementById('custom-amount');
-        const topupCredits = document.getElementById('topup-credits');
-        const topupCost = document.getElementById('topup-cost');
-
-        if (!selectedPackage) {
-            topupCredits.textContent = '0';
-            topupCost.textContent = 'Sh. 0.00';
-            return;
-        }
-
-        const packageValue = selectedPackage.value;
-
-        if (packageValue === 'custom') {
-            customAmountSection.classList.remove('hidden');
-            const customAmount = parseFloat(customAmountInput.value) || 0;
-            const credits = Math.floor(customAmount / SMS_RATE);
-            topupCredits.textContent = credits;
-            topupCost.textContent = `Sh. ${formatCurrency(customAmount)}`;
-        } else {
-            customAmountSection.classList.add('hidden');
-            const credits = parseInt(packageValue);
-            const cost = credits * SMS_RATE;
-            topupCredits.textContent = credits;
-            topupCost.textContent = `Sh. ${formatCurrency(cost)}`;
-        }
-    }
-
-    document.getElementById('topup-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const selectedPackage = document.querySelector('input[name="package"]:checked');
-        const paymentMethod = document.getElementById('payment-method').value;
-
-        if (!selectedPackage) {
-            showMessageModal('Missing Package', 'Please select a package', 'error');
-            return;
-        }
-
-        if (!paymentMethod) {
-            showMessageModal('Missing Payment Method', 'Please select a payment method', 'error');
-            return;
-        }
-
-        let credits = 0;
-        let cost = 0;
-
-        if (selectedPackage.value === 'custom') {
-            const customAmount = parseFloat(document.getElementById('custom-amount').value) || 0;
-            if (customAmount < 1000) {
-                showMessageModal('Invalid Amount', 'Minimum top-up amount is Sh. 1,000', 'error');
-                return;
-            }
-            credits = Math.floor(customAmount / SMS_RATE);
-            cost = customAmount;
-        } else {
-            credits = parseInt(selectedPackage.value);
-            cost = credits * SMS_RATE;
-        }
-
-        showConfirmModal(`Confirm purchase of ${credits} SMS credits for Sh. ${formatCurrency(cost)}?`, () => {
-            smsCredits += credits;
+    function markAsOpened(emailId) {
+        const emailIndex = emailHistory.findIndex(e => e.id === emailId);
+        if (emailIndex !== -1) {
+            emailHistory[emailIndex].status = 'opened';
+            emailHistory[emailIndex].openedAt = new Date().toISOString();
             saveData();
             updateStats();
-
-            document.getElementById('topup-form').reset();
-            updateTopupCalculation();
-
-            showMessageModal('Success', `Successfully purchased ${credits} SMS credits!`, 'success');
-        });
-    });
+            renderEmailHistory();
+            showMessageModal('Success', 'Email marked as opened!', 'success');
+        }
+    }
 
     function showMessageModal(title, message, type = 'info') {
         const modal = document.getElementById('messageModal');
@@ -1933,14 +1803,14 @@ function formatCurrency($amount)
 
         document.getElementById('recipient').addEventListener('input', updateSendFormCalculations);
 
-        document.getElementById('bulk-number-input').addEventListener('keypress', function (e) {
+        document.getElementById('bulk-email-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 addBulkRecipient();
             }
         });
 
-        document.getElementById('add-number-btn').addEventListener('click', addBulkRecipient);
+        document.getElementById('add-email-btn').addEventListener('click', addBulkRecipient);
 
         document.addEventListener('click', function (event) {
             const mobileDropdown = document.getElementById('mobile-tab-dropdown');
@@ -1951,12 +1821,18 @@ function formatCurrency($amount)
                 document.getElementById('mobile-tab-chevron').classList.remove('rotate-180');
             }
         });
+
+        const emailEditor = document.getElementById('email-editor');
+        emailEditor.addEventListener('paste', function (e) {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
     });
 
     window.switchTab = switchTab;
     window.toggleSendType = toggleSendType;
     window.toggleSchedule = toggleSchedule;
-    window.updateCharCount = updateCharCount;
     window.showTemplateSelector = showTemplateSelector;
     window.hideTemplateSelector = hideTemplateSelector;
     window.selectTemplate = selectTemplate;
@@ -1964,22 +1840,25 @@ function formatCurrency($amount)
     window.editTemplate = editTemplate;
     window.deleteTemplate = deleteTemplate;
     window.hideTemplateModal = hideTemplateModal;
-    window.updateTemplateCharCount = updateTemplateCharCount;
     window.filterHistory = filterHistory;
-    window.showSMSDetails = showSMSDetails;
-    window.hideSMSDetails = hideSMSDetails;
+    window.showEmailDetails = showEmailDetails;
+    window.hideEmailDetails = hideEmailDetails;
     window.filterTemplates = filterTemplates;
-    window.updateTopupCalculation = updateTopupCalculation;
-    window.resetSMSData = resetSMSData;
+    window.resetEmailData = resetEmailData;
     window.handleDateRangeChange = handleDateRangeChange;
-    window.editScheduledSMS = editScheduledSMS;
+    window.editScheduledEmail = editScheduledEmail;
     window.hideEditScheduled = hideEditScheduled;
-    window.updateEditCharCount = updateEditCharCount;
-    window.deleteScheduledSMS = deleteScheduledSMS;
+    window.deleteScheduledEmail = deleteScheduledEmail;
+    window.markAsOpened = markAsOpened;
     window.hideMessageModal = hideMessageModal;
     window.hideConfirmModal = hideConfirmModal;
     window.addBulkRecipient = addBulkRecipient;
     window.removeRecipient = removeRecipient;
+    window.formatText = formatText;
+    window.formatTemplateText = formatTemplateText;
+    window.formatEditText = formatEditText;
+    window.handleFileSelect = handleFileSelect;
+    window.removeAttachment = removeAttachment;
 </script>
 
 <?php
