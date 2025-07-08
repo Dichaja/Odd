@@ -34,14 +34,16 @@ $userEmail = $_SESSION['user']['email'];
 $userInitials = implode('', array_map(fn($p) => strtoupper(substr($p, 0, 1)), explode(' ', $userName)));
 $menuItems = [
     'overview' => ['title' => 'Overview', 'items' => ['dashboard' => ['title' => 'Dashboard', 'icon' => 'fa-tachometer-alt']]],
+
     'pages' => [
         'title' => 'Pages',
         'items' => [
             'homepage' => ['title' => 'Homepage', 'icon' => 'fa-home'],
             'about-us' => ['title' => 'About Us', 'icon' => 'fa-info-circle'],
-            'contact-us' => ['title' => 'Contact Us', 'icon' => 'fa-envelope']
+            'contact-us' => ['title' => 'Contact Us', 'icon' => 'fa-envelope'],
         ]
     ],
+
     'finance' => [
         'title' => 'Finance',
         'items' => [
@@ -49,9 +51,10 @@ $menuItems = [
             'cash-accounts' => ['title' => 'Cash Accounts', 'icon' => 'fa-wallet'],
             'zzimba-wallets' => ['title' => 'Zzimba Wallets', 'icon' => 'fa-piggy-bank'],
             'zzimba-charges' => ['title' => 'Zzimba Charges', 'icon' => 'fa-receipt'],
-            'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card']
+            'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card'],
         ]
     ],
+
     'management' => [
         'title' => 'Management',
         'items' => [
@@ -60,24 +63,26 @@ $menuItems = [
             'fundi' => ['title' => 'Fundi', 'icon' => 'fa-hard-hat'],
             'order-catalogue' => ['title' => 'Order Catalogue', 'icon' => 'fa-book'],
             'member-subscription' => ['title' => 'Subscriptions', 'icon' => 'fa-users'],
-            'quotations' => ['title' => 'Quotations', 'icon' => 'fa-file-invoice-dollar']
+            'quotations' => ['title' => 'Quotations', 'icon' => 'fa-file-invoice-dollar'],
         ]
     ],
+
     'marketing' => [
         'title' => 'Marketing',
         'items' => [
             'schedule-ads' => ['title' => 'Schedule Ads', 'icon' => 'fa-calendar-alt'],
-            'ads-management' => ['title' => 'Ads Management', 'icon' => 'fa-ad']
+            'ads-management' => ['title' => 'Ads Management', 'icon' => 'fa-ad'],
         ]
     ],
+
     'analytics' => [
         'title' => 'Analytics',
         'items' => [
             'search-log' => ['title' => 'Search Log', 'icon' => 'fa-search'],
             'page-activity' => ['title' => 'Page Activity', 'icon' => 'fa-chart-line'],
-            'sessions' => ['title' => 'Sessions', 'icon' => 'fa-history']
+            'sessions' => ['title' => 'Sessions', 'icon' => 'fa-history'],
         ]
-    ]
+    ],
 ];
 ?>
 <!DOCTYPE html>
@@ -374,6 +379,7 @@ $menuItems = [
             return {
                 open: false,
                 notes: [],
+
                 count: 0,
                 selected: [],
                 evtSource: null,
@@ -506,6 +512,13 @@ $menuItems = [
                     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                 }
             }
+        }
+
+        // Scroll the active menu item into view on page load
+        const sidebarNavEl = document.getElementById('sidebarNav');
+        const activeNavItemEl = sidebarNavEl.querySelector('.active-nav-item');
+        if (activeNavItemEl) {
+            activeNavItemEl.scrollIntoView({ block: 'start' });
         }
     </script>
 </body>
