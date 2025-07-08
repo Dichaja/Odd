@@ -87,6 +87,18 @@ try {
                 REFERENCES zzimba_wallets(wallet_id)
                 ON DELETE CASCADE ON UPDATE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+        CREATE TABLE IF NOT EXISTS zzimba_wallet_credit_assignments (
+            id CHAR(26) NOT NULL PRIMARY KEY,
+            wallet_id CHAR(26) NOT NULL,
+            credit_setting_id CHAR(26) NOT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            UNIQUE KEY unique_credit_setting (credit_setting_id),
+            CONSTRAINT fk_credit_assignment_wallet FOREIGN KEY (wallet_id)
+                REFERENCES zzimba_wallets(wallet_id)
+                ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     ");
 } catch (PDOException $e) {
     error_log("Table creation error: " . $e->getMessage());
@@ -119,6 +131,15 @@ try {
             break;
         case 'managePlatformAccounts':
             managePlatformAccounts($pdo);
+            break;
+        case 'getCreditAssignments':
+            getCreditAssignments($pdo);
+            break;
+        case 'createCreditAssignment':
+            createCreditAssignment($pdo);
+            break;
+        case 'deleteCreditAssignment':
+            deleteCreditAssignment($pdo);
             break;
         default:
             http_response_code(404);
@@ -563,6 +584,163 @@ function managePlatformAccounts(PDO $pdo)
             ]);
         }
         return;
+    }
+}
+
+function getCreditAssignments(PDO $pdo)
+{
+    try {
+        $stmt = $pdo->prepare("
+            SELECT
+                ca.id,
+                ca.wallet_id,
+                ca.credit_setting_id,
+                ca.created_at,
+                ca.updated_at,
+                w.wallet_name,
+                w.wallet_number
+            FROM zzimba_wallet_credit_assignments ca
+            JOIN zzimba_wallets w ON ca.wallet_id = w.wallet_id
+            ORDER BY ca.created_at DESC
+        ");
+        $stmt->execute();
+        $assignments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'assignments' => $assignments
+        ]);
+    } catch (Exception $e) {
+        error_log("Error getting credit assignments: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error getting credit assignments'
+        ]);
+    }
+}
+
+function createCreditAssignment(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $walletId = trim($data['wallet_id'] ?? '');
+    $creditSettingId = trim($data['credit_setting_id'] ?? '');
+
+    if ($walletId === '' || $creditSettingId === '') {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Missing wallet_id or credit_setting_id'
+        ]);
+        return;
+    }
+
+    // Check if wallet exists and is a platform wallet
+    $walletCheck = $pdo->prepare("
+        SELECT wallet_id FROM zzimba_wallets 
+        WHERE wallet_id = ? AND owner_type = 'PLATFORM'
+    ");
+    $walletCheck->execute([$walletId]);
+    if (!$walletCheck->fetchColumn()) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid platform wallet'
+        ]);
+        return;
+    }
+
+    // Check if credit setting is already assigned
+    $existingCheck = $pdo->prepare("
+        SELECT id FROM zzimba_wallet_credit_assignments 
+        WHERE credit_setting_id = ?
+    ");
+    $existingCheck->execute([$creditSettingId]);
+    if ($existingCheck->fetchColumn()) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'This credit setting is already assigned to another wallet'
+        ]);
+        return;
+    }
+
+    $id = generateUlid();
+    $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO zzimba_wallet_credit_assignments
+                (id, wallet_id, credit_setting_id, created_at, updated_at)
+            VALUES
+                (?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $id,
+            $walletId,
+            $creditSettingId,
+            $now,
+            $now
+        ]);
+
+        $pdo->commit();
+        echo json_encode([
+            'success' => true,
+            'id' => $id
+        ]);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Error creating credit assignment: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error creating credit assignment'
+        ]);
+    }
+}
+
+function deleteCreditAssignment(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $id = trim($data['id'] ?? '');
+
+    if ($id === '') {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Missing assignment ID'
+        ]);
+        return;
+    }
+
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare("
+            DELETE FROM zzimba_wallet_credit_assignments 
+            WHERE id = :id
+        ");
+        $stmt->execute([':id' => $id]);
+
+        if ($stmt->rowCount() === 0) {
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Assignment not found'
+            ]);
+            return;
+        }
+
+        $pdo->commit();
+        echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Error deleting credit assignment: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error deleting credit assignment'
+        ]);
     }
 }
 ?>

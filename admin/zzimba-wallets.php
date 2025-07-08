@@ -107,6 +107,12 @@ function formatCurrency($amount)
                             <i class="fas fa-cogs"></i>
                             <span>Platform Settings</span>
                         </button>
+                        <button id="credit-assignments-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchWalletTab('credit-assignments')">
+                            <i class="fas fa-link"></i>
+                            <span>Credit Assignments</span>
+                        </button>
                     </nav>
                 </div>
             </div>
@@ -152,6 +158,12 @@ function formatCurrency($amount)
                                         data-tab="settings">
                                         <i class="fas fa-cogs text-gray-600"></i>
                                         <span>Platform Account Settings</span>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="credit-assignments">
+                                        <i class="fas fa-link text-indigo-600"></i>
+                                        <span>Credit Assignments</span>
                                     </button>
                                 </div>
                             </div>
@@ -323,6 +335,42 @@ function formatCurrency($amount)
                         </div>
 
                         <div class="p-6" id="settings-grid">
+                            <div class="flex items-center justify-center py-16">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="credit-assignments-content" class="space-y-6 hidden">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200"
+                        id="credit-assignments-container">
+                        <div class="p-6 border-b border-gray-100">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                <div class="w-full lg:w-1/3">
+                                    <div class="relative">
+                                        <div
+                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-search text-gray-400"></i>
+                                        </div>
+                                        <input type="text" id="searchCreditAssignments"
+                                            class="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white"
+                                            placeholder="Search assignments...">
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                    <button id="create-credit-assignment-btn"
+                                        class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 w-full sm:w-auto">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Assign Credit Setting</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-6" id="credit-assignments-grid">
                             <div class="flex items-center justify-center py-16">
                                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                             </div>
@@ -696,6 +744,105 @@ function formatCurrency($amount)
     </div>
 </div>
 
+<div id="createCreditAssignmentModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideCreateCreditAssignmentForm()"></div>
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 overflow-hidden max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-link text-primary"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-secondary font-rubik">Assign Credit Setting to Wallet</h3>
+            </div>
+            <button onclick="hideCreateCreditAssignmentForm()"
+                class="w-8 h-8 rounded-lg hover:bg-gray-200 flex items-center justify-center transition-colors">
+                <i class="fas fa-times text-gray-500"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <form id="createCreditAssignmentForm" class="space-y-6">
+                <div>
+                    <label for="assignmentCreditSettingSelect"
+                        class="block text-sm font-semibold text-gray-700 mb-2">Credit Setting</label>
+                    <select id="assignmentCreditSettingSelect" name="assignmentCreditSettingSelect"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                        required>
+                        <option value="">Select Credit Setting</option>
+                    </select>
+                    <p class="mt-2 text-sm text-gray-500">Select the credit setting first to see its details</p>
+                </div>
+
+                <div id="creditSettingDetails" class="hidden p-4 bg-gray-50 rounded-xl">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Credit Setting Details</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Category:</span>
+                            <span id="settingCategory" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Value:</span>
+                            <span id="settingValue" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Applicable To:</span>
+                            <span id="settingApplicableTo" class="font-medium"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="assignmentWalletSelect" class="block text-sm font-semibold text-gray-700 mb-2">Platform
+                        Wallet</label>
+                    <select id="assignmentWalletSelect" name="assignmentWalletSelect"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                        required>
+                        <option value="">Select Platform Wallet</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div class="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+            <div class="flex gap-3">
+                <button onclick="hideCreateCreditAssignmentForm()"
+                    class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
+                <button id="submitCreditAssignmentForm"
+                    class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25">Assign
+                    Setting</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirmDeleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideConfirmDeleteModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+        <div class="p-6">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Confirm Removal</h3>
+                    <p class="text-sm text-gray-500 mt-1">This action cannot be undone</p>
+                </div>
+            </div>
+            <div class="mb-6">
+                <p class="text-gray-700" id="confirmDeleteMessage">Are you sure you want to remove this credit
+                    assignment?</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="hideConfirmDeleteModal()"
+                    class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">Cancel</button>
+                <button id="confirmDeleteButton"
+                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">Remove</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="messageModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideMessageModal()"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
@@ -721,9 +868,12 @@ function formatCurrency($amount)
     const API_URL = '<?= BASE_URL ?>admin/fetch/manageZzimbaWallets.php';
     let wallets = [];
     let platformSettings = [];
+    let creditSettings = [];
+    let creditAssignments = [];
     let currentWalletTab = 'PLATFORM';
     let currentWalletStatement = [];
     let currentStatementWalletId = null;
+    let pendingDeleteAssignmentId = null;
 
     const WALLETS_COLUMNS_STORAGE_KEY = 'zzimba_wallets_columns';
     const STATEMENT_COLUMNS_STORAGE_KEY = 'zzimba_statement_columns';
@@ -773,13 +923,45 @@ function formatCurrency($amount)
         return `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${className}">${typeText}</span>`;
     }
 
+    function getCategoryBadge(category) {
+        const categoryText = category.charAt(0).toUpperCase() + category.slice(1);
+        const categoryClasses = {
+            'sms': 'bg-blue-100 text-blue-800',
+            'bonus': 'bg-green-100 text-green-800',
+            'access': 'bg-purple-100 text-purple-800',
+            'commission': 'bg-orange-100 text-orange-800',
+            'transfer': 'bg-red-100 text-red-800',
+            'withdrawal': 'bg-indigo-100 text-indigo-800',
+            'subscription': 'bg-pink-100 text-pink-800'
+        };
+        const className = categoryClasses[category] || 'bg-gray-100 text-gray-800';
+        return `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${className}">${categoryText}</span>`;
+    }
+
+    function formatValue(type, value) {
+        if (type === 'percentage') {
+            return `${value}%`;
+        } else {
+            return `Sh. ${formatCurrency(value)}`;
+        }
+    }
+
     function updateTabHeights() {
         const desktopNav = document.getElementById('desktop-nav');
         const walletsContainer = document.getElementById('wallets-container');
         const settingsContainer = document.getElementById('settings-container');
+        const creditAssignmentsContainer = document.getElementById('credit-assignments-container');
 
         if (desktopNav && window.innerWidth >= 1024) {
-            const activeContainer = currentWalletTab === 'settings' ? settingsContainer : walletsContainer;
+            let activeContainer;
+            if (currentWalletTab === 'settings') {
+                activeContainer = settingsContainer;
+            } else if (currentWalletTab === 'credit-assignments') {
+                activeContainer = creditAssignmentsContainer;
+            } else {
+                activeContainer = walletsContainer;
+            }
+
             if (activeContainer) {
                 const containerHeight = activeContainer.offsetHeight;
                 desktopNav.style.height = containerHeight + 'px';
@@ -795,8 +977,11 @@ function formatCurrency($amount)
             btn.classList.add('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900');
         });
 
+        document.getElementById('wallets-content').classList.add('hidden');
+        document.getElementById('settings-content').classList.add('hidden');
+        document.getElementById('credit-assignments-content').classList.add('hidden');
+
         if (tabName === 'settings') {
-            document.getElementById('wallets-content').classList.add('hidden');
             document.getElementById('settings-content').classList.remove('hidden');
             const activeTab = document.getElementById('settings-tab');
             if (activeTab) {
@@ -805,8 +990,16 @@ function formatCurrency($amount)
             }
             loadPlatformSettings();
             updateMobileTabLabel('Platform Account Settings', 'fas fa-cogs');
+        } else if (tabName === 'credit-assignments') {
+            document.getElementById('credit-assignments-content').classList.remove('hidden');
+            const activeTab = document.getElementById('credit-assignments-tab');
+            if (activeTab) {
+                activeTab.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900');
+                activeTab.classList.add('bg-primary/10', 'text-primary', 'border', 'border-primary/20');
+            }
+            loadCreditAssignments();
+            updateMobileTabLabel('Credit Assignments', 'fas fa-link');
         } else {
-            document.getElementById('settings-content').classList.add('hidden');
             document.getElementById('wallets-content').classList.remove('hidden');
 
             const tabId = `${tabName.toLowerCase()}-tab`;
@@ -883,6 +1076,7 @@ function formatCurrency($amount)
                 renderFilteredWallets();
                 updateQuickStats();
                 loadPlatformAccountsDropdown();
+                loadCreditAssignmentDropdowns();
             } else {
                 showMessage('error', 'Error', data.message || 'Failed to load wallets');
             }
@@ -913,6 +1107,39 @@ function formatCurrency($amount)
         }
     }
 
+    async function loadCreditSettings() {
+        try {
+            const response = await fetch('<?= BASE_URL ?>admin/fetch/manageZzimbaCreditSettings.php?action=getSettings');
+            const data = await response.json();
+
+            if (data.success) {
+                creditSettings = data.settings || [];
+                loadCreditAssignmentDropdowns();
+            } else {
+                console.error('Failed to load credit settings:', data.message);
+            }
+        } catch (error) {
+            console.error('Error loading credit settings:', error);
+        }
+    }
+
+    async function loadCreditAssignments() {
+        try {
+            const response = await fetch(`${API_URL}?action=getCreditAssignments`);
+            const data = await response.json();
+
+            if (data.success) {
+                creditAssignments = data.assignments || [];
+                renderCreditAssignments();
+            } else {
+                showMessage('error', 'Error', data.message || 'Failed to load credit assignments');
+            }
+        } catch (error) {
+            console.error('Error loading credit assignments:', error);
+            showMessage('error', 'Error', 'Failed to load credit assignments');
+        }
+    }
+
     function loadPlatformAccountsDropdown() {
         const platformWallets = wallets.filter(w => w.owner_type === 'PLATFORM');
         const select = document.getElementById('platformAccountSelect');
@@ -928,6 +1155,49 @@ function formatCurrency($amount)
             option.textContent = wallet.wallet_name;
             select.appendChild(option);
         });
+    }
+
+    function loadCreditAssignmentDropdowns() {
+        const platformWallets = wallets.filter(w => w.owner_type === 'PLATFORM');
+        const walletSelect = document.getElementById('assignmentWalletSelect');
+        const creditSelect = document.getElementById('assignmentCreditSettingSelect');
+
+        if (walletSelect) {
+            const firstOption = walletSelect.querySelector('option');
+            walletSelect.innerHTML = '';
+            if (firstOption) walletSelect.appendChild(firstOption);
+
+            platformWallets.forEach(wallet => {
+                const option = document.createElement('option');
+                option.value = wallet.wallet_id;
+                option.textContent = wallet.wallet_name;
+                walletSelect.appendChild(option);
+            });
+        }
+
+        if (creditSelect && creditSettings.length > 0) {
+            const firstOption = creditSelect.querySelector('option');
+            creditSelect.innerHTML = '';
+            if (firstOption) creditSelect.appendChild(firstOption);
+
+            // Get assigned credit setting IDs to filter them out
+            const assignedCreditSettingIds = creditAssignments.map(assignment => assignment.credit_setting_id);
+
+            creditSettings.forEach(setting => {
+                // Only add settings that are not already assigned
+                if (!assignedCreditSettingIds.includes(setting.id)) {
+                    const option = document.createElement('option');
+                    option.value = setting.id;
+                    option.textContent = `${setting.setting_name} (${setting.category})`;
+                    option.dataset.category = setting.category;
+                    option.dataset.type = setting.setting_type;
+                    option.dataset.value = setting.setting_value;
+                    option.dataset.description = setting.description || '';
+                    option.dataset.applicableTo = setting.applicable_to || '';
+                    creditSelect.appendChild(option);
+                }
+            });
+        }
     }
 
     function renderFilteredWallets() {
@@ -990,11 +1260,11 @@ function formatCurrency($amount)
                                     <td data-column="details" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
                                         <div class="flex items-center gap-2">
                                             <div class="w-6 h-6 rounded-lg flex items-center justify-center ${wallet.owner_type === 'USER' ? 'bg-green-100' :
-                                                wallet.owner_type === 'VENDOR' ? 'bg-purple-100' : 'bg-cyan-100'
-                                            }">
+                        wallet.owner_type === 'VENDOR' ? 'bg-purple-100' : 'bg-cyan-100'
+                    }">
                                                 <i class="${wallet.owner_type === 'USER' ? 'fas fa-user text-green-600' :
-                                                    wallet.owner_type === 'VENDOR' ? 'fas fa-store text-purple-600' : 'fas fa-building text-cyan-600'
-                                                } text-xs"></i>
+                        wallet.owner_type === 'VENDOR' ? 'fas fa-store text-purple-600' : 'fas fa-building text-cyan-600'
+                    } text-xs"></i>
                                             </div>
                                             <div class="min-w-0 flex-1">
                                                 <div class="text-xs font-medium text-gray-900 leading-tight" title="${wallet.wallet_name}">${displayName}</div>
@@ -1236,6 +1506,160 @@ function formatCurrency($amount)
         setTimeout(updateTabHeights, 100);
     }
 
+    function renderCreditAssignments() {
+        const grid = document.getElementById('credit-assignments-grid');
+        const searchTerm = document.getElementById('searchCreditAssignments').value.toLowerCase();
+
+        const filteredAssignments = creditAssignments.filter(assignment => {
+            const setting = creditSettings.find(s => s.id === assignment.credit_setting_id);
+
+            return (assignment.wallet_name && assignment.wallet_name.toLowerCase().includes(searchTerm)) ||
+                (setting && setting.setting_name.toLowerCase().includes(searchTerm)) ||
+                (setting && setting.category.toLowerCase().includes(searchTerm));
+        });
+
+        if (filteredAssignments.length === 0) {
+            grid.innerHTML = `
+                <div class="text-center py-16">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-link text-gray-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No assignments found</h3>
+                    <p class="text-gray-500 mb-6">No credit setting assignments available</p>
+                    <button onclick="showCreateCreditAssignmentForm()" class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">Assign Credit Setting</button>
+                </div>
+            `;
+            return;
+        }
+
+        const isDesktop = window.innerWidth >= 1024;
+
+        if (isDesktop) {
+            const tableHtml = `
+                <div class="overflow-x-auto max-h-[70vh]">
+                    <table class="w-full">
+                        <thead class="bg-user-accent border-b border-gray-200 sticky top-0">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">Platform Wallet</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">Credit Setting</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">Category</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">Value</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">Assigned</th>
+                                <th class="px-3 py-2 text-center text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            ${filteredAssignments.map((assignment, index) => {
+                const setting = creditSettings.find(s => s.id === assignment.credit_setting_id);
+
+                if (!setting) return '';
+
+                return `
+                                    <tr class="${index % 2 === 0 ? 'bg-user-content' : 'bg-white'} hover:bg-user-secondary/20 transition-colors">
+                                        <td class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-6 h-6 rounded-lg flex items-center justify-center bg-cyan-100">
+                                                    <i class="fas fa-building text-cyan-600 text-xs"></i>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="text-xs font-medium text-gray-900 leading-tight">${assignment.wallet_name}</div>
+                                                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${assignment.wallet_number}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                                            <div class="font-medium text-gray-900">${setting.setting_name}</div>
+                                            ${setting.description ? `<div class="text-gray-500 mt-0.5">${setting.description}</div>` : ''}
+                                        </td>
+                                        <td class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                                            ${getCategoryBadge(setting.category)}
+                                        </td>
+                                        <td class="px-3 py-2 text-xs font-medium ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                                            ${formatValue(setting.setting_type, setting.setting_value)}
+                                        </td>
+                                        <td class="px-3 py-2 text-xs text-gray-600 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
+                                            ${new Date(assignment.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
+                                            <div class="flex items-center justify-center">
+                                                <button onclick="showConfirmDeleteModal('${assignment.id}')" 
+                                                    class="w-6 h-6 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" 
+                                                    title="Remove Assignment">
+                                                    <i class="fas fa-unlink text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            grid.innerHTML = tableHtml;
+        } else {
+            const gridHtml = `
+                <div class="grid grid-cols-1 gap-4">
+                    ${filteredAssignments.map(assignment => {
+                const setting = creditSettings.find(s => s.id === assignment.credit_setting_id);
+
+                if (!setting) return '';
+
+                return `
+                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex items-center gap-3 flex-1">
+                                        <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-cyan-100">
+                                            <i class="fas fa-building text-cyan-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-gray-900 mb-1">${assignment.wallet_name}</h3>
+                                            <p class="text-sm text-gray-500 font-mono">${assignment.wallet_number}</p>
+                                        </div>
+                                    </div>
+                                    ${getCategoryBadge(setting.category)}
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">Credit Setting:</span>
+                                        <span class="font-medium text-gray-900">${setting.setting_name}</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">Value:</span>
+                                        <span class="font-semibold text-gray-900">${formatValue(setting.setting_type, setting.setting_value)}</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">Assigned:</span>
+                                        <span class="text-sm text-gray-500">${new Date(assignment.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    
+                                    ${setting.description ? `
+                                        <div class="pt-2 border-t border-gray-200">
+                                            <span class="text-sm text-gray-600">Description:</span>
+                                            <p class="text-sm text-gray-800 mt-1">${setting.description}</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
+                                    <button onclick="showConfirmDeleteModal('${assignment.id}')" class="flex-1 px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
+                                        <i class="fas fa-unlink mr-1"></i>Remove Assignment
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+            }).join('')}
+                </div>
+            `;
+            grid.innerHTML = gridHtml;
+        }
+
+        setTimeout(updateTabHeights, 100);
+    }
+
     function loadColumnVisibility() {
         const savedWalletColumns = localStorage.getItem(WALLETS_COLUMNS_STORAGE_KEY);
         const savedStatementColumns = localStorage.getItem(STATEMENT_COLUMNS_STORAGE_KEY);
@@ -1348,6 +1772,38 @@ function formatCurrency($amount)
     function hideCreateSettingForm() {
         document.getElementById('createSettingModal').classList.add('hidden');
         document.body.style.overflow = '';
+    }
+
+    function showCreateCreditAssignmentForm() {
+        loadCreditAssignmentDropdowns();
+
+        const modal = document.getElementById('createCreditAssignmentModal');
+        const form = document.getElementById('createCreditAssignmentForm');
+        form.reset();
+
+        // Hide credit setting details initially
+        document.getElementById('creditSettingDetails').classList.add('hidden');
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hideCreateCreditAssignmentForm() {
+        document.getElementById('createCreditAssignmentModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function showConfirmDeleteModal(assignmentId) {
+        pendingDeleteAssignmentId = assignmentId;
+        const modal = document.getElementById('confirmDeleteModal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function hideConfirmDeleteModal() {
+        document.getElementById('confirmDeleteModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        pendingDeleteAssignmentId = null;
     }
 
     function showMessage(type, title, message) {
@@ -1606,6 +2062,69 @@ function formatCurrency($amount)
         } catch (error) {
             console.error('Error deleting platform setting:', error);
             showMessage('error', 'Error', 'Failed to delete platform setting');
+        }
+    }
+
+    async function createCreditAssignment() {
+        const creditSettingId = document.getElementById('assignmentCreditSettingSelect').value;
+        const walletId = document.getElementById('assignmentWalletSelect').value;
+
+        if (!creditSettingId || !walletId) {
+            showMessage('error', 'Validation Error', 'Please select both credit setting and platform wallet');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}?action=createCreditAssignment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    credit_setting_id: creditSettingId,
+                    wallet_id: walletId
+                })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                hideCreateCreditAssignmentForm();
+                await loadCreditAssignments();
+                await loadCreditSettings(); // Reload to update available settings
+                showMessage('success', 'Assignment Created', 'Credit setting assigned to wallet successfully');
+            } else {
+                showMessage('error', 'Error', data.message || 'Failed to create credit assignment');
+            }
+        } catch (error) {
+            console.error('Error creating credit assignment:', error);
+            showMessage('error', 'Error', 'Failed to create credit assignment');
+        }
+    }
+
+    async function deleteCreditAssignment(assignmentId) {
+        if (!assignmentId) {
+            assignmentId = pendingDeleteAssignmentId;
+        }
+
+        if (!assignmentId) return;
+
+        try {
+            const response = await fetch(`${API_URL}?action=deleteCreditAssignment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: assignmentId })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                hideConfirmDeleteModal();
+                await loadCreditAssignments();
+                await loadCreditSettings(); // Reload to update available settings
+                showMessage('success', 'Assignment Removed', 'Credit assignment removed successfully');
+            } else {
+                showMessage('error', 'Error', data.message || 'Failed to remove credit assignment');
+            }
+        } catch (error) {
+            console.error('Error removing credit assignment:', error);
+            showMessage('error', 'Error', 'Failed to remove credit assignment');
         }
     }
 
@@ -1960,6 +2479,27 @@ function formatCurrency($amount)
         }
     }
 
+    function filterCreditAssignments() {
+        renderCreditAssignments();
+    }
+
+    function onCreditSettingChange() {
+        const select = document.getElementById('assignmentCreditSettingSelect');
+        const detailsDiv = document.getElementById('creditSettingDetails');
+
+        if (select.value) {
+            const option = select.options[select.selectedIndex];
+
+            document.getElementById('settingCategory').textContent = option.dataset.category || '';
+            document.getElementById('settingValue').textContent = formatValue(option.dataset.type, parseFloat(option.dataset.value));
+            document.getElementById('settingApplicableTo').textContent = option.dataset.applicableTo || 'All';
+
+            detailsDiv.classList.remove('hidden');
+        } else {
+            detailsDiv.classList.add('hidden');
+        }
+    }
+
     document.addEventListener('click', function (event) {
         const walletSelector = document.getElementById('columnSelector');
         const walletBtn = document.getElementById('viewColumnsBtn');
@@ -2048,21 +2588,30 @@ function formatCurrency($amount)
             applyColumnVisibility('settings-table', visibleSettingsColumns);
             saveColumnVisibility();
         }
+
+        if (event.target.id === 'assignmentCreditSettingSelect') {
+            onCreditSettingChange();
+        }
     });
 
     document.addEventListener('DOMContentLoaded', async () => {
         loadColumnVisibility();
         await loadWallets();
+        await loadCreditSettings();
         switchWalletTab('PLATFORM');
 
         document.getElementById('create-wallet-btn').addEventListener('click', showCreateWalletForm);
         document.getElementById('create-setting-btn').addEventListener('click', showCreateSettingForm);
+        document.getElementById('create-credit-assignment-btn').addEventListener('click', showCreateCreditAssignmentForm);
         document.getElementById('submitWalletForm').addEventListener('click', createWallet);
         document.getElementById('updateWalletForm').addEventListener('click', updateWallet);
         document.getElementById('submitSettingForm').addEventListener('click', createPlatformSetting);
         document.getElementById('updateSettingForm').addEventListener('click', updatePlatformSetting);
+        document.getElementById('submitCreditAssignmentForm').addEventListener('click', createCreditAssignment);
+        document.getElementById('confirmDeleteButton').addEventListener('click', () => deleteCreditAssignment());
         document.getElementById('searchWallets').addEventListener('input', filterWallets);
         document.getElementById('searchSettings').addEventListener('input', filterSettings);
+        document.getElementById('searchCreditAssignments').addEventListener('input', filterCreditAssignments);
         document.getElementById('statementDateFilter').addEventListener('change', loadWalletStatement);
         document.getElementById('mobile-tab-toggle').addEventListener('click', toggleMobileTabDropdown);
 
@@ -2079,6 +2628,7 @@ function formatCurrency($amount)
             displayStatementView();
             renderFilteredWallets();
             renderPlatformSettings();
+            renderCreditAssignments();
         });
 
         setTimeout(updateTabHeights, 500);
@@ -2089,9 +2639,13 @@ function formatCurrency($amount)
     window.hideCreateWalletForm = hideCreateWalletForm;
     window.showCreateSettingForm = showCreateSettingForm;
     window.hideCreateSettingForm = hideCreateSettingForm;
+    window.showCreateCreditAssignmentForm = showCreateCreditAssignmentForm;
+    window.hideCreateCreditAssignmentForm = hideCreateCreditAssignmentForm;
     window.hideEditWalletForm = hideEditWalletForm;
     window.hideEditSettingForm = hideEditSettingForm;
     window.hideMessageModal = hideMessageModal;
+    window.hideConfirmDeleteModal = hideConfirmDeleteModal;
+    window.showConfirmDeleteModal = showConfirmDeleteModal;
     window.editWallet = editWallet;
     window.deleteWallet = deleteWallet;
     window.editSetting = editSetting;
