@@ -12,14 +12,13 @@ use ZzimbaCreditModule\CreditService;
 
 header('Content-Type: application/json');
 
-// helper to generate the 10-digit wallet number
 function generateWalletNumber(PDO $pdo, string $walletId): string
 {
-    $yy = date('y');       // e.g. "26"
+    $yy = date('y');
     $y1 = $yy[0];
     $y2 = $yy[1];
 
-    $mm = date('m');       // e.g. "11"
+    $mm = date('m');
     $m1 = $mm[0];
     $m2 = $mm[1];
 
@@ -356,12 +355,8 @@ function managePlatformAccounts(PDO $pdo)
     $operation = $data['operation'] ?? '';
     $walletNumber = trim($data['wallet_number'] ?? '');
 
-    //
-    // LIST
-    //
     if ($operation === 'list') {
         if ($walletNumber !== '') {
-            // get the internal wallet_id for this wallet_number
             $stmt1 = $pdo->prepare("
                 SELECT wallet_id
                   FROM zzimba_wallets
@@ -377,7 +372,6 @@ function managePlatformAccounts(PDO $pdo)
                 return;
             }
 
-            // return all settings for that wallet, plus wallet_number
             $stmt = $pdo->prepare("
                 SELECT
                     s.id,
@@ -394,7 +388,6 @@ function managePlatformAccounts(PDO $pdo)
             ");
             $stmt->execute([':pid' => $pid]);
         } else {
-            // list *all* settings across all platform wallets
             $stmt = $pdo->query("
                 SELECT
                     s.id,
@@ -417,9 +410,6 @@ function managePlatformAccounts(PDO $pdo)
         return;
     }
 
-    //
-    // VALIDATE OPERATION + WALLET NUMBER
-    //
     if (!in_array($operation, ['add', 'update', 'remove'], true)) {
         http_response_code(400);
         echo json_encode([
@@ -438,7 +428,6 @@ function managePlatformAccounts(PDO $pdo)
         return;
     }
 
-    // resolve the internal platform_account_id
     $stmt2 = $pdo->prepare("
         SELECT wallet_id
           FROM zzimba_wallets
@@ -460,9 +449,6 @@ function managePlatformAccounts(PDO $pdo)
     $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))
         ->format('Y-m-d H:i:s');
 
-    //
-    // ADD
-    //
     if ($operation === 'add') {
         $type = trim($data['type'] ?? '');
         if ($type === '') {
@@ -474,14 +460,14 @@ function managePlatformAccounts(PDO $pdo)
             return;
         }
 
-        $id = generateUlid(); // your ULID helper
+        $id = generateUlid();
 
         try {
             $ins = $pdo->prepare("
                 INSERT INTO zzimba_platform_account_settings
                     (id, platform_account_id, type, created_at, updated_at)
                 VALUES
-                    (:id, :pid,           :type, :now,       :now)
+                    (:id, :pid, :type, :now, :now)
             ");
             $ins->execute([
                 ':id' => $id,
@@ -505,9 +491,6 @@ function managePlatformAccounts(PDO $pdo)
         return;
     }
 
-    //
-    // UPDATE
-    //
     if ($operation === 'update') {
         $id = trim($data['id'] ?? '');
         $type = trim($data['type'] ?? '');
@@ -547,9 +530,6 @@ function managePlatformAccounts(PDO $pdo)
         return;
     }
 
-    //
-    // REMOVE
-    //
     if ($operation === 'remove') {
         $id = trim($data['id'] ?? '');
         if ($id === '') {
@@ -585,3 +565,4 @@ function managePlatformAccounts(PDO $pdo)
         return;
     }
 }
+?>
