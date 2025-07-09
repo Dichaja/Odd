@@ -18,7 +18,8 @@ function formatCurrency($amount)
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">SMS Credit</p>
-                            <p class="text-lg font-bold text-blue-900 whitespace-nowrap" id="sms-credit-count">0</p>
+                            <p class="text-lg font-bold text-blue-900 whitespace-nowrap" id="sms-credit-count">
+                                Loading...</p>
                             <p class="text-sm font-medium text-blue-700 whitespace-nowrap">Messages Available</p>
                         </div>
                         <div class="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
@@ -31,7 +32,8 @@ function formatCurrency($amount)
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Sent Today</p>
-                            <p class="text-lg font-bold text-green-900 whitespace-nowrap" id="sent-today-count">0</p>
+                            <p class="text-lg font-bold text-green-900 whitespace-nowrap" id="sent-today-count">
+                                Loading...</p>
                             <p class="text-sm font-medium text-green-700 whitespace-nowrap" id="sent-today-cost">Sh.
                                 0.00</p>
                         </div>
@@ -45,7 +47,8 @@ function formatCurrency($amount)
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Scheduled</p>
-                            <p class="text-lg font-bold text-purple-900 whitespace-nowrap" id="scheduled-count">0</p>
+                            <p class="text-lg font-bold text-purple-900 whitespace-nowrap" id="scheduled-count">
+                                Loading...</p>
                             <p class="text-sm font-medium text-purple-700 whitespace-nowrap">Pending Messages</p>
                         </div>
                         <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
@@ -58,7 +61,8 @@ function formatCurrency($amount)
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">SMS Rate</p>
-                            <p class="text-lg font-bold text-orange-900 whitespace-nowrap">Sh. 35/=</p>
+                            <p class="text-lg font-bold text-orange-900 whitespace-nowrap" id="sms-rate-display">
+                                Loading...</p>
                             <p class="text-sm font-medium text-orange-700 whitespace-nowrap">Per Message</p>
                         </div>
                         <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
@@ -151,6 +155,7 @@ function formatCurrency($amount)
         </div>
 
         <div id="tab-content">
+            <!-- Send SMS Tab -->
             <div id="send-content" class="tab-content">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
@@ -290,9 +295,13 @@ function formatCurrency($amount)
                                     <span class="text-gray-600">Recipients:</span>
                                     <span class="font-semibold text-gray-900" id="recipient-count">0</span>
                                 </div>
+                                <div class="flex items-center justify-between text-sm mt-2">
+                                    <span class="text-gray-600">Credits Needed:</span>
+                                    <span class="font-semibold text-gray-900" id="credits-needed">0</span>
+                                </div>
                             </div>
 
-                            <button type="submit"
+                            <button type="submit" id="send-sms-btn"
                                 class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
                                 <i class="fas fa-paper-plane mr-2"></i>
                                 <span id="send-button-text">Send SMS</span>
@@ -311,7 +320,7 @@ function formatCurrency($amount)
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-gray-600">Available Credits:</span>
-                                    <span class="font-semibold text-gray-900" id="available-credits">0</span>
+                                    <span class="font-semibold text-gray-900" id="available-credits">Loading...</span>
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="text-gray-600">Credit Value:</span>
@@ -331,37 +340,7 @@ function formatCurrency($amount)
                 </div>
             </div>
 
-            <div id="credit-content" class="tab-content hidden">
-                <div class="max-w-2xl mx-auto">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-wallet text-green-600"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900">Credit Status</h3>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">Available Credits:</span>
-                                <span class="font-semibold text-gray-900" id="mobile-available-credits">0</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-600">Credit Value:</span>
-                                <span class="font-semibold text-gray-900" id="mobile-credit-value">Sh. 0.00</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-3">
-                                <div class="bg-primary h-3 rounded-full transition-all duration-300" style="width: 0%"
-                                    id="mobile-credit-bar"></div>
-                            </div>
-                            <button onclick="switchTab('topup')"
-                                class="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
-                                <i class="fas fa-plus mr-2"></i>Top Up Credits
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            <!-- History Tab -->
             <div id="history-content" class="tab-content hidden">
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
                     <div class="p-6 border-b border-gray-100">
@@ -385,36 +364,16 @@ function formatCurrency($amount)
                                     <option value="scheduled">Scheduled</option>
                                     <option value="failed">Failed</option>
                                 </select>
-                                <select id="dateRangeFilter"
+                                <input type="date" id="dateFromFilter"
                                     class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                    onchange="handleDateRangeChange()">
-                                    <option value="today">Today</option>
-                                    <option value="week" selected>This Week</option>
-                                    <option value="month">This Month</option>
-                                    <option value="custom">Custom Range</option>
-                                </select>
-                                <button onclick="resetSMSData()"
+                                    onchange="filterHistory()" placeholder="From Date">
+                                <input type="date" id="dateToFilter"
+                                    class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                    onchange="filterHistory()" placeholder="To Date">
+                                <button onclick="loadSmsHistory()"
                                     class="px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium">
-                                    <i class="fas fa-refresh mr-2"></i>Reset Data
+                                    <i class="fas fa-refresh mr-2"></i>Refresh
                                 </button>
-                            </div>
-                        </div>
-                        <div id="custom-date-range" class="hidden mt-4">
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label for="start-date" class="block text-sm font-semibold text-gray-700 mb-2">Start
-                                        Date</label>
-                                    <input type="date" id="start-date"
-                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                        onchange="filterHistory()">
-                                </div>
-                                <div>
-                                    <label for="end-date" class="block text-sm font-semibold text-gray-700 mb-2">End
-                                        Date</label>
-                                    <input type="date" id="end-date"
-                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                        onchange="filterHistory()">
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -468,6 +427,7 @@ function formatCurrency($amount)
                 </div>
             </div>
 
+            <!-- Templates Tab -->
             <div id="templates-content" class="tab-content hidden">
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
                     <div class="p-6 border-b border-gray-100">
@@ -506,6 +466,7 @@ function formatCurrency($amount)
                 </div>
             </div>
 
+            <!-- Top Up Tab -->
             <div id="topup-content" class="tab-content hidden">
                 <div class="max-w-2xl mx-auto">
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
@@ -519,8 +480,27 @@ function formatCurrency($amount)
                         <div class="bg-gray-50 rounded-xl p-6 mb-6">
                             <div class="text-center">
                                 <p class="text-sm text-gray-600 mb-2">Current SMS Rate</p>
-                                <p class="text-3xl font-bold text-gray-900">Sh. 35/=</p>
+                                <p class="text-3xl font-bold text-gray-900" id="topup-sms-rate">Loading...</p>
                                 <p class="text-sm text-gray-500">per SMS</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 rounded-xl p-6 mb-6 border border-blue-200">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-wallet text-blue-600"></i>
+                                </div>
+                                <h4 class="text-lg font-semibold text-gray-900">Wallet Balance</h4>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">Available Balance</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="wallet-balance">Loading...</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">Equivalent Credits</p>
+                                    <p class="text-2xl font-bold text-blue-600" id="wallet-credits">Loading...</p>
+                                </div>
                             </div>
                         </div>
 
@@ -534,7 +514,8 @@ function formatCurrency($amount)
                                             onchange="updateTopupCalculation()">
                                         <div class="flex-1">
                                             <div class="font-semibold text-gray-900">100 SMS</div>
-                                            <div class="text-sm text-gray-500">Sh. 3,500</div>
+                                            <div class="text-sm text-gray-500" id="package-100-cost">Calculating...
+                                            </div>
                                         </div>
                                         <div
                                             class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center">
@@ -549,7 +530,8 @@ function formatCurrency($amount)
                                             onchange="updateTopupCalculation()">
                                         <div class="flex-1">
                                             <div class="font-semibold text-gray-900">500 SMS</div>
-                                            <div class="text-sm text-gray-500">Sh. 17,500</div>
+                                            <div class="text-sm text-gray-500" id="package-500-cost">Calculating...
+                                            </div>
                                         </div>
                                         <div
                                             class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center">
@@ -564,7 +546,8 @@ function formatCurrency($amount)
                                             onchange="updateTopupCalculation()">
                                         <div class="flex-1">
                                             <div class="font-semibold text-gray-900">1,000 SMS</div>
-                                            <div class="text-sm text-gray-500">Sh. 35,000</div>
+                                            <div class="text-sm text-gray-500" id="package-1000-cost">Calculating...
+                                            </div>
                                             <div class="text-xs text-green-600 font-medium">Most Popular</div>
                                         </div>
                                         <div
@@ -605,25 +588,37 @@ function formatCurrency($amount)
                                     <span class="text-gray-600">SMS Credits:</span>
                                     <span class="font-semibold text-gray-900" id="topup-credits">0</span>
                                 </div>
-                                <div class="flex items-center justify-between text-sm">
+                                <div class="flex items-center justify-between text-sm mb-2">
                                     <span class="text-gray-600">Total Cost:</span>
                                     <span class="font-semibold text-gray-900" id="topup-cost">Sh. 0.00</span>
                                 </div>
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-600">Wallet Balance:</span>
+                                    <span class="font-semibold" id="balance-status">Sh. 0.00</span>
+                                </div>
                             </div>
 
-                            <div>
-                                <label for="payment-method"
-                                    class="block text-sm font-semibold text-gray-700 mb-2">Payment Method</label>
-                                <select id="payment-method"
-                                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
-                                    <option value="">Select Payment Method</option>
-                                    <option value="mobile-money">Mobile Money</option>
-                                    <option value="bank-transfer">Bank Transfer</option>
-                                    <option value="card">Credit/Debit Card</option>
-                                </select>
+                            <div id="insufficient-balance-warning"
+                                class="hidden bg-red-50 border border-red-200 rounded-xl p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-semibold text-red-900">Insufficient Wallet Balance</h4>
+                                        <p class="text-sm text-red-700 mt-1">You need to top up your wallet first before
+                                            purchasing SMS credits.</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <a href="<?php echo BASE_URL; ?>vendor-store/zzimba-credit"
+                                        class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                                        <i class="fas fa-plus mr-2"></i>Top Up Wallet
+                                    </a>
+                                </div>
                             </div>
 
-                            <button type="submit"
+                            <button type="submit" id="purchase-credits-btn"
                                 class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
                                 <i class="fas fa-credit-card mr-2"></i>
                                 Purchase Credits
@@ -636,6 +631,7 @@ function formatCurrency($amount)
     </div>
 </div>
 
+<!-- Modals -->
 <div id="templateSelectorModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideTemplateSelector()"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[80vh] overflow-hidden">
@@ -698,75 +694,6 @@ function formatCurrency($amount)
     </div>
 </div>
 
-<div id="smsDetailsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideSMSDetails()"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[80vh] overflow-hidden">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">SMS Details</h3>
-                <button onclick="hideSMSDetails()"
-                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-                    <i class="fas fa-times text-gray-500"></i>
-                </button>
-            </div>
-        </div>
-        <div class="p-6 overflow-y-auto" id="sms-details-content">
-        </div>
-    </div>
-</div>
-
-<div id="editScheduledModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideEditScheduled()"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Edit Scheduled SMS</h3>
-                <button onclick="hideEditScheduled()"
-                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-                    <i class="fas fa-times text-gray-500"></i>
-                </button>
-            </div>
-        </div>
-        <div class="p-6">
-            <form id="edit-scheduled-form" class="space-y-4">
-                <input type="hidden" id="edit-sms-id">
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <label for="edit-sms-message" class="block text-sm font-semibold text-gray-700">Message</label>
-                        <span class="text-xs text-gray-500" id="edit-char-count">0/160 characters</span>
-                    </div>
-                    <textarea id="edit-sms-message" rows="4"
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                        required oninput="updateEditCharCount()"></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="edit-schedule-date"
-                            class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                        <input type="date" id="edit-schedule-date"
-                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                            required>
-                    </div>
-                    <div>
-                        <label for="edit-schedule-time"
-                            class="block text-sm font-semibold text-gray-700 mb-2">Time</label>
-                        <input type="time" id="edit-schedule-time"
-                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                            required>
-                    </div>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="hideEditScheduled()"
-                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
-                    <button type="submit"
-                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">Update
-                        SMS</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <div id="messageModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideMessageModal()"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10">
@@ -791,199 +718,145 @@ function formatCurrency($amount)
     </div>
 </div>
 
-<div id="confirmModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideConfirmModal()"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10">
-        <div class="p-6 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Confirm Action</h3>
-                <button onclick="hideConfirmModal()"
-                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-                    <i class="fas fa-times text-gray-500"></i>
-                </button>
-            </div>
-        </div>
-        <div class="p-6">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-red-600"></i>
-                </div>
-                <p class="text-gray-900" id="confirm-modal-text"></p>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="hideConfirmModal()"
-                    class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
-                <button id="confirm-modal-action"
-                    class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium">Confirm</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
+    // Global variables
+    let smsStats = {};
     let smsHistory = [];
     let smsTemplates = [];
-    let smsCredits = 0;
     let currentTab = 'send';
     let bulkRecipients = [];
+    let currentSmsRate = 35;
+    let walletBalance = 0;
+    let walletCredits = 0;
 
-    const SMS_RATE = 35;
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', function () {
+        loadSmsStats();
+        switchTab('send');
+        setupEventListeners();
+    });
 
-    function initializeDummyData() {
-        const savedHistory = localStorage.getItem('sms_history');
-        const savedTemplates = localStorage.getItem('sms_templates');
-        const savedCredits = localStorage.getItem('sms_credits');
+    function setupEventListeners() {
+        // Mobile tab toggle
+        document.getElementById('mobile-tab-toggle').addEventListener('click', toggleMobileTabDropdown);
 
-        if (savedHistory) {
-            smsHistory = JSON.parse(savedHistory);
-        } else {
-            smsHistory = [
-                {
-                    id: 1,
-                    message: "Welcome to our service! Your account has been activated successfully.",
-                    recipients: ["0700000001"],
-                    type: "single",
-                    status: "sent",
-                    cost: 35,
-                    sentAt: new Date(Date.now() - 86400000).toISOString(),
-                    scheduledAt: null
-                },
-                {
-                    id: 2,
-                    message: "Your order #12345 has been confirmed and will be delivered within 2-3 business days.",
-                    recipients: ["0700000002", "0700000003"],
-                    type: "bulk",
-                    status: "sent",
-                    cost: 70,
-                    sentAt: new Date(Date.now() - 172800000).toISOString(),
-                    scheduledAt: null
-                },
-                {
-                    id: 3,
-                    message: "Reminder: Your appointment is scheduled for tomorrow at 2:00 PM.",
-                    recipients: ["0700000004"],
-                    type: "single",
-                    status: "scheduled",
-                    cost: 35,
-                    sentAt: null,
-                    scheduledAt: new Date(Date.now() + 86400000).toISOString()
-                }
-            ];
-            localStorage.setItem('sms_history', JSON.stringify(smsHistory));
-        }
+        // Mobile tab options
+        document.querySelectorAll('.mobile-tab-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const tab = e.currentTarget.getAttribute('data-tab');
+                switchTab(tab);
+                toggleMobileTabDropdown();
+            });
+        });
 
-        if (savedTemplates) {
-            smsTemplates = JSON.parse(savedTemplates);
-        } else {
-            smsTemplates = [
-                {
-                    id: 1,
-                    name: "Welcome Message",
-                    message: "Welcome to our service! Your account has been activated successfully.",
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 2,
-                    name: "Order Confirmation",
-                    message: "Your order #{ORDER_ID} has been confirmed and will be delivered within 2-3 business days.",
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 3,
-                    name: "Appointment Reminder",
-                    message: "Reminder: Your appointment is scheduled for {DATE} at {TIME}.",
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: 4,
-                    name: "Payment Confirmation",
-                    message: "Payment of Sh. {AMOUNT} has been received successfully. Thank you!",
-                    createdAt: new Date().toISOString()
-                }
-            ];
-            localStorage.setItem('sms_templates', JSON.stringify(smsTemplates));
-        }
+        // Form submissions
+        document.getElementById('sms-form').addEventListener('submit', handleSendSms);
+        document.getElementById('topup-form').addEventListener('submit', handlePurchaseCredits);
+        document.getElementById('template-form').addEventListener('submit', handleSaveTemplate);
 
-        if (savedCredits) {
-            smsCredits = parseInt(savedCredits);
-        } else {
-            smsCredits = 150;
-            localStorage.setItem('sms_credits', smsCredits.toString());
-        }
-    }
+        // Input events
+        document.getElementById('recipient').addEventListener('input', updateSendFormCalculations);
+        document.getElementById('bulk-number-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addBulkRecipient();
+            }
+        });
+        document.getElementById('add-number-btn').addEventListener('click', addBulkRecipient);
 
-    function saveData() {
-        localStorage.setItem('sms_history', JSON.stringify(smsHistory));
-        localStorage.setItem('sms_templates', JSON.stringify(smsTemplates));
-        localStorage.setItem('sms_credits', smsCredits.toString());
-    }
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function (event) {
+            const mobileDropdown = document.getElementById('mobile-tab-dropdown');
+            const mobileToggle = document.getElementById('mobile-tab-toggle');
 
-    function resetSMSData() {
-        showConfirmModal('Are you sure you want to reset all SMS data? This action cannot be undone.', () => {
-            localStorage.removeItem('sms_history');
-            localStorage.removeItem('sms_templates');
-            localStorage.removeItem('sms_credits');
-            initializeDummyData();
-            updateStats();
-            renderCurrentTab();
-            showMessageModal('Success', 'SMS data has been reset successfully!', 'success');
+            if (mobileDropdown && mobileToggle && !mobileDropdown.contains(event.target) && !mobileToggle.contains(event.target)) {
+                mobileDropdown.classList.add('hidden');
+                document.getElementById('mobile-tab-chevron').classList.remove('rotate-180');
+            }
         });
     }
 
-    function updateStats() {
-        const today = new Date().toDateString();
-        const sentToday = smsHistory.filter(sms =>
-            sms.status === 'sent' &&
-            new Date(sms.sentAt).toDateString() === today
-        );
-        const scheduled = smsHistory.filter(sms => sms.status === 'scheduled');
+    // API Functions
+    function makeApiCall(action, data = {}, method = 'POST') {
+        const formData = new FormData();
+        formData.append('action', action);
 
-        const sentTodayCount = sentToday.reduce((sum, sms) => sum + sms.recipients.length, 0);
-        const sentTodayCost = sentToday.reduce((sum, sms) => sum + sms.cost, 0);
+        for (const key in data) {
+            if (data[key] !== null && data[key] !== undefined) {
+                formData.append(key, data[key]);
+            }
+        }
 
-        document.getElementById('sms-credit-count').textContent = smsCredits;
-        document.getElementById('sent-today-count').textContent = sentTodayCount;
-        document.getElementById('sent-today-cost').textContent = `Sh. ${formatCurrency(sentTodayCost)}`;
-        document.getElementById('scheduled-count').textContent = scheduled.length;
+        return fetch('fetch/manageSmsCenter.php', {
+            method: method,
+            body: formData
+        })
+            .then(response => response.json())
+            .catch(error => {
+                console.error('API Error:', error);
+                return { success: false, message: 'Network error occurred' };
+            });
+    }
 
-        document.getElementById('available-credits').textContent = smsCredits;
-        document.getElementById('credit-value').textContent = `Sh. ${formatCurrency(smsCredits * SMS_RATE)}`;
+    function loadSmsStats() {
+        makeApiCall('getSmsStats')
+            .then(response => {
+                if (response.success) {
+                    smsStats = response.data;
+                    updateStatsDisplay();
+                } else {
+                    showMessageModal('Error', response.message || 'Failed to load SMS stats', 'error');
+                }
+            });
 
-        document.getElementById('mobile-available-credits').textContent = smsCredits;
-        document.getElementById('mobile-credit-value').textContent = `Sh. ${formatCurrency(smsCredits * SMS_RATE)}`;
+        // Load wallet balance
+        makeApiCall('getWalletBalance')
+            .then(response => {
+                if (response.success) {
+                    walletBalance = response.data.balance;
+                    walletCredits = response.data.equivalent_credits;
+                    updateWalletDisplay();
+                }
+            });
+    }
 
-        const creditPercentage = Math.min((smsCredits / 1000) * 100, 100);
+    function updateStatsDisplay() {
+        document.getElementById('sms-credit-count').textContent = smsStats.current_credits || 0;
+        document.getElementById('sent-today-count').textContent = smsStats.sent_today || 0;
+        document.getElementById('sent-today-cost').textContent = `Sh. ${formatCurrency(smsStats.sent_today_cost || 0)}`;
+        document.getElementById('scheduled-count').textContent = smsStats.scheduled_count || 0;
+        document.getElementById('sms-rate-display').textContent = `Sh. ${formatCurrency(smsStats.sms_rate || 35)}/=`;
+
+        document.getElementById('available-credits').textContent = smsStats.current_credits || 0;
+        document.getElementById('credit-value').textContent = `Sh. ${formatCurrency(smsStats.credit_value || 0)}`;
+
+        currentSmsRate = smsStats.sms_rate || 35;
+
+        // Update credit bar
+        const creditPercentage = Math.min((smsStats.current_credits / 1000) * 100, 100);
         document.getElementById('credit-bar').style.width = `${creditPercentage}%`;
-        document.getElementById('mobile-credit-bar').style.width = `${creditPercentage}%`;
+
+        // Update topup display
+        document.getElementById('topup-sms-rate').textContent = `Sh. ${formatCurrency(currentSmsRate)}/=`;
+        updatePackageCosts();
+        updateSendFormCalculations();
     }
 
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-UG', {
-            style: 'decimal',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount);
+    function updateWalletDisplay() {
+        document.getElementById('wallet-balance').textContent = `Sh. ${formatCurrency(walletBalance)}`;
+        document.getElementById('wallet-credits').textContent = walletCredits;
+        updateTopupCalculation(); // Refresh the topup calculations
     }
 
-    function formatDateTime(dateString) {
-        const date = new Date(dateString);
-        const day = date.getDate();
-        const month = date.toLocaleString('en-US', { month: 'short' });
-        const year = date.getFullYear();
-        const time = date.toLocaleString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-
-        const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
-            day === 2 || day === 22 ? 'nd' :
-                day === 3 || day === 23 ? 'rd' : 'th';
-
-        return `${day}${suffix} ${month}, ${year} ${time}`;
+    function updatePackageCosts() {
+        document.getElementById('package-100-cost').textContent = `Sh. ${formatCurrency(100 * currentSmsRate)}`;
+        document.getElementById('package-500-cost').textContent = `Sh. ${formatCurrency(500 * currentSmsRate)}`;
+        document.getElementById('package-1000-cost').textContent = `Sh. ${formatCurrency(1000 * currentSmsRate)}`;
     }
 
+    // Tab Management
     function switchTab(tabName) {
+        // Update tab buttons
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('border-b-primary', 'text-primary');
             btn.classList.add('border-b-transparent', 'text-gray-500');
@@ -995,6 +868,7 @@ function formatCurrency($amount)
             activeTab.classList.add('border-b-primary', 'text-primary');
         }
 
+        // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.add('hidden');
         });
@@ -1005,8 +879,18 @@ function formatCurrency($amount)
         }
 
         currentTab = tabName;
-        renderCurrentTab();
 
+        // Load tab-specific data
+        switch (tabName) {
+            case 'history':
+                loadSmsHistory();
+                break;
+            case 'templates':
+                loadSmsTemplates();
+                break;
+        }
+
+        // Update mobile tab label
         const tabLabels = {
             'send': { label: 'Send SMS', icon: 'fas fa-paper-plane' },
             'history': { label: 'SMS History', icon: 'fas fa-history' },
@@ -1037,36 +921,20 @@ function formatCurrency($amount)
         chevron.classList.toggle('rotate-180');
     }
 
-    function renderCurrentTab() {
-        switch (currentTab) {
-            case 'send':
-                updateSendFormCalculations();
-                break;
-            case 'history':
-                renderSMSHistory();
-                break;
-            case 'templates':
-                renderTemplates();
-                break;
-            case 'topup':
-                updateTopupCalculation();
-                break;
-        }
-    }
-
+    // Send SMS Functions
     function toggleSendType() {
         const sendType = document.querySelector('input[name="sendType"]:checked').value;
         const singleRecipient = document.getElementById('single-recipient');
-        const bulkRecipients = document.getElementById('bulk-recipients');
+        const bulkRecipientsDiv = document.getElementById('bulk-recipients');
 
         if (sendType === 'single') {
             singleRecipient.classList.remove('hidden');
-            bulkRecipients.classList.add('hidden');
+            bulkRecipientsDiv.classList.add('hidden');
             bulkRecipients = [];
             renderRecipientTags();
         } else {
             singleRecipient.classList.add('hidden');
-            bulkRecipients.classList.remove('hidden');
+            bulkRecipientsDiv.classList.remove('hidden');
         }
         updateSendFormCalculations();
     }
@@ -1134,13 +1002,13 @@ function formatCurrency($amount)
     function renderRecipientTags() {
         const container = document.getElementById('recipient-tags');
         container.innerHTML = bulkRecipients.map(number => `
-        <span class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm">
-            ${number}
-            <button type="button" onclick="removeRecipient('${number}')" class="hover:bg-primary/20 rounded-full p-1 transition-colors">
-                <i class="fas fa-times text-xs"></i>
-            </button>
-        </span>
-    `).join('');
+            <span class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm">
+                ${number}
+                <button type="button" onclick="removeRecipient('${number}')" class="hover:bg-primary/20 rounded-full p-1 transition-colors">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </span>
+        `).join('');
     }
 
     function updateSendFormCalculations() {
@@ -1156,13 +1024,15 @@ function formatCurrency($amount)
             recipientCount = bulkRecipients.length;
         }
 
-        const totalCost = recipientCount * parts * SMS_RATE;
+        const creditsNeeded = recipientCount * parts;
+        const totalCost = creditsNeeded * currentSmsRate;
 
         document.getElementById('recipient-count').textContent = recipientCount;
+        document.getElementById('credits-needed').textContent = creditsNeeded;
         document.getElementById('estimated-cost').textContent = `Sh. ${formatCurrency(totalCost)}`;
     }
 
-    document.getElementById('sms-form').addEventListener('submit', function (e) {
+    function handleSendSms(e) {
         e.preventDefault();
 
         const sendType = document.querySelector('input[name="sendType"]:checked').value;
@@ -1194,15 +1064,6 @@ function formatCurrency($amount)
             recipients = [...bulkRecipients];
         }
 
-        const parts = Math.ceil(message.length / 160) || 1;
-        const totalCost = recipients.length * parts * SMS_RATE;
-        const requiredCredits = recipients.length * parts;
-
-        if (requiredCredits > smsCredits) {
-            showMessageModal('Insufficient Credits', `You need ${requiredCredits} credits but only have ${smsCredits}.`, 'error');
-            return;
-        }
-
         let scheduledAt = null;
         if (sendOption === 'schedule') {
             const scheduleDate = document.getElementById('schedule-date').value;
@@ -1213,71 +1074,253 @@ function formatCurrency($amount)
                 return;
             }
 
-            scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+            scheduledAt = `${scheduleDate} ${scheduleTime}:00`;
         }
 
-        const smsRecord = {
-            id: Date.now(),
+        const sendBtn = document.getElementById('send-sms-btn');
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+        const data = {
             message: message,
-            recipients: recipients,
-            type: sendType,
-            status: sendOption === 'schedule' ? 'scheduled' : 'sent',
-            cost: totalCost,
-            sentAt: sendOption === 'schedule' ? null : new Date().toISOString(),
-            scheduledAt: scheduledAt
+            recipients: JSON.stringify(recipients),
+            send_type: sendType,
+            send_option: sendOption,
+            scheduled_at: scheduledAt
         };
 
-        smsHistory.unshift(smsRecord);
-
-        if (sendOption !== 'schedule') {
-            smsCredits -= requiredCredits;
-        }
-
-        saveData();
-        updateStats();
-
-        document.getElementById('sms-form').reset();
-        document.querySelector('input[name="sendType"][value="single"]').checked = true;
-        document.querySelector('input[name="sendOption"][value="now"]').checked = true;
-        bulkRecipients = [];
-        toggleSendType();
-        toggleSchedule();
-        updateCharCount();
-
-        showMessageModal('Success', `SMS ${sendOption === 'schedule' ? 'scheduled' : 'sent'} successfully!`, 'success');
-    });
-
-    function showTemplateSelector() {
-        const modal = document.getElementById('templateSelectorModal');
-        const list = document.getElementById('template-selector-list');
-
-        if (smsTemplates.length === 0) {
-            list.innerHTML = '<p class="text-center text-gray-500">No templates available</p>';
-        } else {
-            list.innerHTML = smsTemplates.map(template => `
-            <button onclick="selectTemplate(${template.id})" class="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all">
-                <div class="font-medium text-gray-900">${template.name}</div>
-                <div class="text-sm text-gray-500 mt-1">${template.message}</div>
-            </button>
-        `).join('');
-        }
-
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+        makeApiCall('sendSms', data)
+            .then(response => {
+                if (response.success) {
+                    showMessageModal('Success', response.message, 'success');
+                    document.getElementById('sms-form').reset();
+                    document.querySelector('input[name="sendType"][value="single"]').checked = true;
+                    document.querySelector('input[name="sendOption"][value="now"]').checked = true;
+                    bulkRecipients = [];
+                    toggleSendType();
+                    toggleSchedule();
+                    updateCharCount();
+                    loadSmsStats(); // Refresh stats
+                } else {
+                    showMessageModal('Error', response.message || 'Failed to send SMS', 'error');
+                }
+            })
+            .finally(() => {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i><span id="send-button-text">Send SMS</span>';
+            });
     }
 
-    function hideTemplateSelector() {
-        document.getElementById('templateSelectorModal').classList.add('hidden');
-        document.body.style.overflow = '';
+    // History Functions
+    function loadSmsHistory() {
+        const search = document.getElementById('searchHistory').value;
+        const status = document.getElementById('statusFilter').value;
+        const dateFrom = document.getElementById('dateFromFilter').value;
+        const dateTo = document.getElementById('dateToFilter').value;
+
+        const params = new URLSearchParams({
+            action: 'getSmsHistory',
+            search: search,
+            status: status,
+            date_from: dateFrom,
+            date_to: dateTo,
+            page: 1,
+            limit: 50
+        });
+
+        fetch(`fetch/manageSmsCenter.php?${params}`)
+            .then(response => response.json())
+            .then(response => {
+                if (response.success) {
+                    smsHistory = response.data.history;
+                    renderSmsHistory();
+                } else {
+                    showMessageModal('Error', response.message || 'Failed to load SMS history', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading SMS history:', error);
+                showMessageModal('Error', 'Failed to load SMS history', 'error');
+            });
     }
 
-    function selectTemplate(templateId) {
-        const template = smsTemplates.find(t => t.id === templateId);
-        if (template) {
-            document.getElementById('message').value = template.message;
-            updateCharCount();
+    function renderSmsHistory() {
+        const tableBody = document.getElementById('history-table-body');
+        const mobileContainer = document.getElementById('history-mobile');
+        const emptyState = document.getElementById('history-empty-state');
+
+        if (smsHistory.length === 0) {
+            tableBody.innerHTML = '';
+            mobileContainer.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
         }
-        hideTemplateSelector();
+
+        emptyState.classList.add('hidden');
+
+        // Desktop table
+        tableBody.innerHTML = smsHistory.map((sms, index) => {
+            const statusBadge = getStatusBadge(sms.status);
+            const recipientText = sms.recipient_count === 1 ? sms.recipients[0] : `${sms.recipient_count} recipients`;
+            const dateText = sms.status === 'scheduled' ?
+                `Scheduled: ${formatDateTime(sms.scheduled_at)}` :
+                formatDateTime(sms.sent_at);
+
+            return `
+                <tr class="${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors">
+                    <td class="px-4 py-3">
+                        <div class="max-w-xs">
+                            <div class="text-sm font-medium text-gray-900 truncate" title="${sms.message}">
+                                ${sms.message.substring(0, 50)}${sms.message.length > 50 ? '...' : ''}
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                ${sms.sms_parts} SMS part${sms.sms_parts > 1 ? 's' : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="text-sm text-gray-900">${recipientText}</div>
+                        ${sms.type === 'bulk' ? `<div class="text-xs text-gray-500 mt-1">Bulk SMS</div>` : ''}
+                    </td>
+                    <td class="px-4 py-3">${statusBadge}</td>
+                    <td class="px-4 py-3">
+                        <div class="text-sm font-semibold text-gray-900">Sh. ${formatCurrency(sms.total_cost)}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="text-sm text-gray-900">${dateText}</div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="showSmsDetails('${sms.id}')" class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" title="View Details">
+                                <i class="fas fa-eye text-xs"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        // Mobile cards
+        mobileContainer.innerHTML = smsHistory.map(sms => {
+            const statusBadge = getStatusBadge(sms.status);
+            const recipientText = sms.recipient_count === 1 ? sms.recipients[0] : `${sms.recipient_count} recipients`;
+            const dateText = sms.status === 'scheduled' ?
+                `Scheduled: ${formatDateTime(sms.scheduled_at)}` :
+                formatDateTime(sms.sent_at);
+
+            return `
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium text-gray-900 mb-2">${sms.message}</div>
+                            <div class="text-xs text-gray-500">
+                                ${sms.sms_parts} SMS part${sms.sms_parts > 1 ? 's' : ''}
+                            </div>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-xs mb-4">
+                        <div>
+                            <span class="text-gray-500 uppercase tracking-wide">Recipients</span>
+                            <div class="font-medium text-gray-900 mt-1">${recipientText}</div>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 uppercase tracking-wide">Cost</span>
+                            <div class="font-semibold text-gray-900 mt-1">Sh. ${formatCurrency(sms.total_cost)}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs text-gray-500">${dateText}</div>
+                        <button onclick="showSmsDetails('${sms.id}')" class="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
+                            <i class="fas fa-eye mr-1"></i>Details
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getStatusBadge(status) {
+        const badges = {
+            'sent': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Sent</span>',
+            'scheduled': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Scheduled</span>',
+            'failed': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>',
+            'cancelled': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Cancelled</span>'
+        };
+        return badges[status] || '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
+    }
+
+    function filterHistory() {
+        loadSmsHistory();
+    }
+
+    function showSmsDetails(smsId) {
+        const sms = smsHistory.find(s => s.id === smsId);
+        if (!sms) return;
+
+        const dateText = sms.status === 'scheduled' ?
+            `Scheduled for: ${formatDateTime(sms.scheduled_at)}` :
+            `Sent on: ${formatDateTime(sms.sent_at)}`;
+
+        const modalContent = `
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Message</h4>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-gray-900">${sms.message}</p>
+                    </div>
+                    <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                        <span>${sms.message.length} characters</span>
+                        <span>${sms.sms_parts} SMS part${sms.sms_parts > 1 ? 's' : ''}</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Recipients (${sms.recipient_count})</h4>
+                    <div class="bg-gray-50 rounded-lg p-4 max-h-40 overflow-y-auto">
+                        ${sms.recipients.map(recipient => `
+                            <div class="flex items-center gap-2 py-1">
+                                <i class="fas fa-phone text-gray-400 text-xs"></i>
+                                <span class="text-gray-900">${recipient}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Status</h4>
+                        ${getStatusBadge(sms.status)}
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Cost</h4>
+                        <div class="text-lg font-semibold text-gray-900">Sh. ${formatCurrency(sms.total_cost)}</div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Date & Time</h4>
+                    <div class="text-gray-900">${dateText}</div>
+                </div>
+            </div>
+        `;
+
+        showModal('SMS Details', modalContent);
+    }
+
+    // Template Functions
+    function loadSmsTemplates() {
+        makeApiCall('getSmsTemplates')
+            .then(response => {
+                if (response.success) {
+                    smsTemplates = response.data;
+                    renderTemplates();
+                } else {
+                    showMessageModal('Error', response.message || 'Failed to load templates', 'error');
+                }
+            });
     }
 
     function renderTemplates() {
@@ -1294,78 +1337,31 @@ function formatCurrency($amount)
         emptyState.classList.add('hidden');
 
         grid.innerHTML = smsTemplates.map(template => `
-        <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-file-alt text-purple-600"></i>
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-file-alt text-purple-600"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">${template.name}</h4>
                     </div>
-                    <h4 class="font-semibold text-gray-900">${template.name}</h4>
-                </div>
-                <div class="flex gap-1">
-                    <button onclick="editTemplate(${template.id})" class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" title="Edit Template">
-                        <i class="fas fa-edit text-xs"></i>
-                    </button>
-                    <button onclick="deleteTemplate(${template.id})" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" title="Delete Template">
-                        <i class="fas fa-trash-alt text-xs"></i>
-                    </button>
-                </div>
-            </div>
-            <p class="text-sm text-gray-600 mb-4">${template.message}</p>
-            <div class="flex gap-2">
-                <button onclick="selectTemplate(${template.id}); switchTab('send')" class="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium">
-                    <i class="fas fa-paper-plane mr-1"></i>Use Template
-                </button>
-            </div>
-        </div>
-    `).join('');
-    }
-
-    function filterTemplates() {
-        const query = document.getElementById('searchTemplates').value.toLowerCase();
-        const filteredTemplates = smsTemplates.filter(template =>
-            template.name.toLowerCase().includes(query) ||
-            template.message.toLowerCase().includes(query)
-        );
-
-        const grid = document.getElementById('templates-grid');
-        const emptyState = document.getElementById('templates-empty-state');
-
-        if (filteredTemplates.length === 0) {
-            grid.classList.add('hidden');
-            emptyState.classList.remove('hidden');
-            return;
-        }
-
-        grid.classList.remove('hidden');
-        emptyState.classList.add('hidden');
-
-        grid.innerHTML = filteredTemplates.map(template => `
-        <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-file-alt text-purple-600"></i>
+                    <div class="flex gap-1">
+                        <button onclick="editTemplate('${template.id}')" class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" title="Edit Template">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        <button onclick="deleteTemplate('${template.id}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" title="Delete Template">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
                     </div>
-                    <h4 class="font-semibold text-gray-900">${template.name}</h4>
                 </div>
-                <div class="flex gap-1">
-                    <button onclick="editTemplate(${template.id})" class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" title="Edit Template">
-                        <i class="fas fa-edit text-xs"></i>
-                    </button>
-                    <button onclick="deleteTemplate(${template.id})" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" title="Delete Template">
-                        <i class="fas fa-trash-alt text-xs"></i>
+                <p class="text-sm text-gray-600 mb-4">${template.message}</p>
+                <div class="flex gap-2">
+                    <button onclick="selectTemplate('${template.id}'); switchTab('send')" class="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium">
+                        <i class="fas fa-paper-plane mr-1"></i>Use Template
                     </button>
                 </div>
             </div>
-            <p class="text-sm text-gray-600 mb-4">${template.message}</p>
-            <div class="flex gap-2">
-                <button onclick="selectTemplate(${template.id}); switchTab('send')" class="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium">
-                    <i class="fas fa-paper-plane mr-1"></i>Use Template
-                </button>
-            </div>
-        </div>
-    `).join('');
+        `).join('');
     }
 
     function showCreateTemplateForm() {
@@ -1390,18 +1386,21 @@ function formatCurrency($amount)
         updateTemplateCharCount();
     }
 
-    function hideTemplateModal() {
-        document.getElementById('templateModal').classList.add('hidden');
-        document.body.style.overflow = '';
+    function deleteTemplate(templateId) {
+        if (!confirm('Are you sure you want to delete this template?')) return;
+
+        makeApiCall('deleteTemplate', { template_id: templateId })
+            .then(response => {
+                if (response.success) {
+                    showMessageModal('Success', response.message, 'success');
+                    loadSmsTemplates();
+                } else {
+                    showMessageModal('Error', response.message || 'Failed to delete template', 'error');
+                }
+            });
     }
 
-    function updateTemplateCharCount() {
-        const message = document.getElementById('template-message').value;
-        const charCount = document.getElementById('template-char-count');
-        charCount.textContent = `${message.length}/160 characters`;
-    }
-
-    document.getElementById('template-form').addEventListener('submit', function (e) {
+    function handleSaveTemplate(e) {
         e.preventDefault();
 
         const templateId = document.getElementById('template-id').value;
@@ -1413,427 +1412,179 @@ function formatCurrency($amount)
             return;
         }
 
-        if (templateId) {
-            const templateIndex = smsTemplates.findIndex(t => t.id === parseInt(templateId));
-            if (templateIndex !== -1) {
-                smsTemplates[templateIndex] = {
-                    ...smsTemplates[templateIndex],
-                    name: name,
-                    message: message
-                };
-            }
-        } else {
-            const newTemplate = {
-                id: Date.now(),
-                name: name,
-                message: message,
-                createdAt: new Date().toISOString()
-            };
-            smsTemplates.unshift(newTemplate);
-        }
+        const data = {
+            template_id: templateId,
+            name: name,
+            message: message
+        };
 
-        saveData();
-        hideTemplateModal();
-        renderTemplates();
-        showMessageModal('Success', 'Template saved successfully!', 'success');
-    });
-
-    function deleteTemplate(templateId) {
-        showConfirmModal('Are you sure you want to delete this template?', () => {
-            smsTemplates = smsTemplates.filter(t => t.id !== templateId);
-            saveData();
-            renderTemplates();
-            showMessageModal('Success', 'Template deleted successfully!', 'success');
-        });
+        makeApiCall('saveTemplate', data)
+            .then(response => {
+                if (response.success) {
+                    showMessageModal('Success', response.message, 'success');
+                    hideTemplateModal();
+                    loadSmsTemplates();
+                } else {
+                    showMessageModal('Error', response.message || 'Failed to save template', 'error');
+                }
+            });
     }
 
-    function getDateRange(range) {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-        switch (range) {
-            case 'today':
-                return {
-                    start: today,
-                    end: new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1)
-                };
-            case 'week':
-                const weekStart = new Date(today);
-                weekStart.setDate(today.getDate() - today.getDay());
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 7);
-                return { start: weekStart, end: weekEnd };
-            case 'month':
-                const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-                const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
-                return { start: monthStart, end: monthEnd };
-            default:
-                return null;
+    function selectTemplate(templateId) {
+        const template = smsTemplates.find(t => t.id === templateId);
+        if (template) {
+            document.getElementById('message').value = template.message;
+            updateCharCount();
         }
+        hideTemplateSelector();
     }
 
-    function handleDateRangeChange() {
-        const range = document.getElementById('dateRangeFilter').value;
-        const customRange = document.getElementById('custom-date-range');
+    function showTemplateSelector() {
+        const modal = document.getElementById('templateSelectorModal');
+        const list = document.getElementById('template-selector-list');
 
-        if (range === 'custom') {
-            customRange.classList.remove('hidden');
+        if (smsTemplates.length === 0) {
+            list.innerHTML = '<p class="text-center text-gray-500">No templates available</p>';
         } else {
-            customRange.classList.add('hidden');
-            filterHistory();
+            list.innerHTML = smsTemplates.map(template => `
+                <button onclick="selectTemplate('${template.id}')" class="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all">
+                    <div class="font-medium text-gray-900">${template.name}</div>
+                    <div class="text-sm text-gray-500 mt-1">${template.message}</div>
+                </button>
+            `).join('');
         }
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
     }
 
-    function renderSMSHistory() {
-        const tableBody = document.getElementById('history-table-body');
-        const mobileContainer = document.getElementById('history-mobile');
-        const emptyState = document.getElementById('history-empty-state');
+    function hideTemplateSelector() {
+        document.getElementById('templateSelectorModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
 
-        let filteredHistory = [...smsHistory];
+    function hideTemplateModal() {
+        document.getElementById('templateModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
 
-        const query = document.getElementById('searchHistory').value.toLowerCase();
-        const statusFilter = document.getElementById('statusFilter').value;
-        const dateRange = document.getElementById('dateRangeFilter').value;
+    function updateTemplateCharCount() {
+        const message = document.getElementById('template-message').value;
+        const charCount = document.getElementById('template-char-count');
+        charCount.textContent = `${message.length}/160 characters`;
+    }
 
-        if (query) {
-            filteredHistory = filteredHistory.filter(sms =>
-                sms.message.toLowerCase().includes(query) ||
-                sms.recipients.some(r => r.toLowerCase().includes(query))
-            );
-        }
+    function filterTemplates() {
+        const query = document.getElementById('searchTemplates').value.toLowerCase();
+        const filteredTemplates = smsTemplates.filter(template =>
+            template.name.toLowerCase().includes(query) ||
+            template.message.toLowerCase().includes(query)
+        );
 
-        if (statusFilter) {
-            filteredHistory = filteredHistory.filter(sms => sms.status === statusFilter);
-        }
+        const grid = document.getElementById('templates-grid');
+        const emptyState = document.getElementById('templates-empty-state');
 
-        if (dateRange !== 'custom') {
-            const range = getDateRange(dateRange);
-            if (range) {
-                filteredHistory = filteredHistory.filter(sms => {
-                    const smsDate = new Date(sms.sentAt || sms.scheduledAt);
-                    return smsDate >= range.start && smsDate < range.end;
-                });
-            }
-        } else {
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-
-            if (startDate && endDate) {
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                end.setHours(23, 59, 59, 999);
-
-                filteredHistory = filteredHistory.filter(sms => {
-                    const smsDate = new Date(sms.sentAt || sms.scheduledAt);
-                    return smsDate >= start && smsDate <= end;
-                });
-            }
-        }
-
-        if (filteredHistory.length === 0) {
-            tableBody.innerHTML = '';
-            mobileContainer.innerHTML = '';
+        if (filteredTemplates.length === 0) {
+            grid.classList.add('hidden');
             emptyState.classList.remove('hidden');
             return;
         }
 
+        grid.classList.remove('hidden');
         emptyState.classList.add('hidden');
 
-        tableBody.innerHTML = filteredHistory.map((sms, index) => {
-            const statusBadge = getStatusBadge(sms.status);
-            const recipientText = sms.recipients.length === 1 ? sms.recipients[0] : `${sms.recipients.length} recipients`;
-            const dateText = sms.status === 'scheduled' ?
-                `Scheduled: ${formatDateTime(sms.scheduledAt)}` :
-                formatDateTime(sms.sentAt);
-
-            return `
-            <tr class="${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors">
-                <td class="px-4 py-3">
-                    <div class="max-w-xs">
-                        <div class="text-sm font-medium text-gray-900 truncate" title="${sms.message}">
-                            ${sms.message.substring(0, 50)}${sms.message.length > 50 ? '...' : ''}
+        grid.innerHTML = filteredTemplates.map(template => `
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-file-alt text-purple-600"></i>
                         </div>
-                        <div class="text-xs text-gray-500 mt-1">
-                            ${Math.ceil(sms.message.length / 160)} SMS part${Math.ceil(sms.message.length / 160) > 1 ? 's' : ''}
-                        </div>
+                        <h4 class="font-semibold text-gray-900">${template.name}</h4>
                     </div>
-                </td>
-                <td class="px-4 py-3">
-                    <div class="text-sm text-gray-900">${recipientText}</div>
-                    ${sms.type === 'bulk' ? `<div class="text-xs text-gray-500 mt-1">Bulk SMS</div>` : ''}
-                </td>
-                <td class="px-4 py-3">${statusBadge}</td>
-                <td class="px-4 py-3">
-                    <div class="text-sm font-semibold text-gray-900">Sh. ${formatCurrency(sms.cost)}</div>
-                </td>
-                <td class="px-4 py-3">
-                    <div class="text-sm text-gray-900">${dateText}</div>
-                </td>
-                <td class="px-4 py-3 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        <button onclick="showSMSDetails(${sms.id})" class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" title="View Details">
-                            <i class="fas fa-eye text-xs"></i>
+                    <div class="flex gap-1">
+                        <button onclick="editTemplate('${template.id}')" class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" title="Edit Template">
+                            <i class="fas fa-edit text-xs"></i>
                         </button>
-                        ${sms.status === 'scheduled' ? `
-                            <button onclick="editScheduledSMS(${sms.id})" class="w-8 h-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex items-center justify-center" title="Edit">
-                                <i class="fas fa-edit text-xs"></i>
-                            </button>
-                            <button onclick="deleteScheduledSMS(${sms.id})" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" title="Delete">
-                                <i class="fas fa-trash-alt text-xs"></i>
-                            </button>
-                        ` : ''}
-                    </div>
-                </td>
-            </tr>
-        `;
-        }).join('');
-
-        mobileContainer.innerHTML = filteredHistory.map(sms => {
-            const statusBadge = getStatusBadge(sms.status);
-            const recipientText = sms.recipients.length === 1 ? sms.recipients[0] : `${sms.recipients.length} recipients`;
-            const dateText = sms.status === 'scheduled' ?
-                `Scheduled: ${formatDateTime(sms.scheduledAt)}` :
-                formatDateTime(sms.sentAt);
-
-            return `
-            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                <div class="flex items-start justify-between mb-3">
-                    <div class="flex-1 min-w-0">
-                        <div class="text-sm font-medium text-gray-900 mb-2">${sms.message}</div>
-                        <div class="text-xs text-gray-500">
-                            ${Math.ceil(sms.message.length / 160)} SMS part${Math.ceil(sms.message.length / 160) > 1 ? 's' : ''}
-                        </div>
-                    </div>
-                    ${statusBadge}
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4 text-xs mb-4">
-                    <div>
-                        <span class="text-gray-500 uppercase tracking-wide">Recipients</span>
-                        <div class="font-medium text-gray-900 mt-1">${recipientText}</div>
-                    </div>
-                    <div>
-                        <span class="text-gray-500 uppercase tracking-wide">Cost</span>
-                        <div class="font-semibold text-gray-900 mt-1">Sh. ${formatCurrency(sms.cost)}</div>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between">
-                    <div class="text-xs text-gray-500">${dateText}</div>
-                    <div class="flex gap-2">
-                        <button onclick="showSMSDetails(${sms.id})" class="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
-                            <i class="fas fa-eye mr-1"></i>Details
+                        <button onclick="deleteTemplate('${template.id}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" title="Delete Template">
+                            <i class="fas fa-trash-alt text-xs"></i>
                         </button>
-                        ${sms.status === 'scheduled' ? `
-                            <button onclick="editScheduledSMS(${sms.id})" class="px-3 py-2 text-xs bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-medium">
-                                <i class="fas fa-edit mr-1"></i>Edit
-                            </button>
-                            <button onclick="deleteScheduledSMS(${sms.id})" class="px-3 py-2 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium">
-                                <i class="fas fa-trash-alt mr-1"></i>Delete
-                            </button>
-                        ` : ''}
                     </div>
                 </div>
-            </div>
-        `;
-        }).join('');
-    }
-
-    function getStatusBadge(status) {
-        const badges = {
-            'sent': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Sent</span>',
-            'scheduled': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Scheduled</span>',
-            'failed': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>'
-        };
-        return badges[status] || '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
-    }
-
-    function filterHistory() {
-        renderSMSHistory();
-    }
-
-    function showSMSDetails(smsId) {
-        const sms = smsHistory.find(s => s.id === smsId);
-        if (!sms) return;
-
-        const modal = document.getElementById('smsDetailsModal');
-        const content = document.getElementById('sms-details-content');
-
-        const dateText = sms.status === 'scheduled' ?
-            `Scheduled for: ${formatDateTime(sms.scheduledAt)}` :
-            `Sent on: ${formatDateTime(sms.sentAt)}`;
-
-        content.innerHTML = `
-        <div class="space-y-6">
-            <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-2">Message</h4>
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <p class="text-gray-900">${sms.message}</p>
-                </div>
-                <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-                    <span>${sms.message.length} characters</span>
-                    <span>${Math.ceil(sms.message.length / 160)} SMS part${Math.ceil(sms.message.length / 160) > 1 ? 's' : ''}</span>
+                <p class="text-sm text-gray-600 mb-4">${template.message}</p>
+                <div class="flex gap-2">
+                    <button onclick="selectTemplate('${template.id}'); switchTab('send')" class="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium">
+                        <i class="fas fa-paper-plane mr-1"></i>Use Template
+                    </button>
                 </div>
             </div>
-
-            <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-2">Recipients (${sms.recipients.length})</h4>
-                <div class="bg-gray-50 rounded-lg p-4 max-h-40 overflow-y-auto">
-                    ${sms.recipients.map(recipient => `
-                        <div class="flex items-center gap-2 py-1">
-                            <i class="fas fa-phone text-gray-400 text-xs"></i>
-                            <span class="text-gray-900">${recipient}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Status</h4>
-                    ${getStatusBadge(sms.status)}
-                </div>
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Cost</h4>
-                    <div class="text-lg font-semibold text-gray-900">Sh. ${formatCurrency(sms.cost)}</div>
-                </div>
-            </div>
-
-            <div>
-                <h4 class="text-sm font-semibold text-gray-700 mb-2">Date & Time</h4>
-                <div class="text-gray-900">${dateText}</div>
-            </div>
-        </div>
-    `;
-
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+        `).join('');
     }
 
-    function hideSMSDetails() {
-        document.getElementById('smsDetailsModal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-
-    function editScheduledSMS(smsId) {
-        const sms = smsHistory.find(s => s.id === smsId);
-        if (!sms || sms.status !== 'scheduled') return;
-
-        const modal = document.getElementById('editScheduledModal');
-        const scheduledDate = new Date(sms.scheduledAt);
-
-        document.getElementById('edit-sms-id').value = sms.id;
-        document.getElementById('edit-sms-message').value = sms.message;
-        document.getElementById('edit-schedule-date').value = scheduledDate.toISOString().split('T')[0];
-        document.getElementById('edit-schedule-time').value = scheduledDate.toTimeString().slice(0, 5);
-
-        updateEditCharCount();
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function hideEditScheduled() {
-        document.getElementById('editScheduledModal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-
-    function updateEditCharCount() {
-        const message = document.getElementById('edit-sms-message').value;
-        const charCount = document.getElementById('edit-char-count');
-        charCount.textContent = `${message.length}/160 characters`;
-    }
-
-    document.getElementById('edit-scheduled-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const smsId = parseInt(document.getElementById('edit-sms-id').value);
-        const message = document.getElementById('edit-sms-message').value.trim();
-        const scheduleDate = document.getElementById('edit-schedule-date').value;
-        const scheduleTime = document.getElementById('edit-schedule-time').value;
-
-        if (!message || !scheduleDate || !scheduleTime) {
-            showMessageModal('Missing Fields', 'Please fill in all fields', 'error');
-            return;
-        }
-
-        const smsIndex = smsHistory.findIndex(s => s.id === smsId);
-        if (smsIndex !== -1) {
-            const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
-            const parts = Math.ceil(message.length / 160) || 1;
-            const cost = smsHistory[smsIndex].recipients.length * parts * SMS_RATE;
-
-            smsHistory[smsIndex] = {
-                ...smsHistory[smsIndex],
-                message: message,
-                scheduledAt: scheduledAt,
-                cost: cost
-            };
-
-            saveData();
-            hideEditScheduled();
-            renderSMSHistory();
-            showMessageModal('Success', 'Scheduled SMS updated successfully!', 'success');
-        }
-    });
-
-    function deleteScheduledSMS(smsId) {
-        showConfirmModal('Are you sure you want to delete this scheduled SMS?', () => {
-            smsHistory = smsHistory.filter(s => s.id !== smsId);
-            saveData();
-            updateStats();
-            renderSMSHistory();
-            showMessageModal('Success', 'Scheduled SMS deleted successfully!', 'success');
-        });
-    }
-
+    // Top Up Functions
     function updateTopupCalculation() {
         const selectedPackage = document.querySelector('input[name="package"]:checked');
         const customAmountSection = document.getElementById('custom-amount-section');
         const customAmountInput = document.getElementById('custom-amount');
         const topupCredits = document.getElementById('topup-credits');
         const topupCost = document.getElementById('topup-cost');
+        const balanceStatus = document.getElementById('balance-status');
+        const insufficientWarning = document.getElementById('insufficient-balance-warning');
+        const purchaseBtn = document.getElementById('purchase-credits-btn');
 
         if (!selectedPackage) {
             topupCredits.textContent = '0';
             topupCost.textContent = 'Sh. 0.00';
+            balanceStatus.textContent = `Sh. ${formatCurrency(walletBalance)}`;
+            balanceStatus.className = 'font-semibold text-gray-900';
+            insufficientWarning.classList.add('hidden');
+            purchaseBtn.disabled = false;
             return;
         }
 
         const packageValue = selectedPackage.value;
+        let cost = 0;
+        let credits = 0;
 
         if (packageValue === 'custom') {
             customAmountSection.classList.remove('hidden');
             const customAmount = parseFloat(customAmountInput.value) || 0;
-            const credits = Math.floor(customAmount / SMS_RATE);
-            topupCredits.textContent = credits;
-            topupCost.textContent = `Sh. ${formatCurrency(customAmount)}`;
+            cost = customAmount;
+            credits = Math.floor(customAmount / currentSmsRate);
         } else {
             customAmountSection.classList.add('hidden');
-            const credits = parseInt(packageValue);
-            const cost = credits * SMS_RATE;
-            topupCredits.textContent = credits;
-            topupCost.textContent = `Sh. ${formatCurrency(cost)}`;
+            credits = parseInt(packageValue);
+            cost = credits * currentSmsRate;
+        }
+
+        topupCredits.textContent = credits;
+        topupCost.textContent = `Sh. ${formatCurrency(cost)}`;
+        balanceStatus.textContent = `Sh. ${formatCurrency(walletBalance)}`;
+
+        // Check if wallet balance is sufficient
+        if (cost > walletBalance) {
+            balanceStatus.className = 'font-semibold text-red-600';
+            insufficientWarning.classList.remove('hidden');
+            purchaseBtn.disabled = true;
+        } else {
+            balanceStatus.className = 'font-semibold text-green-600';
+            insufficientWarning.classList.add('hidden');
+            purchaseBtn.disabled = false;
         }
     }
 
-    document.getElementById('topup-form').addEventListener('submit', function (e) {
+    function handlePurchaseCredits(e) {
         e.preventDefault();
 
         const selectedPackage = document.querySelector('input[name="package"]:checked');
-        const paymentMethod = document.getElementById('payment-method').value;
 
         if (!selectedPackage) {
             showMessageModal('Missing Package', 'Please select a package', 'error');
             return;
         }
 
-        if (!paymentMethod) {
-            showMessageModal('Missing Payment Method', 'Please select a payment method', 'error');
-            return;
-        }
-
         let credits = 0;
-        let cost = 0;
+        let amount = 0;
 
         if (selectedPackage.value === 'custom') {
             const customAmount = parseFloat(document.getElementById('custom-amount').value) || 0;
@@ -1841,24 +1592,112 @@ function formatCurrency($amount)
                 showMessageModal('Invalid Amount', 'Minimum top-up amount is Sh. 1,000', 'error');
                 return;
             }
-            credits = Math.floor(customAmount / SMS_RATE);
-            cost = customAmount;
+            credits = Math.floor(customAmount / currentSmsRate);
+            amount = customAmount;
         } else {
             credits = parseInt(selectedPackage.value);
-            cost = credits * SMS_RATE;
+            amount = credits * currentSmsRate;
         }
 
-        showConfirmModal(`Confirm purchase of ${credits} SMS credits for Sh. ${formatCurrency(cost)}?`, () => {
-            smsCredits += credits;
-            saveData();
-            updateStats();
+        // Check wallet balance
+        if (amount > walletBalance) {
+            showMessageModal('Insufficient Balance', `You need Sh. ${formatCurrency(amount)} but only have Sh. ${formatCurrency(walletBalance)} in your wallet. Please top up your wallet first.`, 'error');
+            return;
+        }
 
-            document.getElementById('topup-form').reset();
-            updateTopupCalculation();
+        // Show confirmation modal instead of alert
+        const confirmationContent = `
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-credit-card text-blue-600 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Confirm Purchase</h3>
+            <p class="text-gray-600 mb-6">
+                Purchase <strong>${credits} SMS credits</strong> for <strong>Sh. ${formatCurrency(amount)}</strong>?
+            </p>
+            <div class="flex gap-3">
+                <button onclick="hideCustomModal()" class="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button onclick="confirmPurchaseCredits(${amount})" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">Confirm Purchase</button>
+            </div>
+        </div>
+    `;
+        showModal('Confirm Purchase', confirmationContent);
+    }
 
-            showMessageModal('Success', `Successfully purchased ${credits} SMS credits!`, 'success');
+    function confirmPurchaseCredits(amount) {
+        hideCustomModal();
+
+        const purchaseBtn = document.getElementById('purchase-credits-btn');
+        purchaseBtn.disabled = true;
+        purchaseBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+        const data = {
+            amount: amount
+        };
+
+        makeApiCall('purchaseSmsCredits', data)
+            .then(response => {
+                if (response.success) {
+                    showMessageModal('Success', response.message, 'success');
+                    document.getElementById('topup-form').reset();
+                    updateTopupCalculation();
+                    loadSmsStats(); // Refresh stats and wallet balance
+                } else {
+                    if (response.data && response.data.topup_url) {
+                        // Show insufficient balance with topup button
+                        const modalContent = `
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Insufficient Wallet Balance</h3>
+                            <p class="text-gray-600 mb-6">${response.message}</p>
+                            <div class="flex gap-3">
+                                <button onclick="hideCustomModal()" class="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                                <a href="${response.data.topup_url}" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-center">Top Up Wallet</a>
+                            </div>
+                        </div>
+                    `;
+                        showModal('Insufficient Balance', modalContent);
+                    } else {
+                        showMessageModal('Error', response.message || 'Failed to purchase credits', 'error');
+                    }
+                }
+            })
+            .finally(() => {
+                purchaseBtn.disabled = false;
+                purchaseBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Purchase Credits';
+            });
+    }
+
+    // Utility Functions
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-UG', {
+            style: 'decimal',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount);
+    }
+
+    function formatDateTime(dateString) {
+        if (!dateString) return 'N/A';
+
+        const date = new Date(dateString);
+        const day = date.getDate();
+        const month = date.toLocaleString('en-US', { month: 'short' });
+        const year = date.getFullYear();
+        const time = date.toLocaleString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
         });
-    });
+
+        const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
+            day === 2 || day === 22 ? 'nd' :
+                day === 3 || day === 23 ? 'rd' : 'th';
+
+        return `${day}${suffix} ${month}, ${year} ${time}`;
+    }
 
     function showMessageModal(title, message, type = 'info') {
         const modal = document.getElementById('messageModal');
@@ -1895,68 +1734,46 @@ function formatCurrency($amount)
         document.body.style.overflow = '';
     }
 
-    function showConfirmModal(message, onConfirm) {
-        const modal = document.getElementById('confirmModal');
-        const textEl = document.getElementById('confirm-modal-text');
-        const actionBtn = document.getElementById('confirm-modal-action');
+    function showModal(title, content) {
+        // Create a temporary modal for custom content
+        const modalHtml = `
+            <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideCustomModal()"></div>
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[80vh] overflow-hidden">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">${title}</h3>
+                            <button onclick="hideCustomModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
+                                <i class="fas fa-times text-gray-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6 overflow-y-auto max-h-96">
+                        ${content}
+                    </div>
+                </div>
+            </div>
+        `;
 
-        textEl.textContent = message;
-
-        actionBtn.onclick = () => {
-            hideConfirmModal();
-            onConfirm();
-        };
-
-        modal.classList.remove('hidden');
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
         document.body.style.overflow = 'hidden';
     }
 
-    function hideConfirmModal() {
-        document.getElementById('confirmModal').classList.add('hidden');
-        document.body.style.overflow = '';
+    function hideCustomModal() {
+        const modal = document.getElementById('customModal');
+        if (modal) {
+            modal.remove();
+            document.body.style.overflow = '';
+        }
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        initializeDummyData();
-        updateStats();
-        switchTab('send');
-
-        document.getElementById('mobile-tab-toggle').addEventListener('click', toggleMobileTabDropdown);
-
-        document.querySelectorAll('.mobile-tab-option').forEach(option => {
-            option.addEventListener('click', (e) => {
-                const tab = e.currentTarget.getAttribute('data-tab');
-                switchTab(tab);
-                toggleMobileTabDropdown();
-            });
-        });
-
-        document.getElementById('recipient').addEventListener('input', updateSendFormCalculations);
-
-        document.getElementById('bulk-number-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addBulkRecipient();
-            }
-        });
-
-        document.getElementById('add-number-btn').addEventListener('click', addBulkRecipient);
-
-        document.addEventListener('click', function (event) {
-            const mobileDropdown = document.getElementById('mobile-tab-dropdown');
-            const mobileToggle = document.getElementById('mobile-tab-toggle');
-
-            if (mobileDropdown && mobileToggle && !mobileDropdown.contains(event.target) && !mobileToggle.contains(event.target)) {
-                mobileDropdown.classList.add('hidden');
-                document.getElementById('mobile-tab-chevron').classList.remove('rotate-180');
-            }
-        });
-    });
-
+    // Global function assignments for onclick handlers
     window.switchTab = switchTab;
     window.toggleSendType = toggleSendType;
     window.toggleSchedule = toggleSchedule;
     window.updateCharCount = updateCharCount;
+    window.addBulkRecipient = addBulkRecipient;
+    window.removeRecipient = removeRecipient;
     window.showTemplateSelector = showTemplateSelector;
     window.hideTemplateSelector = hideTemplateSelector;
     window.selectTemplate = selectTemplate;
@@ -1965,21 +1782,14 @@ function formatCurrency($amount)
     window.deleteTemplate = deleteTemplate;
     window.hideTemplateModal = hideTemplateModal;
     window.updateTemplateCharCount = updateTemplateCharCount;
-    window.filterHistory = filterHistory;
-    window.showSMSDetails = showSMSDetails;
-    window.hideSMSDetails = hideSMSDetails;
     window.filterTemplates = filterTemplates;
+    window.loadSmsHistory = loadSmsHistory;
+    window.filterHistory = filterHistory;
+    window.showSmsDetails = showSmsDetails;
     window.updateTopupCalculation = updateTopupCalculation;
-    window.resetSMSData = resetSMSData;
-    window.handleDateRangeChange = handleDateRangeChange;
-    window.editScheduledSMS = editScheduledSMS;
-    window.hideEditScheduled = hideEditScheduled;
-    window.updateEditCharCount = updateEditCharCount;
-    window.deleteScheduledSMS = deleteScheduledSMS;
     window.hideMessageModal = hideMessageModal;
-    window.hideConfirmModal = hideConfirmModal;
-    window.addBulkRecipient = addBulkRecipient;
-    window.removeRecipient = removeRecipient;
+    window.hideCustomModal = hideCustomModal;
+    window.confirmPurchaseCredits = confirmPurchaseCredits;
 </script>
 
 <?php

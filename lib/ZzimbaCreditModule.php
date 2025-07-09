@@ -1325,4 +1325,138 @@ final class CreditService
 
         return ['success' => true];
     }
+
+
+    public static function purchaseSmsCredits(array $opts): array
+    {
+        self::boot();
+
+        // 1) Validate debit wallet, owner and payload amount
+        $walletId = trim($opts['wallet_id'] ?? '');
+        $ownerType = strtoupper(trim($opts['owner_type'] ?? ''));
+        $amount = isset($opts['amount']) ? (float) $opts['amount'] : 0;
+        if (!$walletId || !in_array($ownerType, ['USER', 'VENDOR'], true) || $amount <= 0) {
+            return ['success' => false, 'message' => 'Invalid wallet, owner_type or amount'];
+        }
+        $ownerIdKey = $ownerType === 'USER' ? 'user_id' : 'vendor_id';
+        $ownerId = trim($opts[$ownerIdKey] ?? '');
+        if (!$ownerId) {
+            return ['success' => false, 'message' => "Missing {$ownerIdKey}"];
+        }
+
+        // fetch debit wallet
+        $stmt = self::$pdo->prepare("
+        SELECT wallet_number, current_balance
+          FROM zzimba_wallets
+         WHERE wallet_id   = :wid
+           AND owner_type  = :ot
+           AND status      = 'active'
+         LIMIT 1
+    ");
+        $stmt->execute([':wid' => $walletId, ':ot' => $ownerType]);
+        $debitWallet = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$debitWallet) {
+            return ['success' => false, 'message' => 'Debit wallet not found or inactive'];
+        }
+        if ($debitWallet['current_balance'] < $amount) {
+            return ['success' => false, 'message' => 'Insufficient funds'];
+        }
+
+        // 2) Look up the sms_cost setting_id (only for assignment) 
+        $appKey = strtolower($ownerType) . 's';
+        $bst = self::$pdo->prepare("
+        SELECT id
+          FROM zzimba_credit_settings
+         WHERE setting_key = 'sms_cost'
+           AND status      = 'active'
+           AND applicable_to IN ('all', :ap1)
+         ORDER BY (applicable_to = 'all') DESC,
+                  (applicable_to = :ap2) DESC
+         LIMIT 1
+    ");
+        $bst->execute([':ap1' => $appKey, ':ap2' => $appKey]);
+        $setting = $bst->fetch(PDO::FETCH_ASSOC);
+        if (!$setting) {
+            return ['success' => false, 'message' => 'SMS cost setting not found'];
+        }
+        $settingId = $setting['id'];
+
+        // 3) Find credit (SMS sink) wallet via assignment
+        $src = self::$pdo->prepare("
+        SELECT w.wallet_id, w.wallet_number, w.current_balance
+          FROM zzimba_wallets w
+          JOIN zzimba_wallet_credit_assignments a
+            ON a.wallet_id = w.wallet_id
+         WHERE a.credit_setting_id = :cid
+           AND w.status            = 'active'
+         LIMIT 1
+    ");
+        $src->execute([':cid' => $settingId]);
+        $creditWallet = $src->fetch(PDO::FETCH_ASSOC);
+        if (!$creditWallet) {
+            return ['success' => false, 'message' => 'SMS-sink wallet not configured'];
+        }
+
+        // 4) Create the transaction record (using payload $amount)
+        $txnId = \generateUlid();
+        self::insertTransaction([
+            'transaction_id' => $txnId,
+            'transaction_type' => 'SMS_PURCHASE',
+            'status' => 'PENDING',
+            'amount_total' => $amount,
+            'payment_method' => 'WALLET',
+            'wallet_id' => $walletId,
+            'user_id' => $ownerType === 'USER' ? $ownerId : null,
+            'vendor_id' => $ownerType === 'VENDOR' ? $ownerId : null,
+            'note' => 'SMS credits purchase'
+        ]);
+
+        // 5) Link the transfer
+        self::insertTransfer([
+            'id' => \generateUlid(),
+            'wallet_from' => $walletId,
+            'wallet_to' => $creditWallet['wallet_id'],
+            'transaction_id' => $txnId,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        // 6) Prepare custom entry notes
+        $debitNo = $debitWallet['wallet_number'];
+        $creditNo = $creditWallet['wallet_number'];
+        $notes = [
+            'debit' => "SMS purchase debit from {$debitNo}",
+            'credit1' => "SMS purchase instruction from {$debitNo}",
+            'debit2' => "SMS purchase executed for {$creditNo}",
+            'credit2' => "SMS credits credited to {$creditNo}",
+        ];
+
+        // 7) Run the 4‐step ledger and finalize status
+        try {
+            self::$pdo->beginTransaction();
+            self::performTransferEntries($txnId, $walletId, $creditWallet['wallet_id'], $amount, $notes);
+            self::$pdo->prepare("
+            UPDATE zzimba_financial_transactions
+               SET status     = 'SUCCESS',
+                   updated_at = NOW()
+             WHERE transaction_id = :tid
+        ")->execute([':tid' => $txnId]);
+            self::$pdo->commit();
+        } catch (\Throwable $e) {
+            self::$pdo->rollBack();
+            error_log('[ZzimbaCreditModule] SMS purchase error: ' . $e->getMessage());
+            self::$pdo->prepare("
+            UPDATE zzimba_financial_transactions
+               SET status     = 'FAILED',
+                   updated_at = NOW()
+             WHERE transaction_id = :tid
+        ")->execute([':tid' => $txnId]);
+            return ['success' => false, 'message' => 'SMS purchase failed'];
+        }
+
+        return [
+            'success' => true,
+            'transaction_id' => $txnId,
+            'amount' => $amount
+        ];
+    }
 }
