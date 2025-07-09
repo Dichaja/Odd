@@ -880,7 +880,13 @@ final class CreditService
             $params[':startDate'] = $start;
             $params[':endDate'] = $end;
         }
-        $sql .= " ORDER BY created_at DESC";
+
+        // Enhanced ordering: Transactions with original_txn_id (charges) should appear before their referenced transaction
+        $sql .= " ORDER BY created_at DESC,
+                   CASE 
+                     WHEN original_txn_id IS NOT NULL THEN 1 
+                     ELSE 2 
+                   END ASC";
 
         $txnStmt = self::$pdo->prepare($sql);
         $txnStmt->execute($params);
@@ -1592,26 +1598,29 @@ final class CreditService
             $balStmt->execute([':wid' => $withholdingId]);
             $withBal = (float) $balStmt->fetchColumn();
 
-            $creditWithId = self::insertEntry([
+            $newWithBal = $withBal + $amount;
+            $creditId = self::insertEntry([
                 'transaction_id' => $transactionId,
                 'wallet_id' => $withholdingId,
                 'entry_type' => 'CREDIT',
                 'amount' => $amount,
-                'balance_after' => $withBal + $amount,
+                'balance_after' => $newWithBal,
                 'entry_note' => 'Zzimba Credit top-up'
             ]);
-            self::updateWalletBalance($withholdingId, $withBal + $amount);
+            self::updateWalletBalance($withholdingId, $newWithBal);
 
-            $debitWithId = self::insertEntry([
+            $debitBal = $newWithBal - $amount;
+            $receiverNo = $receiverWalletNo;
+            $debitId = self::insertEntry([
                 'transaction_id' => $transactionId,
                 'wallet_id' => $withholdingId,
                 'entry_type' => 'DEBIT',
                 'amount' => $amount,
-                'balance_after' => $withBal,
-                'entry_note' => 'Disbursed to ' . $receiverWalletNo,
-                'ref_entry_id' => $creditWithId
+                'balance_after' => $debitBal,
+                'entry_note' => 'Disbursed to ' . $receiverNo,
+                'ref_entry_id' => $creditId
             ]);
-            self::updateWalletBalance($withholdingId, $withBal);
+            self::updateWalletBalance($withholdingId, $debitBal);
 
             $newWBal = $currBal + $amount;
             self::insertEntry([
@@ -1621,7 +1630,7 @@ final class CreditService
                 'amount' => $amount,
                 'balance_after' => $newWBal,
                 'entry_note' => 'Zzimba Credit top-up',
-                'ref_entry_id' => $debitWithId
+                'ref_entry_id' => $debitId
             ]);
             self::$pdo->prepare("
                 UPDATE zzimba_wallets
@@ -1645,7 +1654,7 @@ final class CreditService
                 'amount' => $amount,
                 'balance_after' => $newCash,
                 'entry_note' => 'Cash account credited from withholding',
-                'ref_entry_id' => $debitWithId
+                'ref_entry_id' => $debitId
             ]);
             self::$pdo->prepare("
                 UPDATE zzimba_cash_accounts
