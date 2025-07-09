@@ -55,21 +55,17 @@ final class CreditService
                 payment_method ENUM('MOBILE_MONEY_GATEWAY','CARD_GATEWAY','MOBILE_MONEY','BANK','WALLET') DEFAULT NULL,
                 external_reference VARCHAR(100) DEFAULT NULL,
                 external_metadata TEXT DEFAULT NULL,
+                wallet_id CHAR(26) DEFAULT NULL,
                 user_id VARCHAR(26) DEFAULT NULL,
                 vendor_id VARCHAR(26) DEFAULT NULL,
                 original_txn_id VARCHAR(26) DEFAULT NULL,
                 note VARCHAR(255) DEFAULT NULL,
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL,
-                CONSTRAINT fk_txn_user FOREIGN KEY (user_id)
-                    REFERENCES zzimba_users(id)
-                    ON UPDATE CASCADE ON DELETE SET NULL,
-                CONSTRAINT fk_txn_vendor FOREIGN KEY (vendor_id)
-                    REFERENCES vendor_stores(id)
-                    ON UPDATE CASCADE ON DELETE SET NULL,
-                CONSTRAINT fk_txn_original FOREIGN KEY (original_txn_id)
-                    REFERENCES zzimba_financial_transactions(transaction_id)
-                    ON UPDATE CASCADE ON DELETE SET NULL
+                CONSTRAINT fk_txn_wallet FOREIGN KEY (wallet_id) REFERENCES zzimba_wallets(wallet_id) ON UPDATE CASCADE ON DELETE SET NULL,
+                CONSTRAINT fk_txn_user FOREIGN KEY (user_id) REFERENCES zzimba_users(id) ON UPDATE CASCADE ON DELETE SET NULL,
+                CONSTRAINT fk_txn_vendor FOREIGN KEY (vendor_id) REFERENCES vendor_stores(id) ON UPDATE CASCADE ON DELETE SET NULL,
+                CONSTRAINT fk_txn_original FOREIGN KEY (original_txn_id) REFERENCES zzimba_financial_transactions(transaction_id) ON UPDATE CASCADE ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
 
         $createEntries = "
@@ -1001,41 +997,53 @@ final class CreditService
     {
         self::boot();
 
+        // ───────────────────────────────────────────────────────── values
+        $walletId = trim($opts['wallet_id'] ?? '');
         $cashAccountId = trim($opts['cash_account_id'] ?? '');
         $amount = (float) ($opts['amount_total'] ?? 0);
         $paymentMethod = strtoupper(trim($opts['payment_method'] ?? ''));
         $externalRef = trim($opts['external_reference'] ?? '');
-        $userId = $opts['user_id'] ?? null;
-        $vendorId = $opts['vendor_id'] ?? null;
         $note = trim($opts['note'] ?? '');
 
-        // method-specific fields
+        // legacy (optional) fields
+        $userId = $opts['user_id'] ?? null;
+        $vendorId = $opts['vendor_id'] ?? null;
+
+        // method-specific extras
         $mmPhoneNumber = trim($opts['mmPhoneNumber'] ?? '');
         $mmDateTime = trim($opts['mmDateTime'] ?? '');
         $btDepositorName = trim($opts['btDepositorName'] ?? '');
         $btDateTime = trim($opts['btDateTime'] ?? '');
 
-        // basic validation
+        // ───────────────────────────────────────────────────────── validate
         if (
+            !$walletId ||
             !$cashAccountId ||
             $amount <= 0 ||
             !in_array($paymentMethod, ['BANK', 'MOBILE_MONEY'], true)
         ) {
-            return ['success' => false, 'message' => 'Invalid parameters for cash top-up'];
+            return ['success' => false, 'message' => 'Invalid parameters'];
         }
 
-        // conditional validation
         if ($paymentMethod === 'MOBILE_MONEY') {
             if (!$mmPhoneNumber || !$mmDateTime) {
-                return ['success' => false, 'message' => 'Phone number and date/time required for mobile money top-up'];
+                return ['success' => false, 'message' => 'Phone & date/time required'];
             }
         } else { // BANK
             if (!$btDepositorName || !$btDateTime) {
-                return ['success' => false, 'message' => 'Depositor name and date/time required for bank top-up'];
+                return ['success' => false, 'message' => 'Depositor & date/time required'];
             }
         }
 
-        // 1) insert the pending transaction
+        // confirm wallet exists & is active
+        $w = self::$pdo->prepare("SELECT owner_type, wallet_number FROM zzimba_wallets WHERE wallet_id = :wid AND status = 'active' LIMIT 1");
+        $w->execute([':wid' => $walletId]);
+        $walletRow = $w->fetch(PDO::FETCH_ASSOC);
+        if (!$walletRow) {
+            return ['success' => false, 'message' => 'Wallet not found or inactive'];
+        }
+
+        // ───────────────────────────────────────────────────────── insert txn
         $txnId = \generateUlid();
         self::insertTransaction([
             'transaction_id' => $txnId,
@@ -1045,55 +1053,41 @@ final class CreditService
             'payment_method' => $paymentMethod,
             'external_reference' => $externalRef,
             'external_metadata' => json_encode($opts),
+            'wallet_id' => $walletId,        // <─ NEW PIVOT FIELD
             'user_id' => $userId,
             'vendor_id' => $vendorId,
             'note' => $note
         ]);
 
-        // 2) determine initiator for SMS
-        $initiator = $_SESSION['user']['username'] ?? 'Unknown';
-        if (isset($_SESSION['active_store'])) {
-            $storeIdStmt = self::$pdo->prepare("
-            SELECT name 
-              FROM vendor_stores 
-             WHERE id = :vid 
-             LIMIT 1
-        ");
-            $storeIdStmt->execute([':vid' => $_SESSION['active_store']]);
-            $storeName = $storeIdStmt->fetchColumn();
-            if ($storeName) {
-                $initiator = $storeName;
-            }
-        }
-
-        // 3) Notify all active admins via SMS
+        // ───────────────────────────────────────────────────────── SMS alert
         try {
-            $adminStmt = self::$pdo->prepare("
-            SELECT phone
-              FROM admin_users
-             WHERE status = 'active'
-        ");
-            $adminStmt->execute();
-            $phones = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+            $walletNameStmt = self::$pdo->prepare("
+                SELECT wallet_name 
+                FROM zzimba_wallets 
+                WHERE wallet_id = :wid
+                LIMIT 1
+            ");
+            $walletNameStmt->execute([':wid' => $walletId]);
+            $initiator = $walletNameStmt->fetchColumn() ?? $walletId;
 
-            if (!empty($phones)) {
+            $adminPhones = self::$pdo
+                ->query("SELECT phone FROM admin_users WHERE status = 'active'")
+                ->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($adminPhones)) {
                 $message = sprintf(
                     "%s initiated a cash top-up of %s UGX. Txn ID: %s. Login to confirm the details to complete top-up.",
                     $initiator,
                     number_format($amount, 2),
                     $txnId
                 );
-                \SMS::sendBulk($phones, $message);
+                \SMS::sendBulk($adminPhones, $message);
             }
         } catch (\Throwable $e) {
-            error_log('[ZzimbaCreditModule] SMS notification error on top-up: ' . $e->getMessage());
+            error_log('[ZzimbaCreditModule] SMS error: ' . $e->getMessage());
         }
 
-        // 4) return success
-        return [
-            'success' => true,
-            'transaction_id' => $txnId
-        ];
+        return ['success' => true, 'transaction_id' => $txnId];
     }
 
     public static function acknowledgeCashTopup(string $transactionId, string $newStatus): array
@@ -1115,8 +1109,9 @@ final class CreditService
             return ['success' => true, 'message' => 'Top-up marked as failed'];
         }
 
+        // Fetch transaction
         $stmt = self::$pdo->prepare("
-        SELECT amount_total, external_metadata, user_id, vendor_id
+        SELECT amount_total, external_metadata, wallet_id, user_id, vendor_id
           FROM zzimba_financial_transactions
          WHERE transaction_id = :tid
     ");
@@ -1129,8 +1124,34 @@ final class CreditService
         $meta = json_decode($txn['external_metadata'], true);
         $cashAccountId = $meta['cash_account_id'] ?? null;
         $amount = (float) $txn['amount_total'];
-        $ownerType = $txn['user_id'] ? 'USER' : 'VENDOR';
-        $ownerId = $ownerType === 'USER' ? $txn['user_id'] : $txn['vendor_id'];
+
+        // Determine receiver wallet
+        $receiverWalletId = $txn['wallet_id'] ?? null;
+        if (!$receiverWalletId) {
+            // fallback to legacy lookup
+            $ownerType = $txn['user_id'] ? 'USER' : 'VENDOR';
+            $ownerId = $txn['user_id'] ?? $txn['vendor_id'] ?? null;
+            $walletRes = self::getWallet($ownerType, $ownerId);
+            if (!$walletRes['success']) {
+                return ['success' => false, 'message' => 'Wallet not found'];
+            }
+            $wallet = $walletRes['wallet'];
+        } else {
+            $stmtWallet = self::$pdo->prepare("
+            SELECT wallet_id, wallet_number, current_balance
+              FROM zzimba_wallets
+             WHERE wallet_id = :wid AND status = 'active'
+        ");
+            $stmtWallet->execute([':wid' => $receiverWalletId]);
+            $wallet = $stmtWallet->fetch(PDO::FETCH_ASSOC);
+            if (!$wallet) {
+                return ['success' => false, 'message' => 'Wallet not found or inactive'];
+            }
+        }
+
+        $receiverWalletId = $wallet['wallet_id'];
+        $receiverWalletNo = $wallet['wallet_number'];
+        $currBal = (float) $wallet['current_balance'];
 
         if (!$cashAccountId) {
             return ['success' => false, 'message' => 'Cash account not specified'];
@@ -1139,6 +1160,7 @@ final class CreditService
         try {
             self::$pdo->beginTransaction();
 
+            // WITHHOLDING WALLET
             $withholdingId = self::getWithholdingAccountId();
             $balStmt = self::$pdo->prepare("
             SELECT current_balance
@@ -1148,6 +1170,7 @@ final class CreditService
             $balStmt->execute([':wid' => $withholdingId]);
             $withBal = (float) $balStmt->fetchColumn();
 
+            // CREDIT withholding
             $creditWithId = self::insertEntry([
                 'transaction_id' => $transactionId,
                 'wallet_id' => $withholdingId,
@@ -1158,15 +1181,7 @@ final class CreditService
             ]);
             self::updateWalletBalance($withholdingId, $withBal + $amount);
 
-            $walletRes = self::getWallet($ownerType, $ownerId);
-            if (!$walletRes['success']) {
-                throw new \Exception('Wallet retrieval failed');
-            }
-            $wallet = $walletRes['wallet'];
-            $receiverWalletId = $wallet['wallet_id'];
-            $receiverWalletNo = $wallet['wallet_number'];
-            $currBal = (float) $wallet['current_balance'];
-
+            // DEBIT withholding → Disburse to receiver
             $debitWithId = self::insertEntry([
                 'transaction_id' => $transactionId,
                 'wallet_id' => $withholdingId,
@@ -1178,6 +1193,7 @@ final class CreditService
             ]);
             self::updateWalletBalance($withholdingId, $withBal);
 
+            // CREDIT receiver wallet
             $newWBal = $currBal + $amount;
             self::insertEntry([
                 'transaction_id' => $transactionId,
@@ -1194,10 +1210,11 @@ final class CreditService
              WHERE wallet_id = :wid
         ")->execute([':bal' => $newWBal, ':wid' => $receiverWalletId]);
 
+            // CASH ACCOUNT CREDIT
             $cStmt = self::$pdo->prepare("
             SELECT current_balance
               FROM zzimba_cash_accounts
-             WHERE id = :cid
+             WHERE id = :cid FOR UPDATE
         ");
             $cStmt->execute([':cid' => $cashAccountId]);
             $cashBal = (float) $cStmt->fetchColumn();

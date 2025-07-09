@@ -20,7 +20,8 @@ switch ($action) {
 
 function handleLogTopup()
 {
-    // common inputs
+    // ───────────────────────────────────────────────────────── common inputs
+    $walletId = trim($_POST['wallet_id'] ?? '');
     $cashAccountId = trim($_POST['cash_account_id'] ?? '');
     $paymentMethod = strtoupper(trim($_POST['payment_method'] ?? ''));
     $amount = (float) ($_POST['amount_total'] ?? 0);
@@ -35,6 +36,7 @@ function handleLogTopup()
 
     // base payload
     $payload = [
+        'wallet_id' => $walletId,
         'cash_account_id' => $cashAccountId,
         'payment_method' => $paymentMethod,
         'amount_total' => $amount,

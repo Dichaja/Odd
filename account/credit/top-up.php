@@ -1,17 +1,43 @@
 <?php
 $cashAccounts = [];
+$walletId = null;
+
 try {
-    $stmt = $pdo->prepare("SELECT id, name, type, provider, account_number FROM zzimba_cash_accounts WHERE status = 'active' ORDER BY type, name");
+    $stmt = $pdo->prepare("
+        SELECT id, name, type, provider, account_number
+        FROM zzimba_cash_accounts
+        WHERE status = 'active'
+        ORDER BY type, name
+    ");
     $stmt->execute();
     $cashAccounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     error_log("Error fetching cash accounts: " . $e->getMessage());
 }
 
-// Group accounts by type
 $groupedAccounts = [];
 foreach ($cashAccounts as $account) {
     $groupedAccounts[$account['type']][] = $account;
+}
+
+try {
+    if (!isset($pdo)) {
+        throw new Exception("PDO connection not set");
+    }
+
+    if (!empty($_SESSION['user']['user_id'])) {
+        $userId = $_SESSION['user']['user_id'];
+        $stmt = $pdo->prepare("
+            SELECT wallet_id
+            FROM zzimba_wallets
+            WHERE user_id = :uid AND owner_type = 'USER' AND status = 'active'
+            LIMIT 1
+        ");
+        $stmt->execute([':uid' => $userId]);
+        $walletId = $stmt->fetchColumn();
+    }
+} catch (Exception $e) {
+    error_log("Error fetching wallet ID: " . $e->getMessage());
 }
 ?>
 
@@ -685,6 +711,7 @@ foreach ($cashAccounts as $account) {
         const topupUrl = <?= json_encode(BASE_URL . 'account/fetch/manageTopup.php') ?>;
         const gatewayApiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageZzimbaCredit.php') ?>;
         const groupedAccounts = <?= json_encode($groupedAccounts) ?>;
+        const walletId = <?= json_encode($walletId) ?>;
 
         let selectedAccount = null;
         let selectedCategory = null;
@@ -940,6 +967,7 @@ foreach ($cashAccounts as $account) {
                 type: 'mobile_money',
                 payload: {
                     action: 'logTopup',
+                    wallet_id: walletId,
                     cash_account_id: selectedAccount.id,
                     payment_method: 'MOBILE_MONEY',
                     amount_total: fd.get('mmAmount'),
@@ -990,6 +1018,7 @@ foreach ($cashAccounts as $account) {
                 type: 'bank_transfer',
                 payload: {
                     action: 'logTopup',
+                    wallet_id: walletId,
                     cash_account_id: selectedAccount.id,
                     payment_method: 'BANK',
                     amount_total: fd.get('btAmount'),
@@ -1131,6 +1160,7 @@ foreach ($cashAccounts as $account) {
             pendingPaymentData = {
                 type: 'gateway',
                 payload: {
+                    wallet_id: walletId,
                     msisdn: validatedMsisdn,
                     amount: amt,
                     description: desc
