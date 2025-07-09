@@ -52,7 +52,7 @@ final class CreditService
         $createFinancial = "
             CREATE TABLE IF NOT EXISTS zzimba_financial_transactions (
                 transaction_id VARCHAR(26) NOT NULL PRIMARY KEY,
-                transaction_type ENUM('TOPUP','PURCHASE','SUBSCRIPTION','SMS_PURCHASE','EMAIL_PURCHASE','PREMIUM_FEATURE','REFUND','WITHDRAWAL','TRANSFER') NOT NULL,
+                transaction_type ENUM('TOPUP','PURCHASE','SUBSCRIPTION','SMS_PURCHASE','EMAIL_PURCHASE','PREMIUM_FEATURE','REFUND','WITHDRAWAL','TRANSFER','CHARGES') NOT NULL,
                 status ENUM('PENDING','SUCCESS','FAILED','REFUNDED','DISPUTED') NOT NULL DEFAULT 'PENDING',
                 amount_total DECIMAL(15,2) NOT NULL,
                 payment_method ENUM('MOBILE_MONEY_GATEWAY','CARD_GATEWAY','MOBILE_MONEY','BANK','WALLET') DEFAULT NULL,
@@ -225,6 +225,69 @@ final class CreditService
         } while ($exists);
 
         return $walletNumber;
+    }
+
+    private static function getFeeSettingsForUser(): ?array
+    {
+        try {
+            $stmt = self::$pdo->prepare("
+                SELECT setting_key, setting_name, setting_value, setting_type, applicable_to, status, id
+                FROM zzimba_credit_settings 
+                WHERE setting_key = 'transfer_fee' 
+                AND category = 'transfer' 
+                AND status = 'active'
+                AND (applicable_to = 'all' OR applicable_to = 'users')
+                ORDER BY 
+                    CASE 
+                        WHEN applicable_to = 'all' THEN 1 
+                        WHEN applicable_to = 'users' THEN 2 
+                        ELSE 3 
+                    END
+                LIMIT 1
+            ");
+
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (\Exception $e) {
+            error_log("Error fetching fee settings: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    private static function calculateTransferFee(float $amount, ?array $feeSettings): float
+    {
+        if (!$feeSettings)
+            return 0;
+
+        $feeValue = floatval($feeSettings['setting_value']);
+
+        if ($feeSettings['setting_type'] === 'flat') {
+            return $feeValue;
+        } elseif ($feeSettings['setting_type'] === 'percentage') {
+            return ($amount * $feeValue) / 100;
+        }
+
+        return 0;
+    }
+
+    private static function getChargeDestinationWallet(string $creditSettingId): ?array
+    {
+        try {
+            $stmt = self::$pdo->prepare("
+                SELECT w.wallet_id, w.wallet_number, w.current_balance
+                FROM zzimba_wallets w
+                JOIN zzimba_wallet_credit_assignments a ON a.wallet_id = w.wallet_id
+                WHERE a.credit_setting_id = :cid
+                AND w.status = 'active'
+                LIMIT 1
+            ");
+
+            $stmt->execute([':cid' => $creditSettingId]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (\Exception $e) {
+            error_log("Error fetching charge destination wallet: " . $e->getMessage());
+            return null;
+        }
     }
 
     public static function validateMsisdn(string $msisdn): array
@@ -938,6 +1001,11 @@ final class CreditService
 
         self::boot();
 
+        // Get fee settings and calculate transfer fee
+        $feeSettings = self::getFeeSettingsForUser();
+        $transferFee = self::calculateTransferFee($amount, $feeSettings);
+        $totalRequired = $amount + $transferFee;
+
         $sourceStmt = self::$pdo->prepare("
             SELECT wallet_id, current_balance
               FROM zzimba_wallets
@@ -972,28 +1040,63 @@ final class CreditService
         if ($fromWalletId === $toWalletId) {
             return ['success' => false, 'message' => 'Cannot transfer to the same wallet'];
         }
-        if ($fromBalance < $amount) {
-            return ['success' => false, 'message' => 'Insufficient funds'];
+        if ($fromBalance < $totalRequired) {
+            return ['success' => false, 'message' => 'Insufficient funds for transfer and fees'];
         }
 
-        $txnId = \generateUlid();
+        // Get charge destination wallet if there are fees
+        $chargeDestinationWallet = null;
+        if ($transferFee > 0 && $feeSettings) {
+            $chargeDestinationWallet = self::getChargeDestinationWallet($feeSettings['id']);
+            if (!$chargeDestinationWallet) {
+                return ['success' => false, 'message' => 'Charge destination wallet not configured'];
+            }
+        }
+
+        // Create main transfer transaction
+        $transferTxnId = \generateUlid();
         self::insertTransaction([
-            'transaction_id' => $txnId,
+            'transaction_id' => $transferTxnId,
             'transaction_type' => 'TRANSFER',
             'status' => 'PENDING',
             'amount_total' => $amount,
             'payment_method' => 'WALLET',
             'user_id' => $userId,
-            'vendor_id' => $toOwnerType === 'VENDOR' ? $destRow['vendor_id'] : null
+            'vendor_id' => $toOwnerType === 'VENDOR' ? $destRow['vendor_id'] : null,
+            'note' => 'Zzimba Credit transfer'
         ]);
 
         self::insertTransfer([
             'id' => \generateUlid(),
             'wallet_from' => $fromWalletId,
             'wallet_to' => $toWalletId,
-            'transaction_id' => $txnId,
+            'transaction_id' => $transferTxnId,
             'created_at' => date('Y-m-d H:i:s')
         ]);
+
+        // Create charges transaction if there are fees
+        $chargesTxnId = null;
+        if ($transferFee > 0 && $chargeDestinationWallet) {
+            $chargesTxnId = \generateUlid();
+            self::insertTransaction([
+                'transaction_id' => $chargesTxnId,
+                'transaction_type' => 'CHARGES',
+                'status' => 'PENDING',
+                'amount_total' => $transferFee,
+                'payment_method' => 'WALLET',
+                'user_id' => $userId,
+                'original_txn_id' => $transferTxnId,
+                'note' => 'Transfer fee charges'
+            ]);
+
+            self::insertTransfer([
+                'id' => \generateUlid(),
+                'wallet_from' => $fromWalletId,
+                'wallet_to' => $chargeDestinationWallet['wallet_id'],
+                'transaction_id' => $chargesTxnId,
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+        }
 
         try {
             self::$pdo->beginTransaction();
@@ -1008,21 +1111,43 @@ final class CreditService
             $wnStmt->execute([':wid' => $toWalletId]);
             $toNo = $wnStmt->fetchColumn();
 
-            $notes = [
+            // Process main transfer
+            $transferNotes = [
                 'debit' => 'Zzimba Credit transfer to ' . $toNo,
                 'credit1' => 'Credit transfer instruction from ' . $fromNo,
                 'debit2' => 'Credit transfer executed for ' . $toNo,
                 'credit2' => 'Zzimba Credit transfer from ' . $fromNo,
             ];
 
-            self::performTransferEntries($txnId, $fromWalletId, $toWalletId, $amount, $notes);
+            self::performTransferEntries($transferTxnId, $fromWalletId, $toWalletId, $amount, $transferNotes);
 
+            // Process charges if applicable
+            if ($transferFee > 0 && $chargeDestinationWallet && $chargesTxnId) {
+                $chargeNotes = [
+                    'debit' => 'Transfer fee charge for transaction to ' . $toNo,
+                    'credit1' => 'Transfer fee collection from ' . $fromNo,
+                    'debit2' => 'Transfer fee disbursement for ' . $fromNo,
+                    'credit2' => 'Transfer fee earned from ' . $fromNo,
+                ];
+
+                self::performTransferEntries($chargesTxnId, $fromWalletId, $chargeDestinationWallet['wallet_id'], $transferFee, $chargeNotes);
+
+                // Update charges transaction status
+                self::$pdo->prepare("
+                    UPDATE zzimba_financial_transactions
+                       SET status     = 'SUCCESS',
+                           updated_at = NOW()
+                     WHERE transaction_id = :tid
+                ")->execute([':tid' => $chargesTxnId]);
+            }
+
+            // Update main transfer transaction status
             self::$pdo->prepare("
                 UPDATE zzimba_financial_transactions
                    SET status     = 'SUCCESS',
                        updated_at = NOW()
                  WHERE transaction_id = :tid
-            ")->execute([':tid' => $txnId]);
+            ")->execute([':tid' => $transferTxnId]);
 
             self::$pdo->commit();
 
@@ -1048,9 +1173,10 @@ final class CreditService
                 $toOwner['owner_type'] === 'VENDOR' ? $toOwner['entity_id'] : null
             );
 
+            $feeMessage = $transferFee > 0 ? " (Fee: {$transferFee} UGX)" : "";
             $recipients = self::buildRecipients(
-                ['message' => "{$senderEntity['type']} {$senderEntity['name']} sent {$amount} UGX to {$recipientEntity['type']} {$recipientEntity['name']}."],
-                ['id' => $senderEntity['id'], 'message' => "You sent {$amount} UGX to {$recipientEntity['type']} {$recipientEntity['name']}."],
+                ['message' => "{$senderEntity['type']} {$senderEntity['name']} sent {$amount} UGX to {$recipientEntity['type']} {$recipientEntity['name']}.{$feeMessage}"],
+                ['id' => $senderEntity['id'], 'message' => "You sent {$amount} UGX to {$recipientEntity['type']} {$recipientEntity['name']}.{$feeMessage}"],
                 $recipientEntity['type'] === 'Store' ? ['id' => $recipientEntity['id'], 'message' => "{$senderEntity['type']} {$senderEntity['name']} sent you {$amount} UGX."] : null
             );
 
@@ -1068,12 +1194,22 @@ final class CreditService
             self::$pdo->rollBack();
             error_log('[ZzimbaCreditModule] transfer error: ' . $e->getMessage());
 
+            // Mark both transactions as failed
             self::$pdo->prepare("
                 UPDATE zzimba_financial_transactions
                    SET status     = 'FAILED',
                        updated_at = NOW()
                  WHERE transaction_id = :tid
-            ")->execute([':tid' => $txnId]);
+            ")->execute([':tid' => $transferTxnId]);
+
+            if ($chargesTxnId) {
+                self::$pdo->prepare("
+                    UPDATE zzimba_financial_transactions
+                       SET status     = 'FAILED',
+                           updated_at = NOW()
+                     WHERE transaction_id = :tid
+                ")->execute([':tid' => $chargesTxnId]);
+            }
 
             return ['success' => false, 'message' => 'Transfer failed'];
         }
@@ -1089,8 +1225,11 @@ final class CreditService
 
         return [
             'success' => true,
-            'transaction_id' => $txnId,
-            'balance' => $newBalance
+            'transaction_id' => $transferTxnId,
+            'charges_transaction_id' => $chargesTxnId,
+            'balance' => $newBalance,
+            'fee_charged' => $transferFee,
+            'total_deducted' => $totalRequired
         ];
     }
 
