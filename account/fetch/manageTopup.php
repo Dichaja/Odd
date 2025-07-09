@@ -34,7 +34,7 @@ function handleLogTopup()
     $btDepositorName = trim($_POST['btDepositorName'] ?? '');
     $btDateTime = trim($_POST['btDateTime'] ?? '');
 
-    // base payload
+    // build payload
     $payload = [
         'wallet_id' => $walletId,
         'cash_account_id' => $cashAccountId,
@@ -46,7 +46,7 @@ function handleLogTopup()
         'vendor_id' => $_SESSION['active_store'] ?? null,
     ];
 
-    // add method-specific fields
+    // method-specific fields
     if ($paymentMethod === 'MOBILE_MONEY') {
         $payload['mmPhoneNumber'] = $mmPhoneNumber;
         $payload['mmDateTime'] = $mmDateTime;
@@ -55,7 +55,14 @@ function handleLogTopup()
         $payload['btDateTime'] = $btDateTime;
     }
 
+    // ◀︎ NEW: log exactly what we're sending
+    error_log('[handleLogTopup] payload: ' . json_encode($payload));
+
     // delegate to service
     $result = CreditService::logCashTopup($payload);
+
+    // ◀︎ OPTIONAL: also log the service response
+    error_log('[handleLogTopup] result: ' . json_encode($result));
+
     echo json_encode($result);
 }

@@ -208,8 +208,8 @@ try {
                             <div class="payment-category-card border-2 border-gray-200 rounded-xl p-6 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02] text-center"
                                 onclick="selectPaymentCategory('mobile_money', '<?= $account['id'] ?>')">
                                 <div class="mb-4">
-                                    <img src="../img/mobile-money.png"
-                                        alt="Mobile Money" class="w-full h-20 object-contain rounded-lg">
+                                    <img src="../img/mobile-money.png" alt="Mobile Money"
+                                        class="w-full h-20 object-contain rounded-lg">
                                 </div>
                                 <h4 class="font-semibold text-gray-900 mb-2">Send Mobile Money</h4>
                                 <p class="text-sm text-gray-500 mb-4">Send money via Airtel Money or MTN MoMo</p>
@@ -238,8 +238,8 @@ try {
                             <div class="payment-category-card border-2 border-gray-200 rounded-xl p-6 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02] text-center"
                                 onclick="selectPaymentCategory('gateway', '<?= $account['id'] ?>')">
                                 <div class="mb-4">
-                                    <img src="../img/gateway.png"
-                                        alt="Card Payment" class="w-full h-20 object-contain rounded-lg">
+                                    <img src="../img/gateway.png" alt="Card Payment"
+                                        class="w-full h-20 object-contain rounded-lg">
                                 </div>
                                 <h4 class="font-semibold text-gray-900 mb-2">Instant Pay</h4>
                                 <p class="text-sm text-gray-500 mb-4">Pay instantly with mobile money or card</p>
@@ -400,7 +400,7 @@ try {
                     class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
                     Cancel
                 </button>
-                <button type="button" onclick="confirmMobileMoneyPayment()"
+                <button type="button" id="mmSubmitBtn" onclick="confirmMobileMoneyPayment()"
                     class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
                     Submit Top-up
                 </button>
@@ -514,7 +514,7 @@ try {
                     class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">
                     Cancel
                 </button>
-                <button type="button" onclick="confirmBankTransferPayment()"
+                <button type="button" id="btSubmitBtn" onclick="confirmBankTransferPayment()"
                     class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
                     Submit Top-up
                 </button>
@@ -559,8 +559,7 @@ try {
                     onclick="selectGatewayMethod('mobile_money')">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                            <img src="../img/mobile-money.png"
-                                alt="Mobile Money" class="w-8 h-8 object-contain">
+                            <img src="../img/mobile-money.png" alt="Mobile Money" class="w-8 h-8 object-contain">
                         </div>
                         <div class="flex-1">
                             <h4 class="font-semibold text-gray-900">Mobile Money</h4>
@@ -577,8 +576,7 @@ try {
                     onclick="selectGatewayMethod('card')">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                            <img src="../img/gateway.png"
-                                alt="Card Payment" class="w-8 h-8 object-contain">
+                            <img src="../img/gateway.png" alt="Card Payment" class="w-8 h-8 object-contain">
                         </div>
                         <div class="flex-1">
                             <h4 class="font-semibold text-gray-900">Card Payment</h4>
@@ -853,6 +851,8 @@ try {
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const topupUrl = <?= json_encode(BASE_URL . 'account/fetch/manageTopup.php') ?>;
+        const gatewayApiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageZzimbaCredit.php') ?>;
         const platformAccounts = <?= json_encode($platformAccounts) ?>;
         const groupedAccounts = <?= json_encode($groupedAccounts) ?>;
 
@@ -1076,8 +1076,8 @@ try {
             pendingPaymentData = {
                 type: 'mobile_money',
                 payload: {
-                    platformAccount: currentPlatformAccount,
-                    platformAccountName: platformAccount.name,
+                    action: 'logTopup',
+                    wallet_id: currentPlatformAccount,
                     cash_account_id: selectedAccount.id,
                     payment_method: 'MOBILE_MONEY',
                     amount_total: fd.get('mmAmount'),
@@ -1130,8 +1130,8 @@ try {
             pendingPaymentData = {
                 type: 'bank_transfer',
                 payload: {
-                    platformAccount: currentPlatformAccount,
-                    platformAccountName: platformAccount.name,
+                    action: 'logTopup',
+                    wallet_id: currentPlatformAccount,
                     cash_account_id: selectedAccount.id,
                     payment_method: 'BANK',
                     amount_total: fd.get('btAmount'),
@@ -1228,8 +1228,7 @@ try {
             pendingPaymentData = {
                 type: 'gateway',
                 payload: {
-                    platformAccount: currentPlatformAccount,
-                    platformAccountName: platformAccount.name,
+                    wallet_id: currentPlatformAccount,
                     msisdn: validatedMsisdn,
                     amount: amt,
                     description: desc
@@ -1278,7 +1277,10 @@ try {
                 return;
             }
 
-            // Simulate redirect to secure payment link
+            // Redirect to secure payment link
+            const paymentUrl = `${BASE_URL}payment/card?amount=${amount}&description=Platform+account+top-up&platform_account=${currentPlatformAccount}`;
+            window.open(paymentUrl, '_blank');
+
             hideCardPaymentModal();
             showTransactionResultModal('success', {
                 title: 'Redirected to Payment',
@@ -1328,6 +1330,11 @@ try {
         window.executePaymentSubmission = function () {
             hideModal('confirmationModal');
 
+            // Disable confirm button to prevent multiple submissions
+            const confirmBtn = document.getElementById('confirmSubmitBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Processing...';
+
             setTimeout(() => {
                 if (pendingPaymentData.type === 'mobile_money') {
                     submitMobileMoneyPayment();
@@ -1339,52 +1346,112 @@ try {
             }, 300);
         };
 
-        // Submit functions (simulated for demo)
+        // Submit functions with real AJAX calls
         window.submitMobileMoneyPayment = async function () {
-            try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
+            const submitBtn = document.getElementById('mmSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
 
-                showTransactionResultModal('success', {
-                    title: 'Top-up Submitted Successfully!',
-                    message: `Your ${pendingPaymentData.payload.platformAccountName} will be updated upon confirmation of funds within the hour.`,
-                    transactionId: 'TXN' + Date.now(),
-                    amount: pendingPaymentData.payload.amount_total,
-                    currency: 'UGX',
-                    platformAccount: pendingPaymentData.payload.platformAccountName
+            try {
+                const resp = await fetch(topupUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(pendingPaymentData.payload)
                 });
-                hideMobileMoneyModal();
+                const data = await resp.json();
+
+                if (data.success) {
+                    const platformAccount = platformAccounts.find(acc => acc.id === currentPlatformAccount);
+                    showTransactionResultModal('success', {
+                        title: 'Top-up Submitted Successfully!',
+                        message: `Your ${platformAccount.name} will be updated upon confirmation of funds within the hour.`,
+                        transactionId: data.transaction_id,
+                        amount: pendingPaymentData.payload.amount_total,
+                        currency: 'UGX',
+                        platformAccount: platformAccount.name
+                    });
+                    hideMobileMoneyModal();
+
+                    // Refresh platform account balances if function exists
+                    if (window.loadPlatformAccountData) window.loadPlatformAccountData();
+                } else {
+                    showTransactionResultModal('failed', {
+                        title: 'Payment Failed',
+                        message: data.message || 'Failed to process your payment.',
+                        reason: data.message,
+                        platformAccount: platformAccounts.find(acc => acc.id === currentPlatformAccount).name
+                    });
+                }
             } catch (e) {
+                console.error('Top-up error:', e);
                 showTransactionResultModal('failed', {
-                    title: 'Payment Failed',
-                    message: 'Failed to process your payment.',
+                    title: 'Network Error',
+                    message: 'Please check your connection and try again.',
                     reason: 'Network connection failed',
-                    platformAccount: pendingPaymentData.payload.platformAccountName
+                    platformAccount: platformAccounts.find(acc => acc.id === currentPlatformAccount).name
                 });
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Top-up';
+
+                // Re-enable confirm button
+                const confirmBtn = document.getElementById('confirmSubmitBtn');
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Confirm';
             }
         };
 
         window.submitBankTransferPayment = async function () {
-            try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
+            const submitBtn = document.getElementById('btSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
 
-                showTransactionResultModal('success', {
-                    title: 'Top-up Submitted Successfully!',
-                    message: `Your ${pendingPaymentData.payload.platformAccountName} will be updated upon confirmation of funds within the hour.`,
-                    transactionId: 'TXN' + Date.now(),
-                    amount: pendingPaymentData.payload.amount_total,
-                    currency: 'UGX',
-                    platformAccount: pendingPaymentData.payload.platformAccountName
+            try {
+                const resp = await fetch(topupUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(pendingPaymentData.payload)
                 });
-                hideBankTransferModal();
+                const data = await resp.json();
+
+                if (data.success) {
+                    const platformAccount = platformAccounts.find(acc => acc.id === currentPlatformAccount);
+                    showTransactionResultModal('success', {
+                        title: 'Top-up Submitted Successfully!',
+                        message: `Your ${platformAccount.name} will be updated upon confirmation of funds within the hour.`,
+                        transactionId: data.transaction_id,
+                        amount: pendingPaymentData.payload.amount_total,
+                        currency: 'UGX',
+                        platformAccount: platformAccount.name
+                    });
+                    hideBankTransferModal();
+
+                    // Refresh platform account balances if function exists
+                    if (window.loadPlatformAccountData) window.loadPlatformAccountData();
+                } else {
+                    showTransactionResultModal('failed', {
+                        title: 'Payment Failed',
+                        message: data.message || 'Failed to process your payment.',
+                        reason: data.message,
+                        platformAccount: platformAccounts.find(acc => acc.id === currentPlatformAccount).name
+                    });
+                }
             } catch (e) {
+                console.error('Top-up error:', e);
                 showTransactionResultModal('failed', {
-                    title: 'Payment Failed',
-                    message: 'Failed to process your payment.',
+                    title: 'Network Error',
+                    message: 'Please check your connection and try again.',
                     reason: 'Network connection failed',
-                    platformAccount: pendingPaymentData.payload.platformAccountName
+                    platformAccount: platformAccounts.find(acc => acc.id === currentPlatformAccount).name
                 });
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Top-up';
+
+                // Re-enable confirm button
+                const confirmBtn = document.getElementById('confirmSubmitBtn');
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Confirm';
             }
         };
 
@@ -1395,24 +1462,24 @@ try {
             showGatewayPaymentStatus('processing', 'Processing Payment', 'Initiating payment request...');
 
             try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                const resp = await fetch(`${gatewayApiUrl}?action=makePayment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(pendingPaymentData.payload)
+                });
+                const data = await resp.json();
 
-                hideGatewayPaymentModal();
-                setTimeout(() => {
-                    showTransactionResultModal('success', {
-                        title: 'Payment Successful!',
-                        message: `Your ${pendingPaymentData.payload.platformAccountName} has been credited successfully.`,
-                        amount: pendingPaymentData.payload.amount,
-                        currency: 'UGX',
-                        provider: selectedAccount.provider,
-                        transactionId: 'GW' + Date.now(),
-                        reference: 'REF' + Date.now(),
-                        platformAccount: pendingPaymentData.payload.platformAccountName
-                    });
-                }, 300);
-            } catch (e) {
-                showGatewayPaymentStatus('error', 'Payment Failed', 'Failed to process payment');
+                if (data.success) {
+                    currentPaymentReference = data.internal_reference;
+                    showGatewayPaymentStatus('pending', 'Payment Request Sent', 'Please check your phone…');
+                    startGatewayStatusChecking();
+                } else {
+                    showGatewayPaymentStatus('error', 'Payment Failed', data.message || 'Failed to initiate payment');
+                    btn.disabled = false;
+                    btn.textContent = 'Add Money';
+                }
+            } catch (_) {
+                showGatewayPaymentStatus('error', 'Network Error', 'Please check your connection and try again.');
                 btn.disabled = false;
                 btn.textContent = 'Add Money';
             }
@@ -1449,9 +1516,11 @@ try {
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between"><span class="text-gray-600">Platform Account:</span><span class="font-semibold">${data.platformAccount}</span></div>
                         <div class="flex justify-between"><span class="text-gray-600">Amount:</span><span class="font-semibold">${data.currency || 'UGX'} ${formatCurrency(data.amount)}</span></div>
+                        ${data.charge ? `<div class="flex justify-between"><span class="text-gray-600">Transaction Fee:</span><span class="font-semibold">${data.currency || 'UGX'} ${formatCurrency(data.charge)}</span></div>` : ''}
                         ${data.provider ? `<div class="flex justify-between"><span class="text-gray-600">Provider:</span><span class="font-semibold">${data.provider.replace('_', ' ')}</span></div>` : ''}
                         <div class="flex justify-between"><span class="text-gray-600">Transaction ID:</span><span class="font-mono text-xs">${data.transactionId || 'N/A'}</span></div>
                         <div class="flex justify-between"><span class="text-gray-600">Reference:</span><span class="font-mono text-xs">${data.reference || 'N/A'}</span></div>
+                        ${data.completedAt && data.completedAt !== 'N/A' ? `<div class="flex justify-between"><span class="text-gray-600">Completed:</span><span class="text-xs">${new Date(data.completedAt).toLocaleString()}</span></div>` : ''}
                     </div>
                 `;
             } else {
@@ -1462,6 +1531,8 @@ try {
                     <div class="space-y-3 text-sm">
                         ${data.platformAccount ? `<div class="flex justify-between"><span class="text-gray-600">Platform Account:</span><span class="font-semibold">${data.platformAccount}</span></div>` : ''}
                         ${data.amount ? `<div class="flex justify-between"><span class="text-gray-600">Amount:</span><span class="font-semibold">${data.currency || 'UGX'} ${formatCurrency(data.amount)}</span></div>` : ''}
+                        ${data.provider ? `<div class="flex justify-between"><span class="text-gray-600">Provider:</span><span class="font-semibold">${data.provider.replace('_', ' ')}</span></div>` : ''}
+                        ${data.reference ? `<div class="flex justify-between"><span class="text-gray-600">Reference:</span><span class="font-mono text-xs">${data.reference}</span></div>` : ''}
                         ${data.reason ? `<div class="mt-4 p-3 bg-red-50 rounded-lg"><p class="text-red-800 text-xs overflow-hidden"><strong>Reason:</strong> ${data.reason}</p></div>` : ''}
                     </div>
                 `;
@@ -1577,7 +1648,7 @@ try {
             div.classList.remove('hidden');
         }
 
-        // Simulate phone validation for demo
+        // Gateway phone validation with real API call
         async function validateGatewayPhoneNumber(phone = null) {
             const inp = document.getElementById('gwPhoneNumber');
             const spinner = document.getElementById('gwPhoneValidationSpinner');
@@ -1594,27 +1665,100 @@ try {
             nameDiv.classList.add('hidden');
 
             try {
-                // Simulate validation
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                const resp = await fetch(`${gatewayApiUrl}?action=validateMsisdn`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ msisdn: formatted })
+                });
+                const data = await resp.json();
 
-                validatedMsisdn = formatted;
-                customerName = 'John Doe'; // Dummy customer name
-                nameDiv.textContent = `✓ ${customerName}`;
-                nameDiv.classList.remove('hidden');
-                checkGatewayFormValidity();
+                if (data.success) {
+                    validatedMsisdn = formatted;
+                    customerName = data.customer_name;
+                    nameDiv.textContent = `✓ ${data.customer_name}`;
+                    nameDiv.classList.remove('hidden');
+                    checkGatewayFormValidity();
+                } else {
+                    showGatewayPhoneError(data.message || 'Phone number validation failed');
+                }
             } catch (_) {
-                showGatewayPhoneError('Phone number validation failed');
+                showGatewayPhoneError('Network error. Please try again.');
             } finally {
                 spinner.classList.add('hidden');
             }
         }
 
+        function startGatewayStatusChecking() {
+            if (!currentPaymentReference) return;
+
+            statusCheckInterval = setInterval(async () => {
+                try {
+                    const resp = await fetch(`${gatewayApiUrl}?action=checkStatus`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ internal_reference: currentPaymentReference })
+                    });
+                    const data = await resp.json();
+
+                    if (data.success) {
+                        if (data.status === 'success') {
+                            clearInterval(statusCheckInterval);
+                            statusCheckInterval = null;
+                            hideGatewayPaymentModal();
+                            setTimeout(() => {
+                                const platformAccount = platformAccounts.find(acc => acc.id === currentPlatformAccount);
+                                showTransactionResultModal('success', {
+                                    title: 'Payment Successful!',
+                                    message: `Your ${platformAccount.name} has been credited successfully.`,
+                                    amount: data.amount,
+                                    currency: data.currency || 'UGX',
+                                    provider: data.provider,
+                                    transactionId: data.provider_transaction_id,
+                                    reference: data.customer_reference,
+                                    charge: data.charge,
+                                    completedAt: data.completed_at,
+                                    platformAccount: platformAccount.name
+                                });
+                            }, 300);
+                            setTimeout(() => {
+                                if (window.loadPlatformAccountData) window.loadPlatformAccountData();
+                            }, 1000);
+                        } else if (data.status === 'failed') {
+                            clearInterval(statusCheckInterval);
+                            statusCheckInterval = null;
+                            hideGatewayPaymentModal();
+                            setTimeout(() => {
+                                const platformAccount = platformAccounts.find(acc => acc.id === currentPlatformAccount);
+                                showTransactionResultModal('failed', {
+                                    title: 'Payment Failed',
+                                    message: data.message || 'Payment could not be completed.',
+                                    amount: data.amount,
+                                    currency: data.currency || 'UGX',
+                                    provider: data.provider,
+                                    reference: data.customer_reference,
+                                    reason: data.message,
+                                    platformAccount: platformAccount.name
+                                });
+                            }, 300);
+                            setTimeout(() => {
+                                const btn = document.getElementById('gwSubmitPaymentBtn');
+                                btn.disabled = false;
+                                btn.textContent = 'Add Money';
+                            }, 1000);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Status check error:', e);
+                }
+            }, 3000);
+        }
+
         function formatCurrency(amount) {
-            return new Intl.NumberFormat('en-UG', {
+            return 'Sh. ' + new Intl.NumberFormat('en-UG', {
                 style: 'decimal',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }).format(amount);
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount) + '/=';
         }
 
         // Event listeners
@@ -1648,6 +1792,13 @@ try {
             }
         });
 
+        document.getElementById('gwPhoneNumber').addEventListener('keypress', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                validateGatewayPhoneNumber();
+            }
+        });
+
         document.getElementById('gwAmount').addEventListener('input', e => {
             const a = parseFloat(e.target.value);
             if (a && a < 500) showGatewayAmountError('Minimum amount is 500 UGX');
@@ -1673,14 +1824,6 @@ try {
             });
         });
     });
-
-    function formatCurrency(amount) {
-        return 'Sh. ' + new Intl.NumberFormat('en-UG', {
-            style: 'decimal',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(amount) + '/=';
-    }
 </script>
 
 <?php

@@ -966,12 +966,14 @@ final class CreditService
     {
         $cols = implode(',', array_keys($row));
         $params = ':' . implode(',:', array_keys($row));
-        $sql = "INSERT INTO zzimba_financial_transactions ($cols,created_at,updated_at) VALUES ($params,NOW(),NOW())";
+        $sql = "INSERT INTO zzimba_financial_transactions ($cols, created_at, updated_at) VALUES ($params, NOW(), NOW())";
+
         try {
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute($row);
         } catch (PDOException $e) {
             error_log('[ZzimbaCreditModule] insert txn error: ' . $e->getMessage());
+            throw new \RuntimeException('Transaction insert failed: ' . $e->getMessage());
         }
     }
 
@@ -997,7 +999,7 @@ final class CreditService
     {
         self::boot();
 
-        // ───────────────────────────────────────────────────────── values
+        // ────────────────────────────────────────────────────── extract values
         $walletId = trim($opts['wallet_id'] ?? '');
         $cashAccountId = trim($opts['cash_account_id'] ?? '');
         $amount = (float) ($opts['amount_total'] ?? 0);
@@ -1005,7 +1007,7 @@ final class CreditService
         $externalRef = trim($opts['external_reference'] ?? '');
         $note = trim($opts['note'] ?? '');
 
-        // legacy (optional) fields
+        // legacy (optional) IDs
         $userId = $opts['user_id'] ?? null;
         $vendorId = $opts['vendor_id'] ?? null;
 
@@ -1015,7 +1017,7 @@ final class CreditService
         $btDepositorName = trim($opts['btDepositorName'] ?? '');
         $btDateTime = trim($opts['btDateTime'] ?? '');
 
-        // ───────────────────────────────────────────────────────── validate
+        // ────────────────────────────────────────────────────── validation
         if (
             !$walletId ||
             !$cashAccountId ||
@@ -1024,28 +1026,31 @@ final class CreditService
         ) {
             return ['success' => false, 'message' => 'Invalid parameters'];
         }
-
-        if ($paymentMethod === 'MOBILE_MONEY') {
-            if (!$mmPhoneNumber || !$mmDateTime) {
-                return ['success' => false, 'message' => 'Phone & date/time required'];
-            }
-        } else { // BANK
-            if (!$btDepositorName || !$btDateTime) {
-                return ['success' => false, 'message' => 'Depositor & date/time required'];
-            }
+        if ($paymentMethod === 'MOBILE_MONEY' && (!$mmPhoneNumber || !$mmDateTime)) {
+            return ['success' => false, 'message' => 'Phone & date/time required'];
+        }
+        if ($paymentMethod === 'BANK' && (!$btDepositorName || !$btDateTime)) {
+            return ['success' => false, 'message' => 'Depositor & date/time required'];
         }
 
-        // confirm wallet exists & is active
-        $w = self::$pdo->prepare("SELECT owner_type, wallet_number FROM zzimba_wallets WHERE wallet_id = :wid AND status = 'active' LIMIT 1");
+        // ────────────────────────────────────────────────────── fetch wallet & owner_type
+        $w = self::$pdo->prepare("
+        SELECT owner_type, wallet_number
+          FROM zzimba_wallets
+         WHERE wallet_id = :wid
+           AND status    = 'active'
+         LIMIT 1
+        ");
         $w->execute([':wid' => $walletId]);
         $walletRow = $w->fetch(PDO::FETCH_ASSOC);
         if (!$walletRow) {
             return ['success' => false, 'message' => 'Wallet not found or inactive'];
         }
+        $ownerType = $walletRow['owner_type'];  // 'USER' | 'VENDOR' | 'PLATFORM'
 
-        // ───────────────────────────────────────────────────────── insert txn
+        // ────────────────────────────────────────────────────── prepare insert payload
         $txnId = \generateUlid();
-        self::insertTransaction([
+        $insertPayload = [
             'transaction_id' => $txnId,
             'transaction_type' => 'TOPUP',
             'status' => 'PENDING',
@@ -1053,22 +1058,36 @@ final class CreditService
             'payment_method' => $paymentMethod,
             'external_reference' => $externalRef,
             'external_metadata' => json_encode($opts),
-            'wallet_id' => $walletId,        // <─ NEW PIVOT FIELD
-            'user_id' => $userId,
-            'vendor_id' => $vendorId,
-            'note' => $note
-        ]);
+            'wallet_id' => $walletId,
+            'note' => $note,
+        ];
 
-        // ───────────────────────────────────────────────────────── SMS alert
+        // ◀︎ ONLY add the matching FK: user_id for USER-wallets, vendor_id for VENDOR-wallets
+        if ($ownerType === 'USER' && !empty($userId)) {
+            $insertPayload['user_id'] = $userId;
+        } elseif ($ownerType === 'VENDOR' && !empty($vendorId)) {
+            $insertPayload['vendor_id'] = $vendorId;
+        }
+        // for PLATFORM wallets we add neither user_id nor vendor_id
+
+        // ────────────────────────────────────────────────────── do the insert
+        try {
+            self::insertTransaction($insertPayload);
+        } catch (\Throwable $e) {
+            error_log('[ZzimbaCreditModule] Txn insert error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not save transaction'];
+        }
+
+        // ────────────────────────────────────────────────────── SMS alert
         try {
             $walletNameStmt = self::$pdo->prepare("
-                SELECT wallet_name 
-                FROM zzimba_wallets 
-                WHERE wallet_id = :wid
-                LIMIT 1
-            ");
+            SELECT wallet_name
+              FROM zzimba_wallets
+             WHERE wallet_id = :wid
+             LIMIT 1
+        ");
             $walletNameStmt->execute([':wid' => $walletId]);
-            $initiator = $walletNameStmt->fetchColumn() ?? $walletId;
+            $initiator = $walletNameStmt->fetchColumn() ?: $walletId;
 
             $adminPhones = self::$pdo
                 ->query("SELECT phone FROM admin_users WHERE status = 'active'")
@@ -1076,7 +1095,7 @@ final class CreditService
 
             if (!empty($adminPhones)) {
                 $message = sprintf(
-                    "%s initiated a cash top-up of %s UGX. Txn ID: %s. Login to confirm the details to complete top-up.",
+                    "%s initiated a cash top-up of %s UGX. Txn ID: %s. Login to confirm.",
                     $initiator,
                     number_format($amount, 2),
                     $txnId
