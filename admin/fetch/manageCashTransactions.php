@@ -38,6 +38,7 @@ function handleListPending()
             note,
             user_id,
             vendor_id,
+            wallet_id,
             created_at
         FROM zzimba_financial_transactions
         WHERE transaction_type = 'TOPUP'
@@ -54,6 +55,7 @@ function handleListPending()
         $meta = json_decode($row['external_metadata'], true) ?: [];
         $cashAccountId = $meta['cash_account_id'] ?? null;
 
+        // Get cash account name
         $accountName = null;
         if ($cashAccountId) {
             $aStmt = $pdo->prepare("SELECT name FROM zzimba_cash_accounts WHERE id = :id LIMIT 1");
@@ -61,9 +63,15 @@ function handleListPending()
             $accountName = $aStmt->fetchColumn();
         }
 
+        // Determine account type and get account information
+        $accountType = 'user'; // default
         $userInfo = null;
         $vendorInfo = null;
+        $platformAccountInfo = null;
+
         if (!empty($row['user_id'])) {
+            // User account
+            $accountType = 'user';
             $uStmt = $pdo->prepare("
                 SELECT first_name, last_name, email, phone
                   FROM zzimba_users
@@ -80,6 +88,8 @@ function handleListPending()
                 ];
             }
         } elseif (!empty($row['vendor_id'])) {
+            // Vendor account
+            $accountType = 'user'; // vendors are still considered user accounts
             $vStmt = $pdo->prepare("
                 SELECT name AS vendor_name, business_email, business_phone, contact_person_name
                   FROM vendor_stores
@@ -90,10 +100,36 @@ function handleListPending()
             if ($v = $vStmt->fetch(PDO::FETCH_ASSOC)) {
                 $vendorInfo = [
                     'vendor_name' => $v['vendor_name'],
-                    'business_email' => $v['business_email'],
+                    'email' => $v['business_email'],
                     'business_phone' => $v['business_phone'],
                     'contact_person_name' => $v['contact_person_name'],
                 ];
+            }
+        } elseif (!empty($row['wallet_id'])) {
+            // Check if this is a platform account
+            $pStmt = $pdo->prepare("
+                SELECT 
+                    w.wallet_id,
+                    w.wallet_name,
+                    w.wallet_number,
+                    w.owner_type,
+                    pas.type as platform_type
+                FROM zzimba_wallets w
+                LEFT JOIN zzimba_platform_account_settings pas ON w.wallet_id = pas.platform_account_id
+                WHERE w.wallet_id = :wallet_id
+                LIMIT 1
+            ");
+            $pStmt->execute([':wallet_id' => $row['wallet_id']]);
+            if ($p = $pStmt->fetch(PDO::FETCH_ASSOC)) {
+                if ($p['owner_type'] === 'PLATFORM') {
+                    $accountType = 'platform';
+                    $platformAccountInfo = [
+                        'wallet_id' => $p['wallet_id'],
+                        'wallet_name' => $p['wallet_name'],
+                        'wallet_number' => $p['wallet_number'],
+                        'type' => $p['platform_type'] ?: 'platform'
+                    ];
+                }
             }
         }
 
@@ -106,10 +142,13 @@ function handleListPending()
             'note' => $row['note'],
             'cash_account_id' => $cashAccountId,
             'cash_account_name' => $accountName,
+            'account_type' => $accountType,
             'user_id' => $row['user_id'],
             'vendor_id' => $row['vendor_id'],
+            'wallet_id' => $row['wallet_id'],
             'user' => $userInfo,
             'vendor' => $vendorInfo,
+            'platform_account' => $platformAccountInfo,
             'created_at' => $row['created_at'],
         ];
     }
@@ -150,7 +189,7 @@ function verifyAdminPassword(PDO $pdo)
                 'token' => $token,
                 'user_id' => $userId,
                 'created_at' => time(),
-                'expires_at' => time() + 300
+                'expires_at' => time() + 300 // 5 minutes
             ];
 
             echo json_encode([
@@ -226,6 +265,7 @@ function handleAcknowledge()
     }
 
     try {
+        // Clear the security token after use
         unset($_SESSION['admin_security_token']);
 
         $result = CreditService::acknowledgeCashTopup($transactionId, $status);
@@ -236,3 +276,4 @@ function handleAcknowledge()
         echo json_encode(['success' => false, 'message' => 'Transaction processing failed. Please try again.']);
     }
 }
+?>

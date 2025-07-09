@@ -6,7 +6,7 @@ ob_start();
 
 function formatCurrency($amount)
 {
-    return number_format($amount, 2);
+    return 'Sh. ' . number_format($amount, 0) . '/=';
 }
 
 function formatDateTime($dateTime)
@@ -16,48 +16,58 @@ function formatDateTime($dateTime)
 }
 ?>
 
-<div class="min-h-screen bg-gray-50" id="app-container">
+<div class="min-h-screen bg-gray-50">
     <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
         <div class="max-w-7xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-check-circle text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl lg:text-3xl font-bold text-secondary font-rubik">Transaction Approvals</h1>
+                    <p class="text-sm text-gray-text">Review and approve pending cash transactions</p>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl p-4 border border-yellow-200">
+                <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-2xl p-6 border border-yellow-200">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-medium text-yellow-600 uppercase tracking-wide">Pending Transactions
                             </p>
-                            <p class="text-lg font-bold text-yellow-900 whitespace-nowrap" id="pending-count">0</p>
+                            <p class="text-2xl font-bold text-yellow-900 whitespace-nowrap" id="pending-count">0</p>
                             <p class="text-sm font-medium text-yellow-700 whitespace-nowrap" id="pending-total">UGX 0.00
                             </p>
                         </div>
-                        <div class="w-10 h-10 bg-yellow-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-clock text-yellow-600"></i>
+                        <div class="w-12 h-12 bg-yellow-200 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-6 border border-green-200">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Bank Transfers</p>
-                            <p class="text-lg font-bold text-green-900 whitespace-nowrap" id="bank-count">0</p>
+                            <p class="text-2xl font-bold text-green-900 whitespace-nowrap" id="bank-count">0</p>
                             <p class="text-sm font-medium text-green-700 whitespace-nowrap" id="bank-total">UGX 0.00</p>
                         </div>
-                        <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-university text-green-600"></i>
+                        <div class="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-university text-green-600 text-xl"></i>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-6 border border-purple-200">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Mobile Money</p>
-                            <p class="text-lg font-bold text-purple-900 whitespace-nowrap" id="mobile-count">0</p>
+                            <p class="text-2xl font-bold text-purple-900 whitespace-nowrap" id="mobile-count">0</p>
                             <p class="text-sm font-medium text-purple-700 whitespace-nowrap" id="mobile-total">UGX 0.00
                             </p>
                         </div>
-                        <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-mobile-alt text-purple-600"></i>
+                        <div class="w-12 h-12 bg-purple-200 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-mobile-alt text-purple-600 text-xl"></i>
                         </div>
                     </div>
                 </div>
@@ -66,6 +76,7 @@ function formatDateTime($dateTime)
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Filters and Search -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
             <div class="p-6 border-b border-gray-100">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -80,97 +91,52 @@ function formatDateTime($dateTime)
                         </div>
                     </div>
 
-                    <div class="hidden lg:block lg:flex-1"></div>
-
                     <div class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <div class="relative">
-                            <button id="viewColumnsBtn" onclick="toggleColumnSelector()"
-                                class="hidden lg:flex px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-sm flex items-center gap-2 hover:bg-gray-50">
-                                <i class="fas fa-eye text-xs"></i>
-                                <span>View</span>
-                                <i class="fas fa-chevron-down text-xs"></i>
-                            </button>
-
-                            <div id="columnSelector"
-                                class="hidden absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-48">
-                                <div class="p-3 border-b border-gray-100">
-                                    <h4 class="text-sm font-semibold text-gray-900">Show Columns</h4>
-                                    <p class="text-xs text-gray-500 mt-1">Select at least 3 columns</p>
-                                </div>
-                                <div class="p-2 space-y-1" id="columnCheckboxes">
-                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <input type="checkbox"
-                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
-                                            data-column="datetime" checked>
-                                        <span class="text-sm text-gray-700">Date/Time</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <input type="checkbox"
-                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
-                                            data-column="amount" checked>
-                                        <span class="text-sm text-gray-700">Amount</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <input type="checkbox"
-                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
-                                            data-column="method" checked>
-                                        <span class="text-sm text-gray-700">Payment Method</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <input type="checkbox"
-                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
-                                            data-column="account" checked>
-                                        <span class="text-sm text-gray-700">Cash Account</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <input type="checkbox"
-                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
-                                            data-column="user" checked>
-                                        <span class="text-sm text-gray-700">User/Vendor</span>
-                                    </label>
-                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <input type="checkbox"
-                                            class="column-checkbox rounded border-gray-300 text-primary focus:ring-primary"
-                                            data-column="actions" checked>
-                                        <span class="text-sm text-gray-700">Actions</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
                         <select id="filterTransactions"
                             class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium w-full sm:w-auto">
                             <option value="all">All Methods</option>
                             <option value="BANK">Bank Transfers</option>
                             <option value="MOBILE_MONEY">Mobile Money</option>
                         </select>
+
+                        <select id="filterAccountType"
+                            class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white text-sm font-medium w-full sm:w-auto">
+                            <option value="all">All Account Types</option>
+                            <option value="user">User Accounts</option>
+                            <option value="platform">Platform Accounts</option>
+                        </select>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Transactions Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <!-- Desktop Table -->
             <div class="hidden lg:block overflow-x-auto">
                 <table class="w-full" id="transactions-table">
-                    <thead class="bg-user-accent border-b border-gray-200">
+                    <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
-                            <th data-column="datetime"
-                                class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                            <th
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                                 Date/Time</th>
-                            <th data-column="amount"
-                                class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                            <th
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                                 Amount</th>
-                            <th data-column="method"
-                                class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                            <th
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
                                 Payment Method</th>
-                            <th data-column="account"
-                                class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                Cash Account</th>
-                            <th data-column="user"
-                                class="px-3 py-2 text-left text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
-                                User/Vendor</th>
-                            <th data-column="actions"
-                                class="px-3 py-2 text-center text-xs font-semibold text-secondary uppercase tracking-wider whitespace-nowrap">
+                            <th
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                                Cash</th>
+                            <th
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                                Account Type</th>
+                            <th
+                                class="px-6 py-4 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">
+                                Account Details</th>
+                            <th
+                                class="px-6 py-4 text-center text-xs font-semibold text-gray-900 uppercase tracking-wider">
                                 Actions</th>
                         </tr>
                     </thead>
@@ -179,12 +145,14 @@ function formatDateTime($dateTime)
                 </table>
             </div>
 
+            <!-- Mobile Cards -->
             <div class="lg:hidden p-4 space-y-4" id="transactions-mobile">
             </div>
 
+            <!-- Empty State -->
             <div id="empty-state" class="hidden text-center py-16">
                 <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-exclamation-circle text-gray-400 text-2xl"></i>
+                    <i class="fas fa-check-circle text-gray-400 text-2xl"></i>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">No pending transactions</h3>
                 <p class="text-gray-500">All transactions have been processed</p>
@@ -193,10 +161,13 @@ function formatDateTime($dateTime)
     </div>
 </div>
 
-<div id="transactionDetailsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+<!-- Transaction Details Modal -->
+<div id="transactionDetailsModal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
     <div
-        class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden max-h-[95vh] flex flex-col">
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative z-10 overflow-hidden max-h-[95vh] flex flex-col transform transition-all duration-300 scale-95">
+        <!-- Header -->
         <div class="p-6 border-b border-gray-100 flex-shrink-0">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
@@ -215,11 +186,13 @@ function formatDateTime($dateTime)
             </div>
         </div>
 
+        <!-- Content -->
         <div class="flex-1 overflow-y-auto p-6">
             <div id="transactionDetailsContent" class="space-y-6">
             </div>
         </div>
 
+        <!-- Footer -->
         <div class="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
             <div class="flex gap-3">
                 <button onclick="hideTransactionDetailsModal()"
@@ -232,16 +205,19 @@ function formatDateTime($dateTime)
                 </button>
                 <button id="approveTransactionBtn"
                     class="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium">
-                    Affirm Transaction
+                    Approve Transaction
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<div id="adminPasswordModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+<!-- Admin Password Modal -->
+<div id="adminPasswordModal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden transform transition-all duration-300 scale-95">
         <div class="p-6">
             <div class="flex items-center gap-4 mb-6">
                 <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
@@ -281,14 +257,11 @@ function formatDateTime($dateTime)
                             <i class="fas fa-eye" id="adminPasswordToggleIcon"></i>
                         </button>
                     </div>
-                    <div id="adminPasswordError" class="hidden mt-1 text-sm text-red-600">
-                    </div>
-                    <div id="adminAttemptsWarning" class="hidden mt-1 text-sm text-orange-600">
-                    </div>
+                    <div id="adminPasswordError" class="hidden mt-1 text-sm text-red-600"></div>
+                    <div id="adminAttemptsWarning" class="hidden mt-1 text-sm text-orange-600"></div>
                 </div>
 
-                <div id="adminActionSummary" class="bg-gray-50 rounded-xl p-4 mb-6">
-                </div>
+                <div id="adminActionSummary" class="bg-gray-50 rounded-xl p-4 mb-6"></div>
 
                 <div class="flex gap-3">
                     <button type="button" onclick="hideAdminPasswordModal()"
@@ -305,9 +278,12 @@ function formatDateTime($dateTime)
     </div>
 </div>
 
-<div id="adminBlockedModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+<!-- Admin Blocked Modal -->
+<div id="adminBlockedModal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden transform transition-all duration-300 scale-95">
         <div class="p-6">
             <div class="text-center mb-6">
                 <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -340,9 +316,12 @@ function formatDateTime($dateTime)
     </div>
 </div>
 
-<div id="confirmationModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+<!-- Confirmation Modal -->
+<div id="confirmationModal"
+    class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"></div>
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden transform transition-all duration-300 scale-95">
         <div class="p-6">
             <div class="flex items-center gap-4 mb-4">
                 <div id="confirmationIcon" class="w-12 h-12 rounded-xl flex items-center justify-center">
@@ -373,8 +352,6 @@ function formatDateTime($dateTime)
     let currentTransaction = null;
     let pendingAction = null;
     let adminSecurityToken = null;
-    let visibleColumns = ['datetime', 'amount', 'method', 'account', 'user', 'actions'];
-    const COLUMNS_STORAGE_KEY = 'approve_transactions_columns';
     const ADMIN_ATTEMPTS_KEY = 'admin_approval_attempts';
     const MAX_ADMIN_ATTEMPTS = 3;
 
@@ -401,12 +378,33 @@ function formatDateTime($dateTime)
         return attempts.count >= MAX_ADMIN_ATTEMPTS;
     }
 
+    // Modal Animation Functions
+    function showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('.transform').classList.remove('scale-95');
+            modal.querySelector('.transform').classList.add('scale-100');
+        }, 10);
+    }
+
+    function hideModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.add('opacity-0');
+        modal.querySelector('.transform').classList.remove('scale-100');
+        modal.querySelector('.transform').classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
     function showAdminBlockedModal() {
-        document.getElementById('adminBlockedModal').classList.remove('hidden');
+        showModal('adminBlockedModal');
     }
 
     function hideAdminBlockedModal() {
-        document.getElementById('adminBlockedModal').classList.add('hidden');
+        hideModal('adminBlockedModal');
     }
 
     function showAdminPasswordModal(action, transaction) {
@@ -415,7 +413,6 @@ function formatDateTime($dateTime)
             return;
         }
 
-        // Use the passed transaction parameter instead of relying on currentTransaction
         const targetTransaction = transaction || currentTransaction;
         if (!targetTransaction) {
             console.error('No transaction available for admin password modal');
@@ -429,27 +426,34 @@ function formatDateTime($dateTime)
         const amountFormatted = formatCurrency(targetTransaction.amount_total);
 
         document.getElementById('adminActionSummary').innerHTML = `
-        <div class="space-y-3">
-            <div class="text-center pb-3 border-b border-gray-200">
-                <p class="text-lg font-bold text-gray-900">UGX ${amountFormatted}</p>
-                <p class="text-sm ${actionColor} font-medium">${actionText} Transaction</p>
-            </div>
-            
-            <div class="flex justify-between items-start">
-                <span class="text-sm font-medium text-gray-600">Transaction ID:</span>
-                <div class="text-right">
-                    <p class="text-sm font-mono text-gray-900">${targetTransaction.transaction_id.substring(0, 12)}...</p>
+            <div class="space-y-3">
+                <div class="text-center pb-3 border-b border-gray-200">
+                    <p class="text-lg font-bold text-gray-900">${amountFormatted}</p>
+                    <p class="text-sm ${actionColor} font-medium">${actionText} Transaction</p>
                 </div>
-            </div>
+                
+                <div class="flex justify-between items-start">
+                    <span class="text-sm font-medium text-gray-600">Transaction ID:</span>
+                    <div class="text-right">
+                        <p class="text-sm font-mono text-gray-900">${targetTransaction.transaction_id.substring(0, 12)}...</p>
+                    </div>
+                </div>
 
-            <div class="flex justify-between items-start">
-                <span class="text-sm font-medium text-gray-600">Payment Method:</span>
-                <div class="text-right">
-                    <p class="text-sm font-semibold text-gray-900">${targetTransaction.payment_method === 'BANK' ? 'Bank Transfer' : 'Mobile Money'}</p>
+                <div class="flex justify-between items-start">
+                    <span class="text-sm font-medium text-gray-600">Payment Method:</span>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-900">${targetTransaction.payment_method === 'BANK' ? 'Bank Transfer' : 'Mobile Money'}</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-start">
+                    <span class="text-sm font-medium text-gray-600">Account Type:</span>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-900">${targetTransaction.account_type === 'platform' ? 'Platform' : 'User'}</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
         const attempts = getAdminPasswordAttempts();
         if (attempts.count > 0) {
@@ -459,18 +463,17 @@ function formatDateTime($dateTime)
             attemptsWarning.classList.remove('hidden');
         }
 
-        document.getElementById('adminPasswordModal').classList.remove('hidden');
+        showModal('adminPasswordModal');
         setTimeout(() => {
             document.getElementById('adminPassword').focus();
         }, 100);
     }
 
     function hideAdminPasswordModal() {
-        document.getElementById('adminPasswordModal').classList.add('hidden');
+        hideModal('adminPasswordModal');
         document.getElementById('adminPassword').value = '';
         document.getElementById('adminPasswordError').classList.add('hidden');
         document.getElementById('adminAttemptsWarning').classList.add('hidden');
-        // Don't reset currentTransaction here - keep it for the action buttons
         pendingAction = null;
     }
 
@@ -525,7 +528,6 @@ function formatDateTime($dateTime)
             if (data.success) {
                 adminSecurityToken = data.token;
                 resetAdminPasswordAttempts();
-                // Store the pending action in a more reliable way
                 const actionToConfirm = pendingAction;
                 hideAdminPasswordModal();
                 showConfirmation(actionToConfirm);
@@ -577,11 +579,11 @@ function formatDateTime($dateTime)
     }
 
     function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-UG', {
+        return 'Sh. ' + new Intl.NumberFormat('en-UG', {
             style: 'decimal',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount);
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount) + '/=';
     }
 
     function formatDateTime(dateTimeString) {
@@ -604,6 +606,14 @@ function formatDateTime($dateTime)
         return badges[method] || `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">${method}</span>`;
     }
 
+    function getAccountTypeBadge(accountType) {
+        const badges = {
+            'platform': '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"><i class="fas fa-cogs mr-2"></i>Platform</span>',
+            'user': '<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"><i class="fas fa-user mr-2"></i>User</span>'
+        };
+        return badges[accountType] || `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">${accountType}</span>`;
+    }
+
     async function fetchPendingTransactions() {
         try {
             const formData = new FormData();
@@ -620,7 +630,6 @@ function formatDateTime($dateTime)
                 pendingTransactions = data.pending || [];
                 renderTransactionsTable(pendingTransactions);
                 updateQuickStats();
-                adjustTableFontSize();
             }
         } catch (error) {
             console.error('Error fetching pending transactions:', error);
@@ -636,13 +645,13 @@ function formatDateTime($dateTime)
         const totalAmount = bankTotal + mobileTotal;
 
         document.getElementById('pending-count').textContent = pendingTransactions.length;
-        document.getElementById('pending-total').textContent = `UGX ${formatCurrency(totalAmount)}`;
+        document.getElementById('pending-total').textContent = formatCurrency(totalAmount);
 
         document.getElementById('bank-count').textContent = bankTransactions.length;
-        document.getElementById('bank-total').textContent = `UGX ${formatCurrency(bankTotal)}`;
+        document.getElementById('bank-total').textContent = formatCurrency(bankTotal);
 
         document.getElementById('mobile-count').textContent = mobileTransactions.length;
-        document.getElementById('mobile-total').textContent = `UGX ${formatCurrency(mobileTotal)}`;
+        document.getElementById('mobile-total').textContent = formatCurrency(mobileTotal);
     }
 
     function renderTransactionsTable(list) {
@@ -662,83 +671,103 @@ function formatDateTime($dateTime)
 
         list.forEach((transaction, index) => {
             const tr = document.createElement('tr');
-            tr.className = `${index % 2 === 0 ? 'bg-user-content' : 'bg-white'} hover:bg-user-secondary/20 transition-colors`;
+            tr.className = `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors`;
 
-            const userVendorName = transaction.user
-                ? `${transaction.user.first_name} ${transaction.user.last_name}`
-                : transaction.vendor
-                    ? transaction.vendor.vendor_name
-                    : 'N/A';
-
+            const accountDetails = getAccountDetails(transaction);
             const transactionDateTime = transaction.external_metadata?.btDateTime || transaction.external_metadata?.mmDateTime || transaction.created_at;
 
             tr.innerHTML = `
-                    <td data-column="datetime" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                        <div class="text-xs font-medium text-gray-900 leading-tight">${formatDateTime(transactionDateTime)}</div>
-                        <div class="text-xs text-gray-500 mt-0.5">Submitted: ${formatDateTime(transaction.created_at)}</div>
-                    </td>
-                    <td data-column="amount" class="px-3 py-2 text-left text-xs font-semibold text-gray-900 whitespace-nowrap ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                        UGX ${formatCurrency(transaction.amount_total)}
-                    </td>
-                    <td data-column="method" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                        ${getPaymentMethodBadge(transaction.payment_method)}
-                    </td>
-                    <td data-column="account" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                        <div class="font-medium text-gray-900">${transaction.cash_account_name}</div>
-                    </td>
-                    <td data-column="user" class="px-3 py-2 text-xs ${index % 2 === 0 ? 'bg-user-accent/30' : 'bg-user-secondary/10'}">
-                        <div class="font-medium text-gray-900">${userVendorName}</div>
-                        <div class="text-gray-500">${transaction.user?.email || transaction.vendor?.email || ''}</div>
-                    </td>
-                    <td data-column="actions" class="px-3 py-2 ${index % 2 === 0 ? 'bg-user-secondary/5' : 'bg-user-accent/20'}">
-                        <div class="flex items-center justify-center">
-                            <button onclick="showTransactionDetails('${transaction.transaction_id}')" 
-                                class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" 
-                                title="View Details">
-                                <i class="fas fa-info-circle text-xs"></i>
-                            </button>
-                        </div>
-                    </td>`;
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">${formatDateTime(transactionDateTime)}</div>
+                    <div class="text-xs text-gray-500">Submitted: ${formatDateTime(transaction.created_at)}</div>
+                </td>
+                <td class="px-6 py-4 text-sm font-semibold text-gray-900">
+                    ${formatCurrency(transaction.amount_total)}
+                </td>
+                <td class="px-6 py-4">
+                    ${getPaymentMethodBadge(transaction.payment_method)}
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">${transaction.cash_account_name}</div>
+                </td>
+                <td class="px-6 py-4">
+                    ${getAccountTypeBadge(transaction.account_type)}
+                </td>
+                <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">${accountDetails.name}</div>
+                    <div class="text-xs text-gray-500">${accountDetails.subtitle}</div>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <button onclick="showTransactionDetails('${transaction.transaction_id}')" 
+                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-lg text-white bg-primary hover:bg-primary/90 transition-colors">
+                        <i class="fas fa-eye mr-2"></i>Details
+                    </button>
+                </td>`;
             tbody.appendChild(tr);
 
+            // Mobile card
             const card = document.createElement('div');
-            card.className = 'bg-gray-50 rounded-xl p-4 border border-gray-100';
+            card.className = 'bg-white rounded-xl p-4 border border-gray-200 shadow-sm';
             card.innerHTML = `
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="flex items-center gap-3 min-w-0 flex-1">
-                            <div class="w-8 h-8 rounded-lg flex items-center justify-center ${transaction.payment_method === 'BANK' ? 'bg-green-100' : 'bg-purple-100'}">
-                                <i class="${transaction.payment_method === 'BANK' ? 'fas fa-university text-green-600' : 'fas fa-mobile-alt text-purple-600'}"></i>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <div class="font-medium text-gray-900 text-sm">UGX ${formatCurrency(transaction.amount_total)}</div>
-                                <div class="text-xs text-gray-500">${formatDateTime(transactionDateTime)}</div>
-                            </div>
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center ${transaction.payment_method === 'BANK' ? 'bg-green-100' : 'bg-purple-100'}">
+                            <i class="${transaction.payment_method === 'BANK' ? 'fas fa-university text-green-600' : 'fas fa-mobile-alt text-purple-600'}"></i>
                         </div>
-                        ${getPaymentMethodBadge(transaction.payment_method)}
-                    </div>
-                    
-                    <div class="grid grid-cols-1 gap-2 text-xs mb-4">
-                        <div>
-                            <span class="text-gray-500 uppercase tracking-wide">Account</span>
-                            <div class="font-medium text-gray-900 mt-1">${transaction.cash_account_name}</div>
-                        </div>
-                        <div>
-                            <span class="text-gray-500 uppercase tracking-wide">User/Vendor</span>
-                            <div class="font-medium text-gray-900 mt-1">${userVendorName}</div>
-                            <div class="text-gray-500">${transaction.user?.email || transaction.vendor?.email || ''}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-semibold text-gray-900">${formatCurrency(transaction.amount_total)}</div>
+                            <div class="text-xs text-gray-500">${formatDateTime(transactionDateTime)}</div>
                         </div>
                     </div>
-                    
-                    <div class="flex justify-center">
-                        <button onclick="showTransactionDetails('${transaction.transaction_id}')" 
-                            class="px-4 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
-                            <i class="fas fa-info-circle mr-1"></i>View Details
-                        </button>
-                    </div>`;
+                    ${getPaymentMethodBadge(transaction.payment_method)}
+                </div>
+                
+                <div class="grid grid-cols-1 gap-3 text-sm mb-4">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Account:</span>
+                        <span class="font-medium text-gray-900">${transaction.cash_account_name}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Type:</span>
+                        ${getAccountTypeBadge(transaction.account_type)}
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Details:</span>
+                        <div class="text-right">
+                            <div class="font-medium text-gray-900">${accountDetails.name}</div>
+                            <div class="text-xs text-gray-500">${accountDetails.subtitle}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center">
+                    <button onclick="showTransactionDetails('${transaction.transaction_id}')" 
+                        class="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                        <i class="fas fa-eye mr-2"></i>Details
+                    </button>
+                </div>`;
             mobile.appendChild(card);
         });
+    }
 
-        applyColumnVisibility();
+    function getAccountDetails(transaction) {
+        if (transaction.account_type === 'platform') {
+            return {
+                name: transaction.platform_account?.wallet_name || 'Platform',
+                subtitle: transaction.platform_account?.type || 'Platform'
+            };
+        } else if (transaction.user) {
+            return {
+                name: `${transaction.user.first_name} ${transaction.user.last_name}`,
+                subtitle: transaction.user.email || ''
+            };
+        } else if (transaction.vendor) {
+            return {
+                name: transaction.vendor.vendor_name,
+                subtitle: transaction.vendor.email || ''
+            };
+        }
+        return { name: 'N/A', subtitle: '' };
     }
 
     function showTransactionDetails(transactionId) {
@@ -752,120 +781,142 @@ function formatDateTime($dateTime)
         const metadata = currentTransaction.external_metadata;
 
         let detailsHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
-                        <h4 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Transaction Information</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <h4 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Transaction Information</h4>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">System Transaction ID</label>
+                            <div class="text-sm font-mono text-gray-900 bg-gray-50 px-2 py-1 rounded">${currentTransaction.transaction_id}</div>
+                        </div>
                         
-                        <div class="space-y-3">
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">System Transaction ID</label>
-                                <div class="text-sm font-mono text-gray-900 bg-gray-50 px-2 py-1 rounded">${currentTransaction.transaction_id}</div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Amount</label>
-                                <div class="text-lg font-semibold text-gray-900">UGX ${formatCurrency(currentTransaction.amount_total)}</div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Payment Method</label>
-                                <div class="mt-1">${getPaymentMethodBadge(currentTransaction.payment_method)}</div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Cash Account</label>
-                                <div class="text-sm font-medium text-gray-900">${currentTransaction.cash_account_name}</div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Transaction Date/Time</label>
-                                <div class="text-sm font-medium text-gray-900">${formatDateTime(metadata?.btDateTime || metadata?.mmDateTime || currentTransaction.created_at)}</div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Submitted</label>
-                                <div class="text-sm text-gray-600">${formatDateTime(currentTransaction.created_at)}</div>
-                            </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Amount</label>
+                            <div class="text-lg font-semibold text-gray-900">${formatCurrency(currentTransaction.amount_total)}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Payment Method</label>
+                            <div class="mt-1">${getPaymentMethodBadge(currentTransaction.payment_method)}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Cash</label>
+                            <div class="text-sm font-medium text-gray-900">${currentTransaction.cash_account_name}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Account Type</label>
+                            <div class="mt-1">${getAccountTypeBadge(currentTransaction.account_type)}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Transaction Date/Time</label>
+                            <div class="text-sm font-medium text-gray-900">${formatDateTime(metadata?.btDateTime || metadata?.mmDateTime || currentTransaction.created_at)}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Submitted</label>
+                            <div class="text-sm text-gray-600">${formatDateTime(currentTransaction.created_at)}</div>
                         </div>
                     </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <h4 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Account Information</h4>
                     
-                    <div class="space-y-4">
-                        <h4 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">User Information</h4>
-                        
-                        <div class="space-y-3">`;
+                    <div class="space-y-3">`;
 
-        if (currentTransaction.user) {
+        if (currentTransaction.account_type === 'platform') {
             detailsHTML += `
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">User Name</label>
-                                <div class="text-sm font-medium text-gray-900">${currentTransaction.user.first_name} ${currentTransaction.user.last_name}</div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Email</label>
-                                <div class="text-sm text-gray-600">${currentTransaction.user.email}</div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Phone</label>
-                                <div class="text-sm text-gray-600">${currentTransaction.user.phone}</div>
-                            </div>`;
+                <div>
+                    <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Platform</label>
+                    <div class="text-sm font-medium text-gray-900">${currentTransaction.platform_account?.wallet_name || 'Platform'}</div>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Account Type</label>
+                    <div class="text-sm text-gray-600">${currentTransaction.platform_account?.type || 'Platform'}</div>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Wallet Number</label>
+                    <div class="text-sm font-mono text-gray-600">${currentTransaction.platform_account?.wallet_number || 'N/A'}</div>
+                </div>`;
+        } else if (currentTransaction.user) {
+            detailsHTML += `
+                <div>
+                    <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">User Name</label>
+                    <div class="text-sm font-medium text-gray-900">${currentTransaction.user.first_name} ${currentTransaction.user.last_name}</div>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Email</label>
+                    <div class="text-sm text-gray-600">${currentTransaction.user.email}</div>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Phone</label>
+                    <div class="text-sm text-gray-600">${currentTransaction.user.phone}</div>
+                </div>`;
         } else if (currentTransaction.vendor) {
             detailsHTML += `
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Vendor Name</label>
-                                <div class="text-sm font-medium text-gray-900">${currentTransaction.vendor.vendor_name}</div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Email</label>
-                                <div class="text-sm text-gray-600">${currentTransaction.vendor.email}</div>
-                            </div>`;
+                <div>
+                    <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Vendor Name</label>
+                    <div class="text-sm font-medium text-gray-900">${currentTransaction.vendor.vendor_name}</div>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-500 uppercase tracking-wide">Email</label>
+                    <div class="text-sm text-gray-600">${currentTransaction.vendor.email}</div>
+                </div>`;
         }
 
         detailsHTML += `
+                    </div>
+                </div>
+            </div>`;
+
+        // Add payment method specific details
+        if (currentTransaction.payment_method === 'BANK' && metadata?.btDepositorName) {
+            detailsHTML += `
+                <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <h5 class="text-sm font-semibold text-green-800 mb-3">Bank Transfer Details</h5>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-medium text-green-600 uppercase tracking-wide">Bank Reference/Receipt Number</label>
+                            <div class="text-sm font-mono text-green-800 bg-green-100 px-2 py-1 rounded mt-1">${currentTransaction.external_reference}</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-green-600 uppercase tracking-wide">Depositor Name</label>
+                            <div class="text-sm font-medium text-green-800">${metadata.btDepositorName}</div>
                         </div>
                     </div>
                 </div>`;
-
-        if (currentTransaction.payment_method === 'BANK' && metadata?.btDepositorName) {
-            detailsHTML += `
-                    <div class="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
-                        <h5 class="text-sm font-semibold text-green-800 mb-3">Bank Transfer Details</h5>
-                        <div class="space-y-3">
-                            <div>
-                                <label class="text-xs font-medium text-green-600 uppercase tracking-wide">Bank Reference/Receipt Number</label>
-                                <div class="text-sm font-mono text-green-800 bg-green-100 px-2 py-1 rounded mt-1">${currentTransaction.external_reference}</div>
-                            </div>
-                            <div>
-                                <label class="text-xs font-medium text-green-600 uppercase tracking-wide">Depositor Name</label>
-                                <div class="text-sm font-medium text-green-800">${metadata.btDepositorName}</div>
-                            </div>
-                        </div>
-                    </div>`;
         } else if (currentTransaction.payment_method === 'MOBILE_MONEY' && metadata?.mmPhoneNumber) {
             detailsHTML += `
-                    <div class="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                        <h5 class="text-sm font-semibold text-purple-800 mb-3">Mobile Money Details</h5>
-                        <div class="space-y-3">
-                            <div>
-                                <label class="text-xs font-medium text-purple-600 uppercase tracking-wide">Mobile Money Transaction ID</label>
-                                <div class="text-sm font-mono text-purple-800 bg-purple-100 px-2 py-1 rounded mt-1">${currentTransaction.external_reference}</div>
-                            </div>
-                            <div>
-                                <label class="text-xs font-medium text-purple-600 uppercase tracking-wide">Sender Phone Number</label>
-                                <div class="text-sm font-medium text-purple-800">${metadata.mmPhoneNumber}</div>
-                            </div>
+                <div class="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <h5 class="text-sm font-semibold text-purple-800 mb-3">Mobile Money Details</h5>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-medium text-purple-600 uppercase tracking-wide">Mobile Money Transaction ID</label>
+                            <div class="text-sm font-mono text-purple-800 bg-purple-100 px-2 py-1 rounded mt-1">${currentTransaction.external_reference}</div>
                         </div>
-                    </div>`;
+                        <div>
+                            <label class="text-xs font-medium text-purple-600 uppercase tracking-wide">Sender Phone Number</label>
+                            <div class="text-sm font-medium text-purple-800">${metadata.mmPhoneNumber}</div>
+                        </div>
+                    </div>
+                </div>`;
         }
 
         if (currentTransaction.note) {
             detailsHTML += `
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <h5 class="text-sm font-semibold text-gray-800 mb-2">Transaction Note</h5>
-                        <div class="text-sm text-gray-700">${currentTransaction.note}</div>
-                    </div>`;
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h5 class="text-sm font-semibold text-gray-800 mb-2">Transaction Note</h5>
+                    <div class="text-sm text-gray-700">${currentTransaction.note}</div>
+                </div>`;
         }
 
         content.innerHTML = detailsHTML;
@@ -873,18 +924,17 @@ function formatDateTime($dateTime)
         document.getElementById('approveTransactionBtn').onclick = () => showAdminPasswordModal('approve', currentTransaction);
         document.getElementById('rejectTransactionBtn').onclick = () => showAdminPasswordModal('reject', currentTransaction);
 
-        document.getElementById('transactionDetailsModal').classList.remove('hidden');
+        showModal('transactionDetailsModal');
     }
 
     function hideTransactionDetailsModal() {
-        document.getElementById('transactionDetailsModal').classList.add('hidden');
+        hideModal('transactionDetailsModal');
         currentTransaction = null;
         pendingAction = null;
         adminSecurityToken = null;
     }
 
     function showConfirmation(action) {
-        // Use the passed action parameter instead of relying on pendingAction
         const modal = document.getElementById('confirmationModal');
         const title = document.getElementById('confirmationTitle');
         const message = document.getElementById('confirmationMessage');
@@ -893,12 +943,12 @@ function formatDateTime($dateTime)
         const confirmBtn = document.getElementById('confirmActionBtn');
 
         if (action === 'approve') {
-            title.textContent = 'Affirm Transaction';
-            message.textContent = 'Are you sure you want to affirm that this money was indeed sent? This will approve the transaction on the platform.';
+            title.textContent = 'Approve Transaction';
+            message.textContent = 'Are you sure you want to approve this transaction? This will credit the account and mark the transaction as successful.';
             icon.className = 'w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center';
             iconClass.className = 'fas fa-check text-green-600 text-xl';
             confirmBtn.className = 'flex-1 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium';
-            confirmBtn.textContent = 'Affirm';
+            confirmBtn.textContent = 'Approve';
             confirmBtn.onclick = () => processTransaction('SUCCESS');
         } else if (action === 'reject') {
             title.textContent = 'Reject Transaction';
@@ -910,11 +960,11 @@ function formatDateTime($dateTime)
             confirmBtn.onclick = () => processTransaction('FAILED');
         }
 
-        modal.classList.remove('hidden');
+        showModal('confirmationModal');
     }
 
     function hideConfirmationModal() {
-        document.getElementById('confirmationModal').classList.add('hidden');
+        hideModal('confirmationModal');
     }
 
     async function processTransaction(status) {
@@ -958,14 +1008,13 @@ function formatDateTime($dateTime)
 
     function showNotification(message, type) {
         const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-all duration-300 ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-            }`;
+        notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-all duration-300 ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`;
         notification.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                    <span>${message}</span>
-                </div>
-            `;
+            <div class="flex items-center gap-2">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
 
         document.body.appendChild(notification);
 
@@ -976,72 +1025,10 @@ function formatDateTime($dateTime)
         }, 3000);
     }
 
-    function loadColumnVisibility() {
-        const saved = localStorage.getItem(COLUMNS_STORAGE_KEY);
-        if (saved) {
-            visibleColumns = JSON.parse(saved);
-        }
-        updateColumnCheckboxes();
-    }
-
-    function saveColumnVisibility() {
-        localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(visibleColumns));
-    }
-
-    function updateColumnCheckboxes() {
-        document.querySelectorAll('.column-checkbox').forEach(checkbox => {
-            const column = checkbox.getAttribute('data-column');
-            checkbox.checked = visibleColumns.includes(column);
-        });
-    }
-
-    function applyColumnVisibility() {
-        const table = document.getElementById('transactions-table');
-        if (!table) return;
-
-        const headers = table.querySelectorAll('thead th[data-column]');
-        headers.forEach(header => {
-            const column = header.getAttribute('data-column');
-            header.style.display = visibleColumns.includes(column) ? '' : 'none';
-        });
-
-        const rows = table.querySelectorAll('tbody tr');
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td[data-column]');
-            cells.forEach(cell => {
-                const column = cell.getAttribute('data-column');
-                cell.style.display = visibleColumns.includes(column) ? '' : 'none';
-            });
-        });
-    }
-
-    function toggleColumnSelector() {
-        const selector = document.getElementById('columnSelector');
-        selector.classList.toggle('hidden');
-    }
-
-    function adjustTableFontSize() {
-        const table = document.getElementById('transactions-table');
-        if (!table) return;
-
-        const container = table.parentElement;
-        let fontSize = 14;
-
-        table.style.fontSize = fontSize + 'px';
-
-        while ((table.scrollWidth > container.clientWidth) && fontSize > 8) {
-            fontSize -= 0.5;
-            table.style.fontSize = fontSize + 'px';
-        }
-
-        if (fontSize < 10) {
-            table.style.fontSize = '10px';
-        }
-    }
-
     function filterTransactions() {
         const query = document.getElementById('searchTransactions').value.trim().toLowerCase();
         const method = document.getElementById('filterTransactions').value;
+        const accountType = document.getElementById('filterAccountType').value;
 
         let filtered = pendingTransactions;
 
@@ -1049,68 +1036,43 @@ function formatDateTime($dateTime)
             filtered = filtered.filter(t => t.payment_method === method);
         }
 
+        if (accountType !== 'all') {
+            filtered = filtered.filter(t => t.account_type === accountType);
+        }
+
         if (query) {
             filtered = filtered.filter(t =>
                 t.cash_account_name.toLowerCase().includes(query) ||
                 (t.user && `${t.user.first_name} ${t.user.last_name}`.toLowerCase().includes(query)) ||
                 (t.vendor && t.vendor.vendor_name.toLowerCase().includes(query)) ||
+                (t.platform_account && t.platform_account.wallet_name.toLowerCase().includes(query)) ||
                 t.external_reference.toLowerCase().includes(query) ||
                 (t.note && t.note.toLowerCase().includes(query))
             );
         }
 
         renderTransactionsTable(filtered);
-        adjustTableFontSize();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        loadColumnVisibility();
         fetchPendingTransactions();
 
         document.getElementById('searchTransactions').addEventListener('input', filterTransactions);
         document.getElementById('filterTransactions').addEventListener('change', filterTransactions);
+        document.getElementById('filterAccountType').addEventListener('change', filterTransactions);
 
-        document.addEventListener('change', function (event) {
-            if (event.target.classList.contains('column-checkbox')) {
-                const column = event.target.getAttribute('data-column');
-                const isChecked = event.target.checked;
-
-                if (isChecked) {
-                    if (!visibleColumns.includes(column)) {
-                        visibleColumns.push(column);
-                    }
-                } else {
-                    if (visibleColumns.length <= 3) {
-                        event.target.checked = true;
-                        return;
-                    }
-                    visibleColumns = visibleColumns.filter(col => col !== column);
-                }
-
-                applyColumnVisibility();
-                saveColumnVisibility();
-                adjustTableFontSize();
-            }
-        });
-
-        document.addEventListener('click', function (event) {
-            const selector = document.getElementById('columnSelector');
-            const btn = document.getElementById('viewColumnsBtn');
-
-            if (selector && btn && !selector.contains(event.target) && !btn.contains(event.target)) {
-                selector.classList.add('hidden');
-            }
-        });
-
-        window.addEventListener('resize', adjustTableFontSize);
+        // Refresh data every 30 seconds
+        setInterval(fetchPendingTransactions, 30000);
     });
 
+    // Global functions
     window.showTransactionDetails = showTransactionDetails;
     window.hideTransactionDetailsModal = hideTransactionDetailsModal;
     window.hideConfirmationModal = hideConfirmationModal;
     window.hideAdminPasswordModal = hideAdminPasswordModal;
     window.hideAdminBlockedModal = hideAdminBlockedModal;
-    window.toggleColumnSelector = toggleColumnSelector;
+    window.toggleAdminPasswordVisibility = toggleAdminPasswordVisibility;
+    window.handleAdminPasswordSubmit = handleAdminPasswordSubmit;
 </script>
 
 <?php
