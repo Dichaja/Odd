@@ -374,40 +374,31 @@ final class CreditService
         return $res;
     }
 
-    public static function getWallet(string $ownerType, string $ownerId = null): array
+    public static function getWallet(string $ownerType, ?string $ownerId = null): array
     {
         self::boot();
 
+        // 1) Try to fetch an existing active wallet
         if ($ownerType === 'PLATFORM') {
             $sql = "
-                SELECT wallet_id,
-                       wallet_number,
-                       wallet_name,
-                       current_balance,
-                       status,
-                       created_at
-                  FROM zzimba_wallets
-                 WHERE owner_type = 'PLATFORM'
-                   AND status     = 'active'
-                 LIMIT 1
-            ";
+            SELECT wallet_id, wallet_number, wallet_name,
+                   current_balance, status, created_at
+              FROM zzimba_wallets
+             WHERE owner_type = 'PLATFORM'
+               AND status     = 'active'
+             LIMIT 1";
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute();
         } else {
             $col = $ownerType === 'USER' ? 'user_id' : 'vendor_id';
             $sql = "
-                SELECT wallet_id,
-                       wallet_number,
-                       wallet_name,
-                       current_balance,
-                       status,
-                       created_at
-                  FROM zzimba_wallets
-                 WHERE owner_type = :ot
-                   AND {$col}    = :oid
-                   AND status    = 'active'
-                 LIMIT 1
-            ";
+            SELECT wallet_id, wallet_number, wallet_name,
+                   current_balance, status, created_at
+              FROM zzimba_wallets
+             WHERE owner_type = :ot
+               AND {$col}    = :oid
+               AND status    = 'active'
+             LIMIT 1";
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute([':ot' => $ownerType, ':oid' => $ownerId]);
         }
@@ -417,23 +408,20 @@ final class CreditService
             return ['success' => true, 'wallet' => $wallet];
         }
 
+        // 2) Create a new wallet
         $wid = \generateUlid();
         $wn = self::generateWalletNumber($wid);
         $now = date('Y-m-d H:i:s');
         $wname = 'My Wallet';
 
         if ($ownerType === 'USER') {
-            $u = self::$pdo
-                ->prepare("SELECT first_name, last_name FROM zzimba_users WHERE id = :uid");
+            $u = self::$pdo->prepare("SELECT first_name, last_name FROM zzimba_users WHERE id = :uid");
             $u->execute([':uid' => $ownerId]);
             if ($r = $u->fetch(PDO::FETCH_ASSOC)) {
                 $wname = trim($r['first_name'] . ' ' . $r['last_name']);
             }
-        }
-
-        if ($ownerType === 'VENDOR') {
-            $v = self::$pdo
-                ->prepare("SELECT name FROM vendor_stores WHERE id = :vid");
+        } elseif ($ownerType === 'VENDOR') {
+            $v = self::$pdo->prepare("SELECT name FROM vendor_stores WHERE id = :vid");
             $v->execute([':vid' => $ownerId]);
             if ($r = $v->fetch(PDO::FETCH_ASSOC)) {
                 $wname = trim($r['name']);
@@ -490,21 +478,103 @@ final class CreditService
         try {
             $ins = self::$pdo->prepare($sql);
             $ins->execute($bind);
-            return [
-                'success' => true,
-                'wallet' => [
-                    'wallet_id' => $wid,
-                    'wallet_number' => $wn,
-                    'wallet_name' => $wname,
-                    'current_balance' => 0.00,
-                    'status' => 'active',
-                    'created_at' => $now
-                ]
-            ];
         } catch (PDOException $e) {
-            error_log('[ZzimbaCreditModule] create wallet error: ' . $e->getMessage());
+            error_log("[ZzimbaCreditModule][getWallet] create wallet error: " . $e->getMessage());
             return ['success' => false, 'message' => 'Could not create wallet'];
         }
+
+        // 3) Award “welcome bonus” if this is a USER or VENDOR
+        if (in_array($ownerType, ['USER', 'VENDOR'], true)) {
+            $appKey = $ownerType === 'USER' ? 'users' : 'vendors';
+
+            // Pick the active welcome_bonus setting WITHOUT repeating placeholders
+            $bonusSql = "
+            SELECT id, setting_value
+              FROM zzimba_credit_settings
+             WHERE setting_key  = 'welcome_bonus'
+               AND status       = 'active'
+               AND applicable_to IN ('all', :applies1)
+             ORDER BY (applicable_to = 'all') DESC,
+                      (applicable_to = :applies2) DESC
+             LIMIT 1
+        ";
+            $bst = self::$pdo->prepare($bonusSql);
+            $bst->execute([
+                ':applies1' => $appKey,
+                ':applies2' => $appKey
+            ]);
+            $setting = $bst->fetch(PDO::FETCH_ASSOC);
+
+            if ($setting && ($amount = (float) $setting['setting_value']) > 0) {
+                // Find the source wallet via assignment
+                $src = self::$pdo->prepare("
+                SELECT w.wallet_id, w.current_balance
+                  FROM zzimba_wallets w
+                  JOIN zzimba_wallet_credit_assignments a
+                    ON a.wallet_id = w.wallet_id
+                 WHERE a.credit_setting_id = :cid
+                   AND w.status            = 'active'
+                 LIMIT 1
+            ");
+                $src->execute([':cid' => $setting['id']]);
+                $source = $src->fetch(PDO::FETCH_ASSOC);
+
+                if ($source && (float) $source['current_balance'] >= $amount) {
+                    $sourceWalletId = $source['wallet_id'];
+                    $txnId = \generateUlid();
+
+                    // 3a) Insert the financial transaction
+                    self::insertTransaction([
+                        'transaction_id' => $txnId,
+                        'transaction_type' => 'TRANSFER',
+                        'status' => 'SUCCESS',
+                        'amount_total' => $amount,
+                        'payment_method' => 'WALLET',
+                        'wallet_id' => $wid,
+                        'user_id' => $ownerType === 'USER' ? $ownerId : null,
+                        'vendor_id' => $ownerType === 'VENDOR' ? $ownerId : null,
+                        'note' => 'Welcome bonus',
+                    ]);
+
+                    // 3b) Record the transfer
+                    self::insertTransfer([
+                        'id' => \generateUlid(),
+                        'wallet_from' => $sourceWalletId,
+                        'wallet_to' => $wid,
+                        'transaction_id' => $txnId,
+                        'created_at' => $now
+                    ]);
+
+                    // 3c) Run the 4‐step ledger entries
+                    try {
+                        self::$pdo->beginTransaction();
+                        self::performTransferEntries($txnId, $sourceWalletId, $wid, $amount);
+                        self::$pdo->commit();
+                    } catch (\Throwable $e) {
+                        self::$pdo->rollBack();
+                        error_log("[ZzimbaCreditModule][getWallet] welcome‐bonus ledger error: " . $e->getMessage());
+                        self::$pdo->prepare("
+                        UPDATE zzimba_financial_transactions
+                           SET status='FAILED', updated_at=NOW()
+                         WHERE transaction_id = :tid
+                    ")->execute([':tid' => $txnId]);
+                    }
+                }
+            }
+        }
+
+        // 4) Return the newly‐created wallet
+        return [
+            'success' => true,
+            'wallet' => [
+                'wallet_id' => $wid,
+                'wallet_number' => $wn,
+                'wallet_name' => $wname,
+                'current_balance' => 0.00,
+                'status' => 'active',
+                'created_at' => $now
+            ]
+        ];
     }
 
 
