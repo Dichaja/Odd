@@ -69,8 +69,7 @@
                 <form id="searchForm" onsubmit="handleSearchSubmit(event)">
                     <div class="mb-4">
                         <label for="sendCreditSearchInput" class="block text-sm font-semibold text-gray-700 mb-2"
-                            id="sendCreditSearchLabel">
-                        </label>
+                            id="sendCreditSearchLabel"></label>
                         <div class="relative">
                             <input type="text" id="sendCreditSearchInput" autocomplete="off"
                                 class="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 placeholder-gray-400"
@@ -79,8 +78,7 @@
                                 <i class="fas fa-search"></i>
                             </div>
                         </div>
-                        <div id="searchInputError" class="hidden mt-1 text-sm text-red-600">
-                        </div>
+                        <div id="searchInputError" class="hidden mt-1 text-sm text-red-600"></div>
                     </div>
 
                     <button type="submit" id="searchWalletBtn"
@@ -101,8 +99,7 @@
                     <p class="text-sm text-gray-500">Select the correct wallet from the results below</p>
                 </div>
 
-                <div id="multipleResultsList" class="space-y-3 mb-6 max-h-64 overflow-y-auto">
-                </div>
+                <div id="multipleResultsList" class="space-y-3 mb-6 max-h-64 overflow-y-auto"></div>
 
                 <div class="flex gap-3">
                     <button onclick="searchAgain()"
@@ -122,8 +119,7 @@
                     <p class="text-sm text-gray-500">No wallet matches your search criteria</p>
                 </div>
 
-                <div id="searchDetails" class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-                </div>
+                <div id="searchDetails" class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6"></div>
 
                 <div class="flex gap-3">
                     <button onclick="searchAgain()"
@@ -147,8 +143,7 @@
                     <p class="text-sm text-gray-500">Please confirm this is the correct wallet</p>
                 </div>
 
-                <div id="walletDetails" class="bg-gray-50 rounded-xl p-4 mb-6">
-                </div>
+                <div id="walletDetails" class="bg-gray-50 rounded-xl p-4 mb-6"></div>
 
                 <div class="flex gap-3">
                     <button onclick="searchAgain()"
@@ -165,7 +160,7 @@
             <div id="sendCreditAmountStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
                 <form id="amountForm" onsubmit="handleAmountSubmit(event)">
-                    <div class="mb-6">
+                    <div class="mb-4">
                         <label for="sendCreditAmount" class="block text-sm font-semibold text-gray-700 mb-2">
                             Enter Amount to Send
                         </label>
@@ -174,16 +169,13 @@
                                 class="w-full px-4 py-3 pr-16 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 placeholder-gray-400 text-lg font-semibold"
                                 placeholder="500" required>
                             <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
-                                UGX
-                            </div>
+                                UGX</div>
                         </div>
                         <p class="text-xs text-gray-500 mt-1">Minimum amount: 500 UGX</p>
-                        <div id="amountError" class="hidden mt-1 text-sm text-red-600">
-                        </div>
+                        <div id="amountError" class="hidden mt-1 text-sm text-red-600"></div>
                     </div>
 
-                    <div id="selectedWalletSummary" class="bg-gray-50 rounded-xl p-4 mb-6">
-                    </div>
+                    <div id="selectedWalletSummary" class="bg-gray-50 rounded-xl p-4 mb-6"></div>
 
                     <div class="flex gap-3">
                         <button type="button" onclick="sendCreditBack()"
@@ -192,16 +184,54 @@
                         </button>
                         <button type="submit" id="sendCreditBtn"
                             class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium">
-                            Send Credit
+                            Continue
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- NEW PASSWORD CONFIRMATION STEP -->
+            <div id="sendCreditBalanceCheckStep"
+                class="hidden transition-all duration-300 transform translate-x-full opacity-0">
+                <div class="text-center mb-6">
+                    <div id="balanceCheckIcon"
+                        class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-spinner animate-spin text-blue-600 text-xl"></i>
+                    </div>
+                    <h4 id="balanceCheckTitle" class="text-lg font-semibold text-gray-900 mb-2">Checking Balance</h4>
+                    <p id="balanceCheckSubtitle" class="text-sm text-gray-500">Validating your wallet balance...</p>
+                </div>
+
+                <div id="balanceCheckDetails" class="rounded-xl p-4 mb-6"></div>
+
+                <div id="balanceCheckActions" class="flex gap-3"></div>
+            </div>
+
+            <div id="sendCreditInsufficientBalanceStep"
+                class="hidden transition-all duration-300 transform translate-x-full opacity-0">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">Insufficient Balance</h4>
+                    <p class="text-sm text-gray-500">You don't have enough balance for this transfer</p>
+                </div>
+
+                <div id="insufficientBalanceDetails" class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6"></div>
+
+                <div class="flex gap-3">
+                    <button onclick="changeTransferAmount()"
+                        class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium">
+                        Change Amount
+                    </button>
+                    <button onclick="topUpWallet()"
+                        class="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 font-medium">
+                        Top Up Wallet
+                    </button>
+                </div>
+            </div>
+
             <div id="sendCreditPasswordStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
-
                 <form id="passwordForm" onsubmit="handlePasswordSubmit(event)">
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
                         <div class="flex items-center gap-3">
@@ -230,14 +260,11 @@
                                 <i class="fas fa-eye" id="passwordToggleIcon"></i>
                             </button>
                         </div>
-                        <div id="passwordError" class="hidden mt-1 text-sm text-red-600">
-                        </div>
-                        <div id="attemptsWarning" class="hidden mt-1 text-sm text-orange-600">
-                        </div>
+                        <div id="passwordError" class="hidden mt-1 text-sm text-red-600"></div>
+                        <div id="attemptsWarning" class="hidden mt-1 text-sm text-orange-600"></div>
                     </div>
 
-                    <div id="passwordTransferSummary" class="bg-gray-50 rounded-xl p-4 mb-6">
-                    </div>
+                    <div id="passwordTransferSummary" class="bg-gray-50 rounded-xl p-4 mb-6"></div>
 
                     <div class="flex gap-3">
                         <button type="button" onclick="sendCreditBack()"
@@ -282,17 +309,13 @@
                 <div class="text-center mb-6">
                     <div id="responseIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     </div>
-                    <h4 id="responseTitle" class="text-lg font-semibold text-gray-900 mb-2">
-                    </h4>
-                    <p id="responseSubtitle" class="text-sm text-gray-500">
-                    </p>
+                    <h4 id="responseTitle" class="text-lg font-semibold text-gray-900 mb-2"></h4>
+                    <p id="responseSubtitle" class="text-sm text-gray-500"></p>
                 </div>
 
-                <div id="responseDetails" class="rounded-xl p-4 mb-6">
-                </div>
+                <div id="responseDetails" class="rounded-xl p-4 mb-6"></div>
 
-                <div id="responseActions" class="flex gap-3">
-                </div>
+                <div id="responseActions" class="flex gap-3"></div>
 
                 <div id="autoCloseCountdown" class="hidden text-center mt-4">
                     <p class="text-sm text-gray-500">
@@ -302,7 +325,6 @@
                 </div>
             </div>
 
-            <!-- BLOCKED USER STEP -->
             <div id="sendCreditBlockedStep"
                 class="hidden transition-all duration-300 transform translate-x-full opacity-0">
                 <div class="text-center mb-6">
@@ -466,8 +488,9 @@
     let autoCloseTimer = null;
     let currentBalance = null;
     let securityToken = null;
+    let transferFeeSettings = null;
+    let calculatedFee = 0;
 
-    // Password attempt tracking
     const STORAGE_KEY = 'sendCredit_attempts';
     const MAX_ATTEMPTS = 3;
 
@@ -494,12 +517,44 @@
         return attempts.count >= MAX_ATTEMPTS;
     }
 
-    window.showSendCreditModal = function () {
-        // Check if user is blocked before showing modal
+    async function fetchTransferFeeSettings() {
+        try {
+            const payload = new FormData();
+            payload.append('action', 'getTransferFeeSettings');
+
+            const response = await fetch(sendCreditApiUrl, {
+                method: 'POST',
+                body: payload
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                transferFeeSettings = data.feeSettings;
+            }
+        } catch (error) {
+            console.error('Error fetching transfer fee settings:', error);
+        }
+    }
+
+    function calculateTransferFee(amount) {
+        if (!transferFeeSettings) return 0;
+
+        if (transferFeeSettings.setting_type === 'flat') {
+            return parseFloat(transferFeeSettings.setting_value);
+        } else if (transferFeeSettings.setting_type === 'percentage') {
+            return (parseFloat(amount) * parseFloat(transferFeeSettings.setting_value)) / 100;
+        }
+
+        return 0;
+    }
+
+    window.showSendCreditModal = async function () {
         if (isUserBlocked()) {
             showBlockedUserStep();
             return;
         }
+
+        await fetchTransferFeeSettings();
 
         const modal = document.getElementById('sendCreditModal');
         const modalContent = document.getElementById('sendCreditModalContent');
@@ -523,7 +578,6 @@
             modalContent.classList.add('modal-show');
         }, 10);
 
-        // Hide all other steps and show blocked step
         document.querySelectorAll('[id^="sendCredit"][id$="Step"]').forEach(step => {
             step.classList.add('hidden');
         });
@@ -562,6 +616,8 @@
         pendingTransfer = null;
         currentBalance = null;
         securityToken = null;
+        transferFeeSettings = null;
+        calculatedFee = 0;
 
         if (autoCloseTimer) {
             clearInterval(autoCloseTimer);
@@ -574,6 +630,8 @@
         document.getElementById('sendCreditNotFoundStep').classList.add('hidden');
         document.getElementById('sendCreditConfirmStep').classList.add('hidden');
         document.getElementById('sendCreditAmountStep').classList.add('hidden');
+        document.getElementById('sendCreditBalanceCheckStep').classList.add('hidden');
+        document.getElementById('sendCreditInsufficientBalanceStep').classList.add('hidden');
         document.getElementById('sendCreditPasswordStep').classList.add('hidden');
         document.getElementById('sendCreditConfirmationStep').classList.add('hidden');
         document.getElementById('sendCreditResponseStep').classList.add('hidden');
@@ -625,7 +683,7 @@
     function resetSendButton() {
         const sendBtn = document.getElementById('sendCreditBtn');
         if (sendBtn) {
-            sendBtn.innerHTML = 'Send Credit';
+            sendBtn.innerHTML = 'Continue';
             sendBtn.disabled = false;
         }
     }
@@ -692,25 +750,27 @@
         } else if (currentStep === 8) {
             animateToStep('sendCreditConfirmationStep', 'sendCreditPasswordStep', 7);
         } else if (currentStep === 7) {
-            animateToStep('sendCreditPasswordStep', 'sendCreditAmountStep', 6);
+            animateToStep('sendCreditPasswordStep', 'sendCreditBalanceCheckStep', 6);
         } else if (currentStep === 6) {
-            animateToStep('sendCreditAmountStep', 'sendCreditConfirmStep', 5);
+            animateToStep('sendCreditBalanceCheckStep', 'sendCreditAmountStep', 5);
         } else if (currentStep === 5) {
-            clearAllForms();
-            clearErrorMessages();
-            resetSearchButton();
-            animateToStep('sendCreditConfirmStep', 'sendCreditSearchStep', 2);
+            animateToStep('sendCreditAmountStep', 'sendCreditConfirmStep', 4);
         } else if (currentStep === 4) {
             clearAllForms();
             clearErrorMessages();
             resetSearchButton();
-            animateToStep('sendCreditNotFoundStep', 'sendCreditSearchStep', 2);
+            animateToStep('sendCreditConfirmStep', 'sendCreditSearchStep', 2);
         } else if (currentStep === 3) {
             clearAllForms();
             clearErrorMessages();
             resetSearchButton();
-            animateToStep('sendCreditMultipleResultsStep', 'sendCreditSearchStep', 2);
+            animateToStep('sendCreditNotFoundStep', 'sendCreditSearchStep', 2);
         } else if (currentStep === 2) {
+            clearAllForms();
+            clearErrorMessages();
+            resetSearchButton();
+            animateToStep('sendCreditMultipleResultsStep', 'sendCreditSearchStep', 2);
+        } else if (currentStep === 1) {
             const searchStep = document.getElementById('sendCreditSearchStep');
             searchStep.classList.add('slide-out-right');
 
@@ -750,7 +810,7 @@
                 setTimeout(() => {
                     document.getElementById('sendCreditSearchInput').focus();
                 }, 400);
-            } else if (stepNumber === 6) {
+            } else if (stepNumber === 5) {
                 setTimeout(() => {
                     document.getElementById('sendCreditAmount').focus();
                 }, 400);
@@ -796,7 +856,7 @@
 
     function handleAmountSubmit(event) {
         event.preventDefault();
-        showPasswordConfirmation();
+        checkBalanceAndProceed();
     }
 
     function handlePasswordSubmit(event) {
@@ -826,7 +886,7 @@
         button.disabled = true;
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
             const payload = new FormData();
             payload.append('action', 'searchWallet');
@@ -1003,7 +1063,7 @@
             confirmStep.classList.remove('hidden', 'translate-x-full', 'opacity-0');
             confirmStep.classList.add('slide-in-right');
 
-            currentStep = 5;
+            currentStep = 4;
         }, 300);
     }
 
@@ -1068,10 +1128,10 @@
             </div>
         `;
 
-        animateToStep('sendCreditConfirmStep', 'sendCreditAmountStep', 6);
+        animateToStep('sendCreditConfirmStep', 'sendCreditAmountStep', 5);
     };
 
-    function showPasswordConfirmation() {
+    async function checkBalanceAndProceed() {
         const amountInput = document.getElementById('sendCreditAmount');
         const amount = amountInput.value.trim();
         clearErrorMessages();
@@ -1086,6 +1146,125 @@
             return;
         }
 
+        document.getElementById('sendCreditTitle').textContent = 'Checking Balance';
+        document.getElementById('sendCreditSubtitle').textContent = 'Validating your wallet balance...';
+
+        const balanceCheckIcon = document.getElementById('balanceCheckIcon');
+        const balanceCheckTitle = document.getElementById('balanceCheckTitle');
+        const balanceCheckSubtitle = document.getElementById('balanceCheckSubtitle');
+        const balanceCheckDetails = document.getElementById('balanceCheckDetails');
+        const balanceCheckActions = document.getElementById('balanceCheckActions');
+
+        balanceCheckIcon.className = 'w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4';
+        balanceCheckIcon.innerHTML = '<i class="fas fa-spinner animate-spin text-blue-600 text-xl"></i>';
+        balanceCheckTitle.textContent = 'Checking Balance';
+        balanceCheckSubtitle.textContent = 'Validating your wallet balance...';
+        balanceCheckDetails.innerHTML = '';
+        balanceCheckActions.innerHTML = '';
+
+        animateToStep('sendCreditAmountStep', 'sendCreditBalanceCheckStep', 6);
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const payload = new FormData();
+            payload.append('action', 'validateTransferBalance');
+            payload.append('amount', amount);
+
+            const response = await fetch(sendCreditApiUrl, {
+                method: 'POST',
+                body: payload
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.validation.isValid) {
+                    showBalanceCheckSuccess(amount, data.validation.fee, data.validation.totalRequired, data.validation.availableBalance);
+                } else {
+                    showInsufficientBalance(amount, data.validation.fee, data.validation.totalRequired, data.validation.availableBalance);
+                }
+            } else {
+                showBalanceCheckError(data.message || 'Unable to validate balance');
+            }
+        } catch (error) {
+            console.error('Error checking balance:', error);
+            showBalanceCheckError('Error checking balance. Please try again.');
+        }
+    }
+
+    function showBalanceCheckSuccess(amount, fee, totalRequired, availableBalance) {
+        const balanceCheckIcon = document.getElementById('balanceCheckIcon');
+        const balanceCheckTitle = document.getElementById('balanceCheckTitle');
+        const balanceCheckSubtitle = document.getElementById('balanceCheckSubtitle');
+        const balanceCheckDetails = document.getElementById('balanceCheckDetails');
+        const balanceCheckActions = document.getElementById('balanceCheckActions');
+
+        balanceCheckIcon.className = 'w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4';
+        balanceCheckIcon.innerHTML = '<i class="fas fa-check text-green-600 text-xl"></i>';
+        balanceCheckTitle.textContent = 'Balance Sufficient';
+        balanceCheckSubtitle.textContent = 'You have enough balance for this transfer';
+
+        let detailsContent = `
+            <div class="bg-green-50 border border-green-200 space-y-4">
+                <div class="text-center pb-3 border-b border-green-200">
+                    <p class="text-2xl font-bold text-green-900">${parseFloat(amount).toLocaleString()} UGX</p>
+                    <p class="text-sm text-green-600">Transfer Amount</p>
+                </div>
+                
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-green-700">Transfer Amount:</span>
+                        <span class="font-semibold text-green-900">${parseFloat(amount).toLocaleString()} UGX</span>
+                    </div>
+        `;
+
+        if (fee > 0) {
+            const feeTypeText = transferFeeSettings && transferFeeSettings.setting_type === 'flat' ?
+                'Transfer Fee (Flat)' :
+                `Transfer Fee (${transferFeeSettings ? transferFeeSettings.setting_value : '0'}%)`;
+
+            detailsContent += `
+                    <div class="flex justify-between items-center">
+                        <span class="text-green-700">${feeTypeText}:</span>
+                        <span class="font-semibold text-green-900">${fee.toLocaleString()} UGX</span>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-green-300 pt-2">
+                        <span class="font-medium text-green-800">Total Required:</span>
+                        <span class="font-bold text-green-900">${totalRequired.toLocaleString()} UGX</span>
+                    </div>
+            `;
+        }
+
+        detailsContent += `
+                    <div class="flex justify-between items-center border-t border-green-300 pt-2">
+                        <span class="font-medium text-green-800">Available Balance:</span>
+                        <span class="font-bold text-green-900">${availableBalance.toLocaleString()} UGX</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-green-800">Remaining After:</span>
+                        <span class="font-bold text-green-900">${(availableBalance - totalRequired).toLocaleString()} UGX</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        balanceCheckDetails.innerHTML = detailsContent;
+
+        balanceCheckActions.innerHTML = `
+            <button onclick="changeTransferAmount()" 
+                class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium">
+                Change Amount
+            </button>
+            <button onclick="proceedToPasswordConfirmation()" 
+                class="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 font-medium">
+                Proceed to Confirm
+            </button>
+        `;
+
+        currentBalance = availableBalance;
+        calculatedFee = fee;
+
         pendingTransfer = {
             amount: amount,
             formattedAmount: parseFloat(amount).toLocaleString('en-UG', {
@@ -1094,14 +1273,121 @@
             }),
             wallet: selectedWallet,
             walletType: window.sendCreditType,
-            searchType: lastSearchParams ? lastSearchParams.searchType : 'id'
+            searchType: lastSearchParams ? lastSearchParams.searchType : 'id',
+            fee: calculatedFee,
+            totalRequired: totalRequired
         };
+    }
 
-        // Show password confirmation step
+    function showInsufficientBalance(amount, fee, totalRequired, availableBalance) {
+        const balanceCheckIcon = document.getElementById('balanceCheckIcon');
+        const balanceCheckTitle = document.getElementById('balanceCheckTitle');
+        const balanceCheckSubtitle = document.getElementById('balanceCheckSubtitle');
+
+        balanceCheckIcon.className = 'w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4';
+        balanceCheckIcon.innerHTML = '<i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>';
+        balanceCheckTitle.textContent = 'Insufficient Balance';
+        balanceCheckSubtitle.textContent = 'You don\'t have enough balance for this transfer';
+
+        setTimeout(() => {
+            animateToStep('sendCreditBalanceCheckStep', 'sendCreditInsufficientBalanceStep', 7);
+
+            const insufficientDetails = document.getElementById('insufficientBalanceDetails');
+
+            let detailsContent = `
+                <div class="space-y-3">
+                    <div class="text-center pb-3 border-b border-red-200">
+                        <p class="text-lg font-bold text-red-900">${parseFloat(amount).toLocaleString()} UGX</p>
+                        <p class="text-sm text-red-600">Requested Transfer Amount</p>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-red-700">Transfer Amount:</span>
+                            <span class="font-semibold text-red-900">${parseFloat(amount).toLocaleString()} UGX</span>
+                        </div>
+            `;
+
+            if (fee > 0) {
+                const feeTypeText = transferFeeSettings && transferFeeSettings.setting_type === 'flat' ?
+                    'Transfer Fee (Flat)' :
+                    `Transfer Fee (${transferFeeSettings ? transferFeeSettings.setting_value : '0'}%)`;
+
+                detailsContent += `
+                        <div class="flex justify-between items-center">
+                            <span class="text-red-700">${feeTypeText}:</span>
+                            <span class="font-semibold text-red-900">${fee.toLocaleString()} UGX</span>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-red-300 pt-2">
+                            <span class="font-medium text-red-800">Total Required:</span>
+                            <span class="font-bold text-red-900">${totalRequired.toLocaleString()} UGX</span>
+                        </div>
+                `;
+            }
+
+            detailsContent += `
+                        <div class="flex justify-between items-center border-t border-red-300 pt-2">
+                            <span class="font-medium text-red-800">Available Balance:</span>
+                            <span class="font-bold text-red-900">${availableBalance.toLocaleString()} UGX</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-red-800">Shortfall:</span>
+                            <span class="font-bold text-red-900">${(totalRequired - availableBalance).toLocaleString()} UGX</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            insufficientDetails.innerHTML = detailsContent;
+        }, 300);
+    }
+
+    function showBalanceCheckError(message) {
+        const balanceCheckIcon = document.getElementById('balanceCheckIcon');
+        const balanceCheckTitle = document.getElementById('balanceCheckTitle');
+        const balanceCheckSubtitle = document.getElementById('balanceCheckSubtitle');
+        const balanceCheckDetails = document.getElementById('balanceCheckDetails');
+        const balanceCheckActions = document.getElementById('balanceCheckActions');
+
+        balanceCheckIcon.className = 'w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4';
+        balanceCheckIcon.innerHTML = '<i class="fas fa-times text-red-600 text-xl"></i>';
+        balanceCheckTitle.textContent = 'Balance Check Failed';
+        balanceCheckSubtitle.textContent = message;
+
+        balanceCheckDetails.innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div class="text-center">
+                    <p class="text-sm text-red-700">${message}</p>
+                </div>
+            </div>
+        `;
+
+        balanceCheckActions.innerHTML = `
+            <button onclick="sendCreditBack()" 
+                class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all duration-200 font-medium">
+                Back
+            </button>
+            <button onclick="checkBalanceAndProceed()" 
+                class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium">
+                Try Again
+            </button>
+        `;
+    }
+
+    window.changeTransferAmount = function () {
+        animateToStep('sendCreditInsufficientBalanceStep', 'sendCreditAmountStep', 5);
+    };
+
+    window.topUpWallet = function () {
+        hideSendCreditModal();
+        window.location.href = 'zzimba-credit';
+    };
+
+    window.proceedToPasswordConfirmation = function () {
         const passwordSummary = document.getElementById('passwordTransferSummary');
         const walletTypeText = window.sendCreditType === 'vendor' ? 'Vendor' : 'User';
 
-        passwordSummary.innerHTML = `
+        let summaryContent = `
             <div class="space-y-3">
                 <div class="text-center pb-3 border-b border-gray-200">
                     <p class="text-lg font-bold text-gray-900">${pendingTransfer.formattedAmount} UGX</p>
@@ -1115,10 +1401,24 @@
                         <p class="text-xs text-gray-500">Account: ${selectedWallet.wallet_number}</p>
                     </div>
                 </div>
-            </div>
         `;
 
-        // Show attempts warning if any previous attempts
+        if (calculatedFee > 0) {
+            summaryContent += `
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-medium text-gray-600">Transfer Fee:</span>
+                    <span class="text-sm font-semibold text-gray-900">${calculatedFee.toLocaleString()} UGX</span>
+                </div>
+                <div class="flex justify-between items-center border-t border-gray-200 pt-2">
+                    <span class="text-sm font-bold text-gray-800">Total Required:</span>
+                    <span class="text-sm font-bold text-gray-900">${pendingTransfer.totalRequired.toLocaleString()} UGX</span>
+                </div>
+            `;
+        }
+
+        summaryContent += `</div>`;
+        passwordSummary.innerHTML = summaryContent;
+
         const attempts = getPasswordAttempts();
         if (attempts.count > 0) {
             const attemptsWarning = document.getElementById('attemptsWarning');
@@ -1130,8 +1430,25 @@
         document.getElementById('sendCreditTitle').textContent = 'Confirm with Password';
         document.getElementById('sendCreditSubtitle').textContent = 'Enter your password to authorize';
 
-        animateToStep('sendCreditAmountStep', 'sendCreditPasswordStep', 7);
-    }
+        animateToStep('sendCreditBalanceCheckStep', 'sendCreditPasswordStep', 7);
+    };
+
+    document.getElementById('sendCreditAmount').addEventListener('input', function (e) {
+        const value = e.target.value;
+        const errorDiv = document.getElementById('amountError');
+
+        clearErrorMessages();
+
+        if (value) {
+            const amount = parseFloat(value);
+
+            if (amount < 500) {
+                e.target.classList.add('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
+                errorDiv.textContent = 'Amount must be at least 500 UGX';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+    });
 
     async function verifyPassword() {
         const passwordInput = document.getElementById('confirmPassword');
@@ -1162,16 +1479,13 @@
             const data = await response.json();
 
             if (data.success) {
-                // Password verified successfully
                 securityToken = data.token;
-                resetPasswordAttempts(); // Clear attempts on success
+                resetPasswordAttempts();
                 showConfirmation();
             } else {
-                // Password verification failed
                 const attempts = incrementPasswordAttempts();
 
                 if (attempts.count >= MAX_ATTEMPTS) {
-                    // User is now blocked
                     showInputError('confirmPassword', 'passwordError', 'Too many failed attempts. Access blocked.');
                     setTimeout(() => {
                         hideSendCreditModal();
@@ -1184,13 +1498,12 @@
                     showInputError('confirmPassword', 'passwordError',
                         `Incorrect password. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`);
 
-                    // Update attempts warning
                     const attemptsWarning = document.getElementById('attemptsWarning');
                     attemptsWarning.textContent = `Warning: ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account is blocked.`;
                     attemptsWarning.classList.remove('hidden');
                 }
 
-                passwordInput.value = ''; // Clear password field
+                passwordInput.value = '';
             }
 
         } catch (error) {
@@ -1206,7 +1519,7 @@
         const confirmationDetails = document.getElementById('confirmationSummaryDetails');
         const walletTypeText = window.sendCreditType === 'vendor' ? 'Vendor' : 'User';
 
-        confirmationDetails.innerHTML = `
+        let confirmationContent = `
             <div class="space-y-4">
                 <div class="text-center pb-3 border-b border-yellow-200">
                     <h5 class="font-semibold text-gray-900 mb-1">Transfer Summary</h5>
@@ -1231,7 +1544,23 @@
                         <span class="text-sm font-medium text-gray-600">Amount:</span>
                         <span class="text-sm font-bold text-gray-900">${pendingTransfer.amount} UGX</span>
                     </div>
+        `;
 
+        if (calculatedFee > 0) {
+            confirmationContent += `
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-600">Transfer Fee:</span>
+                        <span class="text-sm font-bold text-gray-900">${calculatedFee.toLocaleString()} UGX</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center border-t border-yellow-300 pt-2">
+                        <span class="text-sm font-bold text-gray-800">Total Deducted:</span>
+                        <span class="text-sm font-bold text-gray-900">${pendingTransfer.totalRequired.toLocaleString()} UGX</span>
+                    </div>
+            `;
+        }
+
+        confirmationContent += `
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium text-gray-600">Status:</span>
                         <span class="text-sm font-semibold text-green-700">✓ Password Verified</span>
@@ -1239,6 +1568,8 @@
                 </div>
             </div>
         `;
+
+        confirmationDetails.innerHTML = confirmationContent;
 
         document.getElementById('sendCreditTitle').textContent = 'Confirm Transfer';
         document.getElementById('sendCreditSubtitle').textContent = 'Review details before sending';
@@ -1284,6 +1615,8 @@
                     {
                         transactionId: data.transaction_id || 'N/A',
                         amount: pendingTransfer.amount,
+                        fee: calculatedFee,
+                        totalDeducted: pendingTransfer.totalRequired,
                         recipient: pendingTransfer.wallet.wallet_name,
                         recipientAccount: pendingTransfer.wallet.wallet_number,
                         newBalance: data.balance
@@ -1310,7 +1643,7 @@
         } finally {
             confirmBtn.innerHTML = originalText;
             confirmBtn.disabled = false;
-            securityToken = null; // Clear token after use
+            securityToken = null;
         }
     };
 
@@ -1336,7 +1669,7 @@
         responseSubtitle.textContent = subtitle;
 
         if (success && typeof details === 'object') {
-            responseDetails.innerHTML = `
+            let responseContent = `
                 <div class="space-y-3">
                     <div class="text-center pb-3 border-b border-green-200">
                         <div class="flex items-center justify-center gap-2 mb-2">
@@ -1351,6 +1684,25 @@
                             <p class="text-green-600 font-medium">Amount Sent</p>
                             <p class="text-green-800 font-bold">${details.amount} UGX</p>
                         </div>
+            `;
+
+            if (details.fee > 0) {
+                responseContent += `
+                        <div>
+                            <p class="text-green-600 font-medium">Transfer Fee</p>
+                            <p class="text-green-800 font-bold">${details.fee.toLocaleString()} UGX</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-green-600 font-medium">Total Deducted</p>
+                            <p class="text-green-800 font-bold">${details.totalDeducted.toLocaleString()} UGX</p>
+                        </div>
+                `;
+            }
+
+            responseContent += `
                         <div>
                             <p class="text-green-600 font-medium">Available Balance</p>
                             <p class="text-green-800 font-bold">${details.newBalance ? details.newBalance.toLocaleString() : 'N/A'} UGX</p>
@@ -1364,6 +1716,8 @@
                     </div>
                 </div>
             `;
+
+            responseDetails.innerHTML = responseContent;
         } else {
             responseDetails.innerHTML = `
                 <div class="text-center">
@@ -1415,18 +1769,4 @@
 
         animateToStep('sendCreditConfirmationStep', 'sendCreditResponseStep', 9);
     }
-
-    document.getElementById('sendCreditAmount').addEventListener('input', function (e) {
-        const value = e.target.value;
-        const errorDiv = document.getElementById('amountError');
-
-        if (value && parseFloat(value) < 500) {
-            e.target.classList.add('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
-            errorDiv.textContent = 'Amount must be at least 500 UGX';
-            errorDiv.classList.remove('hidden');
-        } else {
-            e.target.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-200');
-            errorDiv.classList.add('hidden');
-        }
-    });
 </script>
