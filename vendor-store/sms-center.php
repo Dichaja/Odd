@@ -141,12 +141,6 @@ function formatCurrency($amount)
                                     <i class="fas fa-plus-circle text-orange-600"></i>
                                     <span>Top Up Credit</span>
                                 </button>
-                                <button
-                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
-                                    data-tab="credit">
-                                    <i class="fas fa-wallet text-indigo-600"></i>
-                                    <span>Credit Status</span>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -157,186 +151,184 @@ function formatCurrency($amount)
         <div id="tab-content">
             <!-- Send SMS Tab -->
             <div id="send-content" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-paper-plane text-blue-600"></i>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-paper-plane text-blue-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-900">Send SMS</h3>
+                    </div>
+
+                    <form id="sms-form" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Send Type</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label
+                                    class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="sendType" value="single" class="sr-only" checked
+                                        onchange="toggleSendType()">
+                                    <div
+                                        class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
+                                        <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-900">Single SMS</div>
+                                </label>
+                                <label
+                                    class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="sendType" value="bulk" class="sr-only"
+                                        onchange="toggleSendType()">
+                                    <div
+                                        class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
+                                        <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-900">Bulk SMS</div>
+                                </label>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-900">Send SMS</h3>
                         </div>
 
-                        <form id="sms-form" class="space-y-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Send Type</label>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <label
-                                        class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="sendType" value="single" class="sr-only" checked
-                                            onchange="toggleSendType()">
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                        <div class="text-sm font-medium text-gray-900">Single SMS</div>
-                                    </label>
-                                    <label
-                                        class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="sendType" value="bulk" class="sr-only"
-                                            onchange="toggleSendType()">
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                        <div class="text-sm font-medium text-gray-900">Bulk SMS</div>
-                                    </label>
+                        <div id="single-recipient">
+                            <label for="recipient" class="block text-sm font-semibold text-gray-700 mb-2">Recipient
+                                Phone Number</label>
+                            <input type="tel" id="recipient"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                placeholder="0700123456" autocomplete="off">
+                        </div>
+
+                        <div id="bulk-recipients" class="hidden">
+                            <label for="bulk-number-input" class="block text-sm font-semibold text-gray-700 mb-2">Add
+                                Recipients</label>
+
+                            <!-- Template Upload Section -->
+                            <div class="bg-blue-50 rounded-xl p-4 mb-4 border border-blue-200">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-excel text-blue-600 text-sm"></i>
+                                    </div>
+                                    <h4 class="font-semibold text-gray-900">Bulk Upload from Excel</h4>
                                 </div>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <button type="button" onclick="downloadSampleTemplate()"
+                                        class="flex-1 px-4 py-2 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium text-blue-700">
+                                        <i class="fas fa-download mr-2"></i>Download Sample Template
+                                    </button>
+                                    <div class="flex-1">
+                                        <input type="file" id="bulk-upload-file" accept=".xlsx,.xls,.csv" class="hidden"
+                                            onchange="handleBulkUpload(event)">
+                                        <button type="button"
+                                            onclick="document.getElementById('bulk-upload-file').click()"
+                                            class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                                            <i class="fas fa-upload mr-2"></i>Upload Excel File
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-blue-600 mt-2">Upload an Excel file with 9-digit phone numbers in
+                                    the first column (format: 700123456). The system will automatically add the leading
+                                    0.</p>
                             </div>
 
-                            <div id="single-recipient">
-                                <label for="recipient" class="block text-sm font-semibold text-gray-700 mb-2">Recipient
-                                    Phone Number</label>
-                                <input type="tel" id="recipient"
-                                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                    placeholder="0700123456" autocomplete="off">
-                            </div>
-
-                            <div id="bulk-recipients" class="hidden">
-                                <label for="bulk-number-input"
-                                    class="block text-sm font-semibold text-gray-700 mb-2">Add Recipients</label>
+                            <!-- Manual Entry Section -->
+                            <div class="border-t border-gray-200 pt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Or Add Manually</label>
                                 <div class="flex gap-2">
                                     <input type="tel" id="bulk-number-input"
                                         class="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                        placeholder="0700123456" autocomplete="off">
+                                        placeholder="700123456 or 0700123456" autocomplete="off">
                                     <button type="button" id="add-number-btn"
                                         class="md:hidden px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
-                                <div id="recipient-tags" class="mt-3 flex flex-wrap gap-2"></div>
-                                <p class="text-xs text-gray-500 mt-2">Enter 10-digit phone numbers (e.g., 0700123456)
-                                </p>
                             </div>
 
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <label for="message"
-                                        class="block text-sm font-semibold text-gray-700">Message</label>
-                                    <span class="text-xs text-gray-500" id="char-count">0/160 characters</span>
-                                </div>
-                                <textarea id="message" rows="4"
-                                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                    placeholder="Type your message here..." oninput="updateCharCount()"></textarea>
-                                <div class="flex items-center justify-between mt-2">
-                                    <p class="text-xs text-gray-500" id="sms-parts">1 SMS part</p>
-                                    <button type="button" onclick="showTemplateSelector()"
-                                        class="text-xs text-primary hover:text-primary/80 font-medium">Use
-                                        Template</button>
-                                </div>
-                            </div>
+                            <div id="recipient-tags" class="mt-3 flex flex-wrap gap-2"></div>
+                            <p class="text-xs text-gray-500 mt-2">Enter 9 or 10-digit phone numbers (e.g., 700123456 or
+                                0700123456)</p>
+                        </div>
 
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Send Options</label>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <label
-                                        class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="sendOption" value="now" class="sr-only" checked
-                                            onchange="toggleSchedule()">
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                        <div class="text-sm font-medium text-gray-900">Send Now</div>
-                                    </label>
-                                    <label
-                                        class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                        <input type="radio" name="sendOption" value="schedule" class="sr-only"
-                                            onchange="toggleSchedule()">
-                                        <div
-                                            class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
-                                            <div
-                                                class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
-                                            </div>
-                                        </div>
-                                        <div class="text-sm font-medium text-gray-900">Schedule</div>
-                                    </label>
-                                </div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="message" class="block text-sm font-semibold text-gray-700">Message</label>
+                                <span class="text-xs text-gray-500" id="char-count">0/160 characters</span>
                             </div>
-
-                            <div id="schedule-options" class="hidden">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="schedule-date"
-                                            class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
-                                        <input type="date" id="schedule-date"
-                                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
-                                    </div>
-                                    <div>
-                                        <label for="schedule-time"
-                                            class="block text-sm font-semibold text-gray-700 mb-2">Time</label>
-                                        <input type="time" id="schedule-time"
-                                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="bg-gray-50 rounded-xl p-4">
-                                <div class="flex items-center justify-between text-sm">
-                                    <span class="text-gray-600">Estimated Cost:</span>
-                                    <span class="font-semibold text-gray-900" id="estimated-cost">Sh. 0.00</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm mt-2">
-                                    <span class="text-gray-600">Recipients:</span>
-                                    <span class="font-semibold text-gray-900" id="recipient-count">0</span>
-                                </div>
-                                <div class="flex items-center justify-between text-sm mt-2">
-                                    <span class="text-gray-600">Credits Needed:</span>
-                                    <span class="font-semibold text-gray-900" id="credits-needed">0</span>
-                                </div>
-                            </div>
-
-                            <button type="submit" id="send-sms-btn"
-                                class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
-                                <i class="fas fa-paper-plane mr-2"></i>
-                                <span id="send-button-text">Send SMS</span>
-                            </button>
-                        </form>
-                    </div>
-
-                    <div class="hidden lg:block">
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <i class="fas fa-wallet text-green-600"></i>
-                                </div>
-                                <h3 class="text-lg font-semibold text-gray-900">Credit Status</h3>
-                            </div>
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-gray-600">Available Credits:</span>
-                                    <span class="font-semibold text-gray-900" id="available-credits">Loading...</span>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-gray-600">Credit Value:</span>
-                                    <span class="font-semibold text-gray-900" id="credit-value">Sh. 0.00</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-primary h-2 rounded-full transition-all duration-300"
-                                        style="width: 0%" id="credit-bar"></div>
-                                </div>
-                                <button onclick="switchTab('topup')"
-                                    class="w-full px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors font-medium">
-                                    <i class="fas fa-plus mr-2"></i>Top Up Credits
-                                </button>
+                            <textarea id="message" rows="4"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                placeholder="Type your message here..." oninput="updateCharCount()"></textarea>
+                            <div class="flex items-center justify-between mt-2">
+                                <p class="text-xs text-gray-500" id="sms-parts">1 SMS part</p>
+                                <button type="button" onclick="showTemplateSelector()"
+                                    class="text-xs text-primary hover:text-primary/80 font-medium">Use
+                                    Template</button>
                             </div>
                         </div>
-                    </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Send Options</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label
+                                    class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="sendOption" value="now" class="sr-only" checked
+                                        onchange="toggleSchedule()">
+                                    <div
+                                        class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
+                                        <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-900">Send Now</div>
+                                </label>
+                                <label
+                                    class="relative flex items-center p-3 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-primary/30 transition-all duration-200 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="sendOption" value="schedule" class="sr-only"
+                                        onchange="toggleSchedule()">
+                                    <div
+                                        class="w-4 h-4 border-2 border-gray-300 rounded-full peer-checked:border-primary peer-checked:bg-primary flex items-center justify-center mr-2">
+                                        <div class="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100">
+                                        </div>
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-900">Schedule</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="schedule-options" class="hidden">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="schedule-date"
+                                        class="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                                    <input type="date" id="schedule-date"
+                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
+                                </div>
+                                <div>
+                                    <label for="schedule-time"
+                                        class="block text-sm font-semibold text-gray-700 mb-2">Time</label>
+                                    <input type="time" id="schedule-time"
+                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600">Estimated Cost:</span>
+                                <span class="font-semibold text-gray-900" id="estimated-cost">Sh. 0.00</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm mt-2">
+                                <span class="text-gray-600">Recipients:</span>
+                                <span class="font-semibold text-gray-900" id="recipient-count">0</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm mt-2">
+                                <span class="text-gray-600">Credits Needed:</span>
+                                <span class="font-semibold text-gray-900" id="credits-needed">0</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="send-sms-btn"
+                            class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            <span id="send-button-text">Send SMS</span>
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -370,10 +362,6 @@ function formatCurrency($amount)
                                 <input type="date" id="dateToFilter"
                                     class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                     onchange="filterHistory()" placeholder="To Date">
-                                <button onclick="loadSmsHistory()"
-                                    class="px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-medium">
-                                    <i class="fas fa-refresh mr-2"></i>Refresh
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -399,7 +387,7 @@ function formatCurrency($amount)
                                             Cost</th>
                                         <th
                                             class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Date</th>
+                                            Date & Time</th>
                                         <th
                                             class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                             Actions</th>
@@ -631,6 +619,32 @@ function formatCurrency($amount)
     </div>
 </div>
 
+<!-- Bulk Upload Results Modal -->
+<div id="bulkUploadModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideBulkUploadModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[80vh] overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Bulk Upload Results</h3>
+                <button onclick="hideBulkUploadModal()"
+                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-96">
+            <div id="upload-results-content">
+            </div>
+            <div class="flex gap-3 pt-4">
+                <button type="button" onclick="hideBulkUploadModal()"
+                    class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
+                    Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modals -->
 <div id="templateSelectorModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideTemplateSelector()"></div>
@@ -714,6 +728,33 @@ function formatCurrency($amount)
             </div>
             <button onclick="hideMessageModal()"
                 class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">OK</button>
+        </div>
+    </div>
+</div>
+
+<div id="confirmationModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideConfirmationModal()"></div>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Confirm SMS Details</h3>
+                <button onclick="hideConfirmationModal()"
+                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4" id="confirmation-details">
+            </div>
+            <div class="flex gap-3 pt-6">
+                <button type="button" onclick="hideConfirmationModal()"
+                    class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
+                <button type="button" onclick="confirmSendSms()"
+                    class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
+                    <i class="fas fa-paper-plane mr-2"></i>Send SMS
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -827,15 +868,6 @@ function formatCurrency($amount)
         document.getElementById('scheduled-count').textContent = smsStats.scheduled_count || 0;
         document.getElementById('sms-rate-display').textContent = `Sh. ${formatCurrency(smsStats.sms_rate || 35)}/=`;
 
-        document.getElementById('available-credits').textContent = smsStats.current_credits || 0;
-        document.getElementById('credit-value').textContent = `Sh. ${formatCurrency(smsStats.credit_value || 0)}`;
-
-        currentSmsRate = smsStats.sms_rate || 35;
-
-        // Update credit bar
-        const creditPercentage = Math.min((smsStats.current_credits / 1000) * 100, 100);
-        document.getElementById('credit-bar').style.width = `${creditPercentage}%`;
-
         // Update topup display
         document.getElementById('topup-sms-rate').textContent = `Sh. ${formatCurrency(currentSmsRate)}/=`;
         updatePackageCosts();
@@ -883,6 +915,7 @@ function formatCurrency($amount)
         // Load tab-specific data
         switch (tabName) {
             case 'history':
+                setDefaultDateFilters();
                 loadSmsHistory();
                 break;
             case 'templates':
@@ -900,6 +933,15 @@ function formatCurrency($amount)
         };
         const tabInfo = tabLabels[tabName] || tabLabels['send'];
         updateMobileTabLabel(tabInfo.label, tabInfo.icon);
+    }
+
+    function setDefaultDateFilters() {
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        document.getElementById('dateFromFilter').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('dateToFilter').value = lastDay.toISOString().split('T')[0];
     }
 
     function updateMobileTabLabel(label, icon) {
@@ -968,7 +1010,17 @@ function formatCurrency($amount)
 
     function validatePhoneNumber(number) {
         const cleaned = number.replace(/\s+/g, '');
-        return /^0[7][0-9]{8}$/.test(cleaned);
+        // Accept both 10-digit (starting with 0) and 9-digit numbers
+        return /^0[7][0-9]{8}$/.test(cleaned) || /^[7][0-9]{8}$/.test(cleaned);
+    }
+
+    function normalizePhoneNumber(number) {
+        const cleaned = number.replace(/\s+/g, '');
+        // If it's a 9-digit number starting with 7, add 0 prefix
+        if (/^[7][0-9]{8}$/.test(cleaned)) {
+            return '0' + cleaned;
+        }
+        return cleaned;
     }
 
     function addBulkRecipient() {
@@ -982,12 +1034,13 @@ function formatCurrency($amount)
             return;
         }
 
-        if (bulkRecipients.includes(number)) {
+        const normalizedNumber = normalizePhoneNumber(number);
+        if (bulkRecipients.includes(normalizedNumber)) {
             showMessageModal('Duplicate Number', 'This number has already been added', 'warning');
             return;
         }
 
-        bulkRecipients.push(number);
+        bulkRecipients.push(normalizedNumber);
         input.value = '';
         renderRecipientTags();
         updateSendFormCalculations();
@@ -1070,18 +1123,41 @@ function formatCurrency($amount)
             const scheduleTime = document.getElementById('schedule-time').value;
 
             if (!scheduleDate || !scheduleTime) {
-                showMessageModal('Missing Schedule', 'Please select schedule date and time', 'error');
+                showMessageModal('Missing Schedule', 'Please select both date and time for scheduling', 'error');
                 return;
             }
 
             scheduledAt = `${scheduleDate} ${scheduleTime}:00`;
         }
 
-        const sendBtn = document.getElementById('send-sms-btn');
-        sendBtn.disabled = true;
-        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        // Show confirmation modal
+        showConfirmationModal(sendType, message, recipients, sendOption, scheduledAt);
+    }
 
-        const data = {
+    function showConfirmationModal(sendType, message, recipients, sendOption, scheduledAt) {
+        const modal = document.getElementById('confirmationModal');
+        const detailsContainer = document.getElementById('confirmation-details');
+
+        const parts = Math.ceil(message.length / 160) || 1;
+        const creditsNeeded = recipients.length * parts;
+        const totalCost = creditsNeeded * currentSmsRate;
+
+        const scheduleText = sendOption === 'schedule' ?
+            `<div><strong>Scheduled for:</strong> ${formatDateTime(scheduledAt)}</div>` :
+            '<div><strong>Send:</strong> Immediately</div>';
+
+        detailsContainer.innerHTML = `
+        <div><strong>Type:</strong> ${sendType === 'single' ? 'Single SMS' : 'Bulk SMS'}</div>
+        <div><strong>Recipients:</strong> ${recipients.length} (${recipients.slice(0, 3).join(', ')}${recipients.length > 3 ? '...' : ''})</div>
+        <div><strong>Message:</strong> ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}</div>
+        <div><strong>SMS Parts:</strong> ${parts}</div>
+        <div><strong>Credits Needed:</strong> ${creditsNeeded}</div>
+        <div><strong>Total Cost:</strong> Sh. ${formatCurrency(totalCost)}</div>
+        ${scheduleText}
+    `;
+
+        // Store the data for confirmation
+        window.pendingSmsData = {
             message: message,
             recipients: JSON.stringify(recipients),
             send_type: sendType,
@@ -1089,26 +1165,53 @@ function formatCurrency($amount)
             scheduled_at: scheduledAt
         };
 
-        makeApiCall('sendSms', data)
+        modal.classList.remove('hidden');
+    }
+
+    function confirmSendSms() {
+        hideConfirmationModal();
+
+        const sendButton = document.getElementById('send-sms-btn');
+        const originalText = sendButton.innerHTML;
+        sendButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+        sendButton.disabled = true;
+
+        makeApiCall('sendSms', window.pendingSmsData)
             .then(response => {
                 if (response.success) {
                     showMessageModal('Success', response.message, 'success');
                     document.getElementById('sms-form').reset();
-                    document.querySelector('input[name="sendType"][value="single"]').checked = true;
-                    document.querySelector('input[name="sendOption"][value="now"]').checked = true;
                     bulkRecipients = [];
-                    toggleSendType();
-                    toggleSchedule();
+                    renderRecipientTags();
+                    updateSendFormCalculations();
                     updateCharCount();
                     loadSmsStats(); // Refresh stats
                 } else {
-                    showMessageModal('Error', response.message || 'Failed to send SMS', 'error');
+                    showMessageModal('Error', response.message, 'error');
                 }
             })
             .finally(() => {
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i><span id="send-button-text">Send SMS</span>';
+                sendButton.innerHTML = originalText;
+                sendButton.disabled = false;
+                delete window.pendingSmsData;
             });
+    }
+
+    function hideConfirmationModal() {
+        document.getElementById('confirmationModal').classList.add('hidden');
+    }
+
+    function formatDateTime(dateTimeString) {
+        if (!dateTimeString) return '';
+        const date = new Date(dateTimeString);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
     }
 
     // History Functions
@@ -1119,16 +1222,14 @@ function formatCurrency($amount)
         const dateTo = document.getElementById('dateToFilter').value;
 
         const params = new URLSearchParams({
-            action: 'getSmsHistory',
             search: search,
             status: status,
             date_from: dateFrom,
             date_to: dateTo,
-            page: 1,
-            limit: 50
+            limit: '50'
         });
 
-        fetch(`fetch/manageSmsCenter.php?${params}`)
+        fetch(`fetch/manageSmsCenter.php?action=getSmsHistory&${params}`)
             .then(response => response.json())
             .then(response => {
                 if (response.success) {
@@ -1159,155 +1260,120 @@ function formatCurrency($amount)
         emptyState.classList.add('hidden');
 
         // Desktop table
-        tableBody.innerHTML = smsHistory.map((sms, index) => {
-            const statusBadge = getStatusBadge(sms.status);
-            const recipientText = sms.recipient_count === 1 ? sms.recipients[0] : `${sms.recipient_count} recipients`;
-            const dateText = sms.status === 'scheduled' ?
-                `Scheduled: ${formatDateTime(sms.scheduled_at)}` :
-                formatDateTime(sms.sent_at);
+        tableBody.innerHTML = smsHistory.map(sms => {
+            const statusClass = getStatusClass(sms.status);
+            const statusIcon = getStatusIcon(sms.status);
+            const displayDate = sms.sent_at || sms.scheduled_at || sms.created_at;
 
             return `
-                <tr class="${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors">
-                    <td class="px-4 py-3">
-                        <div class="max-w-xs">
-                            <div class="text-sm font-medium text-gray-900 truncate" title="${sms.message}">
-                                ${sms.message.substring(0, 50)}${sms.message.length > 50 ? '...' : ''}
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1">
-                                ${sms.sms_parts} SMS part${sms.sms_parts > 1 ? 's' : ''}
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="text-sm text-gray-900">${recipientText}</div>
-                        ${sms.type === 'bulk' ? `<div class="text-xs text-gray-500 mt-1">Bulk SMS</div>` : ''}
-                    </td>
-                    <td class="px-4 py-3">${statusBadge}</td>
-                    <td class="px-4 py-3">
-                        <div class="text-sm font-semibold text-gray-900">Sh. ${formatCurrency(sms.total_cost)}</div>
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="text-sm text-gray-900">${dateText}</div>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <div class="flex items-center justify-center gap-1">
-                            <button onclick="showSmsDetails('${sms.id}')" class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors flex items-center justify-center" title="View Details">
-                                <i class="fas fa-eye text-xs"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3">
+                    <div class="max-w-xs">
+                        <p class="text-sm text-gray-900 truncate" title="${sms.message}">${sms.message}</p>
+                    </div>
+                </td>
+                <td class="px-4 py-3">
+                    <div class="text-sm text-gray-900">${sms.recipient_count} recipient${sms.recipient_count > 1 ? 's' : ''}</div>
+                    <div class="text-xs text-gray-500">${sms.type}</div>
+                </td>
+                <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
+                        <i class="${statusIcon}"></i>
+                        ${sms.status}
+                    </span>
+                </td>
+                <td class="px-4 py-3">
+                    <div class="text-sm text-gray-900">Sh. ${formatCurrency(sms.total_cost)}</div>
+                    <div class="text-xs text-gray-500">${sms.credits_used} credits</div>
+                </td>
+                <td class="px-4 py-3">
+                    <div class="text-sm text-gray-900">${formatDateTime(displayDate)}</div>
+                </td>
+                <td class="px-4 py-3 text-center">
+                    <button onclick="viewSmsDetails('${sms.id}')" class="text-primary hover:text-primary/80 transition-colors">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
         }).join('');
 
         // Mobile cards
         mobileContainer.innerHTML = smsHistory.map(sms => {
-            const statusBadge = getStatusBadge(sms.status);
-            const recipientText = sms.recipient_count === 1 ? sms.recipients[0] : `${sms.recipient_count} recipients`;
-            const dateText = sms.status === 'scheduled' ?
-                `Scheduled: ${formatDateTime(sms.scheduled_at)}` :
-                formatDateTime(sms.sent_at);
+            const statusClass = getStatusClass(sms.status);
+            const statusIcon = getStatusIcon(sms.status);
+            const displayDate = sms.sent_at || sms.scheduled_at || sms.created_at;
 
             return `
-                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="flex-1 min-w-0">
-                            <div class="text-sm font-medium text-gray-900 mb-2">${sms.message}</div>
-                            <div class="text-xs text-gray-500">
-                                ${sms.sms_parts} SMS part${sms.sms_parts > 1 ? 's' : ''}
-                            </div>
-                        </div>
-                        ${statusBadge}
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 text-xs mb-4">
-                        <div>
-                            <span class="text-gray-500 uppercase tracking-wide">Recipients</span>
-                            <div class="font-medium text-gray-900 mt-1">${recipientText}</div>
-                        </div>
-                        <div>
-                            <span class="text-gray-500 uppercase tracking-wide">Cost</span>
-                            <div class="font-semibold text-gray-900 mt-1">Sh. ${formatCurrency(sms.total_cost)}</div>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-900 line-clamp-2 mb-2">${sms.message}</p>
+                        <div class="flex items-center gap-4 text-xs text-gray-500">
+                            <span>${sms.recipient_count} recipient${sms.recipient_count > 1 ? 's' : ''}</span>
+                            <span>${sms.type}</span>
                         </div>
                     </div>
-
-                    <div class="flex items-center justify-between">
-                        <div class="text-xs text-gray-500">${dateText}</div>
-                        <button onclick="showSmsDetails('${sms.id}')" class="px-3 py-2 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium">
-                            <i class="fas fa-eye mr-1"></i>Details
-                        </button>
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
+                        <i class="${statusIcon}"></i>
+                        ${sms.status}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="text-sm">
+                        <span class="font-medium text-gray-900">Sh. ${formatCurrency(sms.total_cost)}</span>
+                        <span class="text-gray-500 ml-2">${sms.credits_used} credits</span>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        ${formatDateTime(displayDate)}
                     </div>
                 </div>
-            `;
+            </div>
+        `;
         }).join('');
-    }
-
-    function getStatusBadge(status) {
-        const badges = {
-            'sent': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Sent</span>',
-            'scheduled': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Scheduled</span>',
-            'failed': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>',
-            'cancelled': '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Cancelled</span>'
-        };
-        return badges[status] || '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
     }
 
     function filterHistory() {
         loadSmsHistory();
     }
 
-    function showSmsDetails(smsId) {
+    function getStatusClass(status) {
+        const classes = {
+            'sent': 'bg-green-100 text-green-800',
+            'scheduled': 'bg-blue-100 text-blue-800',
+            'failed': 'bg-red-100 text-red-800',
+            'cancelled': 'bg-gray-100 text-gray-800'
+        };
+        return classes[status] || 'bg-gray-100 text-gray-800';
+    }
+
+    function getStatusIcon(status) {
+        const icons = {
+            'sent': 'fas fa-check',
+            'scheduled': 'fas fa-clock',
+            'failed': 'fas fa-times',
+            'cancelled': 'fas fa-ban'
+        };
+        return icons[status] || 'fas fa-question';
+    }
+
+    function viewSmsDetails(smsId) {
         const sms = smsHistory.find(s => s.id === smsId);
         if (!sms) return;
 
-        const dateText = sms.status === 'scheduled' ?
-            `Scheduled for: ${formatDateTime(sms.scheduled_at)}` :
-            `Sent on: ${formatDateTime(sms.sent_at)}`;
+        const recipients = Array.isArray(sms.recipients) ? sms.recipients : [];
+        const recipientList = recipients.join(', ');
 
-        const modalContent = `
-            <div class="space-y-6">
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Message</h4>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <p class="text-gray-900">${sms.message}</p>
-                    </div>
-                    <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-                        <span>${sms.message.length} characters</span>
-                        <span>${sms.sms_parts} SMS part${sms.sms_parts > 1 ? 's' : ''}</span>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Recipients (${sms.recipient_count})</h4>
-                    <div class="bg-gray-50 rounded-lg p-4 max-h-40 overflow-y-auto">
-                        ${sms.recipients.map(recipient => `
-                            <div class="flex items-center gap-2 py-1">
-                                <i class="fas fa-phone text-gray-400 text-xs"></i>
-                                <span class="text-gray-900">${recipient}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Status</h4>
-                        ${getStatusBadge(sms.status)}
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Cost</h4>
-                        <div class="text-lg font-semibold text-gray-900">Sh. ${formatCurrency(sms.total_cost)}</div>
-                    </div>
-                </div>
-
-                <div>
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Date & Time</h4>
-                    <div class="text-gray-900">${dateText}</div>
-                </div>
-            </div>
-        `;
-
-        showModal('SMS Details', modalContent);
+        showMessageModal('SMS Details', `
+        <div class="text-left space-y-3">
+            <div><strong>Message:</strong> ${sms.message}</div>
+            <div><strong>Recipients:</strong> ${recipientList}</div>
+            <div><strong>Status:</strong> ${sms.status}</div>
+            <div><strong>Cost:</strong> Sh. ${formatCurrency(sms.total_cost)}</div>
+            <div><strong>Credits Used:</strong> ${sms.credits_used}</div>
+            <div><strong>Date & Time:</strong> ${formatDateTime(sms.sent_at || sms.scheduled_at || sms.created_at)}</div>
+        </div>
+    `, 'info');
     }
 
     // Template Functions
@@ -1316,61 +1382,70 @@ function formatCurrency($amount)
             .then(response => {
                 if (response.success) {
                     smsTemplates = response.data;
-                    renderTemplates();
+                    renderSmsTemplates();
                 } else {
                     showMessageModal('Error', response.message || 'Failed to load templates', 'error');
                 }
             });
     }
 
-    function renderTemplates() {
+    function renderSmsTemplates() {
         const grid = document.getElementById('templates-grid');
         const emptyState = document.getElementById('templates-empty-state');
 
         if (smsTemplates.length === 0) {
-            grid.classList.add('hidden');
+            grid.innerHTML = '';
             emptyState.classList.remove('hidden');
             return;
         }
 
-        grid.classList.remove('hidden');
         emptyState.classList.add('hidden');
 
         grid.innerHTML = smsTemplates.map(template => `
-            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
                 <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-file-alt text-purple-600"></i>
-                        </div>
-                        <h4 class="font-semibold text-gray-900">${template.name}</h4>
-                    </div>
-                    <div class="flex gap-1">
-                        <button onclick="editTemplate('${template.id}')" class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" title="Edit Template">
-                            <i class="fas fa-edit text-xs"></i>
+                    <h4 class="font-semibold text-gray-900 truncate">${template.name}</h4>
+                    <div class="flex items-center gap-2 ml-2">
+                        <button onclick="editTemplate('${template.id}')" class="text-gray-400 hover:text-primary transition-colors">
+                            <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteTemplate('${template.id}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" title="Delete Template">
-                            <i class="fas fa-trash-alt text-xs"></i>
+                        <button onclick="deleteTemplate('${template.id}')" class="text-gray-400 hover:text-red-600 transition-colors">
+                            <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
-                <p class="text-sm text-gray-600 mb-4">${template.message}</p>
-                <div class="flex gap-2">
-                    <button onclick="selectTemplate('${template.id}'); switchTab('send')" class="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium">
-                        <i class="fas fa-paper-plane mr-1"></i>Use Template
+                <p class="text-gray-600 text-sm mb-4 line-clamp-3">${template.message}</p>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-500">${template.message.length} characters</span>
+                    <button onclick="useTemplate('${template.id}')" class="px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm hover:bg-primary/20 transition-colors">
+                        Use Template
                     </button>
                 </div>
             </div>
         `).join('');
     }
 
+    function filterTemplates() {
+        const search = document.getElementById('searchTemplates').value.toLowerCase();
+        const filtered = smsTemplates.filter(template =>
+            template.name.toLowerCase().includes(search) ||
+            template.message.toLowerCase().includes(search)
+        );
+
+        // Temporarily update the templates array for rendering
+        const originalTemplates = [...smsTemplates];
+        smsTemplates = filtered;
+        renderSmsTemplates();
+        smsTemplates = originalTemplates;
+    }
+
     function showCreateTemplateForm() {
         document.getElementById('template-modal-title').textContent = 'Create Template';
-        document.getElementById('template-form').reset();
         document.getElementById('template-id').value = '';
-        document.getElementById('templateModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+        document.getElementById('template-name').value = '';
+        document.getElementById('template-message').value = '';
         updateTemplateCharCount();
+        document.getElementById('templateModal').classList.remove('hidden');
     }
 
     function editTemplate(templateId) {
@@ -1381,9 +1456,8 @@ function formatCurrency($amount)
         document.getElementById('template-id').value = template.id;
         document.getElementById('template-name').value = template.name;
         document.getElementById('template-message').value = template.message;
-        document.getElementById('templateModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
         updateTemplateCharCount();
+        document.getElementById('templateModal').classList.remove('hidden');
     }
 
     function deleteTemplate(templateId) {
@@ -1395,9 +1469,19 @@ function formatCurrency($amount)
                     showMessageModal('Success', response.message, 'success');
                     loadSmsTemplates();
                 } else {
-                    showMessageModal('Error', response.message || 'Failed to delete template', 'error');
+                    showMessageModal('Error', response.message, 'error');
                 }
             });
+    }
+
+    function useTemplate(templateId) {
+        const template = smsTemplates.find(t => t.id === templateId);
+        if (!template) return;
+
+        document.getElementById('message').value = template.message;
+        updateCharCount();
+        switchTab('send');
+        showMessageModal('Template Applied', `Template "${template.name}" has been applied to your message`, 'success');
     }
 
     function handleSaveTemplate(e) {
@@ -1408,7 +1492,7 @@ function formatCurrency($amount)
         const message = document.getElementById('template-message').value.trim();
 
         if (!name || !message) {
-            showMessageModal('Missing Fields', 'Please fill in all fields', 'error');
+            showMessageModal('Missing Information', 'Please fill in all fields', 'error');
             return;
         }
 
@@ -1425,47 +1509,9 @@ function formatCurrency($amount)
                     hideTemplateModal();
                     loadSmsTemplates();
                 } else {
-                    showMessageModal('Error', response.message || 'Failed to save template', 'error');
+                    showMessageModal('Error', response.message, 'error');
                 }
             });
-    }
-
-    function selectTemplate(templateId) {
-        const template = smsTemplates.find(t => t.id === templateId);
-        if (template) {
-            document.getElementById('message').value = template.message;
-            updateCharCount();
-        }
-        hideTemplateSelector();
-    }
-
-    function showTemplateSelector() {
-        const modal = document.getElementById('templateSelectorModal');
-        const list = document.getElementById('template-selector-list');
-
-        if (smsTemplates.length === 0) {
-            list.innerHTML = '<p class="text-center text-gray-500">No templates available</p>';
-        } else {
-            list.innerHTML = smsTemplates.map(template => `
-                <button onclick="selectTemplate('${template.id}')" class="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all">
-                    <div class="font-medium text-gray-900">${template.name}</div>
-                    <div class="text-sm text-gray-500 mt-1">${template.message}</div>
-                </button>
-            `).join('');
-        }
-
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function hideTemplateSelector() {
-        document.getElementById('templateSelectorModal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-
-    function hideTemplateModal() {
-        document.getElementById('templateModal').classList.add('hidden');
-        document.body.style.overflow = '';
     }
 
     function updateTemplateCharCount() {
@@ -1474,102 +1520,81 @@ function formatCurrency($amount)
         charCount.textContent = `${message.length}/160 characters`;
     }
 
-    function filterTemplates() {
-        const query = document.getElementById('searchTemplates').value.toLowerCase();
-        const filteredTemplates = smsTemplates.filter(template =>
-            template.name.toLowerCase().includes(query) ||
-            template.message.toLowerCase().includes(query)
-        );
-
-        const grid = document.getElementById('templates-grid');
-        const emptyState = document.getElementById('templates-empty-state');
-
-        if (filteredTemplates.length === 0) {
-            grid.classList.add('hidden');
-            emptyState.classList.remove('hidden');
-            return;
+    function showTemplateSelector() {
+        if (smsTemplates.length === 0) {
+            loadSmsTemplates();
         }
 
-        grid.classList.remove('hidden');
-        emptyState.classList.add('hidden');
-
-        grid.innerHTML = filteredTemplates.map(template => `
-            <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-file-alt text-purple-600"></i>
-                        </div>
-                        <h4 class="font-semibold text-gray-900">${template.name}</h4>
-                    </div>
-                    <div class="flex gap-1">
-                        <button onclick="editTemplate('${template.id}')" class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center justify-center" title="Edit Template">
-                            <i class="fas fa-edit text-xs"></i>
-                        </button>
-                        <button onclick="deleteTemplate('${template.id}')" class="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors flex items-center justify-center" title="Delete Template">
-                            <i class="fas fa-trash-alt text-xs"></i>
-                        </button>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-600 mb-4">${template.message}</p>
-                <div class="flex gap-2">
-                    <button onclick="selectTemplate('${template.id}'); switchTab('send')" class="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium">
-                        <i class="fas fa-paper-plane mr-1"></i>Use Template
-                    </button>
-                </div>
+        const list = document.getElementById('template-selector-list');
+        list.innerHTML = smsTemplates.map(template => `
+            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors" onclick="selectTemplate('${template.id}')">
+                <div class="font-medium text-gray-900 mb-1">${template.name}</div>
+                <div class="text-sm text-gray-600 line-clamp-2">${template.message}</div>
             </div>
         `).join('');
+
+        if (smsTemplates.length === 0) {
+            list.innerHTML = '<div class="text-center py-8 text-gray-500">No templates found</div>';
+        }
+
+        document.getElementById('templateSelectorModal').classList.remove('hidden');
+    }
+
+    function selectTemplate(templateId) {
+        useTemplate(templateId);
+        hideTemplateSelector();
+    }
+
+    function hideTemplateSelector() {
+        document.getElementById('templateSelectorModal').classList.add('hidden');
+    }
+
+    function hideTemplateModal() {
+        document.getElementById('templateModal').classList.add('hidden');
     }
 
     // Top Up Functions
     function updateTopupCalculation() {
         const selectedPackage = document.querySelector('input[name="package"]:checked');
+        if (!selectedPackage) return;
+
         const customAmountSection = document.getElementById('custom-amount-section');
         const customAmountInput = document.getElementById('custom-amount');
-        const topupCredits = document.getElementById('topup-credits');
-        const topupCost = document.getElementById('topup-cost');
-        const balanceStatus = document.getElementById('balance-status');
-        const insufficientWarning = document.getElementById('insufficient-balance-warning');
-        const purchaseBtn = document.getElementById('purchase-credits-btn');
 
-        if (!selectedPackage) {
-            topupCredits.textContent = '0';
-            topupCost.textContent = 'Sh. 0.00';
-            balanceStatus.textContent = `Sh. ${formatCurrency(walletBalance)}`;
-            balanceStatus.className = 'font-semibold text-gray-900';
-            insufficientWarning.classList.add('hidden');
-            purchaseBtn.disabled = false;
-            return;
-        }
-
-        const packageValue = selectedPackage.value;
-        let cost = 0;
         let credits = 0;
+        let cost = 0;
 
-        if (packageValue === 'custom') {
+        if (selectedPackage.value === 'custom') {
             customAmountSection.classList.remove('hidden');
             const customAmount = parseFloat(customAmountInput.value) || 0;
             cost = customAmount;
-            credits = Math.floor(customAmount / currentSmsRate);
+            credits = Math.floor(cost / currentSmsRate);
         } else {
             customAmountSection.classList.add('hidden');
-            credits = parseInt(packageValue);
+            credits = parseInt(selectedPackage.value);
             cost = credits * currentSmsRate;
         }
 
-        topupCredits.textContent = credits;
-        topupCost.textContent = `Sh. ${formatCurrency(cost)}`;
-        balanceStatus.textContent = `Sh. ${formatCurrency(walletBalance)}`;
+        document.getElementById('topup-credits').textContent = credits;
+        document.getElementById('topup-cost').textContent = `Sh. ${formatCurrency(cost)}`;
 
-        // Check if wallet balance is sufficient
+        // Update balance status
+        const balanceStatus = document.getElementById('balance-status');
+        const insufficientWarning = document.getElementById('insufficient-balance-warning');
+        const purchaseButton = document.getElementById('purchase-credits-btn');
+
         if (cost > walletBalance) {
+            balanceStatus.textContent = `Sh. ${formatCurrency(walletBalance)} (Insufficient)`;
             balanceStatus.className = 'font-semibold text-red-600';
             insufficientWarning.classList.remove('hidden');
-            purchaseBtn.disabled = true;
+            purchaseButton.disabled = true;
+            purchaseButton.classList.add('opacity-50', 'cursor-not-allowed');
         } else {
+            balanceStatus.textContent = `Sh. ${formatCurrency(walletBalance)} (Sufficient)`;
             balanceStatus.className = 'font-semibold text-green-600';
             insufficientWarning.classList.add('hidden');
-            purchaseBtn.disabled = false;
+            purchaseButton.disabled = false;
+            purchaseButton.classList.remove('opacity-50', 'cursor-not-allowed');
         }
     }
 
@@ -1577,219 +1602,283 @@ function formatCurrency($amount)
         e.preventDefault();
 
         const selectedPackage = document.querySelector('input[name="package"]:checked');
-
         if (!selectedPackage) {
-            showMessageModal('Missing Package', 'Please select a package', 'error');
+            showMessageModal('No Package Selected', 'Please select a package', 'error');
             return;
         }
 
-        let credits = 0;
         let amount = 0;
-
         if (selectedPackage.value === 'custom') {
-            const customAmount = parseFloat(document.getElementById('custom-amount').value) || 0;
-            if (customAmount < 1000) {
+            amount = parseFloat(document.getElementById('custom-amount').value) || 0;
+            if (amount < 1000) {
                 showMessageModal('Invalid Amount', 'Minimum top-up amount is Sh. 1,000', 'error');
                 return;
             }
-            credits = Math.floor(customAmount / currentSmsRate);
-            amount = customAmount;
         } else {
-            credits = parseInt(selectedPackage.value);
+            const credits = parseInt(selectedPackage.value);
             amount = credits * currentSmsRate;
         }
 
-        // Check wallet balance
         if (amount > walletBalance) {
-            showMessageModal('Insufficient Balance', `You need Sh. ${formatCurrency(amount)} but only have Sh. ${formatCurrency(walletBalance)} in your wallet. Please top up your wallet first.`, 'error');
+            showMessageModal('Insufficient Balance', 'Your wallet balance is insufficient for this purchase', 'error');
             return;
         }
 
-        // Show confirmation modal instead of alert
-        const confirmationContent = `
-        <div class="text-center">
-            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-credit-card text-blue-600 text-2xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Confirm Purchase</h3>
-            <p class="text-gray-600 mb-6">
-                Purchase <strong>${credits} SMS credits</strong> for <strong>Sh. ${formatCurrency(amount)}</strong>?
-            </p>
-            <div class="flex gap-3">
-                <button onclick="hideCustomModal()" class="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button onclick="confirmPurchaseCredits(${amount})" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">Confirm Purchase</button>
-            </div>
-        </div>
-    `;
-        showModal('Confirm Purchase', confirmationContent);
-    }
+        const purchaseButton = document.getElementById('purchase-credits-btn');
+        const originalText = purchaseButton.innerHTML;
+        purchaseButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        purchaseButton.disabled = true;
 
-    function confirmPurchaseCredits(amount) {
-        hideCustomModal();
-
-        const purchaseBtn = document.getElementById('purchase-credits-btn');
-        purchaseBtn.disabled = true;
-        purchaseBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
-
-        const data = {
-            amount: amount
-        };
-
-        makeApiCall('purchaseSmsCredits', data)
+        makeApiCall('purchaseSmsCredits', { amount: amount })
             .then(response => {
                 if (response.success) {
                     showMessageModal('Success', response.message, 'success');
                     document.getElementById('topup-form').reset();
                     updateTopupCalculation();
-                    loadSmsStats(); // Refresh stats and wallet balance
+                    loadSmsStats(); // Refresh stats
                 } else {
-                    if (response.data && response.data.topup_url) {
-                        // Show insufficient balance with topup button
-                        const modalContent = `
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Insufficient Wallet Balance</h3>
-                            <p class="text-gray-600 mb-6">${response.message}</p>
-                            <div class="flex gap-3">
-                                <button onclick="hideCustomModal()" class="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                                <a href="${response.data.topup_url}" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-center">Top Up Wallet</a>
-                            </div>
-                        </div>
-                    `;
-                        showModal('Insufficient Balance', modalContent);
-                    } else {
-                        showMessageModal('Error', response.message || 'Failed to purchase credits', 'error');
-                    }
+                    showMessageModal('Error', response.message, 'error');
                 }
             })
             .finally(() => {
-                purchaseBtn.disabled = false;
-                purchaseBtn.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Purchase Credits';
+                purchaseButton.innerHTML = originalText;
+                purchaseButton.disabled = false;
             });
     }
 
     // Utility Functions
     function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-UG', {
-            style: 'decimal',
+        return parseFloat(amount).toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
-        }).format(amount);
-    }
-
-    function formatDateTime(dateString) {
-        if (!dateString) return 'N/A';
-
-        const date = new Date(dateString);
-        const day = date.getDate();
-        const month = date.toLocaleString('en-US', { month: 'short' });
-        const year = date.getFullYear();
-        const time = date.toLocaleString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
         });
-
-        const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
-            day === 2 || day === 22 ? 'nd' :
-                day === 3 || day === 23 ? 'rd' : 'th';
-
-        return `${day}${suffix} ${month}, ${year} ${time}`;
     }
 
+    function formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    function formatTime(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Modal Functions
     function showMessageModal(title, message, type = 'info') {
         const modal = document.getElementById('messageModal');
-        const titleEl = document.getElementById('message-modal-title');
-        const textEl = document.getElementById('message-modal-text');
-        const iconEl = document.getElementById('message-modal-icon');
+        const titleElement = document.getElementById('message-modal-title');
+        const textElement = document.getElementById('message-modal-text');
+        const iconElement = document.getElementById('message-modal-icon');
 
-        titleEl.textContent = title;
-        textEl.textContent = message;
+        titleElement.textContent = title;
+        textElement.innerHTML = message;
 
+        // Set icon based on type
         const iconClasses = {
-            'success': 'bg-green-100 text-green-600',
-            'error': 'bg-red-100 text-red-600',
-            'warning': 'bg-yellow-100 text-yellow-600',
-            'info': 'bg-blue-100 text-blue-600'
+            'success': 'bg-green-100 text-green-600 fas fa-check',
+            'error': 'bg-red-100 text-red-600 fas fa-times',
+            'warning': 'bg-yellow-100 text-yellow-600 fas fa-exclamation-triangle',
+            'info': 'bg-blue-100 text-blue-600 fas fa-info'
         };
 
-        const icons = {
-            'success': 'fas fa-check',
-            'error': 'fas fa-exclamation-triangle',
-            'warning': 'fas fa-exclamation-triangle',
-            'info': 'fas fa-info'
-        };
+        const iconClass = iconClasses[type] || iconClasses['info'];
+        const [bgClass, textClass, iconName] = iconClass.split(' ');
 
-        iconEl.className = `w-8 h-8 rounded-lg flex items-center justify-center ${iconClasses[type] || iconClasses.info}`;
-        iconEl.innerHTML = `<i class="${icons[type] || icons.info}"></i>`;
+        iconElement.className = `w-8 h-8 rounded-lg flex items-center justify-center ${bgClass}`;
+        iconElement.innerHTML = `<i class="${iconName} ${textClass}"></i>`;
 
         modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
     }
 
     function hideMessageModal() {
         document.getElementById('messageModal').classList.add('hidden');
-        document.body.style.overflow = '';
     }
 
-    function showModal(title, content) {
-        // Create a temporary modal for custom content
-        const modalHtml = `
-            <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideCustomModal()"></div>
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[80vh] overflow-hidden">
-                    <div class="p-6 border-b border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-semibold text-gray-900">${title}</h3>
-                            <button onclick="hideCustomModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-                                <i class="fas fa-times text-gray-500"></i>
-                            </button>
-                        </div>
+    // Bulk Upload Functions
+    function downloadSampleTemplate() {
+        // Create a simple CSV template with 9-digit numbers (Excel friendly)
+        const csvContent = "Phone Number\n700123456\n701234567\n702345678";
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'sms_bulk_template.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        showMessageModal('Template Downloaded', 'Sample template has been downloaded. Add 9-digit phone numbers (without leading 0) in the first column and upload the file.', 'success');
+    }
+
+    function handleBulkUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+
+        if (!['csv', 'xlsx', 'xls'].includes(fileExtension)) {
+            showMessageModal('Invalid File Type', 'Please upload a CSV or Excel file (.csv, .xlsx, .xls)', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                let phoneNumbers = [];
+
+                if (fileExtension === 'csv') {
+                    phoneNumbers = parseCSV(e.target.result);
+                } else {
+                    // For Excel files, we'll need to use a library like SheetJS
+                    // For now, show a message to use CSV
+                    showMessageModal('Excel Support', 'Please save your Excel file as CSV format and upload again.', 'info');
+                    return;
+                }
+
+                processBulkNumbers(phoneNumbers);
+            } catch (error) {
+                console.error('Error parsing file:', error);
+                showMessageModal('File Error', 'Error reading the file. Please check the format and try again.', 'error');
+            }
+        };
+
+        reader.readAsText(file);
+
+        // Reset the file input
+        event.target.value = '';
+    }
+
+    function parseCSV(csvText) {
+        const lines = csvText.split('\n');
+        const phoneNumbers = [];
+
+        // Skip header row (index 0)
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line) {
+                // Get first column (phone number)
+                const columns = line.split(',');
+                const phoneNumber = columns[0].trim().replace(/['"]/g, ''); // Remove quotes
+                if (phoneNumber) {
+                    phoneNumbers.push(phoneNumber);
+                }
+            }
+        }
+
+        return phoneNumbers;
+    }
+
+    function processBulkNumbers(phoneNumbers) {
+        const results = {
+            valid: [],
+            invalid: [],
+            duplicates: [],
+            total: phoneNumbers.length
+        };
+
+        phoneNumbers.forEach(number => {
+            const cleanNumber = number.replace(/\s+/g, '');
+            const normalizedNumber = normalizePhoneNumber(cleanNumber);
+
+            // Check if already exists in current list or new valid list
+            if (bulkRecipients.includes(normalizedNumber) || results.valid.includes(normalizedNumber)) {
+                results.duplicates.push(normalizedNumber);
+            } else if (validatePhoneNumber(cleanNumber)) {
+                results.valid.push(normalizedNumber);
+            } else {
+                results.invalid.push(cleanNumber);
+            }
+        });
+
+        // Add valid numbers to bulk recipients
+        bulkRecipients.push(...results.valid);
+        renderRecipientTags();
+        updateSendFormCalculations();
+
+        // Show results modal
+        showBulkUploadResults(results);
+    }
+
+    function showBulkUploadResults(results) {
+        const modal = document.getElementById('bulkUploadModal');
+        const content = document.getElementById('upload-results-content');
+
+        const validCount = results.valid.length;
+        const invalidCount = results.invalid.length;
+        const duplicateCount = results.duplicates.length;
+
+        let html = `
+            <div class="space-y-4">
+                <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                        <h4 class="font-semibold text-green-900">Successfully Added: ${validCount}</h4>
                     </div>
-                    <div class="p-6 overflow-y-auto max-h-96">
-                        ${content}
+                    ${validCount > 0 ? `<p class="text-sm text-green-700">Valid phone numbers have been added to your recipient list.</p>` : ''}
+                </div>
+        `;
+
+        if (invalidCount > 0) {
+            html += `
+                <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-times-circle text-red-600"></i>
+                        <h4 class="font-semibold text-red-900">Invalid Numbers: ${invalidCount}</h4>
+                    </div>
+                    <div class="text-sm text-red-700 max-h-32 overflow-y-auto">
+                        ${results.invalid.slice(0, 10).map(num => `<div>${num}</div>`).join('')}
+                        ${invalidCount > 10 ? `<div class="font-medium">... and ${invalidCount - 10} more</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (duplicateCount > 0) {
+            html += `
+                <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                        <h4 class="font-semibold text-yellow-900">Duplicate Numbers: ${duplicateCount}</h4>
+                    </div>
+                    <div class="text-sm text-yellow-700 max-h-32 overflow-y-auto">
+                        ${results.duplicates.slice(0, 10).map(num => `<div>${num}</div>`).join('')}
+                        ${duplicateCount > 10 ? `<div class="font-medium">... and ${duplicateCount - 10} more</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        html += `
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-900 mb-2">Summary</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>Total Processed: ${results.total}</div>
+                        <div>Successfully Added: ${validCount}</div>
+                        <div>Invalid Format: ${invalidCount}</div>
+                        <div>Duplicates Skipped: ${duplicateCount}</div>
                     </div>
                 </div>
             </div>
         `;
 
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        document.body.style.overflow = 'hidden';
+        content.innerHTML = html;
+        modal.classList.remove('hidden');
     }
 
-    function hideCustomModal() {
-        const modal = document.getElementById('customModal');
-        if (modal) {
-            modal.remove();
-            document.body.style.overflow = '';
-        }
+    function hideBulkUploadModal() {
+        document.getElementById('bulkUploadModal').classList.add('hidden');
     }
-
-    // Global function assignments for onclick handlers
-    window.switchTab = switchTab;
-    window.toggleSendType = toggleSendType;
-    window.toggleSchedule = toggleSchedule;
-    window.updateCharCount = updateCharCount;
-    window.addBulkRecipient = addBulkRecipient;
-    window.removeRecipient = removeRecipient;
-    window.showTemplateSelector = showTemplateSelector;
-    window.hideTemplateSelector = hideTemplateSelector;
-    window.selectTemplate = selectTemplate;
-    window.showCreateTemplateForm = showCreateTemplateForm;
-    window.editTemplate = editTemplate;
-    window.deleteTemplate = deleteTemplate;
-    window.hideTemplateModal = hideTemplateModal;
-    window.updateTemplateCharCount = updateTemplateCharCount;
-    window.filterTemplates = filterTemplates;
-    window.loadSmsHistory = loadSmsHistory;
-    window.filterHistory = filterHistory;
-    window.showSmsDetails = showSmsDetails;
-    window.updateTopupCalculation = updateTopupCalculation;
-    window.hideMessageModal = hideMessageModal;
-    window.hideCustomModal = hideCustomModal;
-    window.confirmPurchaseCredits = confirmPurchaseCredits;
 </script>
 
 <?php

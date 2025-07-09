@@ -1424,10 +1424,10 @@ final class CreditService
         $debitNo = $debitWallet['wallet_number'];
         $creditNo = $creditWallet['wallet_number'];
         $notes = [
-            'debit' => "SMS purchase debit from {$debitNo}",
+            'debit' => "SMS credits purchase",
             'credit1' => "SMS purchase instruction from {$debitNo}",
-            'debit2' => "SMS purchase executed for {$creditNo}",
-            'credit2' => "SMS credits credited to {$creditNo}",
+            'debit2' => "SMS purchase, credit sent {$creditNo}",
+            'credit2' => "SMS credits purchased by {$debitNo}",
         ];
 
         // 7) Run the 4‐step ledger and finalize status

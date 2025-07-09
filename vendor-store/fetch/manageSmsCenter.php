@@ -10,6 +10,7 @@ session_start();
 
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../lib/ZzimbaCreditModule.php';
+require_once __DIR__ . '/../../sms/SMS.php';
 
 use ZzimbaCreditModule\CreditService;
 
@@ -610,6 +611,28 @@ function handleSendSms()
         ]);
 
         $pdo->commit();
+
+        // If sending now, actually send the SMS
+        if ($sendOption === 'now') {
+            try {
+                if (count($recipients) === 1) {
+                    // Single SMS
+                    $smsResult = SMS::send($recipients[0], $message);
+                    if (!$smsResult['success']) {
+                        error_log("SMS sending failed for {$recipients[0]}: " . ($smsResult['error'] ?? 'Unknown error'));
+                    }
+                } else {
+                    // Bulk SMS
+                    $bulkResult = SMS::sendBulk($recipients, $message);
+                    if ($bulkResult['failure_count'] > 0) {
+                        error_log("SMS bulk sending had {$bulkResult['failure_count']} failures out of {$bulkResult['total']} messages");
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("SMS sending exception: " . $e->getMessage());
+                // Don't fail the transaction if SMS sending fails - the credits are already deducted
+            }
+        }
 
         // Calculate new available credits
         $newCredits = $smsRate > 0 ? floor($balanceAfter / $smsRate) : 0;
