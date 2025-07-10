@@ -66,8 +66,7 @@ try {
             </div>
         </div>
 
-        <!-- Payment Categories -->
-        <div class="p-6">
+        <div class="p-6 overflow-y-auto max-h-[calc(100vh-160px)] md:max-h-none">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Mobile Money Card -->
                 <div class="payment-category-card border-2 border-gray-200 rounded-xl p-6 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 cursor-pointer transform hover:scale-[1.02] text-center"
