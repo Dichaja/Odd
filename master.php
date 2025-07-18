@@ -115,6 +115,9 @@ if ($hasSeoTags) {
 }
 
 $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+
+// Get search query from URL parameter
+$searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -166,6 +169,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
         const ACTIVE_NAV = <?php echo ($activeNav !== null) ? json_encode($activeNav) : "null"; ?>;
         const PAGE_TITLE = <?php echo ($pageTitle !== null) ? json_encode($pageTitle) : "null"; ?>;
         const IS_LOGGED_IN = <?php echo $isLoggedIn ? 'true' : 'false'; ?>;
+        const SEARCH_QUERY = "<?php echo $searchQuery; ?>";
 
         tailwind.config = {
             theme: {
@@ -431,6 +435,70 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
 
         .mobile-menu-overlay.active {
             display: block
+        }
+
+        .mobile-search-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            z-index: 1200;
+            padding: 1rem;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 2rem;
+        }
+
+        .mobile-search-modal.active {
+            display: flex;
+        }
+
+        .mobile-search-container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mobile-search-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-search-form {
+            padding: 1rem;
+            position: relative;
+        }
+
+        .mobile-search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .mobile-search-input:focus {
+            border-color: #D92B13;
+            box-shadow: 0 0 0 3px rgba(217, 43, 19, 0.1);
+        }
+
+        .mobile-search-dropdown {
+            max-height: 400px;
+            overflow-y: auto;
+            border-top: 1px solid #e5e7eb;
         }
 
         ::-webkit-scrollbar {
@@ -732,8 +800,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                             <div id="desktop-search-dropdown" class="search-dropdown"></div>
                         </div>
                         <button id="desktop-search-button"
-                            class="bg-primary text-white px-6 py-2 rounded-r-lg hover:bg-red-600 transition-colors"
-                            disabled>
+                            class="bg-primary text-white px-6 py-2 rounded-r-lg hover:bg-red-600 transition-colors">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -796,13 +863,36 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                             </a>
                         <?php endif; ?>
                     </div>
-                    <button class="md:hidden text-secondary hover:text-primary" id="mobile-menu-button">
-                        <i class="fas fa-bars text-2xl"></i>
-                    </button>
+                    <div class="flex md:hidden items-center space-x-4">
+                        <button id="mobile-search-toggle" class="text-secondary hover:text-primary transition-colors">
+                            <i class="fas fa-search text-xl"></i>
+                        </button>
+                        <button class="text-secondary hover:text-primary" id="mobile-menu-button">
+                            <i class="fas fa-bars text-2xl"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
+
+    <!-- Mobile Search Modal -->
+    <div id="mobile-search-modal" class="mobile-search-modal">
+        <div class="mobile-search-container">
+            <div class="mobile-search-header">
+                <h3 class="text-lg font-semibold text-gray-900">Search Products</h3>
+                <button id="close-mobile-search" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="mobile-search-form">
+                <input type="text" id="mobile-search-input" placeholder="Search for products..."
+                    class="mobile-search-input" autocomplete="off">
+            </div>
+            <div id="mobile-search-dropdown" class="mobile-search-dropdown" style="display: none;"></div>
+        </div>
+    </div>
+
     <div class="mobile-menu-overlay"></div>
     <div class="mobile-menu bg-white p-4">
         <div class="flex justify-between items-center mb-4">
@@ -813,17 +903,6 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
         </div>
         <div id="mobile-menu-items" class="space-y-4"></div>
         <div class="mt-6 space-y-4">
-            <div class="relative">
-                <input type="text" id="mobile-search-input" placeholder="Search for products..."
-                    class="w-full px-4 py-2 rounded-lg focus:outline-none border border-gray-300 search-input"
-                    autocomplete="off">
-                <button id="mobile-search-button"
-                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary"
-                    disabled>
-                    <i class="fas fa-search"></i>
-                </button>
-                <div id="mobile-search-dropdown" class="search-dropdown"></div>
-            </div>
             <a href="#"
                 class="block text-center bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
                 <i class="fas fa-shopping-cart mr-2"></i>Cart
@@ -1063,7 +1142,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
         async function renderSearchDropdown(query, dropdownElement) {
             query = query.trim().toLowerCase();
             if (!query || !fuseProducts || !searchInitialized) {
-                dropdownElement.classList.remove('show');
+                dropdownElement.style.display = 'none';
                 return;
             }
 
@@ -1123,7 +1202,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
 
             if (html) {
                 dropdownElement.innerHTML = html;
-                dropdownElement.classList.add('show');
+                dropdownElement.style.display = 'block';
 
                 const images = dropdownElement.querySelectorAll('.search-image.loading');
                 images.forEach(async (img) => {
@@ -1139,7 +1218,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                     }
                 });
             } else {
-                dropdownElement.classList.remove('show');
+                dropdownElement.style.display = 'none';
             }
         }
 
@@ -1168,12 +1247,28 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
 
             const mobileSearchInput = document.getElementById('mobile-search-input');
             const mobileSearchDropdown = document.getElementById('mobile-search-dropdown');
-            const mobileSearchButton = document.getElementById('mobile-search-button');
+
+            // Set initial search query if present
+            if (SEARCH_QUERY) {
+                if (desktopSearchInput) desktopSearchInput.value = SEARCH_QUERY;
+                if (mobileSearchInput) mobileSearchInput.value = SEARCH_QUERY;
+            }
 
             if (desktopSearchInput) {
                 desktopSearchInput.addEventListener('input', debounce((e) => {
                     renderSearchDropdown(e.target.value, desktopSearchDropdown);
                 }, 200));
+
+                // Handle Enter key press
+                desktopSearchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const query = desktopSearchInput.value.trim();
+                        if (query) {
+                            window.location.href = BASE_URL + 'materials-yard?s=' + encodeURIComponent(query);
+                        }
+                    }
+                });
 
                 desktopSearchDropdown.addEventListener('click', (e) => {
                     const item = e.target.closest('.search-dropdown-item');
@@ -1186,8 +1281,13 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                     }
                 });
 
+                // Handle search button click
                 desktopSearchButton.addEventListener('click', (e) => {
                     e.preventDefault();
+                    const query = desktopSearchInput.value.trim();
+                    if (query) {
+                        window.location.href = BASE_URL + 'materials-yard?s=' + encodeURIComponent(query);
+                    }
                 });
             }
 
@@ -1195,6 +1295,17 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                 mobileSearchInput.addEventListener('input', debounce((e) => {
                     renderSearchDropdown(e.target.value, mobileSearchDropdown);
                 }, 200));
+
+                // Handle Enter key press
+                mobileSearchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const query = mobileSearchInput.value.trim();
+                        if (query) {
+                            window.location.href = BASE_URL + 'materials-yard?s=' + encodeURIComponent(query);
+                        }
+                    }
+                });
 
                 mobileSearchDropdown.addEventListener('click', (e) => {
                     const item = e.target.closest('.search-dropdown-item');
@@ -1206,18 +1317,11 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                         e.preventDefault();
                     }
                 });
-
-                mobileSearchButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                });
             }
 
             document.addEventListener('click', (e) => {
                 if (!desktopSearchInput?.contains(e.target) && !desktopSearchDropdown?.contains(e.target)) {
                     desktopSearchDropdown?.classList.remove('show');
-                }
-                if (!mobileSearchInput?.contains(e.target) && !mobileSearchDropdown?.contains(e.target)) {
-                    mobileSearchDropdown?.classList.remove('show');
                 }
             });
         }
@@ -1450,6 +1554,35 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                 initializeSearch();
             });
         });
+
+        // Mobile search modal functionality
+        const mobileSearchToggle = document.getElementById('mobile-search-toggle');
+        const mobileSearchModal = document.getElementById('mobile-search-modal');
+        const closeMobileSearch = document.getElementById('close-mobile-search');
+
+        function openMobileSearch() {
+            mobileSearchModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            const searchInput = document.getElementById('mobile-search-input');
+            setTimeout(() => searchInput.focus(), 100);
+        }
+
+        function closeMobileSearchModal() {
+            mobileSearchModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            document.getElementById('mobile-search-dropdown').style.display = 'none';
+        }
+
+        mobileSearchToggle.addEventListener('click', openMobileSearch);
+        closeMobileSearch.addEventListener('click', closeMobileSearchModal);
+
+        // Close mobile search when clicking outside
+        mobileSearchModal.addEventListener('click', (e) => {
+            if (e.target === mobileSearchModal) {
+                closeMobileSearchModal();
+            }
+        });
+
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.querySelector('.mobile-menu');
         const mobileMenuOverlay = document.querySelector('.mobile-menu-overlay');
