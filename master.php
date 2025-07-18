@@ -1,5 +1,102 @@
 <?php
 require_once __DIR__ . '/config/config.php';
+
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'data') {
+    header('Content-Type: application/json');
+    header('Cache-Control: public, max-age=1800');
+
+    try {
+        $products = $pdo->query("
+            SELECT
+                p.id,
+                p.title,
+                p.description,
+                p.meta_title,
+                p.meta_description,
+                p.meta_keywords,
+                p.category_id,
+                c.name AS category_name
+            FROM products p
+            JOIN product_categories c ON c.id = p.category_id
+            WHERE p.status = 'published'
+            ORDER BY p.title ASC
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        $categories = $pdo->query("
+            SELECT
+                id,
+                name,
+                description,
+                meta_title,
+                meta_description,
+                meta_keywords
+            FROM product_categories
+            WHERE status = 'active'
+            ORDER BY name ASC
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'products' => $products,
+            'categories' => $categories,
+            'timestamp' => time()
+        ]);
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Database error occurred',
+            'products' => [],
+            'categories' => []
+        ]);
+    }
+    exit;
+}
+
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
+    header('Content-Type: application/json');
+
+    $type = $_GET['type'] ?? '';
+    $id = $_GET['id'] ?? '';
+
+    if (!$type || !$id) {
+        echo json_encode(['error' => 'Missing parameters']);
+        exit;
+    }
+
+    $basePath = $type === 'product' ? 'img/products/' : 'img/product-categories/';
+    $fullPath = __DIR__ . '/' . $basePath . $id . '/';
+
+    if (!is_dir($fullPath)) {
+        echo json_encode(['image' => null]);
+        exit;
+    }
+
+    $allowedExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+    $images = [];
+
+    $files = scandir($fullPath);
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..')
+            continue;
+
+        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (in_array($extension, $allowedExtensions)) {
+            $images[] = $file;
+        }
+    }
+
+    if (empty($images)) {
+        echo json_encode(['image' => null]);
+        exit;
+    }
+
+    $randomImage = $images[array_rand($images)];
+    $imageUrl = BASE_URL . $basePath . $id . '/' . $randomImage;
+
+    echo json_encode(['image' => $imageUrl]);
+    exit;
+}
+
 $title = isset($pageTitle) ? $pageTitle . ' | Buy Online - Deliver On-site' : 'Zzimba Online Uganda | Buy Online - Deliver On-site';
 $activeNav = $activeNav ?? 'home';
 date_default_timezone_set('Africa/Kampala');
@@ -8,19 +105,15 @@ $sessionUlid = generateUlid();
 
 $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 
-// Default meta description if none is provided
 $metaDescription = 'Zzimba Online Uganda - Your one-stop shop for construction materials and services. Buy online and get delivery on-site.';
 
-// Check if SEO tags are provided from vendor-profile.php or other pages
 $hasSeoTags = isset($seoTags) && is_array($seoTags);
 
-// If SEO tags are provided, use them
 if ($hasSeoTags) {
     $title = $seoTags['title'] ?? $title;
     $metaDescription = $seoTags['description'] ?? $metaDescription;
 }
 
-// Get current URL for canonical and OG URL
 $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 ?>
 <!DOCTYPE html>
@@ -33,7 +126,6 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
     <meta name="description" content="<?= htmlspecialchars($metaDescription) ?>">
     <link rel="canonical" href="<?= htmlspecialchars($currentUrl) ?>">
 
-    <!-- Open Graph Meta Tags -->
     <?php if ($hasSeoTags): ?>
         <meta property="og:title" content="<?= htmlspecialchars($seoTags['og_title'] ?? $title) ?>">
         <meta property="og:description" content="<?= htmlspecialchars($seoTags['og_description'] ?? $metaDescription) ?>">
@@ -50,7 +142,6 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
 
     <meta property="og:site_name" content="Zzimba Online">
 
-    <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title"
         content="<?= htmlspecialchars($hasSeoTags ? ($seoTags['og_title'] ?? $title) : $title) ?>">
@@ -68,6 +159,7 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
     <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
     <script>
         const BASE_URL = "<?php echo BASE_URL; ?>";
         const SESSION_ULID = "<?php echo $sessionUlid; ?>";
@@ -173,7 +265,6 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
             position: relative
         }
 
-        /* New toast styles */
         .toast {
             position: fixed;
             top: 1rem;
@@ -201,7 +292,6 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
             opacity: 1;
         }
 
-        /* Keep the notification container for backward compatibility */
         .notification-container {
             position: fixed;
             bottom: 2rem;
@@ -303,7 +393,9 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
 
         .search-form {
             display: none;
-            transition: all 0.3s ease
+            transition: all 0.3s ease;
+            position: relative;
+            width: 600px;
         }
 
         .search-form.active {
@@ -538,6 +630,72 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
             background-color: #e5e7eb;
             margin: 0.25rem 0;
         }
+
+        .search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 60;
+            display: none;
+        }
+
+        .search-dropdown.show {
+            display: block;
+        }
+
+        .search-dropdown-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .search-dropdown-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .search-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-dropdown-header {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .search-input:focus {
+            box-shadow: 0 0 0 3px rgba(217, 43, 19, 0.2);
+        }
+
+        .loader {
+            border-top-color: #D92B13;
+            animation: spinner 0.6s linear infinite;
+        }
+
+        @keyframes spinner {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .search-image {
+            transition: opacity 0.3s ease;
+        }
+
+        .search-image.loading {
+            opacity: 0.5;
+        }
     </style>
 </head>
 
@@ -567,9 +725,15 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                 <div id="nav-and-search-container" class="hidden md:flex items-center space-x-8">
                     <div id="desktop-nav" class="flex items-center space-x-8"></div>
                     <div class="search-form hidden items-center">
-                        <input type="text" placeholder="Search for products..."
-                            class="px-4 py-2 rounded-l-lg focus:outline-none border border-gray-300">
-                        <button class="bg-primary text-white px-6 py-2 rounded-r-lg hover:bg-red-600 transition-colors">
+                        <div class="relative w-full">
+                            <input type="text" id="desktop-search-input" placeholder="Search for products..."
+                                class="px-4 py-2 rounded-l-lg focus:outline-none border border-gray-300 search-input w-full"
+                                autocomplete="off">
+                            <div id="desktop-search-dropdown" class="search-dropdown"></div>
+                        </div>
+                        <button id="desktop-search-button"
+                            class="bg-primary text-white px-6 py-2 rounded-r-lg hover:bg-red-600 transition-colors"
+                            disabled>
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
@@ -650,11 +814,15 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
         <div id="mobile-menu-items" class="space-y-4"></div>
         <div class="mt-6 space-y-4">
             <div class="relative">
-                <input type="text" placeholder="Search for products..."
-                    class="w-full px-4 py-2 rounded-lg focus:outline-none border border-gray-300">
-                <button class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary">
+                <input type="text" id="mobile-search-input" placeholder="Search for products..."
+                    class="w-full px-4 py-2 rounded-lg focus:outline-none border border-gray-300 search-input"
+                    autocomplete="off">
+                <button id="mobile-search-button"
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary"
+                    disabled>
                     <i class="fas fa-search"></i>
                 </button>
+                <div id="mobile-search-dropdown" class="search-dropdown"></div>
             </div>
             <a href="#"
                 class="block text-center bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
@@ -763,7 +931,297 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
     <script>
-        // New toast function
+        let SEARCH_DATA = { products: [], categories: [] };
+        let fuseProducts = null, fuseCategories = null, fuseWords = null;
+        let searchInitialized = false;
+        let imageCache = new Map();
+
+        function ld(a, b) {
+            if (a === b) return 0;
+            if (!a.length || !b.length) return Math.max(a.length, b.length);
+            const v = Array(b.length + 1).fill(0).map((_, i) => i);
+            for (let i = 0; i < a.length; i++) {
+                let prev = i + 1;
+                for (let j = 0; j < b.length; j++) {
+                    const val = a[i] === b[j] ? v[j] : Math.min(v[j], v[j + 1], prev) + 1;
+                    v[j] = prev; prev = val;
+                }
+                v[b.length] = prev;
+            }
+            return v[b.length];
+        }
+
+        function getImageUrl(type, id) {
+            const cacheKey = `${type}_${id}`;
+
+            if (imageCache.has(cacheKey)) {
+                return Promise.resolve(imageCache.get(cacheKey));
+            }
+
+            return fetch(`${window.location.href}?ajax=image&type=${type}&id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    const imageUrl = data.image || `https://placehold.co/60x60?text=No+Image`;
+                    imageCache.set(cacheKey, imageUrl);
+                    return imageUrl;
+                })
+                .catch(() => {
+                    const fallbackUrl = `https://placehold.co/60x60?text=No+Image`;
+                    imageCache.set(cacheKey, fallbackUrl);
+                    return fallbackUrl;
+                });
+        }
+
+        function loadSearchData() {
+            const cachedData = localStorage.getItem('zzimba_search_data');
+            const cacheTimestamp = localStorage.getItem('zzimba_search_data_timestamp');
+            const now = Date.now();
+            const cacheAge = now - (cacheTimestamp ? parseInt(cacheTimestamp) : 0);
+            const maxCacheAge = 30 * 60 * 1000;
+
+            if (cachedData && cacheAge < maxCacheAge) {
+                try {
+                    SEARCH_DATA = JSON.parse(cachedData);
+                    buildSearchIndexes();
+                    searchInitialized = true;
+                    return Promise.resolve();
+                } catch (e) {
+                    console.error('Error parsing cached search data:', e);
+                }
+            }
+
+            return fetch(window.location.href + '?ajax=data')
+                .then(response => response.json())
+                .then(data => {
+                    SEARCH_DATA = data;
+                    localStorage.setItem('zzimba_search_data', JSON.stringify(data));
+                    localStorage.setItem('zzimba_search_data_timestamp', now.toString());
+                    buildSearchIndexes();
+                    searchInitialized = true;
+                })
+                .catch(error => {
+                    console.error('Failed to load search data:', error);
+                });
+        }
+
+        function buildSearchIndexes() {
+            if (!window.Fuse) {
+                setTimeout(buildSearchIndexes, 100);
+                return;
+            }
+
+            fuseProducts = new Fuse(
+                SEARCH_DATA.products.map(p => ({ ...p })),
+                {
+                    includeScore: true,
+                    threshold: 0.4,
+                    ignoreLocation: true,
+                    keys: [
+                        { name: 'title', weight: 0.4 },
+                        { name: 'meta_title', weight: 0.3 },
+                        { name: 'description', weight: 0.2 },
+                        { name: 'meta_description', weight: 0.2 },
+                        { name: 'meta_keywords', weight: 0.2 },
+                        { name: 'category_name', weight: 0.1 }
+                    ]
+                });
+
+            fuseCategories = new Fuse(
+                SEARCH_DATA.categories.map(c => ({ ...c })),
+                {
+                    includeScore: true,
+                    threshold: 0.4,
+                    ignoreLocation: true,
+                    keys: [
+                        { name: 'name', weight: 0.5 },
+                        { name: 'meta_title', weight: 0.3 },
+                        { name: 'description', weight: 0.2 },
+                        { name: 'meta_description', weight: 0.2 },
+                        { name: 'meta_keywords', weight: 0.2 }
+                    ]
+                });
+
+            const bag = new Set();
+            const tokenize = s => s.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+
+            SEARCH_DATA.products.forEach(p => {
+                [...tokenize(p.title), ...tokenize(p.description || ''), ...tokenize(p.meta_title || ''),
+                ...tokenize(p.meta_description || ''), ...tokenize(p.meta_keywords || '')]
+                    .forEach(w => bag.add(w));
+            });
+
+            SEARCH_DATA.categories.forEach(c => {
+                [...tokenize(c.name), ...tokenize(c.description || ''), ...tokenize(c.meta_title || ''),
+                ...tokenize(c.meta_description || ''), ...tokenize(c.meta_keywords || '')]
+                    .forEach(w => bag.add(w));
+            });
+
+            fuseWords = new Fuse([...bag].map(w => ({ word: w })),
+                { keys: ['word'], includeScore: true, threshold: 0.4, distance: 60 });
+        }
+
+        async function renderSearchDropdown(query, dropdownElement) {
+            query = query.trim().toLowerCase();
+            if (!query || !fuseProducts || !searchInitialized) {
+                dropdownElement.classList.remove('show');
+                return;
+            }
+
+            const suggestions = fuseWords.search(query, { limit: 5 })
+                .map(x => x.item.word)
+                .filter(w => w !== query);
+
+            const productResults = fuseProducts.search(query, { limit: 8 });
+            const categoryResults = fuseCategories.search(query, { limit: 5 });
+
+            let html = '';
+
+            if (suggestions.length) {
+                html += '<div class="search-dropdown-header">Suggestions</div>';
+                suggestions.forEach(word => {
+                    html += `
+                        <div class="search-dropdown-item suggestion flex items-center" data-word="${escapeHtml(word)}">
+                            <i class="fas fa-search text-gray-400 mr-2"></i>
+                            ${escapeHtml(word)}
+                        </div>`;
+                });
+            }
+
+            if (productResults.length) {
+                if (html) html += '<div class="border-t border-gray-200 my-1"></div>';
+                html += '<div class="search-dropdown-header">Products</div>';
+
+                for (const result of productResults) {
+                    const product = result.item;
+                    html += `
+                        <a href="${BASE_URL}view/product/${product.id}" class="search-dropdown-item flex items-center" data-type="product" data-id="${product.id}" data-label="${escapeHtml(product.title)}">
+                            <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="w-10 h-10 rounded mr-3 flex-shrink-0 object-cover search-image loading" data-type="product" data-id="${product.id}">
+                            <div>
+                                <div class="font-medium text-sm">${escapeHtml(product.title)}</div>
+                                <div class="text-xs text-gray-500">${escapeHtml(product.category_name)}</div>
+                            </div>
+                        </a>`;
+                }
+            }
+
+            if (categoryResults.length) {
+                if (html) html += '<div class="border-t border-gray-200 my-1"></div>';
+                html += '<div class="search-dropdown-header">Categories</div>';
+
+                for (const result of categoryResults) {
+                    const category = result.item;
+                    html += `
+                        <a href="${BASE_URL}view/category/${category.id}" class="search-dropdown-item flex items-center" data-type="category" data-id="${category.id}" data-label="${escapeHtml(category.name)}">
+                            <img src="https://placehold.co/40x40?text=Loading..." alt="Category" class="w-10 h-10 rounded mr-3 flex-shrink-0 object-cover search-image loading" data-type="category" data-id="${category.id}">
+                            <div>
+                                <div class="font-medium text-sm">${escapeHtml(category.name)}</div>
+                                <div class="text-xs text-gray-500">Browse category</div>
+                            </div>
+                        </a>`;
+                }
+            }
+
+            if (html) {
+                dropdownElement.innerHTML = html;
+                dropdownElement.classList.add('show');
+
+                const images = dropdownElement.querySelectorAll('.search-image.loading');
+                images.forEach(async (img) => {
+                    const type = img.dataset.type;
+                    const id = img.dataset.id;
+                    try {
+                        const imageUrl = await getImageUrl(type, id);
+                        img.src = imageUrl;
+                        img.classList.remove('loading');
+                    } catch (error) {
+                        img.src = 'https://placehold.co/40x40?text=No+Image';
+                        img.classList.remove('loading');
+                    }
+                });
+            } else {
+                dropdownElement.classList.remove('show');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function initializeSearch() {
+            const desktopSearchInput = document.getElementById('desktop-search-input');
+            const desktopSearchDropdown = document.getElementById('desktop-search-dropdown');
+            const desktopSearchButton = document.getElementById('desktop-search-button');
+
+            const mobileSearchInput = document.getElementById('mobile-search-input');
+            const mobileSearchDropdown = document.getElementById('mobile-search-dropdown');
+            const mobileSearchButton = document.getElementById('mobile-search-button');
+
+            if (desktopSearchInput) {
+                desktopSearchInput.addEventListener('input', debounce((e) => {
+                    renderSearchDropdown(e.target.value, desktopSearchDropdown);
+                }, 200));
+
+                desktopSearchDropdown.addEventListener('click', (e) => {
+                    const item = e.target.closest('.search-dropdown-item');
+                    if (!item) return;
+
+                    if (item.classList.contains('suggestion')) {
+                        desktopSearchInput.value = item.dataset.word;
+                        renderSearchDropdown(item.dataset.word, desktopSearchDropdown);
+                        e.preventDefault();
+                    }
+                });
+
+                desktopSearchButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                });
+            }
+
+            if (mobileSearchInput) {
+                mobileSearchInput.addEventListener('input', debounce((e) => {
+                    renderSearchDropdown(e.target.value, mobileSearchDropdown);
+                }, 200));
+
+                mobileSearchDropdown.addEventListener('click', (e) => {
+                    const item = e.target.closest('.search-dropdown-item');
+                    if (!item) return;
+
+                    if (item.classList.contains('suggestion')) {
+                        mobileSearchInput.value = item.dataset.word;
+                        renderSearchDropdown(item.dataset.word, mobileSearchDropdown);
+                        e.preventDefault();
+                    }
+                });
+
+                mobileSearchButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!desktopSearchInput?.contains(e.target) && !desktopSearchDropdown?.contains(e.target)) {
+                    desktopSearchDropdown?.classList.remove('show');
+                }
+                if (!mobileSearchInput?.contains(e.target) && !mobileSearchDropdown?.contains(e.target)) {
+                    mobileSearchDropdown?.classList.remove('show');
+                }
+            });
+        }
+
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
             toast.className = `toast ${type === 'success' ? 'toast-success' : 'toast-error'}`;
@@ -771,12 +1229,10 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
 
             document.body.appendChild(toast);
 
-            // Trigger reflow and show
             requestAnimationFrame(() => {
                 toast.classList.add('toast-show');
             });
 
-            // Hide and remove after 5 seconds
             setTimeout(() => {
                 toast.classList.remove('toast-show');
                 setTimeout(() => {
@@ -785,7 +1241,6 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
             }, 5000);
         }
 
-        // Keep the original notification system but update it to use the new toast design
         class NotificationSystem {
             constructor() {
                 this.container = document.getElementById('notification-container');
@@ -797,14 +1252,12 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                     type = 'info', title, message, duration = 5000
                 } = o;
 
-                // Use the new toast design
                 const toast = document.createElement('div');
                 toast.className = `toast ${type === 'success' ? 'toast-success' : 'toast-error'}`;
                 toast.textContent = message;
 
                 document.body.appendChild(toast);
 
-                // Trigger reflow and show
                 requestAnimationFrame(() => {
                     toast.classList.add('toast-show');
                 });
@@ -812,7 +1265,6 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                 const id = this.counter++;
                 this.notifications.set(id, toast);
 
-                // Hide and remove after duration
                 if (duration > 0) {
                     setTimeout(() => this.close(id), duration);
                 }
@@ -993,6 +1445,10 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                     }
                 });
             }
+
+            loadSearchData().then(() => {
+                initializeSearch();
+            });
         });
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.querySelector('.mobile-menu');
@@ -1048,6 +1504,13 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
         searchToggle.addEventListener('click', () => {
             searchForm.classList.toggle('active');
             desktopNav.classList.toggle('hidden');
+
+            if (searchForm.classList.contains('active')) {
+                const searchInput = document.getElementById('desktop-search-input');
+                if (searchInput) {
+                    setTimeout(() => searchInput.focus(), 100);
+                }
+            }
         });
         document.addEventListener('click', e => {
             if (!searchForm.contains(e.target) && !searchToggle.contains(e.target)) {
