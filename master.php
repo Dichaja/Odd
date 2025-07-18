@@ -716,10 +716,12 @@ $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" 
                 <div>
                     <h4 class="text-lg font-bold mb-4">Our Services</h4>
                     <ul class="space-y-2 text-gray-400">
+                        <li>Product Profiling</li>
+                        <li>Delivery Fulfilment</li>
+                        <li>Construction Marketing</li>
                         <li>Procurement Support</li>
-                        <li>Construction Advice</li>
-                        <li>Project Consultation</li>
-                        <li>Site Inspections</li>
+                        <li>Payment Processing</li>
+                        <li>Supply Chain Optimization</li>
                     </ul>
                 </div>
                 <div>

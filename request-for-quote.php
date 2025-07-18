@@ -357,20 +357,12 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                     <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
                         <i class="fas fa-info-circle text-red-500"></i>
                     </div>
-                    <h2 class="text-lg font-semibold text-gray-900">Instructions</h2>
+                    <h2 class="text-lg font-semibold text-gray-900">Note</h2>
                 </div>
                 <div class="space-y-4 text-sm text-gray-600">
                     <p class="flex items-start">
-                        <i class="fas fa-clipboard-list mt-1 text-red-500 mr-3"></i>
-                        <span>Fill in all required fields with accurate information.</span>
-                    </p>
-                    <p class="flex items-start">
-                        <i class="fas fa-building mt-1 text-red-500 mr-3"></i>
-                        <span>Company Name is optional if you do not have one.</span>
-                    </p>
-                    <p class="flex items-start">
                         <i class="fas fa-mobile-alt mt-1 text-red-500 mr-3"></i>
-                        <span>Include a valid phone number or WhatsApp contact.</span>
+                        <span>Add a valid phone number or WhatsApp contact for quick contact.</span>
                     </p>
                     <p class="flex items-start">
                         <i class="fas fa-map-marker-alt mt-1 text-red-500 mr-3"></i>
