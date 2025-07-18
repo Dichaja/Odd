@@ -886,8 +886,16 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                 </button>
             </div>
             <div class="mobile-search-form">
-                <input type="text" id="mobile-search-input" placeholder="Search for products..."
-                    class="mobile-search-input" autocomplete="off">
+                <div class="flex">
+                    <input type="text" id="mobile-search-input" placeholder="Search for products..."
+                        class="mobile-search-input flex-1" autocomplete="off"
+                        style="border-radius: 0.5rem 0 0 0.5rem; border-right: none;">
+                    <button id="mobile-search-button"
+                        class="bg-primary text-white px-4 py-3 hover:bg-red-600 transition-colors"
+                        style="border-radius: 0 0.5rem 0.5rem 0; border: 2px solid #D92B13;">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
             </div>
             <div id="mobile-search-dropdown" class="mobile-search-dropdown" style="display: none;"></div>
         </div>
@@ -1319,6 +1327,18 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                 });
             }
 
+            // Handle mobile search button click
+            const mobileSearchButton = document.getElementById('mobile-search-button');
+            if (mobileSearchButton) {
+                mobileSearchButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const query = mobileSearchInput.value.trim();
+                    if (query) {
+                        window.location.href = BASE_URL + 'materials-yard?s=' + encodeURIComponent(query);
+                    }
+                });
+            }
+
             document.addEventListener('click', (e) => {
                 if (!desktopSearchInput?.contains(e.target) && !desktopSearchDropdown?.contains(e.target)) {
                     desktopSearchDropdown?.classList.remove('show');
@@ -1601,7 +1621,6 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
         }
         mobileMenuButton.addEventListener('click', openMobileMenu);
         closeMobileMenuButton.addEventListener('click', closeMobileMenu);
-        mobileMenuOverlay.addEventListener('click', closeMobileMenu);
 
         function openAuthModal() {
             const m = document.getElementById('auth-modal');
