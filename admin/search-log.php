@@ -872,7 +872,7 @@ ob_start();
         document.getElementById('searchFilter').addEventListener('input', debounce(() => {
             currentPage = 1;
             restartStream();
-        }, 500));
+        }, 200));
 
         document.getElementById('performanceFilter').addEventListener('change', () => {
             currentPage = 1;
