@@ -4,6 +4,87 @@ $activeNav = 'quote';
 require_once __DIR__ . '/config/config.php';
 ob_start();
 
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'data') {
+    header('Content-Type: application/json');
+    header('Cache-Control: public, max-age=1800');
+
+    try {
+        $products = $pdo->query("
+            SELECT
+                p.id,
+                p.title,
+                p.description,
+                p.meta_title,
+                p.meta_description,
+                p.meta_keywords,
+                p.category_id,
+                c.name AS category_name
+            FROM products p
+            JOIN product_categories c ON c.id = p.category_id
+            WHERE p.status = 'published'
+            ORDER BY p.title ASC
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'products' => $products,
+            'timestamp' => time()
+        ]);
+
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Database error occurred',
+            'products' => []
+        ]);
+    }
+    exit;
+}
+
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
+    header('Content-Type: application/json');
+
+    $type = $_GET['type'] ?? '';
+    $id = $_GET['id'] ?? '';
+
+    if (!$type || !$id) {
+        echo json_encode(['error' => 'Missing parameters']);
+        exit;
+    }
+
+    $basePath = 'img/products/';
+    $fullPath = __DIR__ . '/' . $basePath . $id . '/';
+
+    if (!is_dir($fullPath)) {
+        echo json_encode(['image' => null]);
+        exit;
+    }
+
+    $allowedExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+    $images = [];
+
+    $files = scandir($fullPath);
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..')
+            continue;
+
+        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (in_array($extension, $allowedExtensions)) {
+            $images[] = $file;
+        }
+    }
+
+    if (empty($images)) {
+        echo json_encode(['image' => null]);
+        exit;
+    }
+
+    $randomImage = $images[array_rand($images)];
+    $imageUrl = BASE_URL . $basePath . $id . '/' . $randomImage;
+
+    echo json_encode(['image' => $imageUrl]);
+    exit;
+}
+
 $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 ?>
 
@@ -132,7 +213,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         right: 0;
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(5px);
+        backdrop-filter: blur(4px);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -163,7 +244,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         transform: scale(1);
     }
 
-    .product-search-dropdown {
+    .search-dropdown {
         position: absolute;
         top: 100%;
         left: 0;
@@ -178,47 +259,50 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         display: none;
     }
 
-    .product-search-dropdown.show {
+    .search-dropdown.show {
         display: block;
     }
 
-    .product-search-item {
+    .search-dropdown-item {
         padding: 0.75rem 1rem;
         cursor: pointer;
         transition: background-color 0.2s ease;
         border-bottom: 1px solid #f3f4f6;
         display: flex;
         align-items: center;
+        gap: 0.75rem;
     }
 
-    .product-search-item:hover {
+    .search-dropdown-item:hover {
         background-color: #f9fafb;
     }
 
-    .product-search-item:last-child {
+    .search-dropdown-item:last-child {
         border-bottom: none;
     }
 
-    .product-search-note {
+    .search-dropdown-header {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6b7280;
+        background-color: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .search-note {
+        background-color: #eff6ff;
+        border-left: 4px solid #3b82f6;
         padding: 0.75rem 1rem;
-        background-color: #fef3c7;
-        border-bottom: 1px solid #f59e0b;
-        font-size: 0.875rem;
-        color: #92400e;
-        display: flex;
-        align-items: center;
+        margin-bottom: 1rem;
+        border-radius: 0 0.375rem 0.375rem 0;
     }
 
-    .product-image {
-        width: 40px;
-        height: 40px;
-        object-fit: cover;
-        border-radius: 0.375rem;
-        margin-right: 0.75rem;
-        flex-shrink: 0;
+    .search-image {
+        transition: opacity 0.3s ease;
     }
 
-    .product-image.loading {
+    .search-image.loading {
         opacity: 0.5;
     }
 
@@ -286,25 +370,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
     .delete-icon:hover {
         color: #ef4444;
-    }
-
-    ::-webkit-scrollbar {
-        width: 3px;
-        height: 3px
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background-color: rgb(0, 0, 0);
-        border-radius: 3px
-    }
-
-    ::-webkit-scrollbar-track {
-        background: transparent
-    }
-
-    * {
-        scrollbar-width: thin;
-        scrollbar-color: rgb(135, 135, 135) transparent
     }
 </style>
 
@@ -441,10 +506,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                         <i class="fas fa-edit mt-1 text-red-500 mr-3"></i>
                         <span>Edit items by clicking the pencil icon in the actions column.</span>
                     </p>
-                    <p class="flex items-start">
-                        <i class="fas fa-search mt-1 text-red-500 mr-3"></i>
-                        <span>Start typing in Brand/Material field to see product suggestions.</span>
-                    </p>
                 </div>
             </div>
 
@@ -493,6 +554,14 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             </button>
         </div>
         <div class="p-6">
+            <div class="search-note">
+                <p class="text-sm text-blue-700 flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <span>Start typing to see product suggestions. You can select from the list or continue typing your
+                        own brand/material name.</span>
+                </p>
+            </div>
+
             <form id="item-form" class="space-y-4">
                 <input type="hidden" id="item-index" value="-1">
 
@@ -502,7 +571,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                         autocomplete="off">
                     <label for="item-brand" class="floating-label text-gray-500">Brand/Material <span
                             class="required-star">*</span></label>
-                    <div id="brand-search-dropdown" class="product-search-dropdown"></div>
+                    <div id="brand-search-dropdown" class="search-dropdown"></div>
                 </div>
 
                 <div class="form-group">
@@ -575,37 +644,38 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const API_BASE = "<?php echo BASE_URL; ?>fetch/handleRFQ";
-        const BASE_URL = "<?php echo BASE_URL; ?>";
 
-        let SEARCH_DATA = { products: [], categories: [] };
+        let SEARCH_DATA = { products: [] };
         let fuseProducts = null;
         let searchInitialized = false;
         let imageCache = new Map();
 
-        function loadSearchData() {
-            const cachedData = localStorage.getItem('zzimba_search_data');
-            const cacheTimestamp = localStorage.getItem('zzimba_search_data_timestamp');
-            const now = Date.now();
-            const cacheAge = now - (cacheTimestamp ? parseInt(cacheTimestamp) : 0);
-            const maxCacheAge = 30 * 60 * 1000;
+        function getImageUrl(type, id) {
+            const cacheKey = `${type}_${id}`;
 
-            if (cachedData && cacheAge < maxCacheAge) {
-                try {
-                    SEARCH_DATA = JSON.parse(cachedData);
-                    buildSearchIndexes();
-                    searchInitialized = true;
-                    return Promise.resolve();
-                } catch (e) {
-                    console.error('Error parsing cached search data:', e);
-                }
+            if (imageCache.has(cacheKey)) {
+                return Promise.resolve(imageCache.get(cacheKey));
             }
 
-            return fetch(window.location.origin + window.location.pathname + '?ajax=data')
+            return fetch(`${window.location.href}?ajax=image&type=${type}&id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    const imageUrl = data.image || `https://placehold.co/60x60?text=No+Image`;
+                    imageCache.set(cacheKey, imageUrl);
+                    return imageUrl;
+                })
+                .catch(() => {
+                    const fallbackUrl = `https://placehold.co/60x60?text=No+Image`;
+                    imageCache.set(cacheKey, fallbackUrl);
+                    return fallbackUrl;
+                });
+        }
+
+        function loadSearchData() {
+            return fetch(window.location.href + '?ajax=data')
                 .then(response => response.json())
                 .then(data => {
                     SEARCH_DATA = data;
-                    localStorage.setItem('zzimba_search_data', JSON.stringify(data));
-                    localStorage.setItem('zzimba_search_data_timestamp', now.toString());
                     buildSearchIndexes();
                     searchInitialized = true;
                 })
@@ -637,50 +707,24 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                 });
         }
 
-        function getImageUrl(type, id) {
-            const cacheKey = `${type}_${id}`;
-
-            if (imageCache.has(cacheKey)) {
-                return Promise.resolve(imageCache.get(cacheKey));
-            }
-
-            return fetch(`${window.location.origin}${window.location.pathname}?ajax=image&type=${type}&id=${id}`)
-                .then(response => response.json())
-                .then(data => {
-                    const imageUrl = data.image || `https://placehold.co/40x40?text=No+Image`;
-                    imageCache.set(cacheKey, imageUrl);
-                    return imageUrl;
-                })
-                .catch(() => {
-                    const fallbackUrl = `https://placehold.co/40x40?text=No+Image`;
-                    imageCache.set(cacheKey, fallbackUrl);
-                    return fallbackUrl;
-                });
-        }
-
-        async function renderProductSearchDropdown(query, dropdownElement) {
+        async function renderProductDropdown(query, dropdownElement, inputElement) {
             query = query.trim().toLowerCase();
             if (!query || !fuseProducts || !searchInitialized) {
                 dropdownElement.style.display = 'none';
                 return;
             }
 
-            const productResults = fuseProducts.search(query, { limit: 6 });
-
+            const productResults = fuseProducts.search(query, { limit: 8 });
             let html = '';
 
             if (productResults.length) {
-                html += `
-                    <div class="product-search-note">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        Select a suggested product if listed, or continue typing your own brand/material name.
-                    </div>`;
+                html += '<div class="search-dropdown-header">Available Products</div>';
 
                 for (const result of productResults) {
                     const product = result.item;
                     html += `
-                        <div class="product-search-item" data-product-title="${escapeHtml(product.title)}">
-                            <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="product-image loading" data-type="product" data-id="${product.id}">
+                        <div class="search-dropdown-item" data-product-title="${escapeHtml(product.title)}">
+                            <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="w-10 h-10 rounded flex-shrink-0 object-cover search-image loading" data-type="product" data-id="${product.id}">
                             <div>
                                 <div class="font-medium text-sm">${escapeHtml(product.title)}</div>
                                 <div class="text-xs text-gray-500">${escapeHtml(product.category_name)}</div>
@@ -691,9 +735,9 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
             if (html) {
                 dropdownElement.innerHTML = html;
-                dropdownElement.classList.add('show');
+                dropdownElement.style.display = 'block';
 
-                const images = dropdownElement.querySelectorAll('.product-image.loading');
+                const images = dropdownElement.querySelectorAll('.search-image.loading');
                 images.forEach(async (img) => {
                     const type = img.dataset.type;
                     const id = img.dataset.id;
@@ -707,19 +751,17 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                     }
                 });
 
-                const items = dropdownElement.querySelectorAll('.product-search-item');
+                const items = dropdownElement.querySelectorAll('.search-dropdown-item');
                 items.forEach(item => {
                     item.addEventListener('click', function () {
                         const productTitle = this.dataset.productTitle;
-                        document.getElementById('item-brand').value = productTitle;
-                        dropdownElement.classList.remove('show');
-
-                        const event = new Event('input', { bubbles: true });
-                        document.getElementById('item-brand').dispatchEvent(event);
+                        inputElement.value = productTitle;
+                        dropdownElement.style.display = 'none';
+                        inputElement.dispatchEvent(new Event('input', { bubbles: true }));
                     });
                 });
             } else {
-                dropdownElement.classList.remove('show');
+                dropdownElement.style.display = 'none';
             }
         }
 
@@ -819,7 +861,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             itemForm.reset();
             itemIndex.value = -1;
             itemModal.classList.add('active');
-            brandSearchDropdown.classList.remove('show');
+            brandSearchDropdown.style.display = 'none';
         }
 
         function editItem(index) {
@@ -830,7 +872,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             itemQuantity.value = item.quantity;
             itemIndex.value = index;
             itemModal.classList.add('active');
-            brandSearchDropdown.classList.remove('show');
+            brandSearchDropdown.style.display = 'none';
         }
 
         function showDeleteModal(index) {
@@ -865,7 +907,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
             updateItemsDisplay();
             itemModal.classList.remove('active');
-            brandSearchDropdown.classList.remove('show');
+            brandSearchDropdown.style.display = 'none';
         }
 
         function deleteItem() {
@@ -877,41 +919,43 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             deleteModal.classList.remove('active');
         }
 
+        loadSearchData().then(() => {
+            itemBrand.addEventListener('input', debounce((e) => {
+                renderProductDropdown(e.target.value, brandSearchDropdown, itemBrand);
+            }, 200));
+
+            itemBrand.addEventListener('focus', () => {
+                if (itemBrand.value.trim()) {
+                    renderProductDropdown(itemBrand.value, brandSearchDropdown, itemBrand);
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!itemBrand.contains(e.target) && !brandSearchDropdown.contains(e.target)) {
+                    brandSearchDropdown.style.display = 'none';
+                }
+            });
+        });
+
         document.getElementById('add-item-btn').addEventListener('click', showAddItemModal);
         document.getElementById('empty-add-item-btn').addEventListener('click', showAddItemModal);
         document.getElementById('close-modal').addEventListener('click', () => {
             itemModal.classList.remove('active');
-            brandSearchDropdown.classList.remove('show');
+            brandSearchDropdown.style.display = 'none';
         });
         document.getElementById('cancel-item').addEventListener('click', () => {
             itemModal.classList.remove('active');
-            brandSearchDropdown.classList.remove('show');
+            brandSearchDropdown.style.display = 'none';
         });
         document.getElementById('close-delete-modal').addEventListener('click', () => deleteModal.classList.remove('active'));
         document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.remove('active'));
         document.getElementById('confirm-delete').addEventListener('click', deleteItem);
         itemForm.addEventListener('submit', saveItem);
 
-        itemBrand.addEventListener('input', debounce((e) => {
-            renderProductSearchDropdown(e.target.value, brandSearchDropdown);
-        }, 200));
-
-        itemBrand.addEventListener('focus', () => {
-            if (itemBrand.value.trim()) {
-                renderProductSearchDropdown(itemBrand.value, brandSearchDropdown);
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!itemBrand.contains(e.target) && !brandSearchDropdown.contains(e.target)) {
-                brandSearchDropdown.classList.remove('show');
-            }
-        });
-
         window.addEventListener('click', function (e) {
             if (e.target === itemModal) {
                 itemModal.classList.remove('active');
-                brandSearchDropdown.classList.remove('show');
+                brandSearchDropdown.style.display = 'none';
             }
             if (e.target === deleteModal) {
                 deleteModal.classList.remove('active');
