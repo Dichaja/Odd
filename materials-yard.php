@@ -13,6 +13,9 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
     $response = ['products' => [], 'categories' => [], 'hasMore' => false, 'total' => 0];
 
     if (!empty($searchQuery)) {
+        // Start timing for performance logging
+        $searchStartTime = microtime(true);
+
         // Advanced search implementation
         $allProductsStmt = $pdo->prepare("
             SELECT 
@@ -45,6 +48,28 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
 
         // Apply advanced search scoring
         $scoredProducts = advancedProductSearch($allProducts, $searchQuery);
+
+        // Calculate search statistics for logging
+        $resultsCount = count($scoredProducts);
+        $maxMatchScore = 0.00;
+        $minMatchScore = 0.00;
+        $averageMatchScore = 0.00;
+
+        if ($resultsCount > 0) {
+            $scores = array_column($scoredProducts, 'search_score');
+            $maxMatchScore = max($scores);
+            $minMatchScore = min($scores);
+            $averageMatchScore = array_sum($scores) / count($scores);
+        }
+
+        // Calculate search duration
+        $searchEndTime = microtime(true);
+        $durationMs = round(($searchEndTime - $searchStartTime) * 1000);
+
+        // Log search activity (only on first page to avoid duplicate logs for pagination)
+        if ($page === 1) {
+            logSearchActivity($pdo, $searchQuery, $resultsCount, $maxMatchScore, $minMatchScore, $averageMatchScore, $durationMs);
+        }
 
         // Apply pagination to scored results
         $totalProducts = count($scoredProducts);
@@ -157,6 +182,53 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
 
     echo json_encode($response);
     exit;
+}
+
+// Search logging function
+function logSearchActivity($pdo, $searchQuery, $resultsCount, $maxMatchScore, $minMatchScore, $averageMatchScore, $durationMs)
+{
+    try {
+        // Generate unique ID using ULID
+        $logId = generateUlid();
+
+        // Set timezone to Africa/Kampala
+        $timezone = new DateTimeZone('Africa/Kampala');
+        $currentDateTime = new DateTime('now', $timezone);
+        $createdAt = $currentDateTime->format('Y-m-d H:i:s');
+
+        // Prepare and execute the insert statement
+        $logStmt = $pdo->prepare("
+            INSERT INTO search_log (
+                id, 
+                session_id, 
+                search_query, 
+                results_count, 
+                max_match_score, 
+                min_match_score, 
+                average_match_score, 
+                duration_ms, 
+                created_at
+            ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?)
+        ");
+
+        $logStmt->execute([
+            $logId,
+            $searchQuery,
+            $resultsCount,
+            round($maxMatchScore, 2),
+            round($minMatchScore, 2),
+            round($averageMatchScore, 2),
+            $durationMs,
+            $createdAt
+        ]);
+
+        // Optional: Log successful search logging for debugging (can be removed in production)
+        error_log("Search logged: Query='{$searchQuery}', Results={$resultsCount}, Duration={$durationMs}ms");
+
+    } catch (Exception $e) {
+        // Log error but don't break the search functionality
+        error_log("Search logging failed: " . $e->getMessage());
+    }
 }
 
 // Advanced search functions
