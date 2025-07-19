@@ -3,58 +3,6 @@ require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Search Analytics';
 $activeNav = 'search-log';
 ob_start();
-
-// Generate dummy data for initial design
-function generateDummySearchData($days = 30)
-{
-    $data = [];
-    $searchTerms = [
-        'cement',
-        'steel bars',
-        'roofing sheets',
-        'tiles',
-        'paint',
-        'bricks',
-        'sand',
-        'gravel',
-        'pipes',
-        'electrical cables',
-        'windows',
-        'doors',
-        'nails',
-        'screws',
-        'timber',
-        'blocks'
-    ];
-
-    for ($i = 0; $i < $days; $i++) {
-        $date = date('Y-m-d', strtotime("-$i days"));
-        $searchCount = rand(50, 200);
-
-        for ($j = 0; $j < $searchCount; $j++) {
-            $maxScore = rand(20, 100);
-            $minScore = rand(0, $maxScore);
-            $avgScore = rand($minScore, $maxScore);
-            $resultsCount = rand(0, 50);
-            $duration = rand(50, 500);
-
-            $data[] = [
-                'id' => generateUlid(),
-                'search_query' => $searchTerms[array_rand($searchTerms)] . (rand(0, 1) ? ' ' . $searchTerms[array_rand($searchTerms)] : ''),
-                'results_count' => $resultsCount,
-                'max_match_score' => $maxScore,
-                'min_match_score' => $minScore,
-                'average_match_score' => $avgScore,
-                'duration_ms' => $duration,
-                'created_at' => $date . ' ' . sprintf('%02d:%02d:%02d', rand(0, 23), rand(0, 59), rand(0, 59))
-            ];
-        }
-    }
-
-    return $data;
-}
-
-$dummyData = generateDummySearchData(30);
 ?>
 
 <div class="min-h-screen bg-gray-50" id="app-container">
@@ -64,6 +12,13 @@ $dummyData = generateDummySearchData(30);
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Search Analytics</h1>
                     <p class="text-gray-600 mt-1">Monitor and analyze search performance and user behavior</p>
+                    <div id="liveIndicator" class="mt-2">
+                        <span
+                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                            Live Updates Active
+                        </span>
+                    </div>
                 </div>
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <button id="exportBtn"
@@ -82,7 +37,6 @@ $dummyData = generateDummySearchData(30);
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Date Filter Controls -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-8">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
@@ -120,7 +74,6 @@ $dummyData = generateDummySearchData(30);
             </div>
         </div>
 
-        <!-- Statistics Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 sm:p-6 border border-blue-200">
                 <div class="flex items-center justify-between">
@@ -175,7 +128,6 @@ $dummyData = generateDummySearchData(30);
             </div>
         </div>
 
-        <!-- Search Log Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
             <div class="p-4 sm:p-6 border-b border-gray-100">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -193,7 +145,7 @@ $dummyData = generateDummySearchData(30);
                             <option value="all">All Performance</option>
                             <option value="good">Good (70%+)</option>
                             <option value="fair">Fair (50-70%)</option>
-                            <option value="poor">Poor (<50%)< /option>
+                            <option value="poor">Poor (&lt;50%)< /option>
                         </select>
                         <button id="clearFilters"
                             class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
@@ -205,7 +157,7 @@ $dummyData = generateDummySearchData(30);
 
             <div class="overflow-x-auto">
                 <div class="min-w-full">
-                    <table class="min-w-[700px] w-full" id="searchLogTable">
+                    <table class="w-full" id="searchLogTable">
                         <thead class="bg-gray-50 border-b border-gray-200">
                             <tr>
                                 <th class="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
@@ -235,7 +187,6 @@ $dummyData = generateDummySearchData(30);
                             </tr>
                         </thead>
                         <tbody id="searchLogBody" class="divide-y divide-gray-100">
-                            <!-- Dynamic content -->
                         </tbody>
                     </table>
                 </div>
@@ -261,9 +212,7 @@ $dummyData = generateDummySearchData(30);
             </div>
         </div>
 
-        <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-8">
-            <!-- Search Performance Chart -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                     <div>
@@ -290,7 +239,6 @@ $dummyData = generateDummySearchData(30);
                 </div>
             </div>
 
-            <!-- Search Volume Chart -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                     <div>
@@ -309,19 +257,15 @@ $dummyData = generateDummySearchData(30);
             </div>
         </div>
 
-        <!-- Detailed Analytics -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-            <!-- Top Search Terms -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold text-gray-900">Top Search Terms</h3>
                 </div>
                 <div class="space-y-3 sm:space-y-4" id="topSearchTerms">
-                    <!-- Dynamic content -->
                 </div>
             </div>
 
-            <!-- Performance Distribution -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-semibold text-gray-900">Performance Distribution</h3>
@@ -332,7 +276,6 @@ $dummyData = generateDummySearchData(30);
                 </div>
             </div>
 
-            <!-- Response Time Analysis -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-semibold text-gray-900">Response Time</h3>
@@ -341,14 +284,14 @@ $dummyData = generateDummySearchData(30);
                 <div class="space-y-4">
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-600">Fast (&lt;100ms)</span>
-                        <div class="flex items-center gap-2">
-                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2">
-                                <div class="bg-green-500 h-2 rounded-full" style="width: 65%" id="fastBar">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 65%" id="fastBar">
+                                        </div>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900 min-w-[3rem] text-right"
+                                        id="fastPercent">65%</span>
                                 </div>
-                            </div>
-                            <span class="text-sm font-medium text-gray-900 min-w-[3rem] text-right"
-                                id="fastPercent">65%</span>
-                        </div>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-600">Medium (100-300ms)</span>
@@ -376,26 +319,20 @@ $dummyData = generateDummySearchData(30);
     </div>
 </div>
 
-<!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    // Global variables
-    let searchData = <?= json_encode($dummyData) ?>;
-    let filteredData = [...searchData];
     let currentPage = 1;
     let itemsPerPage = 20;
     let charts = {};
     let currentPeriod = 'daily';
+    let evtSource = null;
+    let existingLogIds = new Set();
 
-    // Initialize the application
     document.addEventListener('DOMContentLoaded', function () {
         initializeDateFilters();
-        updateStatistics();
-        renderSearchLogTable();
-        initializeCharts();
-        renderTopSearchTerms();
         setupEventListeners();
+        initializeStream();
     });
 
     function initializeDateFilters() {
@@ -412,18 +349,14 @@ $dummyData = generateDummySearchData(30);
                 endDate = new Date(today);
                 break;
             case 'weekly':
-                // Get Sunday of current week
                 const dayOfWeek = today.getDay();
                 startDate = new Date(today);
                 startDate.setDate(today.getDate() - dayOfWeek);
-                // Get Saturday of current week
                 endDate = new Date(startDate);
                 endDate.setDate(startDate.getDate() + 6);
                 break;
             case 'monthly':
-                // First day of current month
                 startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                // Current date
                 endDate = new Date(today);
                 break;
             default:
@@ -435,236 +368,195 @@ $dummyData = generateDummySearchData(30);
         document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
 
         currentPeriod = period;
-        applyDateFilter(period);
+        restartStream();
     }
 
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-        const day = date.getDate();
-        const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
-            day === 2 || day === 22 ? 'nd' :
-                day === 3 || day === 23 ? 'rd' : 'th';
-
-        const month = months[date.getMonth()];
-        const year = date.getFullYear();
-
-        return `${month} ${day}${suffix}, ${year}`;
+    function initializeStream() {
+        restartStream();
     }
 
-    function formatTime(dateString) {
-        const date = new Date(dateString);
-        let hours = date.getHours();
-        const minutes = date.getMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
+    function restartStream() {
+        if (evtSource) {
+            evtSource.close();
+        }
 
-        hours = hours % 12;
-        hours = hours ? hours : 12; // 0 should be 12
-        const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+        const params = new URLSearchParams({
+            action: 'stream',
+            start_date: document.getElementById('startDate').value,
+            end_date: document.getElementById('endDate').value,
+            search_term: document.getElementById('searchFilter').value,
+            performance_filter: document.getElementById('performanceFilter').value,
+            page: currentPage,
+            limit: itemsPerPage,
+            period: currentPeriod
+        });
 
-        return `${hours}:${minutesStr}${ampm}`;
+        evtSource = new EventSource(`fetch/manageSearchLog.php?${params}`);
+
+        evtSource.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+                handleStreamData(data);
+            } catch (err) {
+                console.error('SSE parse error:', err);
+            }
+        };
+
+        evtSource.onerror = function (err) {
+            console.error('SSE connection error:', err);
+        };
     }
 
-    function updateStatistics() {
-        const totalSearches = filteredData.length;
-        const avgResponseTime = totalSearches > 0 ? Math.round(filteredData.reduce((sum, item) => sum + item.duration_ms, 0) / totalSearches) : 0;
-        const avgMatchScore = totalSearches > 0 ? Math.round(filteredData.reduce((sum, item) => sum + item.average_match_score, 0) / totalSearches) : 0;
-        const zeroResults = filteredData.filter(item => item.results_count === 0).length;
+    function handleStreamData(data) {
+        if (data.searchData) {
+            const newLogs = data.searchData.data.filter(log => !existingLogIds.has(log.id));
 
-        document.getElementById('totalSearches').textContent = totalSearches.toLocaleString();
-        document.getElementById('avgResponseTime').textContent = avgResponseTime + 'ms';
-        document.getElementById('avgMatchScore').textContent = avgMatchScore + '%';
-        document.getElementById('zeroResults').textContent = zeroResults.toLocaleString();
+            if (newLogs.length > 0 && shouldShowLiveUpdates()) {
+                addNewLogsToTable(newLogs);
+            }
 
-        // Update response time analysis
-        updateResponseTimeAnalysis();
+            renderSearchLogTable(data.searchData.data, data.searchData.total, data.searchData.page);
+            data.searchData.data.forEach(log => existingLogIds.add(log.id));
+        }
 
-        // Update response time label
+        if (data.stats) {
+            updateStatistics(data.stats);
+        }
+
+        if (data.chartData) {
+            updateCharts(data.chartData);
+        }
+
+        if (data.topTerms) {
+            renderTopSearchTerms(data.topTerms);
+        }
+
+        if (data.distribution) {
+            updateDistributionChart(data.distribution);
+        }
+
+        if (data.responseTime) {
+            updateResponseTimeAnalysis(data.responseTime);
+        }
+    }
+
+    function shouldShowLiveUpdates() {
+        const today = new Date().toISOString().split('T')[0];
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        return startDate <= today && endDate >= today;
+    }
+
+    function addNewLogsToTable(newLogs) {
+        const tbody = document.getElementById('searchLogBody');
+
+        newLogs.forEach(log => {
+            const row = createTableRow(log);
+            row.classList.add('new-log-row');
+            tbody.insertBefore(row, tbody.firstChild);
+
+            setTimeout(() => {
+                row.classList.add('flicker-animation');
+                setTimeout(() => {
+                    row.classList.remove('flicker-animation', 'new-log-row');
+                }, 1000);
+            }, 100);
+        });
+
+        const rows = tbody.querySelectorAll('tr');
+        if (rows.length > itemsPerPage) {
+            for (let i = itemsPerPage; i < rows.length; i++) {
+                rows[i].remove();
+            }
+        }
+    }
+
+    function createTableRow(item) {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-colors';
+
+        const performanceBadge = getPerformanceBadge(item.max_match_score);
+
+        row.innerHTML = `
+        <td class="px-3 py-3">
+            <div class="font-medium text-gray-900 break-words text-sm">${item.search_query}</div>
+        </td>
+        <td class="px-3 py-3 text-center">
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.results_count === 0 ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                ${item.results_count}
+            </span>
+        </td>
+        <td class="px-3 py-3 text-center">
+            <div class="text-xs text-gray-900">
+                <span class="font-medium">${item.max_match_score}%</span> / <span class="text-gray-600">${item.min_match_score}%</span> / <span class="text-gray-600">${item.average_match_score}%</span>
+            </div>
+        </td>
+        <td class="px-3 py-3 text-center">
+            ${performanceBadge}
+        </td>
+        <td class="px-3 py-3 text-center">
+            <span class="text-sm font-medium text-gray-900">${item.duration_ms}ms</span>
+        </td>
+        <td class="px-3 py-3 text-center">
+            <div class="text-xs text-gray-900">${formatDate(item.created_at)}</div>
+            <div class="text-xs text-gray-500">${formatTime(item.created_at)}</div>
+        </td>
+    `;
+
+        return row;
+    }
+
+    function updateStatistics(stats) {
+        document.getElementById('totalSearches').textContent = parseInt(stats.total_searches || 0).toLocaleString();
+        document.getElementById('avgResponseTime').textContent = (stats.avg_response_time || 0) + 'ms';
+        document.getElementById('avgMatchScore').textContent = (stats.avg_match_score || 0) + '%';
+        document.getElementById('zeroResults').textContent = parseInt(stats.zero_results || 0).toLocaleString();
+
         const label = currentPeriod === 'daily' ? 'Today' :
             currentPeriod === 'weekly' ? 'This week' :
                 currentPeriod === 'monthly' ? 'This month' : 'Current period';
         document.getElementById('responseTimeLabel').textContent = label;
     }
 
-    function updateResponseTimeAnalysis() {
-        const fast = filteredData.filter(item => item.duration_ms < 100).length;
-        const medium = filteredData.filter(item => item.duration_ms >= 100 && item.duration_ms <= 300).length;
-        const slow = filteredData.filter(item => item.duration_ms > 300).length;
-        const total = filteredData.length;
-
-        if (total > 0) {
-            const fastPercent = Math.round((fast / total) * 100);
-            const mediumPercent = Math.round((medium / total) * 100);
-            const slowPercent = Math.round((slow / total) * 100);
-
-            document.getElementById('fastBar').style.width = fastPercent + '%';
-            document.getElementById('mediumBar').style.width = mediumPercent + '%';
-            document.getElementById('slowBar').style.width = slowPercent + '%';
-
-            document.getElementById('fastPercent').textContent = fastPercent + '%';
-            document.getElementById('mediumPercent').textContent = mediumPercent + '%';
-            document.getElementById('slowPercent').textContent = slowPercent + '%';
-        }
+    function updateCharts(chartData) {
+        updatePerformanceChart(chartData);
+        updateVolumeChart(chartData);
     }
 
-    function renderSearchLogTable() {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        const pageData = filteredData.slice(startIndex, endIndex);
+    function updatePerformanceChart(chartData) {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
 
-        const tbody = document.getElementById('searchLogBody');
-        tbody.innerHTML = pageData.map(item => {
-            const performanceBadge = getPerformanceBadge(item.max_match_score);
-
-            return `
-            <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-3 py-3">
-                    <div class="font-medium text-gray-900 break-words text-sm">${item.search_query}</div>
-                </td>
-                <td class="px-3 py-3 text-center">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.results_count === 0 ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
-                        ${item.results_count}
-                    </span>
-                </td>
-                <td class="px-3 py-3 text-center">
-                    <div class="text-xs text-gray-900">
-                        <span class="font-medium">${item.max_match_score}%</span> / <span class="text-gray-600">${item.min_match_score}%</span> / <span class="text-gray-600">${item.average_match_score}%</span>
-                    </div>
-                </td>
-                <td class="px-3 py-3 text-center">
-                    ${performanceBadge}
-                </td>
-                <td class="px-3 py-3 text-center">
-                    <span class="text-sm font-medium text-gray-900">${item.duration_ms}ms</span>
-                </td>
-                <td class="px-3 py-3 text-center">
-                    <div class="text-xs text-gray-900">${formatDate(item.created_at)}</div>
-                    <div class="text-xs text-gray-500">${formatTime(item.created_at)}</div>
-                </td>
-            </tr>
-        `;
-        }).join('');
-
-        updatePagination();
-    }
-
-    function getChartLabelsAndData() {
-        const startDate = new Date(document.getElementById('startDate').value);
-        const endDate = new Date(document.getElementById('endDate').value);
+        let labels = [];
+        let goodData = [];
+        let fairData = [];
+        let poorData = [];
 
         if (currentPeriod === 'daily') {
-            // Show 24 hours with 2-hour intervals
-            const labels = [];
-            const dataGroups = {};
-
             for (let hour = 0; hour < 24; hour += 2) {
-                const label = `${hour.toString().padStart(2, '0')}:00`;
-                labels.push(label);
-                dataGroups[hour] = { good: 0, fair: 0, poor: 0, total: 0 };
+                labels.push(`${hour.toString().padStart(2, '0')}:00`);
+                const data = chartData.find(d => parseInt(d.time_unit) === hour) || {};
+                goodData.push(data.good_count || 0);
+                fairData.push(data.fair_count || 0);
+                poorData.push(data.poor_count || 0);
             }
-
-            filteredData.forEach(item => {
-                const itemDate = new Date(item.created_at);
-                const hour = Math.floor(itemDate.getHours() / 2) * 2; // Round to nearest 2-hour interval
-
-                if (dataGroups[hour]) {
-                    dataGroups[hour].total++;
-                    if (item.max_match_score >= 70) {
-                        dataGroups[hour].good++;
-                    } else if (item.max_match_score >= 50) {
-                        dataGroups[hour].fair++;
-                    } else {
-                        dataGroups[hour].poor++;
-                    }
-                }
-            });
-
-            return {
-                labels,
-                goodData: labels.map((_, index) => dataGroups[index * 2]?.good || 0),
-                fairData: labels.map((_, index) => dataGroups[index * 2]?.fair || 0),
-                poorData: labels.map((_, index) => dataGroups[index * 2]?.poor || 0),
-                volumeData: labels.map((_, index) => dataGroups[index * 2]?.total || 0)
-            };
         } else if (currentPeriod === 'weekly') {
-            // Show 7 days
-            const labels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const dataGroups = {};
-
-            labels.forEach((day, index) => {
-                dataGroups[index] = { good: 0, fair: 0, poor: 0, total: 0 };
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            dayNames.forEach((day, index) => {
+                labels.push(day);
+                const data = chartData.find(d => parseInt(d.time_unit) === index) || {};
+                goodData.push(data.good_count || 0);
+                fairData.push(data.fair_count || 0);
+                poorData.push(data.poor_count || 0);
             });
-
-            filteredData.forEach(item => {
-                const itemDate = new Date(item.created_at);
-                const dayOfWeek = itemDate.getDay();
-
-                dataGroups[dayOfWeek].total++;
-                if (item.max_match_score >= 70) {
-                    dataGroups[dayOfWeek].good++;
-                } else if (item.max_match_score >= 50) {
-                    dataGroups[dayOfWeek].fair++;
-                } else {
-                    dataGroups[dayOfWeek].poor++;
-                }
-            });
-
-            return {
-                labels,
-                goodData: labels.map((_, index) => dataGroups[index]?.good || 0),
-                fairData: labels.map((_, index) => dataGroups[index]?.fair || 0),
-                poorData: labels.map((_, index) => dataGroups[index]?.poor || 0),
-                volumeData: labels.map((_, index) => dataGroups[index]?.total || 0)
-            };
         } else {
-            // Show days between start and end date
-            const labels = [];
-            const dataGroups = {};
-
-            const currentDate = new Date(startDate);
-            while (currentDate <= endDate) {
-                const dateStr = currentDate.toISOString().split('T')[0];
-                const label = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                labels.push(label);
-                dataGroups[dateStr] = { good: 0, fair: 0, poor: 0, total: 0 };
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-
-            filteredData.forEach(item => {
-                const dateStr = item.created_at.split(' ')[0];
-                if (dataGroups[dateStr]) {
-                    dataGroups[dateStr].total++;
-                    if (item.max_match_score >= 70) {
-                        dataGroups[dateStr].good++;
-                    } else if (item.max_match_score >= 50) {
-                        dataGroups[dateStr].fair++;
-                    } else {
-                        dataGroups[dateStr].poor++;
-                    }
-                }
+            chartData.forEach(data => {
+                labels.push(new Date(data.time_unit).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                goodData.push(data.good_count || 0);
+                fairData.push(data.fair_count || 0);
+                poorData.push(data.poor_count || 0);
             });
-
-            const dates = Object.keys(dataGroups).sort();
-            return {
-                labels,
-                goodData: dates.map(date => dataGroups[date]?.good || 0),
-                fairData: dates.map(date => dataGroups[date]?.fair || 0),
-                poorData: dates.map(date => dataGroups[date]?.poor || 0),
-                volumeData: dates.map(date => dataGroups[date]?.total || 0)
-            };
         }
-    }
-
-    function initializeCharts() {
-        initializePerformanceChart();
-        initializeVolumeChart();
-        initializeDistributionChart();
-    }
-
-    function initializePerformanceChart() {
-        const ctx = document.getElementById('performanceChart').getContext('2d');
-        const chartData = getChartLabelsAndData();
 
         if (charts.performance) {
             charts.performance.destroy();
@@ -673,11 +565,11 @@ $dummyData = generateDummySearchData(30);
         charts.performance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: chartData.labels,
+                labels: labels,
                 datasets: [
                     {
                         label: 'Good (70%+)',
-                        data: chartData.goodData,
+                        data: goodData,
                         borderColor: '#10B981',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         fill: true,
@@ -685,7 +577,7 @@ $dummyData = generateDummySearchData(30);
                     },
                     {
                         label: 'Fair (50-70%)',
-                        data: chartData.fairData,
+                        data: fairData,
                         borderColor: '#F59E0B',
                         backgroundColor: 'rgba(245, 158, 11, 0.1)',
                         fill: true,
@@ -693,7 +585,7 @@ $dummyData = generateDummySearchData(30);
                     },
                     {
                         label: 'Poor (<50%)',
-                        data: chartData.poorData,
+                        data: poorData,
                         borderColor: '#EF4444',
                         backgroundColor: 'rgba(239, 68, 68, 0.1)',
                         fill: true,
@@ -726,9 +618,31 @@ $dummyData = generateDummySearchData(30);
         });
     }
 
-    function initializeVolumeChart() {
+    function updateVolumeChart(chartData) {
         const ctx = document.getElementById('volumeChart').getContext('2d');
-        const chartData = getChartLabelsAndData();
+
+        let labels = [];
+        let volumeData = [];
+
+        if (currentPeriod === 'daily') {
+            for (let hour = 0; hour < 24; hour += 2) {
+                labels.push(`${hour.toString().padStart(2, '0')}:00`);
+                const data = chartData.find(d => parseInt(d.time_unit) === hour) || {};
+                volumeData.push(data.total_count || 0);
+            }
+        } else if (currentPeriod === 'weekly') {
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            dayNames.forEach((day, index) => {
+                labels.push(day);
+                const data = chartData.find(d => parseInt(d.time_unit) === index) || {};
+                volumeData.push(data.total_count || 0);
+            });
+        } else {
+            chartData.forEach(data => {
+                labels.push(new Date(data.time_unit).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                volumeData.push(data.total_count || 0);
+            });
+        }
 
         if (charts.volume) {
             charts.volume.destroy();
@@ -737,10 +651,10 @@ $dummyData = generateDummySearchData(30);
         charts.volume = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: chartData.labels,
+                labels: labels,
                 datasets: [{
                     label: 'Search Count',
-                    data: chartData.volumeData,
+                    data: volumeData,
                     backgroundColor: 'rgba(59, 130, 246, 0.8)',
                     borderColor: '#3B82F6',
                     borderWidth: 1,
@@ -772,12 +686,8 @@ $dummyData = generateDummySearchData(30);
         });
     }
 
-    function initializeDistributionChart() {
+    function updateDistributionChart(distribution) {
         const ctx = document.getElementById('distributionChart').getContext('2d');
-
-        const good = filteredData.filter(item => item.max_match_score >= 70).length;
-        const fair = filteredData.filter(item => item.max_match_score >= 50 && item.max_match_score < 70).length;
-        const poor = filteredData.filter(item => item.max_match_score < 50).length;
 
         if (charts.distribution) {
             charts.distribution.destroy();
@@ -788,7 +698,7 @@ $dummyData = generateDummySearchData(30);
             data: {
                 labels: ['Good (70%+)', 'Fair (50-70%)', 'Poor (<50%)'],
                 datasets: [{
-                    data: [good, fair, poor],
+                    data: [distribution.good_count || 0, distribution.fair_count || 0, distribution.poor_count || 0],
                     backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
                     borderWidth: 0
                 }]
@@ -809,35 +719,100 @@ $dummyData = generateDummySearchData(30);
         });
     }
 
-    function renderTopSearchTerms() {
-        const termCounts = {};
-        filteredData.forEach(item => {
-            const term = item.search_query.toLowerCase();
-            termCounts[term] = (termCounts[term] || 0) + 1;
-        });
+    function updateResponseTimeAnalysis(analysis) {
+        document.getElementById('fastBar').style.width = (analysis.fast_percent || 0) + '%';
+        document.getElementById('mediumBar').style.width = (analysis.medium_percent || 0) + '%';
+        document.getElementById('slowBar').style.width = (analysis.slow_percent || 0) + '%';
 
-        const sortedTerms = Object.entries(termCounts)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 5); // Changed from 10 to 5
+        document.getElementById('fastPercent').textContent = (analysis.fast_percent || 0) + '%';
+        document.getElementById('mediumPercent').textContent = (analysis.medium_percent || 0) + '%';
+        document.getElementById('slowPercent').textContent = (analysis.slow_percent || 0) + '%';
+    }
 
+    function renderSearchLogTable(data, total, page) {
+        const tbody = document.getElementById('searchLogBody');
+        tbody.innerHTML = data.map(item => {
+            const performanceBadge = getPerformanceBadge(item.max_match_score);
+
+            return `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-3 py-3">
+                    <div class="font-medium text-gray-900 break-words text-sm">${item.search_query}</div>
+                </td>
+                <td class="px-3 py-3 text-center">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.results_count === 0 ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                        ${item.results_count}
+                    </span>
+                </td>
+                <td class="px-3 py-3 text-center">
+                    <div class="text-xs text-gray-900">
+                        <span class="font-medium">${item.max_match_score}%</span> / <span class="text-gray-600">${item.min_match_score}%</span> / <span class="text-gray-600">${item.average_match_score}%</span>
+                    </div>
+                </td>
+                <td class="px-3 py-3 text-center">
+                    ${performanceBadge}
+                </td>
+                <td class="px-3 py-3 text-center">
+                    <span class="text-sm font-medium text-gray-900">${item.duration_ms}ms</span>
+                </td>
+                <td class="px-3 py-3 text-center">
+                    <div class="text-xs text-gray-900">${formatDate(item.created_at)}</div>
+                    <div class="text-xs text-gray-500">${formatTime(item.created_at)}</div>
+                </td>
+            </tr>
+        `;
+        }).join('');
+
+        updatePagination(total, page);
+    }
+
+    function renderTopSearchTerms(topTerms) {
         const container = document.getElementById('topSearchTerms');
-        container.innerHTML = sortedTerms.map(([term, count], index) => `
+        container.innerHTML = topTerms.map((term, index) => `
         <div class="flex items-center justify-between p-3 rounded-lg ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
             <div class="flex items-center gap-3 min-w-0 flex-1">
                 <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
                     ${index + 1}
                 </div>
-                <span class="font-medium text-gray-900 truncate">${term}</span>
+                <span class="font-medium text-gray-900 truncate">${term.search_query}</span>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0 ml-2">
-                <span class="text-sm text-gray-600 hidden sm:inline">${count} searches</span>
-                <span class="text-sm text-gray-600 sm:hidden">${count}</span>
+                <span class="text-sm text-gray-600 hidden sm:inline">${term.search_count} searches</span>
+                <span class="text-sm text-gray-600 sm:hidden">${term.search_count}</span>
                 <div class="w-12 sm:w-16 bg-gray-200 rounded-full h-2">
-                    <div class="bg-primary h-2 rounded-full" style="width: ${(count / sortedTerms[0][1]) * 100}%"></div>
+                    <div class="bg-primary h-2 rounded-full" style="width: ${topTerms.length > 0 ? (term.search_count / topTerms[0].search_count) * 100 : 0}%"></div>
                 </div>
             </div>
         </div>
     `).join('');
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        const day = date.getDate();
+        const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
+            day === 2 || day === 22 ? 'nd' :
+                day === 3 || day === 23 ? 'rd' : 'th';
+
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+
+        return `${month} ${day}${suffix}, ${year}`;
+    }
+
+    function formatTime(dateString) {
+        const date = new Date(dateString);
+        let hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+
+        return `${hours}:${minutesStr}${ampm}`;
     }
 
     function getPerformanceBadge(score) {
@@ -850,68 +825,20 @@ $dummyData = generateDummySearchData(30);
         }
     }
 
-    function updatePagination() {
-        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+    function updatePagination(total, page) {
+        const totalPages = Math.ceil(total / itemsPerPage);
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, total);
 
         document.getElementById('showingCount').textContent = `${startIndex + 1}-${endIndex}`;
-        document.getElementById('totalCount').textContent = filteredData.length;
-        document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${Math.max(1, totalPages)}`;
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('pageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
 
-        document.getElementById('prevPage').disabled = currentPage === 1;
-        document.getElementById('nextPage').disabled = currentPage === totalPages || totalPages === 0;
-    }
-
-    function applyFilters() {
-        const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
-        const performanceFilter = document.getElementById('performanceFilter').value;
-
-        filteredData = searchData.filter(item => {
-            const matchesSearch = !searchTerm || item.search_query.toLowerCase().includes(searchTerm);
-
-            let matchesPerformance = true;
-            if (performanceFilter === 'good') {
-                matchesPerformance = item.max_match_score >= 70;
-            } else if (performanceFilter === 'fair') {
-                matchesPerformance = item.max_match_score >= 50 && item.max_match_score < 70;
-            } else if (performanceFilter === 'poor') {
-                matchesPerformance = item.max_match_score < 50;
-            }
-
-            return matchesSearch && matchesPerformance;
-        });
-
-        currentPage = 1;
-        updateStatistics();
-        updateCharts();
-        renderTopSearchTerms();
-        renderSearchLogTable();
-    }
-
-    function updateCharts() {
-        initializeCharts();
-    }
-
-    function applyDateFilter(period) {
-        const startDate = new Date(document.getElementById('startDate').value);
-        const endDate = new Date(document.getElementById('endDate').value);
-        endDate.setHours(23, 59, 59, 999); // Include the entire end date
-
-        filteredData = searchData.filter(item => {
-            const itemDate = new Date(item.created_at);
-            return itemDate >= startDate && itemDate <= endDate;
-        });
-
-        currentPage = 1;
-        updateStatistics();
-        updateCharts();
-        renderTopSearchTerms();
-        renderSearchLogTable();
+        document.getElementById('prevPage').disabled = page === 1;
+        document.getElementById('nextPage').disabled = page === totalPages || totalPages === 0;
     }
 
     function setupEventListeners() {
-        // Date filter buttons
         document.querySelectorAll('.date-filter-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 document.querySelectorAll('.date-filter-btn').forEach(b => {
@@ -927,115 +854,115 @@ $dummyData = generateDummySearchData(30);
             });
         });
 
-        // Custom date range
         document.getElementById('applyCustomRange').addEventListener('click', function () {
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
 
             if (startDate && endDate) {
-                // Clear active period button
                 document.querySelectorAll('.date-filter-btn').forEach(b => {
                     b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
                     b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
                 });
 
                 currentPeriod = 'custom';
-                applyDateFilter('custom');
+                restartStream();
             }
         });
 
-        // Search and filter inputs
-        document.getElementById('searchFilter').addEventListener('input', applyFilters);
-        document.getElementById('performanceFilter').addEventListener('change', applyFilters);
+        document.getElementById('searchFilter').addEventListener('input', debounce(() => {
+            currentPage = 1;
+            restartStream();
+        }, 500));
 
-        // Clear filters
+        document.getElementById('performanceFilter').addEventListener('change', () => {
+            currentPage = 1;
+            restartStream();
+        });
+
         document.getElementById('clearFilters').addEventListener('click', function () {
             document.getElementById('searchFilter').value = '';
             document.getElementById('performanceFilter').value = 'all';
-            applyFilters();
+            currentPage = 1;
+            restartStream();
         });
 
-        // Pagination
         document.getElementById('prevPage').addEventListener('click', function () {
             if (currentPage > 1) {
                 currentPage--;
-                renderSearchLogTable();
+                restartStream();
             }
         });
 
         document.getElementById('nextPage').addEventListener('click', function () {
-            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderSearchLogTable();
-            }
+            currentPage++;
+            restartStream();
         });
 
-        // Export and refresh buttons
         document.getElementById('exportBtn').addEventListener('click', exportData);
         document.getElementById('refreshBtn').addEventListener('click', refreshData);
+    }
 
-        // Volume chart metric selector
-        document.getElementById('volumeMetric').addEventListener('change', function () {
-            updateVolumeChart(this.value);
-        });
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 
     function exportData() {
-        // Create CSV content
-        const headers = ['Search Query', 'Results Count', 'Max Match Score', 'Min Match Score', 'Average Match Score', 'Duration (ms)', 'Timestamp'];
-        const csvContent = [
-            headers.join(','),
-            ...filteredData.map(item => [
-                `"${item.search_query}"`,
-                item.results_count,
-                item.max_match_score,
-                item.min_match_score,
-                item.average_match_score,
-                item.duration_ms,
-                `"${item.created_at}"`
-            ].join(','))
-        ].join('\n');
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
 
-        // Download CSV file
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `search-analytics-${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        fetch(`fetch/manageSearchLog.php?action=exportSearchData&start_date=${startDate}&end_date=${endDate}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const headers = ['Search Query', 'Results Count', 'Max Match Score', 'Min Match Score', 'Average Match Score', 'Duration (ms)', 'Timestamp'];
+                    const csvContent = [
+                        headers.join(','),
+                        ...data.data.map(item => [
+                            `"${item.search_query}"`,
+                            item.results_count,
+                            item.max_match_score,
+                            item.min_match_score,
+                            item.average_match_score,
+                            item.duration_ms,
+                            `"${item.created_at}"`
+                        ].join(','))
+                    ].join('\n');
+
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `search-analytics-${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+            })
+            .catch(error => console.error('Export error:', error));
     }
 
     function refreshData() {
-        // In a real application, this would fetch fresh data from the server
         const refreshBtn = document.getElementById('refreshBtn');
         const icon = refreshBtn.querySelector('i');
 
         icon.classList.add('fa-spin');
         refreshBtn.disabled = true;
 
-        setTimeout(() => {
-            // Simulate data refresh
-            updateStatistics();
-            updateCharts();
-            renderTopSearchTerms();
-            renderSearchLogTable();
+        restartStream();
 
+        setTimeout(() => {
             icon.classList.remove('fa-spin');
             refreshBtn.disabled = false;
         }, 1000);
-    }
-
-    function updateVolumeChart(metric) {
-        // This would update the volume chart based on the selected metric
-        // For now, we'll just reinitialize the chart
-        if (charts.volume) {
-            charts.volume.destroy();
-        }
-        initializeVolumeChart();
     }
 </script>
 
@@ -1060,11 +987,6 @@ $dummyData = generateDummySearchData(30);
         background-color: #f9fafb;
     }
 
-    .chart-container {
-        position: relative;
-    }
-
-    /* Enhanced mobile table scrolling */
     .overflow-x-auto {
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
@@ -1087,6 +1009,38 @@ $dummyData = generateDummySearchData(30);
 
     .overflow-x-auto::-webkit-scrollbar-thumb:hover {
         background: #a0aec0;
+    }
+
+    #searchLogTable {
+        min-width: 700px;
+    }
+
+    .new-log-row {
+        background-color: #fef3c7 !important;
+    }
+
+    .flicker-animation {
+        animation: flicker 1s ease-in-out;
+    }
+
+    @keyframes flicker {
+
+        0%,
+        100% {
+            background-color: #fef3c7;
+        }
+
+        25% {
+            background-color: #fbbf24;
+        }
+
+        50% {
+            background-color: #fef3c7;
+        }
+
+        75% {
+            background-color: #fbbf24;
+        }
     }
 
     @media (max-width: 640px) {
