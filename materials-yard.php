@@ -13,11 +13,15 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
     $response = ['products' => [], 'categories' => [], 'hasMore' => false, 'total' => 0];
 
     if (!empty($searchQuery)) {
-        $productStmt = $pdo->prepare("
+        // Advanced search implementation
+        $allProductsStmt = $pdo->prepare("
             SELECT 
                 p.id, 
                 p.title, 
                 p.description, 
+                p.meta_title,
+                p.meta_description,
+                p.meta_keywords,
                 p.views,
                 p.category_id,
                 c.name AS category_name,
@@ -34,45 +38,30 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                 ) AS has_pricing
             FROM products p
             JOIN product_categories c ON c.id = p.category_id
-            WHERE p.status = 'published' 
-              AND (p.title LIKE ? OR p.description LIKE ? OR p.meta_keywords LIKE ? OR c.name LIKE ?)
-            ORDER BY 
-                CASE WHEN p.title LIKE ? THEN 1 ELSE 2 END,
-                has_pricing DESC, 
-                p.featured DESC, 
-                p.views DESC
-            LIMIT ? OFFSET ?
+            WHERE p.status = 'published'
         ");
+        $allProductsStmt->execute();
+        $allProducts = $allProductsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $searchTerm = "%{$searchQuery}%";
-        $exactTerm = "%{$searchQuery}%";
-        $productStmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm, $exactTerm, $limit, $offset]);
-        $products = $productStmt->fetchAll(PDO::FETCH_ASSOC);
+        // Apply advanced search scoring
+        $scoredProducts = advancedProductSearch($allProducts, $searchQuery);
 
-        $countStmt = $pdo->prepare("
-            SELECT COUNT(*) as total
-            FROM products p
-            JOIN product_categories c ON c.id = p.category_id
-            WHERE p.status = 'published' 
-              AND (p.title LIKE ? OR p.description LIKE ? OR p.meta_keywords LIKE ? OR c.name LIKE ?)
-        ");
-        $countStmt->execute([$searchTerm, $searchTerm, $searchTerm, $searchTerm]);
-        $totalProducts = $countStmt->fetch()['total'];
+        // Apply pagination to scored results
+        $totalProducts = count($scoredProducts);
+        $products = array_slice($scoredProducts, $offset, $limit);
 
         if ($page === 1) {
-            $categoryStmt = $pdo->prepare("
-                SELECT id, name, description
+            // Advanced category search
+            $allCategoriesStmt = $pdo->prepare("
+                SELECT id, name, description, meta_title, meta_description, meta_keywords
                 FROM product_categories 
-                WHERE status = 'active' 
-                  AND (name LIKE ? OR description LIKE ?)
-                ORDER BY 
-                    CASE WHEN name LIKE ? THEN 1 ELSE 2 END,
-                    name ASC
-                LIMIT 10
+                WHERE status = 'active'
             ");
-            $categoryStmt->execute([$searchTerm, $searchTerm, $exactTerm]);
-            $categories = $categoryStmt->fetchAll(PDO::FETCH_ASSOC);
-            $response['categories'] = $categories;
+            $allCategoriesStmt->execute();
+            $allCategories = $allCategoriesStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $scoredCategories = advancedCategorySearch($allCategories, $searchQuery);
+            $response['categories'] = array_slice($scoredCategories, 0, 10);
         }
     } else {
         if (!empty($categoryId)) {
@@ -168,6 +157,180 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
 
     echo json_encode($response);
     exit;
+}
+
+// Advanced search functions
+function levenshteinDistance($a, $b)
+{
+    if ($a === $b)
+        return 0;
+    if (strlen($a) === 0 || strlen($b) === 0)
+        return max(strlen($a), strlen($b));
+
+    $v = range(0, strlen($b));
+    for ($i = 0; $i < strlen($a); $i++) {
+        $prev = $i + 1;
+        for ($j = 0; $j < strlen($b); $j++) {
+            $val = $a[$i] === $b[$j] ? $v[$j] : min($v[$j], $v[$j + 1], $prev) + 1;
+            $v[$j] = $prev;
+            $prev = $val;
+        }
+        $v[strlen($b)] = $prev;
+    }
+    return $v[strlen($b)];
+}
+
+function soundex_similarity($word1, $word2)
+{
+    return soundex($word1) === soundex($word2);
+}
+
+function metaphone_similarity($word1, $word2)
+{
+    return metaphone($word1) === metaphone($word2);
+}
+
+function tokenize($text)
+{
+    return array_filter(
+        array_map(
+            'trim',
+            preg_split('/\W+/', strtolower($text))
+        ),
+        function ($word) {
+            return strlen($word) > 2; }
+    );
+}
+
+function calculateFieldScore($fieldValue, $searchQuery, $weight = 1.0)
+{
+    if (empty($fieldValue) || empty($searchQuery))
+        return 0;
+
+    $fieldValue = strtolower($fieldValue);
+    $searchQuery = strtolower($searchQuery);
+    $score = 0;
+
+    // Exact match gets highest score
+    if (strpos($fieldValue, $searchQuery) !== false) {
+        $score += 1.0;
+
+        // Bonus for exact word match
+        if (
+            strpos($fieldValue, ' ' . $searchQuery . ' ') !== false ||
+            strpos($fieldValue, $searchQuery . ' ') === 0 ||
+            strpos($fieldValue, ' ' . $searchQuery) === strlen($fieldValue) - strlen($searchQuery) - 1
+        ) {
+            $score += 0.5;
+        }
+    }
+
+    // Tokenized search for partial matches
+    $fieldTokens = tokenize($fieldValue);
+    $queryTokens = tokenize($searchQuery);
+
+    foreach ($queryTokens as $queryToken) {
+        $bestTokenScore = 0;
+
+        foreach ($fieldTokens as $fieldToken) {
+            $tokenScore = 0;
+
+            // Exact token match
+            if ($fieldToken === $queryToken) {
+                $tokenScore = 1.0;
+            }
+            // Partial token match
+            elseif (strpos($fieldToken, $queryToken) !== false || strpos($queryToken, $fieldToken) !== false) {
+                $tokenScore = 0.7;
+            }
+            // Phonetic similarity
+            elseif (soundex_similarity($fieldToken, $queryToken) || metaphone_similarity($fieldToken, $queryToken)) {
+                $tokenScore = 0.6;
+            }
+            // Levenshtein distance for typo tolerance
+            else {
+                $distance = levenshteinDistance($fieldToken, $queryToken);
+                $maxLen = max(strlen($fieldToken), strlen($queryToken));
+                if ($maxLen > 0 && $distance <= 2) { // Allow up to 2 character differences
+                    $tokenScore = max(0, 1 - ($distance / $maxLen)) * 0.5;
+                }
+            }
+
+            $bestTokenScore = max($bestTokenScore, $tokenScore);
+        }
+
+        $score += $bestTokenScore;
+    }
+
+    return $score * $weight;
+}
+
+function advancedProductSearch($products, $searchQuery)
+{
+    $scoredProducts = [];
+
+    foreach ($products as $product) {
+        $totalScore = 0;
+
+        // Weight different fields by importance
+        $totalScore += calculateFieldScore($product['title'], $searchQuery, 0.4);
+        $totalScore += calculateFieldScore($product['meta_title'], $searchQuery, 0.3);
+        $totalScore += calculateFieldScore($product['description'], $searchQuery, 0.2);
+        $totalScore += calculateFieldScore($product['meta_description'], $searchQuery, 0.2);
+        $totalScore += calculateFieldScore($product['meta_keywords'], $searchQuery, 0.2);
+        $totalScore += calculateFieldScore($product['category_name'], $searchQuery, 0.1);
+
+        // Only include products with a minimum score threshold
+        if ($totalScore > 0.1) {
+            $product['search_score'] = min($totalScore, 1.0); // Cap at 1.0 (100%)
+            $scoredProducts[] = $product;
+        }
+    }
+
+    // Sort by score (descending), then by other factors
+    usort($scoredProducts, function ($a, $b) {
+        if ($a['search_score'] !== $b['search_score']) {
+            return $b['search_score'] <=> $a['search_score'];
+        }
+
+        // Secondary sorting by has_pricing, then views
+        if ($a['has_pricing'] !== $b['has_pricing']) {
+            return $b['has_pricing'] <=> $a['has_pricing'];
+        }
+
+        return $b['views'] <=> $a['views'];
+    });
+
+    return $scoredProducts;
+}
+
+function advancedCategorySearch($categories, $searchQuery)
+{
+    $scoredCategories = [];
+
+    foreach ($categories as $category) {
+        $totalScore = 0;
+
+        // Weight different fields by importance
+        $totalScore += calculateFieldScore($category['name'], $searchQuery, 0.5);
+        $totalScore += calculateFieldScore($category['meta_title'], $searchQuery, 0.3);
+        $totalScore += calculateFieldScore($category['description'], $searchQuery, 0.2);
+        $totalScore += calculateFieldScore($category['meta_description'], $searchQuery, 0.2);
+        $totalScore += calculateFieldScore($category['meta_keywords'], $searchQuery, 0.2);
+
+        // Only include categories with a minimum score threshold
+        if ($totalScore > 0.1) {
+            $category['search_score'] = min($totalScore, 1.0); // Cap at 1.0 (100%)
+            $scoredCategories[] = $category;
+        }
+    }
+
+    // Sort by score (descending)
+    usort($scoredCategories, function ($a, $b) {
+        return $b['search_score'] <=> $a['search_score'];
+    });
+
+    return $scoredCategories;
 }
 
 function getProductImage($productId)
@@ -1086,7 +1249,6 @@ ob_start();
                     </div>
                     <div>
                         <h3 class="font-medium text-gray-900">${escapeHtml(category.name)}</h3>
-                        <p class="text-sm text-gray-500 mt-1">${escapeHtml(category.description || 'Browse products in this category')}</p>
                     </div>
                 </div>
             </div>
@@ -1101,6 +1263,11 @@ ob_start();
                 <div class="relative">
                     <img src="${product.primary_image}" alt="${escapeHtml(product.title)}"
                         class="w-full h-40 md:h-48 object-cover">
+                    ${product.search_score ? `
+                        <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                            ${Math.min(Math.round(product.search_score * 100), 100)}% match
+                        </div>
+                    ` : ''}
 
                     <div class="product-details-btn">
                         <a href="<?= BASE_URL ?>view/product/${product.id}"
