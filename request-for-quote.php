@@ -44,7 +44,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         width: 100%;
     }
 
-    /* Enhanced Modern UI Styling */
     .page-header {
         background-image: linear-gradient(to right, rgba(239, 68, 68, 0.9), rgba(185, 28, 28, 0.8)),
             url('https://dummyimage.com/1920x350/e3e3e3/ffffff&text=Request+Quote');
@@ -65,7 +64,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
-    /* Item Report Styling */
     .item-report {
         border-collapse: separate;
         border-spacing: 0;
@@ -105,7 +103,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         border-bottom: none;
     }
 
-    /* Button Styling */
     .btn-primary {
         background-image: linear-gradient(to right, #ef4444, #dc2626);
         color: white;
@@ -128,14 +125,14 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         transform: translateY(-1px);
     }
 
-    /* Modal Styling */
     .modal {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -166,7 +163,65 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         transform: scale(1);
     }
 
-    /* Animation Effects */
+    .product-search-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 300px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        z-index: 60;
+        display: none;
+    }
+
+    .product-search-dropdown.show {
+        display: block;
+    }
+
+    .product-search-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        border-bottom: 1px solid #f3f4f6;
+        display: flex;
+        align-items: center;
+    }
+
+    .product-search-item:hover {
+        background-color: #f9fafb;
+    }
+
+    .product-search-item:last-child {
+        border-bottom: none;
+    }
+
+    .product-search-note {
+        padding: 0.75rem 1rem;
+        background-color: #fef3c7;
+        border-bottom: 1px solid #f59e0b;
+        font-size: 0.875rem;
+        color: #92400e;
+        display: flex;
+        align-items: center;
+    }
+
+    .product-image {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 0.375rem;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .product-image.loading {
+        opacity: 0.5;
+    }
+
     @keyframes fadeIn {
         from {
             opacity: 0;
@@ -199,7 +254,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
-    /* Empty State Styling */
     .empty-state {
         display: flex;
         flex-direction: column;
@@ -212,7 +266,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         border: 2px dashed #e5e7eb;
     }
 
-    /* Utility Classes */
     .required-star {
         color: #ef4444;
         font-weight: bold;
@@ -234,18 +287,35 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
     .delete-icon:hover {
         color: #ef4444;
     }
+
+    ::-webkit-scrollbar {
+        width: 3px;
+        height: 3px
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background-color: rgb(0, 0, 0);
+        border-radius: 3px
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgb(135, 135, 135) transparent
+    }
 </style>
 
 <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Main Form Column -->
         <div class="lg:col-span-2">
             <div class="form-card p-6 md:p-8 fade-in">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-2">Request Details</h2>
                 <p class="text-gray-600 mb-6">Fields marked with <span class="required-star">*</span> are required</p>
 
                 <form id="rfq-form" class="space-y-6" novalidate autocomplete="off">
-                    <!-- Contact Information Section -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="form-group">
                             <input type="text" id="company" name="company" placeholder=" "
@@ -288,7 +358,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                                 class="required-star">*</span></label>
                     </div>
 
-                    <!-- Items Section -->
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
                             <h2 class="text-lg font-medium text-gray-800">List of Items <span
@@ -299,7 +368,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                             </button>
                         </div>
 
-                        <!-- Items Report Table -->
                         <div class="bg-white rounded-lg overflow-hidden">
                             <div id="items-container" class="w-full">
                                 <table class="item-report">
@@ -312,11 +380,9 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                                         </tr>
                                     </thead>
                                     <tbody id="items-list">
-                                        <!-- Items will be dynamically added here -->
                                     </tbody>
                                 </table>
 
-                                <!-- Empty State -->
                                 <div id="empty-items-state" class="empty-state">
                                     <div class="text-gray-400 mb-3">
                                         <i class="fas fa-clipboard-list text-4xl"></i>
@@ -349,7 +415,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             </div>
         </div>
 
-        <!-- Sidebar Column -->
         <div class="lg:col-span-1">
             <div
                 class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 fade-in mb-6 border-l-4 border-red-500 shadow-sm">
@@ -375,6 +440,10 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                     <p class="flex items-start">
                         <i class="fas fa-edit mt-1 text-red-500 mr-3"></i>
                         <span>Edit items by clicking the pencil icon in the actions column.</span>
+                    </p>
+                    <p class="flex items-start">
+                        <i class="fas fa-search mt-1 text-red-500 mr-3"></i>
+                        <span>Start typing in Brand/Material field to see product suggestions.</span>
                     </p>
                 </div>
             </div>
@@ -414,7 +483,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
     </div>
 </div>
 
-<!-- Item Modal -->
 <div id="item-modal" class="modal">
     <div class="modal-content p-0">
         <div
@@ -434,6 +502,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                         autocomplete="off">
                     <label for="item-brand" class="floating-label text-gray-500">Brand/Material <span
                             class="required-star">*</span></label>
+                    <div id="brand-search-dropdown" class="product-search-dropdown"></div>
                 </div>
 
                 <div class="form-group">
@@ -467,7 +536,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 <div id="delete-modal" class="modal">
     <div class="modal-content p-0">
         <div
@@ -502,12 +570,177 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script src="https://www.google.com/recaptcha/api.js?render=<?= $recaptcha_site_key ?>"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const API_BASE = "<?php echo BASE_URL; ?>fetch/handleRFQ";
+        const BASE_URL = "<?php echo BASE_URL; ?>";
 
-        // Initialize phone input
+        let SEARCH_DATA = { products: [], categories: [] };
+        let fuseProducts = null;
+        let searchInitialized = false;
+        let imageCache = new Map();
+
+        function loadSearchData() {
+            const cachedData = localStorage.getItem('zzimba_search_data');
+            const cacheTimestamp = localStorage.getItem('zzimba_search_data_timestamp');
+            const now = Date.now();
+            const cacheAge = now - (cacheTimestamp ? parseInt(cacheTimestamp) : 0);
+            const maxCacheAge = 30 * 60 * 1000;
+
+            if (cachedData && cacheAge < maxCacheAge) {
+                try {
+                    SEARCH_DATA = JSON.parse(cachedData);
+                    buildSearchIndexes();
+                    searchInitialized = true;
+                    return Promise.resolve();
+                } catch (e) {
+                    console.error('Error parsing cached search data:', e);
+                }
+            }
+
+            return fetch(window.location.origin + window.location.pathname + '?ajax=data')
+                .then(response => response.json())
+                .then(data => {
+                    SEARCH_DATA = data;
+                    localStorage.setItem('zzimba_search_data', JSON.stringify(data));
+                    localStorage.setItem('zzimba_search_data_timestamp', now.toString());
+                    buildSearchIndexes();
+                    searchInitialized = true;
+                })
+                .catch(error => {
+                    console.error('Failed to load search data:', error);
+                });
+        }
+
+        function buildSearchIndexes() {
+            if (!window.Fuse) {
+                setTimeout(buildSearchIndexes, 100);
+                return;
+            }
+
+            fuseProducts = new Fuse(
+                SEARCH_DATA.products.map(p => ({ ...p })),
+                {
+                    includeScore: true,
+                    threshold: 0.4,
+                    ignoreLocation: true,
+                    keys: [
+                        { name: 'title', weight: 0.4 },
+                        { name: 'meta_title', weight: 0.3 },
+                        { name: 'description', weight: 0.2 },
+                        { name: 'meta_description', weight: 0.2 },
+                        { name: 'meta_keywords', weight: 0.2 },
+                        { name: 'category_name', weight: 0.1 }
+                    ]
+                });
+        }
+
+        function getImageUrl(type, id) {
+            const cacheKey = `${type}_${id}`;
+
+            if (imageCache.has(cacheKey)) {
+                return Promise.resolve(imageCache.get(cacheKey));
+            }
+
+            return fetch(`${window.location.origin}${window.location.pathname}?ajax=image&type=${type}&id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    const imageUrl = data.image || `https://placehold.co/40x40?text=No+Image`;
+                    imageCache.set(cacheKey, imageUrl);
+                    return imageUrl;
+                })
+                .catch(() => {
+                    const fallbackUrl = `https://placehold.co/40x40?text=No+Image`;
+                    imageCache.set(cacheKey, fallbackUrl);
+                    return fallbackUrl;
+                });
+        }
+
+        async function renderProductSearchDropdown(query, dropdownElement) {
+            query = query.trim().toLowerCase();
+            if (!query || !fuseProducts || !searchInitialized) {
+                dropdownElement.style.display = 'none';
+                return;
+            }
+
+            const productResults = fuseProducts.search(query, { limit: 6 });
+
+            let html = '';
+
+            if (productResults.length) {
+                html += `
+                    <div class="product-search-note">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Select a suggested product if listed, or continue typing your own brand/material name.
+                    </div>`;
+
+                for (const result of productResults) {
+                    const product = result.item;
+                    html += `
+                        <div class="product-search-item" data-product-title="${escapeHtml(product.title)}">
+                            <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="product-image loading" data-type="product" data-id="${product.id}">
+                            <div>
+                                <div class="font-medium text-sm">${escapeHtml(product.title)}</div>
+                                <div class="text-xs text-gray-500">${escapeHtml(product.category_name)}</div>
+                            </div>
+                        </div>`;
+                }
+            }
+
+            if (html) {
+                dropdownElement.innerHTML = html;
+                dropdownElement.classList.add('show');
+
+                const images = dropdownElement.querySelectorAll('.product-image.loading');
+                images.forEach(async (img) => {
+                    const type = img.dataset.type;
+                    const id = img.dataset.id;
+                    try {
+                        const imageUrl = await getImageUrl(type, id);
+                        img.src = imageUrl;
+                        img.classList.remove('loading');
+                    } catch (error) {
+                        img.src = 'https://placehold.co/40x40?text=No+Image';
+                        img.classList.remove('loading');
+                    }
+                });
+
+                const items = dropdownElement.querySelectorAll('.product-search-item');
+                items.forEach(item => {
+                    item.addEventListener('click', function () {
+                        const productTitle = this.dataset.productTitle;
+                        document.getElementById('item-brand').value = productTitle;
+                        dropdownElement.classList.remove('show');
+
+                        const event = new Event('input', { bubbles: true });
+                        document.getElementById('item-brand').dispatchEvent(event);
+                    });
+                });
+            } else {
+                dropdownElement.classList.remove('show');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         const phoneInputField = document.querySelector("#phone-whatsapp");
         const iti = window.intlTelInput(phoneInputField, {
             preferredCountries: ["ug", "rw", "ke", "tz"],
@@ -517,19 +750,16 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
         });
 
-        // Additional autofill prevention
         const formInputs = document.querySelectorAll('input');
         formInputs.forEach(input => {
             const randomAttr = Math.random().toString(36).substring(2);
             input.setAttribute('data-random', randomAttr);
         });
 
-        // Items management
         let items = [];
         const itemsList = document.getElementById('items-list');
         const emptyState = document.getElementById('empty-items-state');
 
-        // Modal elements
         const itemModal = document.getElementById('item-modal');
         const modalTitle = document.getElementById('modal-title');
         const itemForm = document.getElementById('item-form');
@@ -537,12 +767,11 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         const itemBrand = document.getElementById('item-brand');
         const itemSize = document.getElementById('item-size');
         const itemQuantity = document.getElementById('item-quantity');
+        const brandSearchDropdown = document.getElementById('brand-search-dropdown');
 
-        // Delete modal elements
         const deleteModal = document.getElementById('delete-modal');
         const deleteItemIndex = document.getElementById('delete-item-index');
 
-        // Update items display
         function updateItemsDisplay() {
             itemsList.innerHTML = '';
 
@@ -570,7 +799,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                 itemsList.appendChild(row);
             });
 
-            // Add event listeners to action icons
             document.querySelectorAll('.edit-icon').forEach(icon => {
                 icon.addEventListener('click', function () {
                     const index = parseInt(this.getAttribute('data-index'));
@@ -586,15 +814,14 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             });
         }
 
-        // Show item modal for adding
         function showAddItemModal() {
             modalTitle.textContent = 'Add New Item';
             itemForm.reset();
             itemIndex.value = -1;
             itemModal.classList.add('active');
+            brandSearchDropdown.classList.remove('show');
         }
 
-        // Show item modal for editing
         function editItem(index) {
             const item = items[index];
             modalTitle.textContent = 'Edit Item';
@@ -603,15 +830,14 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             itemQuantity.value = item.quantity;
             itemIndex.value = index;
             itemModal.classList.add('active');
+            brandSearchDropdown.classList.remove('show');
         }
 
-        // Show delete confirmation modal
         function showDeleteModal(index) {
             deleteItemIndex.value = index;
             deleteModal.classList.add('active');
         }
 
-        // Save item (add or update)
         function saveItem(e) {
             e.preventDefault();
 
@@ -632,18 +858,16 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             };
 
             if (index === -1) {
-                // Add new item
                 items.push(item);
             } else {
-                // Update existing item
                 items[index] = item;
             }
 
             updateItemsDisplay();
             itemModal.classList.remove('active');
+            brandSearchDropdown.classList.remove('show');
         }
 
-        // Delete item
         function deleteItem() {
             const index = parseInt(deleteItemIndex.value);
             if (index >= 0 && index < items.length) {
@@ -653,27 +877,47 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             deleteModal.classList.remove('active');
         }
 
-        // Event listeners for modals
         document.getElementById('add-item-btn').addEventListener('click', showAddItemModal);
         document.getElementById('empty-add-item-btn').addEventListener('click', showAddItemModal);
-        document.getElementById('close-modal').addEventListener('click', () => itemModal.classList.remove('active'));
-        document.getElementById('cancel-item').addEventListener('click', () => itemModal.classList.remove('active'));
+        document.getElementById('close-modal').addEventListener('click', () => {
+            itemModal.classList.remove('active');
+            brandSearchDropdown.classList.remove('show');
+        });
+        document.getElementById('cancel-item').addEventListener('click', () => {
+            itemModal.classList.remove('active');
+            brandSearchDropdown.classList.remove('show');
+        });
         document.getElementById('close-delete-modal').addEventListener('click', () => deleteModal.classList.remove('active'));
         document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.remove('active'));
         document.getElementById('confirm-delete').addEventListener('click', deleteItem);
         itemForm.addEventListener('submit', saveItem);
 
-        // Close modals when clicking outside
+        itemBrand.addEventListener('input', debounce((e) => {
+            renderProductSearchDropdown(e.target.value, brandSearchDropdown);
+        }, 200));
+
+        itemBrand.addEventListener('focus', () => {
+            if (itemBrand.value.trim()) {
+                renderProductSearchDropdown(itemBrand.value, brandSearchDropdown);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!itemBrand.contains(e.target) && !brandSearchDropdown.contains(e.target)) {
+                brandSearchDropdown.classList.remove('show');
+            }
+        });
+
         window.addEventListener('click', function (e) {
             if (e.target === itemModal) {
                 itemModal.classList.remove('active');
+                brandSearchDropdown.classList.remove('show');
             }
             if (e.target === deleteModal) {
                 deleteModal.classList.remove('active');
             }
         });
 
-        // Reset form
         document.getElementById('reset-form').addEventListener('click', function (e) {
             e.preventDefault();
             const form = document.getElementById('rfq-form');
@@ -683,7 +927,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             updateItemsDisplay();
         });
 
-        // Form submission
         const form = document.getElementById('rfq-form');
         form.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -775,7 +1018,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             });
         });
 
-        // Initialize the items display
         updateItemsDisplay();
     });
 </script>
