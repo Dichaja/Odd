@@ -198,7 +198,8 @@ function tokenize($text)
             preg_split('/\W+/', strtolower($text))
         ),
         function ($word) {
-            return strlen($word) > 2; }
+            return strlen($word) > 2;
+        }
     );
 }
 
@@ -759,6 +760,24 @@ ob_start();
             transform: rotate(360deg);
         }
     }
+
+    .quote-request-section {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        padding: 2rem;
+        text-align: center;
+        margin-top: 3rem;
+    }
+
+    .quote-request-btn {
+        transition: all 0.3s ease;
+    }
+
+    .quote-request-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+    }
 </style>
 
 <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden">
@@ -1021,6 +1040,20 @@ ob_start();
                     </div>
                     <p class="text-gray-600 font-medium">No results found</p>
                     <p class="text-gray-500 text-sm mt-1">Try different keywords or browse our categories</p>
+                </div>
+
+                <!-- Quote Request Section -->
+                <div id="quoteRequestSection" class="quote-request-section">
+                    <div class="max-w-md mx-auto">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">Not found what you're looking for?</h3>
+                        <p class="text-gray-600 text-sm mb-6">Get a custom quote for your specific building material
+                            needs</p>
+                        <a href="<?= BASE_URL ?>request-for-quote"
+                            class="quote-request-btn inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-all duration-300">
+                            <i class="fas fa-file-invoice mr-2"></i>
+                            Request a Quote Now
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
