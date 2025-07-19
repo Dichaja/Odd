@@ -1,710 +1,1122 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-$pageTitle = 'Search Log';
+$pageTitle = 'Search Analytics';
 $activeNav = 'search-log';
-
-// Sample search data - in a real application, this would come from a database
-$searchLogs = [
-    [
-        'id' => 1,
-        'term' => 'Cement',
-        'ip_address' => '192.168.0.1',
-        'location' => 'Kampala, Uganda',
-        'timestamp' => '2024-03-07 10:15:30',
-        'user_id' => null,
-        'results_count' => 8
-    ],
-    [
-        'id' => 2,
-        'term' => 'Blocks',
-        'ip_address' => '172.16.1.25',
-        'location' => 'Entebbe, Uganda',
-        'timestamp' => '2024-03-07 09:45:22',
-        'user_id' => 2,
-        'results_count' => 12
-    ],
-    [
-        'id' => 3,
-        'term' => 'Timber',
-        'ip_address' => '10.0.0.15',
-        'location' => 'Jinja, Uganda',
-        'timestamp' => '2024-03-06 14:30:15',
-        'user_id' => null,
-        'results_count' => 5
-    ],
-    [
-        'id' => 4,
-        'term' => 'Steel rods',
-        'ip_address' => '192.168.1.100',
-        'location' => 'Mbale, Uganda',
-        'timestamp' => '2024-03-06 11:20:45',
-        'user_id' => 1,
-        'results_count' => 10
-    ],
-    [
-        'id' => 5,
-        'term' => 'Paint',
-        'ip_address' => '172.16.0.50',
-        'location' => 'Mbarara, Uganda',
-        'timestamp' => '2024-03-05 16:10:30',
-        'user_id' => null,
-        'results_count' => 15
-    ],
-    [
-        'id' => 6,
-        'term' => 'Cement',
-        'ip_address' => '10.0.0.25',
-        'location' => 'Kampala, Uganda',
-        'timestamp' => '2024-03-05 09:30:15',
-        'user_id' => 3,
-        'results_count' => 8
-    ],
-    [
-        'id' => 7,
-        'term' => 'Roofing sheets',
-        'ip_address' => '192.168.2.15',
-        'location' => 'Gulu, Uganda',
-        'timestamp' => '2024-03-04 15:45:30',
-        'user_id' => null,
-        'results_count' => 6
-    ]
-];
-
-// Function to format date
-function formatDate($date)
-{
-    if (!$date) return '-';
-    $timestamp = strtotime($date);
-
-    $day = date('j', $timestamp);
-    $suffix = '';
-
-    if ($day % 10 == 1 && $day != 11) {
-        $suffix = 'st';
-    } elseif ($day % 10 == 2 && $day != 12) {
-        $suffix = 'nd';
-    } elseif ($day % 10 == 3 && $day != 13) {
-        $suffix = 'rd';
-    } else {
-        $suffix = 'th';
-    }
-
-    return date('F ' . $day . $suffix . ', Y g:i A', $timestamp);
-}
-
-// Function to format timestamps for chart labels
-function formatChartDate($date)
-{
-    if (!$date) return '-';
-    $timestamp = strtotime($date);
-    return date('M d', $timestamp);
-}
-
-// Calculate top search terms
-function getTopSearchTerms($logs, $limit = 5)
-{
-    $terms = [];
-    foreach ($logs as $log) {
-        $term = strtolower($log['term']);
-        if (!isset($terms[$term])) {
-            $terms[$term] = [
-                'term' => $log['term'],
-                'count' => 1
-            ];
-        } else {
-            $terms[$term]['count']++;
-        }
-    }
-
-    // Sort by count (descending)
-    usort($terms, function ($a, $b) {
-        return $b['count'] - $a['count'];
-    });
-
-    // Return only the top N terms
-    return array_slice($terms, 0, $limit);
-}
-
-// Get top search terms
-$topSearchTerms = getTopSearchTerms($searchLogs);
-
-// Get search counts by date
-function getSearchCountsByDate($logs)
-{
-    $counts = [];
-    foreach ($logs as $log) {
-        $date = date('Y-m-d', strtotime($log['timestamp']));
-        if (!isset($counts[$date])) {
-            $counts[$date] = 1;
-        } else {
-            $counts[$date]++;
-        }
-    }
-
-    // Sort by date (ascending)
-    ksort($counts);
-
-    return $counts;
-}
-
-// Get search counts by date
-$searchCountsByDate = getSearchCountsByDate($searchLogs);
-
-// Get unique search count
-$uniqueSearches = count(array_unique(array_column($searchLogs, 'term')));
-
 ob_start();
+
+// Generate dummy data for initial design
+function generateDummySearchData($days = 30)
+{
+    $data = [];
+    $searchTerms = [
+        'cement',
+        'steel bars',
+        'roofing sheets',
+        'tiles',
+        'paint',
+        'bricks',
+        'sand',
+        'gravel',
+        'pipes',
+        'electrical cables',
+        'windows',
+        'doors',
+        'nails',
+        'screws',
+        'timber',
+        'blocks'
+    ];
+
+    for ($i = 0; $i < $days; $i++) {
+        $date = date('Y-m-d', strtotime("-$i days"));
+        $searchCount = rand(50, 200);
+
+        for ($j = 0; $j < $searchCount; $j++) {
+            $maxScore = rand(20, 100);
+            $minScore = rand(0, $maxScore);
+            $avgScore = rand($minScore, $maxScore);
+            $resultsCount = rand(0, 50);
+            $duration = rand(50, 500);
+
+            $data[] = [
+                'id' => generateUlid(),
+                'search_query' => $searchTerms[array_rand($searchTerms)] . (rand(0, 1) ? ' ' . $searchTerms[array_rand($searchTerms)] : ''),
+                'results_count' => $resultsCount,
+                'max_match_score' => $maxScore,
+                'min_match_score' => $minScore,
+                'average_match_score' => $avgScore,
+                'duration_ms' => $duration,
+                'created_at' => $date . ' ' . sprintf('%02d:%02d:%02d', rand(0, 23), rand(0, 59), rand(0, 59))
+            ];
+        }
+    }
+
+    return $data;
+}
+
+$dummyData = generateDummySearchData(30);
 ?>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js"></script>
-
-<div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold text-secondary">Search Log</h1>
-            <p class="text-sm text-gray-text mt-1">Monitor and analyze user search patterns</p>
-        </div>
-        <div class="flex flex-col md:flex-row items-center gap-3">
-            <button id="exportSearchData" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-download"></i>
-                <span>Export</span>
-            </button>
-            <button id="refreshSearchData" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-sync-alt"></i>
-                <span>Refresh Data</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Date Range Filter Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <h3 class="text-lg font-semibold text-secondary mb-4">Date Range</h3>
-        <div class="flex flex-col md:flex-row items-center gap-4">
-            <div class="w-full md:w-auto">
-                <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                <input
-                    type="date"
-                    id="startDate"
-                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-            </div>
-            <div class="w-full md:w-auto">
-                <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                <input
-                    type="date"
-                    id="endDate"
-                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-            </div>
-            <div class="w-full md:w-auto md:self-end">
-                <button
-                    onclick="loadSearchStats()"
-                    class="w-full md:w-auto h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                    Apply Filter
-                </button>
-            </div>
-            <div class="w-full md:w-auto md:self-end">
-                <select
-                    id="presetRanges"
-                    class="w-full md:w-auto h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                    onchange="applyPresetRange()">
-                    <option value="">Quick Ranges</option>
-                    <option value="today">Today</option>
-                    <option value="yesterday">Yesterday</option>
-                    <option value="last7">Last 7 Days</option>
-                    <option value="last30">Last 30 Days</option>
-                    <option value="thisMonth">This Month</option>
-                    <option value="lastMonth">Last Month</option>
-                </select>
+<div class="min-h-screen bg-gray-50" id="app-container">
+    <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Search Analytics</h1>
+                    <p class="text-gray-600 mt-1">Monitor and analyze search performance and user behavior</p>
+                </div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <button id="exportBtn"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-download"></i>
+                        <span>Export Data</span>
+                    </button>
+                    <button id="refreshBtn"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Stats Overview Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-medium text-gray-text">Total Searches</h3>
-                <span class="text-blue-600">
-                    <i class="fas fa-search"></i>
-                </span>
-            </div>
-            <p class="text-2xl font-semibold text-secondary" id="totalSearches"><?= count($searchLogs) ?></p>
-            <div class="mt-2 text-xs flex items-center">
-                <span class="text-green-600 flex items-center" id="searchesChange">
-                    <i class="fas fa-arrow-up mr-1"></i> 12%
-                </span>
-                <span class="text-gray-500 ml-2">vs previous period</span>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Date Filter Controls -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-2">Time Period</h2>
+                    <p class="text-sm text-gray-600">Select the time range for analysis</p>
+                </div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            data-period="daily">
+                            <i class="fas fa-calendar-day mr-2"></i>Daily
+                        </button>
+                        <button
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            data-period="weekly">
+                            <i class="fas fa-calendar-week mr-2"></i>Weekly
+                        </button>
+                        <button
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            data-period="monthly">
+                            <i class="fas fa-calendar-alt mr-2"></i>Monthly
+                        </button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input type="date" id="startDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <span class="text-gray-500 text-center sm:text-left">to</span>
+                        <input type="date" id="endDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <button id="applyCustomRange"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                            Apply
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-medium text-gray-text">Unique Search Terms</h3>
-                <span class="text-green-600">
-                    <i class="fas fa-tag"></i>
-                </span>
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 sm:p-6 border border-blue-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Searches</p>
+                        <p class="text-xl sm:text-2xl font-bold text-blue-900 truncate" id="totalSearches">0</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-search text-blue-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
             </div>
-            <p class="text-2xl font-semibold text-secondary" id="uniqueSearches"><?= $uniqueSearches ?></p>
-            <div class="mt-2 text-xs flex items-center">
-                <span class="text-green-600 flex items-center" id="uniqueChange">
-                    <i class="fas fa-arrow-up mr-1"></i> 8%
-                </span>
-                <span class="text-gray-500 ml-2">vs previous period</span>
+
+            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 sm:p-6 border border-green-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Avg Response Time</p>
+                        <p class="text-xl sm:text-2xl font-bold text-green-900 truncate" id="avgResponseTime">0ms</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-green-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-clock text-green-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl p-4 sm:p-6 border border-yellow-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-yellow-600 uppercase tracking-wide">Avg Match Score</p>
+                        <p class="text-xl sm:text-2xl font-bold text-yellow-900 truncate" id="avgMatchScore">0%</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-bullseye text-yellow-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 sm:p-6 border border-purple-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Zero Results</p>
+                        <p class="text-xl sm:text-2xl font-bold text-purple-900 truncate" id="zeroResults">0</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-exclamation-triangle text-purple-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Search Trends Chart Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <h3 class="text-lg font-semibold text-secondary mb-4">Search Trends</h3>
-        <div class="w-full h-80">
-            <canvas id="searchChart"></canvas>
+        <!-- Search Log Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
+            <div class="p-4 sm:p-6 border-b border-gray-100">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Search Log Details</h3>
+                        <p class="text-sm text-gray-600">Detailed search activity records</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <div class="relative">
+                            <input type="text" id="searchFilter" placeholder="Filter searches..."
+                                class="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                        </div>
+                        <select id="performanceFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="all">All Performance</option>
+                            <option value="good">Good (70%+)</option>
+                            <option value="fair">Fair (50-70%)</option>
+                            <option value="poor">Poor (<50%)< /option>
+                        </select>
+                        <button id="clearFilters"
+                            class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <div class="min-w-full">
+                    <table class="min-w-[700px] w-full" id="searchLogTable">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                                    style="min-width: 180px;">
+                                    Search Query
+                                </th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                                    style="min-width: 80px;">
+                                    Results
+                                </th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                                    style="min-width: 100px;">
+                                    Match Score
+                                </th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                                    style="min-width: 90px;">
+                                    Performance
+                                </th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                                    style="min-width: 80px;">
+                                    Duration
+                                </th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                                    style="min-width: 120px;">
+                                    Timestamp
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="searchLogBody" class="divide-y divide-gray-100">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600 text-center sm:text-left">
+                    Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> searches
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prevPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Previous
+                    </button>
+                    <span id="pageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
+                    <button id="nextPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Top Searches Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <h3 class="text-lg font-semibold text-secondary mb-4">Top Searched Terms</h3>
-        <div class="space-y-4" id="topTermsList">
-            <?php foreach ($topSearchTerms as $index => $term): ?>
-                <div class="bg-gray-50 rounded-lg p-4">
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-8">
+            <!-- Search Performance Chart -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Search Performance</h3>
+                        <p class="text-sm text-gray-600">Match score distribution over time</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                            <span class="text-gray-600">Good (70%+)</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                            <span class="text-gray-600">Fair (50-70%)</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <span class="text-gray-600">Poor (&lt;50%)< /span>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-64 sm:h-80">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Search Volume Chart -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Search Volume</h3>
+                        <p class="text-sm text-gray-600">Search activity over time</p>
+                    </div>
+                    <select id="volumeMetric" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <option value="count">Search Count</option>
+                        <option value="unique">Unique Queries</option>
+                        <option value="results">Avg Results</option>
+                    </select>
+                </div>
+                <div class="h-64 sm:h-80">
+                    <canvas id="volumeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+            <!-- Top Search Terms -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Top Search Terms</h3>
+                </div>
+                <div class="space-y-3 sm:space-y-4" id="topSearchTerms">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+
+            <!-- Performance Distribution -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Performance Distribution</h3>
+                    <i class="fas fa-chart-pie text-gray-400"></i>
+                </div>
+                <div class="h-48 sm:h-64">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Response Time Analysis -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Response Time</h3>
+                    <span class="text-sm text-gray-500" id="responseTimeLabel">Current period</span>
+                </div>
+                <div class="space-y-4">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white font-semibold">
-                                <?= $index + 1 ?>
-                            </span>
-                            <span class="text-secondary font-medium"><?= htmlspecialchars($term['term']) ?></span>
-                        </div>
-                        <span class="text-gray-text text-sm"><?= $term['count'] ?> searches</span>
-                    </div>
-                    <div class="mt-3">
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="bg-primary h-2 rounded-full" style="width: <?= ($term['count'] / $topSearchTerms[0]['count']) * 100 ?>%;"></div>
+                        <span class="text-sm text-gray-600">Fast (&lt;100ms)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" style="width: 65%" id="fastBar">
+                                </div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-900 min-w-[3rem] text-right"
+                                id="fastPercent">65%</span>
                         </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-
-    <!-- Search Logs Table Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-lg font-semibold text-secondary">Detailed Search Logs</h2>
-                <p class="text-sm text-gray-text mt-1">
-                    <span id="logs-count"><?= count($searchLogs) ?></span> searches recorded
-                </p>
-            </div>
-            <div class="flex flex-col md:flex-row items-center gap-3">
-                <div class="relative w-full md:w-auto">
-                    <input type="text" id="searchLogs" placeholder="Filter logs..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Desktop Search Logs Table -->
-        <div class="overflow-x-auto hidden md:block">
-            <table class="w-full" id="searchLogsTable">
-                <thead>
-                    <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Search Term</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">IP Address</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Location</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Results</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Date & Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($searchLogs as $log): ?>
-                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4">
-                                <p class="font-medium text-gray-900"><?= htmlspecialchars($log['term']) ?></p>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= htmlspecialchars($log['ip_address']) ?>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= htmlspecialchars($log['location']) ?>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= number_format($log['results_count']) ?>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">
-                                <?= formatDate($log['timestamp']) ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Mobile Search Logs List -->
-        <div class="md:hidden p-4 space-y-4">
-            <?php foreach ($searchLogs as $log): ?>
-                <div class="bg-white rounded-lg shadow-sm border border-gray-100 mb-4">
-                    <div class="p-4 border-b border-gray-100">
-                        <div class="flex justify-between items-center mb-3">
-                            <p class="font-medium text-gray-900"><?= htmlspecialchars($log['term']) ?></p>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                <?= number_format($log['results_count']) ?> results
-                            </span>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Medium (100-300ms)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 25%" id="mediumBar"></div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-900 min-w-[3rem] text-right"
+                                id="mediumPercent">25%</span>
                         </div>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <span class="text-xs text-gray-500">IP Address:</span>
-                                <span class="text-sm"><?= htmlspecialchars($log['ip_address']) ?></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Slow (>300ms)</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-16 sm:w-24 bg-gray-200 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full" style="width: 10%" id="slowBar"></div>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-xs text-gray-500">Location:</span>
-                                <span class="text-sm"><?= htmlspecialchars($log['location']) ?></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-xs text-gray-500">Date & Time:</span>
-                                <span class="text-sm"><?= formatDate($log['timestamp']) ?></span>
-                            </div>
+                            <span class="text-sm font-medium text-gray-900 min-w-[3rem] text-right"
+                                id="slowPercent">10%</span>
                         </div>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        </div>
-
-        <!-- Pagination -->
-        <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-gray-text">
-                Showing <span id="showing-start">1</span> to <span id="showing-end"><?= count($searchLogs) ?></span> of <span id="total-logs"><?= count($searchLogs) ?></span> logs
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="prev-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div id="pagination-numbers" class="flex items-center">
-                    <button class="px-3 py-2 rounded-lg bg-primary text-white">1</button>
-                </div>
-                <button id="next-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
-        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p class="text-gray-700">Loading data...</p>
-    </div>
-</div>
-
-<!-- Success Notification -->
-<div id="successNotification" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
-    <div class="flex items-center">
-        <i class="fas fa-check-circle mr-2"></i>
-        <span id="successMessage">Data refreshed successfully!</span>
-    </div>
-</div>
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Set default date range (last 7 days)
-        const today = new Date();
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(today.getDate() - 7);
+    // Global variables
+    let searchData = <?= json_encode($dummyData) ?>;
+    let filteredData = [...searchData];
+    let currentPage = 1;
+    let itemsPerPage = 20;
+    let charts = {};
+    let currentPeriod = 'daily';
 
-        document.getElementById('endDate').value = formatDateForInput(today);
-        document.getElementById('startDate').value = formatDateForInput(sevenDaysAgo);
-
-        // Initialize chart
-        initChart();
-
-        // Search functionality
-        document.getElementById('searchLogs').addEventListener('input', function(e) {
-            const query = e.target.value.toLowerCase();
-
-            // Filter desktop rows
-            const rows = document.querySelectorAll('#searchLogsTable tbody tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
-            });
-
-            // Filter mobile cards
-            const cards = document.querySelectorAll('.md\\:hidden > div');
-            cards.forEach(card => {
-                const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(query) ? '' : 'none';
-            });
-
-            updatePagination();
-        });
-
-        // Refresh button
-        document.getElementById('refreshSearchData').addEventListener('click', function() {
-            showLoading();
-
-            // Simulate data refresh
-            setTimeout(() => {
-                hideLoading();
-                showSuccessNotification('Search data refreshed successfully!');
-            }, 1000);
-        });
-
-        // Export button
-        document.getElementById('exportSearchData').addEventListener('click', function() {
-            showSuccessNotification('Search data exported successfully!');
-        });
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeDateFilters();
+        updateStatistics();
+        renderSearchLogTable();
+        initializeCharts();
+        renderTopSearchTerms();
+        setupEventListeners();
     });
 
-    // Initialize chart
-    function initChart() {
-        const ctx = document.getElementById('searchChart').getContext('2d');
-        const labels = <?= json_encode(array_map('formatChartDate', array_keys($searchCountsByDate))) ?>;
-        const data = <?= json_encode(array_values($searchCountsByDate)) ?>;
+    function initializeDateFilters() {
+        setDateRangeForPeriod('daily');
+    }
 
-        searchChart = new Chart(ctx, {
+    function setDateRangeForPeriod(period) {
+        const today = new Date();
+        let startDate, endDate;
+
+        switch (period) {
+            case 'daily':
+                startDate = new Date(today);
+                endDate = new Date(today);
+                break;
+            case 'weekly':
+                // Get Sunday of current week
+                const dayOfWeek = today.getDay();
+                startDate = new Date(today);
+                startDate.setDate(today.getDate() - dayOfWeek);
+                // Get Saturday of current week
+                endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+                break;
+            case 'monthly':
+                // First day of current month
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                // Current date
+                endDate = new Date(today);
+                break;
+            default:
+                startDate = new Date(today);
+                endDate = new Date(today);
+        }
+
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+
+        currentPeriod = period;
+        applyDateFilter(period);
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        const day = date.getDate();
+        const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
+            day === 2 || day === 22 ? 'nd' :
+                day === 3 || day === 23 ? 'rd' : 'th';
+
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+
+        return `${month} ${day}${suffix}, ${year}`;
+    }
+
+    function formatTime(dateString) {
+        const date = new Date(dateString);
+        let hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 should be 12
+        const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+
+        return `${hours}:${minutesStr}${ampm}`;
+    }
+
+    function updateStatistics() {
+        const totalSearches = filteredData.length;
+        const avgResponseTime = totalSearches > 0 ? Math.round(filteredData.reduce((sum, item) => sum + item.duration_ms, 0) / totalSearches) : 0;
+        const avgMatchScore = totalSearches > 0 ? Math.round(filteredData.reduce((sum, item) => sum + item.average_match_score, 0) / totalSearches) : 0;
+        const zeroResults = filteredData.filter(item => item.results_count === 0).length;
+
+        document.getElementById('totalSearches').textContent = totalSearches.toLocaleString();
+        document.getElementById('avgResponseTime').textContent = avgResponseTime + 'ms';
+        document.getElementById('avgMatchScore').textContent = avgMatchScore + '%';
+        document.getElementById('zeroResults').textContent = zeroResults.toLocaleString();
+
+        // Update response time analysis
+        updateResponseTimeAnalysis();
+
+        // Update response time label
+        const label = currentPeriod === 'daily' ? 'Today' :
+            currentPeriod === 'weekly' ? 'This week' :
+                currentPeriod === 'monthly' ? 'This month' : 'Current period';
+        document.getElementById('responseTimeLabel').textContent = label;
+    }
+
+    function updateResponseTimeAnalysis() {
+        const fast = filteredData.filter(item => item.duration_ms < 100).length;
+        const medium = filteredData.filter(item => item.duration_ms >= 100 && item.duration_ms <= 300).length;
+        const slow = filteredData.filter(item => item.duration_ms > 300).length;
+        const total = filteredData.length;
+
+        if (total > 0) {
+            const fastPercent = Math.round((fast / total) * 100);
+            const mediumPercent = Math.round((medium / total) * 100);
+            const slowPercent = Math.round((slow / total) * 100);
+
+            document.getElementById('fastBar').style.width = fastPercent + '%';
+            document.getElementById('mediumBar').style.width = mediumPercent + '%';
+            document.getElementById('slowBar').style.width = slowPercent + '%';
+
+            document.getElementById('fastPercent').textContent = fastPercent + '%';
+            document.getElementById('mediumPercent').textContent = mediumPercent + '%';
+            document.getElementById('slowPercent').textContent = slowPercent + '%';
+        }
+    }
+
+    function renderSearchLogTable() {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pageData = filteredData.slice(startIndex, endIndex);
+
+        const tbody = document.getElementById('searchLogBody');
+        tbody.innerHTML = pageData.map(item => {
+            const performanceBadge = getPerformanceBadge(item.max_match_score);
+
+            return `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-3 py-3">
+                    <div class="font-medium text-gray-900 break-words text-sm">${item.search_query}</div>
+                </td>
+                <td class="px-3 py-3 text-center">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.results_count === 0 ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}">
+                        ${item.results_count}
+                    </span>
+                </td>
+                <td class="px-3 py-3 text-center">
+                    <div class="text-xs text-gray-900">
+                        <span class="font-medium">${item.max_match_score}%</span> / <span class="text-gray-600">${item.min_match_score}%</span> / <span class="text-gray-600">${item.average_match_score}%</span>
+                    </div>
+                </td>
+                <td class="px-3 py-3 text-center">
+                    ${performanceBadge}
+                </td>
+                <td class="px-3 py-3 text-center">
+                    <span class="text-sm font-medium text-gray-900">${item.duration_ms}ms</span>
+                </td>
+                <td class="px-3 py-3 text-center">
+                    <div class="text-xs text-gray-900">${formatDate(item.created_at)}</div>
+                    <div class="text-xs text-gray-500">${formatTime(item.created_at)}</div>
+                </td>
+            </tr>
+        `;
+        }).join('');
+
+        updatePagination();
+    }
+
+    function getChartLabelsAndData() {
+        const startDate = new Date(document.getElementById('startDate').value);
+        const endDate = new Date(document.getElementById('endDate').value);
+
+        if (currentPeriod === 'daily') {
+            // Show 24 hours with 2-hour intervals
+            const labels = [];
+            const dataGroups = {};
+
+            for (let hour = 0; hour < 24; hour += 2) {
+                const label = `${hour.toString().padStart(2, '0')}:00`;
+                labels.push(label);
+                dataGroups[hour] = { good: 0, fair: 0, poor: 0, total: 0 };
+            }
+
+            filteredData.forEach(item => {
+                const itemDate = new Date(item.created_at);
+                const hour = Math.floor(itemDate.getHours() / 2) * 2; // Round to nearest 2-hour interval
+
+                if (dataGroups[hour]) {
+                    dataGroups[hour].total++;
+                    if (item.max_match_score >= 70) {
+                        dataGroups[hour].good++;
+                    } else if (item.max_match_score >= 50) {
+                        dataGroups[hour].fair++;
+                    } else {
+                        dataGroups[hour].poor++;
+                    }
+                }
+            });
+
+            return {
+                labels,
+                goodData: labels.map((_, index) => dataGroups[index * 2]?.good || 0),
+                fairData: labels.map((_, index) => dataGroups[index * 2]?.fair || 0),
+                poorData: labels.map((_, index) => dataGroups[index * 2]?.poor || 0),
+                volumeData: labels.map((_, index) => dataGroups[index * 2]?.total || 0)
+            };
+        } else if (currentPeriod === 'weekly') {
+            // Show 7 days
+            const labels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const dataGroups = {};
+
+            labels.forEach((day, index) => {
+                dataGroups[index] = { good: 0, fair: 0, poor: 0, total: 0 };
+            });
+
+            filteredData.forEach(item => {
+                const itemDate = new Date(item.created_at);
+                const dayOfWeek = itemDate.getDay();
+
+                dataGroups[dayOfWeek].total++;
+                if (item.max_match_score >= 70) {
+                    dataGroups[dayOfWeek].good++;
+                } else if (item.max_match_score >= 50) {
+                    dataGroups[dayOfWeek].fair++;
+                } else {
+                    dataGroups[dayOfWeek].poor++;
+                }
+            });
+
+            return {
+                labels,
+                goodData: labels.map((_, index) => dataGroups[index]?.good || 0),
+                fairData: labels.map((_, index) => dataGroups[index]?.fair || 0),
+                poorData: labels.map((_, index) => dataGroups[index]?.poor || 0),
+                volumeData: labels.map((_, index) => dataGroups[index]?.total || 0)
+            };
+        } else {
+            // Show days between start and end date
+            const labels = [];
+            const dataGroups = {};
+
+            const currentDate = new Date(startDate);
+            while (currentDate <= endDate) {
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const label = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                labels.push(label);
+                dataGroups[dateStr] = { good: 0, fair: 0, poor: 0, total: 0 };
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            filteredData.forEach(item => {
+                const dateStr = item.created_at.split(' ')[0];
+                if (dataGroups[dateStr]) {
+                    dataGroups[dateStr].total++;
+                    if (item.max_match_score >= 70) {
+                        dataGroups[dateStr].good++;
+                    } else if (item.max_match_score >= 50) {
+                        dataGroups[dateStr].fair++;
+                    } else {
+                        dataGroups[dateStr].poor++;
+                    }
+                }
+            });
+
+            const dates = Object.keys(dataGroups).sort();
+            return {
+                labels,
+                goodData: dates.map(date => dataGroups[date]?.good || 0),
+                fairData: dates.map(date => dataGroups[date]?.fair || 0),
+                poorData: dates.map(date => dataGroups[date]?.poor || 0),
+                volumeData: dates.map(date => dataGroups[date]?.total || 0)
+            };
+        }
+    }
+
+    function initializeCharts() {
+        initializePerformanceChart();
+        initializeVolumeChart();
+        initializeDistributionChart();
+    }
+
+    function initializePerformanceChart() {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const chartData = getChartLabelsAndData();
+
+        if (charts.performance) {
+            charts.performance.destroy();
+        }
+
+        charts.performance = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Searches',
-                    data: data,
-                    borderColor: '#C00000',
-                    backgroundColor: 'rgba(192, 0, 0, 0.1)',
-                    fill: true,
-                    tension: 0.3
-                }]
+                labels: chartData.labels,
+                datasets: [
+                    {
+                        label: 'Good (70%+)',
+                        data: chartData.goodData,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Fair (50-70%)',
+                        data: chartData.fairData,
+                        borderColor: '#F59E0B',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Poor (<50%)',
+                        data: chartData.poorData,
+                        borderColor: '#EF4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
                 scales: {
-                    x: {
-                        display: true,
-                        grid: {
-                            display: false
-                        }
-                    },
                     y: {
-                        display: true,
                         beginAtZero: true,
                         grid: {
                             color: 'rgba(0, 0, 0, 0.05)'
                         }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
                     },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
+                    x: {
+                        grid: {
+                            display: false
+                        }
                     }
                 }
             }
         });
     }
 
-    // Load search stats
-    function loadSearchStats() {
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
+    function initializeVolumeChart() {
+        const ctx = document.getElementById('volumeChart').getContext('2d');
+        const chartData = getChartLabelsAndData();
 
-        if (!startDate || !endDate) {
-            alert('Please select both start and end dates.');
-            return;
+        if (charts.volume) {
+            charts.volume.destroy();
         }
 
-        showLoading();
-
-        // Simulate API call
-        setTimeout(() => {
-            // Update chart with random data
-            updateChartData(startDate, endDate);
-
-            // Update stats
-            const totalSearches = Math.floor(Math.random() * 500) + 100;
-            const uniqueSearches = Math.floor(totalSearches * 0.6);
-
-            document.getElementById('totalSearches').textContent = totalSearches.toLocaleString();
-            document.getElementById('uniqueSearches').textContent = uniqueSearches.toLocaleString();
-
-            // Update change indicators
-            const searchesChange = Math.floor(Math.random() * 30) - 10;
-            const uniqueChange = Math.floor(Math.random() * 30) - 10;
-
-            updateChangeIndicator('searchesChange', searchesChange);
-            updateChangeIndicator('uniqueChange', uniqueChange);
-
-            hideLoading();
-            showSuccessNotification('Search data updated successfully!');
-        }, 1000);
-    }
-
-    // Update chart data
-    function updateChartData(startDate, endDate) {
-        if (!searchChart) {
-            return;
-        }
-
-        // Generate dates between start and end
-        const dates = generateDateRange(startDate, endDate);
-
-        // Generate random data
-        const searchData = [];
-
-        for (let i = 0; i < dates.length; i++) {
-            searchData.push(Math.floor(Math.random() * 50) + 5);
-        }
-
-        // Update chart data
-        searchChart.data.labels = dates.map(date => formatChartDate(date));
-        searchChart.data.datasets[0].data = searchData;
-
-        // Update chart
-        searchChart.update();
-    }
-
-    // Apply preset date range
-    function applyPresetRange() {
-        const preset = document.getElementById('presetRanges').value;
-        if (!preset) {
-            return;
-        }
-
-        const today = new Date();
-        let startDate = new Date();
-        let endDate = new Date();
-
-        switch (preset) {
-            case 'today':
-                // Start and end are both today
-                break;
-
-            case 'yesterday':
-                startDate.setDate(today.getDate() - 1);
-                endDate.setDate(today.getDate() - 1);
-                break;
-
-            case 'last7':
-                startDate.setDate(today.getDate() - 6);
-                break;
-
-            case 'last30':
-                startDate.setDate(today.getDate() - 29);
-                break;
-
-            case 'thisMonth':
-                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                break;
-
-            case 'lastMonth':
-                startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                endDate = new Date(today.getFullYear(), today.getMonth(), 0);
-                break;
-        }
-
-        document.getElementById('startDate').value = formatDateForInput(startDate);
-        document.getElementById('endDate').value = formatDateForInput(endDate);
-
-        // Reset dropdown
-        document.getElementById('presetRanges').value = '';
-
-        // Load stats with new date range
-        loadSearchStats();
-    }
-
-    // Update change indicator
-    function updateChangeIndicator(elementId, changeValue) {
-        const element = document.getElementById(elementId);
-        const icon = element.querySelector('i');
-
-        element.textContent = '';
-        element.appendChild(icon);
-        element.appendChild(document.createTextNode(' ' + Math.abs(changeValue) + '%'));
-
-        if (changeValue > 0) {
-            icon.className = 'fas fa-arrow-up mr-1';
-            element.className = 'text-green-600 flex items-center';
-        } else if (changeValue < 0) {
-            icon.className = 'fas fa-arrow-down mr-1';
-            element.className = 'text-red-600 flex items-center';
-        } else {
-            icon.className = 'fas fa-minus mr-1';
-            element.className = 'text-gray-600 flex items-center';
-        }
-    }
-
-    // Update pagination
-    function updatePagination() {
-        const visibleRows = document.querySelectorAll('#searchLogsTable tbody tr:not([style*="display: none"])').length;
-        const visibleCards = document.querySelectorAll('.md\\:hidden > div:not([style*="display: none"])').length;
-
-        const visibleCount = window.innerWidth >= 768 ? visibleRows : visibleCards;
-        const totalLogs = document.querySelectorAll('#searchLogsTable tbody tr').length;
-
-        document.getElementById('showing-start').textContent = visibleCount > 0 ? '1' : '0';
-        document.getElementById('showing-end').textContent = visibleCount;
-        document.getElementById('total-logs').textContent = totalLogs;
-        document.getElementById('logs-count').textContent = visibleCount;
-    }
-
-    // Show loading overlay
-    function showLoading() {
-        document.getElementById('loadingOverlay').classList.remove('hidden');
-    }
-
-    // Hide loading overlay
-    function hideLoading() {
-        document.getElementById('loadingOverlay').classList.add('hidden');
-    }
-
-    // Show success notification
-    function showSuccessNotification(message) {
-        const notification = document.getElementById('successNotification');
-        const messageElement = document.getElementById('successMessage');
-
-        messageElement.textContent = message;
-        notification.classList.remove('hidden');
-
-        setTimeout(() => {
-            notification.classList.add('hidden');
-        }, 3000);
-    }
-
-    // Helper functions
-    function formatDateForInput(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    function formatChartDate(dateStr) {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
+        charts.volume = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Search Count',
+                    data: chartData.volumeData,
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: '#3B82F6',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
         });
     }
 
-    function generateDateRange(startDateStr, endDateStr) {
-        const startDate = new Date(startDateStr);
-        const endDate = new Date(endDateStr);
-        const dates = [];
+    function initializeDistributionChart() {
+        const ctx = document.getElementById('distributionChart').getContext('2d');
 
-        let currentDate = new Date(startDate);
+        const good = filteredData.filter(item => item.max_match_score >= 70).length;
+        const fair = filteredData.filter(item => item.max_match_score >= 50 && item.max_match_score < 70).length;
+        const poor = filteredData.filter(item => item.max_match_score < 50).length;
 
-        while (currentDate <= endDate) {
-            dates.push(formatDateForInput(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
+        if (charts.distribution) {
+            charts.distribution.destroy();
         }
 
-        return dates;
+        charts.distribution = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Good (70%+)', 'Fair (50-70%)', 'Poor (<50%)'],
+                datasets: [{
+                    data: [good, fair, poor],
+                    backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderTopSearchTerms() {
+        const termCounts = {};
+        filteredData.forEach(item => {
+            const term = item.search_query.toLowerCase();
+            termCounts[term] = (termCounts[term] || 0) + 1;
+        });
+
+        const sortedTerms = Object.entries(termCounts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 5); // Changed from 10 to 5
+
+        const container = document.getElementById('topSearchTerms');
+        container.innerHTML = sortedTerms.map(([term, count], index) => `
+        <div class="flex items-center justify-between p-3 rounded-lg ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+                <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary flex-shrink-0">
+                    ${index + 1}
+                </div>
+                <span class="font-medium text-gray-900 truncate">${term}</span>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                <span class="text-sm text-gray-600 hidden sm:inline">${count} searches</span>
+                <span class="text-sm text-gray-600 sm:hidden">${count}</span>
+                <div class="w-12 sm:w-16 bg-gray-200 rounded-full h-2">
+                    <div class="bg-primary h-2 rounded-full" style="width: ${(count / sortedTerms[0][1]) * 100}%"></div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    }
+
+    function getPerformanceBadge(score) {
+        if (score >= 70) {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Good</span>';
+        } else if (score >= 50) {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Fair</span>';
+        } else {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Poor</span>';
+        }
+    }
+
+    function updatePagination() {
+        const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+
+        document.getElementById('showingCount').textContent = `${startIndex + 1}-${endIndex}`;
+        document.getElementById('totalCount').textContent = filteredData.length;
+        document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${Math.max(1, totalPages)}`;
+
+        document.getElementById('prevPage').disabled = currentPage === 1;
+        document.getElementById('nextPage').disabled = currentPage === totalPages || totalPages === 0;
+    }
+
+    function applyFilters() {
+        const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
+        const performanceFilter = document.getElementById('performanceFilter').value;
+
+        filteredData = searchData.filter(item => {
+            const matchesSearch = !searchTerm || item.search_query.toLowerCase().includes(searchTerm);
+
+            let matchesPerformance = true;
+            if (performanceFilter === 'good') {
+                matchesPerformance = item.max_match_score >= 70;
+            } else if (performanceFilter === 'fair') {
+                matchesPerformance = item.max_match_score >= 50 && item.max_match_score < 70;
+            } else if (performanceFilter === 'poor') {
+                matchesPerformance = item.max_match_score < 50;
+            }
+
+            return matchesSearch && matchesPerformance;
+        });
+
+        currentPage = 1;
+        updateStatistics();
+        updateCharts();
+        renderTopSearchTerms();
+        renderSearchLogTable();
+    }
+
+    function updateCharts() {
+        initializeCharts();
+    }
+
+    function applyDateFilter(period) {
+        const startDate = new Date(document.getElementById('startDate').value);
+        const endDate = new Date(document.getElementById('endDate').value);
+        endDate.setHours(23, 59, 59, 999); // Include the entire end date
+
+        filteredData = searchData.filter(item => {
+            const itemDate = new Date(item.created_at);
+            return itemDate >= startDate && itemDate <= endDate;
+        });
+
+        currentPage = 1;
+        updateStatistics();
+        updateCharts();
+        renderTopSearchTerms();
+        renderSearchLogTable();
+    }
+
+    function setupEventListeners() {
+        // Date filter buttons
+        document.querySelectorAll('.date-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.date-filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
+                    b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+                });
+
+                this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+                this.classList.remove('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+
+                const period = this.dataset.period;
+                setDateRangeForPeriod(period);
+            });
+        });
+
+        // Custom date range
+        document.getElementById('applyCustomRange').addEventListener('click', function () {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (startDate && endDate) {
+                // Clear active period button
+                document.querySelectorAll('.date-filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
+                    b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+                });
+
+                currentPeriod = 'custom';
+                applyDateFilter('custom');
+            }
+        });
+
+        // Search and filter inputs
+        document.getElementById('searchFilter').addEventListener('input', applyFilters);
+        document.getElementById('performanceFilter').addEventListener('change', applyFilters);
+
+        // Clear filters
+        document.getElementById('clearFilters').addEventListener('click', function () {
+            document.getElementById('searchFilter').value = '';
+            document.getElementById('performanceFilter').value = 'all';
+            applyFilters();
+        });
+
+        // Pagination
+        document.getElementById('prevPage').addEventListener('click', function () {
+            if (currentPage > 1) {
+                currentPage--;
+                renderSearchLogTable();
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', function () {
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderSearchLogTable();
+            }
+        });
+
+        // Export and refresh buttons
+        document.getElementById('exportBtn').addEventListener('click', exportData);
+        document.getElementById('refreshBtn').addEventListener('click', refreshData);
+
+        // Volume chart metric selector
+        document.getElementById('volumeMetric').addEventListener('change', function () {
+            updateVolumeChart(this.value);
+        });
+    }
+
+    function exportData() {
+        // Create CSV content
+        const headers = ['Search Query', 'Results Count', 'Max Match Score', 'Min Match Score', 'Average Match Score', 'Duration (ms)', 'Timestamp'];
+        const csvContent = [
+            headers.join(','),
+            ...filteredData.map(item => [
+                `"${item.search_query}"`,
+                item.results_count,
+                item.max_match_score,
+                item.min_match_score,
+                item.average_match_score,
+                item.duration_ms,
+                `"${item.created_at}"`
+            ].join(','))
+        ].join('\n');
+
+        // Download CSV file
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `search-analytics-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+
+    function refreshData() {
+        // In a real application, this would fetch fresh data from the server
+        const refreshBtn = document.getElementById('refreshBtn');
+        const icon = refreshBtn.querySelector('i');
+
+        icon.classList.add('fa-spin');
+        refreshBtn.disabled = true;
+
+        setTimeout(() => {
+            // Simulate data refresh
+            updateStatistics();
+            updateCharts();
+            renderTopSearchTerms();
+            renderSearchLogTable();
+
+            icon.classList.remove('fa-spin');
+            refreshBtn.disabled = false;
+        }, 1000);
+    }
+
+    function updateVolumeChart(metric) {
+        // This would update the volume chart based on the selected metric
+        // For now, we'll just reinitialize the chart
+        if (charts.volume) {
+            charts.volume.destroy();
+        }
+        initializeVolumeChart();
     }
 </script>
+
+<style>
+    .date-filter-btn {
+        border-color: #d1d5db;
+        color: #374151;
+        transition: all 0.2s ease;
+    }
+
+    .date-filter-btn:hover:not(.active) {
+        background-color: #f9fafb;
+    }
+
+    .date-filter-btn.active {
+        background-color: #dc2626;
+        color: white;
+        border-color: #dc2626;
+    }
+
+    #searchLogTable tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+    .chart-container {
+        position: relative;
+    }
+
+    /* Enhanced mobile table scrolling */
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 #f7fafc;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: #f7fafc;
+        border-radius: 3px;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
+    }
+
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+    }
+
+    @media (max-width: 640px) {
+        .chart-container {
+            height: 200px;
+        }
+
+        #searchLogTable {
+            font-size: 0.875rem;
+            min-width: 650px;
+        }
+
+        #searchLogTable th,
+        #searchLogTable td {
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        #searchLogTable {
+            font-size: 0.8rem;
+            min-width: 600px;
+        }
+
+        #searchLogTable th,
+        #searchLogTable td {
+            padding: 0.4rem 0.6rem;
+        }
+    }
+</style>
 
 <?php
 $mainContent = ob_get_clean();
