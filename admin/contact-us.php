@@ -3,7 +3,6 @@ require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Manage Contact Page';
 $activeNav = 'contact-us';
 
-// Load contact page data from JSON file
 function loadContactData()
 {
     $filePath = __DIR__ . '/../page-data/contact-us/contact-us.json';
@@ -13,7 +12,6 @@ function loadContactData()
         return json_decode($jsonData, true) ?: [];
     }
 
-    // Return empty default structure if file doesn't exist
     return [
         'contactInfo' => [
             'phones' => [
@@ -140,500 +138,569 @@ function loadContactData()
     ];
 }
 
-// Load data from JSON
 $contactData = loadContactData();
-
-// Extract data from the loaded JSON
 $contactInfo = $contactData['contactInfo'] ?? [];
 $formSettings = $contactData['formSettings'] ?? [];
 
 ob_start();
 ?>
 
-<div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold text-secondary">Contact Page Management</h1>
-            <p class="text-sm text-gray-text mt-1">Manage your website contact page content and layout</p>
-        </div>
-        <div class="flex flex-col md:flex-row items-center gap-3">
-            <a href="dashboard"
-                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-arrow-left"></i>
-                <span>Back to Dashboard</span>
-            </a>
+<div class="min-h-screen bg-gray-50" id="app-container">
+    <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Contact Page Management</h1>
+                    <p class="text-gray-600 mt-1">Manage your website contact page content and layout</p>
+                </div>
+                <div class="flex flex-col md:flex-row items-center gap-3">
+                    <a href="dashboard"
+                        class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back to Dashboard</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <!-- Tab Navigation -->
-        <div class="p-6 border-b border-gray-100">
-            <nav class="flex overflow-x-auto py-2" aria-label="Tabs">
-                <button data-tab="contact-info"
-                    class="tab-button px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap bg-primary text-white">
-                    Contact Information
-                </button>
-                <button data-tab="form-settings"
-                    class="tab-button px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ml-2 text-gray-text hover:text-primary hover:bg-gray-50">
-                    Form &amp; Map Settings
-                </button>
-            </nav>
-        </div>
-
-        <div class="p-6">
-            <!-- Contact Information Tab Content -->
-            <div id="contact-info" class="tab-content">
-                <div class="mb-6">
-                    <h2 class="text-lg font-semibold text-secondary">Contact Information Ribbon</h2>
-                    <p class="text-sm text-gray-text mt-1">Manage contact information displayed in the ribbon</p>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                This information will be displayed in the contact information ribbon at the top of the
-                                contact page.
-                                You can add multiple phone numbers, email addresses, and location lines.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Phone Numbers Section -->
-                <div class="mb-8">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                        <h3 class="text-md font-semibold text-gray-700">Phone Numbers</h3>
-                        <button id="addPhoneBtn"
-                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                            <i class="fas fa-plus"></i>
-                            <span>Add Phone Number</span>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex gap-8">
+            <div class="hidden lg:block w-64 flex-shrink-0">
+                <div id="desktop-nav">
+                    <nav class="space-y-2" aria-label="Contact Navigation">
+                        <button id="contact-info-tab"
+                            class="tab-button active w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 bg-primary/10 text-primary border border-primary/20"
+                            onclick="switchTab('contact-info')">
+                            <i class="fas fa-address-book"></i>
+                            <span>Contact Information</span>
                         </button>
-                    </div>
-
-                    <div id="phones-container" class="space-y-4">
-                        <?php foreach ($contactInfo['phones'] ?? [] as $phone): ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-                                data-id="<?= $phone['id'] ?>" data-order="<?= $phone['order'] ?>">
-                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="text-primary">
-                                            <i class="fas fa-phone-alt text-xl"></i>
-                                        </div>
-                                        <div>
-                                            <p class="font-medium"><?= htmlspecialchars($phone['number']) ?></p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex items-center">
-                                            <div
-                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                                <input type="checkbox"
-                                                    class="phone-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                                    data-id="<?= $phone['id'] ?>" <?= $phone['active'] ? 'checked' : '' ?>>
-                                                <label
-                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                                            </div>
-                                            <span
-                                                class="ml-2 text-xs font-medium <?= $phone['active'] ? 'text-green-600' : 'text-gray-500' ?>">
-                                                <?= $phone['active'] ? 'Active' : 'Inactive' ?>
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <button class="btn-edit-phone text-blue-600 hover:text-blue-800"
-                                                data-id="<?= $phone['id'] ?>">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn-delete-phone text-red-600 hover:text-red-800"
-                                                data-id="<?= $phone['id'] ?>">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                            <span
-                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
-                                                <?= $phone['order'] ?>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
-                <!-- Email Addresses Section -->
-                <div class="mb-8">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                        <h3 class="text-md font-semibold text-gray-700">Email Addresses</h3>
-                        <button id="addEmailBtn"
-                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                            <i class="fas fa-plus"></i>
-                            <span>Add Email Address</span>
+                        <button id="form-settings-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchTab('form-settings')">
+                            <i class="fas fa-cogs"></i>
+                            <span>Form & Map Settings</span>
                         </button>
-                    </div>
-
-                    <div id="emails-container" class="space-y-4">
-                        <?php foreach ($contactInfo['emails'] ?? [] as $email): ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-                                data-id="<?= $email['id'] ?>" data-order="<?= $email['order'] ?>">
-                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="text-amber-500">
-                                            <i class="fas fa-envelope text-xl"></i>
-                                        </div>
-                                        <div>
-                                            <p class="font-medium"><?= htmlspecialchars($email['address']) ?></p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex items-center">
-                                            <div
-                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                                <input type="checkbox"
-                                                    class="email-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                                    data-id="<?= $email['id'] ?>" <?= $email['active'] ? 'checked' : '' ?>>
-                                                <label
-                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                                            </div>
-                                            <span
-                                                class="ml-2 text-xs font-medium <?= $email['active'] ? 'text-green-600' : 'text-gray-500' ?>">
-                                                <?= $email['active'] ? 'Active' : 'Inactive' ?>
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <button class="btn-edit-email text-blue-600 hover:text-blue-800"
-                                                data-id="<?= $email['id'] ?>">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn-delete-email text-red-600 hover:text-red-800"
-                                                data-id="<?= $email['id'] ?>">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                            <span
-                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
-                                                <?= $email['order'] ?>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
-                <!-- Location Details Section -->
-                <div class="mb-8">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                        <h3 class="text-md font-semibold text-gray-700">Location Details</h3>
-                        <button id="addLocationBtn"
-                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                            <i class="fas fa-plus"></i>
-                            <span>Add Location Line</span>
-                        </button>
-                    </div>
-
-                    <div id="location-container" class="space-y-4">
-                        <?php foreach ($contactInfo['location'] ?? [] as $location): ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-                                data-id="<?= $location['id'] ?>" data-order="<?= $location['order'] ?>">
-                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="text-primary">
-                                            <i class="fas fa-map-marker-alt text-xl"></i>
-                                        </div>
-                                        <div>
-                                            <p class="font-medium"><?= htmlspecialchars($location['line']) ?></p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex items-center">
-                                            <div
-                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                                <input type="checkbox"
-                                                    class="location-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                                    data-id="<?= $location['id'] ?>" <?= $location['active'] ? 'checked' : '' ?>>
-                                                <label
-                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                                            </div>
-                                            <span
-                                                class="ml-2 text-xs font-medium <?= $location['active'] ? 'text-green-600' : 'text-gray-500' ?>">
-                                                <?= $location['active'] ? 'Active' : 'Inactive' ?>
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <button class="btn-edit-location text-blue-600 hover:text-blue-800"
-                                                data-id="<?= $location['id'] ?>">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn-delete-location text-red-600 hover:text-red-800"
-                                                data-id="<?= $location['id'] ?>">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                            <span
-                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
-                                                <?= $location['order'] ?>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
-                <!-- Social Media Section -->
-                <div class="mb-8">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                        <h3 class="text-md font-semibold text-gray-700">Social Media Links</h3>
-                    </div>
-
-                    <div id="social-container" class="space-y-4">
-                        <?php
-                        $socialPlatforms = [
-                            'facebook' => ['icon' => 'fab fa-facebook', 'name' => 'Facebook'],
-                            'instagram' => ['icon' => 'fab fa-instagram', 'name' => 'Instagram'],
-                            'linkedin' => ['icon' => 'fab fa-linkedin', 'name' => 'LinkedIn'],
-                            'twitter' => ['icon' => 'fab fa-twitter', 'name' => 'Twitter/X'],
-                            'whatsapp' => ['icon' => 'fab fa-whatsapp', 'name' => 'WhatsApp']
-                        ];
-
-                        $socialData = [];
-                        foreach ($contactInfo['social'] ?? [] as $social) {
-                            $socialData[$social['platform']] = $social;
-                        }
-
-                        foreach ($socialPlatforms as $platform => $info):
-                            $social = $socialData[$platform] ?? [
-                                'id' => $platform,
-                                'platform' => $platform,
-                                'url' => '#',
-                                'active' => false,
-                                'order' => array_search($platform, array_keys($socialPlatforms)) + 1
-                            ];
-                            ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-                                data-id="<?= htmlspecialchars($social['id']) ?>" data-order="<?= $social['order'] ?>">
-                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="text-gray-700">
-                                            <i class="<?= $info['icon'] ?> text-xl"></i>
-                                        </div>
-                                        <div>
-                                            <p class="font-medium"><?= $info['name'] ?></p>
-                                            <p class="text-sm text-gray-500"><?= htmlspecialchars($social['url']) ?></p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex items-center">
-                                            <div
-                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                                <input type="checkbox"
-                                                    class="social-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                                    data-id="<?= htmlspecialchars($social['id']) ?>" <?= $social['active'] ? 'checked' : '' ?>>
-                                                <label
-                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                                            </div>
-                                            <span
-                                                class="ml-2 text-xs font-medium <?= $social['active'] ? 'text-green-600' : 'text-gray-500' ?>">
-                                                <?= $social['active'] ? 'Active' : 'Inactive' ?>
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <button class="btn-edit-social text-blue-600 hover:text-blue-800"
-                                                data-id="<?= htmlspecialchars($social['id']) ?>"
-                                                data-platform="<?= $platform ?>">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <span
-                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
-                                                <?= $social['order'] ?>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
+                    </nav>
                 </div>
             </div>
 
-            <!-- Form & Map Settings Tab Content -->
-            <div id="form-settings" class="tab-content hidden">
-                <div class="mb-6">
-                    <h2 class="text-lg font-semibold text-secondary">Contact Form Settings</h2>
-                    <p class="text-sm text-gray-text mt-1">Configure the contact form and map settings</p>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                Customize the contact form title, description, field labels, placeholders, and button
-                                text.
-                                You can also set the map coordinates to display your location.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Title & Description -->
-                <div class="mb-8">
-                    <h3 class="text-md font-semibold text-gray-700 mb-4">Form Title &amp; Description</h3>
-                    <form id="formTitleForm" class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                        <div class="grid grid-cols-1 gap-6">
-                            <div>
-                                <label for="form-title" class="block text-sm font-medium text-gray-700 mb-1">Form Title
-                                    <span class="text-red-500">*</span></label>
-                                <input type="text" id="form-title" name="title"
-                                    value="<?= htmlspecialchars($formSettings['title'] ?? 'Get in Touch') ?>"
-                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    required>
-                            </div>
-                            <div>
-                                <label for="form-description" class="block text-sm font-medium text-gray-700 mb-1">Form
-                                    Description</label>
-                                <textarea id="form-description" name="description" rows="3"
-                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"><?= htmlspecialchars($formSettings['description'] ?? '') ?></textarea>
-                            </div>
-                            <div>
-                                <label for="button-text" class="block text-sm font-medium text-gray-700 mb-1">Button
-                                    Text
-                                    <span class="text-red-500">*</span></label>
-                                <input type="text" id="button-text" name="buttonText"
-                                    value="<?= htmlspecialchars($formSettings['buttonText'] ?? 'Send Message') ?>"
-                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    required>
-                            </div>
-                        </div>
-                        <div class="pt-4 flex justify-end">
-                            <button type="submit" id="saveFormTitleBtn"
-                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                                Save Changes
+            <div class="flex-1">
+                <div class="lg:hidden mb-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+                        <div class="relative">
+                            <button id="mobile-tab-toggle"
+                                class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-address-book text-primary"></i>
+                                    <span id="mobile-tab-label" class="font-medium text-gray-900">Contact
+                                        Information</span>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"
+                                    id="mobile-tab-chevron"></i>
                             </button>
+
+                            <div id="mobile-tab-dropdown"
+                                class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+                                <div class="py-2">
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="contact-info">
+                                        <i class="fas fa-address-book text-blue-600"></i>
+                                        <span>Contact Information</span>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="form-settings">
+                                        <i class="fas fa-cogs text-green-600"></i>
+                                        <span>Form & Map Settings</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
 
-                <!-- Form Fields -->
-                <div class="mb-8">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                        <h3 class="text-md font-semibold text-gray-700">Form Fields</h3>
-                        <button id="addFieldBtn"
-                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                            <i class="fas fa-plus"></i>
-                            <span>Add Form Field</span>
-                        </button>
-                    </div>
+                <div id="tab-content" class="space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200" id="content-container">
 
-                    <div id="fields-container" class="space-y-4">
-                        <?php foreach ($formSettings['fields'] ?? [] as $field): ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-                                data-id="<?= htmlspecialchars($field['id']) ?>" data-order="<?= $field['order'] ?>">
-                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="text-primary">
-                                            <i class="fas fa-keyboard text-xl"></i>
+                        <div id="contact-info-content" class="tab-content">
+                            <div class="p-6 border-b border-gray-100">
+                                <h2 class="text-lg font-semibold text-secondary">Contact Information</h2>
+                                <p class="text-sm text-gray-text mt-1">Manage contact information displayed on the
+                                    contact page</p>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
                                         </div>
-                                        <div>
-                                            <p class="font-medium"><?= htmlspecialchars($field['label']) ?></p>
-                                            <p class="text-sm text-gray-500">ID: <?= htmlspecialchars($field['id']) ?>,
-                                                Placeholder:
-                                                <?= htmlspecialchars($field['placeholder']) ?>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                This information will be displayed in the contact information ribbon at
+                                                the top of the
+                                                contact page. You can add multiple phone numbers, email addresses, and
+                                                location lines.
                                             </p>
                                         </div>
                                     </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex items-center">
-                                            <span
-                                                class="text-xs font-medium <?= $field['required'] ? 'text-red-600' : 'text-gray-500' ?>">
-                                                <?= $field['required'] ? 'Required' : 'Optional' ?>
-                                            </span>
+                                </div>
+
+                                <div class="mb-8">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                        <h3 class="text-md font-semibold text-gray-700">Phone Numbers</h3>
+                                        <button id="addPhoneBtn"
+                                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                                            <i class="fas fa-plus"></i>
+                                            <span>Add Phone Number</span>
+                                        </button>
+                                    </div>
+
+                                    <div id="phones-container" class="space-y-4">
+                                        <?php foreach ($contactInfo['phones'] ?? [] as $phone): ?>
+                                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                                data-id="<?= $phone['id'] ?>" data-order="<?= $phone['order'] ?>">
+                                                <div
+                                                    class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="text-primary">
+                                                            <i class="fas fa-phone-alt text-xl"></i>
+                                                        </div>
+                                                        <div>
+                                                            <p class="font-medium"><?= htmlspecialchars($phone['number']) ?>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="flex items-center">
+                                                            <div
+                                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                                <input type="checkbox"
+                                                                    class="phone-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                                    data-id="<?= $phone['id'] ?>" <?= $phone['active'] ? 'checked' : '' ?>>
+                                                                <label
+                                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                                            </div>
+                                                            <span
+                                                                class="ml-2 text-xs font-medium <?= $phone['active'] ? 'text-green-600' : 'text-gray-500' ?>">
+                                                                <?= $phone['active'] ? 'Active' : 'Inactive' ?>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <button class="btn-edit-phone text-blue-600 hover:text-blue-800"
+                                                                data-id="<?= $phone['id'] ?>">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button class="btn-delete-phone text-red-600 hover:text-red-800"
+                                                                data-id="<?= $phone['id'] ?>">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                            <span
+                                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
+                                                                <?= $phone['order'] ?>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
+                                <div class="mb-8">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                        <h3 class="text-md font-semibold text-gray-700">Email Addresses</h3>
+                                        <button id="addEmailBtn"
+                                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                                            <i class="fas fa-plus"></i>
+                                            <span>Add Email Address</span>
+                                        </button>
+                                    </div>
+
+                                    <div id="emails-container" class="space-y-4">
+                                        <?php foreach ($contactInfo['emails'] ?? [] as $email): ?>
+                                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                                data-id="<?= $email['id'] ?>" data-order="<?= $email['order'] ?>">
+                                                <div
+                                                    class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="text-amber-500">
+                                                            <i class="fas fa-envelope text-xl"></i>
+                                                        </div>
+                                                        <div>
+                                                            <p class="font-medium">
+                                                                <?= htmlspecialchars($email['address']) ?></p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="flex items-center">
+                                                            <div
+                                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                                <input type="checkbox"
+                                                                    class="email-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                                    data-id="<?= $email['id'] ?>" <?= $email['active'] ? 'checked' : '' ?>>
+                                                                <label
+                                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                                            </div>
+                                                            <span
+                                                                class="ml-2 text-xs font-medium <?= $email['active'] ? 'text-green-600' : 'text-gray-500' ?>">
+                                                                <?= $email['active'] ? 'Active' : 'Inactive' ?>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <button class="btn-edit-email text-blue-600 hover:text-blue-800"
+                                                                data-id="<?= $email['id'] ?>">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button class="btn-delete-email text-red-600 hover:text-red-800"
+                                                                data-id="<?= $email['id'] ?>">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                            <span
+                                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
+                                                                <?= $email['order'] ?>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
+                                <div class="mb-8">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                        <h3 class="text-md font-semibold text-gray-700">Location Details</h3>
+                                        <button id="addLocationBtn"
+                                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                                            <i class="fas fa-plus"></i>
+                                            <span>Add Location Line</span>
+                                        </button>
+                                    </div>
+
+                                    <div id="location-container" class="space-y-4">
+                                        <?php foreach ($contactInfo['location'] ?? [] as $location): ?>
+                                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                                data-id="<?= $location['id'] ?>" data-order="<?= $location['order'] ?>">
+                                                <div
+                                                    class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="text-primary">
+                                                            <i class="fas fa-map-marker-alt text-xl"></i>
+                                                        </div>
+                                                        <div>
+                                                            <p class="font-medium">
+                                                                <?= htmlspecialchars($location['line']) ?></p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="flex items-center">
+                                                            <div
+                                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                                <input type="checkbox"
+                                                                    class="location-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                                    data-id="<?= $location['id'] ?>" <?= $location['active'] ? 'checked' : '' ?>>
+                                                                <label
+                                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                                            </div>
+                                                            <span
+                                                                class="ml-2 text-xs font-medium <?= $location['active'] ? 'text-green-600' : 'text-gray-500' ?>">
+                                                                <?= $location['active'] ? 'Active' : 'Inactive' ?>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <button
+                                                                class="btn-edit-location text-blue-600 hover:text-blue-800"
+                                                                data-id="<?= $location['id'] ?>">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button
+                                                                class="btn-delete-location text-red-600 hover:text-red-800"
+                                                                data-id="<?= $location['id'] ?>">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                            <span
+                                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
+                                                                <?= $location['order'] ?>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
+                                <div class="mb-8">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                        <h3 class="text-md font-semibold text-gray-700">Social Media Links</h3>
+                                    </div>
+
+                                    <div id="social-container" class="space-y-4">
+                                        <?php
+                                        $socialPlatforms = [
+                                            'facebook' => ['icon' => 'fab fa-facebook', 'name' => 'Facebook'],
+                                            'instagram' => ['icon' => 'fab fa-instagram', 'name' => 'Instagram'],
+                                            'linkedin' => ['icon' => 'fab fa-linkedin', 'name' => 'LinkedIn'],
+                                            'twitter' => ['icon' => 'fab fa-twitter', 'name' => 'Twitter/X'],
+                                            'whatsapp' => ['icon' => 'fab fa-whatsapp', 'name' => 'WhatsApp']
+                                        ];
+
+                                        $socialData = [];
+                                        foreach ($contactInfo['social'] ?? [] as $social) {
+                                            $socialData[$social['platform']] = $social;
+                                        }
+
+                                        foreach ($socialPlatforms as $platform => $info):
+                                            $social = $socialData[$platform] ?? [
+                                                'id' => $platform,
+                                                'platform' => $platform,
+                                                'url' => '#',
+                                                'active' => false,
+                                                'order' => array_search($platform, array_keys($socialPlatforms)) + 1
+                                            ];
+                                            ?>
+                                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                                data-id="<?= htmlspecialchars($social['id']) ?>"
+                                                data-order="<?= $social['order'] ?>">
+                                                <div
+                                                    class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="text-gray-700">
+                                                            <i class="<?= $info['icon'] ?> text-xl"></i>
+                                                        </div>
+                                                        <div>
+                                                            <p class="font-medium"><?= $info['name'] ?></p>
+                                                            <p class="text-sm text-gray-500">
+                                                                <?= htmlspecialchars($social['url']) ?></p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="flex items-center">
+                                                            <div
+                                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                                <input type="checkbox"
+                                                                    class="social-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                                    data-id="<?= htmlspecialchars($social['id']) ?>"
+                                                                    <?= $social['active'] ? 'checked' : '' ?>>
+                                                                <label
+                                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                                            </div>
+                                                            <span
+                                                                class="ml-2 text-xs font-medium <?= $social['active'] ? 'text-green-600' : 'text-gray-500' ?>">
+                                                                <?= $social['active'] ? 'Active' : 'Inactive' ?>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <button
+                                                                class="btn-edit-social text-blue-600 hover:text-blue-800"
+                                                                data-id="<?= htmlspecialchars($social['id']) ?>"
+                                                                data-platform="<?= $platform ?>">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <span
+                                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
+                                                                <?= $social['order'] ?>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="form-settings-content" class="tab-content hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <h2 class="text-lg font-semibold text-secondary">Form & Map Settings</h2>
+                                <p class="text-sm text-gray-text mt-1">Configure the contact form and map settings</p>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
                                         </div>
-                                        <div class="flex items-center gap-2">
-                                            <button class="btn-edit-field text-blue-600 hover:text-blue-800"
-                                                data-id="<?= htmlspecialchars($field['id']) ?>">
-                                                <i class="fas fa-edit"></i>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                Customize the contact form title, description, field labels,
+                                                placeholders, and button
+                                                text. You can also set the map coordinates to display your location.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-8">
+                                    <h3 class="text-md font-semibold text-gray-700 mb-4">Form Title & Description</h3>
+                                    <form id="formTitleForm"
+                                        class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                        <div class="grid grid-cols-1 gap-6">
+                                            <div>
+                                                <label for="form-title"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Form Title
+                                                    <span class="text-red-500">*</span></label>
+                                                <input type="text" id="form-title" name="title"
+                                                    value="<?= htmlspecialchars($formSettings['title'] ?? 'Get in Touch') ?>"
+                                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    required>
+                                            </div>
+                                            <div>
+                                                <label for="form-description"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Form
+                                                    Description</label>
+                                                <textarea id="form-description" name="description" rows="3"
+                                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"><?= htmlspecialchars($formSettings['description'] ?? '') ?></textarea>
+                                            </div>
+                                            <div>
+                                                <label for="button-text"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Button
+                                                    Text
+                                                    <span class="text-red-500">*</span></label>
+                                                <input type="text" id="button-text" name="buttonText"
+                                                    value="<?= htmlspecialchars($formSettings['buttonText'] ?? 'Send Message') ?>"
+                                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    required>
+                                            </div>
+                                        </div>
+                                        <div class="pt-4 flex justify-end">
+                                            <button type="submit" id="saveFormTitleBtn"
+                                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                                Save Changes
                                             </button>
-                                            <button class="btn-delete-field text-red-600 hover:text-red-800"
-                                                data-id="<?= htmlspecialchars($field['id']) ?>">
-                                                <i class="fas fa-trash-alt"></i>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div class="mb-8">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                        <h3 class="text-md font-semibold text-gray-700">Form Fields</h3>
+                                        <button id="addFieldBtn"
+                                            class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                                            <i class="fas fa-plus"></i>
+                                            <span>Add Form Field</span>
+                                        </button>
+                                    </div>
+
+                                    <div id="fields-container" class="space-y-4">
+                                        <?php foreach ($formSettings['fields'] ?? [] as $field): ?>
+                                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                                                data-id="<?= htmlspecialchars($field['id']) ?>"
+                                                data-order="<?= $field['order'] ?>">
+                                                <div
+                                                    class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="text-primary">
+                                                            <i class="fas fa-keyboard text-xl"></i>
+                                                        </div>
+                                                        <div>
+                                                            <p class="font-medium"><?= htmlspecialchars($field['label']) ?>
+                                                            </p>
+                                                            <p class="text-sm text-gray-500">ID:
+                                                                <?= htmlspecialchars($field['id']) ?>,
+                                                                Placeholder:
+                                                                <?= htmlspecialchars($field['placeholder']) ?>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="flex items-center">
+                                                            <span
+                                                                class="text-xs font-medium <?= $field['required'] ? 'text-red-600' : 'text-gray-500' ?>">
+                                                                <?= $field['required'] ? 'Required' : 'Optional' ?>
+                                                            </span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2">
+                                                            <button class="btn-edit-field text-blue-600 hover:text-blue-800"
+                                                                data-id="<?= htmlspecialchars($field['id']) ?>">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button class="btn-delete-field text-red-600 hover:text-red-800"
+                                                                data-id="<?= htmlspecialchars($field['id']) ?>">
+                                                                <i class="fas fa-trash-alt"></i>
+                                                            </button>
+                                                            <span
+                                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
+                                                                <?= $field['order'] ?>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
+                                <div class="mb-8">
+                                    <h3 class="text-md font-semibold text-gray-700 mb-4">Map Settings</h3>
+                                    <form id="mapSettingsForm"
+                                        class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                                            <div>
+                                                <label for="map-latitude"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Latitude
+                                                    <span class="text-red-500">*</span></label>
+                                                <input type="text" id="map-latitude" name="latitude"
+                                                    value="<?= htmlspecialchars($formSettings['mapCoordinates']['latitude'] ?? '0.31654191425996444') ?>"
+                                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    required>
+                                            </div>
+                                            <div>
+                                                <label for="map-longitude"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Longitude
+                                                    <span class="text-red-500">*</span></label>
+                                                <input type="text" id="map-longitude" name="longitude"
+                                                    value="<?= htmlspecialchars($formSettings['mapCoordinates']['longitude'] ?? '32.629696775378866') ?>"
+                                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    required>
+                                            </div>
+                                            <div>
+                                                <label for="map-zoom"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Zoom Level
+                                                    <span class="text-red-500">*</span></label>
+                                                <input type="number" id="map-zoom" name="zoom"
+                                                    value="<?= htmlspecialchars($formSettings['mapCoordinates']['zoom'] ?? '15') ?>"
+                                                    min="1" max="20" step="1"
+                                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    required>
+                                            </div>
+                                        </div>
+                                        <div class="pt-4 flex justify-end">
+                                            <button type="submit" id="saveMapSettingsBtn"
+                                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                                Save Map Settings
                                             </button>
-                                            <span
-                                                class="cursor-move bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
-                                                <?= $field['order'] ?>
-                                            </span>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div class="mb-8">
+                                    <h3 class="text-md font-semibold text-gray-700 mb-4">Map Preview</h3>
+                                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                        <div
+                                            class="aspect-[16/9] md:aspect-[3/1] bg-gray-100 rounded-lg overflow-hidden">
+                                            <iframe id="map-preview"
+                                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.7570741913936!2d32.629696775378866!3d0.31654191425996444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMMKwMTgnNTkuNiJOIDMywrAzNyc1NC44IkU!5e0!3m2!1sen!2sus!4v1621234567890!5m2!1sen!2sus"
+                                                width="100%" height="100%" style="border:0;" allowfullscreen=""
+                                                loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+                                                title="Zzimba Online Head Office Location">
+                                            </iframe>
+                                        </div>
+                                        <div class="mt-4 text-center">
+                                            <button id="updateMapPreviewBtn"
+                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                                                <i class="fas fa-sync-alt mr-2"></i>
+                                                Update Map Preview
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
-                <!-- Map Settings -->
-                <div class="mb-8">
-                    <h3 class="text-md font-semibold text-gray-700 mb-4">Map Settings</h3>
-                    <form id="mapSettingsForm"
-                        class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                            <div>
-                                <label for="map-latitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude
-                                    <span class="text-red-500">*</span></label>
-                                <input type="text" id="map-latitude" name="latitude"
-                                    value="<?= htmlspecialchars($formSettings['mapCoordinates']['latitude'] ?? '0.31654191425996444') ?>"
-                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    required>
-                            </div>
-                            <div>
-                                <label for="map-longitude"
-                                    class="block text-sm font-medium text-gray-700 mb-1">Longitude
-                                    <span class="text-red-500">*</span></label>
-                                <input type="text" id="map-longitude" name="longitude"
-                                    value="<?= htmlspecialchars($formSettings['mapCoordinates']['longitude'] ?? '32.629696775378866') ?>"
-                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    required>
-                            </div>
-                            <div>
-                                <label for="map-zoom" class="block text-sm font-medium text-gray-700 mb-1">Zoom Level
-                                    <span class="text-red-500">*</span></label>
-                                <input type="number" id="map-zoom" name="zoom"
-                                    value="<?= htmlspecialchars($formSettings['mapCoordinates']['zoom'] ?? '15') ?>"
-                                    min="1" max="20" step="1"
-                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    required>
-                            </div>
-                        </div>
-                        <div class="pt-4 flex justify-end">
-                            <button type="submit" id="saveMapSettingsBtn"
-                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                                Save Map Settings
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Map Preview -->
-                <div class="mb-8">
-                    <h3 class="text-md font-semibold text-gray-700 mb-4">Map Preview</h3>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                        <div class="aspect-[16/9] md:aspect-[3/1] bg-gray-100 rounded-lg overflow-hidden">
-                            <iframe id="map-preview"
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.7570741913936!2d32.629696775378866!3d0.31654191425996444!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMMKwMTgnNTkuNiJOIDMywrAzNyc1NC44IkU!5e0!3m2!1sen!2sus!4v1621234567890!5m2!1sen!2sus"
-                                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
-                                referrerpolicy="no-referrer-when-downgrade" title="Zzimba Online Head Office Location">
-                            </iframe>
-                        </div>
-                        <div class="mt-4 text-center">
-                            <button id="updateMapPreviewBtn"
-                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
-                                <i class="fas fa-sync-alt mr-2"></i>
-                                Update Map Preview
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -642,7 +709,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Phone Modal -->
 <div id="phoneModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hidePhoneModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -694,7 +760,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Email Modal -->
 <div id="emailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideEmailModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -746,7 +811,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Location Modal -->
 <div id="locationModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideLocationModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -799,7 +863,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Social Modal -->
 <div id="socialModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideSocialModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -853,7 +916,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Field Modal -->
 <div id="fieldModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideFieldModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -912,7 +974,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Delete Modal -->
 <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideDeleteModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -946,7 +1007,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Notifications -->
 <div id="successNotification"
     class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
@@ -963,7 +1023,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Loading Overlay -->
 <div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[1000] hidden">
     <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
         <div class="flex flex-col items-center">
@@ -978,45 +1037,65 @@ ob_start();
     const BASE_URL = '<?= BASE_URL ?>';
     let deleteItemType = '';
     let deleteItemId = '';
+    let currentTab = 'contact-info';
 
     document.addEventListener('DOMContentLoaded', function () {
-        initializeTabs();
         initializeEventListeners();
         initializeSortable();
         initializeStatusToggles();
         updateMapPreview();
+        switchTab('contact-info');
     });
 
-    // Tab functionality
-    function initializeTabs() {
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        function showTab(tabName) {
-            tabButtons.forEach(btn => {
-                if (btn.getAttribute('data-tab') === tabName) {
-                    btn.classList.add('bg-primary', 'text-white');
-                    btn.classList.remove('text-gray-text', 'hover:text-primary', 'hover:bg-gray-50');
-                } else {
-                    btn.classList.remove('bg-primary', 'text-white');
-                    btn.classList.add('text-gray-text', 'hover:text-primary', 'hover:bg-gray-50');
-                }
-            });
-            tabContents.forEach(content => {
-                content.id === tabName
-                    ? content.classList.remove('hidden')
-                    : content.classList.add('hidden');
-            });
-        }
-
-        tabButtons.forEach(btn => {
-            btn.addEventListener('click', function () {
-                showTab(this.getAttribute('data-tab'));
-            });
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('bg-primary/10', 'text-primary', 'border', 'border-primary/20');
+            btn.classList.add('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900');
         });
 
-        // Show default tab
-        showTab('contact-info');
+        const tabId = `${tabName}-tab`;
+        const activeTab = document.getElementById(tabId);
+        if (activeTab) {
+            activeTab.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900');
+            activeTab.classList.add('bg-primary/10', 'text-primary', 'border', 'border-primary/20');
+        }
+
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        const activeContent = document.getElementById(`${tabName}-content`);
+        if (activeContent) {
+            activeContent.classList.remove('hidden');
+        }
+
+        currentTab = tabName;
+
+        const tabLabels = {
+            'contact-info': { label: 'Contact Information', icon: 'fas fa-address-book' },
+            'form-settings': { label: 'Form & Map Settings', icon: 'fas fa-cogs' }
+        };
+        const tabInfo = tabLabels[tabName] || tabLabels['contact-info'];
+        updateMobileTabLabel(tabInfo.label, tabInfo.icon);
+    }
+
+    function updateMobileTabLabel(label, icon) {
+        const labelElement = document.getElementById('mobile-tab-label');
+        const toggleButton = document.getElementById('mobile-tab-toggle');
+        if (labelElement && toggleButton) {
+            labelElement.textContent = label;
+            const iconElement = toggleButton.querySelector('i');
+            if (iconElement) {
+                iconElement.className = `${icon} text-primary`;
+            }
+        }
+    }
+
+    function toggleMobileTabDropdown() {
+        const dropdown = document.getElementById('mobile-tab-dropdown');
+        const chevron = document.getElementById('mobile-tab-chevron');
+        dropdown.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
     }
 
     function showLoading(message = 'Loading...') {
@@ -1029,7 +1108,6 @@ ob_start();
     }
 
     function initializeEventListeners() {
-        // Phone events
         document.getElementById('addPhoneBtn')?.addEventListener('click', () => showPhoneModal());
         document.querySelectorAll('.btn-edit-phone').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -1045,7 +1123,6 @@ ob_start();
         });
         document.getElementById('submitPhone')?.addEventListener('click', submitPhoneForm);
 
-        // Email events
         document.getElementById('addEmailBtn')?.addEventListener('click', () => showEmailModal());
         document.querySelectorAll('.btn-edit-email').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -1061,7 +1138,6 @@ ob_start();
         });
         document.getElementById('submitEmail')?.addEventListener('click', submitEmailForm);
 
-        // Location events
         document.getElementById('addLocationBtn')?.addEventListener('click', () => showLocationModal());
         document.querySelectorAll('.btn-edit-location').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -1077,7 +1153,6 @@ ob_start();
         });
         document.getElementById('submitLocation')?.addEventListener('click', submitLocationForm);
 
-        // Social events
         document.querySelectorAll('.btn-edit-social').forEach(btn => {
             btn.addEventListener('click', function () {
                 const socialId = this.getAttribute('data-id');
@@ -1087,7 +1162,6 @@ ob_start();
         });
         document.getElementById('submitSocial')?.addEventListener('click', submitSocialForm);
 
-        // Field events
         document.getElementById('addFieldBtn')?.addEventListener('click', () => showFieldModal());
         document.querySelectorAll('.btn-edit-field').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -1103,21 +1177,28 @@ ob_start();
         });
         document.getElementById('submitField')?.addEventListener('click', submitFieldForm);
 
-        // Form title and description
         document.getElementById('formTitleForm')?.addEventListener('submit', function (e) {
             e.preventDefault();
             submitFormTitleForm();
         });
 
-        // Map settings
         document.getElementById('mapSettingsForm')?.addEventListener('submit', function (e) {
             e.preventDefault();
             submitMapSettingsForm();
         });
 
         document.getElementById('updateMapPreviewBtn')?.addEventListener('click', updateMapPreview);
-
         document.getElementById('confirmDelete')?.addEventListener('click', confirmDelete);
+
+        document.getElementById('mobile-tab-toggle').addEventListener('click', toggleMobileTabDropdown);
+
+        document.querySelectorAll('.mobile-tab-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const tab = e.currentTarget.getAttribute('data-tab');
+                switchTab(tab);
+                toggleMobileTabDropdown();
+            });
+        });
     }
 
     function initializeSortable() {
@@ -1262,6 +1343,70 @@ ob_start();
                 updateSocialStatus(socialId, newStatus);
             });
         });
+
+        const phoneStatusToggle = document.getElementById('phone-status-toggle');
+        if (phoneStatusToggle) {
+            phoneStatusToggle.addEventListener('change', function () {
+                const statusText = document.getElementById('phone-status-text');
+                const statusInput = document.getElementById('phone-status');
+
+                if (this.checked) {
+                    statusText.textContent = 'Active';
+                    statusInput.value = 'active';
+                } else {
+                    statusText.textContent = 'Inactive';
+                    statusInput.value = 'inactive';
+                }
+            });
+        }
+
+        const emailStatusToggle = document.getElementById('email-status-toggle');
+        if (emailStatusToggle) {
+            emailStatusToggle.addEventListener('change', function () {
+                const statusText = document.getElementById('email-status-text');
+                const statusInput = document.getElementById('email-status');
+
+                if (this.checked) {
+                    statusText.textContent = 'Active';
+                    statusInput.value = 'active';
+                } else {
+                    statusText.textContent = 'Inactive';
+                    statusInput.value = 'inactive';
+                }
+            });
+        }
+
+        const locationStatusToggle = document.getElementById('location-status-toggle');
+        if (locationStatusToggle) {
+            locationStatusToggle.addEventListener('change', function () {
+                const statusText = document.getElementById('location-status-text');
+                const statusInput = document.getElementById('location-status');
+
+                if (this.checked) {
+                    statusText.textContent = 'Active';
+                    statusInput.value = 'active';
+                } else {
+                    statusText.textContent = 'Inactive';
+                    statusInput.value = 'inactive';
+                }
+            });
+        }
+
+        const socialStatusToggle = document.getElementById('social-status-toggle');
+        if (socialStatusToggle) {
+            socialStatusToggle.addEventListener('change', function () {
+                const statusText = document.getElementById('social-status-text');
+                const statusInput = document.getElementById('social-status');
+
+                if (this.checked) {
+                    statusText.textContent = 'Active';
+                    statusInput.value = 'active';
+                } else {
+                    statusText.textContent = 'Inactive';
+                    statusInput.value = 'inactive';
+                }
+            });
+        }
     }
 
     function updatePhonesOrder() {
@@ -1775,7 +1920,6 @@ ob_start();
             return;
         }
 
-        // Validate field ID format (lowercase letters, numbers, underscores only)
         if (!/^[a-z0-9_]+$/.test(id)) {
             showErrorNotification('Field ID must contain only lowercase letters, numbers, and underscores');
             return;
@@ -1996,6 +2140,18 @@ ob_start();
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
+
+    document.addEventListener('click', function (event) {
+        const mobileDropdown = document.getElementById('mobile-tab-dropdown');
+        const mobileToggle = document.getElementById('mobile-tab-toggle');
+
+        if (mobileDropdown && mobileToggle && !mobileDropdown.contains(event.target) && !mobileToggle.contains(event.target)) {
+            mobileDropdown.classList.add('hidden');
+            document.getElementById('mobile-tab-chevron').classList.remove('rotate-180');
+        }
+    });
+
+    window.switchTab = switchTab;
 </script>
 
 <?php

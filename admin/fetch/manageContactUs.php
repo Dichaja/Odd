@@ -4,28 +4,19 @@ require_once __DIR__ . '/../../config/config.php';
 header('Content-Type: application/json');
 date_default_timezone_set('Africa/Kampala');
 
-// Get the raw input data
 $inputData = file_get_contents('php://input');
-
-// Determine the request method and extract the action
 $requestMethod = $_SERVER['REQUEST_METHOD'];
-
-// Initialize action variable
 $action = '';
 
-// Extract action based on request method
 if ($requestMethod === 'GET') {
     $action = $_GET['action'] ?? '';
 } elseif ($requestMethod === 'POST') {
-    // Check if it's a JSON request
     $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
 
     if (strpos($contentType, 'application/json') !== false) {
-        // Parse JSON input
         $jsonData = json_decode($inputData, true);
         $action = $jsonData['action'] ?? '';
     } else {
-        // Regular POST data
         $action = $_POST['action'] ?? '';
     }
 }
@@ -93,7 +84,6 @@ try {
             break;
 
         case 'save_section_content':
-            // Get data based on content type
             $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
 
             if (strpos($contentType, 'application/json') !== false) {
@@ -134,14 +124,13 @@ try {
             break;
 
         default:
-            // Debug information to help diagnose the issue
             $debug = [
                 'action' => $action,
                 'method' => $requestMethod,
                 'contentType' => $_SERVER['CONTENT_TYPE'] ?? 'none',
                 'postData' => $_POST,
                 'getData' => $_GET,
-                'rawInput' => substr($inputData, 0, 1000) // First 1000 chars of raw input
+                'rawInput' => substr($inputData, 0, 1000)
             ];
 
             echo json_encode([
@@ -252,7 +241,6 @@ function saveSectionContent($page, $section, $content)
             $pageContent = json_decode(file_get_contents($filePath), true) ?: [];
         }
 
-        // Initialize contactInfo and formSettings if they don't exist
         if (!isset($pageContent['contactInfo'])) {
             $pageContent['contactInfo'] = [
                 'phones' => [],
@@ -916,3 +904,4 @@ function sanitizeFileName($fileName)
     $fileName = preg_replace('/[^a-zA-Z0-9_-]/', '', $fileName);
     return strtolower($fileName);
 }
+?>
