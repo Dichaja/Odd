@@ -3,7 +3,6 @@ require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Manage Index Page';
 $activeNav = 'homepage';
 
-// Load homepage data from JSON file
 function loadHomepageData()
 {
     $filePath = __DIR__ . '/../page-data/homepage/index.json';
@@ -13,7 +12,6 @@ function loadHomepageData()
         return json_decode($jsonData, true) ?: [];
     }
 
-    // Return empty default structure if file doesn't exist
     return [
         'heroSlides' => [],
         'requestQuoteSection' => [
@@ -52,10 +50,7 @@ function loadHomepageData()
     ];
 }
 
-// Load data from JSON
 $homepageData = loadHomepageData();
-
-// Extract data from the loaded JSON
 $heroSlides = $homepageData['heroSlides'] ?? [];
 $requestQuoteSection = $homepageData['requestQuoteSection'] ?? [];
 $keyFeatures = $homepageData['keyFeatures'] ?? [];
@@ -64,649 +59,796 @@ $categoriesSection = $homepageData['categoriesSection'] ?? [];
 $partnersSection = $homepageData['partnersSection'] ?? [];
 $partners = $homepageData['partners'] ?? [];
 
-// Handle active tab
-$activeTab = $_GET['tab'] ?? 'hero';
-
 ob_start();
 ?>
 
-<div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold text-secondary">Homepage Management</h1>
-            <p class="text-sm text-gray-text mt-1">Manage your website homepage content and layout</p>
-        </div>
-        <div class="flex flex-col md:flex-row items-center gap-3">
-            <a href="dashboard"
-                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-arrow-left"></i>
-                <span>Back to Dashboard</span>
-            </a>
+<div class="min-h-screen bg-gray-50" id="app-container">
+    <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Homepage Management</h1>
+                    <p class="text-gray-600 mt-1">Manage your website homepage content and layout</p>
+                </div>
+                <div class="flex flex-col md:flex-row items-center gap-3">
+                    <a href="dashboard"
+                        class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back to Dashboard</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100">
-            <nav class="flex overflow-x-auto py-2" aria-label="Tabs">
-                <a href="?tab=hero"
-                    class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap <?= $activeTab === 'hero' ? 'bg-primary text-white' : 'text-gray-text hover:text-primary hover:bg-gray-50' ?>">
-                    Hero Slider
-                </a>
-                <a href="?tab=quote"
-                    class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ml-2 <?= $activeTab === 'quote' ? 'bg-primary text-white' : 'text-gray-text hover:text-primary hover:bg-gray-50' ?>">
-                    Request Quote
-                </a>
-                <a href="?tab=features"
-                    class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ml-2 <?= $activeTab === 'features' ? 'bg-primary text-white' : 'text-gray-text hover:text-primary hover:bg-gray-50' ?>">
-                    Key Benefits
-                </a>
-                <a href="?tab=products"
-                    class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ml-2 <?= $activeTab === 'products' ? 'bg-primary text-white' : 'text-gray-text hover:text-primary hover:bg-gray-50' ?>">
-                    Featured Products
-                </a>
-                <a href="?tab=categories"
-                    class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ml-2 <?= $activeTab === 'categories' ? 'bg-primary text-white' : 'text-gray-text hover:text-primary hover:bg-gray-50' ?>">
-                    Categories
-                </a>
-                <a href="?tab=partners"
-                    class="px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap ml-2 <?= $activeTab === 'partners' ? 'bg-primary text-white' : 'text-gray-text hover:text-primary hover:bg-gray-50' ?>">
-                    Partners
-                </a>
-            </nav>
-        </div>
-
-        <div class="p-6">
-            <?php if ($activeTab === 'hero'): ?>
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <div>
-                        <h2 class="text-lg font-semibold text-secondary">Hero Slider Management</h2>
-                        <p class="text-sm text-gray-text mt-1">
-                            <span id="hero-count"><?= count($heroSlides) ?></span> slides found
-                        </p>
-                    </div>
-                    <button id="addHeroBtn"
-                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                        <i class="fas fa-plus"></i>
-                        <span>Add New Slide</span>
-                    </button>
-                </div>
-
-                <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-amber-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-amber-700">
-                                For best results, use images with dimensions 1800×600 pixels (3:1 ratio). Images will be
-                                displayed at 16:9 ratio on mobile devices.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="hero-slides-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    <?php foreach ($heroSlides as $slide): ?>
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
-                            data-id="<?= $slide['id'] ?>" data-order="<?= $slide['order'] ?>">
-                            <div class="relative aspect-[3/1] bg-gray-100">
-                                <?php if ($slide['image']): ?>
-                                    <img src="<?= BASE_URL . $slide['image'] ?>" alt="Slide" class="w-full h-full object-cover">
-                                <?php else: ?>
-                                    <img src="https://placehold.co/1800x600/?text=Hero+Slide" alt="Placeholder"
-                                        class="w-full h-full object-cover">
-                                <?php endif; ?>
-                                <div class="absolute top-2 right-2 flex space-x-1">
-                                    <span
-                                        class="bg-white text-gray-700 rounded-full h-6 w-6 flex items-center justify-center shadow-md">
-                                        <?= $slide['order'] ?>
-                                    </span>
-                                    <button
-                                        class="btn-edit-hero bg-white text-blue-600 rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:text-blue-800"
-                                        data-id="<?= $slide['id'] ?>">
-                                        <i class="fas fa-edit text-xs"></i>
-                                    </button>
-                                    <button
-                                        class="btn-delete-hero bg-white text-red-600 rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:text-red-800"
-                                        data-id="<?= $slide['id'] ?>">
-                                        <i class="fas fa-trash-alt text-xs"></i>
-                                    </button>
-                                </div>
-                                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
-                                    <h3 class="text-white text-sm font-bold truncate"><?= strip_tags($slide['title']) ?></h3>
-                                </div>
-                            </div>
-                            <div class="p-4">
-                                <div class="mb-2">
-                                    <p class="text-sm text-gray-500 line-clamp-2"><?= $slide['subtitle'] ?></p>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center">
-                                        <div
-                                            class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                            <input type="checkbox"
-                                                class="hero-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                                data-id="<?= $slide['id'] ?>" <?= $slide['active'] ? 'checked' : '' ?>>
-                                            <label
-                                                class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                                        </div>
-                                        <span
-                                            class="ml-2 text-xs font-medium <?= $slide['active'] ? 'text-green-600' : 'text-gray-500' ?>">
-                                            <?= $slide['active'] ? 'Active' : 'Inactive' ?>
-                                        </span>
-                                    </div>
-                                    <div class="text-sm text-gray-700">
-                                        Button: <?= $slide['buttonText'] ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-
-            <?php elseif ($activeTab === 'quote'): ?>
-                <div class="mb-6">
-                    <h2 class="text-lg font-semibold text-secondary">Request Quote Section</h2>
-                    <p class="text-sm text-gray-text mt-1">Configure the request quote section on the homepage</p>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                This section allows customers to request personalized quotes for their construction needs.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <form id="quoteForm" class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <div>
-                            <label for="button-text" class="block text-sm font-medium text-gray-700 mb-1">Button Text <span
-                                    class="text-red-500">*</span></label>
-                            <input type="text" id="button-text" name="button-text"
-                                value="<?= $requestQuoteSection['buttonText'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                required>
-                        </div>
-                        <div>
-                            <label for="button-url" class="block text-sm font-medium text-gray-700 mb-1">Button URL <span
-                                    class="text-red-500">*</span></label>
-                            <input type="text" id="button-url" name="button-url"
-                                value="<?= $requestQuoteSection['buttonUrl'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                required>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea id="description" name="description" rows="3"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"><?= $requestQuoteSection['description'] ?? '' ?></textarea>
-                    </div>
-                    <div>
-                        <label for="quote-status-toggle" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <div class="flex items-center space-x-3">
-                            <div
-                                class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                <input type="checkbox" id="quote-status-toggle"
-                                    class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                    <?= ($requestQuoteSection['active'] ?? true) ? 'checked' : '' ?>>
-                                <label for="quote-status-toggle"
-                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                            </div>
-                            <span id="quote-status-text"
-                                class="text-sm font-medium text-gray-700"><?= ($requestQuoteSection['active'] ?? true) ? 'Active' : 'Inactive' ?></span>
-                            <input type="hidden" id="quote-status" name="status"
-                                value="<?= ($requestQuoteSection['active'] ?? true) ? 'active' : 'inactive' ?>">
-                        </div>
-                    </div>
-                    <div class="pt-4 flex justify-end">
-                        <button type="submit" id="saveQuoteBtn"
-                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                            Save Changes
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex gap-8">
+            <div class="hidden lg:block w-64 flex-shrink-0">
+                <div id="desktop-nav">
+                    <nav class="space-y-2" aria-label="Homepage Navigation">
+                        <button id="hero-tab"
+                            class="tab-button active w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 bg-primary/10 text-primary border border-primary/20"
+                            onclick="switchTab('hero')">
+                            <i class="fas fa-images"></i>
+                            <span>Hero Slider</span>
                         </button>
-                    </div>
-                </form>
-
-            <?php elseif ($activeTab === 'features'): ?>
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <div>
-                        <h2 class="text-lg font-semibold text-secondary">Key Benefits Management</h2>
-                        <p class="text-sm text-gray-text mt-1">
-                            <span id="benefits-count"><?= count($keyFeatures) ?></span> benefits found
-                        </p>
-                    </div>
-                    <button id="addBenefitBtn"
-                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                        <i class="fas fa-plus"></i>
-                        <span>Add New Benefit</span>
-                    </button>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                These key benefits highlight the main advantages of using our platform. You can use emoji or
-                                icons for visual representation.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="benefits-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <?php foreach ($keyFeatures as $feature): ?>
-                        <div class="bg-white border rounded-lg shadow-sm p-6 relative" data-id="<?= $feature['id'] ?>"
-                            data-order="<?= $feature['order'] ?>">
-                            <div class="absolute top-3 right-3 flex space-x-2">
-                                <button class="btn-edit-benefit text-blue-600 hover:text-blue-900"
-                                    data-id="<?= $feature['id'] ?>">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn-delete-benefit text-red-600 hover:text-red-900"
-                                    data-id="<?= $feature['id'] ?>">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
-                            <div class="text-4xl mb-4"><?= $feature['icon'] ?></div>
-                            <h3 class="text-xl font-semibold mb-2"><?= $feature['title'] ?></h3>
-                            <p class="text-gray-600"><?= $feature['description'] ?></p>
-                            <div class="mt-4 flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <div
-                                        class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                        <input type="checkbox"
-                                            class="benefit-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                            data-id="<?= $feature['id'] ?>" <?= $feature['active'] ? 'checked' : '' ?>>
-                                        <label
-                                            class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                                    </div>
-                                    <span
-                                        class="ml-2 text-xs font-medium <?= $feature['active'] ? 'text-green-600' : 'text-gray-500' ?>">
-                                        <?= $feature['active'] ? 'Active' : 'Inactive' ?>
-                                    </span>
-                                </div>
-                                <div class="flex items-center">
-                                    <span
-                                        class="bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
-                                        <?= $feature['order'] ?>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-
-            <?php elseif ($activeTab === 'products'): ?>
-                <div class="mb-6">
-                    <h2 class="text-lg font-semibold text-secondary">Featured Products Section</h2>
-                    <p class="text-sm text-gray-text mt-1">Configure how featured products are displayed on the homepage</p>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                Configure how featured products are displayed on the homepage. Products themselves are
-                                managed in the Products section.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <form id="productsForm" class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <div>
-                            <label for="products-title" class="block text-sm font-medium text-gray-700 mb-1">Section Title
-                                <span class="text-red-500">*</span></label>
-                            <input type="text" id="products-title" name="title"
-                                value="<?= $featuredProductsSection['title'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                required>
-                        </div>
-                        <div>
-                            <label for="products-link-text" class="block text-sm font-medium text-gray-700 mb-1">Link
-                                Text</label>
-                            <input type="text" id="products-link-text" name="linkText"
-                                value="<?= $featuredProductsSection['linkText'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label for="products-link-url" class="block text-sm font-medium text-gray-700 mb-1">Link
-                                URL</label>
-                            <input type="text" id="products-link-url" name="linkUrl"
-                                value="<?= $featuredProductsSection['linkUrl'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label for="products-button-text" class="block text-sm font-medium text-gray-700 mb-1">Load More
-                                Button Text</label>
-                            <input type="text" id="products-button-text" name="loadMoreButtonText"
-                                value="<?= $featuredProductsSection['loadMoreButtonText'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label for="products-default-rows" class="block text-sm font-medium text-gray-700 mb-1">Default
-                                Rows</label>
-                            <input type="number" id="products-default-rows" name="defaultRows"
-                                value="<?= $featuredProductsSection['defaultRows'] ?? 1 ?>" min="1" max="5"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            <p class="mt-1 text-xs text-gray-500">Number of rows to show initially</p>
-                        </div>
-                        <div>
-                            <label for="products-per-row" class="block text-sm font-medium text-gray-700 mb-1">Products Per
-                                Row</label>
-                            <select id="products-per-row" name="productsPerRow"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                                <option value="1" <?= ($featuredProductsSection['productsPerRow'] ?? 4) == 1 ? 'selected' : '' ?>>1
-                                    product</option>
-                                <option value="2" <?= ($featuredProductsSection['productsPerRow'] ?? 4) == 2 ? 'selected' : '' ?>>2
-                                    products</option>
-                                <option value="3" <?= ($featuredProductsSection['productsPerRow'] ?? 4) == 3 ? 'selected' : '' ?>>3
-                                    products</option>
-                                <option value="4" <?= ($featuredProductsSection['productsPerRow'] ?? 4) == 4 ? 'selected' : '' ?>>4
-                                    products</option>
-                            </select>
-                            <p class="mt-1 text-xs text-gray-500">On mobile, this will automatically adjust</p>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="products-status-toggle"
-                            class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <div class="flex items-center space-x-3">
-                            <div
-                                class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                <input type="checkbox" id="products-status-toggle"
-                                    class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                    <?= ($featuredProductsSection['active'] ?? true) ? 'checked' : '' ?>>
-                                <label for="products-status-toggle"
-                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                            </div>
-                            <span id="products-status-text"
-                                class="text-sm font-medium text-gray-700"><?= ($featuredProductsSection['active'] ?? true) ? 'Active' : 'Inactive' ?></span>
-                            <input type="hidden" id="products-status" name="status"
-                                value="<?= ($featuredProductsSection['active'] ?? true) ? 'active' : 'inactive' ?>">
-                        </div>
-                    </div>
-                    <div class="pt-4 flex justify-end">
-                        <button type="submit" id="saveProductsBtn"
-                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                            Save Changes
+                        <button id="quote-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchTab('quote')">
+                            <i class="fas fa-quote-left"></i>
+                            <span>Request Quote</span>
                         </button>
-                    </div>
-                </form>
-
-            <?php elseif ($activeTab === 'categories'): ?>
-                <div class="mb-6">
-                    <h2 class="text-lg font-semibold text-secondary">Categories Section</h2>
-                    <p class="text-sm text-gray-text mt-1">Configure how categories are displayed on the homepage</p>
-                </div>
-
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                Configure how categories are displayed on the homepage. Categories themselves are managed in
-                                the Products section.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <form id="categoriesForm" class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <div>
-                            <label for="categories-title" class="block text-sm font-medium text-gray-700 mb-1">Section Title
-                                <span class="text-red-500">*</span></label>
-                            <input type="text" id="categories-title" name="title"
-                                value="<?= $categoriesSection['title'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                required>
-                        </div>
-                        <div>
-                            <label for="categories-link-text" class="block text-sm font-medium text-gray-700 mb-1">Link
-                                Text</label>
-                            <input type="text" id="categories-link-text" name="linkText"
-                                value="<?= $categoriesSection['linkText'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label for="categories-link-url" class="block text-sm font-medium text-gray-700 mb-1">Link
-                                URL</label>
-                            <input type="text" id="categories-link-url" name="linkUrl"
-                                value="<?= $categoriesSection['linkUrl'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label for="categories-button-text" class="block text-sm font-medium text-gray-700 mb-1">Load
-                                More Button Text</label>
-                            <input type="text" id="categories-button-text" name="loadMoreButtonText"
-                                value="<?= $categoriesSection['loadMoreButtonText'] ?? '' ?>"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                        </div>
-                        <div>
-                            <label for="categories-default-rows"
-                                class="block text-sm font-medium text-gray-700 mb-1">Default Rows</label>
-                            <input type="number" id="categories-default-rows" name="defaultRows"
-                                value="<?= $categoriesSection['defaultRows'] ?? 1 ?>" min="1" max="5"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            <p class="mt-1 text-xs text-gray-500">Number of rows to show initially</p>
-                        </div>
-                        <div>
-                            <label for="categories-per-row" class="block text-sm font-medium text-gray-700 mb-1">Categories
-                                Per Row</label>
-                            <select id="categories-per-row" name="categoriesPerRow"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                                <option value="1" <?= ($categoriesSection['categoriesPerRow'] ?? 4) == 1 ? 'selected' : '' ?>>1
-                                    category</option>
-                                <option value="2" <?= ($categoriesSection['categoriesPerRow'] ?? 4) == 2 ? 'selected' : '' ?>>2
-                                    categories</option>
-                                <option value="3" <?= ($categoriesSection['categoriesPerRow'] ?? 4) == 3 ? 'selected' : '' ?>>3
-                                    categories</option>
-                                <option value="4" <?= ($categoriesSection['categoriesPerRow'] ?? 4) == 4 ? 'selected' : '' ?>>4
-                                    categories</option>
-                            </select>
-                            <p class="mt-1 text-xs text-gray-500">On mobile, this will automatically adjust</p>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="categories-status-toggle"
-                            class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <div class="flex items-center space-x-3">
-                            <div
-                                class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                <input type="checkbox" id="categories-status-toggle"
-                                    class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                    <?= ($categoriesSection['active'] ?? true) ? 'checked' : '' ?>>
-                                <label for="categories-status-toggle"
-                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                            </div>
-                            <span id="categories-status-text"
-                                class="text-sm font-medium text-gray-700"><?= ($categoriesSection['active'] ?? true) ? 'Active' : 'Inactive' ?></span>
-                            <input type="hidden" id="categories-status" name="status"
-                                value="<?= ($categoriesSection['active'] ?? true) ? 'active' : 'inactive' ?>">
-                        </div>
-                    </div>
-                    <div class="pt-4 flex justify-end">
-                        <button type="submit" id="saveCategoriesBtn"
-                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                            Save Changes
+                        <button id="features-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchTab('features')">
+                            <i class="fas fa-star"></i>
+                            <span>Key Benefits</span>
                         </button>
-                    </div>
-                </form>
-
-            <?php elseif ($activeTab === 'partners'): ?>
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <div>
-                        <h2 class="text-lg font-semibold text-secondary">Partners Section</h2>
-                        <p class="text-sm text-gray-text mt-1">
-                            <span id="partners-count"><?= count($partners) ?></span> partners found
-                        </p>
-                    </div>
-                    <button id="addPartnerBtn"
-                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                        <i class="fas fa-plus"></i>
-                        <span>Add New Partner</span>
-                    </button>
+                        <button id="products-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchTab('products')">
+                            <i class="fas fa-box"></i>
+                            <span>Featured Products</span>
+                        </button>
+                        <button id="categories-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchTab('categories')">
+                            <i class="fas fa-th-large"></i>
+                            <span>Categories</span>
+                        </button>
+                        <button id="partners-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchTab('partners')">
+                            <i class="fas fa-handshake"></i>
+                            <span>Partners</span>
+                        </button>
+                    </nav>
                 </div>
+            </div>
 
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-info-circle text-blue-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                Manage partners and their display on the homepage. For best results, use logo images with
-                                dimensions 200×100 pixels (2:1 ratio) or 100×100 pixels (1:1 ratio).
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-8">
-                    <h3 class="text-md font-semibold text-gray-700 mb-4">Section Settings</h3>
-                    <form id="partnersSettingsForm"
-                        class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div>
-                                <label for="partners-title" class="block text-sm font-medium text-gray-700 mb-1">Section
-                                    Title <span class="text-red-500">*</span></label>
-                                <input type="text" id="partners-title" name="title"
-                                    value="<?= $partnersSection['title'] ?? '' ?>"
-                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                                    required>
-                            </div>
-                            <div>
-                                <label for="partners-cta-text" class="block text-sm font-medium text-gray-700 mb-1">CTA
-                                    Button Text</label>
-                                <input type="text" id="partners-cta-text" name="ctaButtonText"
-                                    value="<?= $partnersSection['ctaButtonText'] ?? '' ?>"
-                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            </div>
-                            <div>
-                                <label for="partners-cta-url" class="block text-sm font-medium text-gray-700 mb-1">CTA
-                                    Button URL</label>
-                                <input type="text" id="partners-cta-url" name="ctaButtonUrl"
-                                    value="<?= $partnersSection['ctaButtonUrl'] ?? '' ?>"
-                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            </div>
-                        </div>
-                        <div>
-                            <label for="partners-description" class="block text-sm font-medium text-gray-700 mb-1">Section
-                                Description</label>
-                            <textarea id="partners-description" name="description" rows="3"
-                                class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"><?= $partnersSection['description'] ?? '' ?></textarea>
-                        </div>
-                        <div>
-                            <label for="partners-status-toggle"
-                                class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                    <input type="checkbox" id="partners-status-toggle"
-                                        class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                        <?= ($partnersSection['active'] ?? true) ? 'checked' : '' ?>>
-                                    <label for="partners-status-toggle"
-                                        class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+            <div class="flex-1">
+                <div class="lg:hidden mb-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+                        <div class="relative">
+                            <button id="mobile-tab-toggle"
+                                class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-images text-primary"></i>
+                                    <span id="mobile-tab-label" class="font-medium text-gray-900">Hero Slider</span>
                                 </div>
-                                <span id="partners-status-text"
-                                    class="text-sm font-medium text-gray-700"><?= ($partnersSection['active'] ?? true) ? 'Active' : 'Inactive' ?></span>
-                                <input type="hidden" id="partners-status" name="status"
-                                    value="<?= ($partnersSection['active'] ?? true) ? 'active' : 'inactive' ?>">
-                            </div>
-                        </div>
-                        <div class="pt-4 flex justify-end">
-                            <button type="submit" id="savePartnersSettingsBtn"
-                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                                Save Section Settings
+                                <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"
+                                    id="mobile-tab-chevron"></i>
                             </button>
+
+                            <div id="mobile-tab-dropdown"
+                                class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+                                <div class="py-2">
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="hero">
+                                        <i class="fas fa-images text-blue-600"></i>
+                                        <span>Hero Slider</span>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="quote">
+                                        <i class="fas fa-quote-left text-green-600"></i>
+                                        <span>Request Quote</span>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="features">
+                                        <i class="fas fa-star text-purple-600"></i>
+                                        <span>Key Benefits</span>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="products">
+                                        <i class="fas fa-box text-orange-600"></i>
+                                        <span>Featured Products</span>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="categories">
+                                        <i class="fas fa-th-large text-red-600"></i>
+                                        <span>Categories</span>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="partners">
+                                        <i class="fas fa-handshake text-indigo-600"></i>
+                                        <span>Partners</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
 
-                <div class="mt-10">
-                    <h3 class="text-md font-semibold text-gray-700 mb-4">Partners List</h3>
-                    <div id="partners-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        <?php foreach ($partners as $partner): ?>
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
-                                data-id="<?= $partner['id'] ?>" data-order="<?= $partner['order'] ?>">
-                                <div class="relative aspect-[2/1] bg-gray-100 flex items-center justify-center p-4">
-                                    <?php if ($partner['logo']): ?>
-                                        <img src="<?= BASE_URL . $partner['logo'] ?>" alt="<?= $partner['name'] ?>"
-                                            class="max-h-full max-w-full object-contain">
-                                    <?php else: ?>
-                                        <img src="https://placehold.co/200x100?text=<?= urlencode($partner['name']) ?>"
-                                            alt="<?= $partner['name'] ?>" class="max-h-full max-w-full object-contain">
-                                    <?php endif; ?>
-                                    <div class="absolute top-2 right-2 flex space-x-1">
-                                        <span
-                                            class="bg-white text-gray-700 rounded-full h-6 w-6 flex items-center justify-center shadow-md">
-                                            <?= $partner['order'] ?>
-                                        </span>
-                                        <button
-                                            class="btn-edit-partner bg-white text-blue-600 rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:text-blue-800"
-                                            data-id="<?= $partner['id'] ?>">
-                                            <i class="fas fa-edit text-xs"></i>
-                                        </button>
-                                        <button
-                                            class="btn-delete-partner bg-white text-red-600 rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:text-red-800"
-                                            data-id="<?= $partner['id'] ?>">
-                                            <i class="fas fa-trash-alt text-xs"></i>
-                                        </button>
+                <div id="tab-content" class="space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200" id="content-container">
+
+                        <div id="hero-content" class="tab-content">
+                            <div class="p-6 border-b border-gray-100">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <h2 class="text-lg font-semibold text-secondary">Hero Slider Management</h2>
+                                        <p class="text-sm text-gray-text mt-1">
+                                            <span id="hero-count"><?= count($heroSlides) ?></span> slides found
+                                        </p>
+                                    </div>
+                                    <button id="addHeroBtn"
+                                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add New Slide</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-amber-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-amber-700">
+                                                For best results, use images with dimensions 1800×600 pixels (3:1
+                                                ratio). Images will be
+                                                displayed at 16:9 ratio on mobile devices.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="p-4">
-                                    <h3 class="font-medium text-gray-900"><?= $partner['name'] ?></h3>
-                                    <div class="mt-2 flex justify-between items-center">
-                                        <div class="flex items-center">
+
+                                <div id="hero-slides-container"
+                                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <?php foreach ($heroSlides as $slide): ?>
+                                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                                            data-id="<?= $slide['id'] ?>" data-order="<?= $slide['order'] ?>">
+                                            <div class="relative aspect-[3/1] bg-gray-100">
+                                                <?php if ($slide['image']): ?>
+                                                    <img src="<?= BASE_URL . $slide['image'] ?>" alt="Slide"
+                                                        class="w-full h-full object-cover">
+                                                <?php else: ?>
+                                                    <img src="https://placehold.co/1800x600/?text=Hero+Slide" alt="Placeholder"
+                                                        class="w-full h-full object-cover">
+                                                <?php endif; ?>
+                                                <div class="absolute top-2 right-2 flex space-x-1">
+                                                    <span
+                                                        class="bg-white text-gray-700 rounded-full h-6 w-6 flex items-center justify-center shadow-md">
+                                                        <?= $slide['order'] ?>
+                                                    </span>
+                                                    <button
+                                                        class="btn-edit-hero bg-white text-blue-600 rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:text-blue-800"
+                                                        data-id="<?= $slide['id'] ?>">
+                                                        <i class="fas fa-edit text-xs"></i>
+                                                    </button>
+                                                    <button
+                                                        class="btn-delete-hero bg-white text-red-600 rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:text-red-800"
+                                                        data-id="<?= $slide['id'] ?>">
+                                                        <i class="fas fa-trash-alt text-xs"></i>
+                                                    </button>
+                                                </div>
+                                                <div
+                                                    class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
+                                                    <h3 class="text-white text-sm font-bold truncate">
+                                                        <?= strip_tags($slide['title']) ?>
+                                                    </h3>
+                                                </div>
+                                            </div>
+                                            <div class="p-4">
+                                                <div class="mb-2">
+                                                    <p class="text-sm text-gray-500 line-clamp-2"><?= $slide['subtitle'] ?>
+                                                    </p>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <div class="flex items-center">
+                                                        <div
+                                                            class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                            <input type="checkbox"
+                                                                class="hero-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                                data-id="<?= $slide['id'] ?>" <?= $slide['active'] ? 'checked' : '' ?>>
+                                                            <label
+                                                                class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                                        </div>
+                                                        <span
+                                                            class="ml-2 text-xs font-medium <?= $slide['active'] ? 'text-green-600' : 'text-gray-500' ?>">
+                                                            <?= $slide['active'] ? 'Active' : 'Inactive' ?>
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-sm text-gray-700">
+                                                        Button: <?= $slide['buttonText'] ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="quote-content" class="tab-content hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <h2 class="text-lg font-semibold text-secondary">Request Quote Section</h2>
+                                <p class="text-sm text-gray-text mt-1">Configure the request quote section on the
+                                    homepage</p>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                This section allows customers to request personalized quotes for their
+                                                construction needs.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form id="quoteForm"
+                                    class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        <div>
+                                            <label for="button-text"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Button Text <span
+                                                    class="text-red-500">*</span></label>
+                                            <input type="text" id="button-text" name="button-text"
+                                                value="<?= $requestQuoteSection['buttonText'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                required>
+                                        </div>
+                                        <div>
+                                            <label for="button-url"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Button URL <span
+                                                    class="text-red-500">*</span></label>
+                                            <input type="text" id="button-url" name="button-url"
+                                                value="<?= $requestQuoteSection['buttonUrl'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                required>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="description"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                        <textarea id="description" name="description" rows="3"
+                                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"><?= $requestQuoteSection['description'] ?? '' ?></textarea>
+                                    </div>
+                                    <div>
+                                        <label for="quote-status-toggle"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                        <div class="flex items-center space-x-3">
                                             <div
-                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                                <input type="checkbox"
-                                                    class="partner-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                                    data-id="<?= $partner['id'] ?>" <?= $partner['active'] ? 'checked' : '' ?>>
-                                                <label
+                                                class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                <input type="checkbox" id="quote-status-toggle"
+                                                    class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    <?= ($requestQuoteSection['active'] ?? true) ? 'checked' : '' ?>>
+                                                <label for="quote-status-toggle"
                                                     class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
                                             </div>
-                                            <span
-                                                class="ml-2 text-xs font-medium <?= $partner['active'] ? 'text-green-600' : 'text-gray-500' ?>">
-                                                <?= $partner['active'] ? 'Active' : 'Inactive' ?>
-                                            </span>
+                                            <span id="quote-status-text"
+                                                class="text-sm font-medium text-gray-700"><?= ($requestQuoteSection['active'] ?? true) ? 'Active' : 'Inactive' ?></span>
+                                            <input type="hidden" id="quote-status" name="status"
+                                                value="<?= ($requestQuoteSection['active'] ?? true) ? 'active' : 'inactive' ?>">
                                         </div>
-                                        <?php if ($partner['hasLink']): ?>
-                                            <span class="text-xs text-blue-600">
-                                                <i class="fas fa-link mr-1"></i> Has Link
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="text-xs text-gray-400">
-                                                <i class="fas fa-unlink mr-1"></i> No Link
-                                            </span>
-                                        <?php endif; ?>
+                                    </div>
+                                    <div class="pt-4 flex justify-end">
+                                        <button type="submit" id="saveQuoteBtn"
+                                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div id="features-content" class="tab-content hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <h2 class="text-lg font-semibold text-secondary">Key Benefits Management</h2>
+                                        <p class="text-sm text-gray-text mt-1">
+                                            <span id="benefits-count"><?= count($keyFeatures) ?></span> benefits found
+                                        </p>
+                                    </div>
+                                    <button id="addBenefitBtn"
+                                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add New Benefit</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                These key benefits highlight the main advantages of using our platform.
+                                                You can use emoji or
+                                                icons for visual representation.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="benefits-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <?php foreach ($keyFeatures as $feature): ?>
+                                        <div class="bg-white border rounded-lg shadow-sm p-6 relative"
+                                            data-id="<?= $feature['id'] ?>" data-order="<?= $feature['order'] ?>">
+                                            <div class="absolute top-3 right-3 flex space-x-2">
+                                                <button class="btn-edit-benefit text-blue-600 hover:text-blue-900"
+                                                    data-id="<?= $feature['id'] ?>">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-delete-benefit text-red-600 hover:text-red-900"
+                                                    data-id="<?= $feature['id'] ?>">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </div>
+                                            <div class="text-4xl mb-4"><?= $feature['icon'] ?></div>
+                                            <h3 class="text-xl font-semibold mb-2"><?= $feature['title'] ?></h3>
+                                            <p class="text-gray-600"><?= $feature['description'] ?></p>
+                                            <div class="mt-4 flex items-center justify-between">
+                                                <div class="flex items-center">
+                                                    <div
+                                                        class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                        <input type="checkbox"
+                                                            class="benefit-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                            data-id="<?= $feature['id'] ?>" <?= $feature['active'] ? 'checked' : '' ?>>
+                                                        <label
+                                                            class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                                    </div>
+                                                    <span
+                                                        class="ml-2 text-xs font-medium <?= $feature['active'] ? 'text-green-600' : 'text-gray-500' ?>">
+                                                        <?= $feature['active'] ? 'Active' : 'Inactive' ?>
+                                                    </span>
+                                                </div>
+                                                <div class="flex items-center">
+                                                    <span
+                                                        class="bg-gray-100 text-gray-700 rounded-full h-6 w-6 flex items-center justify-center">
+                                                        <?= $feature['order'] ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="products-content" class="tab-content hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <h2 class="text-lg font-semibold text-secondary">Featured Products Section</h2>
+                                <p class="text-sm text-gray-text mt-1">Configure how featured products are displayed on
+                                    the homepage</p>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                Configure how featured products are displayed on the homepage. Products
+                                                themselves are
+                                                managed in the Products section.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form id="productsForm"
+                                    class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        <div>
+                                            <label for="products-title"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Section Title
+                                                <span class="text-red-500">*</span></label>
+                                            <input type="text" id="products-title" name="title"
+                                                value="<?= $featuredProductsSection['title'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                required>
+                                        </div>
+                                        <div>
+                                            <label for="products-link-text"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Link
+                                                Text</label>
+                                            <input type="text" id="products-link-text" name="linkText"
+                                                value="<?= $featuredProductsSection['linkText'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                        </div>
+                                        <div>
+                                            <label for="products-link-url"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Link
+                                                URL</label>
+                                            <input type="text" id="products-link-url" name="linkUrl"
+                                                value="<?= $featuredProductsSection['linkUrl'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                        </div>
+                                        <div>
+                                            <label for="products-button-text"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Load More
+                                                Button Text</label>
+                                            <input type="text" id="products-button-text" name="loadMoreButtonText"
+                                                value="<?= $featuredProductsSection['loadMoreButtonText'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                        </div>
+                                        <div>
+                                            <label for="products-default-rows"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Default
+                                                Rows</label>
+                                            <input type="number" id="products-default-rows" name="defaultRows"
+                                                value="<?= $featuredProductsSection['defaultRows'] ?? 1 ?>" min="1"
+                                                max="5"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                            <p class="mt-1 text-xs text-gray-500">Number of rows to show initially</p>
+                                        </div>
+                                        <div>
+                                            <label for="products-per-row"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Products Per
+                                                Row</label>
+                                            <select id="products-per-row" name="productsPerRow"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                                <option value="1" <?= ($featuredProductsSection['productsPerRow'] ?? 4) == 1 ? 'selected' : '' ?>>1
+                                                    product</option>
+                                                <option value="2" <?= ($featuredProductsSection['productsPerRow'] ?? 4) == 2 ? 'selected' : '' ?>>2
+                                                    products</option>
+                                                <option value="3" <?= ($featuredProductsSection['productsPerRow'] ?? 4) == 3 ? 'selected' : '' ?>>3
+                                                    products</option>
+                                                <option value="4" <?= ($featuredProductsSection['productsPerRow'] ?? 4) == 4 ? 'selected' : '' ?>>4
+                                                    products</option>
+                                            </select>
+                                            <p class="mt-1 text-xs text-gray-500">On mobile, this will automatically
+                                                adjust</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="products-status-toggle"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                <input type="checkbox" id="products-status-toggle"
+                                                    class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    <?= ($featuredProductsSection['active'] ?? true) ? 'checked' : '' ?>>
+                                                <label for="products-status-toggle"
+                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                            </div>
+                                            <span id="products-status-text"
+                                                class="text-sm font-medium text-gray-700"><?= ($featuredProductsSection['active'] ?? true) ? 'Active' : 'Inactive' ?></span>
+                                            <input type="hidden" id="products-status" name="status"
+                                                value="<?= ($featuredProductsSection['active'] ?? true) ? 'active' : 'inactive' ?>">
+                                        </div>
+                                    </div>
+                                    <div class="pt-4 flex justify-end">
+                                        <button type="submit" id="saveProductsBtn"
+                                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div id="categories-content" class="tab-content hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <h2 class="text-lg font-semibold text-secondary">Categories Section</h2>
+                                <p class="text-sm text-gray-text mt-1">Configure how categories are displayed on the
+                                    homepage</p>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                Configure how categories are displayed on the homepage. Categories
+                                                themselves are managed in
+                                                the Products section.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form id="categoriesForm"
+                                    class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        <div>
+                                            <label for="categories-title"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Section Title
+                                                <span class="text-red-500">*</span></label>
+                                            <input type="text" id="categories-title" name="title"
+                                                value="<?= $categoriesSection['title'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                required>
+                                        </div>
+                                        <div>
+                                            <label for="categories-link-text"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Link
+                                                Text</label>
+                                            <input type="text" id="categories-link-text" name="linkText"
+                                                value="<?= $categoriesSection['linkText'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                        </div>
+                                        <div>
+                                            <label for="categories-link-url"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Link
+                                                URL</label>
+                                            <input type="text" id="categories-link-url" name="linkUrl"
+                                                value="<?= $categoriesSection['linkUrl'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                        </div>
+                                        <div>
+                                            <label for="categories-button-text"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Load
+                                                More Button Text</label>
+                                            <input type="text" id="categories-button-text" name="loadMoreButtonText"
+                                                value="<?= $categoriesSection['loadMoreButtonText'] ?? '' ?>"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                        </div>
+                                        <div>
+                                            <label for="categories-default-rows"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Default
+                                                Rows</label>
+                                            <input type="number" id="categories-default-rows" name="defaultRows"
+                                                value="<?= $categoriesSection['defaultRows'] ?? 1 ?>" min="1" max="5"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                            <p class="mt-1 text-xs text-gray-500">Number of rows to show initially</p>
+                                        </div>
+                                        <div>
+                                            <label for="categories-per-row"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Categories
+                                                Per Row</label>
+                                            <select id="categories-per-row" name="categoriesPerRow"
+                                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                                <option value="1" <?= ($categoriesSection['categoriesPerRow'] ?? 4) == 1 ? 'selected' : '' ?>>1
+                                                    category</option>
+                                                <option value="2" <?= ($categoriesSection['categoriesPerRow'] ?? 4) == 2 ? 'selected' : '' ?>>2
+                                                    categories</option>
+                                                <option value="3" <?= ($categoriesSection['categoriesPerRow'] ?? 4) == 3 ? 'selected' : '' ?>>3
+                                                    categories</option>
+                                                <option value="4" <?= ($categoriesSection['categoriesPerRow'] ?? 4) == 4 ? 'selected' : '' ?>>4
+                                                    categories</option>
+                                            </select>
+                                            <p class="mt-1 text-xs text-gray-500">On mobile, this will automatically
+                                                adjust</p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="categories-status-toggle"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                <input type="checkbox" id="categories-status-toggle"
+                                                    class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    <?= ($categoriesSection['active'] ?? true) ? 'checked' : '' ?>>
+                                                <label for="categories-status-toggle"
+                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                            </div>
+                                            <span id="categories-status-text"
+                                                class="text-sm font-medium text-gray-700"><?= ($categoriesSection['active'] ?? true) ? 'Active' : 'Inactive' ?></span>
+                                            <input type="hidden" id="categories-status" name="status"
+                                                value="<?= ($categoriesSection['active'] ?? true) ? 'active' : 'inactive' ?>">
+                                        </div>
+                                    </div>
+                                    <div class="pt-4 flex justify-end">
+                                        <button type="submit" id="saveCategoriesBtn"
+                                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div id="partners-content" class="tab-content hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <h2 class="text-lg font-semibold text-secondary">Partners Section</h2>
+                                        <p class="text-sm text-gray-text mt-1">
+                                            <span id="partners-count"><?= count($partners) ?></span> partners found
+                                        </p>
+                                    </div>
+                                    <button id="addPartnerBtn"
+                                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add New Partner</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i class="fas fa-info-circle text-blue-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-blue-700">
+                                                Manage partners and their display on the homepage. For best results, use
+                                                logo images with
+                                                dimensions 200×100 pixels (2:1 ratio) or 100×100 pixels (1:1 ratio).
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-8">
+                                    <h3 class="text-md font-semibold text-gray-700 mb-4">Section Settings</h3>
+                                    <form id="partnersSettingsForm"
+                                        class="space-y-6 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                            <div>
+                                                <label for="partners-title"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">Section
+                                                    Title <span class="text-red-500">*</span></label>
+                                                <input type="text" id="partners-title" name="title"
+                                                    value="<?= $partnersSection['title'] ?? '' ?>"
+                                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    required>
+                                            </div>
+                                            <div>
+                                                <label for="partners-cta-text"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">CTA
+                                                    Button Text</label>
+                                                <input type="text" id="partners-cta-text" name="ctaButtonText"
+                                                    value="<?= $partnersSection['ctaButtonText'] ?? '' ?>"
+                                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                            </div>
+                                            <div>
+                                                <label for="partners-cta-url"
+                                                    class="block text-sm font-medium text-gray-700 mb-1">CTA
+                                                    Button URL</label>
+                                                <input type="text" id="partners-cta-url" name="ctaButtonUrl"
+                                                    value="<?= $partnersSection['ctaButtonUrl'] ?? '' ?>"
+                                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="partners-description"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Section
+                                                Description</label>
+                                            <textarea id="partners-description" name="description" rows="3"
+                                                class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"><?= $partnersSection['description'] ?? '' ?></textarea>
+                                        </div>
+                                        <div>
+                                            <label for="partners-status-toggle"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                            <div class="flex items-center space-x-3">
+                                                <div
+                                                    class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                    <input type="checkbox" id="partners-status-toggle"
+                                                        class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                        <?= ($partnersSection['active'] ?? true) ? 'checked' : '' ?>>
+                                                    <label for="partners-status-toggle"
+                                                        class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                                </div>
+                                                <span id="partners-status-text"
+                                                    class="text-sm font-medium text-gray-700"><?= ($partnersSection['active'] ?? true) ? 'Active' : 'Inactive' ?></span>
+                                                <input type="hidden" id="partners-status" name="status"
+                                                    value="<?= ($partnersSection['active'] ?? true) ? 'active' : 'inactive' ?>">
+                                            </div>
+                                        </div>
+                                        <div class="pt-4 flex justify-end">
+                                            <button type="submit" id="savePartnersSettingsBtn"
+                                                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                                Save Section Settings
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div class="mt-10">
+                                    <h3 class="text-md font-semibold text-gray-700 mb-4">Partners List</h3>
+                                    <div id="partners-container"
+                                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <?php foreach ($partners as $partner): ?>
+                                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                                                data-id="<?= $partner['id'] ?>" data-order="<?= $partner['order'] ?>">
+                                                <div
+                                                    class="relative aspect-[2/1] bg-gray-100 flex items-center justify-center p-4">
+                                                    <?php if ($partner['logo']): ?>
+                                                        <img src="<?= BASE_URL . $partner['logo'] ?>"
+                                                            alt="<?= $partner['name'] ?>"
+                                                            class="max-h-full max-w-full object-contain">
+                                                    <?php else: ?>
+                                                        <img src="https://placehold.co/200x100?text=<?= urlencode($partner['name']) ?>"
+                                                            alt="<?= $partner['name'] ?>"
+                                                            class="max-h-full max-w-full object-contain">
+                                                    <?php endif; ?>
+                                                    <div class="absolute top-2 right-2 flex space-x-1">
+                                                        <span
+                                                            class="bg-white text-gray-700 rounded-full h-6 w-6 flex items-center justify-center shadow-md">
+                                                            <?= $partner['order'] ?>
+                                                        </span>
+                                                        <button
+                                                            class="btn-edit-partner bg-white text-blue-600 rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:text-blue-800"
+                                                            data-id="<?= $partner['id'] ?>">
+                                                            <i class="fas fa-edit text-xs"></i>
+                                                        </button>
+                                                        <button
+                                                            class="btn-delete-partner bg-white text-red-600 rounded-full h-6 w-6 flex items-center justify-center shadow-md hover:text-red-800"
+                                                            data-id="<?= $partner['id'] ?>">
+                                                            <i class="fas fa-trash-alt text-xs"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="p-4">
+                                                    <h3 class="font-medium text-gray-900"><?= $partner['name'] ?></h3>
+                                                    <div class="mt-2 flex justify-between items-center">
+                                                        <div class="flex items-center">
+                                                            <div
+                                                                class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
+                                                                <input type="checkbox"
+                                                                    class="partner-status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                                                    data-id="<?= $partner['id'] ?>" <?= $partner['active'] ? 'checked' : '' ?>>
+                                                                <label
+                                                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
+                                                            </div>
+                                                            <span
+                                                                class="ml-2 text-xs font-medium <?= $partner['active'] ? 'text-green-600' : 'text-gray-500' ?>">
+                                                                <?= $partner['active'] ? 'Active' : 'Inactive' ?>
+                                                            </span>
+                                                        </div>
+                                                        <?php if ($partner['hasLink']): ?>
+                                                            <span class="text-xs text-blue-600">
+                                                                <i class="fas fa-link mr-1"></i> Has Link
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="text-xs text-gray-400">
+                                                                <i class="fas fa-unlink mr-1"></i> No Link
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
                                     </div>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
-            <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Hero Slide Modal -->
 <div id="heroModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideHeroModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl mx-4 relative z-10 max-h-[90vh] overflow-y-auto">
@@ -846,7 +988,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Benefit Modal -->
 <div id="benefitModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideBenefitModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl mx-4 relative z-10 max-h-[90vh] overflow-y-auto">
@@ -914,7 +1055,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Partner Modal -->
 <div id="partnerModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hidePartnerModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl mx-4 relative z-10 max-h-[90vh] overflow-y-auto">
@@ -943,8 +1083,7 @@ ob_start();
                     <p class="text-sm text-amber-600 mb-3">
                         <i class="fas fa-info-circle mr-1"></i>
                         For best results, use logo images with dimensions 200×100 pixels (2:1 ratio) or 100×100 pixels
-                        (1:1
-                        ratio).
+                        (1:1 ratio).
                     </p>
 
                     <div class="grid grid-cols-1 gap-6">
@@ -963,8 +1102,7 @@ ob_start();
                                         accept="image/jpeg,image/png,image/webp,image/gif" class="hidden">
                                 </div>
                                 <p class="text-xs text-gray-500 mt-1">Recommended size: 200×100 pixels (2:1) or 100×100
-                                    pixels
-                                    (1:1). Max 5MB.</p>
+                                    pixels (1:1). Max 5MB.</p>
                             </div>
                             <div id="partnerUploadProgress" class="w-full bg-gray-200 rounded-full h-2.5 mb-4 hidden">
                                 <div id="partnerUploadProgressBar" class="bg-primary h-2.5 rounded-full"
@@ -1065,7 +1203,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Delete Modal -->
 <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
     <div class="absolute inset-0 bg-black/20" onclick="hideDeleteModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -1099,7 +1236,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Session Expired Modal -->
 <div id="sessionExpiredModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -1120,7 +1256,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Notifications -->
 <div id="successNotification"
     class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
@@ -1137,7 +1272,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Loading Overlay -->
 <div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[1000] hidden">
     <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
         <div class="flex flex-col items-center">
@@ -1147,7 +1281,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Include Cropper.js -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -1158,12 +1291,69 @@ ob_start();
     let partnerCropper = null;
     let deleteItemType = '';
     let deleteItemId = '';
+    let currentTab = 'hero';
 
     document.addEventListener('DOMContentLoaded', function () {
         initializeEventListeners();
         initializeSortable();
         initializeStatusToggles();
+        switchTab('hero');
     });
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('bg-primary/10', 'text-primary', 'border', 'border-primary/20');
+            btn.classList.add('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900');
+        });
+
+        const tabId = `${tabName}-tab`;
+        const activeTab = document.getElementById(tabId);
+        if (activeTab) {
+            activeTab.classList.remove('text-gray-600', 'hover:bg-gray-50', 'hover:text-gray-900');
+            activeTab.classList.add('bg-primary/10', 'text-primary', 'border', 'border-primary/20');
+        }
+
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        const activeContent = document.getElementById(`${tabName}-content`);
+        if (activeContent) {
+            activeContent.classList.remove('hidden');
+        }
+
+        currentTab = tabName;
+
+        const tabLabels = {
+            'hero': { label: 'Hero Slider', icon: 'fas fa-images' },
+            'quote': { label: 'Request Quote', icon: 'fas fa-quote-left' },
+            'features': { label: 'Key Benefits', icon: 'fas fa-star' },
+            'products': { label: 'Featured Products', icon: 'fas fa-box' },
+            'categories': { label: 'Categories', icon: 'fas fa-th-large' },
+            'partners': { label: 'Partners', icon: 'fas fa-handshake' }
+        };
+        const tabInfo = tabLabels[tabName] || tabLabels['hero'];
+        updateMobileTabLabel(tabInfo.label, tabInfo.icon);
+    }
+
+    function updateMobileTabLabel(label, icon) {
+        const labelElement = document.getElementById('mobile-tab-label');
+        const toggleButton = document.getElementById('mobile-tab-toggle');
+        if (labelElement && toggleButton) {
+            labelElement.textContent = label;
+            const iconElement = toggleButton.querySelector('i');
+            if (iconElement) {
+                iconElement.className = `${icon} text-primary`;
+            }
+        }
+    }
+
+    function toggleMobileTabDropdown() {
+        const dropdown = document.getElementById('mobile-tab-dropdown');
+        const chevron = document.getElementById('mobile-tab-chevron');
+        dropdown.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
+    }
 
     function showLoading(message = 'Loading...') {
         document.getElementById('loadingMessage').textContent = message;
@@ -1270,6 +1460,16 @@ ob_start();
             e.preventDefault();
             submitPartnersSettingsForm();
         });
+
+        document.getElementById('mobile-tab-toggle').addEventListener('click', toggleMobileTabDropdown);
+
+        document.querySelectorAll('.mobile-tab-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const tab = e.currentTarget.getAttribute('data-tab');
+                switchTab(tab);
+                toggleMobileTabDropdown();
+            });
+        });
     }
 
     function initializeSortable() {
@@ -1327,7 +1527,6 @@ ob_start();
             });
         });
 
-        // Save the updated order to the server
         saveHeroSlidesOrder(updatedSlides);
     }
 
@@ -1378,7 +1577,6 @@ ob_start();
             });
         });
 
-        // Save the updated order to the server
         saveBenefitsOrder(updatedBenefits);
     }
 
@@ -1429,7 +1627,6 @@ ob_start();
             });
         });
 
-        // Save the updated order to the server
         savePartnersOrder(updatedPartners);
     }
 
@@ -2002,7 +2199,6 @@ ob_start();
                     showSuccessNotification('Hero slide saved successfully');
                     hideHeroModal();
 
-                    // Reload the page to see the changes
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
@@ -2115,7 +2311,6 @@ ob_start();
                     showSuccessNotification('Benefit saved successfully');
                     hideBenefitModal();
 
-                    // Reload the page to see the changes
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
@@ -2442,7 +2637,6 @@ ob_start();
                     showSuccessNotification('Partner saved successfully');
                     hidePartnerModal();
 
-                    // Reload the page to see the changes
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
@@ -2736,7 +2930,6 @@ ob_start();
                     showSuccessNotification(`${capitalizeFirstLetter(deleteItemType)} deleted successfully`);
                     hideDeleteModal();
 
-                    // Reload the page to see the changes
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
@@ -2823,6 +3016,18 @@ ob_start();
             }
         });
     });
+
+    document.addEventListener('click', function (event) {
+        const mobileDropdown = document.getElementById('mobile-tab-dropdown');
+        const mobileToggle = document.getElementById('mobile-tab-toggle');
+
+        if (mobileDropdown && mobileToggle && !mobileDropdown.contains(event.target) && !mobileToggle.contains(event.target)) {
+            mobileDropdown.classList.add('hidden');
+            document.getElementById('mobile-tab-chevron').classList.remove('rotate-180');
+        }
+    });
+
+    window.switchTab = switchTab;
 </script>
 
 <?php

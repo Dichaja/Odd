@@ -4,28 +4,19 @@ require_once __DIR__ . '/../../config/config.php';
 header('Content-Type: application/json');
 date_default_timezone_set('Africa/Kampala');
 
-// Get the raw input data
 $inputData = file_get_contents('php://input');
-
-// Determine the request method and extract the action
 $requestMethod = $_SERVER['REQUEST_METHOD'];
-
-// Initialize action variable
 $action = '';
 
-// Extract action based on request method
 if ($requestMethod === 'GET') {
     $action = $_GET['action'] ?? '';
 } elseif ($requestMethod === 'POST') {
-    // Check if it's a JSON request
     $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
 
     if (strpos($contentType, 'application/json') !== false) {
-        // Parse JSON input
         $jsonData = json_decode($inputData, true);
         $action = $jsonData['action'] ?? '';
     } else {
-        // Regular POST data
         $action = $_POST['action'] ?? '';
     }
 }
@@ -73,7 +64,6 @@ try {
             break;
 
         case 'save_section_content':
-            // Get data based on content type
             $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
 
             if (strpos($contentType, 'application/json') !== false) {
@@ -129,14 +119,13 @@ try {
             break;
 
         default:
-            // Debug information to help diagnose the issue
             $debug = [
                 'action' => $action,
                 'method' => $requestMethod,
                 'contentType' => $_SERVER['CONTENT_TYPE'] ?? 'none',
                 'postData' => $_POST,
                 'getData' => $_GET,
-                'rawInput' => substr($inputData, 0, 1000) // First 1000 chars of raw input
+                'rawInput' => substr($inputData, 0, 1000)
             ];
 
             echo json_encode([
@@ -296,19 +285,27 @@ function saveHeroSlide($pageContent, $content, $filePath)
 
     $slideId = $content['id'];
     $slideExists = false;
+    $existingSlide = null;
 
     foreach ($pageContent['heroSlides'] as $key => $slide) {
         if ($slide['id'] == $slideId) {
-            $pageContent['heroSlides'][$key] = $content;
+            $existingSlide = $slide;
 
-            if ($content['removeImage'] && !empty($slide['image'])) {
-                $imagePath = __DIR__ . '/../../' . $slide['image'];
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
+            if (isset($content['image']) && !empty($content['image'])) {
+
+            } elseif (!isset($content['removeImage']) || !$content['removeImage']) {
+                $content['image'] = $existingSlide['image'] ?? null;
+            } else {
+                if (!empty($existingSlide['image'])) {
+                    $imagePath = __DIR__ . '/../../' . $existingSlide['image'];
+                    if (file_exists($imagePath)) {
+                        unlink($imagePath);
+                    }
                 }
-                $pageContent['heroSlides'][$key]['image'] = null;
+                $content['image'] = null;
             }
 
+            $pageContent['heroSlides'][$key] = $content;
             $slideExists = true;
             break;
         }
@@ -550,19 +547,27 @@ function savePartner($pageContent, $content, $filePath)
 
     $partnerId = $content['id'];
     $partnerExists = false;
+    $existingPartner = null;
 
     foreach ($pageContent['partners'] as $key => $partner) {
         if ($partner['id'] == $partnerId) {
-            $pageContent['partners'][$key] = $content;
+            $existingPartner = $partner;
 
-            if ($content['removeImage'] && !empty($partner['logo'])) {
-                $imagePath = __DIR__ . '/../../' . $partner['logo'];
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
+            if (isset($content['logo']) && !empty($content['logo'])) {
+
+            } elseif (!isset($content['removeImage']) || !$content['removeImage']) {
+                $content['logo'] = $existingPartner['logo'] ?? null;
+            } else {
+                if (!empty($existingPartner['logo'])) {
+                    $imagePath = __DIR__ . '/../../' . $existingPartner['logo'];
+                    if (file_exists($imagePath)) {
+                        unlink($imagePath);
+                    }
                 }
-                $pageContent['partners'][$key]['logo'] = null;
+                $content['logo'] = null;
             }
 
+            $pageContent['partners'][$key] = $content;
             $partnerExists = true;
             break;
         }
@@ -715,13 +720,15 @@ function uploadPageImage($page, $section, $file, $id = null, $name = null)
         }
 
         $ext = getImageExtension($file['name']) ?: 'jpg';
+        $timestamp = time();
 
         if ($section === 'hero') {
-            $filename = 'hero_' . ($id ?: time()) . '.' . $ext;
+            $filename = 'hero_' . ($id ?: $timestamp) . '_' . $timestamp . '.' . $ext;
         } elseif ($section === 'partner') {
-            $filename = sanitizeFileName($name ?: 'partner-' . ($id ?: time())) . '.' . $ext;
+            $partnerName = sanitizeFileName($name ?: 'partner-' . ($id ?: $timestamp));
+            $filename = $partnerName . '_' . $timestamp . '.' . $ext;
         } else {
-            $filename = $sectionDir . '_' . ($id ?: time()) . '.' . $ext;
+            $filename = $sectionDir . '_' . ($id ?: $timestamp) . '_' . $timestamp . '.' . $ext;
         }
 
         $dest = $dir . '/' . $filename;
