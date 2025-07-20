@@ -307,50 +307,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         opacity: 0.5;
     }
 
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .fade-in {
-        animation: fadeIn 0.5s ease forwards;
-    }
-
-    @keyframes pulse {
-
-        0%,
-        100% {
-            opacity: 1;
-        }
-
-        50% {
-            opacity: 0.7;
-        }
-    }
-
-    .pulse {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-
-    .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 3rem 1rem;
-        text-align: center;
-        background-color: #f9fafb;
-        border-radius: 0.5rem;
-        border: 2px dashed #e5e7eb;
-    }
-
     .required-star {
         color: #ef4444;
         font-weight: bold;
@@ -483,15 +439,16 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                                     </tbody>
                                 </table>
 
-                                <div id="empty-items-state" class="empty-state">
-                                    <div class="text-gray-400 mb-3">
-                                        <i class="fas fa-clipboard-list text-4xl"></i>
+                                <div id="empty-items-state"
+                                    class="flex flex-col items-center justify-center text-center py-10 px-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                    <div class="text-gray-400 mb-4">
+                                        <i class="fas fa-clipboard-list text-5xl"></i>
                                     </div>
-                                    <h3 class="text-lg font-medium text-gray-700 mb-1">No Items Added</h3>
-                                    <p class="text-sm text-gray-500 mb-4">Click the "Add Item" button to add materials
-                                        to your quote request</p>
+                                    <h3 class="text-xl font-semibold text-gray-800 mb-2">No Items Added</h3>
+                                    <p class="text-sm text-gray-600 mb-6">Click the "Add Item" button to add materials
+                                        to your quote request.</p>
                                     <button type="button" id="empty-add-item-btn"
-                                        class="btn-secondary inline-flex items-center px-4 py-2 text-white text-sm font-medium rounded-md focus:outline-none transition-colors shadow-sm">
+                                        class="bg-indigo-600 hover:bg-indigo-700 inline-flex items-center px-5 py-2.5 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-md transition-colors">
                                         <i class="fas fa-plus mr-2"></i> Add First Item
                                     </button>
                                 </div>
@@ -524,7 +481,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                             class="px-5 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors shadow-sm">
                             <i class="fas fa-times-circle mr-2"></i> Cancel
                         </button>
-                        <button type="submit"
+                        <button type="submit" id="submit-btn"
                             class="btn-primary px-5 py-3 text-sm font-medium text-white rounded-md focus:outline-none transition-colors shadow-sm">
                             <i class="fas fa-paper-plane mr-2"></i> Submit Request
                         </button>
@@ -597,7 +554,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     </div>
 </div>
 
-<!-- Location Selection Modal -->
 <div id="location-modal" class="modal">
     <div class="modal-content map-modal-content p-0">
         <div
@@ -630,7 +586,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     </div>
 </div>
 
-<!-- Item Modal -->
 <div id="item-modal" class="modal">
     <div class="modal-content p-0">
         <div
@@ -692,7 +647,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     </div>
 </div>
 
-<!-- Delete Modal -->
 <div id="delete-modal" class="modal">
     <div class="modal-content p-0">
         <div
@@ -725,6 +679,42 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     </div>
 </div>
 
+<div id="confirmation-modal" class="modal">
+    <div class="modal-content confirmation-modal p-0">
+        <div
+            class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 flex justify-between items-center border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Confirm Quote Request</h3>
+            <button type="button" class="text-gray-400 hover:text-gray-600 focus:outline-none"
+                id="close-confirmation-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-credit-card text-blue-500 text-2xl"></i>
+                </div>
+            </div>
+            <div class="text-center mb-6">
+                <h4 class="text-lg font-medium text-gray-900 mb-2">Quote Request Fee</h4>
+                <p class="text-gray-600 mb-4">A fee will be charged for submitting this quote request.</p>
+                <div id="confirmation-details" class="space-y-3">
+                </div>
+            </div>
+            <div class="flex justify-center space-x-3">
+                <button type="button" id="cancel-confirmation"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors">
+                    Cancel
+                </button>
+                <button type="button" id="confirm-submission"
+                    class="btn-primary px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors">
+                    <i class="fas fa-check mr-2"></i> Confirm & Submit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
 
 <script>
@@ -743,12 +733,108 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         let map;
         let marker;
         let selectedLocation = null;
+        let walletInfo = { balance: 0, fee: 0, canSubmit: false };
 
-        // Form persistence functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-UG', {
+                style: 'decimal',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function checkWalletBalance() {
+            if (!IS_LOGGED_IN) {
+                return Promise.resolve();
+            }
+
+            return fetch(`${API_BASE}?action=checkWalletBalance`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        walletInfo = {
+                            balance: data.balance,
+                            fee: data.fee,
+                            canSubmit: data.canSubmit
+                        };
+                        updateSubmitButton();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking wallet balance:', error);
+                });
+        }
+
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submit-btn');
+            if (!IS_LOGGED_IN) {
+                submitBtn.disabled = false;
+                return;
+            }
+
+            if (!walletInfo.canSubmit && walletInfo.fee > 0) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-wallet mr-2"></i> Insufficient Balance';
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Submit Request';
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function showConfirmationModal() {
+            const modal = document.getElementById('confirmation-modal');
+            const detailsContainer = document.getElementById('confirmation-details');
+
+            const isInsufficient = !walletInfo.canSubmit;
+
+            detailsContainer.innerHTML = `
+                <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Quote Request Fee:</span>
+                        <span class="font-medium text-gray-900">UGX ${formatCurrency(walletInfo.fee)}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Current Wallet Balance:</span>
+                        <span class="font-medium ${isInsufficient ? 'text-red-600' : 'text-green-600'}">UGX ${formatCurrency(walletInfo.balance)}</span>
+                    </div>
+                    ${isInsufficient ? `
+                        <div class="flex justify-between items-center border-t pt-2">
+                            <span class="text-red-600 font-medium">Amount Needed:</span>
+                            <span class="font-medium text-red-600">UGX ${formatCurrency(walletInfo.fee - walletInfo.balance)}</span>
+                        </div>
+                        <div class="text-center text-red-600 text-sm mt-3">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            Please top up your wallet to continue
+                        </div>
+                    ` : `
+                        <div class="flex justify-between items-center border-t pt-2">
+                            <span class="text-gray-600">Remaining Balance:</span>
+                            <span class="font-medium text-green-600">UGX ${formatCurrency(walletInfo.balance - walletInfo.fee)}</span>
+                        </div>
+                    `}
+                </div>
+            `;
+
+            const confirmBtn = document.getElementById('confirm-submission');
+            if (isInsufficient) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i class="fas fa-wallet mr-2"></i> Insufficient Balance';
+                confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Confirm & Submit';
+                confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            modal.classList.add('active');
+        }
+
         function updateActivity() {
             lastActivityTime = Date.now();
             clearTimeout(activityTimer);
-            activityTimer = setTimeout(checkInactivity, 60000); // Check every minute
+            activityTimer = setTimeout(checkInactivity, 60000);
         }
 
         function checkInactivity() {
@@ -798,7 +884,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     updateItemsDisplay();
                 }
 
-                notifications.info('Your previous form data has been restored.', 'Form Restored');
                 return true;
             } catch (error) {
                 console.error('Error loading form data:', error);
@@ -849,9 +934,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
         window.logoutAndShowLogin = logoutAndShowLogin;
 
-        // Map functions
         function initializeMap() {
-            map = L.map('map').setView([0.3476, 32.5825], 10); // Default to Kampala, Uganda
+            map = L.map('map').setView([0.3476, 32.5825], 10);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
@@ -869,7 +953,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
             marker = L.marker([lat, lng]).addTo(map);
 
-            // Reverse geocoding to get address
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
                 .then(response => response.json())
                 .then(data => {
@@ -959,7 +1042,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
         window.openLocationModal = openLocationModal;
 
-        // Product search functions
         function getImageUrl(type, id) {
             const cacheKey = `${type}_${id}`;
 
@@ -1126,7 +1208,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             };
         }
 
-        // Items management
         let items = [];
         const itemsList = document.getElementById('items-list');
         const emptyState = document.getElementById('empty-items-state');
@@ -1254,17 +1335,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             deleteModal.classList.remove('active');
         }
 
-        // Initialize activity tracking
         updateActivity();
-
-        // Load saved form data on page load
         loadFormData();
+        checkWalletBalance();
 
-        // Event listeners
         document.addEventListener('click', updateActivity);
         document.addEventListener('keypress', updateActivity);
 
-        // Location modal events
         document.getElementById('location').addEventListener('click', openLocationModal);
         document.getElementById('close-location-modal').addEventListener('click', () => {
             document.getElementById('location-modal').classList.remove('active');
@@ -1279,7 +1356,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             saveFormData();
         });
 
-        // Map search
         document.getElementById('map-search-input').addEventListener('input', debounce((e) => {
             searchLocation(e.target.value);
         }, 300));
@@ -1291,7 +1367,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             }
         });
 
-        // Load search data and initialize product search
         loadSearchData().then(() => {
             if (searchInitialized && fuseProducts) {
                 itemBrand.addEventListener('input', debounce((e) => {
@@ -1337,6 +1412,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         document.getElementById('confirm-delete').addEventListener('click', deleteItem);
         itemForm.addEventListener('submit', saveItem);
 
+        document.getElementById('close-confirmation-modal').addEventListener('click', () => {
+            document.getElementById('confirmation-modal').classList.remove('active');
+        });
+        document.getElementById('cancel-confirmation').addEventListener('click', () => {
+            document.getElementById('confirmation-modal').classList.remove('active');
+        });
+        document.getElementById('confirm-submission').addEventListener('click', () => {
+            document.getElementById('confirmation-modal').classList.remove('active');
+            submitRFQ();
+        });
+
         window.addEventListener('click', function (e) {
             if (e.target === itemModal) {
                 itemModal.classList.remove('active');
@@ -1348,6 +1434,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             }
             if (e.target === document.getElementById('location-modal')) {
                 document.getElementById('location-modal').classList.remove('active');
+            }
+            if (e.target === document.getElementById('confirmation-modal')) {
+                document.getElementById('confirmation-modal').classList.remove('active');
             }
         });
 
@@ -1361,6 +1450,56 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             updateItemsDisplay();
             clearFormData();
         });
+
+        function submitRFQ() {
+            const payload = {
+                location: selectedLocation,
+                items: items
+            };
+
+            const submitButton = document.getElementById('submit-btn');
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+
+            fetch(`${API_BASE}?action=submitRFQ`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        let message = 'Thank you! Your quote request has been received. We will contact you shortly.';
+                        if (data.fee_charged > 0) {
+                            message += ` A fee of UGX ${formatCurrency(data.fee_charged)} has been deducted from your wallet. Your remaining balance is UGX ${formatCurrency(data.remaining_balance)}.`;
+                        }
+                        notifications.success(message, 'RFQ Submitted');
+                        document.getElementById('rfq-form').reset();
+                        items = [];
+                        selectedLocation = null;
+                        document.getElementById('location-display').style.display = 'none';
+                        updateItemsDisplay();
+                        clearFormData();
+                        checkWalletBalance();
+                    } else {
+                        if (data.error === 'Insufficient wallet balance') {
+                            notifications.error(`Insufficient wallet balance. You need UGX ${formatCurrency(data.required)} more to submit this request.`, 'Insufficient Balance');
+                        } else {
+                            notifications.error(data.error || 'Submission failed. Please try again.', 'RFQ Error');
+                        }
+                    }
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
+                })
+                .catch(error => {
+                    notifications.error('Submission failed. Please try again.', 'RFQ Error');
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
+                });
+        }
 
         const form = document.getElementById('rfq-form');
         form.addEventListener('submit', function (e) {
@@ -1384,49 +1523,15 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
             if (hasError) return;
 
-            const payload = {
-                location: selectedLocation,
-                items: items
-            };
-
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
-
-            fetch(`${API_BASE}/submitRFQ`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        notifications.success('Thank you! Your quote request has been received. We will contact you shortly.', 'RFQ Submitted');
-                        form.reset();
-                        items = [];
-                        selectedLocation = null;
-                        document.getElementById('location-display').style.display = 'none';
-                        updateItemsDisplay();
-                        clearFormData();
-                    } else {
-                        notifications.error('Submission failed. Please try again.', 'RFQ Error');
-                    }
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                })
-                .catch(error => {
-                    notifications.error('Submission failed. Please try again.', 'RFQ Error');
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                });
+            if (walletInfo.fee > 0) {
+                showConfirmationModal();
+            } else {
+                submitRFQ();
+            }
         });
 
         updateItemsDisplay();
 
-        // Listen for successful login to restore form data
         const originalCloseAuthModal = window.closeAuthModal;
         if (originalCloseAuthModal) {
             window.closeAuthModal = function () {
@@ -1434,6 +1539,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
                 setTimeout(() => {
                     loadFormData();
+                    checkWalletBalance();
                 }, 500);
             };
         }
