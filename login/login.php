@@ -3,7 +3,7 @@ function getStepTitle($mode, $step)
 {
     $titles = [
         'login' => [
-            'username' => 'Login',
+            'identifier' => 'Login',
             'password' => 'Enter Password'
         ],
         'register' => [
@@ -28,11 +28,11 @@ function getStepTitle($mode, $step)
     return $titles[$mode][$step] ?? 'Authentication';
 }
 ?>
-<!-- Login: Username Step -->
-<div id="login-step-username" class="auth-form active">
+
+<div id="login-step-identifier" class="auth-form active">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'username') ?></h2>
+            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'identifier') ?></h2>
             <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
                 <i class="fas fa-times text-xl"></i>
             </button>
@@ -42,26 +42,79 @@ function getStepTitle($mode, $step)
             <a href="javascript:void(0)" onclick="showRegisterStep('username')"
                 class="text-primary hover:text-red-700 font-medium">Create Account</a>
         </p>
-        <form id="login-username-form" class="space-y-4" autocomplete="off" data-mode="login" data-step="username">
+        <form id="login-identifier-form" class="space-y-4" autocomplete="off" data-mode="login" data-step="identifier">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Username or Email</label>
-                <div class="relative">
-                    <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="login-username" required
-                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                        placeholder="Enter your username or email" autofocus autocomplete="off"
-                        onkeyup="checkTripleSpace(this)">
+                <label class="block text-sm font-medium text-gray-700 mb-3">How would you like to login?</label>
+                <div class="flex gap-3 mb-4">
+                    <label class="flex-1 flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="login_method" value="username"
+                            class="mr-3 text-primary focus:ring-primary" checked>
+                        <div>
+                            <p class="font-medium">Username</p>
+                        </div>
+                    </label>
+                    <label class="flex-1 flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="login_method" value="email"
+                            class="mr-3 text-primary focus:ring-primary">
+                        <div>
+                            <p class="font-medium">Email</p>
+                        </div>
+                    </label>
+                    <label class="flex-1 flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="login_method" value="phone"
+                            class="mr-3 text-primary focus:ring-primary">
+                        <div>
+                            <p class="font-medium">Phone</p>
+                        </div>
+                    </label>
                 </div>
-                <div id="login-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
+
+                <div id="username-input" class="login-input-group">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="login-username" required
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="Enter your username" autofocus autocomplete="off"
+                            onkeyup="checkTripleSpace(this)">
+                    </div>
+                </div>
+
+                <div id="email-input" class="login-input-group" style="display:none">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <div class="relative">
+                        <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="email" id="login-email" required
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="Enter your email address" autocomplete="off" onkeyup="checkTripleSpace(this)">
+                    </div>
+                </div>
+
+                <div id="phone-input" class="login-input-group" style="display:none">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <div class="flex">
+                        <div
+                            class="flex items-center px-3 py-2 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50">
+                            <span class="text-gray-700 font-medium">+256</span>
+                        </div>
+                        <input type="text" id="login-phone" required maxlength="9" minlength="9"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="7XXXXXXXX" autocomplete="off" oninput="validatePhoneInput(this)"
+                            onkeyup="checkTripleSpace(this)">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Enter 9 digits (e.g., 701234567)</p>
+                </div>
+
+                <div id="login-identifier-error" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <button type="button" onclick="handleLoginUsernameSubmit()"
+            <button type="button" onclick="handleLoginIdentifierSubmit()"
                 class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
                 Continue
             </button>
         </form>
     </div>
 </div>
-<!-- Login: Password Step -->
+
 <div id="login-step-password" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -71,14 +124,14 @@ function getStepTitle($mode, $step)
             </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showLoginStep('username')"
+            <a href="javascript:void(0)" onclick="showLoginStep('identifier')"
                 class="text-primary hover:text-red-700 font-medium">
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
         </p>
         <form id="login-password-form" class="space-y-4" autocomplete="off" data-mode="login" data-step="password">
             <div class="relative">
-                <p class="mb-4">Logging in as <strong id="login-username-display"></strong></p>
+                <p class="mb-4">Logging in as <strong id="login-identifier-display"></strong></p>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <div class="relative">
                     <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -105,7 +158,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- New: Empty Password (OTP Verification) Options -->
+
 <div id="empty-password-options" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -159,12 +212,12 @@ function getStepTitle($mode, $step)
             <div id="empty-password-loading" class="text-sm text-gray-500 mt-2 hidden">Sending OTP...</div>
         </form>
         <p class="mt-4 text-center text-sm text-gray-600">Need assistance?
-            <a href="javascript:void(0)" onclick="showLoginStep('username')"
+            <a href="javascript:void(0)" onclick="showLoginStep('identifier')"
                 class="text-primary hover:text-red-700 font-medium">Contact Support</a>
         </p>
     </div>
 </div>
-<!-- Register: Username Step -->
+
 <div id="register-step-username" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -175,7 +228,7 @@ function getStepTitle($mode, $step)
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
             Already have an account?
-            <a href="javascript:void(0)" onclick="showLoginStep('username')"
+            <a href="javascript:void(0)" onclick="showLoginStep('identifier')"
                 class="text-primary hover:text-red-700 font-medium">Sign In</a>
         </p>
         <form id="register-username-form" class="space-y-4" autocomplete="off" data-mode="register"
@@ -199,7 +252,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Email Step -->
+
 <div id="register-step-email" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -233,7 +286,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Email Verify Step -->
+
 <div id="register-step-email-verify" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -270,7 +323,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Phone Step -->
+
 <div id="register-step-phone" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -301,7 +354,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Phone Verify Step -->
+
 <div id="register-step-phone-verify" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -338,7 +391,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Register: Password Step -->
+
 <div id="register-step-password" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -404,7 +457,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Forgot Password: Options -->
+
 <div id="forgot-password-options" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -450,12 +503,12 @@ function getStepTitle($mode, $step)
             </button>
         </form>
         <p class="mt-4 text-center text-sm text-gray-600">Remember your password?
-            <a href="javascript:void(0)" onclick="showLoginStep('username')"
+            <a href="javascript:void(0)" onclick="showLoginStep('identifier')"
                 class="text-primary hover:text-red-700 font-medium">Back to Sign In</a>
         </p>
     </div>
 </div>
-<!-- Forgot Password: Email Form -->
+
 <div id="forgot-password-email-form" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -491,7 +544,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Forgot Password: Phone Form -->
+
 <div id="forgot-password-phone-form" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -523,7 +576,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Reset Password: OTP Verification -->
+
 <div id="reset-password-verify" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -559,7 +612,7 @@ function getStepTitle($mode, $step)
         </form>
     </div>
 </div>
-<!-- Reset Password: New Password Form -->
+
 <div id="reset-password-form" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -626,8 +679,8 @@ function getStepTitle($mode, $step)
                     const mode = form.getAttribute('data-mode');
                     const step = form.getAttribute('data-step');
                     if (mode === 'login') {
-                        if (step === 'username') {
-                            handleLoginUsernameSubmit();
+                        if (step === 'identifier') {
+                            handleLoginIdentifierSubmit();
                         } else if (step === 'password') {
                             handleLoginPasswordSubmit();
                         }
@@ -665,6 +718,12 @@ function getStepTitle($mode, $step)
                 }
             });
         });
+
+        document.querySelectorAll('input[name="login_method"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                toggleLoginInputs(this.value);
+            });
+        });
     })();
 
     let registrationData = {};
@@ -675,6 +734,28 @@ function getStepTitle($mode, $step)
     let phoneOTPTimer;
     let resetOTPTimer;
     let spaceCount = 0;
+
+    function validatePhoneInput(input) {
+        input.value = input.value.replace(/\D/g, '');
+        if (input.value.length > 9) {
+            input.value = input.value.substring(0, 9);
+        }
+    }
+
+    function toggleLoginInputs(method) {
+        document.querySelectorAll('.login-input-group').forEach(group => {
+            group.style.display = 'none';
+        });
+
+        const inputGroup = document.getElementById(method + '-input');
+        if (inputGroup) {
+            inputGroup.style.display = 'block';
+            const input = inputGroup.querySelector('input');
+            if (input) {
+                input.focus();
+            }
+        }
+    }
 
     function checkTripleSpace(input) {
         if (input.value.endsWith(' ')) {
@@ -761,7 +842,6 @@ function getStepTitle($mode, $step)
 
         document.getElementById('empty-username-display').textContent = loginData.identifier || '';
 
-        // Update hint text
         const emailHintSpan = document.getElementById('empty-password-email-hint');
         const phoneHintSpan = document.getElementById('empty-password-phone-hint');
 
@@ -794,15 +874,11 @@ function getStepTitle($mode, $step)
                 hideError('empty-password-error');
                 showLoading('empty-password-loading');
 
-                // Instead of calling undefined sendResetEmail/sendResetPhone,
-                // reuse the forgot-password flow:
                 if (method === 'email') {
                     showForgotPasswordForm('email');
-                    // Prefill the email field:
                     document.getElementById('forgot-email').value = identifier;
                 } else {
                     showForgotPasswordForm('phone');
-                    // Prefill the phone field using intlTelInput:
                     const phoneInput = document.getElementById('forgot-phone');
                     const itiPhone = window.intlTelInputGlobals.getInstance(phoneInput);
                     itiPhone.setNumber(identifier);
@@ -981,33 +1057,109 @@ function getStepTitle($mode, $step)
         });
     }
 
-    function handleLoginUsernameSubmit() {
-        const u = document.getElementById('login-username').value;
-        if (!u) {
-            showError('login-username-error', 'Please enter your username or email');
+    function categorizeError(errorMessage, errorCode) {
+        const identifierErrors = [
+            'user not found',
+            'account not found',
+            'username not found',
+            'email not found',
+            'phone not found',
+            'invalid username',
+            'invalid email',
+            'invalid phone',
+            'username does not exist',
+            'email does not exist',
+            'phone does not exist',
+            'account does not exist',
+            'no account found',
+            'user does not exist'
+        ];
+
+        const passwordErrors = [
+            'invalid password',
+            'incorrect password',
+            'wrong password',
+            'password mismatch',
+            'authentication failed',
+            'login failed',
+            'invalid credentials'
+        ];
+
+        if (errorCode === 'EMPTY_PASSWORD') {
+            return 'empty_password';
+        }
+
+        const lowerMessage = errorMessage.toLowerCase();
+
+        for (let error of identifierErrors) {
+            if (lowerMessage.includes(error)) {
+                return 'identifier';
+            }
+        }
+
+        for (let error of passwordErrors) {
+            if (lowerMessage.includes(error)) {
+                return 'password';
+            }
+        }
+
+        return 'general';
+    }
+
+    function handleLoginIdentifierSubmit() {
+        const selectedMethod = document.querySelector('input[name="login_method"]:checked').value;
+        let identifier = '';
+        let identifierType = '';
+
+        if (selectedMethod === 'username') {
+            identifier = document.getElementById('login-username').value;
+            identifierType = 'username';
+        } else if (selectedMethod === 'email') {
+            identifier = document.getElementById('login-email').value;
+            identifierType = 'email';
+        } else if (selectedMethod === 'phone') {
+            const phoneDigits = document.getElementById('login-phone').value;
+            if (phoneDigits.length !== 9 || !/^\d{9}$/.test(phoneDigits)) {
+                showError('login-identifier-error', 'Please enter exactly 9 digits for your phone number');
+                return;
+            }
+            identifier = '+256' + phoneDigits;
+            identifierType = 'phone';
+        }
+
+        if (!identifier) {
+            showError('login-identifier-error', `Please enter your ${selectedMethod}`);
             return;
         }
-        hideError('login-username-error');
-        const button = document.querySelector('#login-username-form button');
+
+        hideError('login-identifier-error');
+        const button = document.querySelector('#login-identifier-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+
         $.ajax({
             url: BASE_URL + 'auth/checkUser',
             type: 'POST',
-            data: JSON.stringify({ identifier: u }),
+            data: JSON.stringify({ identifier: identifier, identifierType: identifierType }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
-                    loginData.identifier = u;
+                    loginData.identifier = identifier;
+                    loginData.identifierType = identifierType;
                     loginData.userType = response.userType;
-                    document.getElementById('login-username-display').textContent = u;
+                    document.getElementById('login-identifier-display').textContent = identifier;
                     showLoginStep('password');
                 } else {
-                    showError('login-username-error', response.message || 'User not found');
+                    const errorCategory = categorizeError(response.message || 'User not found', response.errorCode);
+                    if (errorCategory === 'identifier') {
+                        showError('login-identifier-error', response.message || 'User not found');
+                    } else {
+                        showError('login-identifier-error', response.message || 'User not found');
+                    }
                 }
             },
             error: function (xhr) {
@@ -1015,16 +1167,22 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    if (response.errorCode && response.errorCode === 'EMPTY_PASSWORD') {
+                    const errorCategory = categorizeError(response.message || 'An error occurred', response.errorCode);
+
+                    if (errorCategory === 'empty_password') {
                         loginData.email = response.email;
                         loginData.phone = response.phone;
-                        hideError('login-password-error');
+                        loginData.identifier = identifier;
+                        loginData.identifierType = identifierType;
+                        hideError('login-identifier-error');
                         showEmptyPasswordOptions();
+                    } else if (errorCategory === 'identifier') {
+                        showError('login-identifier-error', response.message || 'User not found');
                     } else {
-                        showError('login-password-error', response.message || 'An error occurred');
+                        showError('login-identifier-error', response.message || 'An error occurred');
                     }
                 } catch (e) {
-                    showError('login-password-error', 'Server error. Please try again later.');
+                    showError('login-identifier-error', 'Server error. Please try again later.');
                 }
             }
         });
@@ -1044,7 +1202,12 @@ function getStepTitle($mode, $step)
         $.ajax({
             url: BASE_URL + 'auth/login',
             type: 'POST',
-            data: JSON.stringify({ identifier: loginData.identifier, password: p, userType: loginData.userType }),
+            data: JSON.stringify({
+                identifier: loginData.identifier,
+                identifierType: loginData.identifierType,
+                password: p,
+                userType: loginData.userType
+            }),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {
@@ -1057,7 +1220,12 @@ function getStepTitle($mode, $step)
                         response.redirect ? window.location.href = response.redirect : window.location.reload();
                     }, 1500);
                 } else {
-                    showError('login-password-error', response.message || 'Invalid password');
+                    const errorCategory = categorizeError(response.message || 'Invalid password', response.errorCode);
+                    if (errorCategory === 'password') {
+                        showError('login-password-error', response.message || 'Invalid password');
+                    } else {
+                        showError('login-password-error', response.message || 'Login failed');
+                    }
                 }
             },
             error: function (xhr) {
@@ -1065,11 +1233,15 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    if (response.errorCode && response.errorCode === 'EMPTY_PASSWORD') {
+                    const errorCategory = categorizeError(response.message || 'An error occurred', response.errorCode);
+
+                    if (errorCategory === 'empty_password') {
                         loginData.email = response.email;
                         loginData.phone = response.phone;
                         hideError('login-password-error');
                         showEmptyPasswordOptions();
+                    } else if (errorCategory === 'password') {
+                        showError('login-password-error', response.message || 'Invalid password');
                     } else {
                         showError('login-password-error', response.message || 'An error occurred');
                     }
@@ -1650,7 +1822,7 @@ function getStepTitle($mode, $step)
                 if (response.success) {
                     notifications.success('Password reset successfully!');
                     setTimeout(() => {
-                        showLoginStep('username');
+                        showLoginStep('identifier');
                         notifications.info('Please login with your new password');
                     }, 1500);
                 } else {
@@ -1812,6 +1984,7 @@ function getStepTitle($mode, $step)
         renderOtpInputs('email-otp');
         renderOtpInputs('phone-otp');
         renderOtpInputs('reset-otp');
+        toggleLoginInputs('username');
 
         const phoneInput = document.querySelector("#phone");
         if (phoneInput) {

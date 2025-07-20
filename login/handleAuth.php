@@ -84,7 +84,7 @@ function isValidEmail(string $email): bool
 
 function isValidPhone(string $phone): bool
 {
-    return (bool) preg_match('/^\+[0-9]{10,15}$/', $phone);
+    return (bool) preg_match('/^\+256[0-9]{9}$/', $phone);
 }
 
 function isStrongPassword(string $password): bool
@@ -338,10 +338,13 @@ try {
             }
 
             $identifier = $data['identifier'];
+            $identifierType = $data['identifierType'] ?? 'auto';
+
             $isEmail = isValidEmail($identifier);
+            $isPhone = isValidPhone($identifier);
 
             $isAdmin = false;
-            if (!$isEmail && str_starts_with($identifier, 'Admin:')) {
+            if (!$isEmail && !$isPhone && str_starts_with($identifier, 'Admin:')) {
                 $isAdmin = true;
                 $identifier = substr($identifier, 6);
             }
@@ -363,18 +366,28 @@ try {
                 break;
             }
 
-            $stmt = $pdo->prepare(
-                $isEmail
-                ? 'SELECT id FROM zzimba_users WHERE email = :identifier'
-                : 'SELECT id FROM zzimba_users WHERE username = :identifier'
-            );
+            // Determine query based on identifier type
+            if ($identifierType === 'email' || $isEmail) {
+                $stmt = $pdo->prepare('SELECT id FROM zzimba_users WHERE email = :identifier');
+            } elseif ($identifierType === 'phone' || $isPhone) {
+                $stmt = $pdo->prepare('SELECT id FROM zzimba_users WHERE phone = :identifier');
+            } else {
+                $stmt = $pdo->prepare('SELECT id FROM zzimba_users WHERE username = :identifier');
+            }
+
             $stmt->execute([':identifier' => $identifier]);
 
             if ($stmt->rowCount() > 0) {
                 echo json_encode(['success' => true, 'userType' => 'user']);
             } else {
                 http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'User not found. Please check your credentials or register a new account.']);
+                $errorMessage = 'User not found. Please check your credentials or register a new account.';
+                if ($identifierType === 'phone' || $isPhone) {
+                    $errorMessage = 'Phone number not found. Please check your number or register a new account.';
+                } elseif ($identifierType === 'email' || $isEmail) {
+                    $errorMessage = 'Email not found. Please check your email or register a new account.';
+                }
+                echo json_encode(['success' => false, 'message' => $errorMessage]);
             }
             break;
 
@@ -385,24 +398,30 @@ try {
             }
 
             $identifier = $data['identifier'];
+            $identifierType = $data['identifierType'] ?? 'auto';
             $password = $data['password'];
             $userType = $data['userType'];
 
             $isEmail = isValidEmail($identifier);
+            $isPhone = isValidPhone($identifier);
             $isAdminFlag = false;
 
-            if (!$isEmail && str_starts_with($identifier, 'Admin:')) {
+            if (!$isEmail && !$isPhone && str_starts_with($identifier, 'Admin:')) {
                 $isAdminFlag = true;
                 $identifier = substr($identifier, 6);
             }
 
             $table = ($userType === 'admin' || $isAdminFlag) ? 'admin_users' : 'zzimba_users';
 
-            $stmt = $pdo->prepare(
-                $isEmail
-                ? "SELECT id, username, password, status, email, phone, last_login FROM $table WHERE email = :identifier"
-                : "SELECT id, username, password, status, email, phone, last_login FROM $table WHERE username = :identifier"
-            );
+            // Determine query based on identifier type
+            if ($identifierType === 'email' || $isEmail) {
+                $stmt = $pdo->prepare("SELECT id, username, password, status, email, phone, last_login FROM $table WHERE email = :identifier");
+            } elseif ($identifierType === 'phone' || $isPhone) {
+                $stmt = $pdo->prepare("SELECT id, username, password, status, email, phone, last_login FROM $table WHERE phone = :identifier");
+            } else {
+                $stmt = $pdo->prepare("SELECT id, username, password, status, email, phone, last_login FROM $table WHERE username = :identifier");
+            }
+
             $stmt->execute([':identifier' => $identifier]);
 
             if ($stmt->rowCount() === 0) {
@@ -599,7 +618,7 @@ try {
 
             if (!isValidPhone($phone)) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
+                echo json_encode(['success' => false, 'message' => 'Invalid phone number format. Must be +256XXXXXXXXX']);
                 break;
             }
 
