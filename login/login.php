@@ -1213,11 +1213,10 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
-                    notifications.success('Login successful! Redirecting...');
+                    notifications.success('Login successful!');
                     setTimeout(() => {
                         closeAuthModal();
-                        response.redirect ? window.location.href = response.redirect : window.location.reload();
-                    }, 1500);
+                    }, 1000);
                 } else {
                     const errorCategory = categorizeError(response.message || 'Invalid password', response.errorCode);
                     if (errorCategory === 'password') {
@@ -1613,11 +1612,10 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
-                    notifications.success('Account created successfully! Redirecting...');
+                    notifications.success('Account created successfully!');
                     setTimeout(() => {
                         closeAuthModal();
-                        response.redirect ? window.location.href = response.redirect : window.location.reload();
-                    }, 1500);
+                    }, 1000);
                 } else {
                     showError('register-password-error', response.message || 'Registration failed');
                 }

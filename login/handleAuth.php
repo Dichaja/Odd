@@ -314,12 +314,11 @@ function maskPhone($phone)
     if (empty($phone))
         return null;
 
-    // Show first 4 digits and last 2 digits only
-    $digits = preg_replace('/\D/', '', $phone); // Strip non-digits
+    $digits = preg_replace('/\D/', '', $phone);
     $len = strlen($digits);
 
     if ($len < 6)
-        return str_repeat('*', $len); // Too short to reveal anything
+        return str_repeat('*', $len);
 
     return substr($digits, 0, 4) . str_repeat('*', $len - 6) . substr($digits, -2);
 }
@@ -366,7 +365,6 @@ try {
                 break;
             }
 
-            // Determine query based on identifier type
             if ($identifierType === 'email' || $isEmail) {
                 $stmt = $pdo->prepare('SELECT id FROM zzimba_users WHERE email = :identifier');
             } elseif ($identifierType === 'phone' || $isPhone) {
@@ -413,7 +411,6 @@ try {
 
             $table = ($userType === 'admin' || $isAdminFlag) ? 'admin_users' : 'zzimba_users';
 
-            // Determine query based on identifier type
             if ($identifierType === 'email' || $isEmail) {
                 $stmt = $pdo->prepare("SELECT id, username, password, status, email, phone, last_login FROM $table WHERE email = :identifier");
             } elseif ($identifierType === 'phone' || $isPhone) {
@@ -531,11 +528,7 @@ try {
                 $user['id']
             );
 
-            $redirect = ($table === 'admin_users')
-                ? BASE_URL . 'admin/dashboard'
-                : BASE_URL . 'account/dashboard';
-
-            echo json_encode(['success' => true, 'message' => 'Login successful', 'redirect' => $redirect]);
+            echo json_encode(['success' => true, 'message' => 'Login successful']);
             break;
 
         case 'checkUsername':
@@ -772,7 +765,6 @@ try {
             break;
 
         case 'sendResetPhone':
-            // Now require username + phone, and ensure they match
             if (!isset($data['username'], $data['phone'])) {
                 http_response_code(400);
                 die(json_encode(['success' => false, 'message' => 'Missing username or phone number']));
@@ -787,7 +779,6 @@ try {
                 break;
             }
 
-            // Check admin_users first
             $stmt = $pdo->prepare('SELECT id, phone FROM admin_users WHERE username = :username');
             $stmt->execute([':username' => $username]);
             $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -800,7 +791,6 @@ try {
                 }
                 $userId = $adminUser['id'];
             } else {
-                // Check zzimba_users
                 $stmt = $pdo->prepare('SELECT id, phone FROM zzimba_users WHERE username = :username');
                 $stmt->execute([':username' => $username]);
                 $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -834,7 +824,6 @@ try {
                 $userId = $zzimbaUser['id'];
             }
 
-            // All good: generate OTP and send
             $otp = createOTP('phone', $phone, $pdo);
 
             if (!sendPasswordResetSmsOTP($phone, $otp)) {
@@ -965,7 +954,6 @@ try {
             break;
 
         case 'sendResetEmail':
-            // Now require username + email, and ensure they match
             if (!isset($data['username'], $data['email'])) {
                 http_response_code(400);
                 die(json_encode(['success' => false, 'message' => 'Missing username or email']));
@@ -980,7 +968,6 @@ try {
                 break;
             }
 
-            // Check admin_users first
             $stmt = $pdo->prepare('SELECT id, email FROM admin_users WHERE username = :username');
             $stmt->execute([':username' => $username]);
             $adminUser = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -993,7 +980,6 @@ try {
                 }
                 $userId = $adminUser['id'];
             } else {
-                // Check zzimba_users
                 $stmt = $pdo->prepare('SELECT id, email FROM zzimba_users WHERE username = :username');
                 $stmt->execute([':username' => $username]);
                 $zzimbaUser = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1027,7 +1013,6 @@ try {
                 $userId = $zzimbaUser['id'];
             }
 
-            // All good: generate OTP and send
             $otp = createOTP('email', $email, $pdo);
 
             if (!sendPasswordResetOTP($email, $otp)) {
@@ -1138,7 +1123,6 @@ try {
                 break;
             }
 
-            // Look up by username + contact
             if ($contactType === 'email') {
                 $stmt = $pdo->prepare('SELECT id, username, phone FROM admin_users WHERE username = :username AND email = :contact');
                 $stmt->execute([':username' => $usernameInput, ':contact' => $contact]);

@@ -97,6 +97,27 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     exit;
 }
 
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'session') {
+    header('Content-Type: application/json');
+
+    $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
+
+    if ($isLoggedIn) {
+        echo json_encode([
+            'logged_in' => true,
+            'user' => [
+                'username' => $_SESSION['user']['username'],
+                'email' => $_SESSION['user']['email'],
+                'is_admin' => $_SESSION['user']['is_admin'],
+                'last_login' => $_SESSION['user']['last_login'] ?? null
+            ]
+        ]);
+    } else {
+        echo json_encode(['logged_in' => false]);
+    }
+    exit;
+}
+
 $title = isset($pageTitle) ? $pageTitle . ' | Buy Online - Deliver On-site' : 'Zzimba Online Uganda | Buy Online - Deliver On-site';
 $activeNav = $activeNav ?? 'home';
 date_default_timezone_set('Africa/Kampala');
@@ -116,7 +137,6 @@ if ($hasSeoTags) {
 
 $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 
-// Get search query from URL parameter
 $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
 ?>
 <!DOCTYPE html>
@@ -168,7 +188,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
         const SESSION_ULID = "<?php echo $sessionUlid; ?>";
         const ACTIVE_NAV = <?php echo ($activeNav !== null) ? json_encode($activeNav) : "null"; ?>;
         const PAGE_TITLE = <?php echo ($pageTitle !== null) ? json_encode($pageTitle) : "null"; ?>;
-        const IS_LOGGED_IN = <?php echo $isLoggedIn ? 'true' : 'false'; ?>;
+        let IS_LOGGED_IN = <?php echo $isLoggedIn ? 'true' : 'false'; ?>;
         const SEARCH_QUERY = "<?php echo $searchQuery; ?>";
 
         tailwind.config = {
@@ -813,55 +833,58 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                         <a href="#" class="text-secondary hover:text-primary transition-colors">
                             <i class="fas fa-shopping-cart text-xl"></i>
                         </a>
-                        <?php if (isset($_SESSION['user']) && $_SESSION['user']['logged_in']): ?>
-                            <div class="user-dropdown">
-                                <button
-                                    class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
-                                    <i class="fas fa-user mr-2"></i>Halo
-                                    <?= htmlspecialchars($_SESSION['user']['username']) ?>!
-                                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
-                                </button>
-                                <div class="user-dropdown-menu">
-                                    <div class="px-4 py-3 bg-gray-50">
-                                        <p class="text-sm font-medium text-gray-900">
-                                            <?= htmlspecialchars($_SESSION['user']['username']) ?>
-                                        </p>
-                                        <p class="text-xs text-gray-500"><?= htmlspecialchars($_SESSION['user']['email']) ?>
-                                        </p>
-                                        <?php if (isset($_SESSION['user']['last_login']) && $_SESSION['user']['last_login']): ?>
-                                            <p class="text-xs text-gray-500 mt-1">Last login:
-                                                <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?>
+                        <div id="auth-section">
+                            <?php if (isset($_SESSION['user']) && $_SESSION['user']['logged_in']): ?>
+                                <div class="user-dropdown">
+                                    <button
+                                        class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
+                                        <i class="fas fa-user mr-2"></i>Halo
+                                        <?= htmlspecialchars($_SESSION['user']['username']) ?>!
+                                        <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                                    </button>
+                                    <div class="user-dropdown-menu">
+                                        <div class="px-4 py-3 bg-gray-50">
+                                            <p class="text-sm font-medium text-gray-900">
+                                                <?= htmlspecialchars($_SESSION['user']['username']) ?>
                                             </p>
+                                            <p class="text-xs text-gray-500">
+                                                <?= htmlspecialchars($_SESSION['user']['email']) ?>
+                                            </p>
+                                            <?php if (isset($_SESSION['user']['last_login']) && $_SESSION['user']['last_login']): ?>
+                                                <p class="text-xs text-gray-500 mt-1">Last login:
+                                                    <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?>
+                                                </p>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($_SESSION['user']['is_admin']): ?>
+                                            <a href="<?= BASE_URL ?>admin/dashboard" class="user-dropdown-item">
+                                                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                                            </a>
+                                            <a href="<?= BASE_URL ?>admin/profile" class="user-dropdown-item">
+                                                <i class="fas fa-user-circle mr-2"></i>Profile
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="<?= BASE_URL ?>account/dashboard" class="user-dropdown-item">
+                                                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                                            </a>
+                                            <a href="<?= BASE_URL ?>account/profile" class="user-dropdown-item">
+                                                <i class="fas fa-user-circle mr-2"></i>Profile
+                                            </a>
                                         <?php endif; ?>
+                                        <div class="border-t border-gray-200 my-1"></div>
+                                        <a href="javascript:void(0);" onclick="logoutUser(); return false;"
+                                            class="user-dropdown-item text-red-600">
+                                            <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                                        </a>
                                     </div>
-                                    <?php if ($_SESSION['user']['is_admin']): ?>
-                                        <a href="<?= BASE_URL ?>admin/dashboard" class="user-dropdown-item">
-                                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
-                                        </a>
-                                        <a href="<?= BASE_URL ?>admin/profile" class="user-dropdown-item">
-                                            <i class="fas fa-user-circle mr-2"></i>Profile
-                                        </a>
-                                    <?php else: ?>
-                                        <a href="<?= BASE_URL ?>account/dashboard" class="user-dropdown-item">
-                                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
-                                        </a>
-                                        <a href="<?= BASE_URL ?>account/profile" class="user-dropdown-item">
-                                            <i class="fas fa-user-circle mr-2"></i>Profile
-                                        </a>
-                                    <?php endif; ?>
-                                    <div class="border-t border-gray-200 my-1"></div>
-                                    <a href="javascript:void(0);" onclick="logoutUser(); return false;"
-                                        class="user-dropdown-item text-red-600">
-                                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
-                                    </a>
                                 </div>
-                            </div>
-                        <?php else: ?>
-                            <a href="#" onclick="openAuthModal(); return false;"
-                                class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
-                                <i class="fas fa-user mr-2"></i>Login / Register
-                            </a>
-                        <?php endif; ?>
+                            <?php else: ?>
+                                <a href="#" onclick="openAuthModal(); return false;"
+                                    class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
+                                    <i class="fas fa-user mr-2"></i>Login / Register
+                                </a>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="flex md:hidden items-center space-x-4">
                         <button id="mobile-search-toggle" class="text-secondary hover:text-primary transition-colors">
@@ -876,7 +899,6 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
         </div>
     </nav>
 
-    <!-- Mobile Search Modal -->
     <div id="mobile-search-modal" class="mobile-search-modal">
         <div class="mobile-search-container">
             <div class="mobile-search-header">
@@ -910,7 +932,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
             </button>
         </div>
         <div id="mobile-menu-items" class="space-y-4"></div>
-        <div class="mt-6 space-y-4">
+        <div class="mt-6 space-y-4" id="mobile-auth-section">
             <a href="#"
                 class="block text-center bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
                 <i class="fas fa-shopping-cart mr-2"></i>Cart
@@ -1256,7 +1278,6 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
             const mobileSearchInput = document.getElementById('mobile-search-input');
             const mobileSearchDropdown = document.getElementById('mobile-search-dropdown');
 
-            // Set initial search query if present
             if (SEARCH_QUERY) {
                 if (desktopSearchInput) desktopSearchInput.value = SEARCH_QUERY;
                 if (mobileSearchInput) mobileSearchInput.value = SEARCH_QUERY;
@@ -1267,7 +1288,6 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                     renderSearchDropdown(e.target.value, desktopSearchDropdown);
                 }, 200));
 
-                // Handle Enter key press
                 desktopSearchInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
@@ -1289,7 +1309,6 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                     }
                 });
 
-                // Handle search button click
                 desktopSearchButton.addEventListener('click', (e) => {
                     e.preventDefault();
                     const query = desktopSearchInput.value.trim();
@@ -1304,7 +1323,6 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                     renderSearchDropdown(e.target.value, mobileSearchDropdown);
                 }, 200));
 
-                // Handle Enter key press
                 mobileSearchInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
@@ -1327,7 +1345,6 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                 });
             }
 
-            // Handle mobile search button click
             const mobileSearchButton = document.getElementById('mobile-search-button');
             if (mobileSearchButton) {
                 mobileSearchButton.addEventListener('click', (e) => {
@@ -1510,6 +1527,101 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
             }
             return otp;
         }
+
+        function updateUIAfterLogin(userData) {
+            IS_LOGGED_IN = true;
+
+            const desktopAuthSection = document.getElementById('auth-section');
+            const mobileAuthSection = document.getElementById('mobile-auth-section');
+
+            const dashboardUrl = userData.is_admin ? BASE_URL + 'admin/dashboard' : BASE_URL + 'account/dashboard';
+            const profileUrl = userData.is_admin ? BASE_URL + 'admin/profile' : BASE_URL + 'account/profile';
+
+            const lastLoginText = userData.last_login ?
+                `Last login: ${new Date(userData.last_login).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                })}` : '';
+
+            if (desktopAuthSection) {
+                desktopAuthSection.innerHTML = `
+                    <div class="user-dropdown">
+                        <button class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
+                            <i class="fas fa-user mr-2"></i>Halo ${userData.username}!
+                            <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                        </button>
+                        <div class="user-dropdown-menu">
+                            <div class="px-4 py-3 bg-gray-50">
+                                <p class="text-sm font-medium text-gray-900">${userData.username}</p>
+                                <p class="text-xs text-gray-500">${userData.email}</p>
+                                ${lastLoginText ? `<p class="text-xs text-gray-500 mt-1">${lastLoginText}</p>` : ''}
+                            </div>
+                            <a href="${dashboardUrl}" class="user-dropdown-item">
+                                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                            </a>
+                            <a href="${profileUrl}" class="user-dropdown-item">
+                                <i class="fas fa-user-circle mr-2"></i>Profile
+                            </a>
+                            <div class="border-t border-gray-200 my-1"></div>
+                            <a href="javascript:void(0);" onclick="logoutUser(); return false;" class="user-dropdown-item text-red-600">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (mobileAuthSection) {
+                mobileAuthSection.innerHTML = `
+                    <a href="#" class="block text-center bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        <i class="fas fa-shopping-cart mr-2"></i>Cart
+                    </a>
+                    <a href="${dashboardUrl}" class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                    <a href="javascript:void(0);" onclick="logoutUser(); return false;" class="block text-center bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </a>
+                `;
+            }
+        }
+
+        function checkSessionStatus() {
+            return fetch(BASE_URL + '?ajax=session')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.logged_in && !IS_LOGGED_IN) {
+                        updateUIAfterLogin(data.user);
+                        return true;
+                    }
+                    return data.logged_in;
+                })
+                .catch(error => {
+                    console.error('Error checking session status:', error);
+                    return false;
+                });
+        }
+
+        function startSessionMonitoring() {
+            const originalCloseAuthModal = window.closeAuthModal;
+
+            window.closeAuthModal = function () {
+                originalCloseAuthModal();
+
+                setTimeout(() => {
+                    checkSessionStatus().then(isLoggedIn => {
+                        if (isLoggedIn) {
+                            notifications.success('Welcome! You are now logged in.');
+                        }
+                    });
+                }, 500);
+            };
+        }
+
         document.getElementById("currentYear").textContent = new Date().getFullYear();
         const activeNavKey = "<?= $activeNav ?>";
         const navItems = {
@@ -1573,9 +1685,10 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
             loadSearchData().then(() => {
                 initializeSearch();
             });
+
+            startSessionMonitoring();
         });
 
-        // Mobile search modal functionality
         const mobileSearchToggle = document.getElementById('mobile-search-toggle');
         const mobileSearchModal = document.getElementById('mobile-search-modal');
         const closeMobileSearch = document.getElementById('close-mobile-search');
@@ -1596,7 +1709,6 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
         mobileSearchToggle.addEventListener('click', openMobileSearch);
         closeMobileSearch.addEventListener('click', closeMobileSearchModal);
 
-        // Close mobile search when clicking outside
         mobileSearchModal.addEventListener('click', (e) => {
             if (e.target === mobileSearchModal) {
                 closeMobileSearchModal();
