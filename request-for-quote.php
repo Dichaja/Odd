@@ -526,7 +526,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                         </button>
                         <button type="submit"
                             class="btn-primary px-5 py-3 text-sm font-medium text-white rounded-md focus:outline-none transition-colors shadow-sm">
-                            <i class="fas fa-paper-plane mr-2"></i> Submit
+                            <i class="fas fa-paper-plane mr-2"></i> Submit Request
                         </button>
                     </div>
                 </form>
@@ -985,12 +985,20 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             return fetch(window.location.href + '?ajax=data')
                 .then(response => response.json())
                 .then(data => {
-                    SEARCH_DATA = data;
-                    buildSearchIndexes();
-                    searchInitialized = true;
+                    if (data && data.products) {
+                        SEARCH_DATA = data;
+                        buildSearchIndexes();
+                        searchInitialized = true;
+                    } else {
+                        console.error('Invalid search data structure:', data);
+                        SEARCH_DATA = { products: [] };
+                        searchInitialized = false;
+                    }
                 })
                 .catch(error => {
                     console.error('Failed to load search data:', error);
+                    SEARCH_DATA = { products: [] };
+                    searchInitialized = false;
                 });
         }
 
@@ -1000,21 +1008,36 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 return;
             }
 
-            fuseProducts = new Fuse(
-                SEARCH_DATA.products.map(p => ({ ...p })),
-                {
-                    includeScore: true,
-                    threshold: 0.4,
-                    ignoreLocation: true,
-                    keys: [
-                        { name: 'title', weight: 0.4 },
-                        { name: 'meta_title', weight: 0.3 },
-                        { name: 'description', weight: 0.2 },
-                        { name: 'meta_description', weight: 0.2 },
-                        { name: 'meta_keywords', weight: 0.2 },
-                        { name: 'category_name', weight: 0.1 }
-                    ]
-                });
+            try {
+                if (!SEARCH_DATA || !SEARCH_DATA.products || !Array.isArray(SEARCH_DATA.products)) {
+                    console.error('Invalid products data for search indexing:', SEARCH_DATA);
+                    fuseProducts = null;
+                    searchInitialized = false;
+                    return;
+                }
+
+                fuseProducts = new Fuse(
+                    SEARCH_DATA.products.map(p => ({ ...p })),
+                    {
+                        includeScore: true,
+                        threshold: 0.4,
+                        ignoreLocation: true,
+                        keys: [
+                            { name: 'title', weight: 0.4 },
+                            { name: 'meta_title', weight: 0.3 },
+                            { name: 'description', weight: 0.2 },
+                            { name: 'meta_description', weight: 0.2 },
+                            { name: 'meta_keywords', weight: 0.2 },
+                            { name: 'category_name', weight: 0.1 }
+                        ]
+                    });
+
+                searchInitialized = true;
+            } catch (error) {
+                console.error('Error building search indexes:', error);
+                fuseProducts = null;
+                searchInitialized = false;
+            }
         }
 
         async function renderProductDropdown(query, dropdownElement, inputElement) {
@@ -1025,57 +1048,62 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 return;
             }
 
-            const productResults = fuseProducts.search(query, { limit: 8 });
-            let html = '';
+            try {
+                const productResults = fuseProducts.search(query, { limit: 8 });
+                let html = '';
 
-            if (productResults.length) {
-                html += '<div class="search-dropdown-header">Available Products</div>';
+                if (productResults.length) {
+                    html += '<div class="search-dropdown-header">Available Products</div>';
 
-                for (const result of productResults) {
-                    const product = result.item;
-                    html += `
-                        <div class="search-dropdown-item" data-product-title="${escapeHtml(product.title)}">
-                            <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="w-10 h-10 rounded flex-shrink-0 object-cover search-image loading" data-type="product" data-id="${product.id}">
-                            <div>
-                                <div class="font-medium text-sm">${escapeHtml(product.title)}</div>
-                                <div class="text-xs text-gray-500">${escapeHtml(product.category_name)}</div>
-                            </div>
-                        </div>`;
-                }
-            }
-
-            if (html) {
-                dropdownElement.innerHTML = html;
-                dropdownElement.style.display = 'block';
-
-                const images = dropdownElement.querySelectorAll('.search-image.loading');
-                images.forEach(async (img) => {
-                    const type = img.dataset.type;
-                    const id = img.dataset.id;
-                    try {
-                        const imageUrl = await getImageUrl(type, id);
-                        img.src = imageUrl;
-                        img.classList.remove('loading');
-                    } catch (error) {
-                        img.src = 'https://placehold.co/40x40?text=No+Image';
-                        img.classList.remove('loading');
+                    for (const result of productResults) {
+                        const product = result.item;
+                        html += `
+                            <div class="search-dropdown-item" data-product-title="${escapeHtml(product.title)}">
+                                <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="w-10 h-10 rounded flex-shrink-0 object-cover search-image loading" data-type="product" data-id="${product.id}">
+                                <div>
+                                    <div class="font-medium text-sm">${escapeHtml(product.title)}</div>
+                                    <div class="text-xs text-gray-500">${escapeHtml(product.category_name)}</div>
+                                </div>
+                            </div>`;
                     }
-                });
+                }
 
-                const items = dropdownElement.querySelectorAll('.search-dropdown-item');
-                items.forEach(item => {
-                    item.addEventListener('click', function () {
-                        const productTitle = this.dataset.productTitle;
-                        isSelectionMade = true;
-                        inputElement.value = productTitle;
-                        dropdownElement.style.display = 'none';
+                if (html) {
+                    dropdownElement.innerHTML = html;
+                    dropdownElement.style.display = 'block';
 
-                        setTimeout(() => {
-                            isSelectionMade = false;
-                        }, 100);
+                    const images = dropdownElement.querySelectorAll('.search-image.loading');
+                    images.forEach(async (img) => {
+                        const type = img.dataset.type;
+                        const id = img.dataset.id;
+                        try {
+                            const imageUrl = await getImageUrl(type, id);
+                            img.src = imageUrl;
+                            img.classList.remove('loading');
+                        } catch (error) {
+                            img.src = 'https://placehold.co/40x40?text=No+Image';
+                            img.classList.remove('loading');
+                        }
                     });
-                });
-            } else {
+
+                    const items = dropdownElement.querySelectorAll('.search-dropdown-item');
+                    items.forEach(item => {
+                        item.addEventListener('click', function () {
+                            const productTitle = this.dataset.productTitle;
+                            isSelectionMade = true;
+                            inputElement.value = productTitle;
+                            dropdownElement.style.display = 'none';
+
+                            setTimeout(() => {
+                                isSelectionMade = false;
+                            }, 100);
+                        });
+                    });
+                } else {
+                    dropdownElement.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error rendering product dropdown:', error);
                 dropdownElement.style.display = 'none';
             }
         }
@@ -1263,28 +1291,33 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             }
         });
 
+        // Load search data and initialize product search
         loadSearchData().then(() => {
-            itemBrand.addEventListener('input', debounce((e) => {
-                if (!isSelectionMade) {
-                    renderProductDropdown(e.target.value, brandSearchDropdown, itemBrand);
-                }
-            }, 200));
+            if (searchInitialized && fuseProducts) {
+                itemBrand.addEventListener('input', debounce((e) => {
+                    if (!isSelectionMade) {
+                        renderProductDropdown(e.target.value, brandSearchDropdown, itemBrand);
+                    }
+                }, 200));
 
-            itemBrand.addEventListener('focus', () => {
-                if (itemBrand.value.trim() && !isSelectionMade) {
-                    renderProductDropdown(itemBrand.value, brandSearchDropdown, itemBrand);
-                }
-            });
+                itemBrand.addEventListener('focus', () => {
+                    if (itemBrand.value.trim() && !isSelectionMade) {
+                        renderProductDropdown(itemBrand.value, brandSearchDropdown, itemBrand);
+                    }
+                });
 
-            itemBrand.addEventListener('keydown', () => {
-                isSelectionMade = false;
-            });
+                itemBrand.addEventListener('keydown', () => {
+                    isSelectionMade = false;
+                });
 
-            document.addEventListener('click', (e) => {
-                if (!itemBrand.contains(e.target) && !brandSearchDropdown.contains(e.target)) {
-                    brandSearchDropdown.style.display = 'none';
-                }
-            });
+                document.addEventListener('click', (e) => {
+                    if (!itemBrand.contains(e.target) && !brandSearchDropdown.contains(e.target)) {
+                        brandSearchDropdown.style.display = 'none';
+                    }
+                });
+            } else {
+                console.warn('Product search functionality disabled due to initialization failure');
+            }
         });
 
         document.getElementById('add-item-btn').addEventListener('click', showAddItemModal);

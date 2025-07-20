@@ -1090,26 +1090,49 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
 
             if (cachedData && cacheAge < maxCacheAge) {
                 try {
-                    SEARCH_DATA = JSON.parse(cachedData);
-                    buildSearchIndexes();
-                    searchInitialized = true;
-                    return Promise.resolve();
+                    const parsedData = JSON.parse(cachedData);
+
+                    // Validate cached data structure
+                    if (parsedData && parsedData.products && Array.isArray(parsedData.products) &&
+                        parsedData.categories && Array.isArray(parsedData.categories)) {
+                        SEARCH_DATA = parsedData;
+                        buildSearchIndexes();
+                        searchInitialized = true;
+                        return Promise.resolve();
+                    } else {
+                        console.warn('Invalid cached data structure, fetching fresh data');
+                        localStorage.removeItem('zzimba_search_data');
+                        localStorage.removeItem('zzimba_search_data_timestamp');
+                    }
                 } catch (e) {
                     console.error('Error parsing cached search data:', e);
+                    localStorage.removeItem('zzimba_search_data');
+                    localStorage.removeItem('zzimba_search_data_timestamp');
                 }
             }
 
             return fetch(window.location.href + '?ajax=data')
                 .then(response => response.json())
                 .then(data => {
-                    SEARCH_DATA = data;
-                    localStorage.setItem('zzimba_search_data', JSON.stringify(data));
-                    localStorage.setItem('zzimba_search_data_timestamp', now.toString());
-                    buildSearchIndexes();
-                    searchInitialized = true;
+
+                    // Validate fresh data structure
+                    if (data && data.products && Array.isArray(data.products) &&
+                        data.categories && Array.isArray(data.categories)) {
+                        SEARCH_DATA = data;
+                        localStorage.setItem('zzimba_search_data', JSON.stringify(data));
+                        localStorage.setItem('zzimba_search_data_timestamp', now.toString());
+                        buildSearchIndexes();
+                        searchInitialized = true;
+                    } else {
+                        console.error('Invalid fresh data structure:', data);
+                        SEARCH_DATA = { products: [], categories: [] };
+                        searchInitialized = false;
+                    }
                 })
                 .catch(error => {
                     console.error('Failed to load search data:', error);
+                    SEARCH_DATA = { products: [], categories: [] };
+                    searchInitialized = false;
                 });
         }
 
@@ -1119,135 +1142,161 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                 return;
             }
 
-            fuseProducts = new Fuse(
-                SEARCH_DATA.products.map(p => ({ ...p })),
-                {
-                    includeScore: true,
-                    threshold: 0.4,
-                    ignoreLocation: true,
-                    keys: [
-                        { name: 'title', weight: 0.4 },
-                        { name: 'meta_title', weight: 0.3 },
-                        { name: 'description', weight: 0.2 },
-                        { name: 'meta_description', weight: 0.2 },
-                        { name: 'meta_keywords', weight: 0.2 },
-                        { name: 'category_name', weight: 0.1 }
-                    ]
+            try {
+                // Validate data before building indexes
+                if (!SEARCH_DATA || !SEARCH_DATA.products || !Array.isArray(SEARCH_DATA.products) ||
+                    !SEARCH_DATA.categories || !Array.isArray(SEARCH_DATA.categories)) {
+                    console.error('Invalid search data structure for indexing:', SEARCH_DATA);
+                    fuseProducts = null;
+                    fuseCategories = null;
+                    fuseWords = null;
+                    searchInitialized = false;
+                    return;
+                }
+
+                fuseProducts = new Fuse(
+                    SEARCH_DATA.products.map(p => ({ ...p })),
+                    {
+                        includeScore: true,
+                        threshold: 0.4,
+                        ignoreLocation: true,
+                        keys: [
+                            { name: 'title', weight: 0.4 },
+                            { name: 'meta_title', weight: 0.3 },
+                            { name: 'description', weight: 0.2 },
+                            { name: 'meta_description', weight: 0.2 },
+                            { name: 'meta_keywords', weight: 0.2 },
+                            { name: 'category_name', weight: 0.1 }
+                        ]
+                    });
+
+                fuseCategories = new Fuse(
+                    SEARCH_DATA.categories.map(c => ({ ...c })),
+                    {
+                        includeScore: true,
+                        threshold: 0.4,
+                        ignoreLocation: true,
+                        keys: [
+                            { name: 'name', weight: 0.5 },
+                            { name: 'meta_title', weight: 0.3 },
+                            { name: 'description', weight: 0.2 },
+                            { name: 'meta_description', weight: 0.2 },
+                            { name: 'meta_keywords', weight: 0.2 }
+                        ]
+                    });
+
+                const bag = new Set();
+                const tokenize = s => s.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+
+                SEARCH_DATA.products.forEach(p => {
+                    [...tokenize(p.title || ''), ...tokenize(p.description || ''), ...tokenize(p.meta_title || ''),
+                    ...tokenize(p.meta_description || ''), ...tokenize(p.meta_keywords || '')]
+                        .forEach(w => bag.add(w));
                 });
 
-            fuseCategories = new Fuse(
-                SEARCH_DATA.categories.map(c => ({ ...c })),
-                {
-                    includeScore: true,
-                    threshold: 0.4,
-                    ignoreLocation: true,
-                    keys: [
-                        { name: 'name', weight: 0.5 },
-                        { name: 'meta_title', weight: 0.3 },
-                        { name: 'description', weight: 0.2 },
-                        { name: 'meta_description', weight: 0.2 },
-                        { name: 'meta_keywords', weight: 0.2 }
-                    ]
+                SEARCH_DATA.categories.forEach(c => {
+                    [...tokenize(c.name || ''), ...tokenize(c.description || ''), ...tokenize(c.meta_title || ''),
+                    ...tokenize(c.meta_description || ''), ...tokenize(c.meta_keywords || '')]
+                        .forEach(w => bag.add(w));
                 });
 
-            const bag = new Set();
-            const tokenize = s => s.toLowerCase().split(/\W+/).filter(w => w.length > 2);
+                fuseWords = new Fuse([...bag].map(w => ({ word: w })),
+                    { keys: ['word'], includeScore: true, threshold: 0.4, distance: 60 });
 
-            SEARCH_DATA.products.forEach(p => {
-                [...tokenize(p.title), ...tokenize(p.description || ''), ...tokenize(p.meta_title || ''),
-                ...tokenize(p.meta_description || ''), ...tokenize(p.meta_keywords || '')]
-                    .forEach(w => bag.add(w));
-            });
-
-            SEARCH_DATA.categories.forEach(c => {
-                [...tokenize(c.name), ...tokenize(c.description || ''), ...tokenize(c.meta_title || ''),
-                ...tokenize(c.meta_description || ''), ...tokenize(c.meta_keywords || '')]
-                    .forEach(w => bag.add(w));
-            });
-
-            fuseWords = new Fuse([...bag].map(w => ({ word: w })),
-                { keys: ['word'], includeScore: true, threshold: 0.4, distance: 60 });
+                searchInitialized = true;
+            } catch (error) {
+                console.error('Error building search indexes:', error);
+                fuseProducts = null;
+                fuseCategories = null;
+                fuseWords = null;
+                searchInitialized = false;
+            }
         }
 
         async function renderSearchDropdown(query, dropdownElement) {
             query = query.trim().toLowerCase();
-            if (!query || !fuseProducts || !searchInitialized) {
+            if (!query || !fuseProducts || !fuseCategories || !fuseWords || !searchInitialized) {
                 dropdownElement.style.display = 'none';
                 return;
             }
 
-            const suggestions = fuseWords.search(query, { limit: 5 })
-                .map(x => x.item.word)
-                .filter(w => w !== query);
+            try {
+                const suggestions = fuseWords.search(query, { limit: 5 })
+                    .map(x => x.item.word)
+                    .filter(w => w !== query);
 
-            const productResults = fuseProducts.search(query, { limit: 8 });
-            const categoryResults = fuseCategories.search(query, { limit: 5 });
+                const productResults = fuseProducts.search(query, { limit: 8 });
+                const categoryResults = fuseCategories.search(query, { limit: 5 });
 
-            let html = '';
+                let html = '';
 
-            if (suggestions.length) {
-                html += '<div class="search-dropdown-header">Suggestions</div>';
-                suggestions.forEach(word => {
-                    html += `
-                        <div class="search-dropdown-item suggestion flex items-center" data-word="${escapeHtml(word)}">
-                            <i class="fas fa-search text-gray-400 mr-2"></i>
-                            ${escapeHtml(word)}
-                        </div>`;
-                });
-            }
-
-            if (productResults.length) {
-                if (html) html += '<div class="border-t border-gray-200 my-1"></div>';
-                html += '<div class="search-dropdown-header">Products</div>';
-
-                for (const result of productResults) {
-                    const product = result.item;
-                    html += `
-                        <a href="${BASE_URL}view/product/${product.id}" class="search-dropdown-item flex items-center" data-type="product" data-id="${product.id}" data-label="${escapeHtml(product.title)}">
-                            <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="w-10 h-10 rounded mr-3 flex-shrink-0 object-cover search-image loading" data-type="product" data-id="${product.id}">
-                            <div>
-                                <div class="font-medium text-sm">${escapeHtml(product.title)}</div>
-                                <div class="text-xs text-gray-500">${escapeHtml(product.category_name)}</div>
-                            </div>
-                        </a>`;
+                if (suggestions.length) {
+                    html += '<div class="search-dropdown-header">Suggestions</div>';
+                    suggestions.forEach(word => {
+                        html += `
+                            <div class="search-dropdown-item suggestion flex items-center" data-word="${escapeHtml(word)}">
+                                <i class="fas fa-search text-gray-400 mr-2"></i>
+                                ${escapeHtml(word)}
+                            </div>`;
+                    });
                 }
-            }
 
-            if (categoryResults.length) {
-                if (html) html += '<div class="border-t border-gray-200 my-1"></div>';
-                html += '<div class="search-dropdown-header">Categories</div>';
+                if (productResults.length) {
+                    if (html) html += '<div class="border-t border-gray-200 my-1"></div>';
+                    html += '<div class="search-dropdown-header">Products</div>';
 
-                for (const result of categoryResults) {
-                    const category = result.item;
-                    html += `
-                        <a href="${BASE_URL}view/category/${category.id}" class="search-dropdown-item flex items-center" data-type="category" data-id="${category.id}" data-label="${escapeHtml(category.name)}">
-                            <img src="https://placehold.co/40x40?text=Loading..." alt="Category" class="w-10 h-10 rounded mr-3 flex-shrink-0 object-cover search-image loading" data-type="category" data-id="${category.id}">
-                            <div>
-                                <div class="font-medium text-sm">${escapeHtml(category.name)}</div>
-                                <div class="text-xs text-gray-500">Browse category</div>
-                            </div>
-                        </a>`;
-                }
-            }
-
-            if (html) {
-                dropdownElement.innerHTML = html;
-                dropdownElement.style.display = 'block';
-
-                const images = dropdownElement.querySelectorAll('.search-image.loading');
-                images.forEach(async (img) => {
-                    const type = img.dataset.type;
-                    const id = img.dataset.id;
-                    try {
-                        const imageUrl = await getImageUrl(type, id);
-                        img.src = imageUrl;
-                        img.classList.remove('loading');
-                    } catch (error) {
-                        img.src = 'https://placehold.co/40x40?text=No+Image';
-                        img.classList.remove('loading');
+                    for (const result of productResults) {
+                        const product = result.item;
+                        html += `
+                            <a href="${BASE_URL}view/product/${product.id}" class="search-dropdown-item flex items-center" data-type="product" data-id="${product.id}" data-label="${escapeHtml(product.title)}">
+                                <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="w-10 h-10 rounded mr-3 flex-shrink-0 object-cover search-image loading" data-type="product" data-id="${product.id}">
+                                <div>
+                                    <div class="font-medium text-sm">${escapeHtml(product.title)}</div>
+                                    <div class="text-xs text-gray-500">${escapeHtml(product.category_name)}</div>
+                                </div>
+                            </a>`;
                     }
-                });
-            } else {
+                }
+
+                if (categoryResults.length) {
+                    if (html) html += '<div class="border-t border-gray-200 my-1"></div>';
+                    html += '<div class="search-dropdown-header">Categories</div>';
+
+                    for (const result of categoryResults) {
+                        const category = result.item;
+                        html += `
+                            <a href="${BASE_URL}view/category/${category.id}" class="search-dropdown-item flex items-center" data-type="category" data-id="${category.id}" data-label="${escapeHtml(category.name)}">
+                                <img src="https://placehold.co/40x40?text=Loading..." alt="Category" class="w-10 h-10 rounded mr-3 flex-shrink-0 object-cover search-image loading" data-type="category" data-id="${category.id}">
+                                <div>
+                                    <div class="font-medium text-sm">${escapeHtml(category.name)}</div>
+                                    <div class="text-xs text-gray-500">Browse category</div>
+                                </div>
+                            </a>`;
+                    }
+                }
+
+                if (html) {
+                    dropdownElement.innerHTML = html;
+                    dropdownElement.style.display = 'block';
+
+                    const images = dropdownElement.querySelectorAll('.search-image.loading');
+                    images.forEach(async (img) => {
+                        const type = img.dataset.type;
+                        const id = img.dataset.id;
+                        try {
+                            const imageUrl = await getImageUrl(type, id);
+                            img.src = imageUrl;
+                            img.classList.remove('loading');
+                        } catch (error) {
+                            img.src = 'https://placehold.co/40x40?text=No+Image';
+                            img.classList.remove('loading');
+                        }
+                    });
+                } else {
+                    dropdownElement.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error rendering search dropdown:', error);
                 dropdownElement.style.display = 'none';
             }
         }
@@ -1283,7 +1332,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                 if (mobileSearchInput) mobileSearchInput.value = SEARCH_QUERY;
             }
 
-            if (desktopSearchInput) {
+            if (desktopSearchInput && searchInitialized) {
                 desktopSearchInput.addEventListener('input', debounce((e) => {
                     renderSearchDropdown(e.target.value, desktopSearchDropdown);
                 }, 200));
@@ -1318,7 +1367,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                 });
             }
 
-            if (mobileSearchInput) {
+            if (mobileSearchInput && searchInitialized) {
                 mobileSearchInput.addEventListener('input', debounce((e) => {
                     renderSearchDropdown(e.target.value, mobileSearchDropdown);
                 }, 200));
@@ -1683,7 +1732,11 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
             }
 
             loadSearchData().then(() => {
-                initializeSearch();
+                if (searchInitialized) {
+                    initializeSearch();
+                } else {
+                    console.warn('Search functionality disabled due to initialization failure');
+                }
             });
 
             startSessionMonitoring();
