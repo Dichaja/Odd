@@ -46,21 +46,21 @@ function getStepTitle($mode, $step)
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-3">How would you like to login?</label>
                 <div class="flex gap-3 mb-4">
-                    <label class="flex-1 flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="login_method" value="username"
                             class="mr-3 text-primary focus:ring-primary" checked>
                         <div>
                             <p class="font-medium">Username</p>
                         </div>
                     </label>
-                    <label class="flex-1 flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="login_method" value="email"
                             class="mr-3 text-primary focus:ring-primary">
                         <div>
                             <p class="font-medium">Email</p>
                         </div>
                     </label>
-                    <label class="flex-1 flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="login_method" value="phone"
                             class="mr-3 text-primary focus:ring-primary">
                         <div>
@@ -102,7 +102,6 @@ function getStepTitle($mode, $step)
                             placeholder="7XXXXXXXX" autocomplete="off" oninput="validatePhoneInput(this)"
                             onkeyup="checkTripleSpace(this)">
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Enter 9 digits (e.g., 701234567)</p>
                 </div>
 
                 <div id="login-identifier-error" class="text-red-500 text-sm mt-1 hidden"></div>
