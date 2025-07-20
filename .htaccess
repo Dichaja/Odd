@@ -1,6 +1,16 @@
 RewriteEngine On
 
 ##############################################
+# 1. Block direct browser hits to /login
+#    – still allow AJAX (XMLHttpRequest)
+##############################################
+#  • Catches “…/login” or “…/login/” at any depth.
+#  • Skips the block when the request comes from AJAX.
+RewriteCond %{REQUEST_URI} (^|/)login/?$               [NC]   # URI ends in “login”
+RewriteCond %{HTTP:X-Requested-With} !^XMLHttpRequest$ [NC]   # NOT an AJAX call
+RewriteRule ^ - [F,L]
+
+##############################################
 # 2. Block Sensitive Folders
 ##############################################
 RewriteRule ^config(/.*)?$ - [F,L]
@@ -8,9 +18,9 @@ RewriteRule ^config(/.*)?$ - [F,L]
 ##############################################
 # 3. Redirects
 ##############################################
-RewriteRule ^admin/?$ admin/dashboard [L,R=301]
-RewriteRule ^account/?$ account/dashboard [L,R=301]
-RewriteRule ^vendor-store/?$ vendor-store/dashboard [L,R=301]
+RewriteRule ^admin/?$        admin/dashboard         [L,R=301]
+RewriteRule ^account/?$      account/dashboard       [L,R=301]
+RewriteRule ^vendor-store/?$ vendor-store/dashboard  [L,R=301]
 
 ##############################################
 # 4. Clean URLs for Static Pages
@@ -18,50 +28,49 @@ RewriteRule ^vendor-store/?$ vendor-store/dashboard [L,R=301]
 RewriteRule ^(about-us|request-for-quote|contact-us|products-page)$ $1.php [L]
 
 ##############################################
-# 5. SEO-Friendly Clean URLs for Any .php Page
+# 5. SEO‑Friendly Clean URLs for Any .php Page
 ##############################################
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([^/.]+)$ $1.php [L]
 
 ##############################################
-# 6. Dynamic Routing for Auth API (Under login/handleAuth.php)
+# 6. Dynamic Routing for Auth API (login/handleAuth.php)
 ##############################################
 RewriteRule ^auth/([a-zA-Z0-9_-]+)$ login/handleAuth.php?action=$1 [L,QSA]
 
 ##############################################
 # 7. Generalized API Routing (Admin & Account Fetch)
 ##############################################
-
-# Pattern: /fetch/module/action → fetch/module.php?action=action
+# /fetch/module/action  → fetch/module.php?action=action
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^fetch/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)$ fetch/$1.php?action=$2 [L,QSA]
 
-# Pattern: /admin/fetch/module/action
+# /admin/fetch/module/action
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^admin/fetch/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)$ admin/fetch/$1.php?action=$2 [L,QSA]
 
-# Pattern: /fetch/module → fetch/module.php
+# /fetch/module  → fetch/module.php
 RewriteRule ^fetch/([a-zA-Z0-9_-]+)$ fetch/$1.php [L]
 
-# Pattern: /admin/fetch/module → admin/fetch/module.php
+# /admin/fetch/module → admin/fetch/module.php
 RewriteRule ^admin/fetch/([a-zA-Z0-9_-]+)$ admin/fetch/$1.php [L]
 
 ##############################################
-# 8. Account/Admin/vendor-store Sections - Clean Page URLs
+# 8. Account / Admin / Vendor‑Store Clean Page URLs
 ##############################################
-RewriteRule ^account/([a-zA-Z0-9_-]+)$ account/$1.php [L]
-RewriteRule ^admin/([a-zA-Z0-9_-]+)$ admin/$1.php [L]
+RewriteRule ^account/([a-zA-Z0-9_-]+)$      account/$1.php      [L]
+RewriteRule ^admin/([a-zA-Z0-9_-]+)$        admin/$1.php        [L]
 RewriteRule ^vendor-store/([a-zA-Z0-9_-]+)$ vendor-store/$1.php [L]
 
 ##############################################
 # 9. View Routes (with ULID patterns)
 ##############################################
-RewriteRule ^view/profile/vendor/([0-9A-HJKMNP-TV-Z]{26})$ vendor-profile.php?id=$1 [L,QSA]
-RewriteRule ^view/product/([0-9A-HJKMNP-TV-Z]{26})$ product-details.php?id=$1 [L,QSA]
-RewriteRule ^view/category/([0-9A-HJKMNP-TV-Z]{26})$ materials-yard.php?categoryId=$1 [L,QSA]
+RewriteRule ^view/profile/vendor/([0-9A-HJKMNP-TV-Z]{26})$ vendor-profile.php?id=$1      [L,QSA]
+RewriteRule ^view/product/([0-9A-HJKMNP-TV-Z]{26})$        product-details.php?id=$1     [L,QSA]
+RewriteRule ^view/category/([0-9A-HJKMNP-TV-Z]{26})$       materials-yard.php?categoryId=$1 [L,QSA]
 
 ##############################################
 # 10. Clean URL for Session Tracker
