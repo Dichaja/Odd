@@ -52,7 +52,7 @@ final class CreditService
         $createFinancial = "
             CREATE TABLE IF NOT EXISTS zzimba_financial_transactions (
                 transaction_id VARCHAR(26) NOT NULL PRIMARY KEY,
-                transaction_type ENUM('TOPUP','PURCHASE','SUBSCRIPTION','SMS_PURCHASE','EMAIL_PURCHASE','PREMIUM_FEATURE','REFUND','WITHDRAWAL','TRANSFER','CHARGES') NOT NULL,
+                transaction_type ENUM('TOPUP','PURCHASE','SUBSCRIPTION','SMS_PURCHASE','EMAIL_PURCHASE','PREMIUM_FEATURE','REFUND','WITHDRAWAL','TRANSFER','CHARGES','QUOTE') NOT NULL,
                 status ENUM('PENDING','SUCCESS','FAILED','REFUNDED','DISPUTED') NOT NULL DEFAULT 'PENDING',
                 amount_total DECIMAL(15,2) NOT NULL,
                 payment_method ENUM('MOBILE_MONEY_GATEWAY','CARD_GATEWAY','MOBILE_MONEY','BANK','WALLET') DEFAULT NULL,
@@ -287,6 +287,181 @@ final class CreditService
         } catch (\Exception $e) {
             error_log("Error fetching charge destination wallet: " . $e->getMessage());
             return null;
+        }
+    }
+
+    public static function processQuoteRequest(array $opts): array
+    {
+        self::boot();
+
+        $amount = (float) ($opts['amount'] ?? 0);
+        $userId = trim($opts['user_id'] ?? '');
+
+        if ($amount <= 0 || empty($userId)) {
+            return ['success' => false, 'message' => 'Invalid amount or user ID'];
+        }
+
+        $userWalletStmt = self::$pdo->prepare("
+            SELECT wallet_id, wallet_number, current_balance
+            FROM zzimba_wallets
+            WHERE user_id = :user_id 
+            AND owner_type = 'USER'
+            AND status = 'active'
+            ORDER BY created_at DESC
+            LIMIT 1
+        ");
+        $userWalletStmt->execute([':user_id' => $userId]);
+        $userWallet = $userWalletStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$userWallet) {
+            return ['success' => false, 'message' => 'User wallet not found'];
+        }
+
+        if ((float) $userWallet['current_balance'] < $amount) {
+            return [
+                'success' => false,
+                'message' => 'Insufficient wallet balance',
+                'balance' => (float) $userWallet['current_balance'],
+                'required' => $amount
+            ];
+        }
+
+        $quoteSettingStmt = self::$pdo->prepare("
+            SELECT id, setting_value
+            FROM zzimba_credit_settings
+            WHERE setting_key = 'request_for_quote'
+            AND status = 'active'
+            AND setting_type = 'flat'
+            AND category = 'quote'
+            AND (applicable_to = 'users' OR applicable_to = 'all')
+            ORDER BY applicable_to DESC
+            LIMIT 1
+        ");
+        $quoteSettingStmt->execute();
+        $quoteSetting = $quoteSettingStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$quoteSetting) {
+            return ['success' => false, 'message' => 'Quote fee setting not found'];
+        }
+
+        $feeAmount = (float) $quoteSetting['setting_value'];
+        if ($amount != $feeAmount) {
+            return ['success' => false, 'message' => 'Amount does not match quote fee setting'];
+        }
+
+        $destinationWallet = self::getChargeDestinationWallet($quoteSetting['id']);
+        if (!$destinationWallet) {
+            return ['success' => false, 'message' => 'Quote fee destination wallet not configured'];
+        }
+
+        $txnId = \generateUlid();
+
+        try {
+            self::$pdo->beginTransaction();
+
+            self::insertTransaction([
+                'transaction_id' => $txnId,
+                'transaction_type' => 'QUOTE',
+                'status' => 'SUCCESS',
+                'amount_total' => $amount,
+                'payment_method' => 'WALLET',
+                'wallet_id' => $userWallet['wallet_id'],
+                'user_id' => $userId,
+                'note' => 'Quote request fee'
+            ]);
+
+            self::insertTransfer([
+                'id' => \generateUlid(),
+                'wallet_from' => $userWallet['wallet_id'],
+                'wallet_to' => $destinationWallet['wallet_id'],
+                'transaction_id' => $txnId,
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            $withholdingId = self::getWithholdingAccountId();
+
+            $balStmt = self::$pdo->prepare("SELECT current_balance FROM zzimba_wallets WHERE wallet_id = :wid");
+
+            $balStmt->execute([':wid' => $userWallet['wallet_id']]);
+            $userBalance = (float) $balStmt->fetchColumn();
+
+            $balStmt->execute([':wid' => $withholdingId]);
+            $withholdingBalance = (float) $balStmt->fetchColumn();
+
+            $balStmt->execute([':wid' => $destinationWallet['wallet_id']]);
+            $destinationBalance = (float) $balStmt->fetchColumn();
+
+            $debitId = self::insertEntry([
+                'transaction_id' => $txnId,
+                'wallet_id' => $userWallet['wallet_id'],
+                'entry_type' => 'DEBIT',
+                'amount' => $amount,
+                'balance_after' => $userBalance - $amount,
+                'entry_note' => 'Quote request fee charged to ' . $userWallet['wallet_number']
+            ]);
+            self::updateWalletBalance($userWallet['wallet_id'], $userBalance - $amount);
+
+            $creditWithholdingId = self::insertEntry([
+                'transaction_id' => $txnId,
+                'wallet_id' => $withholdingId,
+                'entry_type' => 'CREDIT',
+                'amount' => $amount,
+                'balance_after' => $withholdingBalance + $amount,
+                'entry_note' => 'Quote fee collection from ' . $userWallet['wallet_number'],
+                'ref_entry_id' => $debitId
+            ]);
+            self::updateWalletBalance($withholdingId, $withholdingBalance + $amount);
+
+            $debitWithholdingId = self::insertEntry([
+                'transaction_id' => $txnId,
+                'wallet_id' => $withholdingId,
+                'entry_type' => 'DEBIT',
+                'amount' => $amount,
+                'balance_after' => ($withholdingBalance + $amount) - $amount,
+                'entry_note' => 'Quote fee disbursement to ' . $destinationWallet['wallet_number'],
+                'ref_entry_id' => $creditWithholdingId
+            ]);
+            self::updateWalletBalance($withholdingId, ($withholdingBalance + $amount) - $amount);
+
+            self::insertEntry([
+                'transaction_id' => $txnId,
+                'wallet_id' => $destinationWallet['wallet_id'],
+                'entry_type' => 'CREDIT',
+                'amount' => $amount,
+                'balance_after' => $destinationBalance + $amount,
+                'entry_note' => 'Quote fee earned from ' . $userWallet['wallet_number'],
+                'ref_entry_id' => $debitWithholdingId
+            ]);
+            self::updateWalletBalance($destinationWallet['wallet_id'], $destinationBalance + $amount);
+
+            self::$pdo->commit();
+
+            $entity = self::getEntityInfo($userId, null);
+            $recipients = self::buildRecipients(
+                ['message' => "{$entity['type']} {$entity['name']} paid quote request fee of {$amount} UGX. Transaction ID: {$txnId}"],
+                ['id' => $userId, 'message' => "Quote request fee of {$amount} UGX has been charged to your wallet. Transaction ID: {$txnId}"]
+            );
+
+            self::sendNotification('Quote Request Fee Processed', $recipients, 'normal', $userId);
+
+            return [
+                'success' => true,
+                'transaction_id' => $txnId,
+                'fee_charged' => $amount,
+                'remaining_balance' => $userBalance - $amount
+            ];
+
+        } catch (\Throwable $e) {
+            self::$pdo->rollBack();
+            error_log('[ZzimbaCreditModule] Quote request processing error: ' . $e->getMessage());
+
+            self::$pdo->prepare("
+                UPDATE zzimba_financial_transactions
+                SET status = 'FAILED', updated_at = NOW()
+                WHERE transaction_id = :tid
+            ")->execute([':tid' => $txnId]);
+
+            return ['success' => false, 'message' => 'Quote request processing failed'];
         }
     }
 
@@ -881,7 +1056,6 @@ final class CreditService
             $params[':endDate'] = $end;
         }
 
-        // Enhanced ordering: Transactions with original_txn_id (charges) should appear before their referenced transaction
         $sql .= " ORDER BY created_at DESC,
                    CASE 
                      WHEN original_txn_id IS NOT NULL THEN 1 
@@ -1007,7 +1181,6 @@ final class CreditService
 
         self::boot();
 
-        // Get fee settings and calculate transfer fee
         $feeSettings = self::getFeeSettingsForUser();
         $transferFee = self::calculateTransferFee($amount, $feeSettings);
         $totalRequired = $amount + $transferFee;
@@ -1050,7 +1223,6 @@ final class CreditService
             return ['success' => false, 'message' => 'Insufficient funds for transfer and fees'];
         }
 
-        // Get charge destination wallet if there are fees
         $chargeDestinationWallet = null;
         if ($transferFee > 0 && $feeSettings) {
             $chargeDestinationWallet = self::getChargeDestinationWallet($feeSettings['id']);
@@ -1059,7 +1231,6 @@ final class CreditService
             }
         }
 
-        // Create main transfer transaction
         $transferTxnId = \generateUlid();
         self::insertTransaction([
             'transaction_id' => $transferTxnId,
@@ -1080,7 +1251,6 @@ final class CreditService
             'created_at' => date('Y-m-d H:i:s')
         ]);
 
-        // Create charges transaction if there are fees
         $chargesTxnId = null;
         if ($transferFee > 0 && $chargeDestinationWallet) {
             $chargesTxnId = \generateUlid();
@@ -1117,7 +1287,6 @@ final class CreditService
             $wnStmt->execute([':wid' => $toWalletId]);
             $toNo = $wnStmt->fetchColumn();
 
-            // Process main transfer
             $transferNotes = [
                 'debit' => 'Zzimba Credit transfer to ' . $toNo,
                 'credit1' => 'Credit transfer instruction from ' . $fromNo,
@@ -1127,7 +1296,6 @@ final class CreditService
 
             self::performTransferEntries($transferTxnId, $fromWalletId, $toWalletId, $amount, $transferNotes);
 
-            // Process charges if applicable
             if ($transferFee > 0 && $chargeDestinationWallet && $chargesTxnId) {
                 $chargeNotes = [
                     'debit' => 'Transfer fee charge for transaction to ' . $toNo,
@@ -1138,7 +1306,6 @@ final class CreditService
 
                 self::performTransferEntries($chargesTxnId, $fromWalletId, $chargeDestinationWallet['wallet_id'], $transferFee, $chargeNotes);
 
-                // Update charges transaction status
                 self::$pdo->prepare("
                     UPDATE zzimba_financial_transactions
                        SET status     = 'SUCCESS',
@@ -1147,7 +1314,6 @@ final class CreditService
                 ")->execute([':tid' => $chargesTxnId]);
             }
 
-            // Update main transfer transaction status
             self::$pdo->prepare("
                 UPDATE zzimba_financial_transactions
                    SET status     = 'SUCCESS',
@@ -1200,7 +1366,6 @@ final class CreditService
             self::$pdo->rollBack();
             error_log('[ZzimbaCreditModule] transfer error: ' . $e->getMessage());
 
-            // Mark both transactions as failed
             self::$pdo->prepare("
                 UPDATE zzimba_financial_transactions
                    SET status     = 'FAILED',
