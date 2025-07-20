@@ -234,7 +234,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         width: 100%;
         max-width: 500px;
         max-height: 90vh;
-        overflow-y: auto;
+        /* overflow-y: auto; */
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         transform: scale(0.95);
         transition: all 0.3s ease;
