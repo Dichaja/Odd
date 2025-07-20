@@ -526,7 +526,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                         </button>
                         <button type="submit"
                             class="btn-primary px-5 py-3 text-sm font-medium text-white rounded-md focus:outline-none transition-colors shadow-sm">
-                            <i class="fas fa-paper-plane mr-2"></i> Submit Request
+                            <i class="fas fa-paper-plane mr-2"></i> Submit
                         </button>
                     </div>
                 </form>
