@@ -84,11 +84,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     echo json_encode(['image' => $imageUrl]);
     exit;
 }
-
-$recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 ?>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
     .container {
@@ -119,10 +118,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
     .form-input:focus {
         border-color: #ef4444;
-    }
-
-    .iti {
-        width: 100%;
     }
 
     .page-header {
@@ -241,6 +236,13 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
     .modal.active .modal-content {
         transform: scale(1);
+    }
+
+    .map-modal-content {
+        width: 90%;
+        max-width: 800px;
+        height: 80vh;
+        max-height: 600px;
     }
 
     .search-dropdown {
@@ -370,6 +372,82 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
     .delete-icon:hover {
         color: #ef4444;
     }
+
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 0.5rem;
+    }
+
+    .map-search-container {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    .map-search-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.2s ease;
+    }
+
+    .map-search-input:focus {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+
+    .map-search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        max-height: 200px;
+        overflow-y: auto;
+        display: none;
+    }
+
+    .map-search-result {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f3f4f6;
+        transition: background-color 0.2s ease;
+    }
+
+    .map-search-result:hover {
+        background-color: #f9fafb;
+    }
+
+    .map-search-result:last-child {
+        border-bottom: none;
+    }
+
+    .location-display {
+        background-color: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #4b5563;
+    }
+
+    @media (max-width: 768px) {
+        .mobile-hide {
+            display: none !important;
+        }
+
+        .mobile-hide-title {
+            display: none !important;
+        }
+    }
 </style>
 
 <div class="max-w-7xl mx-auto px-4 py-8">
@@ -380,51 +458,9 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                 <p class="text-gray-600 mb-6">Fields marked with <span class="required-star">*</span> are required</p>
 
                 <form id="rfq-form" class="space-y-6" novalidate autocomplete="off">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="form-group">
-                            <input type="text" id="company" name="company" placeholder=" "
-                                class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                                autocomplete="new-company" data-field-id="<?= uniqid('company_') ?>">
-                            <label for="company" class="floating-label text-gray-500">Company Name (optional)</label>
-                        </div>
-
-                        <div class="form-group">
-                            <input type="text" id="contact" name="contact" required placeholder=" "
-                                class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                                autocomplete="new-name" data-field-id="<?= uniqid('contact_') ?>">
-                            <label for="contact" class="floating-label text-gray-500">Contact Person <span
-                                    class="required-star">*</span></label>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="form-group">
-                            <input type="email" id="email" name="email" required placeholder=" "
-                                class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                                autocomplete="new-email" data-field-id="<?= uniqid('email_') ?>">
-                            <label for="email" class="floating-label text-gray-500">Email <span
-                                    class="required-star">*</span></label>
-                        </div>
-
-                        <div class="form-group">
-                            <input type="tel" id="phone-whatsapp" name="phone" required
-                                placeholder="Phone/WhatsApp Contact *"
-                                class="block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500"
-                                autocomplete="new-phone" data-field-id="<?= uniqid('phone_') ?>">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <input type="text" id="location" name="location" required placeholder=" "
-                            class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
-                            autocomplete="new-address" data-field-id="<?= uniqid('location_') ?>">
-                        <label for="location" class="floating-label text-gray-500">Site Location <span
-                                class="required-star">*</span></label>
-                    </div>
-
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-medium text-gray-800">List of Items <span
+                            <h2 class="text-lg font-medium text-gray-800 mobile-hide-title">List of Items <span
                                     class="required-star">*</span></h2>
                             <button type="button" id="add-item-btn"
                                 class="btn-secondary inline-flex items-center px-4 py-2 text-white text-sm font-medium rounded-md focus:outline-none transition-colors shadow-sm">
@@ -463,7 +499,25 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                         </div>
                     </div>
 
-                    <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response">
+                    <div class="form-group">
+                        <input type="text" id="location" name="location" required placeholder=" " readonly
+                            class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none cursor-pointer"
+                            autocomplete="new-address" data-field-id="<?= uniqid('location_') ?>">
+                        <label for="location" class="floating-label text-gray-500">Site Location <span
+                                class="required-star">*</span></label>
+                        <div id="location-display" class="location-display" style="display: none;">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium" id="selected-address"></div>
+                                    <div class="text-xs text-gray-500" id="selected-coordinates"></div>
+                                </div>
+                                <button type="button" onclick="openLocationModal()"
+                                    class="text-red-500 hover:text-red-700 text-sm">
+                                    <i class="fas fa-edit mr-1"></i>Change
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="flex justify-end space-x-4 pt-4">
                         <button type="reset" id="reset-form"
@@ -481,7 +535,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
         <div class="lg:col-span-1">
             <div
-                class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 fade-in mb-6 border-l-4 border-red-500 shadow-sm">
+                class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 fade-in mb-6 border-l-4 border-red-500 shadow-sm mobile-hide">
                 <div class="flex items-center mb-4">
                     <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
                         <i class="fas fa-info-circle text-red-500"></i>
@@ -490,12 +544,8 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                 </div>
                 <div class="space-y-4 text-sm text-gray-600">
                     <p class="flex items-start">
-                        <i class="fas fa-mobile-alt mt-1 text-red-500 mr-3"></i>
-                        <span>Add a valid phone number or WhatsApp contact for quick contact.</span>
-                    </p>
-                    <p class="flex items-start">
                         <i class="fas fa-map-marker-alt mt-1 text-red-500 mr-3"></i>
-                        <span>Specify the exact site location for delivery purposes.</span>
+                        <span>Click on the site location field to select your delivery location on the map.</span>
                     </p>
                     <p class="flex items-start">
                         <i class="fas fa-plus-circle mt-1 text-red-500 mr-3"></i>
@@ -505,10 +555,14 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                         <i class="fas fa-edit mt-1 text-red-500 mr-3"></i>
                         <span>Edit items by clicking the pencil icon in the actions column.</span>
                     </p>
+                    <p class="flex items-start">
+                        <i class="fas fa-save mt-1 text-red-500 mr-3"></i>
+                        <span>Your form data is automatically saved and will be retained for 10 minutes.</span>
+                    </p>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 fade-in">
+            <div class="bg-white rounded-xl shadow-sm p-6 fade-in mobile-hide">
                 <div class="flex items-center mb-4">
                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                         <i class="fas fa-clipboard-check text-blue-500"></i>
@@ -543,6 +597,40 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
     </div>
 </div>
 
+<!-- Location Selection Modal -->
+<div id="location-modal" class="modal">
+    <div class="modal-content map-modal-content p-0">
+        <div
+            class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 flex justify-between items-center border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Select Delivery Location</h3>
+            <button type="button" class="text-gray-400 hover:text-gray-600 focus:outline-none"
+                id="close-location-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-4">
+            <div class="map-search-container">
+                <input type="text" id="map-search-input" placeholder="Search for a location..."
+                    class="map-search-input">
+                <div id="map-search-results" class="map-search-results"></div>
+            </div>
+            <div id="map"></div>
+            <div class="mt-4 flex justify-end space-x-3">
+                <button type="button" id="cancel-location"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors">
+                    Cancel
+                </button>
+                <button type="button" id="confirm-location"
+                    class="btn-primary px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors"
+                    disabled>
+                    <i class="fas fa-map-marker-alt mr-2"></i> Confirm Location
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Item Modal -->
 <div id="item-modal" class="modal">
     <div class="modal-content p-0">
         <div
@@ -604,6 +692,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
     </div>
 </div>
 
+<!-- Delete Modal -->
 <div id="delete-modal" class="modal">
     <div class="modal-content p-0">
         <div
@@ -636,20 +725,241 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
-<script src="https://www.google.com/recaptcha/api.js?render=<?= $recaptcha_site_key ?>"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const API_BASE = "<?php echo BASE_URL; ?>fetch/handleRFQ";
+        const IS_LOGGED_IN = <?php echo (isset($_SESSION['user']) && $_SESSION['user']['logged_in']) ? 'true' : 'false'; ?>;
+        const IS_ADMIN = <?php echo (isset($_SESSION['user']) && $_SESSION['user']['logged_in'] && $_SESSION['user']['is_admin']) ? 'true' : 'false'; ?>;
 
         let SEARCH_DATA = { products: [] };
         let fuseProducts = null;
         let searchInitialized = false;
         let imageCache = new Map();
-        let isSelectionMade = false; // Flag to track if a selection was just made
+        let isSelectionMade = false;
+        let lastActivityTime = Date.now();
+        let activityTimer;
+        let map;
+        let marker;
+        let selectedLocation = null;
 
+        // Form persistence functions
+        function updateActivity() {
+            lastActivityTime = Date.now();
+            clearTimeout(activityTimer);
+            activityTimer = setTimeout(checkInactivity, 60000); // Check every minute
+        }
+
+        function checkInactivity() {
+            const now = Date.now();
+            const tenMinutes = 10 * 60 * 1000;
+
+            if (now - lastActivityTime > tenMinutes) {
+                clearFormData();
+                notifications.info('Form data expired due to inactivity.', 'Session Expired');
+            } else {
+                activityTimer = setTimeout(checkInactivity, 60000);
+            }
+        }
+
+        function saveFormData() {
+            const formData = {
+                location: selectedLocation,
+                items: items,
+                timestamp: Date.now(),
+                lastActivity: lastActivityTime
+            };
+
+            localStorage.setItem('rfq_form_data', JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem('rfq_form_data');
+            if (!savedData) return false;
+
+            try {
+                const formData = JSON.parse(savedData);
+                const now = Date.now();
+                const tenMinutes = 10 * 60 * 1000;
+
+                if (now - formData.lastActivity > tenMinutes) {
+                    localStorage.removeItem('rfq_form_data');
+                    return false;
+                }
+
+                if (formData.location) {
+                    selectedLocation = formData.location;
+                    updateLocationDisplay();
+                }
+
+                if (formData.items && Array.isArray(formData.items)) {
+                    items = formData.items;
+                    updateItemsDisplay();
+                }
+
+                notifications.info('Your previous form data has been restored.', 'Form Restored');
+                return true;
+            } catch (error) {
+                console.error('Error loading form data:', error);
+                localStorage.removeItem('rfq_form_data');
+                return false;
+            }
+        }
+
+        function clearFormData() {
+            localStorage.removeItem('rfq_form_data');
+        }
+
+        function checkAuthenticationBeforeSubmit() {
+            if (!IS_LOGGED_IN) {
+                saveFormData();
+                notifications.error('Please log in to submit a quote request.', 'Authentication Required');
+                if (typeof openAuthModal === 'function') {
+                    openAuthModal();
+                }
+                return false;
+            }
+
+            if (IS_ADMIN) {
+                saveFormData();
+                notifications.error('Admin accounts cannot submit quote requests. Please log in with a regular user account.', 'Admin Account');
+
+                setTimeout(() => {
+                    if (confirm('Would you like to logout and login with a user account to continue?')) {
+                        logoutAndShowLogin();
+                    }
+                }, 1000);
+                return false;
+            }
+
+            return true;
+        }
+
+        function logoutAndShowLogin() {
+            if (typeof logoutUser === 'function') {
+                logoutUser();
+                setTimeout(() => {
+                    if (typeof openAuthModal === 'function') {
+                        openAuthModal();
+                    }
+                }, 1000);
+            }
+        }
+
+        window.logoutAndShowLogin = logoutAndShowLogin;
+
+        // Map functions
+        function initializeMap() {
+            map = L.map('map').setView([0.3476, 32.5825], 10); // Default to Kampala, Uganda
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            map.on('click', function (e) {
+                setMapMarker(e.latlng.lat, e.latlng.lng);
+            });
+        }
+
+        function setMapMarker(lat, lng) {
+            if (marker) {
+                map.removeLayer(marker);
+            }
+
+            marker = L.marker([lat, lng]).addTo(map);
+
+            // Reverse geocoding to get address
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                .then(response => response.json())
+                .then(data => {
+                    const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    selectedLocation = {
+                        lat: lat,
+                        lng: lng,
+                        address: address
+                    };
+
+                    document.getElementById('confirm-location').disabled = false;
+                })
+                .catch(error => {
+                    console.error('Geocoding error:', error);
+                    selectedLocation = {
+                        lat: lat,
+                        lng: lng,
+                        address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+                    };
+
+                    document.getElementById('confirm-location').disabled = false;
+                });
+        }
+
+        function searchLocation(query) {
+            if (query.length < 3) {
+                document.getElementById('map-search-results').style.display = 'none';
+                return;
+            }
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
+                .then(response => response.json())
+                .then(data => {
+                    const resultsContainer = document.getElementById('map-search-results');
+                    resultsContainer.innerHTML = '';
+
+                    if (data.length > 0) {
+                        data.forEach(result => {
+                            const resultDiv = document.createElement('div');
+                            resultDiv.className = 'map-search-result';
+                            resultDiv.textContent = result.display_name;
+                            resultDiv.addEventListener('click', () => {
+                                const lat = parseFloat(result.lat);
+                                const lng = parseFloat(result.lon);
+                                map.setView([lat, lng], 15);
+                                setMapMarker(lat, lng);
+                                resultsContainer.style.display = 'none';
+                                document.getElementById('map-search-input').value = result.display_name;
+                            });
+                            resultsContainer.appendChild(resultDiv);
+                        });
+                        resultsContainer.style.display = 'block';
+                    } else {
+                        resultsContainer.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    document.getElementById('map-search-results').style.display = 'none';
+                });
+        }
+
+        function openLocationModal() {
+            document.getElementById('location-modal').classList.add('active');
+            setTimeout(() => {
+                if (!map) {
+                    initializeMap();
+                } else {
+                    map.invalidateSize();
+                }
+
+                if (selectedLocation) {
+                    map.setView([selectedLocation.lat, selectedLocation.lng], 15);
+                    setMapMarker(selectedLocation.lat, selectedLocation.lng);
+                }
+            }, 100);
+        }
+
+        function updateLocationDisplay() {
+            if (selectedLocation) {
+                document.getElementById('location').value = selectedLocation.address;
+                document.getElementById('selected-address').textContent = selectedLocation.address;
+                document.getElementById('selected-coordinates').textContent = `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`;
+                document.getElementById('location-display').style.display = 'block';
+            }
+        }
+
+        window.openLocationModal = openLocationModal;
+
+        // Product search functions
         function getImageUrl(type, id) {
             const cacheKey = `${type}_${id}`;
 
@@ -710,7 +1020,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         async function renderProductDropdown(query, dropdownElement, inputElement) {
             query = query.trim().toLowerCase();
 
-            // Don't show dropdown if a selection was just made or if query is empty
             if (!query || !fuseProducts || !searchInitialized || isSelectionMade) {
                 dropdownElement.style.display = 'none';
                 return;
@@ -757,11 +1066,10 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                 items.forEach(item => {
                     item.addEventListener('click', function () {
                         const productTitle = this.dataset.productTitle;
-                        isSelectionMade = true; // Set flag to prevent dropdown from showing
+                        isSelectionMade = true;
                         inputElement.value = productTitle;
                         dropdownElement.style.display = 'none';
 
-                        // Reset the flag after a short delay to allow normal typing behavior
                         setTimeout(() => {
                             isSelectionMade = false;
                         }, 100);
@@ -790,21 +1098,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             };
         }
 
-        const phoneInputField = document.querySelector("#phone-whatsapp");
-        const iti = window.intlTelInput(phoneInputField, {
-            preferredCountries: ["ug", "rw", "ke", "tz"],
-            initialCountry: "ug",
-            separateDialCode: true,
-            allowDropdown: true,
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
-        });
-
-        const formInputs = document.querySelectorAll('input');
-        formInputs.forEach(input => {
-            const randomAttr = Math.random().toString(36).substring(2);
-            input.setAttribute('data-random', randomAttr);
-        });
-
+        // Items management
         let items = [];
         const itemsList = document.getElementById('items-list');
         const emptyState = document.getElementById('empty-items-state');
@@ -861,13 +1155,16 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                     showDeleteModal(index);
                 });
             });
+
+            updateActivity();
+            saveFormData();
         }
 
         function showAddItemModal() {
             modalTitle.textContent = 'Add New Item';
             itemForm.reset();
             itemIndex.value = -1;
-            isSelectionMade = false; // Reset selection flag when opening modal
+            isSelectionMade = false;
             itemModal.classList.add('active');
             brandSearchDropdown.style.display = 'none';
         }
@@ -879,7 +1176,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             itemSize.value = item.size;
             itemQuantity.value = item.quantity;
             itemIndex.value = index;
-            isSelectionMade = false; // Reset selection flag when editing
+            isSelectionMade = false;
             itemModal.classList.add('active');
             brandSearchDropdown.style.display = 'none';
         }
@@ -917,7 +1214,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             updateItemsDisplay();
             itemModal.classList.remove('active');
             brandSearchDropdown.style.display = 'none';
-            isSelectionMade = false; // Reset selection flag after saving
+            isSelectionMade = false;
         }
 
         function deleteItem() {
@@ -929,22 +1226,56 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             deleteModal.classList.remove('active');
         }
 
+        // Initialize activity tracking
+        updateActivity();
+
+        // Load saved form data on page load
+        loadFormData();
+
+        // Event listeners
+        document.addEventListener('click', updateActivity);
+        document.addEventListener('keypress', updateActivity);
+
+        // Location modal events
+        document.getElementById('location').addEventListener('click', openLocationModal);
+        document.getElementById('close-location-modal').addEventListener('click', () => {
+            document.getElementById('location-modal').classList.remove('active');
+        });
+        document.getElementById('cancel-location').addEventListener('click', () => {
+            document.getElementById('location-modal').classList.remove('active');
+        });
+        document.getElementById('confirm-location').addEventListener('click', () => {
+            updateLocationDisplay();
+            document.getElementById('location-modal').classList.remove('active');
+            updateActivity();
+            saveFormData();
+        });
+
+        // Map search
+        document.getElementById('map-search-input').addEventListener('input', debounce((e) => {
+            searchLocation(e.target.value);
+        }, 300));
+
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('map-search-input').contains(e.target) &&
+                !document.getElementById('map-search-results').contains(e.target)) {
+                document.getElementById('map-search-results').style.display = 'none';
+            }
+        });
+
         loadSearchData().then(() => {
             itemBrand.addEventListener('input', debounce((e) => {
-                // Only show dropdown if it's not a selection-triggered input
                 if (!isSelectionMade) {
                     renderProductDropdown(e.target.value, brandSearchDropdown, itemBrand);
                 }
             }, 200));
 
             itemBrand.addEventListener('focus', () => {
-                // Only show dropdown on focus if there's a value and no recent selection
                 if (itemBrand.value.trim() && !isSelectionMade) {
                     renderProductDropdown(itemBrand.value, brandSearchDropdown, itemBrand);
                 }
             });
 
-            // Reset selection flag when user starts typing manually
             itemBrand.addEventListener('keydown', () => {
                 isSelectionMade = false;
             });
@@ -982,49 +1313,34 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             if (e.target === deleteModal) {
                 deleteModal.classList.remove('active');
             }
+            if (e.target === document.getElementById('location-modal')) {
+                document.getElementById('location-modal').classList.remove('active');
+            }
         });
 
         document.getElementById('reset-form').addEventListener('click', function (e) {
             e.preventDefault();
             const form = document.getElementById('rfq-form');
             form.reset();
-            iti.setNumber('');
             items = [];
+            selectedLocation = null;
+            document.getElementById('location-display').style.display = 'none';
             updateItemsDisplay();
+            clearFormData();
         });
 
         const form = document.getElementById('rfq-form');
         form.addEventListener('submit', function (e) {
             e.preventDefault();
 
+            if (!checkAuthenticationBeforeSubmit()) {
+                return;
+            }
+
             let hasError = false;
-            const contactInput = document.getElementById('contact');
-            const emailInput = document.getElementById('email');
-            const locationInput = document.getElementById('location');
 
-            if (contactInput.value.trim() === "") {
-                notifications.error('Contact person is required.', 'Input Required');
-                hasError = true;
-            }
-
-            if (emailInput.value.trim() === "") {
-                notifications.error('Email is required.', 'Input Required');
-                hasError = true;
-            } else {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(emailInput.value.trim())) {
-                    notifications.error('Please enter a valid email address.', 'Input Required');
-                    hasError = true;
-                }
-            }
-
-            if (phoneInputField.value.trim() === "" || !iti.isValidNumber()) {
-                notifications.error('Please enter a valid phone number.', 'Input Required');
-                hasError = true;
-            }
-
-            if (locationInput.value.trim() === "") {
-                notifications.error('Site location is required.', 'Input Required');
+            if (!selectedLocation) {
+                notifications.error('Please select a delivery location.', 'Input Required');
                 hasError = true;
             }
 
@@ -1036,13 +1352,8 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             if (hasError) return;
 
             const payload = {
-                company: document.getElementById('company').value.trim(),
-                contact: contactInput.value.trim(),
-                email: emailInput.value.trim(),
-                phone: iti.getNumber(),
-                location: locationInput.value.trim(),
-                items: items,
-                "g-recaptcha-response": document.getElementById('g-recaptcha-response').value
+                location: selectedLocation,
+                items: items
             };
 
             const submitButton = form.querySelector('button[type="submit"]');
@@ -1050,41 +1361,49 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             submitButton.disabled = true;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
 
-            grecaptcha.execute('<?= $recaptcha_site_key ?>', {
-                action: 'submit_rfq'
-            }).then(function (token) {
-                payload["g-recaptcha-response"] = token;
-
-                fetch(`${API_BASE}/submitRFQ`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            notifications.success('Thank you! Your quote request has been received. We will contact you shortly.', 'RFQ Submitted');
-                            form.reset();
-                            iti.setNumber('');
-                            items = [];
-                            updateItemsDisplay();
-                        } else {
-                            notifications.error('Submission failed. Please try again.', 'RFQ Error');
-                        }
-                        submitButton.disabled = false;
-                        submitButton.innerHTML = originalButtonText;
-                    })
-                    .catch(error => {
+            fetch(`${API_BASE}/submitRFQ`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        notifications.success('Thank you! Your quote request has been received. We will contact you shortly.', 'RFQ Submitted');
+                        form.reset();
+                        items = [];
+                        selectedLocation = null;
+                        document.getElementById('location-display').style.display = 'none';
+                        updateItemsDisplay();
+                        clearFormData();
+                    } else {
                         notifications.error('Submission failed. Please try again.', 'RFQ Error');
-                        submitButton.disabled = false;
-                        submitButton.innerHTML = originalButtonText;
-                    });
-            });
+                    }
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
+                })
+                .catch(error => {
+                    notifications.error('Submission failed. Please try again.', 'RFQ Error');
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
+                });
         });
 
         updateItemsDisplay();
+
+        // Listen for successful login to restore form data
+        const originalCloseAuthModal = window.closeAuthModal;
+        if (originalCloseAuthModal) {
+            window.closeAuthModal = function () {
+                originalCloseAuthModal();
+
+                setTimeout(() => {
+                    loadFormData();
+                }, 500);
+            };
+        }
     });
 </script>
 
