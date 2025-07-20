@@ -234,7 +234,6 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         width: 100%;
         max-width: 500px;
         max-height: 90vh;
-        /* overflow-y: auto; */
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         transform: scale(0.95);
         transition: all 0.3s ease;
@@ -649,6 +648,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         let fuseProducts = null;
         let searchInitialized = false;
         let imageCache = new Map();
+        let isSelectionMade = false; // Flag to track if a selection was just made
 
         function getImageUrl(type, id) {
             const cacheKey = `${type}_${id}`;
@@ -709,7 +709,9 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
         async function renderProductDropdown(query, dropdownElement, inputElement) {
             query = query.trim().toLowerCase();
-            if (!query || !fuseProducts || !searchInitialized) {
+
+            // Don't show dropdown if a selection was just made or if query is empty
+            if (!query || !fuseProducts || !searchInitialized || isSelectionMade) {
                 dropdownElement.style.display = 'none';
                 return;
             }
@@ -755,9 +757,14 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
                 items.forEach(item => {
                     item.addEventListener('click', function () {
                         const productTitle = this.dataset.productTitle;
+                        isSelectionMade = true; // Set flag to prevent dropdown from showing
                         inputElement.value = productTitle;
                         dropdownElement.style.display = 'none';
-                        inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+                        // Reset the flag after a short delay to allow normal typing behavior
+                        setTimeout(() => {
+                            isSelectionMade = false;
+                        }, 100);
                     });
                 });
             } else {
@@ -860,6 +867,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             modalTitle.textContent = 'Add New Item';
             itemForm.reset();
             itemIndex.value = -1;
+            isSelectionMade = false; // Reset selection flag when opening modal
             itemModal.classList.add('active');
             brandSearchDropdown.style.display = 'none';
         }
@@ -871,6 +879,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             itemSize.value = item.size;
             itemQuantity.value = item.quantity;
             itemIndex.value = index;
+            isSelectionMade = false; // Reset selection flag when editing
             itemModal.classList.add('active');
             brandSearchDropdown.style.display = 'none';
         }
@@ -908,6 +917,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             updateItemsDisplay();
             itemModal.classList.remove('active');
             brandSearchDropdown.style.display = 'none';
+            isSelectionMade = false; // Reset selection flag after saving
         }
 
         function deleteItem() {
@@ -921,13 +931,22 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
 
         loadSearchData().then(() => {
             itemBrand.addEventListener('input', debounce((e) => {
-                renderProductDropdown(e.target.value, brandSearchDropdown, itemBrand);
+                // Only show dropdown if it's not a selection-triggered input
+                if (!isSelectionMade) {
+                    renderProductDropdown(e.target.value, brandSearchDropdown, itemBrand);
+                }
             }, 200));
 
             itemBrand.addEventListener('focus', () => {
-                if (itemBrand.value.trim()) {
+                // Only show dropdown on focus if there's a value and no recent selection
+                if (itemBrand.value.trim() && !isSelectionMade) {
                     renderProductDropdown(itemBrand.value, brandSearchDropdown, itemBrand);
                 }
+            });
+
+            // Reset selection flag when user starts typing manually
+            itemBrand.addEventListener('keydown', () => {
+                isSelectionMade = false;
             });
 
             document.addEventListener('click', (e) => {
@@ -942,10 +961,12 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
         document.getElementById('close-modal').addEventListener('click', () => {
             itemModal.classList.remove('active');
             brandSearchDropdown.style.display = 'none';
+            isSelectionMade = false;
         });
         document.getElementById('cancel-item').addEventListener('click', () => {
             itemModal.classList.remove('active');
             brandSearchDropdown.style.display = 'none';
+            isSelectionMade = false;
         });
         document.getElementById('close-delete-modal').addEventListener('click', () => deleteModal.classList.remove('active'));
         document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.remove('active'));
@@ -956,6 +977,7 @@ $recaptcha_site_key = '6LdtJdcqAAAAADWom9IW8lSg7L41BQbAJPrAW-Hf';
             if (e.target === itemModal) {
                 itemModal.classList.remove('active');
                 brandSearchDropdown.style.display = 'none';
+                isSelectionMade = false;
             }
             if (e.target === deleteModal) {
                 deleteModal.classList.remove('active');
