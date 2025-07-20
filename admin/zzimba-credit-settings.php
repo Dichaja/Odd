@@ -88,6 +88,15 @@ function formatCurrency($amount)
                                 <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
                             </div>
                         </button>
+                        <button id="quote-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchSettingsTab('quote')">
+                            <i class="fas fa-file-invoice"></i>
+                            <span>Request for Quote</span>
+                            <div id="quote-warning" class="ml-auto hidden">
+                                <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
+                            </div>
+                        </button>
                     </nav>
                 </div>
             </div>
@@ -172,6 +181,15 @@ function formatCurrency($amount)
                                         <i class="fas fa-calendar-alt text-pink-600"></i>
                                         <span>Subscription</span>
                                         <div id="mobile-subscription-warning" class="ml-auto hidden">
+                                            <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
+                                        </div>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="quote">
+                                        <i class="fas fa-file-invoice text-teal-600"></i>
+                                        <span>Request for Quote</span>
+                                        <div id="mobile-quote-warning" class="ml-auto hidden">
                                             <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
                                         </div>
                                     </button>
@@ -289,6 +307,7 @@ function formatCurrency($amount)
                         <option value="transfer">Transfer</option>
                         <option value="withdrawal">Withdrawal</option>
                         <option value="subscription">Subscription</option>
+                        <option value="quote">Request for Quote</option>
                     </select>
                 </div>
 
@@ -573,26 +592,26 @@ function formatCurrency($amount)
 
         if (!hasIncompleteKey) {
             if (currentSettingsTab === category) {
-                warningElement.classList.add('hidden');
-                mobileCurrentWarning.classList.add('hidden');
+                if (warningElement) warningElement.classList.add('hidden');
+                if (mobileCurrentWarning) mobileCurrentWarning.classList.add('hidden');
             }
-            tabWarning.classList.add('hidden');
-            mobileTabWarning.classList.add('hidden');
+            if (tabWarning) tabWarning.classList.add('hidden');
+            if (mobileTabWarning) mobileTabWarning.classList.add('hidden');
             return true;
         } else {
             if (currentSettingsTab === category) {
-                warningElement.classList.remove('hidden');
-                mobileCurrentWarning.classList.remove('hidden');
-                warningMessage.textContent = 'Configuration incomplete. Some setting keys do not have proper coverage for all user groups.';
+                if (warningElement) warningElement.classList.remove('hidden');
+                if (mobileCurrentWarning) mobileCurrentWarning.classList.remove('hidden');
+                if (warningMessage) warningMessage.textContent = 'Configuration incomplete. Some setting keys do not have proper coverage for all user groups.';
             }
-            tabWarning.classList.remove('hidden');
-            mobileTabWarning.classList.remove('hidden');
+            if (tabWarning) tabWarning.classList.remove('hidden');
+            if (mobileTabWarning) mobileTabWarning.classList.remove('hidden');
             return false;
         }
     }
 
     function checkAllCategoriesConfiguration() {
-        const categories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription'];
+        const categories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription', 'quote'];
         categories.forEach(category => {
             checkCategoryConfiguration(category);
         });
@@ -634,7 +653,8 @@ function formatCurrency($amount)
             'commission': { label: 'Commission', icon: 'fas fa-percentage' },
             'transfer': { label: 'Transfer', icon: 'fas fa-exchange-alt' },
             'withdrawal': { label: 'Withdrawal', icon: 'fas fa-money-bill-wave' },
-            'subscription': { label: 'Subscription', icon: 'fas fa-calendar-alt' }
+            'subscription': { label: 'Subscription', icon: 'fas fa-calendar-alt' },
+            'quote': { label: 'Request for Quote', icon: 'fas fa-file-invoice' }
         };
         const tabInfo = tabLabels[tabName] || tabLabels['sms'];
         updateMobileTabLabel(tabInfo.label, tabInfo.icon);

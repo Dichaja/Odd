@@ -30,7 +30,7 @@ try {
             setting_name VARCHAR(200) NOT NULL,
             setting_value DECIMAL(10,2) NOT NULL,
             setting_type ENUM('flat','percentage') NOT NULL,
-            category ENUM('sms','bonus','access','commission','transfer','withdrawal','subscription') NOT NULL,
+            category ENUM('sms','bonus','access','commission','transfer','withdrawal','subscription','quote') NOT NULL,
             description TEXT,
             applicable_to ENUM('users','vendors','all') NOT NULL,
             status ENUM('active','inactive') NOT NULL DEFAULT 'active',
@@ -189,6 +189,19 @@ function insertSampleData(PDO $pdo)
             'description' => 'Percentage fee for instant withdrawals',
             'applicable_to' => 'all',
             'status' => 'inactive',
+            'created_at' => $now,
+            'updated_at' => $now
+        ],
+        [
+            'id' => generateUlid(),
+            'setting_key' => 'quote_request_fee',
+            'setting_name' => 'Request for Quote Fee',
+            'setting_value' => 250.00,
+            'setting_type' => 'flat',
+            'category' => 'quote',
+            'description' => 'Fee for submitting quote requests',
+            'applicable_to' => 'users',
+            'status' => 'active',
             'created_at' => $now,
             'updated_at' => $now
         ]
@@ -358,7 +371,7 @@ function createSetting(PDO $pdo)
     $applicableTo = $data['applicable_to'];
 
     $allowedTypes = ['flat', 'percentage'];
-    $allowedCategories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription'];
+    $allowedCategories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription', 'quote'];
     $allowedApplicable = ['users', 'vendors', 'all'];
 
     if (!in_array($settingType, $allowedTypes, true)) {
