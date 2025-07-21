@@ -167,7 +167,7 @@ ob_start();
                             </th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                                Transport
+                                Delivery Charge
                             </th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
@@ -673,9 +673,9 @@ ob_start();
                 <div class="bg-gray-50 rounded-lg p-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <h4 class="font-medium text-gray-900 mb-3">Transport Cost</h4>
+                            <h4 class="font-medium text-gray-900 mb-3">Delivery Charge</h4>
                             <div class="flex items-center gap-3">
-                                <span class="text-sm text-gray-600">Transport:</span>
+                                <span class="text-sm text-gray-600">Delivery Charge:</span>
                                 ${canEdit && !isProcessed ? `
                                     <div class="flex items-center gap-2">
                                         <span class="text-sm">UGX</span>
@@ -701,7 +701,7 @@ ob_start();
                                     <span class="font-medium">UGX ${formatCurrency(itemsTotal)}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600">Transport Cost:</span>
+                                    <span class="text-gray-600">Delivery Charge:</span>
                                     <span class="font-medium">UGX ${formatCurrency(transport)}</span>
                                 </div>
                                 <div class="flex justify-between border-t pt-2 text-lg font-bold">
@@ -1001,7 +1001,7 @@ ob_start();
                     <span style="font-size: 14px; font-weight: 600;">UGX ${formatCurrency(itemsTotal)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 6px;">
-                    <span style="font-size: 14px;">Transport Cost:</span>
+                    <span style="font-size: 14px;">Delivery Charge:</span>
                     <span style="font-size: 14px; font-weight: 600;">UGX ${formatCurrency(transport)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid #374151; margin-top: 12px;">
