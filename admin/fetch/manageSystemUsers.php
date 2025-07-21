@@ -32,7 +32,7 @@ try {
             $limit = intval($_GET['limit'] ?? 20);
             $offset = ($page - 1) * $limit;
             $search = trim($_GET['search'] ?? '');
-            $sortBy = $_GET['sortBy'] ?? 'last_login';
+            $sortBy = $_GET['sortBy'] ?? 'current_login';
             $sortOrder = $_GET['sortOrder'] ?? 'DESC';
 
             $whereConditions = ["u.status != 'deleted'"];
@@ -47,7 +47,7 @@ try {
 
             // Valid sort columns
             $validSortColumns = [
-                'last_login' => 'u.last_login',
+                'current_login' => 'u.current_login',
                 'created_at' => 'u.created_at',
                 'username' => 'u.username',
                 'email' => 'u.email',
@@ -55,7 +55,7 @@ try {
                 'stores_managed' => 'stores_managed'
             ];
 
-            $sortColumn = $validSortColumns[$sortBy] ?? 'u.last_login';
+            $sortColumn = $validSortColumns[$sortBy] ?? 'u.current_login';
             $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
 
             // Base query for users with store counts
@@ -69,7 +69,7 @@ try {
                     u.phone,
                     u.status,
                     u.created_at,
-                    u.last_login,
+                    u.current_login,
                     COALESCE(store_counts.stores_owned, 0) as stores_owned,
                     COALESCE(manager_counts.stores_managed, 0) as stores_managed
                 FROM zzimba_users u

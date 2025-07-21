@@ -82,8 +82,8 @@ ob_start();
                             <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
                         </div>
                         <select id="sortFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                            <option value="last_login:DESC">Last Login (Recent First)</option>
-                            <option value="last_login:ASC">Last Login (Oldest First)</option>
+                            <option value="current_login:DESC">Last Login (Recent First)</option>
+                            <option value="current_login:ASC">Last Login (Oldest First)</option>
                             <option value="created_at:DESC">Date Created (Newest First)</option>
                             <option value="created_at:ASC">Date Created (Oldest First)</option>
                             <option value="username:ASC">Username (A-Z)</option>
@@ -390,7 +390,7 @@ ob_start();
 
         tbody.innerHTML = users.map(user => {
             const statusBadge = getStatusBadge(user.status);
-            const lastLogin = formatLastLogin(user.last_login);
+            const lastLogin = formatLastLogin(user.current_login);
 
             return `
                 <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewUserDetails('${user.id}')">
@@ -582,7 +582,7 @@ ob_start();
                             <h4 class="font-medium text-gray-900 mb-2">Account Activity</h4>
                             <div class="space-y-1 text-sm">
                                 <div><span class="text-gray-600">Created:</span> <span class="font-medium">${formatDateTime(user.created_at)}</span></div>
-                                <div><span class="text-gray-600">Last Login:</span> <span class="font-medium">${formatDateTime(user.last_login)}</span></div>
+                                <div><span class="text-gray-600">Last Login:</span> <span class="font-medium">${formatDateTime(user.current_login)}</span></div>
                             </div>
                         </div>
                     </div>
