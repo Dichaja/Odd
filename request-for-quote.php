@@ -696,8 +696,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 </div>
             </div>
             <div class="text-center mb-6">
-                <h4 class="text-lg font-medium text-gray-900 mb-2">Quote Request Fee</h4>
-                <p class="text-gray-600 mb-4">A fee will be charged for submitting this quote request.</p>
+                <h4 class="text-lg font-medium text-gray-900 mb-2">Zzimba Credit Deduction</h4>
+                <p class="text-gray-600 mb-4">A fee will be charged for processing this quote request.</p>
                 <div id="confirmation-details" class="space-y-3">
                 </div>
             </div>
