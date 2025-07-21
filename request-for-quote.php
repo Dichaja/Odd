@@ -201,6 +201,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         transform: translateY(-1px);
     }
 
+    .btn-topup {
+        background-image: linear-gradient(to right, #f59e0b, #d97706);
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .btn-topup:hover {
+        background-image: linear-gradient(to right, #d97706, #b45309);
+        transform: translateY(-1px);
+    }
+
     .modal {
         position: fixed;
         top: 0;
@@ -395,6 +406,19 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         color: #4b5563;
     }
 
+    .item-limit-notice {
+        background-color: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        color: #92400e;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
     @media (max-width: 768px) {
         .mobile-hide {
             display: none !important;
@@ -424,6 +448,11 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                             </button>
                         </div>
 
+                        <div id="item-limit-notice" class="item-limit-notice" style="display: none;">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Maximum of 5 items allowed per quote request.</span>
+                        </div>
+
                         <div class="bg-white rounded-lg overflow-hidden">
                             <div id="items-container" class="w-full">
                                 <table class="item-report">
@@ -446,7 +475,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                                     </div>
                                     <h3 class="text-xl font-semibold text-gray-800 mb-2">No Items Added</h3>
                                     <p class="text-sm text-gray-600 mb-6">Click the "Add Item" button to add materials
-                                        to your quote request.</p>
+                                        to your quote request. Maximum 5 items allowed.</p>
                                     <button type="button" id="empty-add-item-btn"
                                         class="bg-indigo-600 hover:bg-indigo-700 inline-flex items-center px-5 py-2.5 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-md transition-colors">
                                         <i class="fas fa-plus mr-2"></i> Add First Item
@@ -506,7 +535,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     </p>
                     <p class="flex items-start">
                         <i class="fas fa-plus-circle mt-1 text-red-500 mr-3"></i>
-                        <span>Use the "Add Item" button to request multiple items.</span>
+                        <span>Use the "Add Item" button to request multiple items (maximum 5 items).</span>
                     </p>
                     <p class="flex items-start">
                         <i class="fas fa-edit mt-1 text-red-500 mr-3"></i>
@@ -720,7 +749,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const API_BASE = "<?php echo BASE_URL; ?>fetch/handleRFQ";
-        const IS_LOGGED_IN = <?php echo (isset($_SESSION['user']) && $_SESSION['user']['logged_in']) ? 'true' : 'false'; ?>;
+        const BASE_URL = "<?php echo BASE_URL; ?>";
+        const MAX_ITEMS = 5;
+        let IS_LOGGED_IN = <?php echo (isset($_SESSION['user']) && $_SESSION['user']['logged_in']) ? 'true' : 'false'; ?>;
         const IS_ADMIN = <?php echo (isset($_SESSION['user']) && $_SESSION['user']['logged_in'] && $_SESSION['user']['is_admin']) ? 'true' : 'false'; ?>;
 
         let SEARCH_DATA = { products: [] };
@@ -741,6 +772,19 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             }).format(amount);
+        }
+
+        function checkSession() {
+            return fetch(`${BASE_URL}fetch/check-session.php`)
+                .then(response => response.json())
+                .then(data => {
+                    IS_LOGGED_IN = data.logged_in || false;
+                    return IS_LOGGED_IN;
+                })
+                .catch(error => {
+                    console.error('Error checking session:', error);
+                    return false;
+                });
         }
 
         function checkWalletBalance() {
@@ -772,14 +816,26 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 return;
             }
 
-            if (!walletInfo.canSubmit && walletInfo.fee > 0) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-wallet mr-2"></i> Insufficient Balance';
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Submit Request';
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function updateItemLimitNotice() {
+            const notice = document.getElementById('item-limit-notice');
+            const addBtn = document.getElementById('add-item-btn');
+            const emptyAddBtn = document.getElementById('empty-add-item-btn');
+
+            if (items.length >= MAX_ITEMS) {
+                notice.style.display = 'flex';
+                addBtn.style.display = 'none';
+                emptyAddBtn.style.display = 'none';
             } else {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Submit Request';
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                notice.style.display = 'none';
+                addBtn.style.display = 'inline-flex';
+                if (items.length === 0) {
+                    emptyAddBtn.style.display = 'inline-flex';
+                }
             }
         }
 
@@ -787,7 +843,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             const modal = document.getElementById('confirmation-modal');
             const detailsContainer = document.getElementById('confirmation-details');
 
-            const isInsufficient = !walletInfo.canSubmit;
+            const isInsufficient = !walletInfo.canSubmit && walletInfo.fee > 0;
 
             detailsContainer.innerHTML = `
                 <div class="bg-gray-50 rounded-lg p-4 space-y-2">
@@ -819,13 +875,18 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
             const confirmBtn = document.getElementById('confirm-submission');
             if (isInsufficient) {
-                confirmBtn.disabled = true;
-                confirmBtn.innerHTML = '<i class="fas fa-wallet mr-2"></i> Insufficient Balance';
-                confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                confirmBtn.innerHTML = '<i class="fas fa-wallet mr-2"></i> Top Up Wallet';
+                confirmBtn.className = 'btn-topup px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors';
+                confirmBtn.onclick = function () {
+                    window.open(`${BASE_URL}account/zzimba-credit`, '_blank');
+                };
             } else {
-                confirmBtn.disabled = false;
                 confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Confirm & Submit';
-                confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                confirmBtn.className = 'btn-primary px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors';
+                confirmBtn.onclick = function () {
+                    document.getElementById('confirmation-modal').classList.remove('active');
+                    submitRFQ();
+                };
             }
 
             modal.classList.add('active');
@@ -897,28 +958,30 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         }
 
         function checkAuthenticationBeforeSubmit() {
-            if (!IS_LOGGED_IN) {
-                saveFormData();
-                notifications.error('Please log in to submit a quote request.', 'Authentication Required');
-                if (typeof openAuthModal === 'function') {
-                    openAuthModal();
-                }
-                return false;
-            }
-
-            if (IS_ADMIN) {
-                saveFormData();
-                notifications.error('Admin accounts cannot submit quote requests. Please log in with a regular user account.', 'Admin Account');
-
-                setTimeout(() => {
-                    if (confirm('Would you like to logout and login with a user account to continue?')) {
-                        logoutAndShowLogin();
+            return checkSession().then(isLoggedIn => {
+                if (!isLoggedIn) {
+                    saveFormData();
+                    notifications.error('Please log in to submit a quote request.', 'Authentication Required');
+                    if (typeof openAuthModal === 'function') {
+                        openAuthModal();
                     }
-                }, 1000);
-                return false;
-            }
+                    return false;
+                }
 
-            return true;
+                if (IS_ADMIN) {
+                    saveFormData();
+                    notifications.error('Admin accounts cannot submit quote requests. Please log in with a regular user account.', 'Admin Account');
+
+                    setTimeout(() => {
+                        if (confirm('Would you like to logout and login with a user account to continue?')) {
+                            logoutAndShowLogin();
+                        }
+                    }, 1000);
+                    return false;
+                }
+
+                return true;
+            });
         }
 
         function logoutAndShowLogin() {
@@ -1229,6 +1292,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
             if (items.length === 0) {
                 emptyState.style.display = 'flex';
+                updateItemLimitNotice();
                 return;
             }
 
@@ -1265,11 +1329,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 });
             });
 
+            updateItemLimitNotice();
             updateActivity();
             saveFormData();
         }
 
         function showAddItemModal() {
+            if (items.length >= MAX_ITEMS) {
+                notifications.error(`Maximum of ${MAX_ITEMS} items allowed per quote request.`, 'Item Limit Reached');
+                return;
+            }
+
             modalTitle.textContent = 'Add New Item';
             itemForm.reset();
             itemIndex.value = -1;
@@ -1315,6 +1385,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             };
 
             if (index === -1) {
+                if (items.length >= MAX_ITEMS) {
+                    notifications.error(`Maximum of ${MAX_ITEMS} items allowed per quote request.`, 'Item Limit Reached');
+                    return;
+                }
                 items.push(item);
             } else {
                 items[index] = item;
@@ -1418,10 +1492,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         document.getElementById('cancel-confirmation').addEventListener('click', () => {
             document.getElementById('confirmation-modal').classList.remove('active');
         });
-        document.getElementById('confirm-submission').addEventListener('click', () => {
-            document.getElementById('confirmation-modal').classList.remove('active');
-            submitRFQ();
-        });
 
         window.addEventListener('click', function (e) {
             if (e.target === itemModal) {
@@ -1505,29 +1575,36 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
 
-            if (!checkAuthenticationBeforeSubmit()) {
-                return;
-            }
+            checkAuthenticationBeforeSubmit().then(isAuthenticated => {
+                if (!isAuthenticated) {
+                    return;
+                }
 
-            let hasError = false;
+                let hasError = false;
 
-            if (!selectedLocation) {
-                notifications.error('Please select a delivery location.', 'Input Required');
-                hasError = true;
-            }
+                if (!selectedLocation) {
+                    notifications.error('Please select a delivery location.', 'Input Required');
+                    hasError = true;
+                }
 
-            if (items.length === 0) {
-                notifications.error('Please add at least one item.', 'Input Required');
-                hasError = true;
-            }
+                if (items.length === 0) {
+                    notifications.error('Please add at least one item.', 'Input Required');
+                    hasError = true;
+                }
 
-            if (hasError) return;
+                if (items.length > MAX_ITEMS) {
+                    notifications.error(`Maximum of ${MAX_ITEMS} items allowed per quote request.`, 'Item Limit Exceeded');
+                    hasError = true;
+                }
 
-            if (walletInfo.fee > 0) {
-                showConfirmationModal();
-            } else {
-                submitRFQ();
-            }
+                if (hasError) return;
+
+                if (walletInfo.fee > 0) {
+                    showConfirmationModal();
+                } else {
+                    submitRFQ();
+                }
+            });
         });
 
         updateItemsDisplay();
@@ -1538,8 +1615,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 originalCloseAuthModal();
 
                 setTimeout(() => {
-                    loadFormData();
-                    checkWalletBalance();
+                    checkSession().then(() => {
+                        loadFormData();
+                        checkWalletBalance();
+                    });
                 }, 500);
             };
         }
@@ -1548,5 +1627,5 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
 <?php
 $mainContent = ob_get_clean();
-include __DIR__ . '/master.php'; 
+include __DIR__ . '/master.php';
 ?>

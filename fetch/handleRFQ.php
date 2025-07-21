@@ -111,10 +111,11 @@ try {
                 !isset($data['location'], $data['items']) ||
                 !is_array($data['items']) ||
                 empty($data['location']) ||
-                count($data['items']) === 0
+                count($data['items']) === 0 ||
+                count($data['items']) > 5
             ) {
                 http_response_code(400);
-                die(json_encode(['error' => 'Missing or invalid required fields']));
+                die(json_encode(['error' => 'Missing or invalid required fields. Maximum 5 items allowed.']));
             }
 
             $userId = $_SESSION['user']['user_id'] ?? $_SESSION['user']['id'] ?? null;
