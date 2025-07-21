@@ -37,7 +37,7 @@ try {
     );
 
     $pdo->exec(
-        "CREATE TABLE IF NOT EXISTS request_for_quote_details (
+        "CREATE TABLE IF NOT EXISTS request_for_quote_details ( 
             RFQD_ID VARCHAR(26) PRIMARY KEY,
             RFQ_ID VARCHAR(26) NOT NULL,
             brand_name VARCHAR(255) NOT NULL,

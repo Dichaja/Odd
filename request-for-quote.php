@@ -1548,5 +1548,5 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
 <?php
 $mainContent = ob_get_clean();
-include __DIR__ . '/master.php';
+include __DIR__ . '/master.php'; 
 ?>

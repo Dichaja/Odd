@@ -290,7 +290,7 @@ final class CreditService
         }
     }
 
-    public static function processQuoteRequest(array $opts): array
+    public static function processQuoteRequest(array $opts): array 
     {
         self::boot();
 
