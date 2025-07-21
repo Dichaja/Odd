@@ -5,8 +5,8 @@ header('Content-Type: application/json');
 header('Cache-Control: no-cache, must-revalidate');
 
 if (
-    !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in']
-    || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']
+    !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] ||
+    !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']
 ) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
@@ -58,9 +58,6 @@ function getQuoteStatistics()
 
     $stats = [
         'pending_quotes' => 0,
-        'pending_quotes_value' => 0,
-        'completed_quotes' => 0,
-        'completed_quotes_value' => 0,
         'total_users' => 0,
         'active_users' => 0,
         'total_vendors' => 0,
@@ -68,17 +65,10 @@ function getQuoteStatistics()
     ];
 
     try {
-        $stmt = $pdo->prepare("SELECT COUNT(*) as count, COALESCE(SUM(fee_charged), 0) as total_value FROM request_for_quote WHERE status = 'New'");
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM request_for_quote WHERE status IN ('Processing', 'Processed')");
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $stats['pending_quotes'] = (int) $result['count'];
-        $stats['pending_quotes_value'] = (float) $result['total_value'];
-
-        $stmt = $pdo->prepare("SELECT COUNT(*) as count, COALESCE(SUM(fee_charged), 0) as total_value FROM request_for_quote WHERE status IN ('Processing', 'Processed')");
-        $stmt->execute();
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $stats['completed_quotes'] = (int) $result['count'];
-        $stats['completed_quotes_value'] = (float) $result['total_value'];
 
         $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM zzimba_users");
         $stmt->execute();
@@ -162,4 +152,3 @@ function getSystemStatus()
 
     return $status;
 }
-?>

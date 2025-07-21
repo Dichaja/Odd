@@ -29,28 +29,15 @@ function formatDateTime($dateTime)
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="stats-cards">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="stats-cards">
                 <div
                     class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200 animate-pulse">
                     <div class="flex items-center justify-between">
                         <div>
                             <div class="h-4 bg-blue-200 rounded w-24 mb-2"></div>
                             <div class="h-8 bg-blue-300 rounded w-16 mb-1"></div>
-                            <div class="h-4 bg-blue-200 rounded w-20"></div>
                         </div>
                         <div class="w-12 h-12 bg-blue-200 rounded-xl"></div>
-                    </div>
-                </div>
-
-                <div
-                    class="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-6 border border-green-200 animate-pulse">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="h-4 bg-green-200 rounded w-24 mb-2"></div>
-                            <div class="h-8 bg-green-300 rounded w-16 mb-1"></div>
-                            <div class="h-4 bg-green-200 rounded w-20"></div>
-                        </div>
-                        <div class="w-12 h-12 bg-green-200 rounded-xl"></div>
                     </div>
                 </div>
 
@@ -288,58 +275,44 @@ function formatDateTime($dateTime)
         const container = document.getElementById('stats-cards');
 
         container.innerHTML = `
-            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Pending Quotes</p>
-                        <p class="text-2xl font-bold text-blue-900 whitespace-nowrap">${stats.pending_quotes || 0}</p>
-                        <p class="text-sm font-medium text-blue-700 whitespace-nowrap">${formatCurrency(stats.pending_quotes_value || 0)}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-blue-200 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-clock text-blue-600 text-xl"></i>
-                    </div>
+        <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Quotes</p>
+                    <p class="text-2xl font-bold text-blue-900 whitespace-nowrap">${stats.pending_quotes || 0}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-200 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-file-invoice text-blue-600 text-xl"></i>
                 </div>
             </div>
+        </div>
 
-            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-6 border border-green-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Completed Quotes</p>
-                        <p class="text-2xl font-bold text-green-900 whitespace-nowrap">${stats.completed_quotes || 0}</p>
-                        <p class="text-sm font-medium text-green-700 whitespace-nowrap">${formatCurrency(stats.completed_quotes_value || 0)}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                    </div>
+        <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-2xl p-6 border border-yellow-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-yellow-600 uppercase tracking-wide">Total Users</p>
+                    <p class="text-2xl font-bold text-yellow-900 whitespace-nowrap">${stats.total_users || 0}</p>
+                    <p class="text-sm font-medium text-yellow-700 whitespace-nowrap">Active: ${stats.active_users || 0}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-200 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-users text-yellow-600 text-xl"></i>
                 </div>
             </div>
+        </div>
 
-            <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-2xl p-6 border border-yellow-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-yellow-600 uppercase tracking-wide">Total Users</p>
-                        <p class="text-2xl font-bold text-yellow-900 whitespace-nowrap">${stats.total_users || 0}</p>
-                        <p class="text-sm font-medium text-yellow-700 whitespace-nowrap">Active: ${stats.active_users || 0}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-yellow-200 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-users text-yellow-600 text-xl"></i>
-                    </div>
+        <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-6 border border-purple-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Total Vendors</p>
+                    <p class="text-2xl font-bold text-purple-900 whitespace-nowrap">${stats.total_vendors || 0}</p>
+                    <p class="text-sm font-medium text-purple-700 whitespace-nowrap">Active: ${stats.active_vendors || 0}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-200 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-store text-purple-600 text-xl"></i>
                 </div>
             </div>
-
-            <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-2xl p-6 border border-purple-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Total Vendors</p>
-                        <p class="text-2xl font-bold text-purple-900 whitespace-nowrap">${stats.total_vendors || 0}</p>
-                        <p class="text-sm font-medium text-purple-700 whitespace-nowrap">Active: ${stats.active_vendors || 0}</p>
-                    </div>
-                    <div class="w-12 h-12 bg-purple-200 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-store text-purple-600 text-xl"></i>
-                    </div>
-                </div>
-            </div>
-        `;
+        </div>
+    `;
     }
 
     function updateRecentQuotes(quotes) {
