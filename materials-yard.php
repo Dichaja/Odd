@@ -888,9 +888,7 @@ ob_start();
                     </p>
                 <?php elseif (empty($categoryId)): ?>
                     <p class="text-gray-200 mt-2 line-clamp-2 max-w-2xl hidden md:block">
-                        Discover a comprehensive range of high-quality building materials for all your construction needs.
-                        From foundation materials to finishing touches, find everything you need to bring your construction
-                        projects to life.
+                        Discover a wide range of genuine building materials and supplies for all your construction needs.
                     </p>
                 <?php endif; ?>
             </div>
