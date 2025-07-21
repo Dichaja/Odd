@@ -1,886 +1,1312 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-$pageTitle = 'Quotations';
+$pageTitle = 'Quotations Management';
 $activeNav = 'quotations';
 ob_start();
 ?>
 
-<div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold text-secondary">Quotations</h1>
-            <p class="text-sm text-gray-text mt-1">Manage and process customer quotation requests</p>
-        </div>
-        <div class="flex flex-col md:flex-row items-center gap-3">
-            <button id="export-btn" class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-download"></i>
-                <span>Export</span>
-            </button>
-            <button id="refresh-btn" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-sync-alt"></i>
-                <span>Refresh</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Date Filter Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <form id="filter-form" class="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div class="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
-                <div class="flex flex-col md:flex-row items-start md:items-center gap-2 w-full md:w-auto">
-                    <label class="text-sm font-medium text-gray-700">From:</label>
-                    <input type="datetime-local" id="startDate" class="h-10 pl-3 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-full md:w-auto">
+<div class="min-h-screen bg-gray-50" id="app-container">
+    <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Quotations Management</h1>
+                    <p class="text-gray-600 mt-1">Monitor and manage customer quotation requests</p>
                 </div>
-                <div class="flex flex-col md:flex-row items-start md:items-center gap-2 w-full md:w-auto">
-                    <label class="text-sm font-medium text-gray-700">To:</label>
-                    <input type="datetime-local" id="endDate" class="h-10 pl-3 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-full md:w-auto">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <button id="exportBtn"
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-download"></i>
+                        <span>Export Data</span>
+                    </button>
+                    <button id="refreshBtn"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Refresh</span>
+                    </button>
                 </div>
-            </div>
-            <button type="button" id="filter-btn" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-filter"></i>
-                <span>Apply Filter</span>
-            </button>
-        </form>
-    </div>
-
-    <!-- Stats Overview Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6" id="stats-overview">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">New Requests</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-new">0</h3>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <i class="fas fa-file-invoice text-blue-500 text-lg"></i>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-100">
-                <a href="#" class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
-                    <span>View all</span>
-                    <i class="fas fa-chevron-right text-xs"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">Processing</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-processing">0</h3>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-yellow-50 flex items-center justify-center">
-                    <i class="fas fa-clock text-yellow-500 text-lg"></i>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-100">
-                <a href="#" class="text-sm text-yellow-600 hover:text-yellow-800 flex items-center gap-1">
-                    <span>View all</span>
-                    <i class="fas fa-chevron-right text-xs"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">Processed</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-completed">0</h3>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
-                    <i class="fas fa-check text-green-500 text-lg"></i>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-100">
-                <a href="#" class="text-sm text-green-600 hover:text-green-800 flex items-center gap-1">
-                    <span>View all</span>
-                    <i class="fas fa-chevron-right text-xs"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">Cancelled</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-cancelled">0</h3>
-                </div>
-                <div class="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center">
-                    <i class="fas fa-times text-red-500 text-lg"></i>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-100">
-                <a href="#" class="text-sm text-red-600 hover:text-red-800 flex items-center gap-1">
-                    <span>View all</span>
-                    <i class="fas fa-chevron-right text-xs"></i>
-                </a>
             </div>
         </div>
     </div>
 
-    <!-- Quotations Table Card -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 class="text-lg font-semibold text-secondary">Quotation Requests</h2>
-            <div class="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
-                <div class="relative w-full md:w-auto">
-                    <input type="text" id="search-term" placeholder="Search requests..." class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-2">Time Period</h2>
+                    <p class="text-sm text-gray-600">Select the time range for analysis</p>
                 </div>
-                <select id="status-filter" class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-full md:w-auto">
-                    <option value="all">All Status</option>
-                    <option value="new">New</option>
-                    <option value="processing">Processing</option>
-                    <option value="processed">Processed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            data-period="daily">
+                            <i class="fas fa-calendar-day mr-2"></i>Daily
+                        </button>
+                        <button
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            data-period="weekly">
+                            <i class="fas fa-calendar-week mr-2"></i>Weekly
+                        </button>
+                        <button
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            data-period="monthly">
+                            <i class="fas fa-calendar-alt mr-2"></i>Monthly
+                        </button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input type="date" id="startDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <span class="text-gray-500 text-center sm:text-left">to</span>
+                        <input type="date" id="endDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <button id="applyCustomRange"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                            Apply
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Desktop Table -->
-        <div class="overflow-x-auto hidden md:block">
-            <table class="w-full" id="quotations-table">
-                <thead>
-                    <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Contact Person</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Company</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Location</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Items</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Status</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Submitted</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="quotations-body"></tbody>
-            </table>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 sm:p-6 border border-blue-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">New Requests</p>
+                        <p class="text-xl sm:text-2xl font-bold text-blue-900 truncate" id="newRequests">0</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-file-invoice text-blue-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl p-4 sm:p-6 border border-yellow-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-yellow-600 uppercase tracking-wide">Processing</p>
+                        <p class="text-xl sm:text-2xl font-bold text-yellow-900 truncate" id="processingRequests">0</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-clock text-yellow-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 sm:p-6 border border-green-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Processed</p>
+                        <p class="text-xl sm:text-2xl font-bold text-green-900 truncate" id="processedRequests">0</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-green-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-check text-green-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-red-50 to-red-100 rounded-xl p-4 sm:p-6 border border-red-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-red-600 uppercase tracking-wide">Cancelled</p>
+                        <p class="text-xl sm:text-2xl font-bold text-red-900 truncate" id="cancelledRequests">0</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-red-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-times text-red-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Mobile List -->
-        <div class="md:hidden p-4 space-y-4" id="quotations-mobile"></div>
-
-        <!-- Empty State -->
-        <div id="empty-state" class="hidden p-8 text-center">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                <i class="fas fa-file-invoice text-gray-400 text-xl"></i>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
+            <div class="p-4 sm:p-6 border-b border-gray-100">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Quotation Requests</h3>
+                        <p class="text-sm text-gray-600">Click on any row to view and manage quotation details</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <div class="relative">
+                            <input type="text" id="searchFilter" placeholder="Search requests..."
+                                class="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                        </div>
+                        <select id="statusFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="all">All Status</option>
+                            <option value="New">New</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Processed">Processed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <button id="clearFilters"
+                            class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Clear Filters
+                        </button>
+                    </div>
+                </div>
             </div>
-            <h3 class="text-lg font-medium text-gray-700 mb-2">No quotations found</h3>
-            <p class="text-sm text-gray-500 mb-4">Try adjusting your search or filter criteria</p>
-            <button id="reset-filters" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                Reset Filters
-            </button>
+
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-full" id="quotationsTable">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                                User Details
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                                Items
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                                Fee Charged
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                                Transport
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                                Total Amount
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                                Status
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
+                                Created
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="quotationsBody" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <div>Loading quotations...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600 text-center sm:text-left">
+                    Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> requests
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prevPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Previous
+                    </button>
+                    <span id="pageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
+                    <button id="nextPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
         </div>
+    </div>
+</div>
 
-        <!-- Pagination -->
-        <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-gray-text">
-                Showing <span id="showing-count">0</span> quotations
+<!-- Quotation Details Modal -->
+<div id="quotationModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div
+        class="relative w-full max-w-6xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[95vh] overflow-hidden">
+        <div
+            class="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100">
+            <div>
+                <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Quotation Report</h3>
+                <p class="text-sm text-gray-600 mt-1" id="modalSubtitle">Manage pricing and quotation details</p>
             </div>
-            <div class="flex items-center gap-2">
-                <button id="prev-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-left"></i>
+            <div class="flex items-center gap-3">
+                <button id="printQuotationBtn"
+                    class="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-white/50" title="Print PDF">
+                    <i class="fas fa-print text-lg"></i>
                 </button>
-                <div id="pagination-numbers" class="flex items-center">
-                    <button class="px-3 py-2 rounded-lg bg-primary text-white">1</button>
+                <button onclick="closeQuotationModal()"
+                    class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-y-auto max-h-[calc(95vh-120px)]">
+            <div id="quotationContent" class="p-6">
+                <div class="flex items-center justify-center py-12">
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-3xl text-blue-500 mb-4"></i>
+                        <p class="text-gray-600">Fetching quotation details...</p>
+                    </div>
                 </div>
-                <button id="next-page" class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 mx-auto bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900" id="confirmationTitle">Confirm Action</h3>
+                <p class="text-gray-600 mt-2" id="confirmationMessage">Are you sure you want to proceed with this
+                    action?</p>
+            </div>
+            <div class="flex justify-center gap-4">
+                <button id="cancelConfirmationBtn"
+                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                    Cancel
+                </button>
+                <button id="confirmActionBtn"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Confirm
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Quote Details Offcanvas -->
-<div id="quoteDetailsOffcanvas" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/20" onclick="hideQuoteDetails()"></div>
-    <div class="absolute inset-y-0 right-0 w-full max-w-2xl bg-white shadow-lg transform translate-x-full transition-transform duration-300">
-        <div class="flex flex-col h-full">
-            <div class="flex items-center justify-between p-6 border-b border-gray-100">
-                <h3 class="text-lg font-semibold text-secondary" id="offcanvas-title"></h3>
-                <button onclick="hideQuoteDetails()" class="text-gray-400 hover:text-gray-500">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-6" id="quoteDetailsContent"></div>
-        </div>
-    </div>
+<!-- Hidden div for PDF generation -->
+<div id="pdfContent"
+    style="position: absolute; left: -9999px; top: -9999px; width: 297mm; background: white; font-family: Arial, sans-serif; color: #333; padding: 10mm;">
 </div>
 
-<!-- Confirm Modal -->
-<div id="confirmModal" class="fixed inset-0 z-50 hidden transition-opacity duration-300">
-    <div class="absolute inset-0 bg-black/20" onclick="closeConfirmModal()"></div>
-    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 opacity-0 transform scale-95" id="confirmModalBox">
-        <h3 class="text-lg font-medium text-gray-800 mb-4" id="confirmModalTitle">Confirm Action</h3>
-        <p class="text-sm text-gray-600 mb-6" id="confirmModalMessage">Are you sure?</p>
-        <div class="flex justify-end gap-3">
-            <button class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50" onclick="closeConfirmModal()">Cancel</button>
-            <button class="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90" id="confirmModalYesBtn">Confirm</button>
-        </div>
-    </div>
-</div>
-
-<!-- Success Toast -->
-<div id="successToast" class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-md hidden z-50">
-    <div class="flex items-center">
-        <i class="fas fa-check-circle mr-2"></i>
-        <div>
-            <h4 class="font-medium" id="successToastTitle">Success</h4>
-            <p class="text-sm" id="successToastMessage">Operation completed successfully!</p>
-        </div>
-    </div>
-</div>
-
-<!-- Error Toast -->
-<div id="errorToast" class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md hidden z-50">
-    <div class="flex items-center">
-        <i class="fas fa-exclamation-circle mr-2"></i>
-        <div>
-            <h4 class="font-medium" id="errorToastTitle">Error</h4>
-            <p class="text-sm" id="errorToastMessage">Something went wrong!</p>
-        </div>
-    </div>
-</div>
-
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
-        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p class="text-gray-700">Loading data...</p>
-    </div>
-</div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>
-    const API_BASE = "<?php echo BASE_URL; ?>admin/fetch/manageQuotations";
     let currentPage = 1;
-    let totalPages = 1;
+    let itemsPerPage = 20;
+    let currentPeriod = 'daily';
+    let currentQuotationId = null;
+    let currentQuotationData = null;
+    let pendingAction = null;
 
-    // Notifications system
-    const notifications = {
-        success: function(message, title = 'Success') {
-            const toast = document.getElementById('successToast');
-            document.getElementById('successToastTitle').textContent = title;
-            document.getElementById('successToastMessage').textContent = message;
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
-        },
-        error: function(message, title = 'Error') {
-            const toast = document.getElementById('errorToast');
-            document.getElementById('errorToastTitle').textContent = title;
-            document.getElementById('errorToastMessage').textContent = message;
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeDateFilters();
+        setupEventListeners();
+        loadQuotations();
+    });
+
+    function initializeDateFilters() {
+        setDateRangeForPeriod('daily');
+    }
+
+    function setDateRangeForPeriod(period) {
+        const today = new Date();
+        let startDate, endDate;
+
+        switch (period) {
+            case 'daily':
+                startDate = new Date(today);
+                endDate = new Date(today);
+                break;
+            case 'weekly':
+                const dayOfWeek = today.getDay();
+                startDate = new Date(today);
+                startDate.setDate(today.getDate() - dayOfWeek);
+                endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+                break;
+            case 'monthly':
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                endDate = new Date(today);
+                break;
+            default:
+                startDate = new Date(today);
+                endDate = new Date(today);
         }
-    };
 
-    // Loading overlay
-    function showLoading() {
-        document.getElementById('loadingOverlay').classList.remove('hidden');
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+
+        currentPeriod = period;
+        loadQuotations();
     }
 
-    function hideLoading() {
-        document.getElementById('loadingOverlay').classList.add('hidden');
-    }
+    function loadQuotations() {
+        const params = new URLSearchParams({
+            action: 'getQuotations',
+            start_date: document.getElementById('startDate').value,
+            end_date: document.getElementById('endDate').value,
+            search_term: document.getElementById('searchFilter').value,
+            status_filter: document.getElementById('statusFilter').value,
+            page: currentPage,
+            limit: itemsPerPage
+        });
 
-    function formatDate(dateStr) {
-        const d = new Date(dateStr);
-        const options = {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
-            hour12: true
-        };
-        return d.toLocaleString('en-US', options);
-    }
-
-    function setDateTimeInputs(startDt, endDt) {
-        document.getElementById('startDate').value = startDt;
-        document.getElementById('endDate').value = endDt;
-    }
-
-    function getQuotations() {
-        const filterBtn = document.getElementById('filter-btn');
-        filterBtn.disabled = true;
-        const originalText = filterBtn.innerHTML;
-        filterBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Filtering...';
-
-        showLoading();
-
-        const start = document.getElementById('startDate').value;
-        const end = document.getElementById('endDate').value;
-        const search = document.getElementById('search-term').value;
-        const status = document.getElementById('status-filter').value;
-
-        fetch(`${API_BASE}/getQuotations?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&search=${encodeURIComponent(search)}&status=${status}`)
+        fetch(`fetch/manageQuotations.php?${params}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update stats
-                    document.getElementById('stat-new').innerText = data.stats.new;
-                    document.getElementById('stat-processing').innerText = data.stats.processing;
-                    document.getElementById('stat-completed').innerText = data.stats.processed;
-                    document.getElementById('stat-cancelled').innerText = data.stats.cancelled;
-
-                    // Update showing count
-                    document.getElementById('showing-count').innerText = data.quotations.length;
-
-                    // Clear existing data
-                    const tbody = document.getElementById('quotations-body');
-                    tbody.innerHTML = "";
-                    const mobileContainer = document.getElementById('quotations-mobile');
-                    mobileContainer.innerHTML = "";
-
-                    // Show empty state if no results
-                    if (data.quotations.length === 0) {
-                        document.getElementById('empty-state').classList.remove('hidden');
-                        document.getElementById('quotations-table').classList.add('hidden');
-                    } else {
-                        document.getElementById('empty-state').classList.add('hidden');
-                        document.getElementById('quotations-table').classList.remove('hidden');
-                    }
-
-                    // Populate data
-                    data.quotations.forEach(q => {
-                        // Desktop row
-                        const tr = document.createElement('tr');
-                        tr.className = "border-b border-gray-100 hover:bg-gray-50 transition-colors";
-
-                        const companyDisplay = q.company_name ? q.company_name : '<i class="text-gray-400 text-sm">No Company</i>';
-
-                        tr.innerHTML = `
-                            <td class="px-6 py-4">
-                                <div class="font-medium text-secondary">${q.contact_person}</div>
-                                <div class="text-sm text-gray-400">${q.phone}</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="font-medium text-secondary">${companyDisplay}</div>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">${q.site_location}</td>
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    ${q.items_count} items
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${q.status_class}">
-                                    ${q.status.charAt(0).toUpperCase() + q.status.slice(1)}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-text">${formatDate(q.created_at)}</td>
-                            <td class="px-6 py-4">
-                                <button 
-                                    onclick="showQuoteDetails('${q.id}')" 
-                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                                    data-tippy-content="View Details"
-                                >
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </td>
-                        `;
-
-                        tbody.appendChild(tr);
-
-                        // Mobile card
-                        const mobileRow = document.createElement('div');
-                        mobileRow.className = "bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden";
-                        mobileRow.setAttribute("data-quote-id", q.id);
-
-                        mobileRow.innerHTML = `
-                            <div class="mobile-row-header p-4 flex justify-between items-center cursor-pointer">
-                                <div>
-                                    <div class="font-medium text-secondary">${q.contact_person}</div>
-                                    <div class="text-sm text-gray-400">${companyDisplay}</div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${q.status_class}">
-                                        ${q.status.charAt(0).toUpperCase() + q.status.slice(1)}
-                                    </span>
-                                    <svg class="accordion-arrow w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="accordion-content hidden">
-                                <div class="px-4 pb-4 space-y-4">
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <div class="text-xs text-gray-500">Phone</div>
-                                            <div class="text-sm font-medium">${q.phone}</div>
-                                        </div>
-                                        <div>
-                                            <div class="text-xs text-gray-500">Items</div>
-                                            <div class="text-sm font-medium">${q.items_count} items</div>
-                                        </div>
-                                        <div>
-                                            <div class="text-xs text-gray-500">Location</div>
-                                            <div class="text-sm font-medium">${q.site_location}</div>
-                                        </div>
-                                        <div>
-                                            <div class="text-xs text-gray-500">Submitted</div>
-                                            <div class="text-sm font-medium">${formatDate(q.created_at)}</div>
-                                        </div>
-                                    </div>
-                                    <button 
-                                        onclick="showQuoteDetails('${q.id}')" 
-                                        class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <i class="fas fa-eye"></i>
-                                        <span>View Details</span>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-
-                        mobileContainer.appendChild(mobileRow);
-                    });
-
-                    // Initialize accordion functionality for mobile
-                    initAccordion();
-
-                    // Initialize tooltips
-                    if (typeof tippy !== 'undefined') {
-                        tippy('[data-tippy-content]', {
-                            placement: 'top',
-                            arrow: true,
-                            theme: 'light',
-                        });
-                    }
+                    renderQuotationsTable(data.quotationData.data, data.quotationData.total, data.quotationData.page);
+                    updateStatistics(data.stats);
                 } else {
-                    notifications.error('Failed to load quotations. Please try again.');
+                    console.error('Error loading quotations:', data.error);
+                    showError('Failed to load quotations');
                 }
             })
             .catch(error => {
-                console.error('Error fetching quotations:', error);
-                notifications.error('An error occurred while fetching data.');
-            })
-            .finally(() => {
-                filterBtn.disabled = false;
-                filterBtn.innerHTML = originalText;
-                hideLoading();
+                console.error('Error:', error);
+                showError('An error occurred while loading quotations');
             });
     }
 
-    function initAccordion() {
-        document.querySelectorAll('.mobile-row-header').forEach(header => {
-            header.addEventListener('click', function(e) {
-                e.stopPropagation();
-
-                const content = this.nextElementSibling;
-                const arrow = this.querySelector('.accordion-arrow');
-
-                // Close all other accordions
-                document.querySelectorAll('.accordion-content').forEach(item => {
-                    if (item !== content && !item.classList.contains('hidden')) {
-                        item.classList.add('hidden');
-                        const otherArrow = item.previousElementSibling.querySelector('.accordion-arrow');
-                        if (otherArrow) otherArrow.classList.remove('active');
-                    }
-                });
-
-                // Toggle current accordion
-                content.classList.toggle('hidden');
-                arrow.classList.toggle('active');
-            });
-        });
+    function showError(message) {
+        const tbody = document.getElementById('quotationsBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-red-500">
+                    <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                    <div>${message}</div>
+                </td>
+            </tr>
+        `;
     }
 
-    function filterQuotations() {
-        getQuotations();
+    function updateStatistics(stats) {
+        document.getElementById('newRequests').textContent = parseInt(stats.new || 0).toLocaleString();
+        document.getElementById('processingRequests').textContent = parseInt(stats.processing || 0).toLocaleString();
+        document.getElementById('processedRequests').textContent = parseInt(stats.processed || 0).toLocaleString();
+        document.getElementById('cancelledRequests').textContent = parseInt(stats.cancelled || 0).toLocaleString();
     }
 
-    function showQuoteDetails(id) {
-        showLoading();
+    function renderQuotationsTable(data, total, page) {
+        const tbody = document.getElementById('quotationsBody');
 
-        fetch(`${API_BASE}/getRFQDetails?id=${id}`)
+        if (data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                        <i class="fas fa-inbox text-2xl mb-2"></i>
+                        <div>No quotations found</div>
+                    </td>
+                </tr>
+            `;
+            updatePagination(0, 1);
+            return;
+        }
+
+        tbody.innerHTML = data.map(item => {
+            const statusBadge = getStatusBadge(item.status);
+            const totalAmount = calculateTotalAmount(item);
+
+            return `
+            <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewQuotationDetails('${item.RFQ_ID}')">
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="font-medium text-gray-900 text-sm">${item.full_name || 'N/A'}</div>
+                    <div class="text-xs text-gray-500">${item.user_email || 'N/A'}</div>
+                </td>
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        ${item.items_count}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                    <span class="text-sm font-medium text-gray-900">UGX ${formatCurrency(item.fee_charged)}</span>
+                </td>
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                    <span class="text-sm font-medium text-gray-900">UGX ${formatCurrency(item.transport)}</span>
+                </td>
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                    <span class="text-sm font-bold text-green-600">UGX ${formatCurrency(totalAmount)}</span>
+                </td>
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                    ${statusBadge}
+                </td>
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                    <div class="text-xs text-gray-900">${formatDate(item.created_at)}</div>
+                    <div class="text-xs text-gray-500">${formatTime(item.created_at)}</div>
+                </td>
+            </tr>
+        `;
+        }).join('');
+
+        updatePagination(total, page);
+    }
+
+    function calculateTotalAmount(item) {
+        const itemsTotal = parseFloat(item.items_total || 0);
+        const transport = parseFloat(item.transport || 0);
+        return itemsTotal + transport;
+    }
+
+    function getStatusBadge(status) {
+        const statusLower = status.toLowerCase();
+        if (statusLower === 'new') {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">New</span>';
+        } else if (statusLower === 'processing') {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Processing</span>';
+        } else if (statusLower === 'processed') {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Processed</span>';
+        } else if (statusLower === 'cancelled') {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Cancelled</span>';
+        }
+        return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-UG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount || 0);
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const day = date.getDate();
+        const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
+            day === 2 || day === 22 ? 'nd' :
+                day === 3 || day === 23 ? 'rd' : 'th';
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        return `${month} ${day}${suffix}, ${year}`;
+    }
+
+    function formatTime(dateString) {
+        const date = new Date(dateString);
+        let hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+        return `${hours}:${minutesStr}${ampm}`;
+    }
+
+    function updatePagination(total, page) {
+        const totalPages = Math.ceil(total / itemsPerPage);
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, total);
+
+        document.getElementById('showingCount').textContent = total > 0 ? `${startIndex + 1}-${endIndex}` : '0';
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('pageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
+
+        document.getElementById('prevPage').disabled = page === 1;
+        document.getElementById('nextPage').disabled = page === totalPages || totalPages === 0;
+    }
+
+    function viewQuotationDetails(id) {
+        currentQuotationId = id;
+        document.getElementById('quotationModal').classList.remove('hidden');
+
+        // Show loading state
+        document.getElementById('quotationContent').innerHTML = `
+            <div class="flex items-center justify-center py-12">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin text-3xl text-blue-500 mb-4"></i>
+                    <p class="text-gray-600">Fetching quotation details...</p>
+                </div>
+            </div>
+        `;
+
+        fetch(`fetch/manageQuotations.php?action=getRFQDetails&id=${id}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const offcanvas = document.getElementById('quoteDetailsOffcanvas');
-                    const content = document.getElementById('quoteDetailsContent');
-
-                    document.getElementById('offcanvas-title').innerText = data.quotation.company_name || 'Quotation Details';
-
-                    const st = data.quotation.status.toLowerCase();
-                    let primaryAction = '';
-                    let secondaryAction = '';
-
-                    if (st === "new") {
-                        primaryAction = `<button onclick="showConfirmModal('process','${id}')" class="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                            <i class="fas fa-cog"></i>
-                            <span>Process Quote</span>
-                        </button>`;
-                        secondaryAction = `<button onclick="showConfirmModal('cancel','${id}')" class="flex-1 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                            <i class="fas fa-times"></i>
-                            <span>Cancel Quote</span>
-                        </button>`;
-                    } else if (st === "processing") {
-                        primaryAction = `<button onclick="showConfirmModal('complete','${id}')" class="flex-1 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2">
-                            <i class="fas fa-check"></i>
-                            <span>Mark Processed</span>
-                        </button>`;
-                        secondaryAction = `<button onclick="showConfirmModal('cancel','${id}')" class="flex-1 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-                            <i class="fas fa-times"></i>
-                            <span>Cancel Quote</span>
-                        </button>`;
-                    } else {
-                        primaryAction = `<button disabled class="flex-1 bg-gray-200 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed flex items-center justify-center gap-2">
-                            <i class="fas fa-ban"></i>
-                            <span>No Actions</span>
-                        </button>`;
-                        secondaryAction = `<button disabled class="flex-1 border border-gray-200 text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed flex items-center justify-center gap-2">
-                            <i class="fas fa-ban"></i>
-                            <span>No Actions</span>
-                        </button>`;
-                    }
-
-                    content.innerHTML = `
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h4 class="text-xl font-semibold text-secondary">${data.quotation.company_name || '<i class="text-gray-400">No Company</i>'}</h4>
-                                <p class="text-sm text-gray-text mt-1">Submitted on ${formatDate(data.quotation.created_at)}</p>
-                            </div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${data.quotation.status_class}">
-                                ${data.quotation.status.charAt(0).toUpperCase() + data.quotation.status.slice(1)}
-                            </span>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="space-y-1">
-                                <label class="text-sm text-gray-text">Contact Person</label>
-                                <div class="font-medium text-secondary">${data.quotation.contact_person}</div>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-sm text-gray-text">Phone/WhatsApp</label>
-                                <div class="font-medium text-secondary">${data.quotation.phone}</div>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-sm text-gray-text">Email</label>
-                                <div class="font-medium text-secondary">${data.quotation.email}</div>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-sm text-gray-text">Site Location</label>
-                                <div class="font-medium text-secondary">${data.quotation.site_location}</div>
+                    currentQuotationData = data;
+                    showQuotationModal(data.quotation, data.items);
+                } else {
+                    document.getElementById('quotationContent').innerHTML = `
+                        <div class="flex items-center justify-center py-12">
+                            <div class="text-center text-red-500">
+                                <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                                <p>Failed to load quotation details</p>
                             </div>
                         </div>
-                        
-                        <div class="border-t border-gray-100 pt-6">
-                            <h4 class="font-medium text-secondary mb-4">Requested Items</h4>
-                            <div class="space-y-4">
-                                ${data.items.map(item => `
-                                <div class="bg-gray-50 p-4 rounded-lg">
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <div class="text-sm text-gray-text">Brand</div>
-                                            <div class="font-medium text-secondary">${item.brand_name}</div>
-                                        </div>
-                                        <div>
-                                            <div class="text-sm text-gray-text">Size</div>
-                                            <div class="font-medium text-secondary">${item.size}</div>
-                                        </div>
-                                        <div>
-                                            <div class="text-sm text-gray-text">Quantity</div>
-                                            <div class="font-medium text-secondary">${item.quantity}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                `).join('')}
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('quotationContent').innerHTML = `
+                    <div class="flex items-center justify-center py-12">
+                        <div class="text-center text-red-500">
+                            <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                            <p>An error occurred while loading details</p>
+                        </div>
+                    </div>
+                `;
+            });
+    }
+
+    function createGoogleMapsLink(coordinates) {
+        if (!coordinates) return '#';
+        // Extract lat,lng from coordinates string
+        const coords = coordinates.match(/-?\d+\.?\d*/g);
+        if (coords && coords.length >= 2) {
+            return `https://www.google.com/maps?q=${coords[0]},${coords[1]}`;
+        }
+        return '#';
+    }
+
+    function showQuotationModal(quotation, items) {
+        const content = document.getElementById('quotationContent');
+        const canEdit = quotation.status.toLowerCase() !== 'cancelled';
+        const isProcessed = quotation.status.toLowerCase() === 'processed';
+
+        let itemsTotal = 0;
+        let allItemsPriced = true;
+
+        items.forEach(item => {
+            if (item.unit_price && item.unit_price > 0) {
+                itemsTotal += parseFloat(item.unit_price) * parseInt(item.quantity);
+            } else {
+                allItemsPriced = false;
+            }
+        });
+
+        const transport = parseFloat(quotation.transport || 0);
+        const feeCharged = parseFloat(quotation.fee_charged || 0);
+        const grandTotal = itemsTotal + transport;
+
+        // Create clickable links
+        const emailLink = quotation.user_email && quotation.user_email !== 'N/A' ?
+            `<a href="mailto:${quotation.user_email}" class="text-blue-600 hover:text-blue-800 underline">${quotation.user_email}</a>` :
+            (quotation.user_email || 'N/A');
+
+        const phoneLink = quotation.phone && quotation.phone !== 'N/A' ?
+            `<a href="tel:${quotation.phone}" class="text-blue-600 hover:text-blue-800 underline">${quotation.phone}</a>` :
+            (quotation.phone || 'N/A');
+
+        const coordinatesLink = quotation.coordinates ?
+            `<a href="${createGoogleMapsLink(quotation.coordinates)}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${quotation.coordinates}</a>` :
+            '';
+
+        content.innerHTML = `
+            <div class="space-y-6">
+                <!-- Header Information -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-2">Request Information</h4>
+                            <div class="space-y-1 text-sm">
+                                <div><span class="text-gray-600">Name:</span> <span class="font-medium">${quotation.full_name || 'N/A'}</span></div>
+                                <div><span class="text-gray-600">Email:</span> <span class="font-medium">${emailLink}</span></div>
+                                <div><span class="text-gray-600">Phone:</span> <span class="font-medium">${phoneLink}</span></div>
+                                <div><span class="text-gray-600">Status:</span> ${getStatusBadge(quotation.status)}</div>
                             </div>
                         </div>
-                        
-                        <div class="border-t border-gray-100 pt-6">
-                            <h4 class="font-medium text-secondary mb-4">Actions</h4>
-                            <div class="flex flex-col md:flex-row gap-4">
-                                ${primaryAction}
-                                ${secondaryAction}
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-2">Location Details</h4>
+                            <div class="space-y-1 text-sm">
+                                <div><span class="text-gray-600">Site Location:</span></div>
+                                <div class="font-medium">${quotation.site_location}</div>
+                                ${coordinatesLink ? `<div class="text-gray-500">${coordinatesLink}</div>` : ''}
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-2">Dates</h4>
+                            <div class="space-y-1 text-sm">
+                                <div><span class="text-gray-600">Created:</span> <span class="font-medium">${formatDate(quotation.created_at)} ${formatTime(quotation.created_at)}</span></div>
+                                <div><span class="text-gray-600">Updated:</span> <span class="font-medium">${formatDate(quotation.updated_at)} ${formatTime(quotation.updated_at)}</span></div>
                             </div>
                         </div>
                     </div>
-                    `;
+                </div>
+                
+                <!-- Items Table -->
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-3">Requested Items</h4>
+                    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Brand/Material</th>
+                                    <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Size/Specification</th>
+                                    <th class="px-4 py-3 text-center text-sm font-medium text-gray-600">Quantity</th>
+                                    <th class="px-4 py-3 text-center text-sm font-medium text-gray-600">Unit Price (UGX)</th>
+                                    <th class="px-4 py-3 text-center text-sm font-medium text-gray-600">Total (UGX)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${items.map((item, index) => {
+            const unitPrice = parseFloat(item.unit_price || 0);
+            const quantity = parseInt(item.quantity);
+            const total = unitPrice * quantity;
 
-                    offcanvas.classList.remove('hidden');
-                    setTimeout(() => {
-                        offcanvas.querySelector('.transform').classList.remove('translate-x-full');
-                    }, 10);
-                } else {
-                    notifications.error('Failed to load quotation details.');
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching quotation details:', error);
-                notifications.error('An error occurred while fetching details.');
-            })
-            .finally(() => {
-                hideLoading();
-            });
+            return `
+                                        <tr>
+                                            <td class="px-4 py-3 text-sm">${item.brand_name}</td>
+                                            <td class="px-4 py-3 text-sm">${item.size}</td>
+                                            <td class="px-4 py-3 text-sm text-center">${quantity}</td>
+                                            <td class="px-4 py-3 text-center">
+                                                ${canEdit && !isProcessed ? `
+                                                    <input type="number" 
+                                                           value="${unitPrice}" 
+                                                           min="0" 
+                                                           step="0.01"
+                                                           class="w-24 px-2 py-1 text-sm border border-gray-300 rounded text-center unit-price-input"
+                                                           data-item-id="${item.RFQD_ID}"
+                                                           onchange="updateItemPrice('${item.RFQD_ID}', this.value)">
+                                                ` : `
+                                                    <span class="text-sm font-medium">${formatCurrency(unitPrice)}</span>
+                                                `}
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-center font-medium">
+                                                ${formatCurrency(total)}
+                                            </td>
+                                        </tr>
+                                    `;
+        }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Transport and Totals -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-3">Transport Cost</h4>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm text-gray-600">Transport:</span>
+                                ${canEdit && !isProcessed ? `
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm">UGX</span>
+                                        <input type="number" 
+                                               value="${transport}" 
+                                               min="0" 
+                                               step="0.01"
+                                               class="w-32 px-3 py-2 text-sm border border-gray-300 rounded"
+                                               id="transportCost"
+                                               onchange="updateTransportCost(this.value)">
+                                    </div>
+                                ` : `
+                                    <span class="text-sm font-medium">UGX ${formatCurrency(transport)}</span>
+                                `}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-3">Summary</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Items Subtotal:</span>
+                                    <span class="font-medium">UGX ${formatCurrency(itemsTotal)}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Transport Cost:</span>
+                                    <span class="font-medium">UGX ${formatCurrency(transport)}</span>
+                                </div>
+                                <div class="flex justify-between border-t pt-2 text-lg font-bold">
+                                    <span>Total Amount:</span>
+                                    <span class="text-green-600">UGX ${formatCurrency(grandTotal)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button onclick="closeQuotationModal()" 
+                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Close
+                    </button>
+                    ${getModalActionButtons(quotation.status, quotation.RFQ_ID, allItemsPriced, transport > 0)}
+                </div>
+            </div>
+        `;
     }
 
-    function hideQuoteDetails() {
-        const offcanvas = document.getElementById('quoteDetailsOffcanvas');
-        offcanvas.querySelector('.transform').classList.add('translate-x-full');
-        setTimeout(() => {
-            offcanvas.classList.add('hidden');
-        }, 300);
+    function getModalActionButtons(status, id, allItemsPriced, hasTransport) {
+        const statusLower = status.toLowerCase();
+
+        if (statusLower === 'new') {
+            return `
+                <button onclick="showConfirmationModal('${id}', 'cancel')" 
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Cancel Request
+                </button>
+            `;
+        } else if (statusLower === 'processing') {
+            if (allItemsPriced && hasTransport) {
+                return `
+                    <button onclick="showConfirmationModal('${id}', 'process')" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        Mark as Processed
+                    </button>
+                    <button onclick="showConfirmationModal('${id}', 'cancel')" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                        Cancel Request
+                    </button>
+                `;
+            } else {
+                return `
+                    <button disabled 
+                        class="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed"
+                        title="All items must be priced and transport cost set">
+                        Complete Pricing First
+                    </button>
+                    <button onclick="showConfirmationModal('${id}', 'cancel')" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                        Cancel Request
+                    </button>
+                `;
+            }
+        }
+        return '';
     }
 
-    let pendingAction = null;
-    let pendingId = null;
+    function showConfirmationModal(id, action) {
+        const modal = document.getElementById('confirmationModal');
+        const titleElement = document.getElementById('confirmationTitle');
+        const messageElement = document.getElementById('confirmationMessage');
+        const confirmButton = document.getElementById('confirmActionBtn');
 
-    function showConfirmModal(action, id) {
-        pendingAction = action;
-        pendingId = id;
-        const modal = document.getElementById('confirmModal');
-        const box = document.getElementById('confirmModalBox');
-        const title = document.getElementById('confirmModalTitle');
-        const message = document.getElementById('confirmModalMessage');
-        const confirmBtn = document.getElementById('confirmModalYesBtn');
+        pendingAction = { id, action };
 
-        if (action === 'process') {
-            title.innerText = "Process Quotation";
-            message.innerText = "Are you sure you want to process this quotation?";
-            confirmBtn.className = "px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90";
-        } else if (action === 'complete') {
-            title.innerText = "Mark Quotation Processed";
-            message.innerText = "Are you sure you want to mark this quotation as processed?";
-            confirmBtn.className = "px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600";
-        } else if (action === 'cancel') {
-            title.innerText = "Cancel Quotation";
-            message.innerText = "Are you sure you want to cancel this quotation?";
-            confirmBtn.className = "px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600";
+        if (action === 'cancel') {
+            titleElement.textContent = 'Cancel Quotation';
+            messageElement.textContent = 'Are you sure you want to cancel this quotation? This action cannot be undone.';
+            confirmButton.textContent = 'Yes, Cancel';
+            confirmButton.className = 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors';
+        } else if (action === 'process') {
+            titleElement.textContent = 'Mark as Processed';
+            messageElement.textContent = 'Are you sure you want to mark this quotation as processed? This will finalize the quotation.';
+            confirmButton.textContent = 'Yes, Process';
+            confirmButton.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors';
         }
 
         modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.classList.add('opacity-100');
-            box.classList.remove('opacity-0', 'scale-95');
-        }, 10);
     }
 
-    function closeConfirmModal() {
-        const modal = document.getElementById('confirmModal');
-        const box = document.getElementById('confirmModalBox');
-        modal.classList.remove('opacity-100');
-        box.classList.add('opacity-0', 'scale-95');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-        }, 200);
+    function closeConfirmationModal() {
+        document.getElementById('confirmationModal').classList.add('hidden');
         pendingAction = null;
-        pendingId = null;
     }
 
-    function updateQuotationStatus(action, id) {
-        showLoading();
+    function executeConfirmedAction() {
+        if (!pendingAction) return;
 
-        fetch(`${API_BASE}/${action}RFQ?id=${id}`, {
-                method: 'POST'
+        const { id, action } = pendingAction;
+        closeConfirmationModal();
+
+        if (action === 'cancel') {
+            updateQuotationStatus(id, 'Cancelled');
+        } else if (action === 'process') {
+            updateQuotationStatus(id, 'Processed');
+        }
+    }
+
+    function updateItemPrice(itemId, price) {
+        fetch('fetch/manageQuotations.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'updateItemPrice',
+                item_id: itemId,
+                price: parseFloat(price) || 0
             })
+        })
             .then(response => response.json())
             .then(data => {
-                closeConfirmModal();
                 if (data.success) {
-                    notifications.success('Quotation updated successfully.', 'Action Completed');
-                    hideQuoteDetails();
-                    getQuotations();
-                } else {
-                    notifications.error('Action failed. Please try again.', 'Error');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating quotation:', error);
-                notifications.error('An error occurred while updating the quotation.');
-            })
-            .finally(() => {
-                hideLoading();
-            });
-    }
-
-    function initServerTime() {
-        showLoading();
-
-        fetch(`${API_BASE}/getServerTime`)
-            .then(r => r.json())
-            .then(d => {
-                if (!d.success) {
-                    notifications.error('Failed to get server time.');
-                    return;
-                }
-
-                const nowStr = d.now;
-                const parts = nowStr.split(' ');
-                const datePart = parts[0].split('-');
-                const timePart = parts[1].split(':');
-                const currentYear = parseInt(datePart[0], 10);
-                const currentMonth = parseInt(datePart[1], 10) - 1;
-                const currentDay = parseInt(datePart[2], 10);
-                const currentHour = parseInt(timePart[0], 10);
-                const currentMin = parseInt(timePart[1], 10);
-                const startOfMonth = new Date(currentYear, currentMonth, 1, 0, 0, 0);
-                const endNow = new Date(currentYear, currentMonth, currentDay, currentHour, currentMin, 0);
-                setDateTimeInputs(formatToDateTimeLocal(startOfMonth), formatToDateTimeLocal(endNow));
-                getQuotations();
-            })
-            .catch(error => {
-                console.error('Error fetching server time:', error);
-                notifications.error('An error occurred while fetching server time.');
-            })
-            .finally(() => {
-                hideLoading();
-            });
-    }
-
-    function formatToDateTimeLocal(jsDate) {
-        const yyyy = jsDate.getFullYear();
-        const mm = String(jsDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(jsDate.getDate()).padStart(2, '0');
-        const hh = String(jsDate.getHours()).padStart(2, '0');
-        const min = String(jsDate.getMinutes()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
-    }
-
-    // Event Listeners
-    document.getElementById('filter-btn').addEventListener('click', filterQuotations);
-    document.getElementById('search-term').addEventListener('keyup', function(e) {
-        if (e.key === "Enter") filterQuotations();
-    });
-    document.getElementById('status-filter').addEventListener('change', filterQuotations);
-    document.getElementById('confirmModalYesBtn').addEventListener('click', function() {
-        if (!pendingAction || !pendingId) {
-            closeConfirmModal();
-            return;
-        }
-        updateQuotationStatus(pendingAction, pendingId);
-    });
-    document.getElementById('reset-filters').addEventListener('click', function() {
-        document.getElementById('search-term').value = '';
-        document.getElementById('status-filter').value = 'all';
-        initServerTime();
-    });
-    document.getElementById('refresh-btn').addEventListener('click', function() {
-        getQuotations();
-        notifications.success('Data refreshed successfully.');
-    });
-    document.getElementById('export-btn').addEventListener('click', function() {
-        notifications.success('Export functionality will be implemented soon.');
-    });
-
-    // Initialize
-    window.addEventListener('load', function() {
-        initServerTime();
-    });
-
-    // Accordion functionality for mobile
-    function initAccordion() {
-        document.querySelectorAll('.mobile-row-header').forEach(header => {
-            header.addEventListener('click', function(e) {
-                e.stopPropagation();
-
-                const content = this.nextElementSibling;
-                const arrow = this.querySelector('.accordion-arrow');
-
-                // Close all other accordions
-                document.querySelectorAll('.accordion-content').forEach(item => {
-                    if (item !== content && !item.classList.contains('hidden')) {
-                        item.classList.add('hidden');
-                        const otherArrow = item.previousElementSibling.querySelector('.accordion-arrow');
-                        if (otherArrow) otherArrow.classList.remove('active');
+                    // Check if this triggers status change to processing
+                    if (data.status_changed) {
+                        // Refresh the modal to show updated status
+                        viewQuotationDetails(currentQuotationId);
+                        // Refresh the main table
+                        loadQuotations();
+                    } else {
+                        // Just refresh the modal to update totals
+                        viewQuotationDetails(currentQuotationId);
                     }
+                } else {
+                    alert('Failed to update price: ' + (data.error || 'Unknown error'));
+                    // Revert the input value
+                    document.querySelector(`input[data-item-id="${itemId}"]`).value = data.old_price || 0;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating price');
+            });
+    }
+
+    function updateTransportCost(cost) {
+        fetch('fetch/manageQuotations.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'updateTransportCost',
+                rfq_id: currentQuotationId,
+                transport: parseFloat(cost) || 0
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Check if this triggers status change to processing
+                    if (data.status_changed) {
+                        // Refresh the modal to show updated status
+                        viewQuotationDetails(currentQuotationId);
+                        // Refresh the main table
+                        loadQuotations();
+                    } else {
+                        // Just refresh the modal to update totals
+                        viewQuotationDetails(currentQuotationId);
+                    }
+                } else {
+                    alert('Failed to update transport cost: ' + (data.error || 'Unknown error'));
+                    // Revert the input value
+                    document.getElementById('transportCost').value = data.old_transport || 0;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating transport cost');
+            });
+    }
+
+    function updateQuotationStatus(id, newStatus) {
+        const action = newStatus === 'Processing' ? 'process' :
+            newStatus === 'Processed' ? 'complete' : 'cancel';
+
+        fetch(`fetch/manageQuotations.php?action=${action}RFQ&id=${id}`, {
+            method: 'POST'
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeQuotationModal();
+                    loadQuotations();
+                    alert('Status updated successfully');
+                } else {
+                    alert('Failed to update status: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating status');
+            });
+    }
+
+    function closeQuotationModal() {
+        document.getElementById('quotationModal').classList.add('hidden');
+        currentQuotationId = null;
+        currentQuotationData = null;
+    }
+
+    function generatePDF() {
+        if (!currentQuotationData) return;
+
+        const { quotation, items } = currentQuotationData;
+        const pdfContainer = document.getElementById('pdfContent');
+
+        // Calculate totals
+        let itemsTotal = 0;
+        items.forEach(item => {
+            if (item.unit_price && item.unit_price > 0) {
+                itemsTotal += parseFloat(item.unit_price) * parseInt(item.quantity);
+            }
+        });
+
+        const transport = parseFloat(quotation.transport || 0);
+        const grandTotal = itemsTotal + transport;
+
+
+        // Create PDF content with proper styling for page breaks and reduced margins
+        pdfContainer.innerHTML = `
+    <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.4; font-size: 12px;">
+        <!-- Header Section -->
+        <div style="text-align: center; margin-bottom: 20px; page-break-inside: avoid;">
+            <h1 style="font-size: 24px; margin: 0 0 10px 0; color: #2563eb;">Quotation Report</h1>
+            <p style="font-size: 14px; color: #666; margin: 0;">Generated on ${formatDateReadable(new Date())} at ${formatTimeReadable(new Date())}</p>
+        </div>
+        
+        <!-- Customer Information Section -->
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px; page-break-inside: avoid;">
+            <div style="width: 30%; min-width: 200px;">
+                <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Customer Information</h3>
+                <div style="margin-bottom: 8px;"><strong>Name:</strong> ${quotation.full_name || 'N/A'}</div>
+                <div style="margin-bottom: 8px;"><strong>Email:</strong> ${quotation.user_email || 'N/A'}</div>
+                <div style="margin-bottom: 8px;"><strong>Phone:</strong> ${quotation.phone || 'N/A'}</div>
+                <div style="margin-bottom: 8px;"><strong>Status:</strong> ${quotation.status}</div>
+            </div>
+            
+            <div style="width: 35%; min-width: 250px;">
+                <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Location Details</h3>
+                <div style="margin-bottom: 8px;"><strong>Site Location:</strong></div>
+                <div style="margin-bottom: 8px; word-wrap: break-word;">${quotation.site_location}</div>
+                ${quotation.coordinates ? `<div style="margin-bottom: 8px; color: #666; font-size: 11px;">${quotation.coordinates}</div>` : ''}
+            </div>
+            
+            <div style="width: 30%; min-width: 200px;">
+                <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Dates</h3>
+                <div style="margin-bottom: 8px;"><strong>Created:</strong> ${formatDateReadable(new Date(quotation.created_at))} ${formatTimeReadable(new Date(quotation.created_at))}</div>
+                <div style="margin-bottom: 8px;"><strong>Updated:</strong> ${formatDateReadable(new Date(quotation.updated_at))} ${formatTimeReadable(new Date(quotation.updated_at))}</div>
+            </div>
+        </div>
+        
+        <!-- Items Table Section -->
+        <div style="margin-bottom: 20px;">
+            <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Requested Items</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; page-break-inside: auto;">
+                <thead>
+                    <tr style="background-color: #f3f4f6;">
+                        <th style="padding: 10px 6px; text-align: left; border: 1px solid #d1d5db; font-weight: 600; font-size: 12px;">Brand/Material</th>
+                        <th style="padding: 10px 6px; text-align: left; border: 1px solid #d1d5db; font-weight: 600; font-size: 12px;">Size/Specification</th>
+                        <th style="padding: 10px 6px; text-align: center; border: 1px solid #d1d5db; font-weight: 600; font-size: 12px;">Quantity</th>
+                        <th style="padding: 10px 6px; text-align: center; border: 1px solid #d1d5db; font-weight: 600; font-size: 12px;">Unit Price (UGX)</th>
+                        <th style="padding: 10px 6px; text-align: center; border: 1px solid #d1d5db; font-weight: 600; font-size: 12px;">Total (UGX)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${items.map((item, index) => {
+            const unitPrice = parseFloat(item.unit_price || 0);
+            const quantity = parseInt(item.quantity);
+            const total = unitPrice * quantity;
+
+            return `
+                            <tr style="page-break-inside: avoid;">
+                                <td style="padding: 8px 6px; border: 1px solid #d1d5db; word-wrap: break-word; max-width: 150px;">${item.brand_name}</td>
+                                <td style="padding: 8px 6px; border: 1px solid #d1d5db; word-wrap: break-word; max-width: 150px;">${item.size}</td>
+                                <td style="padding: 8px 6px; text-align: center; border: 1px solid #d1d5db;">${quantity}</td>
+                                <td style="padding: 8px 6px; text-align: center; border: 1px solid #d1d5db; font-weight: 500;">${formatCurrency(unitPrice)}</td>
+                                <td style="padding: 8px 6px; text-align: center; border: 1px solid #d1d5db; font-weight: 600;">${formatCurrency(total)}</td>
+                            </tr>
+                        `;
+        }).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Summary Section -->
+        <div style="display: flex; justify-content: flex-end; page-break-inside: avoid;">
+            <div style="width: 300px; border: 2px solid #d1d5db; padding: 15px; background-color: #f9fafb;">
+                <h3 style="font-size: 16px; margin: 0 0 15px 0; color: #374151;">Summary</h3>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px;">
+                    <span style="font-size: 14px;">Items Subtotal:</span>
+                    <span style="font-size: 14px; font-weight: 600;">UGX ${formatCurrency(itemsTotal)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 6px;">
+                    <span style="font-size: 14px;">Transport Cost:</span>
+                    <span style="font-size: 14px; font-weight: 600;">UGX ${formatCurrency(transport)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid #374151; margin-top: 12px;">
+                    <span style="font-size: 16px; font-weight: 700;">Total Amount:</span>
+                    <span style="font-size: 16px; font-weight: 700; color: #047857;">UGX ${formatCurrency(grandTotal)}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="margin-top: 30px; text-align: center; color: #666; font-size: 11px; page-break-inside: avoid;">
+            <p style="margin: 0;">This is a computer-generated document. No signature is required.</p>
+        </div>
+    </div>
+`;
+
+        // Add the new date formatting functions before the setTimeout
+        function formatDateReadable(date) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const day = date.getDate();
+            const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
+                day === 2 || day === 22 ? 'nd' :
+                    day === 3 || day === 23 ? 'rd' : 'th';
+            const month = months[date.getMonth()];
+            const year = date.getFullYear();
+            return `${month} ${day}${suffix}, ${year}`;
+        }
+
+        function formatTimeReadable(date) {
+            let hours = date.getHours();
+            const minutes = date.getMinutes();
+            const seconds = date.getSeconds();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+            const secondsStr = seconds < 10 ? '0' + seconds : seconds;
+            return `${hours}:${minutesStr}:${secondsStr} ${ampm}`;
+        }
+
+
+        // Wait for content to be rendered, then generate PDF
+        setTimeout(() => {
+            const { jsPDF } = window.jspdf;
+
+            html2canvas(pdfContainer, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                width: pdfContainer.scrollWidth,
+                height: pdfContainer.scrollHeight,
+                scrollX: 0,
+                scrollY: 0
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
                 });
 
-                // Toggle current accordion
-                content.classList.toggle('hidden');
-                arrow.classList.toggle('active');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgProps = pdf.getImageProperties(imgData);
+                const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // Add first page
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                heightLeft -= pdfHeight;
+
+                // Add additional pages if needed
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+                    heightLeft -= pdfHeight;
+                }
+
+                const fileName = `Quotation_${quotation.full_name || 'Customer'}_${new Date().toISOString().slice(0, 10)}.pdf`;
+                pdf.save(fileName);
+            }).catch(error => {
+                console.error('PDF generation error:', error);
+                alert('Failed to generate PDF. Please try again.');
+            });
+        }, 500);
+    }
+
+    function setupEventListeners() {
+        document.querySelectorAll('.date-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.date-filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
+                    b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+                });
+
+                this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+                this.classList.remove('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+
+                const period = this.dataset.period;
+                setDateRangeForPeriod(period);
             });
         });
+
+        document.getElementById('applyCustomRange').addEventListener('click', function () {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (startDate && endDate) {
+                document.querySelectorAll('.date-filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
+                    b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+                });
+
+                currentPeriod = 'custom';
+                currentPage = 1;
+                loadQuotations();
+            }
+        });
+
+        document.getElementById('searchFilter').addEventListener('input', debounce(() => {
+            currentPage = 1;
+            loadQuotations();
+        }, 500));
+
+        document.getElementById('statusFilter').addEventListener('change', () => {
+            currentPage = 1;
+            loadQuotations();
+        });
+
+        document.getElementById('clearFilters').addEventListener('click', function () {
+            document.getElementById('searchFilter').value = '';
+            document.getElementById('statusFilter').value = 'all';
+            currentPage = 1;
+            loadQuotations();
+        });
+
+        document.getElementById('prevPage').addEventListener('click', function () {
+            if (currentPage > 1) {
+                currentPage--;
+                loadQuotations();
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', function () {
+            currentPage++;
+            loadQuotations();
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', exportData);
+        document.getElementById('refreshBtn').addEventListener('click', refreshData);
+        document.getElementById('printQuotationBtn').addEventListener('click', generatePDF);
+
+        // Confirmation modal events
+        document.getElementById('cancelConfirmationBtn').addEventListener('click', closeConfirmationModal);
+        document.getElementById('confirmActionBtn').addEventListener('click', executeConfirmedAction);
+
+        // Close modal when clicking outside
+        document.getElementById('quotationModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeQuotationModal();
+            }
+        });
+
+        document.getElementById('confirmationModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeConfirmationModal();
+            }
+        });
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    function exportData() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        fetch(`fetch/manageQuotations.php?action=exportQuotationData&start_date=${startDate}&end_date=${endDate}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const headers = ['User', 'Email', 'Phone', 'Location', 'Items Count', 'Fee Charged', 'Transport', 'Items Total', 'Grand Total', 'Status', 'Created At'];
+                    const csvContent = [
+                        headers.join(','),
+                        ...data.data.map(item => [
+                            `"${item.full_name || 'N/A'}"`,
+                            `"${item.user_email || 'N/A'}"`,
+                            `"${item.phone || 'N/A'}"`,
+                            `"${item.site_location}"`,
+                            item.items_count,
+                            item.fee_charged,
+                            item.transport,
+                            item.items_total || 0,
+                            (parseFloat(item.items_total || 0) + parseFloat(item.transport || 0)),
+                            `"${item.status}"`,
+                            `"${item.created_at}"`
+                        ].join(','))
+                    ].join('\n');
+
+                    const blob = new Blob([csvContent], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `quotations-${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }
+            })
+            .catch(error => console.error('Export error:', error));
+    }
+
+    function refreshData() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        const icon = refreshBtn.querySelector('i');
+
+        icon.classList.add('fa-spin');
+        refreshBtn.disabled = true;
+
+        loadQuotations();
+
+        setTimeout(() => {
+            icon.classList.remove('fa-spin');
+            refreshBtn.disabled = false;
+        }, 1000);
     }
 </script>
 
 <style>
-    /* Accordion styling */
-    .accordion-content {
-        display: none;
+    .date-filter-btn {
+        border-color: #d1d5db;
+        color: #374151;
+        transition: all 0.2s ease;
     }
 
-    .accordion-content.hidden {
-        display: none;
+    .date-filter-btn:hover:not(.active) {
+        background-color: #f9fafb;
     }
 
-    .accordion-arrow {
-        transition: transform 0.2s ease;
+    .date-filter-btn.active {
+        background-color: #dc2626;
+        color: white;
+        border-color: #dc2626;
     }
 
-    .accordion-arrow.active {
-        transform: rotate(180deg);
+    #quotationsTable tbody tr:hover {
+        background-color: #f9fafb;
     }
 
-    /* Status badge colors */
-    .bg-new {
-        background-color: #EFF6FF;
-        color: #1E40AF;
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 #f7fafc;
     }
 
-    .bg-processing {
-        background-color: #FEF3C7;
-        color: #92400E;
+    .overflow-x-auto::-webkit-scrollbar {
+        height: 6px;
     }
 
-    .bg-processed {
-        background-color: #D1FAE5;
-        color: #065F46;
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: #f7fafc;
+        border-radius: 3px;
     }
 
-    .bg-cancelled {
-        background-color: #FEE2E2;
-        color: #B91C1C;
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
     }
 
-    /* Animation for modals */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
     }
 
-    @keyframes scaleIn {
-        from {
-            transform: scale(0.95);
-            opacity: 0;
-        }
-
-        to {
-            transform: scale(1);
-            opacity: 1;
-        }
+    #quotationsTable {
+        min-width: 800px;
     }
 
-    /* Responsive improvements */
+    .unit-price-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
     @media (max-width: 768px) {
-        #filter-form {
-            flex-direction: column;
-            width: 100%;
+        #quotationsTable {
+            font-size: 0.875rem;
         }
 
-        #filter-form>div {
-            width: 100%;
-        }
-
-        #filter-btn {
-            width: 100%;
-        }
-
-        .stats-card {
-            margin-bottom: 1rem;
+        #quotationsTable th,
+        #quotationsTable td {
+            padding: 0.5rem 0.75rem;
         }
     }
 </style>

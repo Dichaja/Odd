@@ -8,118 +8,275 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 date_default_timezone_set('Africa/Kampala');
 
-$pdo->exec(
-    "CREATE TABLE IF NOT EXISTS action_logs (
-        log_id VARCHAR(26) PRIMARY KEY,
-        action TEXT NOT NULL,
-        created_at DATETIME NOT NULL
-    )"
-);
+// Create tables if they don't exist
+try {
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS request_for_quote (
+            RFQ_ID VARCHAR(26) NOT NULL PRIMARY KEY,
+            user_id VARCHAR(26) NOT NULL,
+            site_location VARCHAR(255) NOT NULL,
+            coordinates VARCHAR(255) DEFAULT NULL,
+            transport DECIMAL(10,2) DEFAULT 0.00,
+            fee_charged DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            status ENUM('New','Processing','Cancelled','Processed') NOT NULL DEFAULT 'New',
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+    );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS request_for_quote_details (
+            RFQD_ID VARCHAR(26) NOT NULL PRIMARY KEY,
+            RFQ_ID VARCHAR(26) NOT NULL,
+            brand_name VARCHAR(255) NOT NULL,
+            size VARCHAR(255) NOT NULL,
+            quantity INT(11) NOT NULL,
+            unit_price DECIMAL(10,2) DEFAULT NULL,
+            created_at DATETIME NOT NULL,
+            updated_at DATETIME NOT NULL,
+            FOREIGN KEY (RFQ_ID) REFERENCES request_for_quote(RFQ_ID) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+    );
+
+    $pdo->exec(
+        "CREATE TABLE IF NOT EXISTS action_logs (
+            log_id VARCHAR(26) PRIMARY KEY,
+            action TEXT NOT NULL,
+            created_at DATETIME NOT NULL
+        )"
+    );
+} catch (PDOException $e) {
+    error_log('Table creation error: ' . $e->getMessage());
+}
 
 function logAction($pdo, $msg)
 {
-    $now   = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+    $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
     $logId = generateUlid();
-    $stmt  = $pdo->prepare(
+    $stmt = $pdo->prepare(
         "INSERT INTO action_logs (log_id, action, created_at) 
          VALUES (:id, :act, :cat)"
     );
     $stmt->execute([
-        ':id'  => $logId,
+        ':id' => $logId,
         ':act' => $msg,
         ':cat' => $now
     ]);
 }
 
-$action = $_GET['action'] ?? '';
+function getQuotationData($pdo, $startDateTime, $endDateTime, $searchTerm, $statusFilter, $page, $limit)
+{
+    // Get quotation data with items total
+    $quotationQuery = "
+        SELECT 
+            r.RFQ_ID,
+            r.user_id,
+            r.site_location,
+            r.coordinates,
+            r.transport,
+            r.fee_charged,
+            r.status,
+            r.created_at,
+            r.updated_at,
+            COALESCE(u.username, 'Unknown User') as user_name,
+            COALESCE(CONCAT(u.first_name, ' ', u.last_name), u.username, 'Unknown User') as full_name,
+            COALESCE(u.email, 'No Email') as user_email,
+            COALESCE(u.phone, 'N/A') as phone,
+            (SELECT COUNT(*) FROM request_for_quote_details d WHERE d.RFQ_ID = r.RFQ_ID) as items_count,
+            (SELECT SUM(COALESCE(d.unit_price, 0) * d.quantity) FROM request_for_quote_details d WHERE d.RFQ_ID = r.RFQ_ID) as items_total
+        FROM request_for_quote r
+        LEFT JOIN zzimba_users u ON r.user_id = u.id
+        WHERE r.created_at BETWEEN :start_date AND :end_date
+    ";
+
+    $params = [
+        ':start_date' => $startDateTime,
+        ':end_date' => $endDateTime
+    ];
+
+    if ($searchTerm) {
+        $quotationQuery .= " AND (r.site_location LIKE :search OR u.username LIKE :search2 OR u.email LIKE :search3 OR u.phone LIKE :search4 OR r.RFQ_ID LIKE :search5 OR u.first_name LIKE :search6 OR u.last_name LIKE :search7)";
+        $params[':search'] = "%$searchTerm%";
+        $params[':search2'] = "%$searchTerm%";
+        $params[':search3'] = "%$searchTerm%";
+        $params[':search4'] = "%$searchTerm%";
+        $params[':search5'] = "%$searchTerm%";
+        $params[':search6'] = "%$searchTerm%";
+        $params[':search7'] = "%$searchTerm%";
+    }
+
+    if ($statusFilter !== 'all') {
+        $quotationQuery .= " AND r.status = :status";
+        $params[':status'] = $statusFilter;
+    }
+
+    $quotationQuery .= " ORDER BY r.created_at DESC";
+
+    // Get total count first
+    $countQuery = "
+        SELECT COUNT(*) as total
+        FROM request_for_quote r
+        LEFT JOIN zzimba_users u ON r.user_id = u.id
+        WHERE r.created_at BETWEEN :start_date AND :end_date
+    ";
+
+    $countParams = [
+        ':start_date' => $startDateTime,
+        ':end_date' => $endDateTime
+    ];
+
+    if ($searchTerm) {
+        $countQuery .= " AND (r.site_location LIKE :search OR u.username LIKE :search2 OR u.email LIKE :search3 OR u.phone LIKE :search4 OR r.RFQ_ID LIKE :search5 OR u.first_name LIKE :search6 OR u.last_name LIKE :search7)";
+        $countParams[':search'] = "%$searchTerm%";
+        $countParams[':search2'] = "%$searchTerm%";
+        $countParams[':search3'] = "%$searchTerm%";
+        $countParams[':search4'] = "%$searchTerm%";
+        $countParams[':search5'] = "%$searchTerm%";
+        $countParams[':search6'] = "%$searchTerm%";
+        $countParams[':search7'] = "%$searchTerm%";
+    }
+
+    if ($statusFilter !== 'all') {
+        $countQuery .= " AND r.status = :status";
+        $countParams[':status'] = $statusFilter;
+    }
+
+    $countStmt = $pdo->prepare($countQuery);
+    $countStmt->execute($countParams);
+    $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
+    $totalCount = $countResult ? intval($countResult['total']) : 0;
+
+    // Add pagination to main query
+    $offset = ($page - 1) * $limit;
+    $quotationQuery .= " LIMIT :limit OFFSET :offset";
+    $params[':limit'] = $limit;
+    $params[':offset'] = $offset;
+
+    $stmt = $pdo->prepare($quotationQuery);
+    foreach ($params as $key => $value) {
+        if ($key === ':limit' || $key === ':offset') {
+            $stmt->bindValue($key, $value, PDO::PARAM_INT);
+        } else {
+            $stmt->bindValue($key, $value);
+        }
+    }
+    $stmt->execute();
+    $quotations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    return ['data' => $quotations, 'total' => $totalCount];
+}
+
+function getStatistics($pdo, $startDateTime, $endDateTime)
+{
+    $statsQuery = "
+        SELECT 
+            status,
+            COUNT(*) as count
+        FROM request_for_quote 
+        WHERE created_at BETWEEN :start_date AND :end_date
+        GROUP BY status
+    ";
+    $statsStmt = $pdo->prepare($statsQuery);
+    $statsStmt->execute([
+        ':start_date' => $startDateTime,
+        ':end_date' => $endDateTime
+    ]);
+    $statsResults = $statsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stats = ['new' => 0, 'processing' => 0, 'processed' => 0, 'cancelled' => 0];
+    foreach ($statsResults as $stat) {
+        $statusKey = strtolower($stat['status']);
+        if (isset($stats[$statusKey])) {
+            $stats[$statusKey] = intval($stat['count']);
+        }
+    }
+
+    return $stats;
+}
+
+function checkAndUpdateStatus($pdo, $rfqId)
+{
+    // Check if all items have prices and transport is set
+    $stmt = $pdo->prepare("
+        SELECT 
+            r.status,
+            r.transport,
+            COUNT(d.RFQD_ID) as total_items,
+            COUNT(CASE WHEN d.unit_price IS NOT NULL AND d.unit_price > 0 THEN 1 END) as priced_items
+        FROM request_for_quote r
+        LEFT JOIN request_for_quote_details d ON r.RFQ_ID = d.RFQ_ID
+        WHERE r.RFQ_ID = :rfq_id
+        GROUP BY r.RFQ_ID, r.status, r.transport
+    ");
+    $stmt->execute([':rfq_id' => $rfqId]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$result)
+        return false;
+
+    $currentStatus = $result['status'];
+    $transport = floatval($result['transport']);
+    $totalItems = intval($result['total_items']);
+    $pricedItems = intval($result['priced_items']);
+
+    // If status is New and we have any pricing, change to Processing
+    if ($currentStatus === 'New' && ($pricedItems > 0 || $transport > 0)) {
+        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+        $updateStmt = $pdo->prepare("
+            UPDATE request_for_quote 
+            SET status = 'Processing', updated_at = :now 
+            WHERE RFQ_ID = :rfq_id
+        ");
+        $updateStmt->execute([':now' => $now, ':rfq_id' => $rfqId]);
+
+        logAction($pdo, "Status automatically changed to Processing for RFQ $rfqId due to pricing update");
+        return true;
+    }
+
+    return false;
+}
+
+// Handle different request methods
+$method = $_SERVER['REQUEST_METHOD'];
+$action = '';
+
+if ($method === 'GET') {
+    $action = $_GET['action'] ?? '';
+} else if ($method === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $action = $input['action'] ?? $_GET['action'] ?? '';
+}
 
 try {
-
     switch ($action) {
-
-        case 'getServerTime':
-            $now = new DateTime('now', new DateTimeZone('Africa/Kampala'));
-            echo json_encode(['success' => true, 'now' => $now->format('Y-m-d H:i:s')]);
-            break;
-
         case 'getQuotations':
-            $start  = $_GET['start']  ?? '';
-            $end    = $_GET['end']    ?? '';
-            $search = $_GET['search'] ?? '';
-            $status = $_GET['status'] ?? 'all';
+            $startDate = $_GET['start_date'] ?? '';
+            $endDate = $_GET['end_date'] ?? '';
+            $searchTerm = $_GET['search_term'] ?? '';
+            $statusFilter = $_GET['status_filter'] ?? 'all';
+            $page = max(1, intval($_GET['page'] ?? 1));
+            $limit = max(1, min(100, intval($_GET['limit'] ?? 20)));
 
-            if (!$start || !$end) {
+            if (!$startDate || !$endDate) {
                 http_response_code(400);
                 die(json_encode(['error' => 'Missing date range']));
             }
 
-            $startDt = str_replace('T', ' ', $start) . ':00';
-            $endDt   = str_replace('T', ' ', $end)   . ':59';
+            $startDateTime = $startDate . ' 00:00:00';
+            $endDateTime = $endDate . ' 23:59:59';
 
-            $query = "
-                SELECT 
-                    RFQ_ID, company_name, contact_person, email, phone,
-                    site_location, status, created_at,
-                    (SELECT COUNT(*) 
-                     FROM request_for_quote_details d 
-                     WHERE d.RFQ_ID = r.RFQ_ID
-                    ) AS items_count
-                FROM request_for_quote r
-                WHERE r.created_at BETWEEN :start AND :end
-            ";
+            $quotationData = getQuotationData($pdo, $startDateTime, $endDateTime, $searchTerm, $statusFilter, $page, $limit);
+            $stats = getStatistics($pdo, $startDateTime, $endDateTime);
 
-            $params = [':start' => $startDt, ':end' => $endDt];
-
-            if ($search) {
-                $query .= "
-                    AND (
-                        r.company_name   LIKE :search1 OR
-                        r.contact_person LIKE :search2 OR
-                        r.site_location  LIKE :search3
-                    )
-                ";
-                $params[':search1'] = "%$search%";
-                $params[':search2'] = "%$search%";
-                $params[':search3'] = "%$search%";
-            }
-
-            if ($status !== 'all') {
-                $query .= " AND r.status = :status";
-                $params[':status'] = $status;
-            }
-
-            $query .= " ORDER BY r.created_at DESC";
-
-            $stmt = $pdo->prepare($query);
-            $stmt->execute($params);
-            $quotations = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            $stats = ['new' => 0, 'processing' => 0, 'processed' => 0, 'cancelled' => 0];
-
-            foreach ($quotations as &$q) {
-                $q['id'] = $q['RFQ_ID'];
-                unset($q['RFQ_ID']);
-
-                $statusLower = strtolower($q['status']);
-
-                if ($statusLower === 'new') {
-                    $q['status_class'] = 'bg-blue-100 text-blue-800';
-                    $stats['new']++;
-                } elseif ($statusLower === 'processing') {
-                    $q['status_class'] = 'bg-yellow-100 text-yellow-800';
-                    $stats['processing']++;
-                } elseif ($statusLower === 'processed') {
-                    $q['status_class'] = 'bg-green-100 text-green-800';
-                    $stats['processed']++;
-                } elseif ($statusLower === 'cancelled') {
-                    $q['status_class'] = 'bg-red-100 text-red-800';
-                    $stats['cancelled']++;
-                } else {
-                    $q['status_class'] = 'bg-gray-100 text-gray-800';
-                }
-            }
-
-            echo json_encode(['success' => true, 'stats' => $stats, 'quotations' => $quotations]);
+            echo json_encode([
+                'success' => true,
+                'quotationData' => [
+                    'data' => $quotationData['data'],
+                    'total' => $quotationData['total'],
+                    'page' => $page
+                ],
+                'stats' => $stats
+            ]);
             break;
 
         case 'getRFQDetails':
@@ -130,10 +287,23 @@ try {
             }
 
             $stmt = $pdo->prepare(
-                "SELECT RFQ_ID, company_name, contact_person, email, phone,
-                        site_location, status, created_at
-                 FROM request_for_quote
-                 WHERE RFQ_ID = :id"
+                "SELECT 
+                    r.RFQ_ID, 
+                    r.user_id,
+                    r.site_location, 
+                    r.coordinates,
+                    r.transport,
+                    r.fee_charged,
+                    r.status, 
+                    r.created_at,
+                    r.updated_at,
+                    COALESCE(u.username, 'Unknown User') as user_name,
+                    COALESCE(CONCAT(u.first_name, ' ', u.last_name), u.username, 'Unknown User') as full_name,
+                    COALESCE(u.email, 'No Email') as user_email,
+                    COALESCE(u.phone, 'N/A') as phone
+                 FROM request_for_quote r
+                 LEFT JOIN zzimba_users u ON r.user_id = u.id
+                 WHERE r.RFQ_ID = :id"
             );
             $stmt->execute([':id' => $id]);
             $quotation = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -143,32 +313,121 @@ try {
                 die(json_encode(['error' => 'Quotation not found']));
             }
 
-            $quotation['id'] = $quotation['RFQ_ID'];
-            unset($quotation['RFQ_ID']);
-
-            $statusLower = strtolower($quotation['status']);
-
-            if ($statusLower === 'new') {
-                $quotation['status_class'] = 'bg-blue-100 text-blue-800';
-            } elseif ($statusLower === 'processing') {
-                $quotation['status_class'] = 'bg-yellow-100 text-yellow-800';
-            } elseif ($statusLower === 'processed') {
-                $quotation['status_class'] = 'bg-green-100 text-green-800';
-            } elseif ($statusLower === 'cancelled') {
-                $quotation['status_class'] = 'bg-red-100 text-red-800';
-            } else {
-                $quotation['status_class'] = 'bg-gray-100 text-gray-800';
-            }
-
             $stmt = $pdo->prepare(
-                "SELECT brand_name, size, quantity
+                "SELECT RFQD_ID, brand_name, size, quantity, unit_price
                  FROM request_for_quote_details
-                 WHERE RFQ_ID = :id"
+                 WHERE RFQ_ID = :id
+                 ORDER BY created_at ASC"
             );
             $stmt->execute([':id' => $id]);
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo json_encode(['success' => true, 'quotation' => $quotation, 'items' => $items]);
+            break;
+
+        case 'updateItemPrice':
+            if ($method !== 'POST') {
+                http_response_code(405);
+                die(json_encode(['error' => 'Method not allowed']));
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true);
+            $itemId = $input['item_id'] ?? '';
+            $price = floatval($input['price'] ?? 0);
+
+            if (!$itemId) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Missing item ID']));
+            }
+
+            // Get current price and RFQ ID
+            $stmt = $pdo->prepare("SELECT unit_price, RFQ_ID FROM request_for_quote_details WHERE RFQD_ID = :id");
+            $stmt->execute([':id' => $itemId]);
+            $currentItem = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$currentItem) {
+                http_response_code(404);
+                die(json_encode(['error' => 'Item not found']));
+            }
+
+            $oldPrice = $currentItem['unit_price'];
+            $rfqId = $currentItem['RFQ_ID'];
+
+            // Update the price
+            $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+            $stmt = $pdo->prepare(
+                "UPDATE request_for_quote_details 
+                 SET unit_price = :price, updated_at = :now 
+                 WHERE RFQD_ID = :id"
+            );
+            $stmt->execute([
+                ':price' => $price,
+                ':now' => $now,
+                ':id' => $itemId
+            ]);
+
+            // Check if status should be updated
+            $statusChanged = checkAndUpdateStatus($pdo, $rfqId);
+
+            logAction($pdo, "Updated unit price for item $itemId from " . ($oldPrice ?: '0') . " to $price");
+
+            echo json_encode([
+                'success' => true,
+                'status_changed' => $statusChanged,
+                'old_price' => $oldPrice
+            ]);
+            break;
+
+        case 'updateTransportCost':
+            if ($method !== 'POST') {
+                http_response_code(405);
+                die(json_encode(['error' => 'Method not allowed']));
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true);
+            $rfqId = $input['rfq_id'] ?? '';
+            $transport = floatval($input['transport'] ?? 0);
+
+            if (!$rfqId) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Missing RFQ ID']));
+            }
+
+            // Get current transport cost
+            $stmt = $pdo->prepare("SELECT transport FROM request_for_quote WHERE RFQ_ID = :id");
+            $stmt->execute([':id' => $rfqId]);
+            $currentRfq = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$currentRfq) {
+                http_response_code(404);
+                die(json_encode(['error' => 'RFQ not found']));
+            }
+
+            $oldTransport = $currentRfq['transport'];
+
+            // Update the transport cost
+            $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+            $stmt = $pdo->prepare(
+                "UPDATE request_for_quote 
+                 SET transport = :transport, updated_at = :now 
+                 WHERE RFQ_ID = :id"
+            );
+            $stmt->execute([
+                ':transport' => $transport,
+                ':now' => $now,
+                ':id' => $rfqId
+            ]);
+
+            // Check if status should be updated
+            $statusChanged = checkAndUpdateStatus($pdo, $rfqId);
+
+            logAction($pdo, "Updated transport cost for RFQ $rfqId from " . ($oldTransport ?: '0') . " to $transport");
+
+            echo json_encode([
+                'success' => true,
+                'status_changed' => $statusChanged,
+                'old_transport' => $oldTransport
+            ]);
             break;
 
         case 'processRFQ':
@@ -186,15 +445,15 @@ try {
 
             if (!$row || strtolower($row['status']) !== 'new') {
                 http_response_code(400);
-                die(json_encode(['error' => 'Invalid action']));
+                die(json_encode(['error' => 'Invalid action - can only process New requests']));
             }
 
             $oldStatus = $row['status'];
-            $now       = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+            $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
             $stmt = $pdo->prepare(
                 "UPDATE request_for_quote
-                 SET status = 'processing', updated_at = :now
+                 SET status = 'Processing', updated_at = :now
                  WHERE RFQ_ID = :id"
             );
             $stmt->execute([':now' => $now, ':id' => $id]);
@@ -211,23 +470,41 @@ try {
                 die(json_encode(['error' => 'Missing id']));
             }
 
-            $stmt = $pdo->prepare(
-                "SELECT status FROM request_for_quote WHERE RFQ_ID = :id"
-            );
+            // Check if all items are priced and transport is set
+            $stmt = $pdo->prepare("
+                SELECT 
+                    r.status,
+                    r.transport,
+                    COUNT(d.RFQD_ID) as total_items,
+                    COUNT(CASE WHEN d.unit_price IS NOT NULL AND d.unit_price > 0 THEN 1 END) as priced_items
+                FROM request_for_quote r
+                LEFT JOIN request_for_quote_details d ON r.RFQ_ID = d.RFQ_ID
+                WHERE r.RFQ_ID = :id
+                GROUP BY r.RFQ_ID, r.status, r.transport
+            ");
             $stmt->execute([':id' => $id]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$row || strtolower($row['status']) !== 'processing') {
+            if (!$result || strtolower($result['status']) !== 'processing') {
                 http_response_code(400);
-                die(json_encode(['error' => 'Invalid action']));
+                die(json_encode(['error' => 'Invalid action - can only complete Processing requests']));
             }
 
-            $oldStatus = $row['status'];
-            $now       = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+            $transport = floatval($result['transport']);
+            $totalItems = intval($result['total_items']);
+            $pricedItems = intval($result['priced_items']);
+
+            if ($totalItems !== $pricedItems || $transport <= 0) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Cannot complete - all items must be priced and transport cost must be set']));
+            }
+
+            $oldStatus = $result['status'];
+            $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
             $stmt = $pdo->prepare(
                 "UPDATE request_for_quote
-                 SET status = 'processed', updated_at = :now
+                 SET status = 'Processed', updated_at = :now
                  WHERE RFQ_ID = :id"
             );
             $stmt->execute([':now' => $now, ':id' => $id]);
@@ -252,15 +529,15 @@ try {
 
             if (!$row || strtolower($row['status']) === 'processed') {
                 http_response_code(400);
-                die(json_encode(['error' => 'Invalid action']));
+                die(json_encode(['error' => 'Invalid action - cannot cancel Processed requests']));
             }
 
             $oldStatus = $row['status'];
-            $now       = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+            $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
             $stmt = $pdo->prepare(
                 "UPDATE request_for_quote
-                 SET status = 'cancelled', updated_at = :now
+                 SET status = 'Cancelled', updated_at = :now
                  WHERE RFQ_ID = :id"
             );
             $stmt->execute([':now' => $now, ':id' => $id]);
@@ -268,6 +545,50 @@ try {
             logAction($pdo, "Changed status for RFQ $id from $oldStatus to Cancelled");
 
             echo json_encode(['success' => true]);
+            break;
+
+        case 'exportQuotationData':
+            $startDate = $_GET['start_date'] ?? '';
+            $endDate = $_GET['end_date'] ?? '';
+
+            if (!$startDate || !$endDate) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Missing date range']));
+            }
+
+            $startDateTime = $startDate . ' 00:00:00';
+            $endDateTime = $endDate . ' 23:59:59';
+
+            $query = "
+                SELECT 
+                    r.user_id,
+                    r.site_location,
+                    r.coordinates,
+                    r.transport,
+                    r.fee_charged,
+                    r.status,
+                    r.created_at,
+                    r.updated_at,
+                    COALESCE(u.username, 'Unknown User') as user_name,
+                    COALESCE(CONCAT(u.first_name, ' ', u.last_name), u.username, 'Unknown User') as full_name,
+                    COALESCE(u.email, 'No Email') as user_email,
+                    COALESCE(u.phone, 'N/A') as phone,
+                    (SELECT COUNT(*) FROM request_for_quote_details d WHERE d.RFQ_ID = r.RFQ_ID) as items_count,
+                    (SELECT SUM(COALESCE(d.unit_price, 0) * d.quantity) FROM request_for_quote_details d WHERE d.RFQ_ID = r.RFQ_ID) as items_total
+                FROM request_for_quote r
+                LEFT JOIN zzimba_users u ON r.user_id = u.id
+                WHERE r.created_at BETWEEN :start_date AND :end_date
+                ORDER BY r.created_at DESC
+            ";
+
+            $stmt = $pdo->prepare($query);
+            $stmt->execute([
+                ':start_date' => $startDateTime,
+                ':end_date' => $endDateTime
+            ]);
+            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode(['success' => true, 'data' => $data]);
             break;
 
         default:
@@ -279,3 +600,4 @@ try {
     http_response_code(500);
     echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
+?>
