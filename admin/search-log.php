@@ -230,7 +230,7 @@ ob_start();
                         </div>
                         <div class="flex items-center gap-1">
                             <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                            <span class="text-gray-600">Poor (&lt;50%)< /span>
+                            <span class="text-gray-600">Poor (&lt;50%)</span>
                         </div>
                     </div>
                 </div>
