@@ -1,166 +1,183 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
 
-// Check if session exists and if it has expired
-if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
-    http_response_code(401);
+header('Content-Type: application/json');
+header('Cache-Control: no-cache, must-revalidate');
+
+function sendResponse($success, $message = '', $profile = null)
+{
     echo json_encode([
-        'success' => false,
-        'message' => 'Your session has expired due to inactivity. Please log in again.',
-        'session_expired' => true
+        'success' => $success,
+        'message' => $message,
+        'profile' => $profile,
+        'timestamp' => date('Y-m-d H:i:s')
     ]);
     exit;
 }
 
-$userId = $_SESSION['user']['user_id'];
-$action = $_GET['action'] ?? '';
-$data = json_decode(file_get_contents('php://input'), true);
-
 try {
-    switch ($action) {
-        case 'getUserDetails':
-            $stmt = $pdo->prepare("SELECT 
-              username, 
-              email, 
-              phone, 
-              first_name, 
-              last_name, 
-              role,
-              status,
-              profile_pic_url,
-              DATE_FORMAT(current_login, '%Y-%m-%d %H:%i:%s') as current_login,
-              DATE_FORMAT(last_login, '%Y-%m-%d %H:%i:%s') as last_login,
-              DATE_FORMAT(created_at, '%Y-%m-%d') as created_at
-              FROM admin_users 
-              WHERE id = :user_id");
-            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
-            $stmt->execute();
+    if (!isset($_SESSION['user']) || !isset($_SESSION['user']['username'])) {
+        throw new Exception('User not authenticated');
+    }
 
-            if ($stmt->rowCount() === 0) {
-                http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'User not found']);
-                break;
+    $userName = $_SESSION['user']['username'];
+
+    if (!isset($_POST['action']) && !isset($_GET['action'])) {
+        throw new Exception('Action parameter is required');
+    }
+
+    $action = $_POST['action'] ?? $_GET['action'];
+
+    switch ($action) {
+        case 'getProfile':
+            $stmt = $pdo->prepare("
+                SELECT 
+                    id,
+                    username,
+                    first_name,
+                    last_name,
+                    email,
+                    phone,
+                    role,
+                    status,
+                    created_at,
+                    updated_at,
+                    current_login,
+                    last_login
+                FROM admin_users
+                WHERE username = ?
+            ");
+            $stmt->execute([$userName]);
+            $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$profile) {
+                throw new Exception('Profile not found');
             }
 
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode(['success' => true, 'data' => $user]);
-            break;
+            sendResponse(true, 'Profile loaded successfully', $profile);
 
         case 'updateProfile':
-            if (!isset($data['first_name']) || !isset($data['last_name']) || !isset($data['email']) || !isset($data['phone'])) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Missing required fields']);
-                break;
+            $username = trim($_POST['username'] ?? '');
+            $firstName = trim($_POST['first_name'] ?? '');
+            $lastName = trim($_POST['last_name'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            $phone = trim($_POST['phone'] ?? '');
+
+            if (!$username) {
+                throw new Exception('Username is required');
             }
 
-            $firstName = $data['first_name'];
-            $lastName = $data['last_name'];
-            $email = $data['email'];
-            $phone = $data['phone'];
+            if (!$email) {
+                throw new Exception('Email is required');
+            }
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid email format']);
-                break;
+                throw new Exception('Invalid email format');
             }
 
-            if (!preg_match('/^\+[0-9]{10,15}$/', $phone)) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
-                break;
+            if ($phone && !preg_match('/^\+256[0-9]{9}$/', $phone)) {
+                throw new Exception('Phone must be in format +256XXXXXXXXX');
             }
 
-            $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE email = :email AND id != :user_id");
-            $stmt->bindParam(':email', $email);
-            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
-            $stmt->execute();
+            $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE username = ?");
+            $stmt->execute([$userName]);
+            $currentUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$currentUser) {
+                throw new Exception('Current user not found');
+            }
+
+            $userId = $currentUser['id'];
+
+            $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE username = ? AND id != ?");
+            $stmt->execute([$username, $userId]);
+            if ($stmt->fetch()) {
+                throw new Exception('Username already exists');
+            }
+
+            $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE email = ? AND id != ?");
+            $stmt->execute([$email, $userId]);
+            if ($stmt->fetch()) {
+                throw new Exception('Email already exists');
+            }
+
+            if ($phone) {
+                $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE phone = ? AND id != ?");
+                $stmt->execute([$phone, $userId]);
+                if ($stmt->fetch()) {
+                    throw new Exception('Phone number already exists');
+                }
+            }
+
+            $stmt = $pdo->prepare("
+                UPDATE admin_users 
+                SET username = ?, first_name = ?, last_name = ?, email = ?, phone = ?, updated_at = NOW() 
+                WHERE id = ?
+            ");
+            $result = $stmt->execute([$username, $firstName, $lastName, $email, $phone, $userId]);
 
             if ($stmt->rowCount() > 0) {
-                http_response_code(409);
-                echo json_encode(['success' => false, 'message' => 'Email is already registered to another admin account']);
-                break;
+                if ($userName !== $username) {
+                    $_SESSION['user']['username'] = $username;
+                }
+
+                sendResponse(true, 'Profile updated successfully');
+            } else {
+                throw new Exception('No changes made or profile not found');
             }
-
-            $stmt = $pdo->prepare("SELECT id FROM admin_users WHERE phone = :phone AND id != :user_id");
-            $stmt->bindParam(':phone', $phone);
-            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
-            $stmt->execute();
-
-            if ($stmt->rowCount() > 0) {
-                http_response_code(409);
-                echo json_encode(['success' => false, 'message' => 'Phone number is already registered to another admin account']);
-                break;
-            }
-
-            $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
-            $stmt = $pdo->prepare("UPDATE admin_users SET 
-              first_name = :first_name, 
-              last_name = :last_name, 
-              email = :email, 
-              phone = :phone, 
-              updated_at = :updated_at 
-              WHERE id = :user_id");
-            $stmt->bindParam(':first_name', $firstName);
-            $stmt->bindParam(':last_name', $lastName);
-            $stmt->bindParam(':email', $email);
-            $stmt->bindParam(':phone', $phone);
-            $stmt->bindParam(':updated_at', $now);
-            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
-            $stmt->execute();
-
-            $_SESSION['user']['email'] = $email;
-
-            echo json_encode(['success' => true, 'message' => 'Profile updated successfully']);
-            break;
 
         case 'changePassword':
-            if (!isset($data['current_password']) || !isset($data['new_password'])) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Missing required fields']);
-                break;
+            $currentPassword = $_POST['current_password'] ?? '';
+            $newPassword = $_POST['new_password'] ?? '';
+
+            if (!$currentPassword) {
+                throw new Exception('Current password is required');
             }
 
-            $currentPassword = $data['current_password'];
-            $newPassword = $data['new_password'];
-
-            if (!(strlen($newPassword) >= 8 &&
-                preg_match('/[A-Z]/', $newPassword) &&
-                preg_match('/[a-z]/', $newPassword) &&
-                preg_match('/[0-9]/', $newPassword) &&
-                preg_match('/[^A-Za-z0-9]/', $newPassword))) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Password must be at least 8 characters with uppercase, lowercase, number, and special character']);
-                break;
+            if (!$newPassword) {
+                throw new Exception('New password is required');
             }
 
-            $stmt = $pdo->prepare("SELECT password FROM admin_users WHERE id = :user_id");
-            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
-            $stmt->execute();
+            if (strlen($newPassword) < 6) {
+                throw new Exception('New password must be at least 6 characters long');
+            }
+
+            $stmt = $pdo->prepare("SELECT id, password FROM admin_users WHERE username = ?");
+            $stmt->execute([$userName]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+            if (!$user) {
+                throw new Exception('User not found');
+            }
+
             if (!password_verify($currentPassword, $user['password'])) {
-                http_response_code(401);
-                echo json_encode(['success' => false, 'message' => 'Current password is incorrect']);
-                break;
+                throw new Exception('Current password is incorrect');
+            }
+
+            if (password_verify($newPassword, $user['password'])) {
+                throw new Exception('New password must be different from current password');
             }
 
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
-            $stmt = $pdo->prepare("UPDATE admin_users SET password = :password, updated_at = :updated_at WHERE id = :user_id");
-            $stmt->bindParam(':password', $hashedPassword);
-            $stmt->bindParam(':updated_at', $now);
-            $stmt->bindParam(':user_id', $userId, PDO::PARAM_LOB);
-            $stmt->execute();
 
-            echo json_encode(['success' => true, 'message' => 'Password changed successfully']);
-            break;
+            $stmt = $pdo->prepare("
+                UPDATE admin_users 
+                SET password = ?, updated_at = NOW() 
+                WHERE id = ?
+            ");
+            $result = $stmt->execute([$hashedPassword, $user['id']]);
+
+            if ($stmt->rowCount() > 0) {
+                sendResponse(true, 'Password changed successfully');
+            } else {
+                throw new Exception('Failed to update password');
+            }
 
         default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
-            break;
+            throw new Exception('Invalid action specified');
     }
+
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    sendResponse(false, $e->getMessage());
 }
+?>
