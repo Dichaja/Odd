@@ -6,7 +6,6 @@ ob_start();
 ?>
 
 <div class="min-h-screen bg-user-content">
-    <!-- Header Section -->
     <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6 mb-6">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -26,8 +25,7 @@ ob_start();
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 sm:p-6 border border-blue-200">
                 <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
@@ -79,9 +77,21 @@ ob_start();
                     </div>
                 </div>
             </div>
+
+            <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 sm:p-6 border border-purple-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Paid</p>
+                        <p class="text-xl sm:text-2xl font-bold text-purple-900 truncate" id="paidRequests">0</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-credit-card text-purple-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Quotations Table -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
             <div class="p-4 sm:p-6 border-b border-gray-100">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -101,6 +111,7 @@ ob_start();
                             <option value="Processing">Processing</option>
                             <option value="Processed">Processed</option>
                             <option value="Cancelled">Cancelled</option>
+                            <option value="Paid">Paid</option>
                         </select>
                         <button id="clearFilters"
                             class="px-4 py-2 text-sm text-gray-text hover:text-secondary border border-gray-300 rounded-lg hover:bg-gray-50">
@@ -177,7 +188,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Quotation Details Modal -->
 <div id="quotationModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div
@@ -213,7 +223,167 @@ ob_start();
     </div>
 </div>
 
-<!-- Hidden div for PDF generation -->
+<div id="editConfirmModal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-edit text-yellow-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-secondary">Edit Quotation</h3>
+                    <p class="text-sm text-gray-text">Are you sure you want to edit this quotation?</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeEditConfirmModal()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button onclick="confirmEdit()"
+                    class="px-4 py-2 bg-user-primary text-white rounded-lg hover:bg-user-primary/90">
+                    Yes, Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="saveConfirmModal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-lg mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-orange-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-secondary">Save Changes - Important Notice</h3>
+                    <p class="text-sm text-gray-text mt-2">You can only edit this quotation once. After saving, you
+                        won't be able to edit it again. Please ensure you've made all necessary changes to all items
+                        before proceeding.</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeSaveConfirmModal()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button onclick="confirmSave()"
+                    class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                    Yes, Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="paymentConfirmModal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-credit-card text-green-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-secondary">Make Payment</h3>
+                    <p class="text-sm text-gray-text">Confirm payment for this quotation</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-text">Total Amount:</span>
+                    <span class="text-lg font-bold text-green-600" id="paymentAmount">UGX 0.00</span>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closePaymentConfirmModal()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button onclick="confirmPayment()"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Confirm Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="cancelConfirmModal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-times text-red-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-secondary">Cancel Quotation</h3>
+                    <p class="text-sm text-gray-text">Are you sure you want to cancel this quotation? This action cannot
+                        be undone.</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeCancelConfirmModal()"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    No, Keep It
+                </button>
+                <button onclick="confirmCancel()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Yes, Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="successModal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check text-green-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-secondary">Success</h3>
+                    <p class="text-sm text-gray-text" id="successMessage">Operation completed successfully.</p>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button onclick="closeSuccessModal()"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="errorModal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-secondary">Error</h3>
+                    <p class="text-sm text-gray-text" id="errorMessage">An error occurred.</p>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button onclick="closeErrorModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="pdfContent"
     style="position: absolute; left: -9999px; top: -9999px; width: 297mm; background: white; font-family: Arial, sans-serif; color: #333; padding: 10mm;">
 </div>
@@ -226,11 +396,32 @@ ob_start();
     let itemsPerPage = 20;
     let currentQuotationId = null;
     let currentQuotationData = null;
+    let isEditMode = false;
+    let editedItems = [];
+    let itemsToRemove = [];
 
     document.addEventListener('DOMContentLoaded', function () {
         setupEventListeners();
         loadQuotations();
     });
+
+    function showSuccessModal(message) {
+        document.getElementById('successMessage').textContent = message;
+        document.getElementById('successModal').classList.remove('hidden');
+    }
+
+    function closeSuccessModal() {
+        document.getElementById('successModal').classList.add('hidden');
+    }
+
+    function showErrorModal(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorModal').classList.remove('hidden');
+    }
+
+    function closeErrorModal() {
+        document.getElementById('errorModal').classList.add('hidden');
+    }
 
     function loadQuotations() {
         const params = new URLSearchParams({
@@ -275,6 +466,7 @@ ob_start();
         document.getElementById('processingRequests').textContent = parseInt(stats.processing || 0).toLocaleString();
         document.getElementById('processedRequests').textContent = parseInt(stats.processed || 0).toLocaleString();
         document.getElementById('cancelledRequests').textContent = parseInt(stats.cancelled || 0).toLocaleString();
+        document.getElementById('paidRequests').textContent = parseInt(stats.paid || 0).toLocaleString();
     }
 
     function renderQuotationsTable(data, total, page) {
@@ -347,6 +539,8 @@ ob_start();
             return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Processed</span>';
         } else if (statusLower === 'cancelled') {
             return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Cancelled</span>';
+        } else if (statusLower === 'paid') {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Paid</span>';
         }
         return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
     }
@@ -396,9 +590,11 @@ ob_start();
 
     function viewQuotationDetails(id) {
         currentQuotationId = id;
+        isEditMode = false;
+        editedItems = [];
+        itemsToRemove = [];
         document.getElementById('quotationModal').classList.remove('hidden');
 
-        // Show loading state
         document.getElementById('quotationContent').innerHTML = `
             <div class="flex items-center justify-center py-12">
                 <div class="text-center">
@@ -440,7 +636,6 @@ ob_start();
 
     function createGoogleMapsLink(coordinates) {
         if (!coordinates) return '#';
-        // Extract lat,lng from coordinates string
         const coords = coordinates.match(/-?\d+\.?\d*/g);
         if (coords && coords.length >= 2) {
             return `https://www.google.com/maps?q=${coords[0]},${coords[1]}`;
@@ -450,8 +645,11 @@ ob_start();
 
     function showQuotationModal(quotation, items) {
         const content = document.getElementById('quotationContent');
-        const canEdit = quotation.status.toLowerCase() !== 'cancelled';
-        const isProcessed = quotation.status.toLowerCase() === 'processed';
+        const status = quotation.status.toLowerCase();
+        const isModified = parseInt(quotation.modified) === 1;
+        const canEdit = status === 'processed' && !isModified;
+        const canCancel = ['new', 'processing', 'processed'].includes(status);
+        const canPay = status === 'processed';
 
         let itemsTotal = 0;
 
@@ -465,21 +663,20 @@ ob_start();
         const feeCharged = parseFloat(quotation.fee_charged || 0);
         const grandTotal = itemsTotal + transport;
 
-        // Create clickable links
         const coordinatesLink = quotation.coordinates ?
             `<a href="${createGoogleMapsLink(quotation.coordinates)}" target="_blank" class="text-user-primary hover:text-user-primary/80 underline">${quotation.coordinates}</a>` :
             '';
 
         content.innerHTML = `
             <div class="space-y-6">
-                <!-- Header Information -->
                 <div class="bg-user-accent/50 rounded-lg p-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <h4 class="font-medium text-secondary mb-2">Request Information</h4>
                             <div class="space-y-1 text-sm">
                                 <div><span class="text-gray-text">Status:</span> ${getStatusBadge(quotation.status)}</div>
                                 <div><span class="text-gray-text">Fee Charged:</span> <span class="font-medium">UGX ${formatCurrency(feeCharged)}</span></div>
+                                ${isModified ? '<div class="text-xs text-orange-600 font-medium">⚠ This quotation has been modified</div>' : ''}
                             </div>
                         </div>
                         <div>
@@ -490,23 +687,41 @@ ob_start();
                                 ${coordinatesLink ? `<div class="text-gray-500">${coordinatesLink}</div>` : ''}
                             </div>
                         </div>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <h4 class="font-medium text-secondary mb-2">Dates</h4>
-                                <div class="space-y-1 text-sm">
-                                    <div><span class="text-gray-text">Created:</span> <span class="font-medium">${formatDate(quotation.created_at)} ${formatTime(quotation.created_at)}</span></div>
-                                    <div><span class="text-gray-text">Updated:</span> <span class="font-medium">${formatDate(quotation.updated_at)} ${formatTime(quotation.updated_at)}</span></div>
-                                </div>
+                        <div>
+                            <h4 class="font-medium text-secondary mb-2">Dates</h4>
+                            <div class="space-y-1 text-sm">
+                                <div><span class="text-gray-text">Created:</span> <span class="font-medium">${formatDate(quotation.created_at)} ${formatTime(quotation.created_at)}</span></div>
+                                <div><span class="text-gray-text">Updated:</span> <span class="font-medium">${formatDate(quotation.updated_at)} ${formatTime(quotation.updated_at)}</span></div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Items Table -->
                 <div>
-                    <h4 class="font-medium text-secondary mb-3">Requested Items</h4>
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-medium text-secondary">Requested Items</h4>
+                        ${canEdit && !isEditMode ? `
+                            <button onclick="showEditConfirmModal()" 
+                                class="px-3 py-1 bg-user-primary text-white text-sm rounded-lg hover:bg-user-primary/90 flex items-center gap-2">
+                                <i class="fas fa-edit"></i>
+                                Edit Items
+                            </button>
+                        ` : ''}
+                        ${isEditMode ? `
+                            <div class="flex gap-2">
+                                <button onclick="showSaveConfirmModal()" 
+                                    class="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                    <i class="fas fa-save"></i>
+                                    Save Changes
+                                </button>
+                                <button onclick="exitEditMode()" 
+                                    class="px-3 py-1 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 flex items-center gap-2">
+                                    <i class="fas fa-times"></i>
+                                    Cancel
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
                     <div class="overflow-x-auto border border-gray-200 rounded-lg">
                         <table class="w-full">
                             <thead class="bg-gray-50">
@@ -516,45 +731,16 @@ ob_start();
                                     <th class="px-4 py-3 text-center text-sm font-medium text-gray-600">Quantity</th>
                                     <th class="px-4 py-3 text-center text-sm font-medium text-gray-600">Unit Price (UGX)</th>
                                     <th class="px-4 py-3 text-center text-sm font-medium text-gray-600">Total (UGX)</th>
+                                    ${isEditMode ? '<th class="px-4 py-3 text-center text-sm font-medium text-gray-600">Actions</th>' : ''}
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                ${items.map((item, index) => {
-            const unitPrice = parseFloat(item.unit_price || 0);
-            const quantity = parseInt(item.quantity);
-            const total = unitPrice * quantity;
-
-            return `
-                                        <tr>
-                                            <td class="px-4 py-3 text-sm">${item.brand_name}</td>
-                                            <td class="px-4 py-3 text-sm">${item.size}</td>
-                                            <td class="px-4 py-3 text-center">
-                                                ${canEdit ? `
-                                                    <input type="number" 
-                                                           value="${quantity}" 
-                                                           min="1" 
-                                                           class="w-20 px-2 py-1 text-sm border border-gray-300 rounded text-center quantity-input"
-                                                           data-item-id="${item.RFQD_ID}"
-                                                           onchange="updateItemQuantity('${item.RFQD_ID}', this.value)">
-                                                ` : `
-                                                    <span class="text-sm font-medium">${quantity}</span>
-                                                `}
-                                            </td>
-                                            <td class="px-4 py-3 text-center">
-                                                <span class="text-sm font-medium">${unitPrice > 0 ? formatCurrency(unitPrice) : '<span class="text-gray-400 italic">Not set yet</span>'}</span>
-                                            </td>
-                                            <td class="px-4 py-3 text-sm text-center font-medium">
-                                                ${formatCurrency(total)}
-                                            </td>
-                                        </tr>
-                                    `;
-        }).join('')}
+                            <tbody class="divide-y divide-gray-200" id="itemsTableBody">
+                                ${renderItemsTable(items)}
                             </tbody>
                         </table>
                     </div>
                 </div>
                 
-                <!-- Transport and Totals -->
                 <div class="bg-user-accent/50 rounded-lg p-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -570,7 +756,7 @@ ob_start();
                             <div class="space-y-2 text-sm">
                                 <div class="flex justify-between">
                                     <span class="text-gray-text">Items Subtotal:</span>
-                                    <span class="font-medium">${itemsTotal > 0 ? 'UGX ' + formatCurrency(itemsTotal) : '<span class="text-gray-400 italic">Not set yet</span>'}</span>
+                                    <span class="font-medium" id="itemsSubtotal">${itemsTotal > 0 ? 'UGX ' + formatCurrency(itemsTotal) : '<span class="text-gray-400 italic">Not set yet</span>'}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-text">Delivery Charge:</span>
@@ -578,15 +764,30 @@ ob_start();
                                 </div>
                                 <div class="flex justify-between border-t pt-2 text-lg font-bold">
                                     <span>Total Amount:</span>
-                                    <span class="text-green-600">${grandTotal > 0 ? 'UGX ' + formatCurrency(grandTotal) : '<span class="text-gray-400 italic">Pending pricing</span>'}</span>
+                                    <span class="text-green-600" id="grandTotal">${grandTotal > 0 ? 'UGX ' + formatCurrency(grandTotal) : '<span class="text-gray-400 italic">Pending pricing</span>'}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Action Buttons -->
-                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                    <div class="flex gap-3">
+                        ${canCancel ? `
+                            <button onclick="showCancelConfirmModal()" 
+                                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2">
+                                <i class="fas fa-times"></i>
+                                Cancel Quote
+                            </button>
+                        ` : ''}
+                        ${canPay && grandTotal > 0 ? `
+                            <button onclick="showPaymentConfirmModal(${grandTotal})" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                <i class="fas fa-credit-card"></i>
+                                Make Payment
+                            </button>
+                        ` : ''}
+                    </div>
                     <button onclick="closeQuotationModal()" 
                         class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                         Close
@@ -596,8 +797,219 @@ ob_start();
         `;
     }
 
-    function updateItemQuantity(itemId, quantity) {
+    function renderItemsTable(items) {
+        return items.filter(item => !itemsToRemove.includes(item.RFQD_ID)).map((item, index) => {
+            const unitPrice = parseFloat(item.unit_price || 0);
+            const quantity = parseInt(item.quantity);
+            const total = unitPrice * quantity;
+            const remainingItems = items.filter(i => !itemsToRemove.includes(i.RFQD_ID));
+
+            return `
+                <tr data-item-id="${item.RFQD_ID}">
+                    <td class="px-4 py-3 text-sm">${item.brand_name}</td>
+                    <td class="px-4 py-3 text-sm">${item.size}</td>
+                    <td class="px-4 py-3 text-center">
+                        ${isEditMode ? `
+                            <input type="number" 
+                                   value="${quantity}" 
+                                   min="1" 
+                                   class="w-20 px-2 py-1 text-sm border border-gray-300 rounded text-center quantity-input"
+                                   data-item-id="${item.RFQD_ID}"
+                                   onchange="updateQuantityInMemory('${item.RFQD_ID}', this.value)">
+                        ` : `
+                            <span class="text-sm font-medium">${quantity}</span>
+                        `}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="text-sm font-medium">${unitPrice > 0 ? formatCurrency(unitPrice) : '<span class="text-gray-400 italic">Not set yet</span>'}</span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-center font-medium item-total" data-item-id="${item.RFQD_ID}">
+                        ${formatCurrency(total)}
+                    </td>
+                    ${isEditMode ? `
+                        <td class="px-4 py-3 text-center">
+                            ${remainingItems.length > 1 ? `
+                                <button onclick="markItemForRemoval('${item.RFQD_ID}')" 
+                                    class="text-red-600 hover:text-red-800 p-1 rounded" 
+                                    title="Remove item">
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>
+                            ` : `
+                                <span class="text-gray-400 text-xs">Last item</span>
+                            `}
+                        </td>
+                    ` : ''}
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function updateQuantityInMemory(itemId, quantity) {
         const qty = parseInt(quantity) || 1;
+
+        const existingIndex = editedItems.findIndex(item => item.id === itemId);
+        if (existingIndex >= 0) {
+            editedItems[existingIndex].quantity = qty;
+        } else {
+            editedItems.push({ id: itemId, quantity: qty });
+        }
+
+        updateItemTotal(itemId, qty);
+        updateSummaryTotals();
+    }
+
+    function updateItemTotal(itemId, quantity) {
+        const item = currentQuotationData.items.find(i => i.RFQD_ID === itemId);
+        if (item) {
+            const unitPrice = parseFloat(item.unit_price || 0);
+            const total = unitPrice * quantity;
+            const totalCell = document.querySelector(`.item-total[data-item-id="${itemId}"]`);
+            if (totalCell) {
+                totalCell.textContent = formatCurrency(total);
+            }
+        }
+    }
+
+    function updateSummaryTotals() {
+        let itemsTotal = 0;
+
+        currentQuotationData.items.forEach(item => {
+            if (!itemsToRemove.includes(item.RFQD_ID)) {
+                const editedItem = editedItems.find(e => e.id === item.RFQD_ID);
+                const quantity = editedItem ? editedItem.quantity : parseInt(item.quantity);
+                const unitPrice = parseFloat(item.unit_price || 0);
+                itemsTotal += unitPrice * quantity;
+            }
+        });
+
+        const transport = parseFloat(currentQuotationData.quotation.transport || 0);
+        const grandTotal = itemsTotal + transport;
+
+        document.getElementById('itemsSubtotal').innerHTML = itemsTotal > 0 ? 'UGX ' + formatCurrency(itemsTotal) : '<span class="text-gray-400 italic">Not set yet</span>';
+        document.getElementById('grandTotal').innerHTML = grandTotal > 0 ? 'UGX ' + formatCurrency(grandTotal) : '<span class="text-gray-400 italic">Pending pricing</span>';
+    }
+
+    function markItemForRemoval(itemId) {
+        const remainingItems = currentQuotationData.items.filter(item => !itemsToRemove.includes(item.RFQD_ID));
+        if (remainingItems.length <= 1) {
+            showErrorModal('Cannot remove the last item. At least one item must remain.');
+            return;
+        }
+
+        itemsToRemove.push(itemId);
+
+        const editedIndex = editedItems.findIndex(item => item.id === itemId);
+        if (editedIndex >= 0) {
+            editedItems.splice(editedIndex, 1);
+        }
+
+        document.getElementById('itemsTableBody').innerHTML = renderItemsTable(currentQuotationData.items);
+        updateSummaryTotals();
+    }
+
+    function showSaveConfirmModal() {
+        if (editedItems.length === 0 && itemsToRemove.length === 0) {
+            showErrorModal('No changes to save.');
+            return;
+        }
+        document.getElementById('saveConfirmModal').classList.remove('hidden');
+    }
+
+    function closeSaveConfirmModal() {
+        document.getElementById('saveConfirmModal').classList.add('hidden');
+    }
+
+    function confirmSave() {
+        closeSaveConfirmModal();
+
+        const saveData = {
+            action: 'updateQuotation',
+            rfq_id: currentQuotationId,
+            items: editedItems,
+            items_to_remove: itemsToRemove
+        };
+
+        fetch('fetch/manageQuotations.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(saveData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessModal('Changes saved successfully. Status changed to Processing.');
+                    setTimeout(() => {
+                        closeSuccessModal();
+                        closeQuotationModal();
+                        loadQuotations();
+                    }, 2000);
+                } else {
+                    showErrorModal('Failed to save changes: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showErrorModal('An error occurred while saving changes');
+            });
+    }
+
+    function showEditConfirmModal() {
+        if (!currentQuotationData) {
+            showErrorModal('No quotation data available');
+            return;
+        }
+        document.getElementById('editConfirmModal').classList.remove('hidden');
+    }
+
+    function closeEditConfirmModal() {
+        document.getElementById('editConfirmModal').classList.add('hidden');
+    }
+
+    function confirmEdit() {
+        closeEditConfirmModal();
+        if (!currentQuotationData) {
+            showErrorModal('No quotation data available');
+            return;
+        }
+        isEditMode = true;
+        editedItems = [];
+        itemsToRemove = [];
+        showQuotationModal(currentQuotationData.quotation, currentQuotationData.items);
+    }
+
+    function exitEditMode() {
+        isEditMode = false;
+        editedItems = [];
+        itemsToRemove = [];
+        showQuotationModal(currentQuotationData.quotation, currentQuotationData.items);
+    }
+
+    function showPaymentConfirmModal(amount) {
+        document.getElementById('paymentAmount').textContent = 'UGX ' + formatCurrency(amount);
+        document.getElementById('paymentConfirmModal').classList.remove('hidden');
+    }
+
+    function closePaymentConfirmModal() {
+        document.getElementById('paymentConfirmModal').classList.add('hidden');
+    }
+
+    function confirmPayment() {
+        closePaymentConfirmModal();
+        showErrorModal('Payment functionality will be implemented soon.');
+    }
+
+    function showCancelConfirmModal() {
+        document.getElementById('cancelConfirmModal').classList.remove('hidden');
+    }
+
+    function closeCancelConfirmModal() {
+        document.getElementById('cancelConfirmModal').classList.add('hidden');
+    }
+
+    function confirmCancel() {
+        closeCancelConfirmModal();
 
         fetch('fetch/manageQuotations.php', {
             method: 'POST',
@@ -605,33 +1017,26 @@ ob_start();
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                action: 'updateItemQuantity',
-                item_id: itemId,
-                quantity: qty
+                action: 'cancelQuotation',
+                rfq_id: currentQuotationId
             })
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Check if this triggers status change to processing
-                    if (data.status_changed) {
-                        // Refresh the modal to show updated status
-                        viewQuotationDetails(currentQuotationId);
-                        // Refresh the main table
+                    showSuccessModal('Quotation cancelled successfully.');
+                    setTimeout(() => {
+                        closeSuccessModal();
+                        closeQuotationModal();
                         loadQuotations();
-                    } else {
-                        // Just refresh the modal to update totals
-                        viewQuotationDetails(currentQuotationId);
-                    }
+                    }, 2000);
                 } else {
-                    alert('Failed to update quantity: ' + (data.error || 'Unknown error'));
-                    // Revert the input value
-                    document.querySelector(`input[data-item-id="${itemId}"]`).value = data.old_quantity || 1;
+                    showErrorModal('Failed to cancel quotation: ' + (data.error || 'Unknown error'));
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while updating quantity');
+                showErrorModal('An error occurred while cancelling quotation');
             });
     }
 
@@ -639,6 +1044,9 @@ ob_start();
         document.getElementById('quotationModal').classList.add('hidden');
         currentQuotationId = null;
         currentQuotationData = null;
+        isEditMode = false;
+        editedItems = [];
+        itemsToRemove = [];
     }
 
     function generatePDF() {
@@ -647,7 +1055,6 @@ ob_start();
         const { quotation, items } = currentQuotationData;
         const pdfContainer = document.getElementById('pdfContent');
 
-        // Calculate totals
         let itemsTotal = 0;
         items.forEach(item => {
             if (item.unit_price && item.unit_price > 0) {
@@ -658,34 +1065,34 @@ ob_start();
         const transport = parseFloat(quotation.transport || 0);
         const grandTotal = itemsTotal + transport;
 
-        // Create PDF content with proper styling for page breaks and reduced margins
         pdfContainer.innerHTML = `
             <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.4; font-size: 12px;">
-                <!-- Header Section -->
                 <div style="text-align: center; margin-bottom: 20px; page-break-inside: avoid;">
                     <h1 style="font-size: 24px; margin: 0 0 10px 0; color: #D92B13;">My Quotation Report</h1>
                     <p style="font-size: 14px; color: #666; margin: 0;">Generated on ${formatDateReadable(new Date())} at ${formatTimeReadable(new Date())}</p>
                 </div>
                 
-                <!-- Request Information Section -->
                 <div style="display: flex; justify-content: space-between; margin-bottom: 20px; page-break-inside: avoid;">
-                    <div style="width: 45%; min-width: 200px;">
+                    <div style="width: 30%; min-width: 200px;">
                         <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Request Information</h3>
                         <div style="margin-bottom: 8px;"><strong>Status:</strong> ${quotation.status}</div>
                         <div style="margin-bottom: 8px;"><strong>Fee Charged:</strong> UGX ${formatCurrency(quotation.fee_charged)}</div>
-                        <div style="margin-bottom: 8px;"><strong>Created:</strong> ${formatDateReadable(new Date(quotation.created_at))} ${formatTimeReadable(new Date(quotation.created_at))}</div>
-                        <div style="margin-bottom: 8px;"><strong>Updated:</strong> ${formatDateReadable(new Date(quotation.updated_at))} ${formatTimeReadable(new Date(quotation.updated_at))}</div>
                     </div>
                     
-                    <div style="width: 50%; min-width: 250px;">
+                    <div style="width: 30%; min-width: 250px;">
                         <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Location Details</h3>
                         <div style="margin-bottom: 8px;"><strong>Site Location:</strong></div>
                         <div style="margin-bottom: 8px; word-wrap: break-word;">${quotation.site_location}</div>
                         ${quotation.coordinates ? `<div style="margin-bottom: 8px; color: #666; font-size: 11px;">${quotation.coordinates}</div>` : ''}
                     </div>
+
+                    <div style="width: 30%; min-width: 200px;">
+                        <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Dates</h3>
+                        <div style="margin-bottom: 8px;"><strong>Created:</strong> ${formatDateReadable(new Date(quotation.created_at))} ${formatTimeReadable(new Date(quotation.created_at))}</div>
+                        <div style="margin-bottom: 8px;"><strong>Updated:</strong> ${formatDateReadable(new Date(quotation.updated_at))} ${formatTimeReadable(new Date(quotation.updated_at))}</div>
+                    </div>
                 </div>
                 
-                <!-- Items Table Section -->
                 <div style="margin-bottom: 20px;">
                     <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Requested Items</h3>
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; page-break-inside: auto;">
@@ -718,7 +1125,6 @@ ob_start();
                     </table>
                 </div>
                 
-                <!-- Summary Section -->
                 <div style="display: flex; justify-content: flex-end; page-break-inside: avoid;">
                     <div style="width: 300px; border: 2px solid #d1d5db; padding: 15px; background-color: #f9fafb;">
                         <h3 style="font-size: 16px; margin: 0 0 15px 0; color: #374151;">Summary</h3>
@@ -737,14 +1143,12 @@ ob_start();
                     </div>
                 </div>
                 
-                <!-- Footer -->
                 <div style="margin-top: 30px; text-align: center; color: #666; font-size: 11px; page-break-inside: avoid;">
                     <p style="margin: 0;">This is a computer-generated document. No signature is required.</p>
                 </div>
             </div>
         `;
 
-        // Add the date formatting functions
         function formatDateReadable(date) {
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const day = date.getDate();
@@ -768,7 +1172,6 @@ ob_start();
             return `${hours}:${minutesStr}:${secondsStr} ${ampm}`;
         }
 
-        // Wait for content to be rendered, then generate PDF
         setTimeout(() => {
             const { jsPDF } = window.jspdf;
 
@@ -797,11 +1200,9 @@ ob_start();
                 let heightLeft = imgHeight;
                 let position = 0;
 
-                // Add first page
                 pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
                 heightLeft -= pdfHeight;
 
-                // Add additional pages if needed
                 while (heightLeft >= 0) {
                     position = heightLeft - imgHeight;
                     pdf.addPage();
@@ -813,7 +1214,7 @@ ob_start();
                 pdf.save(fileName);
             }).catch(error => {
                 console.error('PDF generation error:', error);
-                alert('Failed to generate PDF. Please try again.');
+                showErrorModal('Failed to generate PDF. Please try again.');
             });
         }, 500);
     }
@@ -851,10 +1252,45 @@ ob_start();
         document.getElementById('refreshBtn').addEventListener('click', refreshData);
         document.getElementById('printQuotationBtn').addEventListener('click', generatePDF);
 
-        // Close modal when clicking outside
         document.getElementById('quotationModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeQuotationModal();
+            }
+        });
+
+        document.getElementById('editConfirmModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeEditConfirmModal();
+            }
+        });
+
+        document.getElementById('saveConfirmModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeSaveConfirmModal();
+            }
+        });
+
+        document.getElementById('paymentConfirmModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closePaymentConfirmModal();
+            }
+        });
+
+        document.getElementById('cancelConfirmModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeCancelConfirmModal();
+            }
+        });
+
+        document.getElementById('successModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeSuccessModal();
+            }
+        });
+
+        document.getElementById('errorModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeErrorModal();
             }
         });
     }

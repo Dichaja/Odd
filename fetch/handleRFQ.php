@@ -30,7 +30,8 @@ try {
             coordinates VARCHAR(255) NULL,
             transport DECIMAL(10,2) NULL DEFAULT 0.00,
             fee_charged DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-            status ENUM('New','Processing','Cancelled','Processed') NOT NULL DEFAULT 'New',
+            modified SMALLINT NOT NULL DEFAULT 0,
+            status ENUM('New', 'Processing', 'Cancelled', 'Processed', 'Paid') NOT NULL DEFAULT 'New',
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL
         )"

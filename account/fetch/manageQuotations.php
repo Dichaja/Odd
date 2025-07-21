@@ -8,13 +8,11 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 date_default_timezone_set('Africa/Kampala');
 
-// Check if user is logged in
 if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in']) {
     http_response_code(401);
     die(json_encode(['error' => 'Authentication required']));
 }
 
-// Check if user is admin (admins shouldn't access user endpoints)
 if ($_SESSION['user']['is_admin']) {
     http_response_code(403);
     die(json_encode(['error' => 'Admin accounts cannot access user quotations']));
@@ -27,7 +25,6 @@ if (!$userId) {
     die(json_encode(['error' => 'User ID not found in session']));
 }
 
-// Create tables if they don't exist
 try {
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS request_for_quote (
@@ -37,7 +34,8 @@ try {
             coordinates VARCHAR(255) DEFAULT NULL,
             transport DECIMAL(10,2) DEFAULT 0.00,
             fee_charged DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-            status ENUM('New','Processing','Cancelled','Processed') NOT NULL DEFAULT 'New',
+            modified SMALLINT NOT NULL DEFAULT 0,
+            status ENUM('New','Processing','Cancelled','Processed','Paid') NOT NULL DEFAULT 'New',
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
@@ -85,7 +83,6 @@ function logAction($pdo, $msg)
 
 function getUserQuotationData($pdo, $userId, $searchTerm, $statusFilter, $page, $limit)
 {
-    // Get quotation data with items total for specific user
     $quotationQuery = "
         SELECT 
             r.RFQ_ID,
@@ -94,6 +91,7 @@ function getUserQuotationData($pdo, $userId, $searchTerm, $statusFilter, $page, 
             r.coordinates,
             r.transport,
             r.fee_charged,
+            r.modified,
             r.status,
             r.created_at,
             r.updated_at,
@@ -120,7 +118,6 @@ function getUserQuotationData($pdo, $userId, $searchTerm, $statusFilter, $page, 
 
     $quotationQuery .= " ORDER BY r.created_at DESC";
 
-    // Get total count first
     $countQuery = "
         SELECT COUNT(*) as total
         FROM request_for_quote r
@@ -147,7 +144,6 @@ function getUserQuotationData($pdo, $userId, $searchTerm, $statusFilter, $page, 
     $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
     $totalCount = $countResult ? intval($countResult['total']) : 0;
 
-    // Add pagination to main query
     $offset = ($page - 1) * $limit;
     $quotationQuery .= " LIMIT :limit OFFSET :offset";
     $params[':limit'] = $limit;
@@ -183,7 +179,7 @@ function getUserStatistics($pdo, $userId)
     ]);
     $statsResults = $statsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stats = ['new' => 0, 'processing' => 0, 'processed' => 0, 'cancelled' => 0];
+    $stats = ['new' => 0, 'processing' => 0, 'processed' => 0, 'cancelled' => 0, 'paid' => 0];
     foreach ($statsResults as $stat) {
         $statusKey = strtolower($stat['status']);
         if (isset($stats[$statusKey])) {
@@ -194,37 +190,6 @@ function getUserStatistics($pdo, $userId)
     return $stats;
 }
 
-function checkAndUpdateStatusForUser($pdo, $rfqId, $userId)
-{
-    // Verify the RFQ belongs to the user
-    $stmt = $pdo->prepare("SELECT status FROM request_for_quote WHERE RFQ_ID = :rfq_id AND user_id = :user_id");
-    $stmt->execute([':rfq_id' => $rfqId, ':user_id' => $userId]);
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$result)
-        return false;
-
-    $currentStatus = $result['status'];
-
-    // If status is New, change to Processing when user updates quantity
-    // If status is Processed, change back to Processing when user updates quantity
-    if ($currentStatus === 'New' || $currentStatus === 'Processed') {
-        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-        $updateStmt = $pdo->prepare("
-            UPDATE request_for_quote 
-            SET status = 'Processing', updated_at = :now 
-            WHERE RFQ_ID = :rfq_id AND user_id = :user_id
-        ");
-        $updateStmt->execute([':now' => $now, ':rfq_id' => $rfqId, ':user_id' => $userId]);
-
-        logAction($pdo, "User updated quantity for RFQ $rfqId, status changed from $currentStatus to Processing");
-        return true;
-    }
-
-    return false;
-}
-
-// Handle different request methods
 $method = $_SERVER['REQUEST_METHOD'];
 $action = '';
 
@@ -264,7 +229,6 @@ try {
                 die(json_encode(['error' => 'Missing id']));
             }
 
-            // Verify the RFQ belongs to the user
             $stmt = $pdo->prepare(
                 "SELECT 
                     r.RFQ_ID, 
@@ -273,6 +237,7 @@ try {
                     r.coordinates,
                     r.transport,
                     r.fee_charged,
+                    r.modified,
                     r.status, 
                     r.created_at,
                     r.updated_at
@@ -299,72 +264,135 @@ try {
             echo json_encode(['success' => true, 'quotation' => $quotation, 'items' => $items]);
             break;
 
-        case 'updateItemQuantity':
+        case 'updateQuotation':
             if ($method !== 'POST') {
                 http_response_code(405);
                 die(json_encode(['error' => 'Method not allowed']));
             }
 
             $input = json_decode(file_get_contents('php://input'), true);
-            $itemId = $input['item_id'] ?? '';
-            $quantity = intval($input['quantity'] ?? 1);
+            $rfqId = $input['rfq_id'] ?? '';
+            $items = $input['items'] ?? [];
+            $itemsToRemove = $input['items_to_remove'] ?? [];
 
-            if (!$itemId || $quantity < 1) {
+            if (!$rfqId) {
                 http_response_code(400);
-                die(json_encode(['error' => 'Missing or invalid item ID or quantity']));
+                die(json_encode(['error' => 'Missing RFQ ID']));
             }
 
-            // Get current quantity and verify ownership
-            $stmt = $pdo->prepare("
-                SELECT d.quantity, d.RFQ_ID 
-                FROM request_for_quote_details d
-                JOIN request_for_quote r ON d.RFQ_ID = r.RFQ_ID
-                WHERE d.RFQD_ID = :id AND r.user_id = :user_id
-            ");
-            $stmt->execute([':id' => $itemId, ':user_id' => $userId]);
-            $currentItem = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (empty($items) && empty($itemsToRemove)) {
+                http_response_code(400);
+                die(json_encode(['error' => 'No changes to save']));
+            }
 
-            if (!$currentItem) {
+            $stmt = $pdo->prepare("SELECT status, modified FROM request_for_quote WHERE RFQ_ID = :rfq_id AND user_id = :user_id");
+            $stmt->execute([':rfq_id' => $rfqId, ':user_id' => $userId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$result) {
                 http_response_code(404);
-                die(json_encode(['error' => 'Item not found or access denied']));
+                die(json_encode(['error' => 'Quotation not found or access denied']));
             }
 
-            $oldQuantity = $currentItem['quantity'];
-            $rfqId = $currentItem['RFQ_ID'];
+            $currentStatus = $result['status'];
+            $isModified = intval($result['modified']);
 
-            // Check if RFQ can be modified (only Cancelled status cannot be modified)
-            $statusStmt = $pdo->prepare("SELECT status FROM request_for_quote WHERE RFQ_ID = :rfq_id");
-            $statusStmt->execute([':rfq_id' => $rfqId]);
-            $statusResult = $statusStmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$statusResult || strtolower($statusResult['status']) === 'cancelled') {
+            if (strtolower($currentStatus) !== 'processed') {
                 http_response_code(400);
-                die(json_encode(['error' => 'Cannot modify items in cancelled quotations']));
+                die(json_encode(['error' => 'Can only edit quotations with Processed status']));
             }
 
-            // Update the quantity
+            if ($isModified === 1) {
+                http_response_code(400);
+                die(json_encode(['error' => 'This quotation has already been modified and cannot be edited again']));
+            }
+
+            $pdo->beginTransaction();
+
+            try {
+                $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+
+                if (!empty($itemsToRemove)) {
+                    $placeholders = str_repeat('?,', count($itemsToRemove) - 1) . '?';
+                    $stmt = $pdo->prepare("DELETE FROM request_for_quote_details WHERE RFQD_ID IN ($placeholders) AND RFQ_ID = ?");
+                    $params = array_merge($itemsToRemove, [$rfqId]);
+                    $stmt->execute($params);
+                }
+
+                foreach ($items as $item) {
+                    $stmt = $pdo->prepare("
+                        UPDATE request_for_quote_details 
+                        SET quantity = :quantity, updated_at = :now 
+                        WHERE RFQD_ID = :id AND RFQ_ID = :rfq_id
+                    ");
+                    $stmt->execute([
+                        ':quantity' => intval($item['quantity']),
+                        ':now' => $now,
+                        ':id' => $item['id'],
+                        ':rfq_id' => $rfqId
+                    ]);
+                }
+
+                $stmt = $pdo->prepare("
+                    UPDATE request_for_quote 
+                    SET status = 'Processing', modified = 1, updated_at = :now 
+                    WHERE RFQ_ID = :rfq_id AND user_id = :user_id
+                ");
+                $stmt->execute([':now' => $now, ':rfq_id' => $rfqId, ':user_id' => $userId]);
+
+                $pdo->commit();
+
+                logAction($pdo, "User updated quotation $rfqId, status changed to Processing");
+
+                echo json_encode(['success' => true]);
+
+            } catch (Exception $e) {
+                $pdo->rollBack();
+                throw $e;
+            }
+            break;
+
+        case 'cancelQuotation':
+            if ($method !== 'POST') {
+                http_response_code(405);
+                die(json_encode(['error' => 'Method not allowed']));
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true);
+            $rfqId = $input['rfq_id'] ?? '';
+
+            if (!$rfqId) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Missing RFQ ID']));
+            }
+
+            $stmt = $pdo->prepare("SELECT status FROM request_for_quote WHERE RFQ_ID = :rfq_id AND user_id = :user_id");
+            $stmt->execute([':rfq_id' => $rfqId, ':user_id' => $userId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$result) {
+                http_response_code(404);
+                die(json_encode(['error' => 'Quotation not found or access denied']));
+            }
+
+            $currentStatus = strtolower($result['status']);
+
+            if (!in_array($currentStatus, ['new', 'processing', 'processed'])) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Can only cancel quotations with New, Processing, or Processed status']));
+            }
+
             $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-            $stmt = $pdo->prepare(
-                "UPDATE request_for_quote_details 
-                 SET quantity = :quantity, updated_at = :now 
-                 WHERE RFQD_ID = :id"
-            );
-            $stmt->execute([
-                ':quantity' => $quantity,
-                ':now' => $now,
-                ':id' => $itemId
-            ]);
+            $stmt = $pdo->prepare("
+                UPDATE request_for_quote 
+                SET status = 'Cancelled', updated_at = :now 
+                WHERE RFQ_ID = :rfq_id AND user_id = :user_id
+            ");
+            $stmt->execute([':now' => $now, ':rfq_id' => $rfqId, ':user_id' => $userId]);
 
-            // Check if status should be updated
-            $statusChanged = checkAndUpdateStatusForUser($pdo, $rfqId, $userId);
+            logAction($pdo, "User cancelled quotation $rfqId");
 
-            logAction($pdo, "User updated quantity for item $itemId from $oldQuantity to $quantity");
-
-            echo json_encode([
-                'success' => true,
-                'status_changed' => $statusChanged,
-                'old_quantity' => $oldQuantity
-            ]);
+            echo json_encode(['success' => true]);
             break;
 
         default:

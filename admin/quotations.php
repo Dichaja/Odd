@@ -67,7 +67,7 @@ ob_start();
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 sm:p-6 border border-blue-200">
                 <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
@@ -119,6 +119,19 @@ ob_start();
                     </div>
                 </div>
             </div>
+
+            <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 sm:p-6 border border-purple-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Paid</p>
+                        <p class="text-xl sm:text-2xl font-bold text-purple-900 truncate" id="paidRequests">0</p>
+                    </div>
+                    <div
+                        class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-200 rounded-lg flex items-center justify-center flex-shrink-0 ml-3">
+                        <i class="fas fa-credit-card text-purple-600 text-lg sm:text-xl"></i>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
@@ -140,6 +153,7 @@ ob_start();
                             <option value="Processing">Processing</option>
                             <option value="Processed">Processed</option>
                             <option value="Cancelled">Cancelled</option>
+                            <option value="Paid">Paid</option>
                         </select>
                         <button id="clearFilters"
                             class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
@@ -216,7 +230,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Quotation Details Modal -->
 <div id="quotationModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div
@@ -252,26 +265,26 @@ ob_start();
     </div>
 </div>
 
-<!-- Confirmation Modal -->
-<div id="confirmationModal" class="fixed inset-0 z-50 hidden">
+<div id="confirmationModal" class="fixed inset-0 z-[60] hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
         <div class="p-6">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 mx-auto bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-exclamation-triangle text-yellow-500 text-2xl"></i>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-600"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900" id="confirmationTitle">Confirm Action</h3>
-                <p class="text-gray-600 mt-2" id="confirmationMessage">Are you sure you want to proceed with this
-                    action?</p>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900" id="confirmationTitle">Confirm Action</h3>
+                    <p class="text-sm text-gray-600 mt-1" id="confirmationMessage">Are you sure you want to proceed with
+                        this action?</p>
+                </div>
             </div>
-            <div class="flex justify-center gap-4">
+            <div class="flex justify-end gap-3">
                 <button id="cancelConfirmationBtn"
-                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Cancel
                 </button>
-                <button id="confirmActionBtn"
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                <button id="confirmActionBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                     Confirm
                 </button>
             </div>
@@ -279,7 +292,51 @@ ob_start();
     </div>
 </div>
 
-<!-- Hidden div for PDF generation -->
+<div id="successModal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check text-green-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Success</h3>
+                    <p class="text-sm text-gray-600" id="successMessage">Operation completed successfully.</p>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button onclick="closeSuccessModal()"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="errorModal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Error</h3>
+                    <p class="text-sm text-gray-600" id="errorMessage">An error occurred.</p>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button onclick="closeErrorModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="pdfContent"
     style="position: absolute; left: -9999px; top: -9999px; width: 297mm; background: white; font-family: Arial, sans-serif; color: #333; padding: 10mm;">
 </div>
@@ -300,6 +357,24 @@ ob_start();
         setupEventListeners();
         loadQuotations();
     });
+
+    function showSuccessModal(message) {
+        document.getElementById('successMessage').textContent = message;
+        document.getElementById('successModal').classList.remove('hidden');
+    }
+
+    function closeSuccessModal() {
+        document.getElementById('successModal').classList.add('hidden');
+    }
+
+    function showErrorModal(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorModal').classList.remove('hidden');
+    }
+
+    function closeErrorModal() {
+        document.getElementById('errorModal').classList.add('hidden');
+    }
 
     function initializeDateFilters() {
         setDateRangeForPeriod('daily');
@@ -382,6 +457,7 @@ ob_start();
         document.getElementById('processingRequests').textContent = parseInt(stats.processing || 0).toLocaleString();
         document.getElementById('processedRequests').textContent = parseInt(stats.processed || 0).toLocaleString();
         document.getElementById('cancelledRequests').textContent = parseInt(stats.cancelled || 0).toLocaleString();
+        document.getElementById('paidRequests').textContent = parseInt(stats.paid || 0).toLocaleString();
     }
 
     function renderQuotationsTable(data, total, page) {
@@ -454,6 +530,8 @@ ob_start();
             return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Processed</span>';
         } else if (statusLower === 'cancelled') {
             return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Cancelled</span>';
+        } else if (statusLower === 'paid') {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Paid</span>';
         }
         return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
     }
@@ -505,7 +583,6 @@ ob_start();
         currentQuotationId = id;
         document.getElementById('quotationModal').classList.remove('hidden');
 
-        // Show loading state
         document.getElementById('quotationContent').innerHTML = `
             <div class="flex items-center justify-center py-12">
                 <div class="text-center">
@@ -547,7 +624,6 @@ ob_start();
 
     function createGoogleMapsLink(coordinates) {
         if (!coordinates) return '#';
-        // Extract lat,lng from coordinates string
         const coords = coordinates.match(/-?\d+\.?\d*/g);
         if (coords && coords.length >= 2) {
             return `https://www.google.com/maps?q=${coords[0]},${coords[1]}`;
@@ -557,8 +633,9 @@ ob_start();
 
     function showQuotationModal(quotation, items) {
         const content = document.getElementById('quotationContent');
-        const canEdit = quotation.status.toLowerCase() !== 'cancelled';
-        const isProcessed = quotation.status.toLowerCase() === 'processed';
+        const status = quotation.status.toLowerCase();
+        const isModified = parseInt(quotation.modified) === 1;
+        const canEdit = !['paid', 'cancelled'].includes(status);
 
         let itemsTotal = 0;
         let allItemsPriced = true;
@@ -575,7 +652,6 @@ ob_start();
         const feeCharged = parseFloat(quotation.fee_charged || 0);
         const grandTotal = itemsTotal + transport;
 
-        // Create clickable links
         const emailLink = quotation.user_email && quotation.user_email !== 'N/A' ?
             `<a href="mailto:${quotation.user_email}" class="text-blue-600 hover:text-blue-800 underline">${quotation.user_email}</a>` :
             (quotation.user_email || 'N/A');
@@ -590,7 +666,6 @@ ob_start();
 
         content.innerHTML = `
             <div class="space-y-6">
-                <!-- Header Information -->
                 <div class="bg-gray-50 rounded-lg p-4">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
@@ -600,6 +675,7 @@ ob_start();
                                 <div><span class="text-gray-600">Email:</span> <span class="font-medium">${emailLink}</span></div>
                                 <div><span class="text-gray-600">Phone:</span> <span class="font-medium">${phoneLink}</span></div>
                                 <div><span class="text-gray-600">Status:</span> ${getStatusBadge(quotation.status)}</div>
+                                ${isModified ? '<div class="text-xs text-orange-600 font-medium">⚠ This quotation has been modified by user</div>' : ''}
                             </div>
                         </div>
                         <div>
@@ -620,7 +696,6 @@ ob_start();
                     </div>
                 </div>
                 
-                <!-- Items Table -->
                 <div>
                     <h4 class="font-medium text-gray-900 mb-3">Requested Items</h4>
                     <div class="overflow-x-auto border border-gray-200 rounded-lg">
@@ -646,7 +721,7 @@ ob_start();
                                             <td class="px-4 py-3 text-sm">${item.size}</td>
                                             <td class="px-4 py-3 text-sm text-center">${quantity}</td>
                                             <td class="px-4 py-3 text-center">
-                                                ${canEdit && !isProcessed ? `
+                                                ${canEdit ? `
                                                     <input type="number" 
                                                            value="${unitPrice}" 
                                                            min="0" 
@@ -669,14 +744,13 @@ ob_start();
                     </div>
                 </div>
                 
-                <!-- Transport and Totals -->
                 <div class="bg-gray-50 rounded-lg p-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h4 class="font-medium text-gray-900 mb-3">Delivery Charge</h4>
                             <div class="flex items-center gap-3">
                                 <span class="text-sm text-gray-600">Delivery Charge:</span>
-                                ${canEdit && !isProcessed ? `
+                                ${canEdit ? `
                                     <div class="flex items-center gap-2">
                                         <span class="text-sm">UGX</span>
                                         <input type="number" 
@@ -713,55 +787,69 @@ ob_start();
                     </div>
                 </div>
                 
-                <!-- Action Buttons -->
-                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+                    <div class="flex items-center gap-3">
+                        ${getStatusDropdown(quotation.status, quotation.RFQ_ID, canEdit)}
+                    </div>
                     <button onclick="closeQuotationModal()" 
                         class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                         Close
                     </button>
-                    ${getModalActionButtons(quotation.status, quotation.RFQ_ID, allItemsPriced, transport > 0)}
                 </div>
             </div>
         `;
     }
 
-    function getModalActionButtons(status, id, allItemsPriced, hasTransport) {
-        const statusLower = status.toLowerCase();
-
-        if (statusLower === 'new') {
-            return `
-                <button onclick="showConfirmationModal('${id}', 'cancel')" 
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                    Cancel Request
-                </button>
-            `;
-        } else if (statusLower === 'processing') {
-            if (allItemsPriced && hasTransport) {
-                return `
-                    <button onclick="showConfirmationModal('${id}', 'process')" 
-                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                        Mark as Processed
-                    </button>
-                    <button onclick="showConfirmationModal('${id}', 'cancel')" 
-                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                        Cancel Request
-                    </button>
-                `;
-            } else {
-                return `
-                    <button disabled 
-                        class="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed"
-                        title="All items must be priced and transport cost set">
-                        Complete Pricing First
-                    </button>
-                    <button onclick="showConfirmationModal('${id}', 'cancel')" 
-                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                        Cancel Request
-                    </button>
-                `;
-            }
+    function getStatusDropdown(currentStatus, rfqId, canEdit) {
+        if (!canEdit) {
+            return `<span class="text-sm text-gray-500">Status cannot be changed for ${currentStatus.toLowerCase()} quotations</span>`;
         }
-        return '';
+
+        const statuses = ['New', 'Processing', 'Processed'];
+
+        return `
+            <div class="flex items-center gap-3">
+                <label class="text-sm font-medium text-gray-700">Status:</label>
+                <select id="statusSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm" onchange="updateQuotationStatus('${rfqId}', this.value)">
+                    ${statuses.map(status => `
+                        <option value="${status}" ${status === currentStatus ? 'selected' : ''}>${status}</option>
+                    `).join('')}
+                </select>
+            </div>
+        `;
+    }
+
+    function updateQuotationStatus(rfqId, newStatus) {
+        fetch('fetch/manageQuotations.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'updateQuotationStatus',
+                rfq_id: rfqId,
+                status: newStatus
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessModal('Status updated successfully');
+                    setTimeout(() => {
+                        closeSuccessModal();
+                        viewQuotationDetails(rfqId);
+                        loadQuotations();
+                    }, 1500);
+                } else {
+                    showErrorModal('Failed to update status: ' + (data.error || 'Unknown error'));
+                    document.getElementById('statusSelect').value = currentQuotationData.quotation.status;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showErrorModal('An error occurred while updating status');
+                document.getElementById('statusSelect').value = currentQuotationData.quotation.status;
+            });
     }
 
     function showConfirmationModal(id, action) {
@@ -772,16 +860,11 @@ ob_start();
 
         pendingAction = { id, action };
 
-        if (action === 'cancel') {
-            titleElement.textContent = 'Cancel Quotation';
-            messageElement.textContent = 'Are you sure you want to cancel this quotation? This action cannot be undone.';
-            confirmButton.textContent = 'Yes, Cancel';
-            confirmButton.className = 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors';
-        } else if (action === 'process') {
+        if (action === 'process') {
             titleElement.textContent = 'Mark as Processed';
             messageElement.textContent = 'Are you sure you want to mark this quotation as processed? This will finalize the quotation.';
             confirmButton.textContent = 'Yes, Process';
-            confirmButton.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors';
+            confirmButton.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700';
         }
 
         modal.classList.remove('hidden');
@@ -798,9 +881,7 @@ ob_start();
         const { id, action } = pendingAction;
         closeConfirmationModal();
 
-        if (action === 'cancel') {
-            updateQuotationStatus(id, 'Cancelled');
-        } else if (action === 'process') {
+        if (action === 'process') {
             updateQuotationStatus(id, 'Processed');
         }
     }
@@ -820,25 +901,20 @@ ob_start();
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Check if this triggers status change to processing
                     if (data.status_changed) {
-                        // Refresh the modal to show updated status
                         viewQuotationDetails(currentQuotationId);
-                        // Refresh the main table
                         loadQuotations();
                     } else {
-                        // Just refresh the modal to update totals
                         viewQuotationDetails(currentQuotationId);
                     }
                 } else {
-                    alert('Failed to update price: ' + (data.error || 'Unknown error'));
-                    // Revert the input value
+                    showErrorModal('Failed to update price: ' + (data.error || 'Unknown error'));
                     document.querySelector(`input[data-item-id="${itemId}"]`).value = data.old_price || 0;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while updating price');
+                showErrorModal('An error occurred while updating price');
             });
     }
 
@@ -857,48 +933,20 @@ ob_start();
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Check if this triggers status change to processing
                     if (data.status_changed) {
-                        // Refresh the modal to show updated status
                         viewQuotationDetails(currentQuotationId);
-                        // Refresh the main table
                         loadQuotations();
                     } else {
-                        // Just refresh the modal to update totals
                         viewQuotationDetails(currentQuotationId);
                     }
                 } else {
-                    alert('Failed to update transport cost: ' + (data.error || 'Unknown error'));
-                    // Revert the input value
+                    showErrorModal('Failed to update transport cost: ' + (data.error || 'Unknown error'));
                     document.getElementById('transportCost').value = data.old_transport || 0;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while updating transport cost');
-            });
-    }
-
-    function updateQuotationStatus(id, newStatus) {
-        const action = newStatus === 'Processing' ? 'process' :
-            newStatus === 'Processed' ? 'complete' : 'cancel';
-
-        fetch(`fetch/manageQuotations.php?action=${action}RFQ&id=${id}`, {
-            method: 'POST'
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    closeQuotationModal();
-                    loadQuotations();
-                    alert('Status updated successfully');
-                } else {
-                    alert('Failed to update status: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while updating status');
+                showErrorModal('An error occurred while updating transport cost');
             });
     }
 
@@ -914,7 +962,6 @@ ob_start();
         const { quotation, items } = currentQuotationData;
         const pdfContainer = document.getElementById('pdfContent');
 
-        // Calculate totals
         let itemsTotal = 0;
         items.forEach(item => {
             if (item.unit_price && item.unit_price > 0) {
@@ -925,17 +972,13 @@ ob_start();
         const transport = parseFloat(quotation.transport || 0);
         const grandTotal = itemsTotal + transport;
 
-
-        // Create PDF content with proper styling for page breaks and reduced margins
         pdfContainer.innerHTML = `
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.4; font-size: 12px;">
-        <!-- Header Section -->
         <div style="text-align: center; margin-bottom: 20px; page-break-inside: avoid;">
             <h1 style="font-size: 24px; margin: 0 0 10px 0; color: #2563eb;">Quotation Report</h1>
             <p style="font-size: 14px; color: #666; margin: 0;">Generated on ${formatDateReadable(new Date())} at ${formatTimeReadable(new Date())}</p>
         </div>
         
-        <!-- Customer Information Section -->
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px; page-break-inside: avoid;">
             <div style="width: 30%; min-width: 200px;">
                 <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Customer Information</h3>
@@ -959,7 +1002,6 @@ ob_start();
             </div>
         </div>
         
-        <!-- Items Table Section -->
         <div style="margin-bottom: 20px;">
             <h3 style="font-size: 16px; margin: 0 0 15px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 5px; color: #374151;">Requested Items</h3>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; page-break-inside: auto;">
@@ -992,7 +1034,6 @@ ob_start();
             </table>
         </div>
         
-        <!-- Summary Section -->
         <div style="display: flex; justify-content: flex-end; page-break-inside: avoid;">
             <div style="width: 300px; border: 2px solid #d1d5db; padding: 15px; background-color: #f9fafb;">
                 <h3 style="font-size: 16px; margin: 0 0 15px 0; color: #374151;">Summary</h3>
@@ -1011,14 +1052,12 @@ ob_start();
             </div>
         </div>
         
-        <!-- Footer -->
         <div style="margin-top: 30px; text-align: center; color: #666; font-size: 11px; page-break-inside: avoid;">
             <p style="margin: 0;">This is a computer-generated document. No signature is required.</p>
         </div>
     </div>
 `;
 
-        // Add the new date formatting functions before the setTimeout
         function formatDateReadable(date) {
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const day = date.getDate();
@@ -1042,8 +1081,6 @@ ob_start();
             return `${hours}:${minutesStr}:${secondsStr} ${ampm}`;
         }
 
-
-        // Wait for content to be rendered, then generate PDF
         setTimeout(() => {
             const { jsPDF } = window.jspdf;
 
@@ -1072,11 +1109,9 @@ ob_start();
                 let heightLeft = imgHeight;
                 let position = 0;
 
-                // Add first page
                 pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
                 heightLeft -= pdfHeight;
 
-                // Add additional pages if needed
                 while (heightLeft >= 0) {
                     position = heightLeft - imgHeight;
                     pdf.addPage();
@@ -1088,7 +1123,7 @@ ob_start();
                 pdf.save(fileName);
             }).catch(error => {
                 console.error('PDF generation error:', error);
-                alert('Failed to generate PDF. Please try again.');
+                showErrorModal('Failed to generate PDF. Please try again.');
             });
         }, 500);
     }
@@ -1158,11 +1193,9 @@ ob_start();
         document.getElementById('refreshBtn').addEventListener('click', refreshData);
         document.getElementById('printQuotationBtn').addEventListener('click', generatePDF);
 
-        // Confirmation modal events
         document.getElementById('cancelConfirmationBtn').addEventListener('click', closeConfirmationModal);
         document.getElementById('confirmActionBtn').addEventListener('click', executeConfirmedAction);
 
-        // Close modal when clicking outside
         document.getElementById('quotationModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeQuotationModal();
@@ -1172,6 +1205,18 @@ ob_start();
         document.getElementById('confirmationModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeConfirmationModal();
+            }
+        });
+
+        document.getElementById('successModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeSuccessModal();
+            }
+        });
+
+        document.getElementById('errorModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeErrorModal();
             }
         });
     }
@@ -1196,7 +1241,7 @@ ob_start();
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const headers = ['User', 'Email', 'Phone', 'Location', 'Items Count', 'Fee Charged', 'Transport', 'Items Total', 'Grand Total', 'Status', 'Created At'];
+                    const headers = ['User', 'Email', 'Phone', 'Location', 'Items Count', 'Fee Charged', 'Transport', 'Items Total', 'Grand Total', 'Status', 'Modified', 'Created At'];
                     const csvContent = [
                         headers.join(','),
                         ...data.data.map(item => [
@@ -1210,6 +1255,7 @@ ob_start();
                             item.items_total || 0,
                             (parseFloat(item.items_total || 0) + parseFloat(item.transport || 0)),
                             `"${item.status}"`,
+                            item.modified ? 'Yes' : 'No',
                             `"${item.created_at}"`
                         ].join(','))
                     ].join('\n');

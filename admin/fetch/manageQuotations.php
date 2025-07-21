@@ -8,7 +8,6 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 date_default_timezone_set('Africa/Kampala');
 
-// Create tables if they don't exist
 try {
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS request_for_quote (
@@ -18,7 +17,8 @@ try {
             coordinates VARCHAR(255) DEFAULT NULL,
             transport DECIMAL(10,2) DEFAULT 0.00,
             fee_charged DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-            status ENUM('New','Processing','Cancelled','Processed') NOT NULL DEFAULT 'New',
+            modified SMALLINT NOT NULL DEFAULT 0,
+            status ENUM('New','Processing','Cancelled','Processed','Paid') NOT NULL DEFAULT 'New',
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
@@ -66,7 +66,6 @@ function logAction($pdo, $msg)
 
 function getQuotationData($pdo, $startDateTime, $endDateTime, $searchTerm, $statusFilter, $page, $limit)
 {
-    // Get quotation data with items total
     $quotationQuery = "
         SELECT 
             r.RFQ_ID,
@@ -75,6 +74,7 @@ function getQuotationData($pdo, $startDateTime, $endDateTime, $searchTerm, $stat
             r.coordinates,
             r.transport,
             r.fee_charged,
+            r.modified,
             r.status,
             r.created_at,
             r.updated_at,
@@ -112,7 +112,6 @@ function getQuotationData($pdo, $startDateTime, $endDateTime, $searchTerm, $stat
 
     $quotationQuery .= " ORDER BY r.created_at DESC";
 
-    // Get total count first
     $countQuery = "
         SELECT COUNT(*) as total
         FROM request_for_quote r
@@ -146,7 +145,6 @@ function getQuotationData($pdo, $startDateTime, $endDateTime, $searchTerm, $stat
     $countResult = $countStmt->fetch(PDO::FETCH_ASSOC);
     $totalCount = $countResult ? intval($countResult['total']) : 0;
 
-    // Add pagination to main query
     $offset = ($page - 1) * $limit;
     $quotationQuery .= " LIMIT :limit OFFSET :offset";
     $params[':limit'] = $limit;
@@ -183,7 +181,7 @@ function getStatistics($pdo, $startDateTime, $endDateTime)
     ]);
     $statsResults = $statsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stats = ['new' => 0, 'processing' => 0, 'processed' => 0, 'cancelled' => 0];
+    $stats = ['new' => 0, 'processing' => 0, 'processed' => 0, 'cancelled' => 0, 'paid' => 0];
     foreach ($statsResults as $stat) {
         $statusKey = strtolower($stat['status']);
         if (isset($stats[$statusKey])) {
@@ -196,7 +194,6 @@ function getStatistics($pdo, $startDateTime, $endDateTime)
 
 function checkAndUpdateStatus($pdo, $rfqId)
 {
-    // Check if all items have prices and transport is set
     $stmt = $pdo->prepare("
         SELECT 
             r.status,
@@ -219,7 +216,6 @@ function checkAndUpdateStatus($pdo, $rfqId)
     $totalItems = intval($result['total_items']);
     $pricedItems = intval($result['priced_items']);
 
-    // If status is New and we have any pricing, change to Processing
     if ($currentStatus === 'New' && ($pricedItems > 0 || $transport > 0)) {
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
         $updateStmt = $pdo->prepare("
@@ -236,7 +232,6 @@ function checkAndUpdateStatus($pdo, $rfqId)
     return false;
 }
 
-// Handle different request methods
 $method = $_SERVER['REQUEST_METHOD'];
 $action = '';
 
@@ -294,6 +289,7 @@ try {
                     r.coordinates,
                     r.transport,
                     r.fee_charged,
+                    r.modified,
                     r.status, 
                     r.created_at,
                     r.updated_at,
@@ -340,8 +336,12 @@ try {
                 die(json_encode(['error' => 'Missing item ID']));
             }
 
-            // Get current price and RFQ ID
-            $stmt = $pdo->prepare("SELECT unit_price, RFQ_ID FROM request_for_quote_details WHERE RFQD_ID = :id");
+            $stmt = $pdo->prepare("
+                SELECT d.unit_price, d.RFQ_ID, r.status 
+                FROM request_for_quote_details d
+                JOIN request_for_quote r ON d.RFQ_ID = r.RFQ_ID
+                WHERE d.RFQD_ID = :id
+            ");
             $stmt->execute([':id' => $itemId]);
             $currentItem = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -350,10 +350,15 @@ try {
                 die(json_encode(['error' => 'Item not found']));
             }
 
+            $currentStatus = strtolower($currentItem['status']);
+            if (in_array($currentStatus, ['paid', 'cancelled'])) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Cannot edit items for paid or cancelled quotations']));
+            }
+
             $oldPrice = $currentItem['unit_price'];
             $rfqId = $currentItem['RFQ_ID'];
 
-            // Update the price
             $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
             $stmt = $pdo->prepare(
                 "UPDATE request_for_quote_details 
@@ -366,10 +371,9 @@ try {
                 ':id' => $itemId
             ]);
 
-            // Check if status should be updated
             $statusChanged = checkAndUpdateStatus($pdo, $rfqId);
 
-            logAction($pdo, "Updated unit price for item $itemId from " . ($oldPrice ?: '0') . " to $price");
+            logAction($pdo, "Admin updated unit price for item $itemId from " . ($oldPrice ?: '0') . " to $price");
 
             echo json_encode([
                 'success' => true,
@@ -393,8 +397,7 @@ try {
                 die(json_encode(['error' => 'Missing RFQ ID']));
             }
 
-            // Get current transport cost
-            $stmt = $pdo->prepare("SELECT transport FROM request_for_quote WHERE RFQ_ID = :id");
+            $stmt = $pdo->prepare("SELECT transport, status FROM request_for_quote WHERE RFQ_ID = :id");
             $stmt->execute([':id' => $rfqId]);
             $currentRfq = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -403,9 +406,14 @@ try {
                 die(json_encode(['error' => 'RFQ not found']));
             }
 
+            $currentStatus = strtolower($currentRfq['status']);
+            if (in_array($currentStatus, ['paid', 'cancelled'])) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Cannot edit transport cost for paid or cancelled quotations']));
+            }
+
             $oldTransport = $currentRfq['transport'];
 
-            // Update the transport cost
             $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
             $stmt = $pdo->prepare(
                 "UPDATE request_for_quote 
@@ -418,10 +426,9 @@ try {
                 ':id' => $rfqId
             ]);
 
-            // Check if status should be updated
             $statusChanged = checkAndUpdateStatus($pdo, $rfqId);
 
-            logAction($pdo, "Updated transport cost for RFQ $rfqId from " . ($oldTransport ?: '0') . " to $transport");
+            logAction($pdo, "Admin updated transport cost for RFQ $rfqId from " . ($oldTransport ?: '0') . " to $transport");
 
             echo json_encode([
                 'success' => true,
@@ -430,22 +437,40 @@ try {
             ]);
             break;
 
-        case 'processRFQ':
-            $id = $_GET['id'] ?? '';
-            if (!$id) {
-                http_response_code(400);
-                die(json_encode(['error' => 'Missing id']));
+        case 'updateQuotationStatus':
+            if ($method !== 'POST') {
+                http_response_code(405);
+                die(json_encode(['error' => 'Method not allowed']));
             }
 
-            $stmt = $pdo->prepare(
-                "SELECT status FROM request_for_quote WHERE RFQ_ID = :id"
-            );
-            $stmt->execute([':id' => $id]);
+            $input = json_decode(file_get_contents('php://input'), true);
+            $rfqId = $input['rfq_id'] ?? '';
+            $newStatus = $input['status'] ?? '';
+
+            if (!$rfqId || !$newStatus) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Missing RFQ ID or status']));
+            }
+
+            $validStatuses = ['New', 'Processing', 'Processed'];
+            if (!in_array($newStatus, $validStatuses)) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Invalid status']));
+            }
+
+            $stmt = $pdo->prepare("SELECT status FROM request_for_quote WHERE RFQ_ID = :id");
+            $stmt->execute([':id' => $rfqId]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$row || strtolower($row['status']) !== 'new') {
+            if (!$row) {
+                http_response_code(404);
+                die(json_encode(['error' => 'Quotation not found']));
+            }
+
+            $currentStatus = strtolower($row['status']);
+            if (in_array($currentStatus, ['paid', 'cancelled'])) {
                 http_response_code(400);
-                die(json_encode(['error' => 'Invalid action - can only process New requests']));
+                die(json_encode(['error' => 'Cannot change status of paid or cancelled quotations']));
             }
 
             $oldStatus = $row['status'];
@@ -453,96 +478,12 @@ try {
 
             $stmt = $pdo->prepare(
                 "UPDATE request_for_quote
-                 SET status = 'Processing', updated_at = :now
+                 SET status = :status, updated_at = :now
                  WHERE RFQ_ID = :id"
             );
-            $stmt->execute([':now' => $now, ':id' => $id]);
+            $stmt->execute([':status' => $newStatus, ':now' => $now, ':id' => $rfqId]);
 
-            logAction($pdo, "Changed status for RFQ $id from $oldStatus to Processing");
-
-            echo json_encode(['success' => true]);
-            break;
-
-        case 'completeRFQ':
-            $id = $_GET['id'] ?? '';
-            if (!$id) {
-                http_response_code(400);
-                die(json_encode(['error' => 'Missing id']));
-            }
-
-            // Check if all items are priced and transport is set
-            $stmt = $pdo->prepare("
-                SELECT 
-                    r.status,
-                    r.transport,
-                    COUNT(d.RFQD_ID) as total_items,
-                    COUNT(CASE WHEN d.unit_price IS NOT NULL AND d.unit_price > 0 THEN 1 END) as priced_items
-                FROM request_for_quote r
-                LEFT JOIN request_for_quote_details d ON r.RFQ_ID = d.RFQ_ID
-                WHERE r.RFQ_ID = :id
-                GROUP BY r.RFQ_ID, r.status, r.transport
-            ");
-            $stmt->execute([':id' => $id]);
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$result || strtolower($result['status']) !== 'processing') {
-                http_response_code(400);
-                die(json_encode(['error' => 'Invalid action - can only complete Processing requests']));
-            }
-
-            $transport = floatval($result['transport']);
-            $totalItems = intval($result['total_items']);
-            $pricedItems = intval($result['priced_items']);
-
-            if ($totalItems !== $pricedItems || $transport <= 0) {
-                http_response_code(400);
-                die(json_encode(['error' => 'Cannot complete - all items must be priced and transport cost must be set']));
-            }
-
-            $oldStatus = $result['status'];
-            $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-
-            $stmt = $pdo->prepare(
-                "UPDATE request_for_quote
-                 SET status = 'Processed', updated_at = :now
-                 WHERE RFQ_ID = :id"
-            );
-            $stmt->execute([':now' => $now, ':id' => $id]);
-
-            logAction($pdo, "Changed status for RFQ $id from $oldStatus to Processed");
-
-            echo json_encode(['success' => true]);
-            break;
-
-        case 'cancelRFQ':
-            $id = $_GET['id'] ?? '';
-            if (!$id) {
-                http_response_code(400);
-                die(json_encode(['error' => 'Missing id']));
-            }
-
-            $stmt = $pdo->prepare(
-                "SELECT status FROM request_for_quote WHERE RFQ_ID = :id"
-            );
-            $stmt->execute([':id' => $id]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$row || strtolower($row['status']) === 'processed') {
-                http_response_code(400);
-                die(json_encode(['error' => 'Invalid action - cannot cancel Processed requests']));
-            }
-
-            $oldStatus = $row['status'];
-            $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-
-            $stmt = $pdo->prepare(
-                "UPDATE request_for_quote
-                 SET status = 'Cancelled', updated_at = :now
-                 WHERE RFQ_ID = :id"
-            );
-            $stmt->execute([':now' => $now, ':id' => $id]);
-
-            logAction($pdo, "Changed status for RFQ $id from $oldStatus to Cancelled");
+            logAction($pdo, "Admin changed status for RFQ $rfqId from $oldStatus to $newStatus");
 
             echo json_encode(['success' => true]);
             break;
@@ -566,6 +507,7 @@ try {
                     r.coordinates,
                     r.transport,
                     r.fee_charged,
+                    r.modified,
                     r.status,
                     r.created_at,
                     r.updated_at,
