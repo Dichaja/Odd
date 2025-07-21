@@ -853,16 +853,21 @@ ob_start();
 </style>
 
 <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-800/70 to-gray-900/90 z-10"></div>
+    <!-- Lighter gradient overlay for better image visibility -->
+    <div class="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/50 z-10"></div>
+
+    <!-- Increased image opacity to make it more visible -->
     <img src="<?= $categoryImageUrl ?>" alt="<?= htmlspecialchars($pageTitle) ?> Banner"
-        class="w-full h-full object-cover opacity-20">
+        class="w-full h-full object-cover opacity-60">
+
     <div class="container mx-auto px-4 absolute inset-0 flex flex-col justify-start pt-8 md:pt-12 z-20">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-                <h1 class="text-xl md:text-3xl font-bold text-white mb-4">
+                <!-- Added text shadow for better readability -->
+                <h1 class="text-xl md:text-3xl font-bold text-white mb-4 drop-shadow-lg">
                     <?= htmlspecialchars($pageTitle) ?>
                 </h1>
-                <nav class="flex text-xs md:text-sm text-gray-300 overflow-hidden whitespace-nowrap">
+                <nav class="flex text-xs md:text-sm text-gray-200 overflow-hidden whitespace-nowrap drop-shadow-md">
                     <a href="<?= BASE_URL ?>" class="hover:text-white transition-colors truncate max-w-[30%]">Zzimba
                         Online</a>
                     <span class="mx-2">/</span>
@@ -878,23 +883,22 @@ ob_start();
                     <?php endif; ?>
                 </nav>
                 <?php if (!empty($searchQuery)): ?>
-                    <p class="text-gray-200 mt-2 line-clamp-2 max-w-2xl hidden md:block">
+                    <p class="text-gray-100 mt-2 line-clamp-2 max-w-2xl hidden md:block drop-shadow-md">
                         Search results for "<?= htmlspecialchars($searchQuery) ?>" - Find the best building materials and
                         construction products.
                     </p>
                 <?php elseif (!empty($categoryId) && isset($category) && !empty($category['description'])): ?>
-                    <p class="text-gray-200 mt-2 line-clamp-2 max-w-2xl hidden md:block">
+                    <p class="text-gray-100 mt-2 line-clamp-2 max-w-2xl hidden md:block drop-shadow-md">
                         <?= htmlspecialchars($category['description']) ?>
                     </p>
                 <?php elseif (empty($categoryId)): ?>
-                    <p class="text-gray-200 mt-2 line-clamp-2 max-w-2xl hidden md:block">
+                    <p class="text-gray-100 mt-2 line-clamp-2 max-w-2xl hidden md:block drop-shadow-md">
                         Discover a wide range of genuine building materials and supplies for all your construction needs.
                     </p>
                 <?php endif; ?>
             </div>
-
             <div class="share-container mt-4 md:mt-0 hidden md:flex">
-                <span class="share-label text-white">SHARE</span>
+                <span class="share-label text-white drop-shadow-lg">SHARE</span>
                 <div class="share-buttons">
                     <button onclick="copyLink()" class="share-button">
                         <i class="fa-solid fa-link"></i>
