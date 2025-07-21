@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../lib/ZzimbaCreditModule.php';
+
+use ZzimbaCreditModule\CreditService;
 
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
@@ -24,6 +27,8 @@ try {
             RFQ_ID VARCHAR(26) PRIMARY KEY,
             user_id VARCHAR(26) NOT NULL,
             site_location VARCHAR(255) NOT NULL,
+            coordinates VARCHAR(255) NULL,
+            transport DECIMAL(10,2) NULL DEFAULT 0.00,
             fee_charged DECIMAL(10,2) NOT NULL DEFAULT 0.00,
             status ENUM('New','Processing','Cancelled','Processed') NOT NULL DEFAULT 'New',
             created_at DATETIME NOT NULL,
@@ -38,6 +43,7 @@ try {
             brand_name VARCHAR(255) NOT NULL,
             size VARCHAR(255) NOT NULL,
             quantity INT NOT NULL,
+            unit_price DECIMAL(10,2) NULL,
             created_at DATETIME NOT NULL,
             updated_at DATETIME NOT NULL,
             FOREIGN KEY (RFQ_ID) REFERENCES request_for_quote(RFQ_ID) ON DELETE CASCADE
@@ -118,19 +124,6 @@ try {
                 die(json_encode(['error' => 'User ID not found in session']));
             }
 
-            $balanceStmt = $pdo->prepare(
-                "SELECT wallet_id, current_balance FROM zzimba_wallets 
-                 WHERE user_id = :user_id AND status = 'active' 
-                 ORDER BY created_at DESC LIMIT 1"
-            );
-            $balanceStmt->execute([':user_id' => $userId]);
-            $wallet = $balanceStmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$wallet) {
-                http_response_code(400);
-                die(json_encode(['error' => 'No active wallet found. Please contact support.']));
-            }
-
             $feeStmt = $pdo->prepare(
                 "SELECT setting_value FROM zzimba_credit_settings 
                  WHERE setting_key = 'request_for_quote' 
@@ -148,33 +141,46 @@ try {
             }
 
             $fee = floatval($fee);
-            $currentBalance = floatval($wallet['current_balance']);
 
-            if ($currentBalance < $fee) {
-                http_response_code(400);
-                die(json_encode([
-                    'error' => 'Insufficient wallet balance',
-                    'balance' => $currentBalance,
-                    'fee' => $fee,
-                    'required' => $fee - $currentBalance
-                ]));
+            if ($fee > 0) {
+                $quoteResult = CreditService::processQuoteRequest([
+                    'amount' => $fee,
+                    'user_id' => $userId
+                ]);
+
+                if (!$quoteResult['success']) {
+                    http_response_code(400);
+                    die(json_encode([
+                        'error' => $quoteResult['message'],
+                        'balance' => $quoteResult['balance'] ?? 0,
+                        'fee' => $fee,
+                        'required' => isset($quoteResult['required']) ? $quoteResult['required'] : $fee
+                    ]));
+                }
             }
 
             $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
             $rfqId = generateUlid();
             $location = is_array($data['location']) ? $data['location']['address'] : $data['location'];
+            $coordinates = null;
+
+            if (is_array($data['location']) && isset($data['location']['lat'], $data['location']['lng'])) {
+                $coordinates = $data['location']['lat'] . ',' . $data['location']['lng'];
+            }
 
             $pdo->beginTransaction();
 
             $stmt = $pdo->prepare(
                 "INSERT INTO request_for_quote
-                    (RFQ_ID, user_id, site_location, fee_charged, status, created_at, updated_at)
+                    (RFQ_ID, user_id, site_location, coordinates, transport, fee_charged, status, created_at, updated_at)
                  VALUES
-                    (:rfq_id, :user_id, :location, :fee, 'New', :created_at, :updated_at)"
+                    (:rfq_id, :user_id, :location, :coordinates, :transport, :fee, 'New', :created_at, :updated_at)"
             );
             $stmt->bindParam(':rfq_id', $rfqId);
             $stmt->bindParam(':user_id', $userId);
             $stmt->bindParam(':location', $location);
+            $stmt->bindParam(':coordinates', $coordinates);
+            $stmt->bindValue(':transport', null);
             $stmt->bindParam(':fee', $fee);
             $stmt->bindParam(':created_at', $now);
             $stmt->bindParam(':updated_at', $now);
@@ -182,9 +188,9 @@ try {
 
             $stmtDetail = $pdo->prepare(
                 "INSERT INTO request_for_quote_details
-                    (RFQD_ID, RFQ_ID, brand_name, size, quantity, created_at, updated_at)
+                    (RFQD_ID, RFQ_ID, brand_name, size, quantity, unit_price, created_at, updated_at)
                  VALUES
-                    (:rfqd_id, :rfq_id, :brand, :size, :quantity, :created_at, :updated_at)"
+                    (:rfqd_id, :rfq_id, :brand, :size, :quantity, :unit_price, :created_at, :updated_at)"
             );
 
             foreach ($data['items'] as $item) {
@@ -204,6 +210,7 @@ try {
                 $stmtDetail->bindParam(':brand', $brand);
                 $stmtDetail->bindParam(':size', $size);
                 $stmtDetail->bindParam(':quantity', $quantity, PDO::PARAM_INT);
+                $stmtDetail->bindValue(':unit_price', null);
                 $stmtDetail->bindParam(':created_at', $now);
                 $stmtDetail->bindParam(':updated_at', $now);
                 $stmtDetail->execute();
@@ -211,12 +218,27 @@ try {
 
             $pdo->commit();
 
-            echo json_encode([
+            $response = [
                 'success' => true,
                 'message' => 'RFQ submitted successfully.',
-                'fee_charged' => $fee,
-                'remaining_balance' => $currentBalance - $fee
-            ]);
+                'fee_charged' => $fee
+            ];
+
+            if ($fee > 0 && isset($quoteResult)) {
+                $response['remaining_balance'] = $quoteResult['remaining_balance'];
+                $response['transaction_id'] = $quoteResult['transaction_id'];
+            } else {
+                $balanceStmt = $pdo->prepare(
+                    "SELECT current_balance FROM zzimba_wallets 
+                     WHERE user_id = :user_id AND status = 'active' 
+                     ORDER BY created_at DESC LIMIT 1"
+                );
+                $balanceStmt->execute([':user_id' => $userId]);
+                $currentBalance = $balanceStmt->fetchColumn();
+                $response['remaining_balance'] = floatval($currentBalance ?: 0);
+            }
+
+            echo json_encode($response);
             break;
 
         default:
