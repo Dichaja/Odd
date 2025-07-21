@@ -450,7 +450,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
                         <div id="item-limit-notice" class="item-limit-notice" style="display: none;">
                             <i class="fas fa-info-circle"></i>
-                            <span>Maximum of 5 items allowed per quote request.</span>
+                            <span>You can add upto 5 items per quote request.</span>
                         </div>
 
                         <div class="bg-white rounded-lg overflow-hidden">

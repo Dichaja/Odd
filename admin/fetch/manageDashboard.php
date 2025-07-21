@@ -1,22 +1,15 @@
 <?php
-ob_start();
-
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/../../logs/php-errors.log');
-
 require_once __DIR__ . '/../../config/config.php';
 
 header('Content-Type: application/json');
+header('Cache-Control: no-cache, must-revalidate');
 
 if (
-    !isset($_SESSION['user']) ||
-    !$_SESSION['user']['logged_in'] ||
-    !$_SESSION['user']['is_admin']
+    !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in']
+    || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']
 ) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Session expired', 'session_expired' => true]);
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit;
 }
 
@@ -24,111 +17,149 @@ $action = $_GET['action'] ?? '';
 
 try {
     switch ($action) {
-        case 'getStats':
-            $stats = [];
-
-            $stmt = $pdo->query("SELECT COUNT(*) AS total FROM zzimba_users");
-            $stats['total_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-
-            $stmt = $pdo->query("SELECT COUNT(*) AS active FROM zzimba_users WHERE status = 'active'");
-            $stats['active_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['active'];
-
-            $stmt = $pdo->query("SELECT COUNT(*) AS inactive FROM zzimba_users WHERE status IN ('inactive','suspended')");
-            $stats['inactive_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['inactive'];
-
-            $thirtyDaysAgo = date('Y-m-d H:i:s', strtotime('-30 days'));
-            $stmt = $pdo->prepare("SELECT COUNT(*) AS new_users FROM zzimba_users WHERE created_at >= ?");
-            $stmt->execute([$thirtyDaysAgo]);
-            $stats['new_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['new_users'];
-
-            $stats['total_change']    = 8;
-            $stats['active_change']   = 12;
-            $stats['inactive_change'] = 3;
-            $stats['new_change']      = 24;
-
-            echo json_encode(['success' => true, 'stats' => $stats]);
+        case 'getDashboardStats':
+            getDashboardStats();
             break;
-
-        case 'getUsers':
-            $sort   = $_GET['sort']  ?? 'created_at';
-            $order  = strtolower($_GET['order'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
-            $search = $_GET['search'] ?? '';
-            $page   = intval($_GET['page']  ?? 1);
-            $limit  = intval($_GET['limit'] ?? 10);
-            $offset = ($page - 1) * $limit;
-
-            $allowed = ['username', 'email', 'created_at', 'current_login', 'status'];
-            if (!in_array($sort, $allowed)) {
-                $sort = 'created_at';
-            }
-
-            $baseQuery  = "FROM zzimba_users";
-            $baseCount  = "SELECT COUNT(*) AS total $baseQuery";
-            $baseSelect = "SELECT id, username, email, phone, status, created_at, current_login, last_login $baseQuery";
-            $params     = [];
-
-            if ($search !== '') {
-                $cond  = " WHERE username LIKE ? OR email LIKE ? OR phone LIKE ?";
-                $like  = "%$search%";
-                $params = [$like, $like, $like];
-                $baseSelect .= $cond;
-                $baseCount  .= $cond;
-            }
-
-            $baseSelect .= " ORDER BY $sort $order LIMIT ? OFFSET ?";
-            $params[] = $limit;
-            $params[] = $offset;
-
-            $stmt = $pdo->prepare($baseCount);
-            if (!empty($params) && $search !== '') {
-                $stmt->execute(array_slice($params, 0, 3));
-            } else {
-                $stmt->execute();
-            }
-            $totalUsers = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-
-            $stmt = $pdo->prepare($baseSelect);
-            $stmt->execute($params);
-            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            echo json_encode([
-                'success'    => true,
-                'users'      => $users,
-                'pagination' => [
-                    'total' => $totalUsers,
-                    'page'  => $page,
-                    'limit' => $limit,
-                    'pages' => ceil($totalUsers / $limit)
-                ]
-            ]);
-            break;
-
-        case 'getUserDetails':
-            $id = $_GET['id'] ?? '';
-            if ($id === '') {
-                echo json_encode(['success' => false, 'error' => 'User ID is required']);
-                exit;
-            }
-
-            $stmt = $pdo->prepare("SELECT * FROM zzimba_users WHERE id = ?");
-            $stmt->execute([$id]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$user) {
-                echo json_encode(['success' => false, 'error' => 'User not found']);
-                exit;
-            }
-
-            echo json_encode(['success' => true, 'data' => $user]);
-            break;
-
         default:
-            echo json_encode(['success' => false, 'error' => 'Invalid action']);
+            echo json_encode(['success' => false, 'message' => 'Invalid action']);
             break;
     }
 } catch (Exception $e) {
-    error_log('Error in manageDashboard.php: ' . $e->getMessage());
-    echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
+    error_log("Dashboard API Error: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Internal server error']);
 }
 
-ob_end_flush();
+function getDashboardStats()
+{
+    global $pdo;
+
+    try {
+        $quoteStats = getQuoteStatistics();
+        $recentQuotes = getRecentQuotes();
+        $systemStatus = getSystemStatus();
+
+        echo json_encode([
+            'success' => true,
+            'stats' => $quoteStats,
+            'recent_quotes' => $recentQuotes,
+            'system_status' => $systemStatus,
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+
+    } catch (Exception $e) {
+        error_log("Error fetching dashboard stats: " . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'Failed to fetch dashboard statistics']);
+    }
+}
+
+function getQuoteStatistics()
+{
+    global $pdo;
+
+    $stats = [
+        'pending_quotes' => 0,
+        'pending_quotes_value' => 0,
+        'completed_quotes' => 0,
+        'completed_quotes_value' => 0,
+        'total_users' => 0,
+        'active_users' => 0,
+        'total_vendors' => 0,
+        'active_vendors' => 0
+    ];
+
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count, COALESCE(SUM(fee_charged), 0) as total_value FROM request_for_quote WHERE status = 'New'");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['pending_quotes'] = (int) $result['count'];
+        $stats['pending_quotes_value'] = (float) $result['total_value'];
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count, COALESCE(SUM(fee_charged), 0) as total_value FROM request_for_quote WHERE status IN ('Processing', 'Processed')");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['completed_quotes'] = (int) $result['count'];
+        $stats['completed_quotes_value'] = (float) $result['total_value'];
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM zzimba_users");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['total_users'] = (int) $result['count'];
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM zzimba_users WHERE status = 'active'");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['active_users'] = (int) $result['count'];
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM vendor_stores");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['total_vendors'] = (int) $result['count'];
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM vendor_stores WHERE status = 'active'");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['active_vendors'] = (int) $result['count'];
+
+    } catch (Exception $e) {
+        error_log("Error fetching quote statistics: " . $e->getMessage());
+    }
+
+    return $stats;
+}
+
+function getRecentQuotes($limit = 5)
+{
+    global $pdo;
+
+    try {
+        $stmt = $pdo->prepare("SELECT RFQ_ID, site_location, status, fee_charged, created_at FROM request_for_quote ORDER BY created_at DESC LIMIT :limit");
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (Exception $e) {
+        error_log("Error fetching recent quotes: " . $e->getMessage());
+        return [];
+    }
+}
+
+function getSystemStatus()
+{
+    global $pdo;
+
+    $status = [
+        'active_users' => 0,
+        'pending_transactions' => 0,
+        'total_products' => 0,
+        'active_vendors' => 0
+    ];
+
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM zzimba_users WHERE last_login >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $status['active_users'] = (int) $result['count'];
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM zzimba_financial_transactions WHERE status = 'PENDING'");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $status['pending_transactions'] = (int) $result['count'];
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM products");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $status['total_products'] = (int) $result['count'];
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM vendor_stores WHERE status = 'active'");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $status['active_vendors'] = (int) $result['count'];
+
+    } catch (Exception $e) {
+        error_log("Error fetching system status: " . $e->getMessage());
+    }
+
+    return $status;
+}
+?>
