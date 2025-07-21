@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/ZzimbaCreditModule.php';
+
+use ZzimbaCreditModule\CreditService;
 
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
@@ -190,6 +193,28 @@ function getUserStatistics($pdo, $userId)
     return $stats;
 }
 
+function getUserWalletBalance($pdo, $userId)
+{
+    try {
+        $stmt = $pdo->prepare("
+            SELECT current_balance 
+            FROM zzimba_wallets 
+            WHERE user_id = :user_id 
+            AND owner_type = 'USER'
+            AND status = 'active'
+            ORDER BY created_at DESC
+            LIMIT 1
+        ");
+        $stmt->execute([':user_id' => $userId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result ? floatval($result['current_balance']) : 0.00;
+    } catch (Exception $e) {
+        error_log("Error fetching wallet balance: " . $e->getMessage());
+        return 0.00;
+    }
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 $action = '';
 
@@ -262,6 +287,68 @@ try {
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo json_encode(['success' => true, 'quotation' => $quotation, 'items' => $items]);
+            break;
+
+        case 'getWalletBalance':
+            $balance = getUserWalletBalance($pdo, $userId);
+            echo json_encode([
+                'success' => true,
+                'balance' => $balance
+            ]);
+            break;
+
+        case 'processQuotePayment':
+            if ($method !== 'POST') {
+                http_response_code(405);
+                die(json_encode(['error' => 'Method not allowed']));
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true);
+            $quotationId = $input['quotation_id'] ?? '';
+            $amount = floatval($input['amount'] ?? 0);
+
+            if (!$quotationId || $amount <= 0) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Missing quotation ID or invalid amount']));
+            }
+
+            $stmt = $pdo->prepare("
+                SELECT status 
+                FROM request_for_quote 
+                WHERE RFQ_ID = :quotation_id AND user_id = :user_id
+            ");
+            $stmt->execute([':quotation_id' => $quotationId, ':user_id' => $userId]);
+            $quotation = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$quotation) {
+                http_response_code(404);
+                die(json_encode(['error' => 'Quotation not found or access denied']));
+            }
+
+            if (strtolower($quotation['status']) !== 'processed') {
+                http_response_code(400);
+                die(json_encode(['error' => 'Can only pay for processed quotations']));
+            }
+
+            $result = CreditService::processQuotePayment([
+                'user_id' => $userId,
+                'amount' => $amount,
+                'quotation_id' => $quotationId
+            ]);
+
+            if ($result['success']) {
+                $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+                $stmt = $pdo->prepare("
+                    UPDATE request_for_quote 
+                    SET status = 'Paid', updated_at = :now 
+                    WHERE RFQ_ID = :quotation_id AND user_id = :user_id
+                ");
+                $stmt->execute([':now' => $now, ':quotation_id' => $quotationId, ':user_id' => $userId]);
+
+                logAction($pdo, "User paid for quotation $quotationId, amount: $amount UGX");
+            }
+
+            echo json_encode($result);
             break;
 
         case 'updateQuotation':

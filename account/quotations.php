@@ -284,28 +284,23 @@ ob_start();
     <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
         <div class="p-6">
             <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <i class="fas fa-credit-card text-green-600"></i>
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-credit-card text-blue-600"></i>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-secondary">Make Payment</h3>
-                    <p class="text-sm text-gray-text">Confirm payment for this quotation</p>
+                    <h3 class="text-lg font-semibold text-secondary">Confirm Quote Payment</h3>
+                    <p class="text-sm text-gray-text">Review payment details before proceeding</p>
                 </div>
             </div>
-            <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-sm text-gray-text">Total Amount:</span>
-                    <span class="text-lg font-bold text-green-600" id="paymentAmount">UGX 0.00</span>
-                </div>
+            <div id="paymentDetails" class="space-y-3 mb-4">
             </div>
             <div class="flex justify-end gap-3">
                 <button onclick="closePaymentConfirmModal()"
                     class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                     Cancel
                 </button>
-                <button onclick="confirmPayment()"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                    Confirm Payment
+                <button id="confirmPaymentBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <i class="fas fa-check mr-2"></i> Confirm Payment
                 </button>
             </div>
         </div>
@@ -399,11 +394,33 @@ ob_start();
     let isEditMode = false;
     let editedItems = [];
     let itemsToRemove = [];
+    let walletBalance = 0;
 
     document.addEventListener('DOMContentLoaded', function () {
         setupEventListeners();
         loadQuotations();
+        checkWalletBalance();
     });
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-UG', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount || 0);
+    }
+
+    function checkWalletBalance() {
+        fetch('fetch/manageQuotations.php?action=getWalletBalance')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    walletBalance = parseFloat(data.balance || 0);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking wallet balance:', error);
+            });
+    }
 
     function showSuccessModal(message) {
         document.getElementById('successMessage').textContent = message;
@@ -543,13 +560,6 @@ ob_start();
             return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Paid</span>';
         }
         return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
-    }
-
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-UG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount || 0);
     }
 
     function formatDate(dateString) {
@@ -987,17 +997,108 @@ ob_start();
     }
 
     function showPaymentConfirmModal(amount) {
-        document.getElementById('paymentAmount').textContent = 'UGX ' + formatCurrency(amount);
-        document.getElementById('paymentConfirmModal').classList.remove('hidden');
+        checkWalletBalance();
+
+        setTimeout(() => {
+            const isInsufficient = walletBalance < amount;
+            const amountNeeded = isInsufficient ? amount - walletBalance : 0;
+
+            document.getElementById('paymentDetails').innerHTML = `
+                <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Quote Payment Amount:</span>
+                        <span class="font-medium text-gray-900">UGX ${formatCurrency(amount)}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Current Wallet Balance:</span>
+                        <span class="font-medium ${isInsufficient ? 'text-red-600' : 'text-green-600'}">UGX ${formatCurrency(walletBalance)}</span>
+                    </div>
+                    ${isInsufficient ? `
+                        <div class="flex justify-between items-center border-t pt-2">
+                            <span class="text-red-600 font-medium">Amount Needed:</span>
+                            <span class="font-medium text-red-600">UGX ${formatCurrency(amountNeeded)}</span>
+                        </div>
+                        <div class="text-center text-red-600 text-sm mt-3">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            Please top up your wallet to continue
+                        </div>
+                    ` : `
+                        <div class="flex justify-between items-center border-t pt-2">
+                            <span class="text-gray-600">Remaining Balance:</span>
+                            <span class="font-medium text-green-600">UGX ${formatCurrency(walletBalance - amount)}</span>
+                        </div>
+                    `}
+                </div>
+            `;
+
+            const confirmBtn = document.getElementById('confirmPaymentBtn');
+            if (isInsufficient) {
+                confirmBtn.innerHTML = '<i class="fas fa-wallet mr-2"></i> Top Up Wallet';
+                confirmBtn.className = 'px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700';
+                confirmBtn.onclick = function () {
+                    window.open(`${BASE_URL}account/zzimba-credit`, '_blank');
+                };
+            } else {
+                confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Confirm Payment';
+                confirmBtn.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700';
+                confirmBtn.onclick = function () {
+                    confirmPayment(amount);
+                };
+            }
+
+            document.getElementById('paymentConfirmModal').classList.remove('hidden');
+        }, 100);
     }
 
     function closePaymentConfirmModal() {
         document.getElementById('paymentConfirmModal').classList.add('hidden');
     }
 
-    function confirmPayment() {
+    function confirmPayment(amount) {
         closePaymentConfirmModal();
-        showErrorModal('Payment functionality will be implemented soon.');
+
+        const confirmBtn = document.getElementById('confirmPaymentBtn');
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+
+        fetch('fetch/manageQuotations.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'processQuotePayment',
+                quotation_id: currentQuotationId,
+                amount: amount
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessModal(`Payment successful! UGX ${formatCurrency(data.amount_paid)} has been deducted from your wallet. Remaining balance: UGX ${formatCurrency(data.remaining_balance)}`);
+                    setTimeout(() => {
+                        closeSuccessModal();
+                        closeQuotationModal();
+                        loadQuotations();
+                        checkWalletBalance();
+                    }, 3000);
+                } else {
+                    if (data.message === 'Insufficient wallet balance') {
+                        showErrorModal(`Insufficient wallet balance. You need UGX ${formatCurrency(data.required - data.balance)} more to complete this payment.`);
+                    } else {
+                        showErrorModal('Payment failed: ' + (data.message || 'Unknown error'));
+                    }
+                }
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showErrorModal('An error occurred while processing payment');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalText;
+            });
     }
 
     function showCancelConfirmModal() {

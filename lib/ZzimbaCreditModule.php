@@ -290,7 +290,7 @@ final class CreditService
         }
     }
 
-    public static function processQuoteRequest(array $opts): array 
+    public static function processQuoteRequest(array $opts): array
     {
         self::boot();
 
@@ -438,8 +438,8 @@ final class CreditService
 
             $entity = self::getEntityInfo($userId, null);
             $recipients = self::buildRecipients(
-                ['message' => "{$entity['type']} {$entity['name']} paid quote request fee of {$amount} UGX. Transaction ID: {$txnId}"],
-                ['id' => $userId, 'message' => "Quote request fee of {$amount} UGX has been charged to your wallet. Transaction ID: {$txnId}"]
+                ['message' => "{$entity['type']} {$entity['name']} submitted a Request for Quote and was charged {$amount} UGX"],
+                ['id' => $userId, 'message' => "Quote request fee of {$amount} UGX has been charged to your wallet"]
             );
 
             self::sendNotification('Quote Request Fee Processed', $recipients, 'normal', $userId);
@@ -462,6 +462,182 @@ final class CreditService
             ")->execute([':tid' => $txnId]);
 
             return ['success' => false, 'message' => 'Quote request processing failed'];
+        }
+    }
+
+    public static function processQuotePayment(array $opts): array
+    {
+        self::boot();
+
+        $amount = (float) ($opts['amount'] ?? 0);
+        $userId = trim($opts['user_id'] ?? '');
+        $quotationId = trim($opts['quotation_id'] ?? '');
+
+        if ($amount <= 0 || empty($userId) || empty($quotationId)) {
+            return ['success' => false, 'message' => 'Invalid amount, user ID, or quotation ID'];
+        }
+
+        $userWalletStmt = self::$pdo->prepare("
+            SELECT wallet_id, wallet_number, current_balance
+            FROM zzimba_wallets
+            WHERE user_id = :user_id 
+            AND owner_type = 'USER'
+            AND status = 'active'
+            ORDER BY created_at DESC
+            LIMIT 1
+        ");
+        $userWalletStmt->execute([':user_id' => $userId]);
+        $userWallet = $userWalletStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$userWallet) {
+            return ['success' => false, 'message' => 'User wallet not found'];
+        }
+
+        if ((float) $userWallet['current_balance'] < $amount) {
+            return [
+                'success' => false,
+                'message' => 'Insufficient wallet balance',
+                'balance' => (float) $userWallet['current_balance'],
+                'required' => $amount
+            ];
+        }
+
+        $operationsWalletStmt = self::$pdo->prepare("
+            SELECT platform_account_id
+            FROM zzimba_platform_account_settings
+            WHERE type = 'operations'
+            LIMIT 1
+        ");
+        $operationsWalletStmt->execute();
+        $operationsWalletId = $operationsWalletStmt->fetchColumn();
+
+        if (!$operationsWalletId) {
+            return ['success' => false, 'message' => 'Operations account not configured'];
+        }
+
+        $operationsWalletDetailsStmt = self::$pdo->prepare("
+            SELECT wallet_id, wallet_number, current_balance
+            FROM zzimba_wallets
+            WHERE wallet_id = :wallet_id
+            AND status = 'active'
+            LIMIT 1
+        ");
+        $operationsWalletDetailsStmt->execute([':wallet_id' => $operationsWalletId]);
+        $operationsWallet = $operationsWalletDetailsStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$operationsWallet) {
+            return ['success' => false, 'message' => 'Operations wallet not found'];
+        }
+
+        $txnId = \generateUlid();
+
+        try {
+            self::$pdo->beginTransaction();
+
+            self::insertTransaction([
+                'transaction_id' => $txnId,
+                'transaction_type' => 'QUOTE',
+                'status' => 'SUCCESS',
+                'amount_total' => $amount,
+                'payment_method' => 'WALLET',
+                'wallet_id' => $userWallet['wallet_id'],
+                'user_id' => $userId,
+                'note' => 'Quote payment for quotation ID: ' . $quotationId
+            ]);
+
+            self::insertTransfer([
+                'id' => \generateUlid(),
+                'wallet_from' => $userWallet['wallet_id'],
+                'wallet_to' => $operationsWallet['wallet_id'],
+                'transaction_id' => $txnId,
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            $withholdingId = self::getWithholdingAccountId();
+
+            $balStmt = self::$pdo->prepare("SELECT current_balance FROM zzimba_wallets WHERE wallet_id = :wid");
+
+            $balStmt->execute([':wid' => $userWallet['wallet_id']]);
+            $userBalance = (float) $balStmt->fetchColumn();
+
+            $balStmt->execute([':wid' => $withholdingId]);
+            $withholdingBalance = (float) $balStmt->fetchColumn();
+
+            $balStmt->execute([':wid' => $operationsWallet['wallet_id']]);
+            $operationsBalance = (float) $balStmt->fetchColumn();
+
+            $debitId = self::insertEntry([
+                'transaction_id' => $txnId,
+                'wallet_id' => $userWallet['wallet_id'],
+                'entry_type' => 'DEBIT',
+                'amount' => $amount,
+                'balance_after' => $userBalance - $amount,
+                'entry_note' => 'Quote payment for quotation ' . $quotationId
+            ]);
+            self::updateWalletBalance($userWallet['wallet_id'], $userBalance - $amount);
+
+            $creditWithholdingId = self::insertEntry([
+                'transaction_id' => $txnId,
+                'wallet_id' => $withholdingId,
+                'entry_type' => 'CREDIT',
+                'amount' => $amount,
+                'balance_after' => $withholdingBalance + $amount,
+                'entry_note' => 'Quote payment collection from ' . $userWallet['wallet_number'],
+                'ref_entry_id' => $debitId
+            ]);
+            self::updateWalletBalance($withholdingId, $withholdingBalance + $amount);
+
+            $debitWithholdingId = self::insertEntry([
+                'transaction_id' => $txnId,
+                'wallet_id' => $withholdingId,
+                'entry_type' => 'DEBIT',
+                'amount' => $amount,
+                'balance_after' => ($withholdingBalance + $amount) - $amount,
+                'entry_note' => 'Quote payment disbursement to operations account',
+                'ref_entry_id' => $creditWithholdingId
+            ]);
+            self::updateWalletBalance($withholdingId, ($withholdingBalance + $amount) - $amount);
+
+            self::insertEntry([
+                'transaction_id' => $txnId,
+                'wallet_id' => $operationsWallet['wallet_id'],
+                'entry_type' => 'CREDIT',
+                'amount' => $amount,
+                'balance_after' => $operationsBalance + $amount,
+                'entry_note' => 'Quote payment received from ' . $userWallet['wallet_number'],
+                'ref_entry_id' => $debitWithholdingId
+            ]);
+            self::updateWalletBalance($operationsWallet['wallet_id'], $operationsBalance + $amount);
+
+            self::$pdo->commit();
+
+            $entity = self::getEntityInfo($userId, null);
+            $recipients = self::buildRecipients(
+                ['message' => "{$entity['type']} {$entity['name']} paid {$amount} UGX for the processed quote with ID {$quotationId}"],
+                ['id' => $userId, 'message' => "Payment of {$amount} UGX for quote {$quotationId} has been processed successfully"]
+            );
+
+            self::sendNotification('Quote Payment Processed', $recipients, 'normal', $userId);
+
+            return [
+                'success' => true,
+                'transaction_id' => $txnId,
+                'amount_paid' => $amount,
+                'quotation_id' => $quotationId,
+                'remaining_balance' => $userBalance - $amount
+            ];
+
+        } catch (\Throwable $e) {
+            self::$pdo->rollBack();
+            error_log('[ZzimbaCreditModule] Quote payment processing error: ' . $e->getMessage());
+
+            self::$pdo->prepare("
+                UPDATE zzimba_financial_transactions
+                SET status = 'FAILED', updated_at = NOW()
+                WHERE transaction_id = :tid
+            ")->execute([':tid' => $txnId]);
+
+            return ['success' => false, 'message' => 'Quote payment processing failed'];
         }
     }
 
