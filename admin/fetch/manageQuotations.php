@@ -382,6 +382,64 @@ try {
             ]);
             break;
 
+        case 'updateItemSize':
+            if ($method !== 'POST') {
+                http_response_code(405);
+                die(json_encode(['error' => 'Method not allowed']));
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true);
+            $itemId = $input['item_id'] ?? '';
+            $size = trim($input['size'] ?? '');
+
+            if (!$itemId || !$size) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Missing item ID or size']));
+            }
+
+            $stmt = $pdo->prepare("
+                SELECT d.size, d.RFQ_ID, r.status 
+                FROM request_for_quote_details d
+                JOIN request_for_quote r ON d.RFQ_ID = r.RFQ_ID
+                WHERE d.RFQD_ID = :id
+            ");
+            $stmt->execute([':id' => $itemId]);
+            $currentItem = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$currentItem) {
+                http_response_code(404);
+                die(json_encode(['error' => 'Item not found']));
+            }
+
+            $currentStatus = strtolower($currentItem['status']);
+            if (in_array($currentStatus, ['paid', 'cancelled'])) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Cannot edit items for paid or cancelled quotations']));
+            }
+
+            $oldSize = $currentItem['size'];
+            $rfqId = $currentItem['RFQ_ID'];
+
+            $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+            $stmt = $pdo->prepare(
+                "UPDATE request_for_quote_details 
+                 SET size = :size, updated_at = :now 
+                 WHERE RFQD_ID = :id"
+            );
+            $stmt->execute([
+                ':size' => $size,
+                ':now' => $now,
+                ':id' => $itemId
+            ]);
+
+            logAction($pdo, "Admin updated size/specification for item $itemId from '$oldSize' to '$size'");
+
+            echo json_encode([
+                'success' => true,
+                'old_size' => $oldSize
+            ]);
+            break;
+
         case 'updateTransportCost':
             if ($method !== 'POST') {
                 http_response_code(405);

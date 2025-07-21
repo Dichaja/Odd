@@ -718,7 +718,17 @@ ob_start();
             return `
                                         <tr>
                                             <td class="px-4 py-3 text-sm">${item.brand_name}</td>
-                                            <td class="px-4 py-3 text-sm">${item.size}</td>
+                                            <td class="px-4 py-3 text-sm">
+                                                ${canEdit ? `
+                                                    <input type="text" 
+                                                           value="${item.size}" 
+                                                           class="w-full px-2 py-1 text-sm border border-gray-300 rounded item-size-input"
+                                                           data-item-id="${item.RFQD_ID}"
+                                                           onchange="updateItemSize('${item.RFQD_ID}', this.value)">
+                                                ` : `
+                                                    <span class="text-sm">${item.size}</span>
+                                                `}
+                                            </td>
                                             <td class="px-4 py-3 text-sm text-center">${quantity}</td>
                                             <td class="px-4 py-3 text-center">
                                                 ${canEdit ? `
@@ -915,6 +925,36 @@ ob_start();
             .catch(error => {
                 console.error('Error:', error);
                 showErrorModal('An error occurred while updating price');
+            });
+    }
+
+    function updateItemSize(itemId, size) {
+        fetch('fetch/manageQuotations.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'updateItemSize',
+                item_id: itemId,
+                size: size.trim()
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessModal('Size/specification updated successfully');
+                    setTimeout(() => {
+                        closeSuccessModal();
+                    }, 1500);
+                } else {
+                    showErrorModal('Failed to update size: ' + (data.error || 'Unknown error'));
+                    document.querySelector(`input[data-item-id="${itemId}"]`).value = data.old_size || '';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showErrorModal('An error occurred while updating size');
             });
     }
 
@@ -1339,7 +1379,8 @@ ob_start();
         min-width: 800px;
     }
 
-    .unit-price-input:focus {
+    .unit-price-input:focus,
+    .item-size-input:focus {
         outline: none;
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
