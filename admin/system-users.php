@@ -73,7 +73,7 @@ ob_start();
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900">User Accounts</h3>
-                        <p class="text-sm text-gray-600">Click on any row to view and manage user details</p>
+                        <p class="text-sm text-gray-600">View and manage user details</p>
                     </div>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         <div class="relative">
