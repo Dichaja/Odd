@@ -1546,7 +1546,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                         if (data.fee_charged > 0) {
                             message += ` A fee of UGX ${formatCurrency(data.fee_charged)} has been deducted from your wallet. Your remaining balance is UGX ${formatCurrency(data.remaining_balance)}.`;
                         }
-                        notifications.success(message, 'RFQ Submitted');
+
+                        showSuccessModal(message);
+
                         document.getElementById('rfq-form').reset();
                         items = [];
                         selectedLocation = null;
@@ -1569,6 +1571,55 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     submitButton.disabled = false;
                     submitButton.innerHTML = originalButtonText;
                 });
+        }
+
+        function showSuccessModal(message) {
+            const modalHtml = `
+                <div id="success-modal" class="modal active">
+                    <div class="modal-content p-0">
+                        <div class="bg-gradient-to-r from-green-50 to-green-100 p-4 flex justify-between items-center border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Quote Request Submitted</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex items-center justify-center mb-4">
+                                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-green-500 text-2xl"></i>
+                                </div>
+                            </div>
+                            <div class="text-center mb-6">
+                                <p class="text-gray-700">${message}</p>
+                            </div>
+                            <div class="flex justify-center space-x-3">
+                                <button type="button" id="close-success-modal"
+                                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors">
+                                    Close
+                                </button>
+                                <button type="button" id="view-quotations"
+                                    class="btn-primary px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors">
+                                    <i class="fas fa-eye mr-2"></i> View My Quotations
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            document.getElementById('close-success-modal').addEventListener('click', () => {
+                document.getElementById('success-modal').remove();
+            });
+
+            document.getElementById('view-quotations').addEventListener('click', () => {
+                window.location.href = BASE_URL + 'account/quotations';
+            });
+
+            window.addEventListener('click', function (e) {
+                const modal = document.getElementById('success-modal');
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         }
 
         const form = document.getElementById('rfq-form');
