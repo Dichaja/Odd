@@ -32,9 +32,14 @@ $activeNav = $activeNav ?? 'dashboard';
 $userName = $_SESSION['user']['username'];
 $userEmail = $_SESSION['user']['email'];
 $userInitials = implode('', array_map(fn($p) => strtoupper(substr($p, 0, 1)), explode(' ', $userName)));
-$menuItems = [
-    'overview' => ['title' => 'Overview', 'items' => ['dashboard' => ['title' => 'Dashboard', 'icon' => 'fa-tachometer-alt']]],
 
+$menuItems = [
+    'overview' => [
+        'title' => 'Overview',
+        'items' => [
+            'dashboard' => ['title' => 'Dashboard', 'icon' => 'fa-tachometer-alt']
+        ]
+    ],
     'pages' => [
         'title' => 'Pages',
         'items' => [
@@ -43,7 +48,6 @@ $menuItems = [
             'contact-us' => ['title' => 'Contact Us', 'icon' => 'fa-envelope'],
         ]
     ],
-
     'finance' => [
         'title' => 'Finance',
         'items' => [
@@ -54,7 +58,6 @@ $menuItems = [
             'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card'],
         ]
     ],
-
     'management' => [
         'title' => 'Management',
         'items' => [
@@ -66,7 +69,6 @@ $menuItems = [
             'quotations' => ['title' => 'Quotations', 'icon' => 'fa-file-invoice-dollar'],
         ]
     ],
-
     'marketing' => [
         'title' => 'Marketing',
         'items' => [
@@ -74,13 +76,25 @@ $menuItems = [
             'ads-management' => ['title' => 'Ads Management', 'icon' => 'fa-ad'],
         ]
     ],
-
     'analytics' => [
         'title' => 'Analytics',
         'items' => [
             'search-log' => ['title' => 'Search Log', 'icon' => 'fa-search'],
             'page-activity' => ['title' => 'Page Activity', 'icon' => 'fa-chart-line'],
             'sessions' => ['title' => 'Sessions', 'icon' => 'fa-history'],
+        ]
+    ],
+    'users' => [
+        'title' => 'Users',
+        'items' => [
+            'admin-users' => ['title' => 'Admin Users', 'icon' => 'fa-user-shield'],
+            'system-users' => ['title' => 'System Users', 'icon' => 'fa-user'],
+        ]
+    ],
+    'settings' => [
+        'title' => 'Settings',
+        'items' => [
+            'settings' => ['title' => 'Settings', 'icon' => 'fa-cog'],
         ]
     ],
 ];
@@ -104,7 +118,7 @@ $menuItems = [
                     colors: {
                         primary: '#D92B13',
                         secondary: '#1a1a1a',
-                        'gray-text': '#4B5563',
+                        'gray-text': '#4B5563'
                     },
                     fontFamily: {
                         rubik: ['Rubik', 'sans-serif']
@@ -176,8 +190,9 @@ $menuItems = [
 
 <body class="bg-gray-50 font-rubik">
     <div class="flex min-h-screen">
-        <aside id="sidebar"
-            class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg
+                      transform -translate-x-full lg:translate-x-0
+                      transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
                     <a href="<?= BASE_URL ?>admin/dashboard" class="flex items-center space-x-3">
@@ -189,9 +204,11 @@ $menuItems = [
                         <div class="nav-category"><?= htmlspecialchars($category['title']) ?></div>
                         <div class="space-y-1 mb-2">
                             <?php foreach ($category['items'] as $key => $item): ?>
-                                <a href="<?= BASE_URL ?>admin/<?= $key ?>"
-                                    class="group flex items-center px-4 py-2.5 text-sm rounded-lg transition-all duration-200
-                          <?= $activeNav === $key ? 'bg-primary/10 text-primary active-nav-item' : 'text-gray-text hover:bg-gray-50 hover:text-primary' ?>">
+                                <a href="<?= BASE_URL ?>admin/<?= $key ?>" class="group flex items-center px-4 py-2.5 text-sm rounded-lg
+                                       transition-all duration-200
+                                       <?= $activeNav === $key
+                                           ? 'bg-primary/10 text-primary active-nav-item'
+                                           : 'text-gray-text hover:bg-gray-50 hover:text-primary' ?>">
                                     <i class="fas <?= $item['icon'] ?> w-5 h-5 mr-3"></i>
                                     <?= htmlspecialchars($item['title']) ?>
                                 </a>
@@ -199,24 +216,14 @@ $menuItems = [
                         </div>
                     <?php endforeach; ?>
                 </nav>
-                <div class="p-4 border-t border-gray-100">
-                    <a href="users"
-                        class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-primary">
-                        <i class="fas fa-users w-5 h-5 mr-3"></i>Users
-                    </a>
-                    <a href="#"
-                        class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-primary">
-                        <i class="fas fa-cog w-5 h-5 mr-3"></i>Settings
-                    </a>
-                </div>
             </div>
         </aside>
         <div class="flex-1 lg:ml-72">
             <header class="sticky top-0 z-40 bg-white border-b border-gray-100">
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
-                        <button id="sidebarToggle"
-                            class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
+                        <button id="sidebarToggle" class="lg:hidden w-10 h-10 flex items-center justify-center
+                                       text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
                         <h1 class="text-xl font-semibold text-secondary">
@@ -224,23 +231,18 @@ $menuItems = [
                         </h1>
                     </div>
                     <div class="flex items-center gap-2">
-
-                        <!-- SSE‐powered Notifications -->
                         <div x-data="notifComponent()" x-init="init()" class="relative mr-2">
-                            <button @click="toggle" class="relative w-10 h-10 flex items-center justify-center text-gray-500
-                                    hover:text-primary rounded-lg hover:bg-gray-50">
+                            <button @click="toggle" class="relative w-10 h-10 flex items-center justify-center
+                                           text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
                                 <i class="fas fa-bell text-xl"></i>
-                                <span x-show="count > 0" x-text="count" class="absolute -top-1 -right-1 text-[10px] font-semibold text-white
-                                    bg-primary rounded-full h-4 w-4 grid place-items-center">
-                                </span>
+                                <span x-show="count > 0" x-text="count" class="absolute -top-1 -right-1 text-[10px] font-semibold
+                                             text-white bg-primary rounded-full h-4 w-4
+                                             grid place-items-center"></span>
                             </button>
-
                             <div x-show="open" @click.away="open = false" x-transition class="fixed top-14 left-2 right-2 w-auto max-w-full
-                                sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2
-                                sm:w-80 sm:max-w-none
-                                bg-white rounded-lg shadow-lg border border-gray-100
-                                z-50 max-h-96 overflow-auto">
-                                <!-- Bulk action toolbar -->
+                                        sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2
+                                        sm:w-80 sm:max-w-none bg-white rounded-lg
+                                        shadow-lg border border-gray-100 z-50 max-h-96 overflow-auto">
                                 <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                                     <div class="flex items-center gap-2">
                                         <input type="checkbox" id="selectAll" @change="selectAll($event)"
@@ -248,12 +250,12 @@ $menuItems = [
                                         <label for="selectAll" class="text-xs text-gray-600">Select All</label>
                                     </div>
                                     <div class="flex gap-2">
-                                        <button @click="markBulkSeen"
-                                            class="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition">
+                                        <button @click="markBulkSeen" class="text-xs px-2 py-1 bg-primary text-white rounded
+                                                       hover:bg-opacity-90 transition">
                                             Mark Read
                                         </button>
-                                        <button @click="dismissBulk"
-                                            class="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-opacity-90 transition">
+                                        <button @click="dismissBulk" class="text-xs px-2 py-1 bg-red-500 text-white rounded
+                                                       hover:bg-opacity-90 transition">
                                             Dismiss
                                         </button>
                                     </div>
@@ -277,7 +279,7 @@ $menuItems = [
                                             </a>
                                         </div>
                                         <button @click.stop="dismiss(note.target_id)" class="absolute top-2 right-2 text-gray-300 hover:text-primary
-                                            opacity-0 group-hover:opacity-100 transition">
+                                                       opacity-0 group-hover:opacity-100 transition">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -287,22 +289,22 @@ $menuItems = [
                                 </div>
                             </div>
                         </div>
-
                         <div class="relative" id="userDropdown">
                             <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2"
                                 title="Last login: <?= htmlspecialchars($formattedLastLogin) ?>">
                                 <div class="user-initials"><?= htmlspecialchars($userInitials) ?></div>
-                                <span
-                                    class="hidden md:block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
+                                <span class="hidden md:block text-sm font-medium text-gray-700">
+                                    <?= htmlspecialchars($userName) ?>
+                                </span>
                                 <i class="fas fa-chevron-down text-sm text-gray-400"></i>
                             </button>
-                            <div id="userDropdownMenu"
-                                class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
+                            <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white
+                                        shadow-lg border border-gray-100 py-2 z-50">
                                 <div class="px-4 py-2 border-b border-gray-100 mb-1">
                                     <p class="text-sm font-medium"><?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500"><?= htmlspecialchars($userEmail) ?></p>
-                                    <p class="text-xs text-gray-400 mt-1">Last login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?>
+                                    <p class="text-xs text-gray-400 mt-1">
+                                        Last login: <?= htmlspecialchars($formattedLastLogin) ?>
                                     </p>
                                 </div>
                                 <a href="<?= BASE_URL ?>admin/profile"
@@ -323,12 +325,12 @@ $menuItems = [
                     </div>
                 </div>
             </header>
-            <main class="p-6"><?= $mainContent ?? '' ?></main>
+            <main class="p-6">
+                <?= $mainContent ?? '' ?>
+            </main>
         </div>
     </div>
-
     <script>
-        // Sidebar toggle & user dropdown
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const overlay = Object.assign(document.createElement('div'), {
@@ -373,55 +375,38 @@ $menuItems = [
                 .then(d => d.success ? location.href = '<?= BASE_URL ?>' : alert('Logout failed: ' + d.message))
                 .catch(() => alert('Error during logout. Try again.'));
         }
-
-        // Alpine SSE‐powered notification component with persistent selections
         function notifComponent() {
             return {
                 open: false,
                 notes: [],
-
                 count: 0,
                 selected: [],
                 evtSource: null,
-
                 toggle() {
                     this.open = !this.open;
                 },
-
                 init() {
                     this.evtSource = new EventSource('<?= BASE_URL ?>fetch/manageNotifications.php?action=stream');
                     this.evtSource.onmessage = e => {
                         try {
                             const data = JSON.parse(e.data);
-                            // Preserve selections: keep only those IDs still present
                             const newIds = data.map(n => n.target_id);
                             this.selected = this.selected.filter(id => newIds.includes(id));
-
                             this.notes = data;
                             this.count = this.notes.filter(n => n.is_seen == 0).length;
-
-                            // Update "Select All" checkbox state
                             const selectAllBox = document.getElementById('selectAll');
                             if (selectAllBox) {
                                 selectAllBox.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
                             }
-                        } catch (err) {
-                            console.error('SSE parse error', err);
-                        }
+                        } catch { }
                     };
-                    this.evtSource.onerror = err => {
-                        console.error('SSE connection error', err);
-                    };
+                    this.evtSource.onerror = () => { };
                 },
-
                 selectAll(event) {
-                    if (event.target.checked) {
-                        this.selected = this.notes.map(n => n.target_id);
-                    } else {
-                        this.selected = [];
-                    }
+                    this.selected = event.target.checked
+                        ? this.notes.map(n => n.target_id)
+                        : [];
                 },
-
                 markSeenReq(id) {
                     const params = new URLSearchParams();
                     params.append('action', 'markSeen');
@@ -436,9 +421,8 @@ $menuItems = [
                         this.count = this.notes.filter(n => n.is_seen == 0).length;
                     });
                 },
-
                 markBulkSeen() {
-                    if (this.selected.length === 0) return;
+                    if (!this.selected.length) return;
                     const params = new URLSearchParams();
                     params.append('action', 'markSeen');
                     this.selected.forEach(id => params.append('target_id[]', id));
@@ -456,12 +440,10 @@ $menuItems = [
                         if (selectAllBox) selectAllBox.checked = false;
                     });
                 },
-
                 handleClick(note) {
                     if (note.is_seen == 0) this.markSeenReq(note.target_id);
                     if (note.link_url) location.href = note.link_url;
                 },
-
                 dismiss(id) {
                     const params = new URLSearchParams();
                     params.append('action', 'dismiss');
@@ -478,9 +460,8 @@ $menuItems = [
                         if (selectAllBox) selectAllBox.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
                     });
                 },
-
                 dismissBulk() {
-                    if (this.selected.length === 0) return;
+                    if (!this.selected.length) return;
                     const params = new URLSearchParams();
                     params.append('action', 'dismiss');
                     this.selected.forEach(id => params.append('target_id[]', id));
@@ -496,7 +477,6 @@ $menuItems = [
                         if (selectAllBox) selectAllBox.checked = false;
                     });
                 },
-
                 formatDate(ts) {
                     const d = new Date(ts.replace(' ', 'T'));
                     const now = new Date();
@@ -505,7 +485,6 @@ $menuItems = [
                     const yesterday = new Date(today);
                     yesterday.setDate(today.getDate() - 1);
                     const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-
                     if (diff < 60) return 'Now';
                     if (d >= today) return 'Today ' + time;
                     if (d >= yesterday && d < today) return 'Yesterday ' + time;
@@ -513,8 +492,6 @@ $menuItems = [
                 }
             }
         }
-
-        // Scroll the active menu item into view on page load
         const sidebarNavEl = document.getElementById('sidebarNav');
         const activeNavItemEl = sidebarNavEl.querySelector('.active-nav-item');
         if (activeNavItemEl) {

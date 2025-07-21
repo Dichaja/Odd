@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'User Management';
-$activeNav = 'users';
+$activeNav = 'admin-users';
 
 if (!isset($_SESSION['user']) || !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in'] || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']) {
     header('Location: ' . BASE_URL);

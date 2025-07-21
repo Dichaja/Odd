@@ -126,7 +126,7 @@ function formatDateTime($dateTime)
                         <span class="text-sm font-medium text-gray-900 text-center">Stores</span>
                     </a>
 
-                    <a href="<?= BASE_URL ?>admin/users"
+                    <a href="<?= BASE_URL ?>admin/system-users"
                         class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group">
                         <div
                             class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/10 transition-colors">
