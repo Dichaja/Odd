@@ -1,111 +1,221 @@
 <?php
-require_once __DIR__ . '/../../config/config.php';
-date_default_timezone_set('Africa/Kampala');
-header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
-header('Access-Control-Allow-Methods: GET');
+header('Cache-Control: no-cache');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-$action = $_GET['action'] ?? '';
+function getSessionData()
+{
+    $jsonFile = __DIR__ . '/../../track/session_log.json';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Method not allowed']);
-    exit;
-}
-
-try {
-    $pdo->exec(
-        "CREATE TABLE IF NOT EXISTS logged_sessions (
-            sessionID VARCHAR(26) PRIMARY KEY,
-            session_timestamp BIGINT NOT NULL,
-            ipAddress VARCHAR(45) NOT NULL,
-            country VARCHAR(255) NOT NULL,
-            shortName VARCHAR(10) NOT NULL,
-            phoneCode VARCHAR(10) NOT NULL,
-            browser VARCHAR(100) NOT NULL,
-            device VARCHAR(50) NOT NULL,
-            logged_at DATETIME NOT NULL
-        )"
-    );
-
-    $pdo->exec(
-        "CREATE TABLE IF NOT EXISTS logged_session_details (
-            logID VARCHAR(26) PRIMARY KEY,
-            sessionID VARCHAR(26) NOT NULL,
-            event VARCHAR(255) NOT NULL,
-            log_timestamp VARCHAR(50) NOT NULL,
-            activeNavigation VARCHAR(255) NOT NULL,
-            pageTitle VARCHAR(255) NOT NULL,
-            FOREIGN KEY (sessionID) REFERENCES logged_sessions(sessionID) ON DELETE CASCADE
-        )"
-    );
-} catch (PDOException $e) {
-    http_response_code(500);
-    die(json_encode(['error' => 'Table creation failed: ' . $e->getMessage()]));
-}
-
-try {
-    switch ($action) {
-        case 'getPastSessions':
-            $start = $_GET['start'] ?? '';
-            $end   = $_GET['end']   ?? '';
-
-            if (!$start || !$end) {
-                http_response_code(400);
-                die(json_encode(['error' => 'Missing date range']));
-            }
-
-            $startDt = str_replace('T', ' ', $start) . ':00';
-            $endDt   = str_replace('T', ' ', $end)   . ':59';
-
-            $stmt = $pdo->prepare(
-                "SELECT * 
-                 FROM logged_sessions 
-                 WHERE logged_at BETWEEN :start AND :end 
-                 ORDER BY logged_at DESC"
-            );
-            $stmt->execute([':start' => $startDt, ':end' => $endDt]);
-            $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            $result = [];
-
-            foreach ($sessions as $session) {
-                $sessionStart = $session['session_timestamp'];
-                $session['timestamp']       = (int) $sessionStart;
-                $session['formatted_start'] = date("M jS, Y g:i:s A", $sessionStart / 1000);
-                $session['formatted_end']   = date("M jS, Y g:i:s A", strtotime($session['logged_at']));
-
-                $stmtDetails = $pdo->prepare(
-                    "SELECT event, log_timestamp, activeNavigation, pageTitle
-                     FROM logged_session_details
-                     WHERE sessionID = :sessionID
-                     ORDER BY log_timestamp ASC"
-                );
-                $stmtDetails->execute([':sessionID' => $session['sessionID']]);
-                $logs = $stmtDetails->fetchAll(PDO::FETCH_ASSOC);
-
-                foreach ($logs as &$log) {
-                    $dt = DateTime::createFromFormat("d/m/Y, H:i:s", $log['log_timestamp']);
-                    $log['timestamp'] = $dt
-                        ? $dt->format("M jS, Y g:i:s A")
-                        : $log['log_timestamp'];
-                }
-
-                $session['logs'] = $logs;
-                unset($session['session_timestamp']);
-                $result[] = $session;
-            }
-
-            echo json_encode($result);
-            break;
-
-        default:
-            http_response_code(404);
-            echo json_encode(['error' => 'Action not found']);
-            break;
+    if (!file_exists($jsonFile)) {
+        return ['error' => 'Session log file not found'];
     }
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+
+    $jsonContent = file_get_contents($jsonFile);
+    if ($jsonContent === false) {
+        return ['error' => 'Unable to read session log file'];
+    }
+
+    $sessions = json_decode($jsonContent, true);
+    if ($sessions === null) {
+        return ['error' => 'Invalid JSON format'];
+    }
+
+    foreach ($sessions as &$session) {
+        $session['shortName'] = strtoupper($session['shortName']);
+
+        $sessionStart = strtotime($session['timestamp']);
+        $now = time();
+        $duration = $now - $sessionStart;
+
+        $hours = floor($duration / 3600);
+        $minutes = floor(($duration % 3600) / 60);
+        $seconds = $duration % 60;
+
+        if ($hours > 0) {
+            $session['activeDuration'] = sprintf('%dh %dm', $hours, $minutes);
+        } elseif ($minutes > 0) {
+            $session['activeDuration'] = sprintf('%dm %ds', $minutes, $seconds);
+        } else {
+            $session['activeDuration'] = sprintf('%ds', $seconds);
+        }
+
+        $session['isActive'] = ($duration < 1800);
+
+        if (isset($session['logs']) && is_array($session['logs'])) {
+            usort($session['logs'], function ($a, $b) {
+                return strtotime($a['timestamp']) - strtotime($b['timestamp']);
+            });
+
+            $lastLog = end($session['logs']);
+            $session['lastActivity'] = $lastLog['timestamp'];
+            $session['lastActivityTime'] = strtotime($lastLog['timestamp']);
+        } else {
+            $session['lastActivity'] = $session['timestamp'];
+            $session['lastActivityTime'] = strtotime($session['timestamp']);
+        }
+    }
+
+    usort($sessions, function ($a, $b) {
+        return $b['lastActivityTime'] - $a['lastActivityTime'];
+    });
+
+    return $sessions;
 }
+
+function getCountryInfo($countryName)
+{
+    static $countryCache = [];
+
+    if (isset($countryCache[$countryName])) {
+        return $countryCache[$countryName];
+    }
+
+    $apiUrl = "https://restcountries.com/v3.1/name/" . urlencode($countryName) . "?fields=name,cca2,flag,idd";
+
+    $context = stream_context_create([
+        'http' => [
+            'timeout' => 5,
+            'user_agent' => 'Mozilla/5.0 (compatible; SessionMonitor/1.0)'
+        ]
+    ]);
+
+    $response = @file_get_contents($apiUrl, false, $context);
+
+    if ($response === false) {
+        $countryCache[$countryName] = [
+            'shortName' => strtoupper(substr($countryName, 0, 2)),
+            'flag' => '🏳️',
+            'phoneCode' => '+000'
+        ];
+        return $countryCache[$countryName];
+    }
+
+    $data = json_decode($response, true);
+
+    if (!$data || !is_array($data) || empty($data)) {
+        $countryCache[$countryName] = [
+            'shortName' => strtoupper(substr($countryName, 0, 2)),
+            'flag' => '🏳️',
+            'phoneCode' => '+000'
+        ];
+        return $countryCache[$countryName];
+    }
+
+    $country = $data[0];
+
+    $countryInfo = [
+        'shortName' => $country['cca2'] ?? strtoupper(substr($countryName, 0, 2)),
+        'flag' => $country['flag'] ?? '🏳️',
+        'phoneCode' => isset($country['idd']['root']) && isset($country['idd']['suffixes'][0])
+            ? $country['idd']['root'] . $country['idd']['suffixes'][0]
+            : '+000'
+    ];
+
+    $countryCache[$countryName] = $countryInfo;
+    return $countryInfo;
+}
+
+function streamSessions()
+{
+    header('Content-Type: text/event-stream');
+    header('Cache-Control: no-cache');
+    header('Connection: keep-alive');
+
+    $lastModified = 0;
+    $jsonFile = __DIR__ . '/../../track/session_log.json';
+
+    while (true) {
+        if (connection_aborted()) {
+            break;
+        }
+
+        clearstatcache();
+        $currentModified = file_exists($jsonFile) ? filemtime($jsonFile) : 0;
+
+        if ($currentModified > $lastModified) {
+            $sessions = getSessionData();
+
+            if (!isset($sessions['error'])) {
+                foreach ($sessions as &$session) {
+                    if (isset($session['country'])) {
+                        $countryInfo = getCountryInfo($session['country']);
+                        $session['shortName'] = $countryInfo['shortName'];
+                        $session['flag'] = $countryInfo['flag'];
+                        if (!isset($session['phoneCode'])) {
+                            $session['phoneCode'] = $countryInfo['phoneCode'];
+                        }
+                    }
+                }
+            }
+
+            echo "data: " . json_encode([
+                'type' => 'sessions_update',
+                'data' => $sessions,
+                'timestamp' => time()
+            ]) . "\n\n";
+
+            $lastModified = $currentModified;
+        }
+
+        echo "data: " . json_encode([
+            'type' => 'heartbeat',
+            'timestamp' => time()
+        ]) . "\n\n";
+
+        if (ob_get_level()) {
+            ob_flush();
+        }
+        flush();
+
+        sleep(2);
+    }
+}
+
+$action = $_GET['action'] ?? 'get';
+
+switch ($action) {
+    case 'stream':
+        streamSessions();
+        break;
+
+    case 'get':
+    default:
+        $sessions = getSessionData();
+
+        if (!isset($sessions['error'])) {
+            foreach ($sessions as &$session) {
+                if (isset($session['country'])) {
+                    $countryInfo = getCountryInfo($session['country']);
+                    $session['shortName'] = $countryInfo['shortName'];
+                    $session['flag'] = $countryInfo['flag'];
+                    if (!isset($session['phoneCode'])) {
+                        $session['phoneCode'] = $countryInfo['phoneCode'];
+                    }
+                }
+            }
+        }
+
+        echo json_encode([
+            'success' => !isset($sessions['error']),
+            'data' => $sessions,
+            'timestamp' => time(),
+            'stats' => !isset($sessions['error']) ? [
+                'total_sessions' => count($sessions),
+                'active_sessions' => count(array_filter($sessions, function ($s) {
+                    return $s['isActive'];
+                })),
+                'logged_users' => count(array_filter($sessions, function ($s) {
+                    return $s['loggedUser'] !== null;
+                })),
+                'unique_countries' => count(array_unique(array_column($sessions, 'country'))),
+                'total_events' => array_sum(array_map(function ($s) {
+                    return count($s['logs'] ?? []);
+                }, $sessions))
+            ] : null
+        ]);
+        break;
+}
+?>
