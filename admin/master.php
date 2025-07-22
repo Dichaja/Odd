@@ -226,7 +226,7 @@ $menuItems = [
                                        text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
-                        <h1 class="text-xl font-semibold text-secondary">
+                        <h1 class="hidden lg:block text-xl font-semibold text-secondary">
                             <?= htmlspecialchars($pageTitle ?? 'Dashboard') ?>
                         </h1>
                     </div>

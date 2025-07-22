@@ -1,848 +1,1440 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-$pageTitle = 'Session Tracking';
+$pageTitle = 'Active Sessions Monitor';
 $activeNav = 'sessions';
 ob_start();
 ?>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<div class="min-h-screen bg-gray-50" id="app-container">
+    <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 sm:py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                <div>
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <h1 class="text-lg sm:text-2xl font-bold text-gray-900">Sessions Monitor</h1>
+                    </div>
+                    <p class="text-gray-600 mt-1 text-sm sm:text-base hidden sm:block">Monitor real-time user activity
+                        and session events</p>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div
+                        class="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-green-50 border border-green-200 rounded-lg">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-xs sm:text-sm font-medium text-green-700">Live</span>
+                    </div>
+                    <button id="refreshBtn"
+                        class="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-sync-alt text-sm"></i>
+                        <span class="hidden sm:inline">Refresh</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Active Sessions</p>
+                        <p class="text-xl font-bold text-blue-900 truncate" id="activeSessions">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Logged Users</p>
+                        <p class="text-xl font-bold text-green-900 truncate" id="loggedUsers">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user-check text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Countries</p>
+                        <p class="text-xl font-bold text-purple-900 truncate" id="uniqueCountries">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-globe text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">Total Events</p>
+                        <p class="text-xl font-bold text-orange-900 truncate" id="totalEvents">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-chart-line text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
+            <div class="p-4 sm:p-6 border-b border-gray-100">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Active Sessions</h3>
+                        <p class="text-sm text-gray-600">Click on any session to view detailed activity logs</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <div class="relative">
+                            <input type="text" id="searchFilter" placeholder="Search sessions..."
+                                class="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                        </div>
+                        <select id="countryFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="all">All Countries</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hidden lg:block overflow-x-auto">
+                <table class="w-full" id="sessionsTable">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Session Info
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Location
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Device
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                User Status
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Events
+                            </th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Last Activity
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessionsBody" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <div>Loading sessions...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="lg:hidden" id="sessionsCards">
+                <div class="p-4 text-center text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <div>Loading sessions...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="sessionModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="closeSessionModal()"></div>
+    <div
+        class="relative w-full h-full max-w-6xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[95vh] overflow-hidden">
+        <div
+            class="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100">
+            <div class="flex items-center gap-3">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Session Activity</h3>
+                    <p class="text-sm text-gray-600 mt-1" id="modalSubtitle">Real-time monitoring</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 px-3 py-1 bg-green-100 border border-green-200 rounded-full">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-xs font-medium text-green-700">Live</span>
+                </div>
+                <button onclick="closeSessionModal()"
+                    class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex h-[calc(95vh-120px)]">
+            <div class="w-80 border-r border-gray-200 bg-gray-50 overflow-y-auto">
+                <div class="p-4" id="sessionInfo">
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin text-xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500 text-sm">Loading...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col min-h-0">
+                <div id="newEventIndicator" class="hidden bg-blue-50 border-b border-blue-200 p-2 text-center">
+                    <button onclick="scrollToBottom()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        <i class="fas fa-arrow-down mr-1"></i>
+                        New activity available
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-4 space-y-3" id="activityFeed">
+                    <div class="text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Loading activity feed...</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 p-4 bg-white">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                            <input type="text" id="chatInput" placeholder="Send a message to the user..."
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                maxlength="500">
+                        </div>
+                        <button id="sendChatBtn"
+                            class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-paper-plane text-sm"></i>
+                            <span>Send</span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                        <span>Messages are sent in real-time</span>
+                        <span id="charCount">0/500</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="mobileSessionModal" class="fixed inset-0 z-50 hidden lg:hidden">
+    <div class="absolute inset-0 bg-white">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="closeMobileSessionModal()" class="text-white hover:text-blue-100">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </button>
+                <div>
+                    <h3 class="font-bold text-lg" id="mobileModalTitle">Session</h3>
+                    <p class="text-blue-100 text-sm" id="mobileModalSubtitle">Live monitoring</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 px-2 py-1 bg-green-500 rounded-full">
+                <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                <span class="text-xs font-medium">Live</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col h-[calc(100vh-80px)]">
+            <div id="mobileNewEventIndicator" class="hidden bg-blue-50 border-b border-blue-200 p-2 text-center">
+                <button onclick="scrollToBottomMobile()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <i class="fas fa-arrow-down mr-1"></i>
+                    New activity available
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50" id="mobileActivityFeed">
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-500">Loading activity feed...</p>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 p-4 bg-white">
+                <div class="flex items-center gap-2">
+                    <div class="flex-1">
+                        <input type="text" id="mobileChatInput" placeholder="Type a message..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            maxlength="500">
+                    </div>
+                    <button id="mobileSendChatBtn"
+                        class="w-10 h-10 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-paper-plane text-sm"></i>
+                    </button>
+                </div>
+                <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                    <span>Real-time messaging</span>
+                    <span id="mobileCharCount">0/500</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+    let sessions = [];
+    let currentSessionId = null;
+    let refreshInterval = null;
+    let modalRefreshInterval = null;
+    let leafletMaps = {};
+
+    const countryShortNames = {
+        'Uganda': 'UG',
+        'Kenya': 'KE',
+        'Tanzania': 'TZ',
+        'Rwanda': 'RW',
+        'Burundi': 'BI',
+        'South Sudan': 'SS',
+        'Ethiopia': 'ET',
+        'Somalia': 'SO',
+        'Democratic Republic of the Congo': 'CD',
+        'Nigeria': 'NG',
+        'Ghana': 'GH',
+        'South Africa': 'ZA',
+        'Egypt': 'EG',
+        'Morocco': 'MA',
+        'Algeria': 'DZ',
+        'Tunisia': 'TN',
+        'Libya': 'LY',
+        'Sudan': 'SD',
+        'Chad': 'TD',
+        'Niger': 'NE',
+        'Mali': 'ML',
+        'Burkina Faso': 'BF',
+        'Senegal': 'SN',
+        'Guinea': 'GN',
+        'Sierra Leone': 'SL',
+        'Liberia': 'LR',
+        'Ivory Coast': 'CI',
+        'Togo': 'TG',
+        'Benin': 'BJ',
+        'Cameroon': 'CM',
+        'Central African Republic': 'CF',
+        'Equatorial Guinea': 'GQ',
+        'Gabon': 'GA',
+        'Republic of the Congo': 'CG',
+        'Angola': 'AO',
+        'Zambia': 'ZM',
+        'Malawi': 'MW',
+        'Mozambique': 'MZ',
+        'Zimbabwe': 'ZW',
+        'Botswana': 'BW',
+        'Namibia': 'NA',
+        'Lesotho': 'LS',
+        'Eswatini': 'SZ',
+        'Madagascar': 'MG',
+        'Mauritius': 'MU',
+        'Seychelles': 'SC',
+        'Comoros': 'KM',
+        'Djibouti': 'DJ',
+        'Eritrea': 'ER'
+    };
+
+    const simulatedSessions = [
+        {
+            "sessionID": "01k0rk412rc7nxbj7r3qhjszz7",
+            "timestamp": Date.now() - 300000,
+            "ipAddress": "197.239.10.70",
+            "country": "Uganda",
+            "shortName": "ug",
+            "phoneCode": "+256",
+            "browser": "Chrome",
+            "device": "desktop",
+            "coords": {
+                "latitude": 0.3244032,
+                "longitude": 32.571392
+            },
+            "loggedUser": "john_doe",
+            "logs": [
+                {
+                    "event": "page_load",
+                    "timestamp": new Date(Date.now() - 300000).toISOString(),
+                    "referrer": "",
+                    "url": "http://localhost/newzzimba/",
+                    "activeNavigation": "home",
+                    "pageTitle": "Zzimba Online Uganda"
+                },
+                {
+                    "event": "scroll",
+                    "timestamp": new Date(Date.now() - 295000).toISOString(),
+                    "scrollPosition": 250
+                },
+                {
+                    "event": "click",
+                    "timestamp": new Date(Date.now() - 290000).toISOString(),
+                    "element": "About Us Link",
+                    "url": "http://localhost/newzzimba/about"
+                },
+                {
+                    "event": "page_load",
+                    "timestamp": new Date(Date.now() - 285000).toISOString(),
+                    "referrer": "http://localhost/newzzimba/",
+                    "url": "http://localhost/newzzimba/about",
+                    "activeNavigation": "about",
+                    "pageTitle": "About Us - Zzimba Online"
+                },
+                {
+                    "event": "login_modal_open",
+                    "timestamp": new Date(Date.now() - 280000).toISOString()
+                },
+                {
+                    "event": "login_identifier",
+                    "timestamp": new Date(Date.now() - 275000).toISOString(),
+                    "identifier": "+256712345678",
+                    "status": "passed"
+                },
+                {
+                    "event": "login_password",
+                    "timestamp": new Date(Date.now() - 270000).toISOString(),
+                    "status": "failed"
+                },
+                {
+                    "event": "login_password",
+                    "timestamp": new Date(Date.now() - 265000).toISOString(),
+                    "status": "passed"
+                },
+                {
+                    "event": "navigation",
+                    "timestamp": new Date(Date.now() - 260000).toISOString(),
+                    "url": "http://localhost/newzzimba/dashboard",
+                    "pageTitle": "Dashboard - Zzimba Online"
+                },
+                {
+                    "event": "form_interaction",
+                    "timestamp": new Date(Date.now() - 255000).toISOString(),
+                    "formType": "search",
+                    "action": "focus"
+                },
+                {
+                    "event": "search_query",
+                    "timestamp": new Date(Date.now() - 250000).toISOString(),
+                    "query": "building materials"
+                },
+                {
+                    "event": "click",
+                    "timestamp": new Date(Date.now() - 30000).toISOString(),
+                    "element": "Product Card",
+                    "productId": "cement_001"
+                }
+            ]
+        },
+        {
+            "sessionID": "02m1sl523sd8oyck8s4rijt008",
+            "timestamp": Date.now() - 180000,
+            "ipAddress": "102.165.45.123",
+            "country": "Kenya",
+            "shortName": "ke",
+            "phoneCode": "+254",
+            "browser": "Safari",
+            "device": "mobile",
+            "coords": {
+                "latitude": -1.286389,
+                "longitude": 36.817223
+            },
+            "loggedUser": "mary_smith",
+            "logs": [
+                {
+                    "event": "page_load",
+                    "timestamp": new Date(Date.now() - 180000).toISOString(),
+                    "url": "http://localhost/newzzimba/products",
+                    "pageTitle": "Products - Zzimba Online"
+                },
+                {
+                    "event": "filter_applied",
+                    "timestamp": new Date(Date.now() - 175000).toISOString(),
+                    "filterType": "category",
+                    "filterValue": "cement"
+                },
+                {
+                    "event": "product_view",
+                    "timestamp": new Date(Date.now() - 170000).toISOString(),
+                    "productId": "cement_premium_001",
+                    "productName": "Premium Cement 50kg"
+                },
+                {
+                    "event": "add_to_cart",
+                    "timestamp": new Date(Date.now() - 165000).toISOString(),
+                    "productId": "cement_premium_001",
+                    "quantity": 10
+                },
+                {
+                    "event": "navigation",
+                    "timestamp": new Date(Date.now() - 160000).toISOString(),
+                    "url": "http://localhost/newzzimba/cart",
+                    "pageTitle": "Shopping Cart - Zzimba Online"
+                },
+                {
+                    "event": "checkout_initiated",
+                    "timestamp": new Date(Date.now() - 155000).toISOString(),
+                    "cartValue": 450000
+                },
+                {
+                    "event": "form_interaction",
+                    "timestamp": new Date(Date.now() - 150000).toISOString(),
+                    "formType": "checkout",
+                    "step": "delivery_address"
+                },
+                {
+                    "event": "payment_method_selected",
+                    "timestamp": new Date(Date.now() - 145000).toISOString(),
+                    "method": "mobile_money"
+                },
+                {
+                    "event": "order_placed",
+                    "timestamp": new Date(Date.now() - 140000).toISOString(),
+                    "orderId": "ORD_2025_001234",
+                    "amount": 450000
+                },
+                {
+                    "event": "page_load",
+                    "timestamp": new Date(Date.now() - 15000).toISOString(),
+                    "url": "http://localhost/newzzimba/order-confirmation",
+                    "pageTitle": "Order Confirmation - Zzimba Online"
+                }
+            ]
+        }
+    ];
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadSessions();
+        setupEventListeners();
+        startAutoRefresh();
+        document.getElementById('sessionModal').classList.add('hidden');
+        document.getElementById('mobileSessionModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    });
+
+    function setupEventListeners() {
+        document.getElementById('refreshBtn').addEventListener('click', refreshSessions);
+        document.getElementById('searchFilter').addEventListener('input', debounce(filterSessions, 300));
+        document.getElementById('countryFilter').addEventListener('change', filterSessions);
+
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendChatBtn');
+        const charCount = document.getElementById('charCount');
+
+        if (chatInput && sendBtn && charCount) {
+            chatInput.addEventListener('input', function () {
+                const length = this.value.length;
+                charCount.textContent = `${length}/500`;
+                sendBtn.disabled = length === 0;
+            });
+
+            chatInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChatMessage();
+                }
+            });
+
+            sendBtn.addEventListener('click', sendChatMessage);
+        }
+
+        const mobileChatInput = document.getElementById('mobileChatInput');
+        const mobileSendBtn = document.getElementById('mobileSendChatBtn');
+        const mobileCharCount = document.getElementById('mobileCharCount');
+
+        if (mobileChatInput && mobileSendBtn && mobileCharCount) {
+            mobileChatInput.addEventListener('input', function () {
+                const length = this.value.length;
+                mobileCharCount.textContent = `${length}/500`;
+                mobileSendBtn.disabled = length === 0;
+            });
+
+            mobileChatInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMobileChatMessage();
+                }
+            });
+
+            mobileSendBtn.addEventListener('click', sendMobileChatMessage);
+        }
+    }
+
+    function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+            loadSessions();
+        }, 5000);
+    }
+
+    function stopAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+    }
+
+    function startModalRefresh() {
+        modalRefreshInterval = setInterval(() => {
+            if (currentSessionId) {
+                if (window.innerWidth < 1024) {
+                    loadMobileSessionDetails(currentSessionId, false);
+                } else {
+                    loadSessionDetails(currentSessionId, false);
+                }
+            }
+        }, 5000);
+    }
+
+    function stopModalRefresh() {
+        if (modalRefreshInterval) {
+            clearInterval(modalRefreshInterval);
+            modalRefreshInterval = null;
+        }
+    }
+
+    async function loadSessions() {
+        try {
+            sessions = simulatedSessions;
+            updateStatistics();
+            renderSessionsTable();
+            renderSessionsCards();
+            updateCountryFilter();
+        } catch (error) {
+            console.error('Error loading sessions:', error);
+            showError('Failed to load sessions');
+        }
+    }
+
+    function updateStatistics() {
+        const activeSessions = sessions.length;
+        const loggedUsers = sessions.filter(s => s.loggedUser !== null).length;
+        const uniqueCountries = [...new Set(sessions.map(s => s.country))].length;
+        const totalEvents = sessions.reduce((sum, s) => sum + (s.logs ? s.logs.length : 0), 0);
+
+        document.getElementById('activeSessions').textContent = activeSessions.toLocaleString();
+        document.getElementById('loggedUsers').textContent = loggedUsers.toLocaleString();
+        document.getElementById('uniqueCountries').textContent = uniqueCountries.toLocaleString();
+        document.getElementById('totalEvents').textContent = totalEvents.toLocaleString();
+    }
+
+    function updateCountryFilter() {
+        const countryFilter = document.getElementById('countryFilter');
+        const countries = [...new Set(sessions.map(s => s.country))].sort();
+
+        const currentValue = countryFilter.value;
+
+        countryFilter.innerHTML = '<option value="all">All Countries</option>';
+        countries.forEach(country => {
+            const option = document.createElement('option');
+            option.value = country;
+            option.textContent = country;
+            countryFilter.appendChild(option);
+        });
+
+        if (countries.includes(currentValue)) {
+            countryFilter.value = currentValue;
+        }
+    }
+
+    function renderSessionsTable() {
+        const tbody = document.getElementById('sessionsBody');
+
+        if (sessions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                        <i class="fas fa-users text-2xl mb-2"></i>
+                        <div>No active sessions found</div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let filteredSessions = filterSessionsData();
+        filteredSessions.sort((a, b) => getLastActivity(b) - getLastActivity(a));
+
+        tbody.innerHTML = filteredSessions.map(session => {
+            const lastActivity = getLastActivity(session);
+            const timeAgo = getTimeAgo(lastActivity);
+            const displayName = session.loggedUser ? session.loggedUser : session.sessionID;
+            const deviceIcon = getDeviceIcon(session.device);
+
+            return `
+                <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewSessionDetails('${session.sessionID}')">
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                <i class="${session.loggedUser ? 'fas fa-user' : 'fas fa-globe'} text-gray-600 text-sm"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${displayName}</div>
+                                <div class="text-sm text-gray-500">${session.ipAddress}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <div class="flex items-center justify-center gap-2">
+                            <img src="https://flagcdn.com/16x12/${session.shortName.toLowerCase()}.png" alt="${session.country}" class="rounded">
+                            <span class="text-sm text-gray-900">${session.country}</span>
+                        </div>
+                        <div class="text-xs text-gray-500">${session.phoneCode}</div>
+                    </td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <div class="flex items-center justify-center gap-2">
+                            <i class="${deviceIcon} text-gray-600"></i>
+                            <span class="text-sm text-gray-900">${session.browser}</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                        ${session.loggedUser ?
+                    `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-user-check mr-1"></i>Logged In
+                            </span>` :
+                    `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-globe mr-1"></i>Guest
+                            </span>`
+                }
+                    </td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            ${session.logs ? session.logs.length : 0} events
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${timeAgo}</div>
+                        <div class="text-xs text-gray-500">${formatTime(lastActivity)}</div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderSessionsCards() {
+        const container = document.getElementById('sessionsCards');
+
+        if (sessions.length === 0) {
+            container.innerHTML = `
+                <div class="p-4 text-center text-gray-500">
+                    <i class="fas fa-users text-2xl mb-2"></i>
+                    <div>No active sessions found</div>
+                </div>
+            `;
+            return;
+        }
+
+        let filteredSessions = filterSessionsData();
+        filteredSessions.sort((a, b) => getLastActivity(b) - getLastActivity(a));
+
+        container.innerHTML = filteredSessions.map(session => {
+            const lastActivity = getLastActivity(session);
+            const timeAgo = getTimeAgo(lastActivity);
+            const displayName = session.loggedUser ? `${session.loggedUser}` : `${session.sessionID.substring(0, 6)}...`;
+            const deviceIcon = getDeviceIcon(session.device);
+            const countryDisplay = countryShortNames[session.country] || session.country;
+
+            return `
+                <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewSessionDetails('${session.sessionID}')">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                            <i class="${session.loggedUser ? 'fas fa-user' : 'fas fa-globe'} text-gray-600 text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="text-sm font-medium text-gray-900 truncate">${displayName}</h4>
+                                <span class="text-xs text-gray-500">${timeAgo}</span>
+                            </div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <img src="https://flagcdn.com/16x12/${session.shortName.toLowerCase()}.png" alt="${session.country}" class="rounded">
+                                <span class="text-sm text-gray-600">${countryDisplay}</span>
+                                <span class="text-xs text-gray-500">•</span>
+                                <span class="text-sm text-gray-600">${session.browser}</span>
+                                <span class="text-xs text-gray-500">•</span>
+                                <i class="${deviceIcon} text-gray-600 text-sm"></i>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    ${session.loggedUser ?
+                    `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <i class="fas fa-user-check mr-1"></i>Logged In
+                                        </span>` :
+                    `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            <i class="fas fa-globe mr-1"></i>Guest
+                                        </span>`
+                }
+                                </div>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    ${session.logs ? session.logs.length : 0} events
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function filterSessionsData() {
+        const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
+        const countryFilter = document.getElementById('countryFilter').value;
+
+        return sessions.filter(session => {
+            const matchesSearch = !searchTerm ||
+                session.sessionID.toLowerCase().includes(searchTerm) ||
+                session.ipAddress.includes(searchTerm) ||
+                session.country.toLowerCase().includes(searchTerm) ||
+                session.browser.toLowerCase().includes(searchTerm) ||
+                (session.loggedUser && session.loggedUser.toLowerCase().includes(searchTerm));
+
+            const matchesCountry = countryFilter === 'all' || session.country === countryFilter;
+
+            return matchesSearch && matchesCountry;
+        });
+    }
+
+    function filterSessions() {
+        renderSessionsTable();
+        renderSessionsCards();
+    }
+
+    function getLastActivity(session) {
+        if (!session.logs || session.logs.length === 0) {
+            return session.timestamp;
+        }
+
+        const lastLog = session.logs[session.logs.length - 1];
+        return new Date(lastLog.timestamp).getTime();
+    }
+
+    function getTimeAgo(timestamp) {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        return `${days}d ago`;
+    }
+
+    function formatTime(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    function formatDateTime(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    function viewSessionDetails(sessionId) {
+        currentSessionId = sessionId;
+
+        if (window.innerWidth < 1024) {
+            document.getElementById('mobileSessionModal').classList.remove('hidden');
+            loadMobileSessionDetails(sessionId, true);
+        } else {
+            document.getElementById('sessionModal').classList.remove('hidden');
+            loadSessionDetails(sessionId, true);
+        }
+
+        document.body.style.overflow = 'hidden';
+        startModalRefresh();
+    }
+
+    function loadSessionDetails(sessionId, isInitialLoad = false) {
+        const session = sessions.find(s => s.sessionID === sessionId);
+        if (!session) return;
+
+        if (isInitialLoad) {
+            document.getElementById('modalTitle').textContent = `Session: ${sessionId}`;
+            document.getElementById('modalSubtitle').textContent = `${session.country} • ${session.browser} • ${session.device}`;
+        }
+
+        if (isInitialLoad) {
+            const sessionInfo = document.getElementById('sessionInfo');
+            sessionInfo.innerHTML = `
+            <div class="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 mb-3 sm:mb-4">
+                <h4 class="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Session Details</h4>
+                <div class="space-y-2 text-xs sm:text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Session ID:</span>
+                        <span class="font-mono text-xs">${session.sessionID.substring(0, 8)}...</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">IP Address:</span>
+                        <span class="font-medium">${session.ipAddress}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Location:</span>
+                        <div class="flex items-center gap-1">
+                            <img src="https://flagcdn.com/16x12/${session.shortName.toLowerCase()}.png" alt="${session.country}" class="rounded">
+                            <span>${session.country}</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Browser:</span>
+                        <span class="font-medium">${session.browser}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Device:</span>
+                        <div class="flex items-center gap-1">
+                            <i class="${getDeviceIcon(session.device)} text-gray-600 text-xs"></i>
+                            <span class="font-medium capitalize">${session.device}</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">User Status:</span>
+                        ${session.loggedUser ?
+                    '<span class="text-green-600 font-medium">Logged In</span>' :
+                    '<span class="text-gray-600">Guest</span>'
+                }
+                    </div>
+                </div>
+            </div>
+
+            ${session.coords ? `
+                <div class="bg-white rounded-lg p-3 sm:p-4 border border-gray-200">
+                    <h4 class="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Location</h4>
+                    <div id="map-${sessionId}" class="w-full h-32 sm:h-48 rounded-lg border border-gray-200"></div>
+                    <div class="mt-2 text-xs text-gray-500 text-center">
+                        <a href="https://www.google.com/maps?q=${session.coords.latitude},${session.coords.longitude}" 
+                           target="_blank" 
+                           class="text-blue-600 hover:text-blue-800 underline">
+                            ${session.coords.latitude.toFixed(6)}, ${session.coords.longitude.toFixed(6)}
+                        </a>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+
+            if (session.coords) {
+                setTimeout(() => initLeafletMap(sessionId, session.coords), 100);
+            }
+        }
+
+        const activityFeed = document.getElementById('activityFeed');
+        const wasAtBottom = activityFeed.scrollTop + activityFeed.clientHeight >= activityFeed.scrollHeight - 5;
+
+        if (!session.logs || session.logs.length === 0) {
+            activityFeed.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-clock text-2xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-500">No activity recorded yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        const sortedLogs = [...session.logs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        activityFeed.innerHTML = sortedLogs.map((log, index) => {
+            const isLatest = index === sortedLogs.length - 1;
+            return `
+                <div class="flex gap-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full ${session.loggedUser ? 'bg-gray-400' : 'bg-gray-500'} flex items-center justify-center">
+                            <i class="${session.loggedUser ? 'fas fa-user' : 'fas fa-globe'} text-white text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-medium text-gray-500">${formatDateTime(log.timestamp)}</span>
+                                ${isLatest ? '<span class="text-xs text-green-600 font-medium">Latest</span>' : ''}
+                            </div>
+                            <div class="text-sm text-gray-900">
+                                ${formatEventMessage(log)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        if (!isInitialLoad && !wasAtBottom) {
+            document.getElementById('newEventIndicator').classList.remove('hidden');
+        } else if (wasAtBottom) {
+            activityFeed.scrollTop = activityFeed.scrollHeight;
+            document.getElementById('newEventIndicator').classList.add('hidden');
+        }
+    }
+
+    function loadMobileSessionDetails(sessionId, isInitialLoad = false) {
+        const session = sessions.find(s => s.sessionID === sessionId);
+        if (!session) return;
+
+        if (isInitialLoad) {
+            document.getElementById('mobileModalTitle').textContent = session.loggedUser ? session.loggedUser : `${sessionId.substring(0, 8)}...`;
+            document.getElementById('mobileModalSubtitle').textContent = `${countryShortNames[session.country] || session.country} • ${session.browser}`;
+        }
+
+        const mobileActivityFeed = document.getElementById('mobileActivityFeed');
+        const wasAtBottom = mobileActivityFeed.scrollTop + mobileActivityFeed.clientHeight >= mobileActivityFeed.scrollHeight - 5;
+
+        if (!session.logs || session.logs.length === 0) {
+            mobileActivityFeed.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-clock text-2xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-500">No activity recorded yet</p>
+                </div>
+            `;
+            return;
+        }
+
+        const sortedLogs = [...session.logs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        mobileActivityFeed.innerHTML = sortedLogs.map((log, index) => {
+            const isLatest = index === sortedLogs.length - 1;
+            return `
+                <div class="flex gap-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 rounded-full ${session.loggedUser ? 'bg-gray-400' : 'bg-gray-500'} flex items-center justify-center">
+                            <i class="${session.loggedUser ? 'fas fa-user' : 'fas fa-globe'} text-white text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-medium text-gray-500">${formatTime(new Date(log.timestamp).getTime())}</span>
+                                ${isLatest ? '<span class="text-xs text-green-600 font-medium">Latest</span>' : ''}
+                            </div>
+                            <div class="text-sm text-gray-900">
+                                ${formatEventMessage(log)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        if (!isInitialLoad && !wasAtBottom) {
+            document.getElementById('mobileNewEventIndicator').classList.remove('hidden');
+        } else if (wasAtBottom) {
+            mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
+            document.getElementById('mobileNewEventIndicator').classList.add('hidden');
+        }
+    }
+
+    function initLeafletMap(sessionId, coords) {
+        const mapElement = document.getElementById(`map-${sessionId}`);
+        if (!mapElement || typeof L === 'undefined') return;
+
+        try {
+            const map = L.map(mapElement).setView([coords.latitude, coords.longitude], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            const customIcon = L.divIcon({
+                html: '<i class="fas fa-map-marker-alt" style="color: #3B82F6; font-size: 24px;"></i>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 24],
+                className: 'custom-div-icon'
+            });
+
+            L.marker([coords.latitude, coords.longitude], { icon: customIcon })
+                .addTo(map)
+                .bindPopup(`User Location<br>Lat: ${coords.latitude.toFixed(6)}<br>Lng: ${coords.longitude.toFixed(6)}`);
+
+            leafletMaps[sessionId] = map;
+
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 200);
+        } catch (error) {
+            console.error('Error initializing Leaflet map:', error);
+        }
+    }
+
+    function getDeviceIcon(device) {
+        const icons = {
+            'mobile': 'fas fa-mobile-alt',
+            'tablet': 'fas fa-tablet-alt',
+            'desktop': 'fas fa-desktop'
+        };
+        return icons[device] || 'fas fa-desktop';
+    }
+
+    function scrollToBottom() {
+        const activityFeed = document.getElementById('activityFeed');
+        activityFeed.scrollTop = activityFeed.scrollHeight;
+        document.getElementById('newEventIndicator').classList.add('hidden');
+    }
+
+    function scrollToBottomMobile() {
+        const mobileActivityFeed = document.getElementById('mobileActivityFeed');
+        mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
+        document.getElementById('mobileNewEventIndicator').classList.add('hidden');
+    }
+
+    function formatEventMessage(log) {
+        switch (log.event) {
+            case 'page_load':
+                return `Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
+
+            case 'login_modal_open':
+                return 'Opened login modal';
+
+            case 'login_identifier':
+                return `Entered identifier: ${log.identifier} (${log.status === 'passed' ? '✅ Valid' : '❌ Invalid'})`;
+
+            case 'login_password':
+                return `Password attempt: ${log.status === 'passed' ? '✅ Success' : '❌ Failed'}`;
+
+            case 'click':
+                return log.url ?
+                    `Clicked on "${log.element}" → <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.url}</a>` :
+                    `Clicked on "${log.element}"`;
+
+            case 'navigation':
+                return `Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
+
+            case 'scroll':
+                return `Scrolled to position ${log.scrollPosition}px`;
+
+            case 'search_query':
+                return `Searched for: "<strong>${log.query}</strong>"`;
+
+            case 'add_to_cart':
+                return `Added ${log.quantity} item(s) to cart (Product ID: ${log.productId})`;
+
+            case 'checkout_initiated':
+                return `Started checkout process (Cart value: UGX ${log.cartValue?.toLocaleString()})`;
+
+            case 'order_placed':
+                return `Placed order ${log.orderId} (Amount: UGX ${log.amount?.toLocaleString()})`;
+
+            case 'product_view':
+                return `Viewed product: <strong>${log.productName}</strong> (ID: ${log.productId})`;
+
+            case 'filter_applied':
+                return `Applied ${log.filterType} filter: <strong>${log.filterValue}</strong>`;
+
+            case 'form_interaction':
+                return `Interacted with ${log.formType} form${log.step ? ` (Step: ${log.step})` : ''}${log.action ? ` - ${log.action}` : ''}`;
+
+            case 'payment_method_selected':
+                return `Selected payment method: <strong>${log.method.replace('_', ' ')}</strong>`;
+
+            default:
+                return `${log.event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+        }
+    }
+
+    let chatMessages = {};
+
+    function sendChatMessage() {
+        const chatInput = document.getElementById('chatInput');
+        const message = chatInput.value.trim();
+
+        if (!message || !currentSessionId) return;
+
+        if (!chatMessages[currentSessionId]) {
+            chatMessages[currentSessionId] = [];
+        }
+        chatMessages[currentSessionId].push({
+            message: message,
+            timestamp: Date.now(),
+            type: 'admin'
+        });
+
+        const activityFeed = document.getElementById('activityFeed');
+        const adminMessage = `
+            <div class="flex gap-3 justify-end">
+                <div class="flex-1 min-w-0 max-w-xs">
+                    <div class="bg-blue-500 text-white rounded-lg p-3 shadow-sm">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-xs font-medium opacity-75">Admin</span>
+                            <span class="text-xs opacity-75">Just now</span>
+                        </div>
+                        <div class="text-sm">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                        <i class="fas fa-user-shield text-white text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        activityFeed.insertAdjacentHTML('beforeend', adminMessage);
+        activityFeed.scrollTop = activityFeed.scrollHeight;
+
+        chatInput.value = '';
+        document.getElementById('charCount').textContent = '0/500';
+        document.getElementById('sendChatBtn').disabled = true;
+
+        console.log(`Sending message to session ${currentSessionId}: ${message}`);
+
+        setTimeout(() => {
+            const deliveryConfirmation = `
+                <div class="text-center">
+                    <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                        <i class="fas fa-check mr-1"></i>Message delivered
+                    </span>
+                </div>
+            `;
+            activityFeed.insertAdjacentHTML('beforeend', deliveryConfirmation);
+            activityFeed.scrollTop = activityFeed.scrollHeight;
+        }, 1000);
+    }
+
+    function sendMobileChatMessage() {
+        const mobileChatInput = document.getElementById('mobileChatInput');
+        const message = mobileChatInput.value.trim();
+
+        if (!message || !currentSessionId) return;
+
+        if (!chatMessages[currentSessionId]) {
+            chatMessages[currentSessionId] = [];
+        }
+
+        chatMessages[currentSessionId].push({
+            message: message,
+            timestamp: Date.now(),
+            type: 'admin'
+        });
+
+        const mobileActivityFeed = document.getElementById('mobileActivityFeed');
+        const adminMessage = `
+        <div class="flex gap-3 justify-end">
+            <div class="flex-1 min-w-0 max-w-xs">
+                <div class="bg-blue-500 text-white rounded-lg p-3 shadow-sm">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-medium opacity-75">Admin</span>
+                        <span class="text-xs opacity-75">Just now</span>
+                    </div>
+                    <div class="text-sm">
+                        ${message}
+                    </div>
+                </div>
+            </div>
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                    <i class="fas fa-user-shield text-white text-xs"></i>
+                </div>
+            </div>
+        </div>
+    `;
+
+        mobileActivityFeed.insertAdjacentHTML('beforeend', adminMessage);
+        mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
+
+        mobileChatInput.value = '';
+        document.getElementById('mobileCharCount').textContent = '0/500';
+        document.getElementById('mobileSendChatBtn').disabled = true;
+
+        console.log(`Sending mobile message to session ${currentSessionId}: ${message}`);
+
+        setTimeout(() => {
+            const deliveryConfirmation = `
+            <div class="text-center">
+                <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                    <i class="fas fa-check mr-1"></i>Message delivered
+                </span>
+            </div>
+        `;
+            mobileActivityFeed.insertAdjacentHTML('beforeend', deliveryConfirmation);
+            mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
+        }, 1000);
+    }
+
+    function closeSessionModal() {
+        document.getElementById('sessionModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        currentSessionId = null;
+        stopModalRefresh();
+
+        document.getElementById('chatInput').value = '';
+        document.getElementById('charCount').textContent = '0/500';
+        document.getElementById('sendChatBtn').disabled = true;
+
+        Object.keys(leafletMaps).forEach(mapId => {
+            if (leafletMaps[mapId]) {
+                leafletMaps[mapId].remove();
+                delete leafletMaps[mapId];
+            }
+        });
+    }
+
+    function closeMobileSessionModal() {
+        document.getElementById('mobileSessionModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        currentSessionId = null;
+        stopModalRefresh();
+
+        document.getElementById('mobileChatInput').value = '';
+        document.getElementById('mobileCharCount').textContent = '0/500';
+        document.getElementById('mobileSendChatBtn').disabled = true;
+    }
+
+    function refreshSessions() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        const icon = refreshBtn.querySelector('i');
+
+        icon.classList.add('fa-spin');
+        refreshBtn.disabled = true;
+
+        loadSessions().finally(() => {
+            setTimeout(() => {
+                icon.classList.remove('fa-spin');
+                refreshBtn.disabled = false;
+            }, 1000);
+        });
+    }
+
+    function showError(message) {
+        const tbody = document.getElementById('sessionsBody');
+        const cards = document.getElementById('sessionsCards');
+
+        const errorContent = `
+            <div class="px-4 py-8 text-center text-red-500">
+                <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                <div>${message}</div>
+            </div>
+        `;
+
+        tbody.innerHTML = `<tr><td colspan="6">${errorContent}</td></tr>`;
+        cards.innerHTML = errorContent;
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    window.addEventListener('beforeunload', () => {
+        stopAutoRefresh();
+        stopModalRefresh();
+
+        Object.keys(leafletMaps).forEach(mapId => {
+            if (leafletMaps[mapId]) {
+                leafletMaps[mapId].remove();
+                delete leafletMaps[mapId];
+            }
+        });
+    });
+
+    window.viewSessionDetails = viewSessionDetails;
+    window.closeSessionModal = closeSessionModal;
+    window.closeMobileSessionModal = closeMobileSessionModal;
+    window.scrollToBottom = scrollToBottom;
+    window.scrollToBottomMobile = scrollToBottomMobile;
+</script>
+
 <style>
-    .responsive-table-mobile {
-        display: none;
+    .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
-    .accordion-content {
-        display: none;
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: .5;
+        }
     }
 
-    .accordion-arrow {
-        transition: transform 0.2s ease;
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 #f7fafc;
     }
 
-    .accordion-arrow.active {
-        transform: rotate(180deg);
+    .overflow-x-auto::-webkit-scrollbar {
+        height: 6px;
     }
 
-    .date-range-preset {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        border-radius: 0.375rem;
-        border: 1px solid #e5e7eb;
-        background-color: #fff;
-        color: #4B5563;
-        cursor: pointer;
-        transition: all 0.2s;
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: #f7fafc;
+        border-radius: 3px;
     }
 
-    .date-range-preset:hover {
-        border-color: #C00000;
-        color: #C00000;
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
     }
 
-    .date-range-preset.active {
-        background-color: #C00000;
-        border-color: #C00000;
-        color: white;
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
     }
 
-    @media (max-width: 768px) {
-        .responsive-table-desktop {
-            display: none;
-        }
+    #chatInput:focus,
+    #mobileChatInput:focus {
+        outline: none;
+        border-color: #3B82F6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
 
-        .responsive-table-mobile {
-            display: block;
-        }
+    #activityFeed,
+    #mobileActivityFeed {
+        scroll-behavior: smooth;
+    }
 
-        .mobile-row {
-            background: white;
-            border: 1px solid #f3f4f6;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            overflow: hidden;
-        }
+    .leaflet-container {
+        border-radius: 0.5rem;
+    }
 
-        .mobile-row-header {
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-        }
+    .custom-div-icon {
+        background: transparent;
+        border: none;
+    }
 
-        .mobile-row-content {
-            padding: 0 1rem 1rem;
-        }
+    .leaflet-default-icon-path {
+        background-image: url('https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png');
+    }
 
-        .mobile-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-        }
+    #mobileSessionModal {
+        background: white;
+    }
 
-        .mobile-grid-item {
-            display: flex;
-            flex-direction: column;
-        }
+    #mobileChatInput {
+        border-radius: 20px;
+    }
 
-        .mobile-label {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-bottom: 0.25rem;
-        }
-
-        .mobile-value {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #111827;
-        }
-
-        #filter-form {
-            flex-direction: column;
-            align-items: flex-end;
-        }
-
-        #filter-btn {
-            width: 100%;
-            text-align: left;
-        }
-
-        .responsive-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .responsive-header h2 {
-            display: none;
-        }
-
-        .responsive-header>div {
-            align-items: stretch;
-            width: 100%;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .responsive-header input,
-        .responsive-header select {
-            width: 100%;
-        }
-
-        .date-range-presets {
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .date-range-preset {
-            flex: 1 0 calc(50% - 0.5rem);
-            justify-content: center;
-        }
+    #mobileSendChatBtn {
+        border-radius: 50%;
+        min-width: 40px;
+        min-height: 40px;
     }
 </style>
-<div class="space-y-6">
-    <!-- Active Sessions -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100 flex items-center justify-between responsive-header">
-            <h2 class="text-lg font-semibold text-secondary">Active Sessions</h2>
-            <div class="flex items-center gap-4">
-                <div class="relative">
-                    <input type="text" id="searchActive" placeholder="Search active sessions..." class="w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                </div>
-            </div>
-        </div>
-        <div class="responsive-table-desktop overflow-x-auto">
-            <table class="w-full" id="active-sessions-table">
-                <thead>
-                    <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Session ID</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">IP Address</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Browser</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Device</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Country</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Started</th>
-                    </tr>
-                </thead>
-                <tbody id="active-sessions-body"></tbody>
-            </table>
-        </div>
-        <div class="responsive-table-mobile p-4" id="active-sessions-mobile"></div>
-    </div>
-    <!-- Filter Form -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <form id="filter-form" class="space-y-4">
-            <div class="flex flex-wrap items-center gap-3 date-range-presets">
-                <button type="button" class="date-range-preset active" data-range="current-week">
-                    <i class="fas fa-calendar-week mr-2"></i>Current Week
-                </button>
-                <button type="button" class="date-range-preset" data-range="last-week">
-                    <i class="fas fa-calendar-week mr-2"></i>Last Week
-                </button>
-                <button type="button" class="date-range-preset" data-range="today">
-                    <i class="fas fa-calendar-day mr-2"></i>Today
-                </button>
-                <button type="button" class="date-range-preset" data-range="yesterday">
-                    <i class="fas fa-calendar-day mr-2"></i>Yesterday
-                </button>
-                <button type="button" class="date-range-preset" data-range="this-month">
-                    <i class="fas fa-calendar-alt mr-2"></i>This Month
-                </button>
-            </div>
-            <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <label class="text-sm text-gray-text">From:</label>
-                    <input type="datetime-local" id="startDate" class="h-10 pl-2 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                </div>
-                <div class="flex items-center gap-2">
-                    <label class="text-sm text-gray-text">To:</label>
-                    <input type="datetime-local" id="endDate" class="h-10 pl-2 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                </div>
-                <button type="button" id="filter-btn" class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                    <i class="fas fa-filter mr-2"></i>Apply Filter
-                </button>
-            </div>
-        </form>
-    </div>
-    <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="stats-overview">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">Active Sessions</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-active">0</h3>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <i class="fas fa-play text-blue-500"></i>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">Past Sessions</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-past">0</h3>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                    <i class="fas fa-history text-green-500"></i>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between">
-                <div class="space-y-1">
-                    <p class="text-sm text-gray-text">Average Duration</p>
-                    <h3 class="text-2xl font-semibold text-secondary" id="stat-avg-duration">--</h3>
-                </div>
-                <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                    <i class="fas fa-clock text-purple-500"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Past Sessions Table -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100" id="past-sessions-container">
-        <div class="p-6 border-b border-gray-100 flex items-center justify-between responsive-header">
-            <h2 class="text-lg font-semibold text-secondary">Past Sessions</h2>
-            <div class="flex items-center gap-4">
-                <div class="relative">
-                    <input type="text" id="searchPast" placeholder="Search past sessions..." class="w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                </div>
-            </div>
-        </div>
-        <div class="responsive-table-desktop overflow-x-auto">
-            <table class="w-full" id="past-sessions-table">
-                <thead>
-                    <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Session ID</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">IP Address</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Browser</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Device</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Country</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Ended</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Duration</th>
-                    </tr>
-                </thead>
-                <tbody id="past-sessions-body"></tbody>
-            </table>
-        </div>
-        <div class="responsive-table-mobile p-4" id="past-sessions-mobile"></div>
-        <div class="p-4 border-t border-gray-100 flex justify-center">
-            <div class="flex items-center gap-2">
-                <button id="load-more" class="px-4 py-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm">
-                    <i class="fas fa-sync-alt mr-2"></i>Load More
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Offcanvas for Session Details -->
-<div id="sessionDetailsOffcanvas" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/20" onclick="hideSessionDetails()"></div>
-    <div class="absolute inset-y-0 right-0 w-full max-w-2xl bg-white shadow-lg transform translate-x-full transition-transform duration-300">
-        <div class="flex flex-col h-full">
-            <div class="flex items-center justify-between p-6 border-b border-gray-100">
-                <h3 class="text-lg font-semibold text-secondary" id="offcanvas-session-title"></h3>
-                <button onclick="hideSessionDetails()" class="text-gray-400 hover:text-gray-500">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-6" id="sessionDetailsContent"></div>
-        </div>
-    </div>
-</div>
-<script>
-    // API endpoint for past sessions.
-    const API_BASE = "<?php echo BASE_URL; ?>admin/fetch/manageSessions";
-    var currentOffcanvasSessionID = null;
-    var activeSessions = [];
-    var pastSessions = [];
-    if (!localStorage.getItem('countryCodes')) {
-        var codes = {
-            "Uganda": "ug",
-            "Kenya": "ke"
-        };
-        localStorage.setItem('countryCodes', JSON.stringify(codes));
-    }
 
-    // Helper function to add ordinal suffix to a day number.
-    function getOrdinalSuffix(day) {
-        if (day > 3 && day < 21) return "th";
-        switch (day % 10) {
-            case 1:
-                return "st";
-            case 2:
-                return "nd";
-            case 3:
-                return "rd";
-            default:
-                return "th";
-        }
-    }
-
-    // Formats a Date object as "Feb 18th, 2025 11:54:48 PM"
-    function formatDateCustom(date) {
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        let month = months[date.getMonth()];
-        let day = date.getDate();
-        let ordinal = getOrdinalSuffix(day);
-        let year = date.getFullYear();
-        let hours = date.getHours();
-        let minutes = date.getMinutes();
-        let seconds = date.getSeconds();
-        let ampm = hours >= 12 ? "PM" : "AM";
-        hours = hours % 12;
-        hours = hours ? hours : 12; // convert 0 to 12
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-        return `${month} ${day}${ordinal}, ${year} ${hours}:${minutes}:${seconds} ${ampm}`;
-    }
-
-    // Updates the formatDateFromTimestamp function to use our custom format.
-    function formatDateFromTimestamp(ts) {
-        return formatDateCustom(new Date(ts));
-    }
-
-    // Utility: Format Duration between start and end timestamps (in ms)
-    function formatDuration(startMs, endMs) {
-        var diffSeconds = Math.floor((endMs - startMs) / 1000);
-        if (diffSeconds < 60) {
-            return diffSeconds + "s";
-        } else if (diffSeconds < 3600) {
-            var minutes = Math.floor(diffSeconds / 60);
-            var seconds = diffSeconds % 60;
-            return minutes + "m" + (seconds > 0 ? " " + seconds + "s" : "");
-        } else if (diffSeconds < 86400) {
-            var hours = Math.floor(diffSeconds / 3600);
-            var minutes = Math.floor((diffSeconds % 3600) / 60);
-            return hours + "h" + (minutes > 0 ? " " + minutes + "m" : "");
-        } else if (diffSeconds < 2592000) { // less than 30 days
-            var days = Math.floor(diffSeconds / 86400);
-            var hours = Math.floor((diffSeconds % 86400) / 3600);
-            return days + "d" + (hours > 0 ? " " + hours + "h" : "");
-        } else {
-            var months = Math.floor(diffSeconds / 2592000);
-            var days = Math.floor((diffSeconds % 2592000) / 86400);
-            return months + "mo" + (days > 0 ? " " + days + "d" : "");
-        }
-    }
-
-    function getCountryFlagHtml(countryName, shortName) {
-        if (shortName) {
-            return '<span class="flag-icon flag-icon-' + shortName + '"></span> <span>' + countryName + '</span>';
-        } else {
-            var countryCodes = JSON.parse(localStorage.getItem('countryCodes') || '{}');
-            if (!countryCodes[countryName]) {
-                var defaultMapping = {
-                    "Uganda": "ug",
-                    "Kenya": "ke"
-                };
-                var code = defaultMapping[countryName] || countryName.slice(0, 2).toLowerCase();
-                countryCodes[countryName] = code;
-                localStorage.setItem('countryCodes', JSON.stringify(countryCodes));
-            }
-            var code = countryCodes[countryName];
-            return '<span class="flag-icon flag-icon-' + code + '"></span> <span>' + countryName + '</span>';
-        }
-    }
-
-    function capitalizeDevice(dev) {
-        if (!dev) return '';
-        return dev.charAt(0).toUpperCase() + dev.slice(1);
-    }
-
-    function renderSessions(sessions, desktopTbodyID, mobileContainerID) {
-        var isPastSession = (desktopTbodyID === "past-sessions-body");
-        var desktopTbody = document.getElementById(desktopTbodyID);
-        var mobileContainer = document.getElementById(mobileContainerID);
-        desktopTbody.innerHTML = "";
-        mobileContainer.innerHTML = "";
-        sessions.sort(function(a, b) {
-            return b.timestamp - a.timestamp;
-        });
-
-        // Calculate average duration for past sessions
-        if (isPastSession && sessions.length > 0) {
-            let totalDuration = 0;
-            let validSessions = 0;
-
-            sessions.forEach(function(session) {
-                if (session.logged_at) {
-                    const duration = new Date(session.logged_at).getTime() - session.timestamp;
-                    if (duration > 0) {
-                        totalDuration += duration;
-                        validSessions++;
-                    }
-                }
-            });
-
-            if (validSessions > 0) {
-                const avgDuration = totalDuration / validSessions;
-                $("#stat-avg-duration").text(formatDuration(0, avgDuration));
-            } else {
-                $("#stat-avg-duration").text("--");
-            }
-        }
-
-        sessions.forEach(function(session) {
-            var countryDisplay = getCountryFlagHtml(session.country, session.shortName);
-            var deviceDisplay = capitalizeDevice(session.device);
-            var tr = document.createElement('tr');
-            tr.className = "border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors";
-            tr.onclick = function() {
-                showSessionDetails(session.sessionID);
-            };
-            if (isPastSession) {
-                var shortSessionID = session.sessionID.substring(0, 6) + "...";
-                var endedTime = formatDateCustom(new Date(session.logged_at));
-                var duration = formatDuration(session.timestamp, new Date(session.logged_at).getTime());
-                tr.innerHTML = '<td class="px-6 py-4 text-sm text-gray-text">' + shortSessionID + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + session.ipAddress + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + session.browser + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + deviceDisplay + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + countryDisplay + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + endedTime + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + duration + '</td>';
-            } else {
-                tr.innerHTML = '<td class="px-6 py-4 text-sm text-gray-text">' + session.sessionID + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + session.ipAddress + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + session.browser + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + deviceDisplay + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + countryDisplay + '</td>' +
-                    '<td class="px-6 py-4 text-sm text-gray-text">' + formatDateFromTimestamp(session.timestamp) + '</td>';
-            }
-            desktopTbody.appendChild(tr);
-            // Mobile view rendering:
-            var mobileRow = document.createElement('div');
-            mobileRow.className = "mobile-row";
-            mobileRow.setAttribute("data-session-id", session.sessionID);
-            if (isPastSession) {
-                var shortSessionIDMobile = session.sessionID.substring(0, 6) + "...";
-                var endedTimeMobile = formatDateCustom(new Date(session.logged_at));
-                var durationMobile = formatDuration(session.timestamp, new Date(session.logged_at).getTime());
-                mobileRow.innerHTML = '<div class="mobile-row-header">' +
-                    '<div class="font-medium text-secondary">Session ID: ' + shortSessionIDMobile + '</div>' +
-                    '<svg class="accordion-arrow w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />' +
-                    '</svg>' +
-                    '</div>' +
-                    '<div class="accordion-content">' +
-                    '<div class="mobile-row-content">' +
-                    '<div class="mobile-grid">' +
-                    '<div class="mobile-grid-item">' +
-                    '<span class="mobile-label">Country</span>' +
-                    '<span class="mobile-value">' + countryDisplay + '</span>' +
-                    '</div>' +
-                    '<div class="mobile-grid-item">' +
-                    '<span class="mobile-label">Ended</span>' +
-                    '<span class="mobile-value">' + endedTimeMobile + '</span>' +
-                    '</div>' +
-                    '<div class="mobile-grid-item">' +
-                    '<span class="mobile-label">Duration</span>' +
-                    '<span class="mobile-value">' + durationMobile + '</span>' +
-                    '</div>' +
-                    '<div class="mobile-grid-item">' +
-                    '<span class="mobile-label">Browser</span>' +
-                    '<span class="mobile-value">' + session.browser + '</span>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '<button onclick="showSessionDetails(\'' + session.sessionID + '\')" class="w-full mt-4 bg-gray-50 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm">' +
-                    'View Details' +
-                    '</button>';
-            } else {
-                mobileRow.innerHTML = '<div class="mobile-row-header">' +
-                    '<div class="font-medium text-secondary">Session ID: ' + session.sessionID + '</div>' +
-                    '<svg class="accordion-arrow w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />' +
-                    '</svg>' +
-                    '</div>' +
-                    '<div class="accordion-content">' +
-                    '<div class="mobile-row-content">' +
-                    '<div class="mobile-grid">' +
-                    '<div class="mobile-grid-item">' +
-                    '<span class="mobile-label">Country</span>' +
-                    '<span class="mobile-value">' + countryDisplay + '</span>' +
-                    '</div>' +
-                    '<div class="mobile-grid-item">' +
-                    '<span class="mobile-label">Browser</span>' +
-                    '<span class="mobile-value">' + session.browser + '</span>' +
-                    '</div>' +
-                    '<div class="mobile-grid-item">' +
-                    '<span class="mobile-label">Device</span>' +
-                    '<span class="mobile-value">' + deviceDisplay + '</span>' +
-                    '</div>' +
-                    '<div class="mobile-grid-item">' +
-                    '<span class="mobile-label">Started</span>' +
-                    '<span class="mobile-value">' + formatDateFromTimestamp(session.timestamp) + '</span>' +
-                    '</div>' +
-                    '</div>' +
-                    '</div>' +
-                    '<button onclick="showSessionDetails(\'' + session.sessionID + '\')" class="w-full mt-4 bg-gray-50 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors text-sm">' +
-                    'View Details' +
-                    '</button>';
-            }
-            mobileContainer.appendChild(mobileRow);
-        });
-    }
-
-    // Update the offcanvas with detailed session info.
-    function updateOffcanvas(session) {
-        var logsHTML = "";
-        session.logs.forEach(function(log) {
-            logsHTML += '<div class="bg-gray-50 p-4 rounded-lg mb-3">' +
-                '<p class="text-sm text-gray-500 mb-1">Event: <span class="text-gray-700 font-medium">' + log.event + '</span></p>' +
-                '<p class="text-sm text-gray-500 mb-1">Timestamp: <span class="text-gray-700 font-medium">' + log.timestamp + '</span></p>' +
-                '<p class="text-sm text-gray-500 mb-1">Active Nav: <span class="text-gray-700 font-medium">' + log.activeNavigation + '</span></p>' +
-                '<p class="text-sm text-gray-500">Page Title: <span class="text-gray-700 font-medium">' + log.pageTitle + '</span></p>' +
-                '</div>';
-        });
-
-        var sessionInfoHtml = '<div>' +
-            '<h4 class="text-lg font-semibold text-secondary">Session Info</h4>';
-
-        if (session.logged_at) {
-            sessionInfoHtml += '<p class="text-sm text-gray-text mt-2">Started on: ' + formatDateFromTimestamp(session.timestamp) + '</p>' +
-                '<p class="text-sm text-gray-text mt-1">Ended on: ' + formatDateCustom(new Date(session.logged_at)) + '</p>' +
-                '<p class="text-sm text-gray-text mt-1">Duration: ' + formatDuration(session.timestamp, new Date(session.logged_at).getTime()) + '</p>';
-        } else {
-            sessionInfoHtml += '<p class="text-sm text-gray-text mt-2">Started on: ' + formatDateFromTimestamp(session.timestamp) + '</p>';
-        }
-
-        sessionInfoHtml += '<p class="text-sm text-gray-text mt-1">Browser: ' + session.browser + '</p>' +
-            '<p class="text-sm text-gray-text mt-1">Device: ' + capitalizeDevice(session.device) + '</p>' +
-            '<p class="text-sm text-gray-text mt-1">IP Address: ' + session.ipAddress + '</p>' +
-            '<p class="text-sm text-gray-text mt-1">Country: ' + getCountryFlagHtml(session.country, session.shortName) + '</p>' +
-            '</div>';
-
-        document.getElementById('sessionDetailsContent').innerHTML = '<div class="space-y-6">' +
-            sessionInfoHtml +
-            '<div class="border-t border-gray-100 pt-6">' +
-            '<h4 class="font-medium text-secondary mb-4">Logs</h4>' +
-            '<div>' + logsHTML + '</div>' +
-            '</div>' +
-            '</div>';
-    }
-
-    function showSessionDetails(sessionID) {
-        currentOffcanvasSessionID = sessionID;
-        var session = activeSessions.find(function(s) {
-            return s.sessionID === sessionID;
-        }) || pastSessions.find(function(s) {
-            return s.sessionID === sessionID;
-        });
-        if (session) {
-            // For offcanvas, show full sessionID
-            document.getElementById('offcanvas-session-title').innerText = "Session: " + session.sessionID;
-            updateOffcanvas(session);
-        } else {
-            document.getElementById('offcanvas-session-title').innerText = "Session: " + sessionID;
-            document.getElementById('sessionDetailsContent').innerHTML = '<div class="text-red-500 italic">Session Ended</div>';
-        }
-        var offcanvas = document.getElementById('sessionDetailsOffcanvas');
-        offcanvas.classList.remove('hidden');
-        setTimeout(function() {
-            offcanvas.querySelector('.transform').classList.remove('translate-x-full');
-        }, 10);
-    }
-
-    function hideSessionDetails() {
-        currentOffcanvasSessionID = null;
-        var offcanvas = document.getElementById('sessionDetailsOffcanvas');
-        offcanvas.querySelector('.transform').classList.add('translate-x-full');
-        setTimeout(function() {
-            offcanvas.classList.add('hidden');
-        }, 300);
-    }
-
-    function fetchActiveSessions() {
-        $.ajax({
-            url: "<?= BASE_URL ?>track/session_log.json",
-            dataType: "json",
-            cache: false,
-            success: function(data) {
-                activeSessions = data;
-                var filtered = activeSessions;
-                var searchVal = $("#searchActive").val().toLowerCase();
-                if (searchVal) {
-                    filtered = activeSessions.filter(function(s) {
-                        var combined = s.sessionID + " " + s.ipAddress + " " + s.browser + " " + s.device + " " + s.country;
-                        return combined.toLowerCase().indexOf(searchVal) !== -1;
-                    });
-                }
-                renderSessions(filtered, "active-sessions-body", "active-sessions-mobile");
-                $("#stat-active").text(activeSessions.length);
-                if (currentOffcanvasSessionID) {
-                    var sess = activeSessions.find(function(s) {
-                        return s.sessionID === currentOffcanvasSessionID;
-                    });
-                    if (sess) {
-                        updateOffcanvas(sess);
-                    } else {
-                        var content = document.getElementById('sessionDetailsContent');
-                        if (content && content.innerHTML.indexOf("Session Ended") === -1) {
-                            content.innerHTML += '<div class="text-red-500 italic mt-4">Session Ended</div>';
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // Updated: fetchPastSessions now calls the API endpoint with the given date range.
-    function fetchPastSessions() {
-        var start = $("#startDate").val();
-        var end = $("#endDate").val();
-        fetch(`${API_BASE}/getPastSessions?start=${start}&end=${end}`)
-            .then(response => response.json())
-            .then(data => {
-                pastSessions = data;
-                var filtered = pastSessions;
-                var searchVal = $("#searchPast").val().toLowerCase();
-                if (searchVal) {
-                    filtered = pastSessions.filter(function(s) {
-                        var combined = s.sessionID + " " + s.ipAddress + " " + s.browser + " " + s.device + " " + s.country;
-                        return combined.toLowerCase().indexOf(searchVal) !== -1;
-                    });
-                }
-                renderSessions(filtered, "past-sessions-body", "past-sessions-mobile");
-                $("#stat-past").text(pastSessions.length);
-            })
-            .catch(err => {
-                console.error(err);
-            });
-    }
-
-    function formatToDateTimeLocal(jsDate) {
-        var yyyy = jsDate.getFullYear();
-        var mm = String(jsDate.getMonth() + 1).padStart(2, '0');
-        var dd = String(jsDate.getDate()).padStart(2, '0');
-        var hh = String(jsDate.getHours()).padStart(2, '0');
-        var min = String(jsDate.getMinutes()).padStart(2, '0');
-        return yyyy + "-" + mm + "-" + dd + "T" + hh + ":" + min;
-    }
-
-    // Get the current week's Sunday and Saturday
-    function getCurrentWeekDates() {
-        const now = new Date();
-        const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-
-        // Calculate days to subtract to get to Sunday
-        const daysToSunday = currentDay;
-        const sunday = new Date(now);
-        sunday.setDate(now.getDate() - daysToSunday);
-        sunday.setHours(0, 0, 0, 0);
-
-        // Calculate days to add to get to Saturday
-        const daysToSaturday = 6 - currentDay;
-        const saturday = new Date(now);
-        saturday.setDate(now.getDate() + daysToSaturday);
-        saturday.setHours(23, 59, 59, 999);
-
-        return {
-            start: sunday,
-            end: saturday
-        };
-    }
-
-    // Get last week's Sunday and Saturday
-    function getLastWeekDates() {
-        const {
-            start,
-            end
-        } = getCurrentWeekDates();
-        const lastWeekStart = new Date(start);
-        lastWeekStart.setDate(start.getDate() - 7);
-
-        const lastWeekEnd = new Date(end);
-        lastWeekEnd.setDate(end.getDate() - 7);
-
-        return {
-            start: lastWeekStart,
-            end: lastWeekEnd
-        };
-    }
-
-    // Get today's start and end
-    function getTodayDates() {
-        const now = new Date();
-        const start = new Date(now);
-        start.setHours(0, 0, 0, 0);
-
-        const end = new Date(now);
-        end.setHours(23, 59, 59, 999);
-
-        return {
-            start,
-            end
-        };
-    }
-
-    // Get yesterday's start and end
-    function getYesterdayDates() {
-        const now = new Date();
-        const yesterday = new Date(now);
-        yesterday.setDate(now.getDate() - 1);
-
-        const start = new Date(yesterday);
-        start.setHours(0, 0, 0, 0);
-
-        const end = new Date(yesterday);
-        end.setHours(23, 59, 59, 999);
-
-        return {
-            start,
-            end
-        };
-    }
-
-    // Get this month's start and end
-    function getThisMonthDates() {
-        const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-
-        return {
-            start,
-            end
-        };
-    }
-
-    // Set date range based on preset
-    function setDateRange(preset) {
-        let dateRange;
-
-        switch (preset) {
-            case 'current-week':
-                dateRange = getCurrentWeekDates();
-                break;
-            case 'last-week':
-                dateRange = getLastWeekDates();
-                break;
-            case 'today':
-                dateRange = getTodayDates();
-                break;
-            case 'yesterday':
-                dateRange = getYesterdayDates();
-                break;
-            case 'this-month':
-                dateRange = getThisMonthDates();
-                break;
-            default:
-                dateRange = getCurrentWeekDates();
-        }
-
-        $("#startDate").val(formatToDateTimeLocal(dateRange.start));
-        $("#endDate").val(formatToDateTimeLocal(dateRange.end));
-
-        // Update active class on preset buttons
-        $(".date-range-preset").removeClass("active");
-        $(`.date-range-preset[data-range="${preset}"]`).addClass("active");
-    }
-
-    // Event handlers
-    $("#filter-btn").on("click", function() {
-        fetchActiveSessions();
-        fetchPastSessions();
-    });
-
-    $("#searchActive").on("keyup", function(e) {
-        if (e.key === "Enter") {
-            fetchActiveSessions();
-        }
-    });
-
-    $("#searchPast").on("keyup", function(e) {
-        if (e.key === "Enter") {
-            fetchPastSessions();
-        }
-    });
-
-    $(document).on("click", ".mobile-row-header", function(e) {
-        var row = $(this).closest(".mobile-row");
-        var content = row.find(".accordion-content");
-        var arrow = $(this).find(".accordion-arrow");
-        $(".accordion-content").not(content).slideUp();
-        $(".accordion-arrow").not(arrow).removeClass("active");
-        if (content.is(":visible")) {
-            content.slideUp();
-            arrow.removeClass("active");
-        } else {
-            content.slideDown();
-            arrow.addClass("active");
-        }
-    });
-
-    // Date range preset buttons
-    $(".date-range-preset").on("click", function() {
-        const preset = $(this).data("range");
-        setDateRange(preset);
-        fetchPastSessions();
-    });
-
-    // Load more button
-    $("#load-more").on("click", function() {
-        // This would typically load more past sessions
-        // For now, just refresh the current data
-        fetchPastSessions();
-        $(this).html('<i class="fas fa-check mr-2"></i>Refreshed');
-        setTimeout(() => {
-            $(this).html('<i class="fas fa-sync-alt mr-2"></i>Load More');
-        }, 2000);
-    });
-
-    window.addEventListener("load", function() {
-        // Set default date range to current week (Sunday to Saturday)
-        setDateRange('current-week');
-        fetchActiveSessions();
-        fetchPastSessions();
-    });
-
-    setInterval(fetchActiveSessions, 5000);
-    setInterval(fetchPastSessions, 60000);
-</script>
 <?php
 $mainContent = ob_get_clean();
 include __DIR__ . '/master.php';
