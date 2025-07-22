@@ -32,7 +32,7 @@ ob_start();
     </div>
 
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8">
-        <div class="hidden sm:grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div class="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
                 <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
@@ -77,18 +77,6 @@ ob_start();
                     </div>
                     <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center flex-shrink-0">
                         <i class="fas fa-globe text-orange-600"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gradient-to-r from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
-                <div class="flex items-center justify-between">
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs font-medium text-red-600 uppercase tracking-wide">Total Events</p>
-                        <p class="text-xl font-bold text-red-900 truncate" id="totalEvents">0</p>
-                    </div>
-                    <div class="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-chart-line text-red-600"></i>
                     </div>
                 </div>
             </div>
@@ -473,19 +461,16 @@ ob_start();
             document.getElementById('activeSessions').textContent = stats.active_sessions.toLocaleString();
             document.getElementById('loggedUsers').textContent = stats.logged_users.toLocaleString();
             document.getElementById('uniqueCountries').textContent = stats.unique_countries.toLocaleString();
-            document.getElementById('totalEvents').textContent = stats.total_events.toLocaleString();
         } else {
             const totalSessions = sessions.length;
             const activeSessions = sessions.filter(s => s.isActive).length;
             const loggedUsers = sessions.filter(s => s.loggedUser !== null).length;
             const uniqueCountries = [...new Set(sessions.map(s => s.country))].length;
-            const totalEvents = sessions.reduce((sum, s) => sum + (s.logs ? s.logs.length : 0), 0);
 
             document.getElementById('totalSessions').textContent = totalSessions.toLocaleString();
             document.getElementById('activeSessions').textContent = activeSessions.toLocaleString();
             document.getElementById('loggedUsers').textContent = loggedUsers.toLocaleString();
             document.getElementById('uniqueCountries').textContent = uniqueCountries.toLocaleString();
-            document.getElementById('totalEvents').textContent = totalEvents.toLocaleString();
         }
     }
 
@@ -525,7 +510,6 @@ ob_start();
         let filteredSessions = filterSessionsData();
 
         tbody.innerHTML = filteredSessions.map(session => {
-            // Use username if logged in, otherwise use truncated session ID for guests
             let displayName;
             if (session.loggedUser && session.loggedUser.username) {
                 displayName = session.loggedUser.username;
@@ -607,7 +591,6 @@ ob_start();
 
         container.innerHTML = filteredSessions.map(session => {
             const lastActivity = session.isExpired ? '-' : getTimeAgo(getLastActivity(session));
-            // Use username if logged in, otherwise use truncated session ID for guests
             let displayName;
             if (session.loggedUser && session.loggedUser.username) {
                 displayName = session.loggedUser.username;
@@ -760,7 +743,6 @@ ob_start();
         if (!session) return;
 
         if (isInitialLoad) {
-            // Use username as title if logged in, otherwise use session ID
             const modalTitle = session.loggedUser && session.loggedUser.username ?
                 session.loggedUser.username :
                 `Session: ${sessionId}`;
@@ -768,7 +750,6 @@ ob_start();
             document.getElementById('modalTitle').textContent = modalTitle;
             document.getElementById('modalSubtitle').textContent = `${session.country} • ${session.browser} • ${session.device} • ${session.activeDuration}`;
 
-            // Update status indicator
             const statusIndicator = document.getElementById('modalStatusIndicator');
             if (session.isExpired) {
                 statusIndicator.innerHTML = `
@@ -784,7 +765,6 @@ ob_start();
                 statusIndicator.className = 'flex items-center gap-2 px-3 py-1 bg-green-100 border border-green-200 rounded-full';
             }
 
-            // Disable chat for expired sessions
             const chatSection = document.getElementById('chatSection');
             if (session.isExpired) {
                 chatSection.style.display = 'none';
@@ -942,7 +922,6 @@ ob_start();
         if (!session) return;
 
         if (isInitialLoad) {
-            // Use username as title if logged in, otherwise use truncated session ID
             const mobileTitle = session.loggedUser && session.loggedUser.username ?
                 session.loggedUser.username :
                 `${sessionId.substring(0, 8)}...`;
@@ -950,7 +929,6 @@ ob_start();
             document.getElementById('mobileModalTitle').textContent = mobileTitle;
             document.getElementById('mobileModalSubtitle').textContent = `${session.country} • ${session.browser} • ${session.activeDuration}`;
 
-            // Update mobile status indicator
             const mobileStatusIndicator = document.getElementById('mobileModalStatusIndicator');
             if (session.isExpired) {
                 mobileStatusIndicator.innerHTML = `
@@ -966,7 +944,6 @@ ob_start();
                 mobileStatusIndicator.className = 'flex items-center gap-2 px-2 py-1 bg-green-500 rounded-full';
             }
 
-            // Disable mobile chat for expired sessions
             const mobileChatSection = document.getElementById('mobileChatSection');
             if (session.isExpired) {
                 mobileChatSection.style.display = 'none';

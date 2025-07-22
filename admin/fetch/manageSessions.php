@@ -10,19 +10,13 @@ date_default_timezone_set('Africa/Kampala');
 
 function getSessionData()
 {
-    // Get live sessions from JSON file
     $liveSessions = getLiveSessionsFromJson();
-
-    // Get expired sessions from database
     $expiredSessions = getExpiredSessionsFromDatabase();
-
-    // Combine and sort by last activity (live sessions first)
     $allSessions = array_merge($liveSessions, $expiredSessions);
 
-    // Sort: active sessions first, then by last activity time
     usort($allSessions, function ($a, $b) {
         if ($a['isActive'] !== $b['isActive']) {
-            return $b['isActive'] - $a['isActive']; // Active sessions first
+            return $b['isActive'] - $a['isActive'];
         }
         return $b['lastActivityTime'] - $a['lastActivityTime'];
     });
@@ -49,17 +43,15 @@ function getLiveSessionsFromJson()
     }
 
     $formattedSessions = [];
+    $now = time();
 
     foreach ($sessions as $session) {
-        // Normalize country code
         $session['shortName'] = strtolower($session['shortName']);
 
-        // Extract logged user from successful login events
         if (!isset($session['loggedUser']) || $session['loggedUser'] === null) {
             $session['loggedUser'] = extractLoggedUserFromEvents($session['logs'] ?? []);
         }
 
-        // Calculate session timing for live sessions
         if (isset($session['logs']) && is_array($session['logs']) && count($session['logs']) > 0) {
             usort($session['logs'], function ($a, $b) {
                 return strtotime($a['timestamp']) - strtotime($b['timestamp']);
@@ -67,38 +59,26 @@ function getLiveSessionsFromJson()
             $firstLog = reset($session['logs']);
             $lastLog = end($session['logs']);
 
-            $sessionStartTime = strtotime($firstLog['timestamp']);
+            $firstLogTime = strtotime($firstLog['timestamp']);
+            $lastLogTime = strtotime($lastLog['timestamp']);
+
+            $duration = $now - $firstLogTime;
+            $session['activeDuration'] = formatDuration($duration);
+
             $session['lastActivity'] = $lastLog['timestamp'];
-            $session['lastActivityTime'] = strtotime($lastLog['timestamp']);
+            $session['lastActivityTime'] = $lastLogTime;
         } else {
-            // No logs: use session timestamp for both start and last activity
             $sessionStartTime = strtotime($session['timestamp']);
+            $duration = $now - $sessionStartTime;
+            $session['activeDuration'] = formatDuration($duration);
             $session['lastActivity'] = $session['timestamp'];
-            $session['lastActivityTime'] = strtotime($session['timestamp']);
+            $session['lastActivityTime'] = $sessionStartTime;
         }
 
-        // For live sessions, compute active duration from session start to now
-        $now = time();
-        $duration = $now - $sessionStartTime;
-
-        // Format duration (never show seconds for live sessions, minimum 1 minute)
-        if ($duration < 60) {
-            $session['activeDuration'] = '1m';
-        } elseif ($duration >= 3600) {
-            $hours = floor($duration / 3600);
-            $minutes = floor(($duration % 3600) / 60);
-            $session['activeDuration'] = $minutes > 0 ? sprintf('%dh %dm', $hours, $minutes) : sprintf('%dh', $hours);
-        } else {
-            $minutes = floor($duration / 60);
-            $session['activeDuration'] = sprintf('%dm', $minutes);
-        }
-
-        // Live sessions are active if last activity was within 30 minutes
         $timeSinceLastActivity = $now - $session['lastActivityTime'];
-        $session['isActive'] = ($timeSinceLastActivity < 1800); // 30 minutes
+        $session['isActive'] = ($timeSinceLastActivity < 1800);
         $session['isExpired'] = false;
 
-        // Add authentication statistics
         $session['authStats'] = calculateAuthStats($session['logs'] ?? []);
 
         $formattedSessions[] = $session;
@@ -112,7 +92,6 @@ function getExpiredSessionsFromDatabase()
     global $pdo;
 
     try {
-        // Get all sessions from database with their latest activity
         $stmt = $pdo->prepare("
             SELECT 
                 s.*,
@@ -128,7 +107,6 @@ function getExpiredSessionsFromDatabase()
         $formattedSessions = [];
 
         foreach ($sessions as $session) {
-            // Get all events for this session
             $eventsStmt = $pdo->prepare("
                 SELECT * FROM session_events 
                 WHERE session_id = ? 
@@ -137,7 +115,6 @@ function getExpiredSessionsFromDatabase()
             $eventsStmt->execute([$session['session_id']]);
             $events = $eventsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Format expired session data
             $formattedSession = formatExpiredSessionData($session, $events);
             $formattedSessions[] = $formattedSession;
         }
@@ -152,26 +129,19 @@ function getExpiredSessionsFromDatabase()
 
 function formatExpiredSessionData($session, $events)
 {
-    // Calculate session timing for expired sessions
     $sessionStart = strtotime($session['created_at']);
     $lastActivityTime = strtotime($session['last_activity_time']);
 
-    // For expired sessions, duration is static - from session start to last event
-    $duration = $lastActivityTime - $sessionStart;
-
-    // Format duration (never negative, never in seconds)
-    if ($duration <= 0) {
-        $activeDuration = '1m';
-    } elseif ($duration >= 3600) {
-        $hours = floor($duration / 3600);
-        $minutes = floor(($duration % 3600) / 60);
-        $activeDuration = $minutes > 0 ? sprintf('%dh %dm', $hours, $minutes) : sprintf('%dh', $hours);
+    if (count($events) > 0) {
+        $firstEventTime = strtotime($events[0]['event_timestamp']);
+        $lastEventTime = strtotime($events[count($events) - 1]['event_timestamp']);
+        $duration = $lastEventTime - $firstEventTime;
     } else {
-        $minutes = floor($duration / 60);
-        $activeDuration = $minutes > 0 ? sprintf('%dm', $minutes) : '1m';
+        $duration = 0;
     }
 
-    // Format logged user data
+    $activeDuration = formatDuration($duration);
+
     $loggedUser = null;
     if ($session['logged_in'] && $session['user_id']) {
         $loggedUser = [
@@ -185,7 +155,6 @@ function formatExpiredSessionData($session, $events)
         ];
     }
 
-    // Format coordinates
     $coords = null;
     if ($session['latitude'] && $session['longitude']) {
         $coords = [
@@ -194,7 +163,6 @@ function formatExpiredSessionData($session, $events)
         ];
     }
 
-    // Format events
     $logs = [];
     foreach ($events as $event) {
         $log = [
@@ -202,7 +170,6 @@ function formatExpiredSessionData($session, $events)
             'timestamp' => date('c', strtotime($event['event_timestamp']))
         ];
 
-        // Add event-specific data
         if ($event['referrer'])
             $log['referrer'] = $event['referrer'];
         if ($event['url'])
@@ -305,13 +272,34 @@ function formatExpiredSessionData($session, $events)
         'coords' => $coords,
         'loggedUser' => $loggedUser,
         'logs' => $logs,
-        'lastActivity' => null, // No last activity for expired sessions
+        'lastActivity' => null,
         'lastActivityTime' => $lastActivityTime,
         'activeDuration' => $activeDuration,
-        'isActive' => false, // All database sessions are expired
+        'isActive' => false,
         'isExpired' => true,
         'authStats' => calculateAuthStats($logs)
     ];
+}
+
+function formatDuration($seconds)
+{
+    if ($seconds <= 0) {
+        return '0s';
+    }
+
+    $hours = floor($seconds / 3600);
+    $minutes = floor(($seconds % 3600) / 60);
+    $secs = $seconds % 60;
+
+    $parts = [];
+    if ($hours > 0)
+        $parts[] = $hours . 'h';
+    if ($minutes > 0)
+        $parts[] = $minutes . 'm';
+    if ($secs > 0)
+        $parts[] = $secs . 's';
+
+    return empty($parts) ? '0s' : implode(' ', $parts);
 }
 
 function extractLoggedUserFromEvents($logs)
@@ -320,15 +308,12 @@ function extractLoggedUserFromEvents($logs)
         return null;
     }
 
-    // Look for successful login events to extract username
     foreach ($logs as $log) {
         if ($log['event'] === 'login_success') {
-            // Look backwards for the identifier that was successfully used
             foreach (array_reverse($logs) as $prevLog) {
                 if ($prevLog['event'] === 'login_identifier_success' && isset($prevLog['identifier'])) {
                     return $prevLog['identifier'];
                 }
-                // Stop looking if we hit another login attempt
                 if ($prevLog['event'] === 'login_success' && $prevLog !== $log) {
                     break;
                 }
@@ -471,7 +456,8 @@ function streamSessions()
     ignore_user_abort(true);
     set_time_limit(0);
 
-    $lastCheck = 0;
+    $lastSessionsUpdate = 0;
+    $lastHeartbeat = 0;
 
     while (true) {
         if (connection_aborted()) {
@@ -480,13 +466,11 @@ function streamSessions()
 
         $currentTime = time();
 
-        // Check for updates every 2 seconds
-        if ($currentTime > $lastCheck + 2) {
-            $lastCheck = $currentTime;
+        if ($currentTime >= $lastSessionsUpdate + 2) {
+            $lastSessionsUpdate = $currentTime;
 
             $sessions = getSessionData();
 
-            // Enrich with country flags/codes if needed
             if (!isset($sessions['error'])) {
                 foreach ($sessions as &$session) {
                     if (isset($session['country']) && !isset($session['flag'])) {
@@ -501,28 +485,32 @@ function streamSessions()
                 unset($session);
             }
 
-            // Send sessions update
             echo "data: " . json_encode([
                 'type' => 'sessions_update',
                 'data' => $sessions,
                 'timestamp' => $currentTime,
             ]) . "\n\n";
+
+            if (ob_get_level()) {
+                ob_flush();
+            }
+            flush();
         }
 
-        // Send heartbeat every 5 seconds
-        if ($currentTime % 5 == 0) {
+        if ($currentTime >= $lastHeartbeat + 2) {
+            $lastHeartbeat = $currentTime;
             echo "data: " . json_encode([
                 'type' => 'heartbeat',
                 'timestamp' => $currentTime,
             ]) . "\n\n";
+
+            if (ob_get_level()) {
+                ob_flush();
+            }
+            flush();
         }
 
-        if (ob_get_level()) {
-            ob_flush();
-        }
-        flush();
-
-        sleep(1);
+        usleep(100000);
     }
 }
 
@@ -560,7 +548,6 @@ switch ($action) {
                 'active_sessions' => count(array_filter($sessions, fn($s) => $s['isActive'])),
                 'logged_users' => count(array_filter($sessions, fn($s) => $s['loggedUser'] !== null)),
                 'unique_countries' => count(array_unique(array_column($sessions, 'country'))),
-                'total_events' => array_sum(array_map(fn($s) => count($s['logs'] ?? []), $sessions)),
                 'total_login_attempts' => array_sum(array_map(fn($s) => $s['authStats']['login_attempts'] ?? 0, $sessions)),
                 'total_login_successes' => array_sum(array_map(fn($s) => $s['authStats']['login_successes'] ?? 0, $sessions)),
                 'total_login_failures' => array_sum(array_map(fn($s) => $s['authStats']['login_failures'] ?? 0, $sessions)),
