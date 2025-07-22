@@ -98,7 +98,7 @@ ob_start();
             <div class="p-4 sm:p-6 border-b border-gray-100">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900">Active Sessions</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Sessions Monitor</h3>
                         <p class="text-sm text-gray-600">Click on any session to view detailed activity logs</p>
                     </div>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -113,6 +113,7 @@ ob_start();
                         <select id="statusFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
                             <option value="all">All Status</option>
                             <option value="active">Active Only</option>
+                            <option value="expired">Expired Only</option>
                             <option value="logged">Logged Users</option>
                             <option value="guest">Guests</option>
                         </select>
@@ -181,7 +182,8 @@ ob_start();
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <div class="flex items-center gap-2 px-3 py-1 bg-green-100 border border-green-200 rounded-full">
+                <div id="modalStatusIndicator"
+                    class="flex items-center gap-2 px-3 py-1 bg-green-100 border border-green-200 rounded-full">
                     <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span class="text-xs font-medium text-green-700">Live</span>
                 </div>
@@ -217,7 +219,7 @@ ob_start();
                     </div>
                 </div>
 
-                <div class="border-t border-gray-200 p-4 bg-white">
+                <div class="border-t border-gray-200 p-4 bg-white" id="chatSection">
                     <div class="flex items-center gap-3">
                         <div class="flex-1">
                             <input type="text" id="chatInput" placeholder="Send a message to the user..."
@@ -252,7 +254,7 @@ ob_start();
                     <p class="text-blue-100 text-sm" id="mobileModalSubtitle">Live monitoring</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 px-2 py-1 bg-green-500 rounded-full">
+            <div id="mobileModalStatusIndicator" class="flex items-center gap-2 px-2 py-1 bg-green-500 rounded-full">
                 <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 <span class="text-xs font-medium">Live</span>
             </div>
@@ -276,7 +278,7 @@ ob_start();
                     </div>
                 </div>
 
-                <div class="border-t border-gray-200 p-4 bg-white sticky bottom-0 z-10">
+                <div class="border-t border-gray-200 p-4 bg-white sticky bottom-0 z-10" id="mobileChatSection">
                     <div class="flex items-center gap-2">
                         <div class="flex-1">
                             <input type="text" id="mobileChatInput" placeholder="Type a message..."
@@ -513,7 +515,7 @@ ob_start();
             <tr>
                 <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                     <i class="fas fa-users text-2xl mb-2"></i>
-                    <div>No active sessions found</div>
+                    <div>No sessions found</div>
                 </td>
             </tr>
         `;
@@ -523,13 +525,20 @@ ob_start();
         let filteredSessions = filterSessionsData();
 
         tbody.innerHTML = filteredSessions.map(session => {
-            const displayName = session.loggedUser ? session.loggedUser : session.sessionID;
+            // Use username if logged in, otherwise use truncated session ID for guests
+            let displayName;
+            if (session.loggedUser && session.loggedUser.username) {
+                displayName = session.loggedUser.username;
+            } else {
+                displayName = session.sessionID.substring(0, 6) + '...';
+            }
+
             const deviceIcon = getDeviceIcon(session.device);
-            const lastActivity = getLastActivity(session);
-            const timeAgo = getTimeAgo(lastActivity);
+            const lastActivity = session.isExpired ? '-' : getTimeAgo(getLastActivity(session));
+            const lastActivityTime = session.isExpired ? '-' : formatTime(getLastActivity(session));
 
             return `
-            <tr class="hover:bg-gray-50 transition-colors cursor-pointer ${!session.isActive ? 'opacity-60' : ''}" onclick="viewSessionDetails('${session.sessionID}')">
+            <tr class="hover:bg-gray-50 transition-colors cursor-pointer ${session.isExpired ? 'opacity-60 bg-gray-50' : ''}" onclick="viewSessionDetails('${session.sessionID}')">
                 <td class="px-4 py-3 whitespace-nowrap">
                     <div class="flex items-center">
                         <div class="flex-shrink-0 h-10 w-10 rounded-full ${session.isActive ? 'bg-green-100' : 'bg-gray-300'} flex items-center justify-center">
@@ -543,7 +552,7 @@ ob_start();
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
                     <div class="flex items-center justify-center gap-2">
-                        <img src="https://flagcdn.com/16x12/${session.shortName.toLowerCase()}.png" alt="${session.country}" class="rounded">
+                        <img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
                         <span class="text-sm text-gray-900">${session.country}</span>
                     </div>
                     <div class="text-xs text-gray-500">${session.phoneCode}</div>
@@ -573,8 +582,8 @@ ob_start();
                     </span>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
-                    <div class="text-sm text-gray-900">${timeAgo}</div>
-                    <div class="text-xs text-gray-500">${formatTime(lastActivity)}</div>
+                    <div class="text-sm text-gray-900">${lastActivity}</div>
+                    <div class="text-xs text-gray-500">${lastActivityTime}</div>
                 </td>
             </tr>
         `;
@@ -588,7 +597,7 @@ ob_start();
             container.innerHTML = `
             <div class="p-4 text-center text-gray-500">
                 <i class="fas fa-users text-2xl mb-2"></i>
-                <div>No active sessions found</div>
+                <div>No sessions found</div>
             </div>
         `;
             return;
@@ -597,13 +606,18 @@ ob_start();
         let filteredSessions = filterSessionsData();
 
         container.innerHTML = filteredSessions.map(session => {
-            const lastActivity = getLastActivity(session);
-            const timeAgo = getTimeAgo(lastActivity);
-            const displayName = session.loggedUser ? session.loggedUser : `${session.sessionID.substring(0, 6)}...`;
+            const lastActivity = session.isExpired ? '-' : getTimeAgo(getLastActivity(session));
+            // Use username if logged in, otherwise use truncated session ID for guests
+            let displayName;
+            if (session.loggedUser && session.loggedUser.username) {
+                displayName = session.loggedUser.username;
+            } else {
+                displayName = session.sessionID.substring(0, 6) + '...';
+            }
             const deviceIcon = getDeviceIcon(session.device);
 
             return `
-            <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!session.isActive ? 'opacity-60' : ''}" onclick="viewSessionDetails('${session.sessionID}')">
+            <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${session.isExpired ? 'opacity-60 bg-gray-50' : ''}" onclick="viewSessionDetails('${session.sessionID}')">
                 <div class="flex items-start gap-3">
                     <div class="flex-shrink-0 h-10 w-10 rounded-full ${session.isActive ? 'bg-green-100' : 'bg-gray-300'} flex items-center justify-center">
                         <i class="${session.loggedUser ? 'fas fa-user' : 'fas fa-globe'} ${session.isActive ? 'text-green-600' : 'text-gray-600'} text-sm"></i>
@@ -611,10 +625,10 @@ ob_start();
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between mb-1">
                             <h4 class="text-sm font-medium text-gray-900 truncate">${displayName}</h4>
-                            <span class="text-xs text-gray-500">${timeAgo}</span>
+                            <span class="text-xs text-gray-500">${lastActivity}</span>
                         </div>
                         <div class="flex items-center gap-2 mb-2">
-                            <img src="https://flagcdn.com/16x12/${session.shortName.toLowerCase()}.png" alt="${session.country}" class="rounded">
+                            <img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
                             <span class="text-sm text-gray-600">${session.country}</span>
                             <span class="text-xs text-gray-500">•</span>
                             <span class="text-sm text-gray-600">${session.browser}</span>
@@ -655,7 +669,7 @@ ob_start();
                 session.ipAddress.includes(searchTerm) ||
                 session.country.toLowerCase().includes(searchTerm) ||
                 session.browser.toLowerCase().includes(searchTerm) ||
-                (session.loggedUser && session.loggedUser.toLowerCase().includes(searchTerm));
+                (session.loggedUser && session.loggedUser.username && session.loggedUser.username.toLowerCase().includes(searchTerm));
 
             const matchesCountry = countryFilter === 'all' || session.country === countryFilter;
 
@@ -663,6 +677,9 @@ ob_start();
             switch (statusFilter) {
                 case 'active':
                     matchesStatus = session.isActive;
+                    break;
+                case 'expired':
+                    matchesStatus = session.isExpired;
                     break;
                 case 'logged':
                     matchesStatus = session.loggedUser !== null;
@@ -743,8 +760,37 @@ ob_start();
         if (!session) return;
 
         if (isInitialLoad) {
-            document.getElementById('modalTitle').textContent = `Session: ${sessionId}`;
+            // Use username as title if logged in, otherwise use session ID
+            const modalTitle = session.loggedUser && session.loggedUser.username ?
+                session.loggedUser.username :
+                `Session: ${sessionId}`;
+
+            document.getElementById('modalTitle').textContent = modalTitle;
             document.getElementById('modalSubtitle').textContent = `${session.country} • ${session.browser} • ${session.device} • ${session.activeDuration}`;
+
+            // Update status indicator
+            const statusIndicator = document.getElementById('modalStatusIndicator');
+            if (session.isExpired) {
+                statusIndicator.innerHTML = `
+                    <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span class="text-xs font-medium text-red-700">Expired</span>
+                `;
+                statusIndicator.className = 'flex items-center gap-2 px-3 py-1 bg-red-100 border border-red-200 rounded-full';
+            } else {
+                statusIndicator.innerHTML = `
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-xs font-medium text-green-700">Live</span>
+                `;
+                statusIndicator.className = 'flex items-center gap-2 px-3 py-1 bg-green-100 border border-green-200 rounded-full';
+            }
+
+            // Disable chat for expired sessions
+            const chatSection = document.getElementById('chatSection');
+            if (session.isExpired) {
+                chatSection.style.display = 'none';
+            } else {
+                chatSection.style.display = 'block';
+            }
         }
 
         if (isInitialLoad) {
@@ -764,7 +810,7 @@ ob_start();
                     <div class="flex justify-between">
                         <span class="text-gray-600">Location:</span>
                         <div class="flex items-center gap-1">
-                            <img src="https://flagcdn.com/16x12/${session.shortName.toLowerCase()}.png" alt="${session.country}" class="rounded">
+                            <img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
                             <span>${session.country}</span>
                         </div>
                     </div>
@@ -785,7 +831,7 @@ ob_start();
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Status:</span>
-                        <span class="font-medium ${session.isActive ? 'text-green-600' : 'text-red-600'}">${session.isActive ? 'Active' : 'Inactive'}</span>
+                        <span class="font-medium ${session.isActive ? 'text-green-600' : 'text-red-600'}">${session.isActive ? 'Active' : session.isExpired ? 'Expired' : 'Inactive'}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">User Status:</span>
@@ -794,6 +840,33 @@ ob_start();
                     '<span class="text-gray-600">Guest</span>'
                 }
                     </div>
+                    ${session.loggedUser ? `
+                        <div class="pt-2 border-t border-gray-200">
+                            <h5 class="font-medium text-gray-900 mb-2">User Information</h5>
+                            <div class="space-y-1">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Username:</span>
+                                    <span class="font-medium">${session.loggedUser.username}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Email:</span>
+                                    <span class="font-medium">${session.loggedUser.email}</span>
+                                </div>
+                                ${session.loggedUser.phone ? `
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Phone:</span>
+                                        <span class="font-medium">${session.loggedUser.phone}</span>
+                                    </div>
+                                ` : ''}
+                                ${session.loggedUser.last_login ? `
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Last Login:</span>
+                                        <span class="font-medium">${formatDateTime(new Date(session.loggedUser.last_login).getTime())}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
 
@@ -837,15 +910,15 @@ ob_start();
             return `
             <div class="flex gap-3">
                 <div class="flex-shrink-0">
-                    <div class="w-8 h-8 rounded-full ${session.loggedUser ? 'bg-gray-400' : 'bg-gray-500'} flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full ${session.loggedUser ? 'bg-blue-500' : 'bg-gray-500'} flex items-center justify-center">
                         <i class="${session.loggedUser ? 'fas fa-user' : 'fas fa-globe'} text-white text-xs"></i>
                     </div>
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
                         <div class="flex items-center justify-between mb-1">
-                            <span class="text-xs font-medium text-gray-500">${formatDateTime(log.timestamp)}</span>
-                            ${isLatest ? '<span class="text-xs text-green-600 font-medium">Latest</span>' : ''}
+                            <span class="text-xs font-medium text-gray-500">${formatDateTime(new Date(log.timestamp).getTime())}</span>
+                            ${isLatest && !session.isExpired ? '<span class="text-xs text-green-600 font-medium">Latest</span>' : ''}
                         </div>
                         <div class="text-sm text-gray-900">
                             ${formatEventMessage(log)}
@@ -856,7 +929,7 @@ ob_start();
         `;
         }).join('');
 
-        if (!isInitialLoad && !wasAtBottom) {
+        if (!isInitialLoad && !wasAtBottom && !session.isExpired) {
             document.getElementById('newEventIndicator').classList.remove('hidden');
         } else if (wasAtBottom) {
             activityFeed.scrollTop = activityFeed.scrollHeight;
@@ -869,8 +942,37 @@ ob_start();
         if (!session) return;
 
         if (isInitialLoad) {
-            document.getElementById('mobileModalTitle').textContent = session.loggedUser ? session.loggedUser : `${sessionId.substring(0, 8)}...`;
+            // Use username as title if logged in, otherwise use truncated session ID
+            const mobileTitle = session.loggedUser && session.loggedUser.username ?
+                session.loggedUser.username :
+                `${sessionId.substring(0, 8)}...`;
+
+            document.getElementById('mobileModalTitle').textContent = mobileTitle;
             document.getElementById('mobileModalSubtitle').textContent = `${session.country} • ${session.browser} • ${session.activeDuration}`;
+
+            // Update mobile status indicator
+            const mobileStatusIndicator = document.getElementById('mobileModalStatusIndicator');
+            if (session.isExpired) {
+                mobileStatusIndicator.innerHTML = `
+                    <div class="w-2 h-2 bg-white rounded-full"></div>
+                    <span class="text-xs font-medium">Expired</span>
+                `;
+                mobileStatusIndicator.className = 'flex items-center gap-2 px-2 py-1 bg-red-500 rounded-full';
+            } else {
+                mobileStatusIndicator.innerHTML = `
+                    <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    <span class="text-xs font-medium">Live</span>
+                `;
+                mobileStatusIndicator.className = 'flex items-center gap-2 px-2 py-1 bg-green-500 rounded-full';
+            }
+
+            // Disable mobile chat for expired sessions
+            const mobileChatSection = document.getElementById('mobileChatSection');
+            if (session.isExpired) {
+                mobileChatSection.style.display = 'none';
+            } else {
+                mobileChatSection.style.display = 'block';
+            }
         }
 
         const mobileActivityFeed = document.getElementById('mobileActivityFeed');
@@ -893,7 +995,7 @@ ob_start();
             return `
             <div class="flex gap-3">
                 <div class="flex-shrink-0">
-                    <div class="w-8 h-8 rounded-full ${session.loggedUser ? 'bg-gray-400' : 'bg-gray-500'} flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full ${session.loggedUser ? 'bg-blue-500' : 'bg-gray-500'} flex items-center justify-center">
                         <i class="${session.loggedUser ? 'fas fa-user' : 'fas fa-globe'} text-white text-xs"></i>
                     </div>
                 </div>
@@ -901,7 +1003,7 @@ ob_start();
                     <div class="bg-white rounded-lg p-3 border border-gray-200 shadow-sm">
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-xs font-medium text-gray-500">${formatTime(new Date(log.timestamp).getTime())}</span>
-                            ${isLatest ? '<span class="text-xs text-green-600 font-medium">Latest</span>' : ''}
+                            ${isLatest && !session.isExpired ? '<span class="text-xs text-green-600 font-medium">Latest</span>' : ''}
                         </div>
                         <div class="text-sm text-gray-900">
                             ${formatEventMessage(log)}
@@ -912,7 +1014,7 @@ ob_start();
         `;
         }).join('');
 
-        if (!isInitialLoad && !wasAtBottom) {
+        if (!isInitialLoad && !wasAtBottom && !session.isExpired) {
             document.getElementById('mobileNewEventIndicator').classList.remove('hidden');
         } else if (wasAtBottom) {
             mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
@@ -1097,6 +1199,9 @@ ob_start();
     let chatMessages = {};
 
     function sendChatMessage() {
+        const session = sessions.find(s => s.sessionID === currentSessionId);
+        if (!session || session.isExpired) return;
+
         const chatInput = document.getElementById('chatInput');
         const message = chatInput.value.trim();
 
@@ -1156,6 +1261,9 @@ ob_start();
     }
 
     function sendMobileChatMessage() {
+        const session = sessions.find(s => s.sessionID === currentSessionId);
+        if (!session || session.isExpired) return;
+
         const mobileChatInput = document.getElementById('mobileChatInput');
         const message = mobileChatInput.value.trim();
 

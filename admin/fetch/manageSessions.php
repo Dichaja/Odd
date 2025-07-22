@@ -10,32 +10,56 @@ date_default_timezone_set('Africa/Kampala');
 
 function getSessionData()
 {
+    // Get live sessions from JSON file
+    $liveSessions = getLiveSessionsFromJson();
+
+    // Get expired sessions from database
+    $expiredSessions = getExpiredSessionsFromDatabase();
+
+    // Combine and sort by last activity (live sessions first)
+    $allSessions = array_merge($liveSessions, $expiredSessions);
+
+    // Sort: active sessions first, then by last activity time
+    usort($allSessions, function ($a, $b) {
+        if ($a['isActive'] !== $b['isActive']) {
+            return $b['isActive'] - $a['isActive']; // Active sessions first
+        }
+        return $b['lastActivityTime'] - $a['lastActivityTime'];
+    });
+
+    return $allSessions;
+}
+
+function getLiveSessionsFromJson()
+{
     $jsonFile = __DIR__ . '/../../track/session_log.json';
 
     if (!file_exists($jsonFile)) {
-        return ['error' => 'Session log file not found'];
+        return [];
     }
 
     $jsonContent = file_get_contents($jsonFile);
     if ($jsonContent === false) {
-        return ['error' => 'Unable to read session log file'];
+        return [];
     }
 
     $sessions = json_decode($jsonContent, true);
     if ($sessions === null) {
-        return ['error' => 'Invalid JSON format'];
+        return [];
     }
 
-    foreach ($sessions as &$session) {
-        // normalize country code
-        $session['shortName'] = strtoupper($session['shortName']);
+    $formattedSessions = [];
+
+    foreach ($sessions as $session) {
+        // Normalize country code
+        $session['shortName'] = strtolower($session['shortName']);
 
         // Extract logged user from successful login events
         if (!isset($session['loggedUser']) || $session['loggedUser'] === null) {
             $session['loggedUser'] = extractLoggedUserFromEvents($session['logs'] ?? []);
         }
 
-        // if we have logs, sort them and take first & last as respectively session start and last activity
+        // Calculate session timing for live sessions
         if (isset($session['logs']) && is_array($session['logs']) && count($session['logs']) > 0) {
             usort($session['logs'], function ($a, $b) {
                 return strtotime($a['timestamp']) - strtotime($b['timestamp']);
@@ -47,42 +71,247 @@ function getSessionData()
             $session['lastActivity'] = $lastLog['timestamp'];
             $session['lastActivityTime'] = strtotime($lastLog['timestamp']);
         } else {
-            // no logs: use session timestamp for both start and last activity
+            // No logs: use session timestamp for both start and last activity
             $sessionStartTime = strtotime($session['timestamp']);
             $session['lastActivity'] = $session['timestamp'];
             $session['lastActivityTime'] = strtotime($session['timestamp']);
         }
 
-        // compute how long the session has been active, from the session start
+        // For live sessions, compute active duration from session start to now
         $now = time();
         $duration = $now - $sessionStartTime;
 
-        if ($duration >= 3600) {
+        // Format duration (never show seconds for live sessions, minimum 1 minute)
+        if ($duration < 60) {
+            $session['activeDuration'] = '1m';
+        } elseif ($duration >= 3600) {
             $hours = floor($duration / 3600);
             $minutes = floor(($duration % 3600) / 60);
-            $session['activeDuration'] = sprintf('%dh %dm', $hours, $minutes);
-        } elseif ($duration >= 60) {
-            $minutes = floor($duration / 60);
-            $seconds = $duration % 60;
-            $session['activeDuration'] = sprintf('%dm %ds', $minutes, $seconds);
+            $session['activeDuration'] = $minutes > 0 ? sprintf('%dh %dm', $hours, $minutes) : sprintf('%dh', $hours);
         } else {
-            $session['activeDuration'] = sprintf('%ds', $duration);
+            $minutes = floor($duration / 60);
+            $session['activeDuration'] = sprintf('%dm', $minutes);
         }
 
-        // consider session active if started less than 30 minutes ago
-        $session['isActive'] = ($duration < 1800);
+        // Live sessions are active if last activity was within 30 minutes
+        $timeSinceLastActivity = $now - $session['lastActivityTime'];
+        $session['isActive'] = ($timeSinceLastActivity < 1800); // 30 minutes
+        $session['isExpired'] = false;
 
         // Add authentication statistics
         $session['authStats'] = calculateAuthStats($session['logs'] ?? []);
+
+        $formattedSessions[] = $session;
     }
-    unset($session);
 
-    // newest activity first
-    usort($sessions, function ($a, $b) {
-        return $b['lastActivityTime'] - $a['lastActivityTime'];
-    });
+    return $formattedSessions;
+}
 
-    return $sessions;
+function getExpiredSessionsFromDatabase()
+{
+    global $pdo;
+
+    try {
+        // Get all sessions from database with their latest activity
+        $stmt = $pdo->prepare("
+            SELECT 
+                s.*,
+                COALESCE(MAX(se.event_timestamp), s.created_at) as last_activity_time
+            FROM sessions s
+            LEFT JOIN session_events se ON s.session_id = se.session_id
+            GROUP BY s.session_id
+            ORDER BY last_activity_time DESC
+        ");
+        $stmt->execute();
+        $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $formattedSessions = [];
+
+        foreach ($sessions as $session) {
+            // Get all events for this session
+            $eventsStmt = $pdo->prepare("
+                SELECT * FROM session_events 
+                WHERE session_id = ? 
+                ORDER BY event_timestamp ASC
+            ");
+            $eventsStmt->execute([$session['session_id']]);
+            $events = $eventsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Format expired session data
+            $formattedSession = formatExpiredSessionData($session, $events);
+            $formattedSessions[] = $formattedSession;
+        }
+
+        return $formattedSessions;
+
+    } catch (PDOException $e) {
+        error_log("Database error in getExpiredSessionsFromDatabase: " . $e->getMessage());
+        return [];
+    }
+}
+
+function formatExpiredSessionData($session, $events)
+{
+    // Calculate session timing for expired sessions
+    $sessionStart = strtotime($session['created_at']);
+    $lastActivityTime = strtotime($session['last_activity_time']);
+
+    // For expired sessions, duration is static - from session start to last event
+    $duration = $lastActivityTime - $sessionStart;
+
+    // Format duration (never negative, never in seconds)
+    if ($duration <= 0) {
+        $activeDuration = '1m';
+    } elseif ($duration >= 3600) {
+        $hours = floor($duration / 3600);
+        $minutes = floor(($duration % 3600) / 60);
+        $activeDuration = $minutes > 0 ? sprintf('%dh %dm', $hours, $minutes) : sprintf('%dh', $hours);
+    } else {
+        $minutes = floor($duration / 60);
+        $activeDuration = $minutes > 0 ? sprintf('%dm', $minutes) : '1m';
+    }
+
+    // Format logged user data
+    $loggedUser = null;
+    if ($session['logged_in'] && $session['user_id']) {
+        $loggedUser = [
+            'logged_in' => true,
+            'user_id' => $session['user_id'],
+            'username' => $session['username'],
+            'email' => $session['email'],
+            'phone' => $session['phone'],
+            'is_admin' => (bool) $session['is_admin'],
+            'last_login' => $session['last_login']
+        ];
+    }
+
+    // Format coordinates
+    $coords = null;
+    if ($session['latitude'] && $session['longitude']) {
+        $coords = [
+            'latitude' => (float) $session['latitude'],
+            'longitude' => (float) $session['longitude']
+        ];
+    }
+
+    // Format events
+    $logs = [];
+    foreach ($events as $event) {
+        $log = [
+            'event' => $event['event_name'],
+            'timestamp' => date('c', strtotime($event['event_timestamp']))
+        ];
+
+        // Add event-specific data
+        if ($event['referrer'])
+            $log['referrer'] = $event['referrer'];
+        if ($event['url'])
+            $log['url'] = $event['url'];
+        if ($event['active_navigation'])
+            $log['activeNavigation'] = $event['active_navigation'];
+        if ($event['page_title'])
+            $log['pageTitle'] = $event['page_title'];
+        if ($event['identifier'])
+            $log['identifier'] = $event['identifier'];
+        if ($event['identifier_type'])
+            $log['identifierType'] = $event['identifier_type'];
+        if ($event['username'])
+            $log['username'] = $event['username'];
+        if ($event['email'])
+            $log['email'] = $event['email'];
+        if ($event['phone'])
+            $log['phone'] = $event['phone'];
+        if ($event['error_message'])
+            $log['errorMessage'] = $event['error_message'];
+        if ($event['status'])
+            $log['status'] = $event['status'];
+        if ($event['from_form'])
+            $log['fromForm'] = $event['from_form'];
+        if ($event['to_form'])
+            $log['toForm'] = $event['to_form'];
+        if ($event['form_type'])
+            $log['formType'] = $event['form_type'];
+        if ($event['step'])
+            $log['step'] = $event['step'];
+        if ($event['action'])
+            $log['action'] = $event['action'];
+        if ($event['method'])
+            $log['method'] = $event['method'];
+        if ($event['element'])
+            $log['element'] = $event['element'];
+        if ($event['scroll_position'])
+            $log['scrollPosition'] = $event['scroll_position'];
+        if ($event['query'])
+            $log['query'] = $event['query'];
+        if ($event['search_results'])
+            $log['searchResults'] = $event['search_results'];
+        if ($event['product_id'])
+            $log['productId'] = $event['product_id'];
+        if ($event['product_name'])
+            $log['productName'] = $event['product_name'];
+        if ($event['category_id'])
+            $log['categoryId'] = $event['category_id'];
+        if ($event['category_name'])
+            $log['categoryName'] = $event['category_name'];
+        if ($event['quantity'])
+            $log['quantity'] = $event['quantity'];
+        if ($event['price'])
+            $log['price'] = $event['price'];
+        if ($event['cart_value'])
+            $log['cartValue'] = $event['cart_value'];
+        if ($event['amount'])
+            $log['amount'] = $event['amount'];
+        if ($event['order_id'])
+            $log['orderId'] = $event['order_id'];
+        if ($event['payment_method'])
+            $log['paymentMethod'] = $event['payment_method'];
+        if ($event['filter_type'])
+            $log['filterType'] = $event['filter_type'];
+        if ($event['filter_value'])
+            $log['filterValue'] = $event['filter_value'];
+        if ($event['sort_by'])
+            $log['sortBy'] = $event['sort_by'];
+        if ($event['sort_order'])
+            $log['sortOrder'] = $event['sort_order'];
+        if ($event['contact_type'])
+            $log['contactType'] = $event['contact_type'];
+        if ($event['contact_value'])
+            $log['contactValue'] = $event['contact_value'];
+        if ($event['message'])
+            $log['message'] = $event['message'];
+        if ($event['otp_type'])
+            $log['otpType'] = $event['otp_type'];
+        if ($event['otp_attempts'])
+            $log['otpAttempts'] = $event['otp_attempts'];
+        if ($event['extra_data']) {
+            $extraData = json_decode($event['extra_data'], true);
+            if ($extraData) {
+                $log = array_merge($log, $extraData);
+            }
+        }
+
+        $logs[] = $log;
+    }
+
+    return [
+        'sessionID' => $session['session_id'],
+        'timestamp' => date('c', $sessionStart),
+        'ipAddress' => $session['ip_address'],
+        'country' => $session['country'],
+        'shortName' => strtolower($session['short_name']),
+        'phoneCode' => $session['phone_code'],
+        'browser' => $session['browser'],
+        'device' => $session['device'],
+        'coords' => $coords,
+        'loggedUser' => $loggedUser,
+        'logs' => $logs,
+        'lastActivity' => null, // No last activity for expired sessions
+        'lastActivityTime' => $lastActivityTime,
+        'activeDuration' => $activeDuration,
+        'isActive' => false, // All database sessions are expired
+        'isExpired' => true,
+        'authStats' => calculateAuthStats($logs)
+    ];
 }
 
 function extractLoggedUserFromEvents($logs)
@@ -242,30 +471,27 @@ function streamSessions()
     ignore_user_abort(true);
     set_time_limit(0);
 
-    $lastModified = 0;
+    $lastCheck = 0;
 
     while (true) {
         if (connection_aborted()) {
             break;
         }
 
-        clearstatcache();
-        $jsonFile = __DIR__ . '/../../track/session_log.json';
+        $currentTime = time();
 
-        // Check if file was modified
-        $currentModified = file_exists($jsonFile) ? filemtime($jsonFile) : 0;
-
-        if ($currentModified > $lastModified) {
-            $lastModified = $currentModified;
+        // Check for updates every 2 seconds
+        if ($currentTime > $lastCheck + 2) {
+            $lastCheck = $currentTime;
 
             $sessions = getSessionData();
 
-            // enrich with country flags/codes
+            // Enrich with country flags/codes if needed
             if (!isset($sessions['error'])) {
                 foreach ($sessions as &$session) {
-                    if (isset($session['country'])) {
+                    if (isset($session['country']) && !isset($session['flag'])) {
                         $countryInfo = getCountryInfo($session['country']);
-                        $session['shortName'] = $countryInfo['shortName'];
+                        $session['shortName'] = strtolower($countryInfo['shortName']);
                         $session['flag'] = $countryInfo['flag'];
                         if (!isset($session['phoneCode'])) {
                             $session['phoneCode'] = $countryInfo['phoneCode'];
@@ -275,26 +501,28 @@ function streamSessions()
                 unset($session);
             }
 
-            // send sessions update
+            // Send sessions update
             echo "data: " . json_encode([
                 'type' => 'sessions_update',
                 'data' => $sessions,
-                'timestamp' => time(),
+                'timestamp' => $currentTime,
             ]) . "\n\n";
         }
 
-        // send heartbeat every 5 seconds
-        echo "data: " . json_encode([
-            'type' => 'heartbeat',
-            'timestamp' => time(),
-        ]) . "\n\n";
+        // Send heartbeat every 5 seconds
+        if ($currentTime % 5 == 0) {
+            echo "data: " . json_encode([
+                'type' => 'heartbeat',
+                'timestamp' => $currentTime,
+            ]) . "\n\n";
+        }
 
         if (ob_get_level()) {
             ob_flush();
         }
         flush();
 
-        sleep(2);
+        sleep(1);
     }
 }
 
@@ -311,9 +539,9 @@ switch ($action) {
 
         if (!isset($sessions['error'])) {
             foreach ($sessions as &$session) {
-                if (isset($session['country'])) {
+                if (isset($session['country']) && !isset($session['flag'])) {
                     $countryInfo = getCountryInfo($session['country']);
-                    $session['shortName'] = $countryInfo['shortName'];
+                    $session['shortName'] = strtolower($countryInfo['shortName']);
                     $session['flag'] = $countryInfo['flag'];
                     if (!isset($session['phoneCode'])) {
                         $session['phoneCode'] = $countryInfo['phoneCode'];
