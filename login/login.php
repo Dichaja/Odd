@@ -820,7 +820,6 @@ function getStepTitle($mode, $step)
             window.sessionTracker.trackLoginModalClose();
         }
 
-        // ✅ Added session status check after modal closes
         if (typeof checkSessionStatus === 'function') {
             checkSessionStatus();
         }
