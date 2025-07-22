@@ -456,8 +456,6 @@ function streamSessions()
     ignore_user_abort(true);
     set_time_limit(0);
 
-    while (ob_get_level()) ob_end_clean();
-
     $lastSessionsUpdate = 0;
     $lastHeartbeat = 0;
 
@@ -512,7 +510,7 @@ function streamSessions()
             flush();
         }
 
-        sleep(2);
+        usleep(100000);
     }
 }
 
