@@ -22,6 +22,12 @@ try {
           `longitude`      DECIMAL(10,7)  NULL,
           `user_id`        VARCHAR(26)    NULL,
           `admin_id`       VARCHAR(26)    NULL,
+          `logged_in`      BOOLEAN        DEFAULT FALSE,
+          `username`       VARCHAR(100)   NULL,
+          `email`          VARCHAR(255)   NULL,
+          `phone`          VARCHAR(20)    NULL,
+          `is_admin`       BOOLEAN        DEFAULT FALSE,
+          `last_login`     DATETIME       NULL,
           `created_at`     DATETIME       DEFAULT CURRENT_TIMESTAMP,
           `updated_at`     DATETIME       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           PRIMARY KEY (`session_id`),
@@ -29,6 +35,10 @@ try {
           INDEX `idx_sessions_admin` (`admin_id`),
           INDEX `idx_sessions_country` (`country`),
           INDEX `idx_sessions_device` (`device`),
+          INDEX `idx_sessions_logged_in` (`logged_in`),
+          INDEX `idx_sessions_is_admin` (`is_admin`),
+          INDEX `idx_sessions_username` (`username`),
+          INDEX `idx_sessions_email` (`email`),
           INDEX `idx_sessions_last_update` (`last_update_ms`),
           CONSTRAINT `fk_sessions_user`
             FOREIGN KEY (`user_id`)
@@ -179,9 +189,8 @@ foreach ($expiredSessions as $session) {
     try {
         $pdo->beginTransaction();
 
-        // --- Upsert into sessions ---
+        // --- Extract user information from loggedUser object ---
         $sessionID = $session['sessionID'];
-        // convert ISO timestamp -> ms
         $lastUpdateMs = isset($session['timestamp'])
             ? (strtotime($session['timestamp']) * 1000)
             : ($currentTime * 1000);
@@ -189,24 +198,52 @@ foreach ($expiredSessions as $session) {
         $lat = $session['coords']['latitude'] ?? null;
         $lng = $session['coords']['longitude'] ?? null;
 
-        // Determine user type and ID
+        // Parse loggedUser object
+        $loggedIn = false;
         $userId = null;
         $adminId = null;
-        if (isset($session['loggedUser']) && $session['loggedUser']) {
-            // You might need to query the database to determine if this is a regular user or admin
-            // For now, assuming it's a regular user - adjust logic as needed
-            $userId = $session['loggedUser'];
+        $username = null;
+        $email = null;
+        $phone = null;
+        $isAdmin = false;
+        $lastLogin = null;
+
+        if (isset($session['loggedUser']) && is_array($session['loggedUser'])) {
+            $loggedUser = $session['loggedUser'];
+
+            $loggedIn = $loggedUser['logged_in'] ?? false;
+            $isAdmin = $loggedUser['is_admin'] ?? false;
+            $username = $loggedUser['username'] ?? null;
+            $email = $loggedUser['email'] ?? null;
+            $phone = $loggedUser['phone'] ?? null;
+
+            // Parse last_login datetime
+            if (isset($loggedUser['last_login']) && $loggedUser['last_login']) {
+                $lastLogin = date('Y-m-d H:i:s', strtotime($loggedUser['last_login']));
+            }
+
+            // Assign to appropriate user type based on is_admin flag
+            if ($loggedIn && isset($loggedUser['user_id'])) {
+                if ($isAdmin) {
+                    $adminId = $loggedUser['user_id'];
+                } else {
+                    $userId = $loggedUser['user_id'];
+                }
+            }
         }
 
+        // --- Upsert into sessions ---
         $stmt = $pdo->prepare("
             INSERT INTO `sessions` (
                 session_id, last_update_ms, ip_address, country,
                 short_name, phone_code, browser, device,
-                latitude, longitude, user_id, admin_id
+                latitude, longitude, user_id, admin_id,
+                logged_in, username, email, phone, is_admin, last_login
             ) VALUES (
                 :session_id, :last_update_ms, :ip_address, :country,
                 :short_name, :phone_code, :browser, :device,
-                :latitude, :longitude, :user_id, :admin_id
+                :latitude, :longitude, :user_id, :admin_id,
+                :logged_in, :username, :email, :phone, :is_admin, :last_login
             )
             ON DUPLICATE KEY UPDATE
                 last_update_ms = VALUES(last_update_ms),
@@ -219,7 +256,13 @@ foreach ($expiredSessions as $session) {
                 latitude       = VALUES(latitude),
                 longitude      = VALUES(longitude),
                 user_id        = VALUES(user_id),
-                admin_id       = VALUES(admin_id)
+                admin_id       = VALUES(admin_id),
+                logged_in      = VALUES(logged_in),
+                username       = VALUES(username),
+                email          = VALUES(email),
+                phone          = VALUES(phone),
+                is_admin       = VALUES(is_admin),
+                last_login     = VALUES(last_login)
         ");
 
         $stmt->execute([
@@ -235,6 +278,12 @@ foreach ($expiredSessions as $session) {
             ':longitude' => $lng,
             ':user_id' => $userId,
             ':admin_id' => $adminId,
+            ':logged_in' => $loggedIn,
+            ':username' => $username,
+            ':email' => $email,
+            ':phone' => $phone,
+            ':is_admin' => $isAdmin,
+            ':last_login' => $lastLogin,
         ]);
 
         // --- Insert each log into session_events ---
@@ -459,9 +508,24 @@ file_put_contents(
 
 // 7) Respond with detailed statistics
 $totalEvents = 0;
+$loggedInSessions = 0;
+$adminSessions = 0;
+$guestSessions = 0;
+
 foreach ($expiredSessions as $session) {
     if (isset($session['logs']) && is_array($session['logs'])) {
         $totalEvents += count($session['logs']);
+    }
+
+    if (isset($session['loggedUser']) && is_array($session['loggedUser'])) {
+        if ($session['loggedUser']['logged_in'] ?? false) {
+            $loggedInSessions++;
+            if ($session['loggedUser']['is_admin'] ?? false) {
+                $adminSessions++;
+            }
+        }
+    } else {
+        $guestSessions++;
     }
 }
 
@@ -473,6 +537,9 @@ echo json_encode([
         'logged_sessions' => $loggedCount,
         'remaining_sessions' => count($remainingSessions),
         'total_events_logged' => $totalEvents,
+        'logged_in_sessions' => $loggedInSessions,
+        'admin_sessions' => $adminSessions,
+        'guest_sessions' => $guestSessions,
         'processing_time' => microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']
     ]
 ]);

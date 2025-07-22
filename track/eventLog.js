@@ -23,8 +23,7 @@ $(function () {
                     localStorage.removeItem(STORAGE_KEY);
                 }
             })
-            .fail(() => {
-            });
+            .fail(() => { });
     }
 
     checkSessionExpired();
@@ -42,11 +41,24 @@ $(function () {
     }
 
     function getSession() {
-        let s;
+        let raw = localStorage.getItem(STORAGE_KEY);
+        let s = null;
         try {
-            s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            s = raw ? JSON.parse(raw) : null;
         } catch {
             s = null;
+        }
+
+        const currentUser = typeof LOGGED_USER !== 'undefined' ? LOGGED_USER : null;
+
+        if (s) {
+            if (s.loggedUser && currentUser && s.loggedUser.user_id !== currentUser.user_id) {
+                localStorage.removeItem(STORAGE_KEY);
+                s = null;
+            } else if (!s.loggedUser && currentUser) {
+                s.loggedUser = currentUser;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+            }
         }
 
         const lastTsMs = s && s.timestamp ? Date.parse(s.timestamp) : 0;
@@ -64,7 +76,7 @@ $(function () {
                 browser: bd.browser,
                 device: bd.device,
                 coords: { latitude: null, longitude: null },
-                loggedUser: typeof LOGGED_USER !== 'undefined' ? LOGGED_USER : null,
+                loggedUser: currentUser,
                 logs: []
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(s));

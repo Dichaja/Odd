@@ -1044,6 +1044,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
         let fuseProducts = null, fuseCategories = null, fuseWords = null;
         let searchInitialized = false;
         let imageCache = new Map();
+        const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
 
         function ld(a, b) {
             if (a === b) return 0;
