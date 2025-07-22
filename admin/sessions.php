@@ -244,7 +244,7 @@ ob_start();
             </div>
         </div>
 
-        <div class="flex flex-col h-[calc(100vh-150px)]">
+        <div class="flex flex-col h-[calc(100vh-80px)]">
             <div class="flex flex-col min-h-screen bg-gray-50">
 
                 <!-- New Event Indicator -->
