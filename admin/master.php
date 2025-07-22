@@ -26,7 +26,7 @@ $formattedLastLogin = $lastLogin !== 'Never'
     ? date('M d, Y h:i A', strtotime($lastLogin))
     : 'Never';
 
-$title = isset($pageTitle) ? $pageTitle . ' | Admin Console - Zzimba Online' : 'Admin Dashboard';
+$title = isset($pageTitle) ? $pageTitle . ' | Admin Dashboard' : 'Admin Dashboard';
 $activeNav = $activeNav ?? 'dashboard';
 
 $userName = $_SESSION['user']['username'];

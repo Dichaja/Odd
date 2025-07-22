@@ -78,8 +78,8 @@ if (
 
 // Page settings
 $title = isset($pageTitle)
-    ? "{$pageTitle} - {$storeName} | Zzimba Online"
-    : "{$storeName} Dashboard | Zzimba Online";
+    ? "{$pageTitle} - {$storeName} | Store Dashboard"
+    : "{$storeName} Store Dashboard";
 $activeNav = $activeNav ?? 'dashboard';
 $userName = $_SESSION['user']['username'];
 // Store initials for avatar (first two words only)
