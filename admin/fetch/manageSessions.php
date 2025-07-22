@@ -27,6 +27,11 @@ function getSessionData()
         // normalize country code
         $session['shortName'] = strtoupper($session['shortName']);
 
+        // Extract logged user from successful login events
+        if (!isset($session['loggedUser']) || $session['loggedUser'] === null) {
+            $session['loggedUser'] = extractLoggedUserFromEvents($session['logs'] ?? []);
+        }
+
         // if we have logs, sort them and take first & last as respectively session start and last activity
         if (isset($session['logs']) && is_array($session['logs']) && count($session['logs']) > 0) {
             usort($session['logs'], function ($a, $b) {
@@ -63,6 +68,9 @@ function getSessionData()
 
         // consider session active if started less than 30 minutes ago
         $session['isActive'] = ($duration < 1800);
+
+        // Add authentication statistics
+        $session['authStats'] = calculateAuthStats($session['logs'] ?? []);
     }
     unset($session);
 
@@ -72,6 +80,105 @@ function getSessionData()
     });
 
     return $sessions;
+}
+
+function extractLoggedUserFromEvents($logs)
+{
+    if (!is_array($logs)) {
+        return null;
+    }
+
+    // Look for successful login events to extract username
+    foreach ($logs as $log) {
+        if ($log['event'] === 'login_success') {
+            // Look backwards for the identifier that was successfully used
+            foreach (array_reverse($logs) as $prevLog) {
+                if ($prevLog['event'] === 'login_identifier_success' && isset($prevLog['identifier'])) {
+                    return $prevLog['identifier'];
+                }
+                // Stop looking if we hit another login attempt
+                if ($prevLog['event'] === 'login_success' && $prevLog !== $log) {
+                    break;
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+function calculateAuthStats($logs)
+{
+    if (!is_array($logs)) {
+        return [
+            'login_attempts' => 0,
+            'login_successes' => 0,
+            'login_failures' => 0,
+            'registration_attempts' => 0,
+            'password_reset_attempts' => 0,
+            'last_login_attempt' => null,
+            'failed_identifiers' => [],
+            'successful_identifiers' => []
+        ];
+    }
+
+    $stats = [
+        'login_attempts' => 0,
+        'login_successes' => 0,
+        'login_failures' => 0,
+        'registration_attempts' => 0,
+        'password_reset_attempts' => 0,
+        'last_login_attempt' => null,
+        'failed_identifiers' => [],
+        'successful_identifiers' => []
+    ];
+
+    foreach ($logs as $log) {
+        switch ($log['event']) {
+            case 'login_identifier_submit':
+                $stats['login_attempts']++;
+                $stats['last_login_attempt'] = $log['timestamp'];
+                break;
+
+            case 'login_success':
+                $stats['login_successes']++;
+                break;
+
+            case 'login_identifier_failed':
+            case 'login_password_failed':
+                $stats['login_failures']++;
+                if (isset($log['identifier'])) {
+                    $stats['failed_identifiers'][] = [
+                        'identifier' => $log['identifier'],
+                        'type' => $log['identifierType'] ?? 'unknown',
+                        'error' => $log['errorMessage'] ?? 'Unknown error',
+                        'timestamp' => $log['timestamp']
+                    ];
+                }
+                break;
+
+            case 'login_identifier_success':
+                if (isset($log['identifier'])) {
+                    $stats['successful_identifiers'][] = [
+                        'identifier' => $log['identifier'],
+                        'type' => $log['identifierType'] ?? 'unknown',
+                        'timestamp' => $log['timestamp']
+                    ];
+                }
+                break;
+
+            case 'register_username_submit':
+            case 'register_email_submit':
+                $stats['registration_attempts']++;
+                break;
+
+            case 'password_reset_requested':
+                $stats['password_reset_attempts']++;
+                break;
+        }
+    }
+
+    return $stats;
 }
 
 function getCountryInfo($countryName)
@@ -132,37 +239,48 @@ function streamSessions()
     ignore_user_abort(true);
     set_time_limit(0);
 
+    $lastModified = 0;
+
     while (true) {
         if (connection_aborted()) {
             break;
         }
 
         clearstatcache();
-        $sessions = getSessionData();
+        $jsonFile = __DIR__ . '/../../track/session_log.json';
 
-        // enrich with country flags/codes
-        if (!isset($sessions['error'])) {
-            foreach ($sessions as &$session) {
-                if (isset($session['country'])) {
-                    $countryInfo = getCountryInfo($session['country']);
-                    $session['shortName'] = $countryInfo['shortName'];
-                    $session['flag'] = $countryInfo['flag'];
-                    if (!isset($session['phoneCode'])) {
-                        $session['phoneCode'] = $countryInfo['phoneCode'];
+        // Check if file was modified
+        $currentModified = file_exists($jsonFile) ? filemtime($jsonFile) : 0;
+
+        if ($currentModified > $lastModified) {
+            $lastModified = $currentModified;
+
+            $sessions = getSessionData();
+
+            // enrich with country flags/codes
+            if (!isset($sessions['error'])) {
+                foreach ($sessions as &$session) {
+                    if (isset($session['country'])) {
+                        $countryInfo = getCountryInfo($session['country']);
+                        $session['shortName'] = $countryInfo['shortName'];
+                        $session['flag'] = $countryInfo['flag'];
+                        if (!isset($session['phoneCode'])) {
+                            $session['phoneCode'] = $countryInfo['phoneCode'];
+                        }
                     }
                 }
+                unset($session);
             }
-            unset($session);
+
+            // send sessions update
+            echo "data: " . json_encode([
+                'type' => 'sessions_update',
+                'data' => $sessions,
+                'timestamp' => time(),
+            ]) . "\n\n";
         }
 
-        // always send full sessions_update
-        echo "data: " . json_encode([
-            'type' => 'sessions_update',
-            'data' => $sessions,
-            'timestamp' => time(),
-        ]) . "\n\n";
-
-        // then a heartbeat
+        // send heartbeat every 5 seconds
         echo "data: " . json_encode([
             'type' => 'heartbeat',
             'timestamp' => time(),
@@ -212,6 +330,9 @@ switch ($action) {
                 'logged_users' => count(array_filter($sessions, fn($s) => $s['loggedUser'] !== null)),
                 'unique_countries' => count(array_unique(array_column($sessions, 'country'))),
                 'total_events' => array_sum(array_map(fn($s) => count($s['logs'] ?? []), $sessions)),
+                'total_login_attempts' => array_sum(array_map(fn($s) => $s['authStats']['login_attempts'] ?? 0, $sessions)),
+                'total_login_successes' => array_sum(array_map(fn($s) => $s['authStats']['login_successes'] ?? 0, $sessions)),
+                'total_login_failures' => array_sum(array_map(fn($s) => $s['authStats']['login_failures'] ?? 0, $sessions)),
             ] : null,
         ]);
         break;

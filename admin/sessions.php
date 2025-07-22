@@ -976,57 +976,121 @@ ob_start();
     function formatEventMessage(log) {
         switch (log.event) {
             case 'page_load':
-                return `Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
+                return `<i class="fas fa-globe text-blue-500 mr-2"></i>Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline font-medium">${log.pageTitle || log.url}</a>`;
+
+            case 'page_refresh':
+                return `<i class="fas fa-sync-alt text-orange-500 mr-2"></i>Refreshed page: <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline font-medium">${log.pageTitle || log.url}</a>`;
 
             case 'login_modal_open':
-                return 'Opened login modal';
+                return '<i class="fas fa-sign-in-alt text-green-500 mr-2"></i>Opened login modal';
 
-            case 'login_identifier':
-                return `Entered identifier: ${log.identifier} (${log.status === 'passed' ? '✅ Valid' : '❌ Invalid'})`;
+            case 'login_modal_close':
+                return '<i class="fas fa-times text-gray-500 mr-2"></i>Closed login modal';
 
-            case 'login_password':
-                return `Password attempt: ${log.status === 'passed' ? '✅ Success' : '❌ Failed'}`;
+            case 'form_switch':
+                return `<i class="fas fa-exchange-alt text-purple-500 mr-2"></i>Switched from <strong>${log.fromForm}</strong> to <strong>${log.toForm}</strong> form`;
+
+            case 'login_identifier_submit':
+                return `<i class="fas fa-user text-blue-500 mr-2"></i>Submitted identifier: <strong>${log.identifier}</strong> <span class="text-gray-500">(${log.identifierType})</span>`;
+
+            case 'login_identifier_success':
+                return `<i class="fas fa-check-circle text-green-500 mr-2"></i>✅ Identifier verified: <strong>${log.identifier}</strong> <span class="text-gray-500">(${log.identifierType})</span>`;
+
+            case 'login_identifier_failed':
+                return `<i class="fas fa-exclamation-circle text-red-500 mr-2"></i>❌ Identifier failed: <strong>${log.identifier}</strong> <span class="text-gray-500">(${log.identifierType})</span><br><span class="text-red-600 text-xs">${log.errorMessage}</span>`;
+
+            case 'login_password_submit':
+                return '<i class="fas fa-key text-blue-500 mr-2"></i>Submitted password';
+
+            case 'login_password_success':
+                return '<i class="fas fa-check-circle text-green-500 mr-2"></i>✅ Password verified successfully';
+
+            case 'login_password_failed':
+                return `<i class="fas fa-exclamation-circle text-red-500 mr-2"></i>❌ Password verification failed<br><span class="text-red-600 text-xs">${log.errorMessage}</span>`;
+
+            case 'login_success':
+                return '<i class="fas fa-user-check text-green-500 mr-2"></i>🎉 <strong>Login successful!</strong>';
+
+            case 'register_username_submit':
+                return `<i class="fas fa-user-plus text-blue-500 mr-2"></i>Submitted username: <strong>${log.username}</strong>`;
+
+            case 'register_username_success':
+                return `<i class="fas fa-check-circle text-green-500 mr-2"></i>✅ Username available: <strong>${log.username}</strong>`;
+
+            case 'register_username_failed':
+                return `<i class="fas fa-exclamation-circle text-red-500 mr-2"></i>❌ Username unavailable: <strong>${log.username}</strong><br><span class="text-red-600 text-xs">${log.errorMessage}</span>`;
+
+            case 'register_email_submit':
+                return `<i class="fas fa-envelope text-blue-500 mr-2"></i>Submitted email: <strong>${log.email}</strong>`;
+
+            case 'register_email_success':
+                return `<i class="fas fa-check-circle text-green-500 mr-2"></i>✅ Email available: <strong>${log.email}</strong>`;
+
+            case 'register_email_failed':
+            case 'register_email_check_failed':
+                return `<i class="fas fa-exclamation-circle text-red-500 mr-2"></i>❌ Email unavailable: <strong>${log.email}</strong><br><span class="text-red-600 text-xs">${log.errorMessage}</span>`;
+
+            case 'password_reset_requested':
+                return '<i class="fas fa-unlock-alt text-orange-500 mr-2"></i>Requested password reset';
+
+            case 'otp_validation':
+                const otpIcon = log.status === 'success' ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-circle text-red-500';
+                const otpStatus = log.status === 'success' ? '✅ OTP verified' : '❌ OTP verification failed';
+                return `<i class="${otpIcon} mr-2"></i>${otpStatus}`;
+
+            case 'password_reset_completed':
+                const resetIcon = log.status === 'success' ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-circle text-red-500';
+                const resetStatus = log.status === 'success' ? '✅ Password reset completed' : '❌ Password reset failed';
+                return `<i class="${resetIcon} mr-2"></i>${resetStatus}`;
+
+            case 'registration_start':
+                return '<i class="fas fa-user-plus text-blue-500 mr-2"></i>Started registration process';
+
+            case 'registration_complete':
+                const regIcon = log.status === 'success' ? 'fas fa-check-circle text-green-500' : 'fas fa-exclamation-circle text-red-500';
+                const regStatus = log.status === 'success' ? '🎉 <strong>Registration completed!</strong>' : '❌ Registration failed';
+                return `<i class="${regIcon} mr-2"></i>${regStatus}`;
+
+            case 'login_method_change':
+                return `<i class="fas fa-exchange-alt text-purple-500 mr-2"></i>Changed login method to: <strong>${log.method}</strong>`;
 
             case 'click':
                 return log.url ?
-                    `Clicked on "${log.element}" → <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.url}</a>` :
-                    `Clicked on "${log.element}"`;
+                    `<i class="fas fa-mouse-pointer text-gray-500 mr-2"></i>Clicked on "${log.element}" → <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.url}</a>` :
+                    `<i class="fas fa-mouse-pointer text-gray-500 mr-2"></i>Clicked on "${log.element}"`;
 
             case 'navigation':
-                return `Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
+                return `<i class="fas fa-compass text-blue-500 mr-2"></i>Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
 
             case 'scroll':
-                return `Scrolled to position ${log.scrollPosition}px`;
+                return `<i class="fas fa-arrows-alt-v text-gray-500 mr-2"></i>Scrolled to position ${log.scrollPosition}px`;
 
             case 'search_query':
-                return `Searched for: "<strong>${log.query}</strong>"`;
+                return `<i class="fas fa-search text-blue-500 mr-2"></i>Searched for: "<strong>${log.query}</strong>"`;
 
             case 'add_to_cart':
-                return `Added ${log.quantity} item(s) to cart (Product ID: ${log.productId})`;
+                return `<i class="fas fa-shopping-cart text-green-500 mr-2"></i>Added ${log.quantity} item(s) to cart (Product ID: ${log.productId})`;
 
             case 'checkout_initiated':
-                return `Started checkout process (Cart value: UGX ${log.cartValue?.toLocaleString()})`;
+                return `<i class="fas fa-credit-card text-orange-500 mr-2"></i>Started checkout process (Cart value: UGX ${log.cartValue?.toLocaleString()})`;
 
             case 'order_placed':
-                return `Placed order ${log.orderId} (Amount: UGX ${log.amount?.toLocaleString()})`;
+                return `<i class="fas fa-check-circle text-green-500 mr-2"></i>🎉 Placed order ${log.orderId} (Amount: UGX ${log.amount?.toLocaleString()})`;
 
             case 'product_view':
-                return `Viewed product: <strong>${log.productName}</strong> (ID: ${log.productId})`;
+                return `<i class="fas fa-eye text-blue-500 mr-2"></i>Viewed product: <strong>${log.productName}</strong> (ID: ${log.productId})`;
 
             case 'filter_applied':
-                return `Applied ${log.filterType} filter: <strong>${log.filterValue}</strong>`;
+                return `<i class="fas fa-filter text-purple-500 mr-2"></i>Applied ${log.filterType} filter: <strong>${log.filterValue}</strong>`;
 
             case 'form_interaction':
-                return `Interacted with ${log.formType} form${log.step ? ` (Step: ${log.step})` : ''}${log.action ? ` - ${log.action}` : ''}`;
+                return `<i class="fas fa-edit text-blue-500 mr-2"></i>Interacted with ${log.formType} form${log.step ? ` (Step: ${log.step})` : ''}${log.action ? ` - ${log.action}` : ''}`;
 
             case 'payment_method_selected':
-                return `Selected payment method: <strong>${log.method.replace('_', ' ')}</strong>`;
-
-            case 'page_refresh':
-                return `Refreshed page: <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
+                return `<i class="fas fa-credit-card text-green-500 mr-2"></i>Selected payment method: <strong>${log.method.replace('_', ' ')}</strong>`;
 
             default:
-                return `${log.event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+                return `<i class="fas fa-info-circle text-gray-500 mr-2"></i>${log.event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
         }
     }
 
