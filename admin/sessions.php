@@ -249,7 +249,7 @@ ob_start();
         </div>
 
         <div class="flex flex-col h-[calc(100vh-80px)]">
-            <div class="flex flex-col min-h-screen bg-gray-50">
+            <div class="flex flex-col h-full bg-gray-50">
                 <div id="mobileNewEventIndicator"
                     class="hidden bg-blue-50 border-b border-blue-200 p-2 text-center sticky top-0 z-10">
                     <button onclick="scrollToBottomMobile()"
@@ -258,15 +258,15 @@ ob_start();
                         New activity available
                     </button>
                 </div>
-
-                <div id="mobileActivityFeed" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+                <div id="mobileActivityFeed"
+                    class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 h-[calc(100%-120px)]">
                     <div class="text-center py-8">
                         <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
                         <p class="text-gray-500">Loading activity feed...</p>
                     </div>
                 </div>
-
-                <div class="border-t border-gray-200 p-4 bg-white sticky bottom-0 z-10" id="mobileChatSection">
+                <div class="border-t border-gray-200 p-4 bg-white sticky bottom-0 z-10"
+                    id="mobileChatSection">
                     <div class="flex items-center gap-2">
                         <div class="flex-1">
                             <input type="text" id="mobileChatInput" placeholder="Type a message..."
