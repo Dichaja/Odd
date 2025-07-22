@@ -778,8 +778,10 @@ function getStepTitle($mode, $step)
             }, 10);
         }
 
-        if (step === 'identifier' && typeof window.sessionTracker !== 'undefined') {
-            window.sessionTracker.trackLoginModalOpen();
+        if (step === 'identifier') {
+            if (typeof window.sessionTracker !== 'undefined') {
+                window.sessionTracker.trackLoginModalOpen();
+            }
         }
     }
 
@@ -801,6 +803,37 @@ function getStepTitle($mode, $step)
         });
     }
 
+    function closeAuthModal() {
+        const m = document.getElementById('auth-modal');
+        const c = m.querySelector('.modal-container');
+
+        c.classList.remove('active');
+
+        setTimeout(() => {
+            m.classList.remove('flex');
+            m.classList.add('hidden');
+            m.style.display = '';
+            document.body.style.overflow = 'auto';
+        }, 300);
+
+        if (typeof window.sessionTracker !== 'undefined') {
+            window.sessionTracker.trackLoginModalClose();
+        }
+    }
+    function openAuthModal() {
+        const m = document.getElementById('auth-modal');
+        const c = m.querySelector('.modal-container');
+
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+
+        m.style.display = 'flex';
+
+        c.offsetHeight;
+        c.classList.add('active');
+
+        document.body.style.overflow = 'hidden';
+    }
     function showForgotPasswordOptions() {
         hideAllForms();
         const opt = document.getElementById('forgot-password-options');
@@ -1139,6 +1172,8 @@ function getStepTitle($mode, $step)
             return;
         }
 
+        trackUserEvent('login_identifier_submit', { identifier, identifierType });
+
         hideError('login-identifier-error');
         const button = document.querySelector('#login-identifier-form button');
         const originalText = button.innerHTML;
@@ -1160,17 +1195,13 @@ function getStepTitle($mode, $step)
                     loginData.userType = response.userType;
                     document.getElementById('login-identifier-display').textContent = identifier;
 
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackLoginIdentifier(identifier, 'success');
-                    }
+                    trackUserEvent('login_identifier_success', { identifier, identifierType });
 
                     showLoginStep('password');
                 } else {
                     const errorCategory = categorizeError(response.message || 'User not found', response.errorCode);
 
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackLoginIdentifier(identifier, 'failed');
-                    }
+                    trackUserEvent('login_identifier_failed', { identifier, identifierType, errorMessage: response.message || 'User not found' });
 
                     if (errorCategory === 'identifier') {
                         showError('login-identifier-error', response.message || 'User not found');
@@ -1194,20 +1225,14 @@ function getStepTitle($mode, $step)
                         hideError('login-identifier-error');
                         showEmptyPasswordOptions();
                     } else if (errorCategory === 'identifier') {
-                        if (typeof window.sessionTracker !== 'undefined') {
-                            window.sessionTracker.trackLoginIdentifier(identifier, 'failed');
-                        }
+                        trackUserEvent('login_identifier_failed', { identifier, identifierType, errorMessage: response.message || 'User not found' });
                         showError('login-identifier-error', response.message || 'User not found');
                     } else {
-                        if (typeof window.sessionTracker !== 'undefined') {
-                            window.sessionTracker.trackLoginIdentifier(identifier, 'failed');
-                        }
-                        showError('login-identifier-error', response.message || 'An error occurred');
+                        trackUserEvent('login_identifier_failed', { identifier, identifierType, errorMessage: response.message || 'An error occurred' });
+                        showError('login-identifier-error', 'Server error. Please try again later.');
                     }
                 } catch (e) {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackLoginIdentifier(identifier, 'failed');
-                    }
+                    trackUserEvent('login_identifier_failed', { identifier, identifierType, errorMessage: 'Server error' });
                     showError('login-identifier-error', 'Server error. Please try again later.');
                 }
             }
@@ -1225,6 +1250,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Logging in...';
+        trackUserEvent('login_password_submit');
         $.ajax({
             url: BASE_URL + 'auth/login',
             type: 'POST',
@@ -1240,19 +1266,15 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackLoginPassword('success');
-                    }
+                    trackUserEvent('login_password_success');
+                    trackUserEvent('login_success');
                     notifications.success('Login successful!');
                     setTimeout(() => {
                         closeAuthModal();
                     }, 1000);
                 } else {
                     const errorCategory = categorizeError(response.message || 'Invalid password', response.errorCode);
-
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackLoginPassword('failed');
-                    }
+                    trackUserEvent('login_password_failed', { errorMessage: response.message || 'Invalid password' });
 
                     if (errorCategory === 'password') {
                         showError('login-password-error', response.message || 'Invalid password');
@@ -1274,20 +1296,14 @@ function getStepTitle($mode, $step)
                         hideError('login-password-error');
                         showEmptyPasswordOptions();
                     } else if (errorCategory === 'password') {
-                        if (typeof window.sessionTracker !== 'undefined') {
-                            window.sessionTracker.trackLoginPassword('failed');
-                        }
+                        trackUserEvent('login_password_failed', { errorMessage: response.message || 'Invalid password' });
                         showError('login-password-error', response.message || 'Invalid password');
                     } else {
-                        if (typeof window.sessionTracker !== 'undefined') {
-                            window.sessionTracker.trackLoginPassword('failed');
-                        }
-                        showError('login-password-error', response.message || 'An error occurred');
+                        trackUserEvent('login_password_failed', { errorMessage: response.message || 'An error occurred' });
+                        showError('login-password-error', 'Server error. Please try again later.');
                     }
                 } catch (e) {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackLoginPassword('failed');
-                    }
+                    trackUserEvent('login_password_failed', { errorMessage: 'Server error' });
                     showError('login-password-error', 'Server error. Please try again later.');
                 }
             }
@@ -1356,6 +1372,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+        trackUserEvent('register_username_submit', { username: u });
         $.ajax({
             url: BASE_URL + 'auth/checkUsername',
             type: 'POST',
@@ -1372,8 +1389,10 @@ function getStepTitle($mode, $step)
                     document.getElementById('register-username-display-phone').textContent = u;
                     document.getElementById('register-username-display-phone-verify').textContent = u;
                     document.getElementById('register-username-display-password').textContent = u;
+                    trackUserEvent('register_username_success', { username: u });
                     showRegisterStep('email');
                 } else {
+                    trackUserEvent('register_username_failed', { username: u, errorMessage: response.message || 'Username is already taken' });
                     showError('register-username-error', response.message || 'Username is already taken');
                 }
             },
@@ -1382,8 +1401,10 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('register_username_failed', { username: u, errorMessage: response.message || 'An error occurred' });
                     showError('register-username-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('register_username_failed', { username: u, errorMessage: 'Server error' });
                     showError('register-username-error', 'Server error. Please try again later.');
                 }
             }
@@ -1405,6 +1426,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending OTP...';
+        trackUserEvent('register_email_submit', { email: e });
         $.ajax({
             url: BASE_URL + 'auth/checkEmail',
             type: 'POST',
@@ -1425,6 +1447,7 @@ function getStepTitle($mode, $step)
                             button.disabled = false;
                             button.innerHTML = originalText;
                             if (otpResponse.success) {
+                                trackUserEvent('register_email_otp_sent', { email: e });
                                 notifications.success('Verification code sent to your email');
                                 renderOtpInputs('email-otp');
                                 startOTPTimer('email-otp', 120);
@@ -1432,6 +1455,7 @@ function getStepTitle($mode, $step)
                                 $('.otp-input[data-otp-target="email-otp"]').val('');
                                 document.getElementById('email-otp').value = '';
                             } else {
+                                trackUserEvent('register_email_otp_failed', { email: e, errorMessage: otpResponse.message || 'Failed to send verification code' });
                                 showError('register-email-error', otpResponse.message || 'Failed to send verification code');
                             }
                         },
@@ -1440,8 +1464,10 @@ function getStepTitle($mode, $step)
                             button.innerHTML = originalText;
                             try {
                                 const response = JSON.parse(xhr.responseText);
+                                trackUserEvent('register_email_otp_failed', { email: e, errorMessage: response.message || 'Failed to send verification code' });
                                 showError('register-email-error', response.message || 'Failed to send verification code');
                             } catch (e) {
+                                trackUserEvent('register_email_otp_failed', { email: e, errorMessage: 'Failed to send verification code. Please try again.' });
                                 showError('register-email-error', 'Failed to send verification code. Please try again.');
                             }
                         }
@@ -1449,6 +1475,7 @@ function getStepTitle($mode, $step)
                 } else {
                     button.disabled = false;
                     button.innerHTML = originalText;
+                    trackUserEvent('register_email_check_failed', { email: e, errorMessage: response.message || 'Email is already registered' });
                     showError('register-email-error', response.message || 'Email is already registered');
                 }
             },
@@ -1457,8 +1484,10 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('register_email_check_failed', { email: e, errorMessage: response.message || 'An error occurred' });
                     showError('register-email-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('register_email_check_failed', { email: e, errorMessage: 'Server error' });
                     showError('register-email-error', 'Server error. Please try again later.');
                 }
             }
@@ -1476,6 +1505,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+        trackUserEvent('email_otp_submit', { email: registrationData.email });
         $.ajax({
             url: BASE_URL + 'auth/verifyEmailOTP',
             type: 'POST',
@@ -1486,29 +1516,24 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackOtpValidation('success');
-                    }
+                    trackUserEvent('email_otp_success');
                     notifications.success('Email verified successfully');
                     registrationData.emailVerified = true;
                     showRegisterStep('phone');
                 } else {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackOtpValidation('failed');
-                    }
+                    trackUserEvent('email_otp_failed', { errorMessage: response.message || 'Invalid verification code' });
                     showError('email-otp-error', response.message || 'Invalid verification code');
                 }
             },
             error: function (xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-                if (typeof window.sessionTracker !== 'undefined') {
-                    window.sessionTracker.trackOtpValidation('failed');
-                }
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('email_otp_failed', { errorMessage: response.message || 'An error occurred' });
                     showError('email-otp-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('email_otp_failed', { errorMessage: 'Server error' });
                     showError('email-otp-error', 'Server error. Please try again later.');
                 }
             }
@@ -1528,6 +1553,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+        trackUserEvent('register_phone_submit', { phone: pn });
         $.ajax({
             url: BASE_URL + 'auth/checkPhone',
             type: 'POST',
@@ -1548,6 +1574,7 @@ function getStepTitle($mode, $step)
                         dataType: 'json',
                         success: function (otpResponse) {
                             if (otpResponse.success) {
+                                trackUserEvent('register_phone_otp_sent', { phone: pn });
                                 notifications.success('Verification code sent to your phone');
                                 renderOtpInputs('phone-otp');
                                 startOTPTimer('phone-otp', 120);
@@ -1555,19 +1582,23 @@ function getStepTitle($mode, $step)
                                 $('.otp-input[data-otp-target="phone-otp"]').val('');
                                 document.getElementById('phone-otp').value = '';
                             } else {
+                                trackUserEvent('register_phone_otp_failed', { phone: pn, errorMessage: otpResponse.message || 'Failed to send verification code' });
                                 showError('register-phone-error', otpResponse.message || 'Failed to send verification code');
                             }
                         },
                         error: function (xhr) {
                             try {
                                 const response = JSON.parse(xhr.responseText);
+                                trackUserEvent('register_phone_otp_failed', { phone: pn, errorMessage: response.message || 'Failed to send verification code' });
                                 showError('register-phone-error', response.message || 'Failed to send verification code');
                             } catch (e) {
+                                trackUserEvent('register_phone_otp_failed', { phone: pn, errorMessage: 'Failed to send verification code. Please try again.' });
                                 showError('register-phone-error', 'Failed to send verification code. Please try again.');
                             }
                         }
                     });
                 } else {
+                    trackUserEvent('register_phone_check_failed', { phone: pn, errorMessage: response.message || 'Phone number is already registered' });
                     showError('register-phone-error', response.message || 'Phone number is already registered');
                 }
             },
@@ -1576,8 +1607,10 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('register_phone_check_failed', { phone: pn, errorMessage: response.message || 'An error occurred' });
                     showError('register-phone-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('register_phone_check_failed', { phone: pn, errorMessage: 'Server error' });
                     showError('register-phone-error', 'Server error. Please try again later.');
                 }
             }
@@ -1595,6 +1628,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+        trackUserEvent('phone_otp_submit', { phone: registrationData.phone });
         $.ajax({
             url: BASE_URL + 'auth/verifyPhoneOTP',
             type: 'POST',
@@ -1605,29 +1639,24 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackOtpValidation('success');
-                    }
+                    trackUserEvent('phone_otp_success');
                     notifications.success('Phone verified successfully');
                     registrationData.phoneVerified = true;
                     showRegisterStep('password');
                 } else {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackOtpValidation('failed');
-                    }
+                    trackUserEvent('phone_otp_failed', { errorMessage: response.message || 'Invalid verification code' });
                     showError('phone-otp-error', response.message || 'Invalid verification code');
                 }
             },
             error: function (xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-                if (typeof window.sessionTracker !== 'undefined') {
-                    window.sessionTracker.trackOtpValidation('failed');
-                }
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('phone_otp_failed', { errorMessage: response.message || 'An error occurred' });
                     showError('phone-otp-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('phone_otp_failed', { errorMessage: 'Server error' });
                     showError('phone-otp-error', 'Server error. Please try again later.');
                 }
             }
@@ -1659,6 +1688,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating account...';
+        trackUserEvent('register_password_submit');
         $.ajax({
             url: BASE_URL + 'auth/register',
             type: 'POST',
@@ -1674,11 +1704,13 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
+                    trackUserEvent('registration_complete', { status: 'success' });
                     notifications.success('Account created successfully!');
                     setTimeout(() => {
                         closeAuthModal();
                     }, 1000);
                 } else {
+                    trackUserEvent('registration_complete', { status: 'failed', errorMessage: response.message || 'Registration failed' });
                     showError('register-password-error', response.message || 'Registration failed');
                 }
             },
@@ -1687,8 +1719,10 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('registration_complete', { status: 'failed', errorMessage: response.message || 'An error occurred' });
                     showError('register-password-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('registration_complete', { status: 'failed', errorMessage: 'Server error' });
                     showError('register-password-error', 'Server error. Please try again later.');
                 }
             }
@@ -1710,6 +1744,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+        trackUserEvent('forgot_email_submit', { email: e });
         $.ajax({
             url: BASE_URL + 'auth/sendResetEmail',
             type: 'POST',
@@ -1734,6 +1769,7 @@ function getStepTitle($mode, $step)
                     $('.otp-input[data-otp-target="reset-otp"]').val('');
                     document.getElementById('reset-otp').value = '';
                 } else {
+                    trackUserEvent('forgot_email_failed', { email: e, errorMessage: response.message || 'Email not found' });
                     showError('forgot-email-error', response.message || 'Email not found');
                 }
             },
@@ -1742,8 +1778,10 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('forgot_email_failed', { email: e, errorMessage: response.message || 'An error occurred' });
                     showError('forgot-email-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('forgot_email_failed', { email: e, errorMessage: 'Server error' });
                     showError('forgot-email-error', 'Server error. Please try again later.');
                 }
             }
@@ -1763,6 +1801,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+        trackUserEvent('forgot_phone_submit', { phone: pn });
         $.ajax({
             url: BASE_URL + 'auth/sendResetPhone',
             type: 'POST',
@@ -1787,6 +1826,7 @@ function getStepTitle($mode, $step)
                     $('.otp-input[data-otp-target="reset-otp"]').val('');
                     document.getElementById('reset-otp').value = '';
                 } else {
+                    trackUserEvent('forgot_phone_failed', { phone: pn, errorMessage: response.message || 'Phone number not found' });
                     showError('forgot-phone-error', response.message || 'Phone number not found');
                 }
             },
@@ -1795,8 +1835,10 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('forgot_phone_failed', { phone: pn, errorMessage: response.message || 'An error occurred' });
                     showError('forgot-phone-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('forgot_phone_failed', { phone: pn, errorMessage: 'Server error' });
                     showError('forgot-phone-error', 'Server error. Please try again later.');
                 }
             }
@@ -1814,6 +1856,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+        trackUserEvent('reset_otp_submit', { contact: forgotPasswordData.contact, contactType: resetMethod });
         $.ajax({
             url: BASE_URL + 'auth/verifyResetOTP',
             type: 'POST',
@@ -1824,29 +1867,24 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackOtpValidation('success');
-                    }
+                    trackUserEvent('reset_otp_success');
                     notifications.success('Code verified successfully');
                     forgotPasswordData.otpVerified = true;
                     showResetPasswordForm();
                 } else {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackOtpValidation('failed');
-                    }
+                    trackUserEvent('reset_otp_failed', { errorMessage: response.message || 'Invalid verification code' });
                     showError('reset-otp-error', response.message || 'Invalid verification code');
                 }
             },
             error: function (xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-                if (typeof window.sessionTracker !== 'undefined') {
-                    window.sessionTracker.trackOtpValidation('failed');
-                }
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('reset_otp_failed', { errorMessage: response.message || 'An error occurred' });
                     showError('reset-otp-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('reset_otp_failed', { errorMessage: 'Server error' });
                     showError('reset-otp-error', 'Server error. Please try again later.');
                 }
             }
@@ -1873,6 +1911,7 @@ function getStepTitle($mode, $step)
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Resetting password...';
+        trackUserEvent('reset_password_submit');
         $.ajax({
             url: BASE_URL + 'auth/resetPassword',
             type: 'POST',
@@ -1888,31 +1927,26 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackPasswordResetComplete('success');
-                    }
+                    trackUserEvent('password_reset_completed', { status: 'success' });
                     notifications.success('Password reset successfully!');
                     setTimeout(() => {
                         showLoginStep('identifier');
                         notifications.info('Please login with your new password');
                     }, 1500);
                 } else {
-                    if (typeof window.sessionTracker !== 'undefined') {
-                        window.sessionTracker.trackPasswordResetComplete('failed');
-                    }
+                    trackUserEvent('password_reset_completed', { status: 'failed', errorMessage: response.message || 'Password reset failed' });
                     showError('reset-password-error', response.message || 'Password reset failed');
                 }
             },
             error: function (xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
-                if (typeof window.sessionTracker !== 'undefined') {
-                    window.sessionTracker.trackPasswordResetComplete('failed');
-                }
                 try {
                     const response = JSON.parse(xhr.responseText);
+                    trackUserEvent('password_reset_completed', { status: 'failed', errorMessage: response.message || 'An error occurred' });
                     showError('reset-password-error', response.message || 'An error occurred');
                 } catch (e) {
+                    trackUserEvent('password_reset_completed', { status: 'failed', errorMessage: 'Server error' });
                     showError('reset-password-error', 'Server error. Please try again later.');
                 }
             }

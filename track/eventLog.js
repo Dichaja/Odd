@@ -1,12 +1,8 @@
 $(function () {
-    const SESSION_EXPIRY = 30 * 60 * 1000;           // 30 minutes
+    const SESSION_EXPIRY = 30 * 60 * 1000;
     const STORAGE_KEY = 'session_event_log';
     const TRACKER_URL = BASE_URL + 'track/s';
 
-    /**
-     * Fetch server to see if our current sessionID has been expired/removed.
-     * If so, drop localStorage so getSession() can create a new one.
-     */
     function checkSessionExpired() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
@@ -28,11 +24,9 @@ $(function () {
                 }
             })
             .fail(() => {
-                // optionally handle error
             });
     }
 
-    // 1) Immediately check if server has already expired our session
     checkSessionExpired();
 
     function getBrowserAndDevice() {
@@ -55,7 +49,6 @@ $(function () {
             s = null;
         }
 
-        // parse ISO timestamp back to ms for expiry check
         const lastTsMs = s && s.timestamp ? Date.parse(s.timestamp) : 0;
         const expired = s && (Date.now() - lastTsMs > SESSION_EXPIRY);
 
@@ -63,7 +56,7 @@ $(function () {
             const bd = getBrowserAndDevice();
             s = {
                 sessionID: typeof SESSION_ULID !== 'undefined' ? SESSION_ULID : null,
-                timestamp: new Date().toISOString(),       // ISO string now
+                timestamp: new Date().toISOString(),
                 ipAddress: 'Fetching...',
                 country: 'Fetching...',
                 shortName: 'Fetching...',
@@ -84,12 +77,12 @@ $(function () {
         const s = getSession();
         const e = {
             event: eventName,
-            timestamp: new Date().toISOString(),         // ISO string
+            timestamp: new Date().toISOString(),
             referrer: eventName === 'page_load' ? document.referrer : undefined,
             ...details
         };
         s.logs.push(e);
-        s.timestamp = new Date().toISOString();         // ISO string
+        s.timestamp = new Date().toISOString();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
         return s;
     }
@@ -198,7 +191,6 @@ $(function () {
                     .done(loc => {
                         let s = getSession();
                         if (s.ipAddress !== 'Fetching...' && s.ipAddress !== ip) {
-                            // new IP means old session likely gone server‑side as well
                             localStorage.removeItem(STORAGE_KEY);
                             s = getSession();
                         }
@@ -219,16 +211,13 @@ $(function () {
             .fail(() => updateCoordsAndFlush());
     }
 
-    // kick off initial tracking
     fetchIPAndLog();
 
-    // backwards‑compatible alias
     window.trackUserEvent = function (eventName, details = {}) {
         const s = logEvent(eventName, details);
         sendSessionToServer(s);
     };
 
-    // full API + login‑flow convenience methods
     window.sessionTracker = {
         getSession,
         logEvent,
@@ -241,24 +230,79 @@ $(function () {
             const s = this.logEvent('login_modal_open');
             this.sendSessionToServer(s);
         },
-        trackLoginIdentifier(identifier, status) {
-            const s = this.logEvent('login_identifier', { identifier, status });
+
+        trackLoginModalClose() {
+            const s = this.logEvent('login_modal_close');
             this.sendSessionToServer(s);
         },
-        trackLoginPassword(status) {
-            const s = this.logEvent('login_password', { status });
+
+        trackFormSwitch(fromForm, toForm) {
+            const s = this.logEvent('form_switch', { fromForm, toForm });
             this.sendSessionToServer(s);
         },
+
+        trackLoginIdentifierSubmit(identifier, identifierType) {
+            const s = this.logEvent('login_identifier_submit', { identifier, identifierType });
+            this.sendSessionToServer(s);
+        },
+
+        trackLoginIdentifierSuccess(identifier, identifierType) {
+            const s = this.logEvent('login_identifier_success', { identifier, identifierType });
+            this.sendSessionToServer(s);
+        },
+
+        trackLoginIdentifierFailed(identifier, identifierType, errorMessage) {
+            const s = this.logEvent('login_identifier_failed', { identifier, identifierType, errorMessage });
+            this.sendSessionToServer(s);
+        },
+
+        trackLoginPasswordSubmit() {
+            const s = this.logEvent('login_password_submit');
+            this.sendSessionToServer(s);
+        },
+
+        trackLoginPasswordSuccess() {
+            const s = this.logEvent('login_password_success');
+            this.sendSessionToServer(s);
+        },
+
+        trackLoginPasswordFailed(errorMessage) {
+            const s = this.logEvent('login_password_failed', { errorMessage });
+            this.sendSessionToServer(s);
+        },
+
+        trackLoginSuccess() {
+            const s = this.logEvent('login_success');
+            this.sendSessionToServer(s);
+        },
+
         trackPasswordResetRequest() {
             const s = this.logEvent('password_reset_requested');
             this.sendSessionToServer(s);
         },
+
         trackOtpValidation(status) {
             const s = this.logEvent('otp_validation', { status });
             this.sendSessionToServer(s);
         },
+
         trackPasswordResetComplete(status) {
             const s = this.logEvent('password_reset_completed', { status });
+            this.sendSessionToServer(s);
+        },
+
+        trackRegistrationStart() {
+            const s = this.logEvent('registration_start');
+            this.sendSessionToServer(s);
+        },
+
+        trackRegistrationComplete(status) {
+            const s = this.logEvent('registration_complete', { status });
+            this.sendSessionToServer(s);
+        },
+
+        trackLoginMethodChange(method) {
+            const s = this.logEvent('login_method_change', { method });
             this.sendSessionToServer(s);
         }
     };
