@@ -418,6 +418,8 @@ $menuItems = [
     </div>
 
     <script>
+        const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
+
         // Sidebar toggle
         const sidebar = document.getElementById('sidebar'),
             sidebarToggle = document.getElementById('sidebarToggle'),
