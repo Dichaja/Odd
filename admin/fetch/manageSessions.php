@@ -94,7 +94,6 @@ function getCountryInfo($countryName)
     }
 
     $data = json_decode($response, true);
-
     if (!$data || !is_array($data) || empty($data)) {
         $countryCache[$countryName] = [
             'shortName' => strtoupper(substr($countryName, 0, 2)),
@@ -105,11 +104,10 @@ function getCountryInfo($countryName)
     }
 
     $country = $data[0];
-
     $countryInfo = [
         'shortName' => $country['cca2'] ?? strtoupper(substr($countryName, 0, 2)),
         'flag' => $country['flag'] ?? '🏳️',
-        'phoneCode' => isset($country['idd']['root']) && isset($country['idd']['suffixes'][0])
+        'phoneCode' => isset($country['idd']['root'], $country['idd']['suffixes'][0])
             ? $country['idd']['root'] . $country['idd']['suffixes'][0]
             : '+000'
     ];
@@ -124,8 +122,9 @@ function streamSessions()
     header('Cache-Control: no-cache');
     header('Connection: keep-alive');
 
-    $lastModified = 0;
-    $jsonFile = __DIR__ . '/../../track/session_log.json';
+    // Keep the script running even if the client disconnects
+    ignore_user_abort(true);
+    set_time_limit(0);
 
     while (true) {
         if (connection_aborted()) {
@@ -133,33 +132,29 @@ function streamSessions()
         }
 
         clearstatcache();
-        $currentModified = file_exists($jsonFile) ? filemtime($jsonFile) : 0;
+        $sessions = getSessionData();
 
-        if ($currentModified > $lastModified) {
-            $sessions = getSessionData();
-
-            if (!isset($sessions['error'])) {
-                foreach ($sessions as &$session) {
-                    if (isset($session['country'])) {
-                        $countryInfo = getCountryInfo($session['country']);
-                        $session['shortName'] = $countryInfo['shortName'];
-                        $session['flag'] = $countryInfo['flag'];
-                        if (!isset($session['phoneCode'])) {
-                            $session['phoneCode'] = $countryInfo['phoneCode'];
-                        }
+        if (!isset($sessions['error'])) {
+            foreach ($sessions as &$session) {
+                if (isset($session['country'])) {
+                    $countryInfo = getCountryInfo($session['country']);
+                    $session['shortName'] = $countryInfo['shortName'];
+                    $session['flag'] = $countryInfo['flag'];
+                    if (!isset($session['phoneCode'])) {
+                        $session['phoneCode'] = $countryInfo['phoneCode'];
                     }
                 }
             }
-
-            echo "data: " . json_encode([
-                'type' => 'sessions_update',
-                'data' => $sessions,
-                'timestamp' => time()
-            ]) . "\n\n";
-
-            $lastModified = $currentModified;
         }
 
+        // Always send sessions_update
+        echo "data: " . json_encode([
+            'type' => 'sessions_update',
+            'data' => $sessions,
+            'timestamp' => time()
+        ]) . "\n\n";
+
+        // Then send heartbeat
         echo "data: " . json_encode([
             'type' => 'heartbeat',
             'timestamp' => time()
@@ -204,18 +199,11 @@ switch ($action) {
             'timestamp' => time(),
             'stats' => !isset($sessions['error']) ? [
                 'total_sessions' => count($sessions),
-                'active_sessions' => count(array_filter($sessions, function ($s) {
-                    return $s['isActive'];
-                })),
-                'logged_users' => count(array_filter($sessions, function ($s) {
-                    return $s['loggedUser'] !== null;
-                })),
+                'active_sessions' => count(array_filter($sessions, fn($s) => $s['isActive'])),
+                'logged_users' => count(array_filter($sessions, fn($s) => $s['loggedUser'] !== null)),
                 'unique_countries' => count(array_unique(array_column($sessions, 'country'))),
-                'total_events' => array_sum(array_map(function ($s) {
-                    return count($s['logs'] ?? []);
-                }, $sessions))
+                'total_events' => array_sum(array_map(fn($s) => count($s['logs'] ?? []), $sessions))
             ] : null
         ]);
         break;
 }
-?>

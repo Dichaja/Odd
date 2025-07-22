@@ -412,7 +412,7 @@ ob_start();
                 if (!isConnected) {
                     initializeEventStream();
                 }
-            }, 5000);
+            }, 2000);
         };
     }
 
