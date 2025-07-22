@@ -265,7 +265,7 @@ ob_start();
                         <p class="text-gray-500">Loading activity feed...</p>
                     </div>
                 </div>
-                <div class="border-t border-gray-200 p-4 bg-white sticky bottom-0 z-10"
+                <div class="border-t border-gray-200 p-4 bg-white sticky bottom-0 z-10 h-[120px]"
                     id="mobileChatSection">
                     <div class="flex items-center gap-2">
                         <div class="flex-1">
