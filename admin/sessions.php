@@ -245,7 +245,7 @@ ob_start();
         </div>
 
         <div class="flex flex-col h-[calc(100vh-150px)]">
-            <div class="flex flex-col bg-gray-50">
+            <div class="flex flex-col min-h-screen bg-gray-50">
 
                 <!-- New Event Indicator -->
                 <div id="mobileNewEventIndicator"
