@@ -245,416 +245,409 @@ ob_start();
         </div>
 
         <div class="flex flex-col h-[calc(100vh-80px)]">
-            <div class="flex flex-col min-h-screen bg-gray-50">
+            <div id="mobileNewEventIndicator" class="hidden bg-blue-50 border-b border-blue-200 p-2 text-center">
+                <button onclick="scrollToBottomMobile()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <i class="fas fa-arrow-down mr-1"></i>
+                    New activity available
+                </button>
+            </div>
 
-                <!-- New Event Indicator -->
-                <div id="mobileNewEventIndicator"
-                    class="hidden bg-blue-50 border-b border-blue-200 p-2 text-center sticky top-0 z-10">
-                    <button onclick="scrollToBottomMobile()"
-                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                        <i class="fas fa-arrow-down mr-1"></i>
-                        New activity available
+            <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50" id="mobileActivityFeed">
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
+                    <p class="text-gray-500">Loading activity feed...</p>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 p-4 bg-white">
+                <div class="flex items-center gap-2">
+                    <div class="flex-1">
+                        <input type="text" id="mobileChatInput" placeholder="Type a message..."
+                            class="w-full px-3 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            maxlength="500">
+                    </div>
+                    <button id="mobileSendChatBtn"
+                        class="w-10 h-10 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-paper-plane text-sm"></i>
                     </button>
                 </div>
-
-                <!-- Activity Feed -->
-                <div id="mobileActivityFeed" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-                    <div class="text-center py-8">
-                        <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">Loading activity feed...</p>
-                    </div>
-                </div>
-
-                <!-- Chat Input -->
-                <div class="border-t border-gray-200 p-4 bg-white sticky bottom-0 z-10">
-                    <div class="flex items-center gap-2">
-                        <div class="flex-1">
-                            <input type="text" id="mobileChatInput" placeholder="Type a message..."
-                                class="w-full px-3 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                maxlength="500">
-                        </div>
-                        <button id="mobileSendChatBtn"
-                            class="w-10 h-10 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fas fa-paper-plane text-sm"></i>
-                        </button>
-                    </div>
-                    <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-                        <span>Real-time messaging</span>
-                        <span id="mobileCharCount">0/500</span>
-                    </div>
+                <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                    <span>Real-time messaging</span>
+                    <span id="mobileCharCount">0/500</span>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    <script>
-        let sessions = [];
-        let currentSessionId = null;
-        let refreshInterval = null;
-        let modalRefreshInterval = null;
-        let leafletMaps = {};
+<script>
+    let sessions = [];
+    let currentSessionId = null;
+    let refreshInterval = null;
+    let modalRefreshInterval = null;
+    let leafletMaps = {};
 
-        const countryShortNames = {
-            'Uganda': 'UG',
-            'Kenya': 'KE',
-            'Tanzania': 'TZ',
-            'Rwanda': 'RW',
-            'Burundi': 'BI',
-            'South Sudan': 'SS',
-            'Ethiopia': 'ET',
-            'Somalia': 'SO',
-            'Democratic Republic of the Congo': 'CD',
-            'Nigeria': 'NG',
-            'Ghana': 'GH',
-            'South Africa': 'ZA',
-            'Egypt': 'EG',
-            'Morocco': 'MA',
-            'Algeria': 'DZ',
-            'Tunisia': 'TN',
-            'Libya': 'LY',
-            'Sudan': 'SD',
-            'Chad': 'TD',
-            'Niger': 'NE',
-            'Mali': 'ML',
-            'Burkina Faso': 'BF',
-            'Senegal': 'SN',
-            'Guinea': 'GN',
-            'Sierra Leone': 'SL',
-            'Liberia': 'LR',
-            'Ivory Coast': 'CI',
-            'Togo': 'TG',
-            'Benin': 'BJ',
-            'Cameroon': 'CM',
-            'Central African Republic': 'CF',
-            'Equatorial Guinea': 'GQ',
-            'Gabon': 'GA',
-            'Republic of the Congo': 'CG',
-            'Angola': 'AO',
-            'Zambia': 'ZM',
-            'Malawi': 'MW',
-            'Mozambique': 'MZ',
-            'Zimbabwe': 'ZW',
-            'Botswana': 'BW',
-            'Namibia': 'NA',
-            'Lesotho': 'LS',
-            'Eswatini': 'SZ',
-            'Madagascar': 'MG',
-            'Mauritius': 'MU',
-            'Seychelles': 'SC',
-            'Comoros': 'KM',
-            'Djibouti': 'DJ',
-            'Eritrea': 'ER'
-        };
+    const countryShortNames = {
+        'Uganda': 'UG',
+        'Kenya': 'KE',
+        'Tanzania': 'TZ',
+        'Rwanda': 'RW',
+        'Burundi': 'BI',
+        'South Sudan': 'SS',
+        'Ethiopia': 'ET',
+        'Somalia': 'SO',
+        'Democratic Republic of the Congo': 'CD',
+        'Nigeria': 'NG',
+        'Ghana': 'GH',
+        'South Africa': 'ZA',
+        'Egypt': 'EG',
+        'Morocco': 'MA',
+        'Algeria': 'DZ',
+        'Tunisia': 'TN',
+        'Libya': 'LY',
+        'Sudan': 'SD',
+        'Chad': 'TD',
+        'Niger': 'NE',
+        'Mali': 'ML',
+        'Burkina Faso': 'BF',
+        'Senegal': 'SN',
+        'Guinea': 'GN',
+        'Sierra Leone': 'SL',
+        'Liberia': 'LR',
+        'Ivory Coast': 'CI',
+        'Togo': 'TG',
+        'Benin': 'BJ',
+        'Cameroon': 'CM',
+        'Central African Republic': 'CF',
+        'Equatorial Guinea': 'GQ',
+        'Gabon': 'GA',
+        'Republic of the Congo': 'CG',
+        'Angola': 'AO',
+        'Zambia': 'ZM',
+        'Malawi': 'MW',
+        'Mozambique': 'MZ',
+        'Zimbabwe': 'ZW',
+        'Botswana': 'BW',
+        'Namibia': 'NA',
+        'Lesotho': 'LS',
+        'Eswatini': 'SZ',
+        'Madagascar': 'MG',
+        'Mauritius': 'MU',
+        'Seychelles': 'SC',
+        'Comoros': 'KM',
+        'Djibouti': 'DJ',
+        'Eritrea': 'ER'
+    };
 
-        const simulatedSessions = [
-            {
-                "sessionID": "01k0rk412rc7nxbj7r3qhjszz7",
-                "timestamp": Date.now() - 300000,
-                "ipAddress": "197.239.10.70",
-                "country": "Uganda",
-                "shortName": "ug",
-                "phoneCode": "+256",
-                "browser": "Chrome",
-                "device": "desktop",
-                "coords": {
-                    "latitude": 0.3244032,
-                    "longitude": 32.571392
-                },
-                "loggedUser": "john_doe",
-                "logs": [
-                    {
-                        "event": "page_load",
-                        "timestamp": new Date(Date.now() - 300000).toISOString(),
-                        "referrer": "",
-                        "url": "http://localhost/newzzimba/",
-                        "activeNavigation": "home",
-                        "pageTitle": "Zzimba Online Uganda"
-                    },
-                    {
-                        "event": "scroll",
-                        "timestamp": new Date(Date.now() - 295000).toISOString(),
-                        "scrollPosition": 250
-                    },
-                    {
-                        "event": "click",
-                        "timestamp": new Date(Date.now() - 290000).toISOString(),
-                        "element": "About Us Link",
-                        "url": "http://localhost/newzzimba/about"
-                    },
-                    {
-                        "event": "page_load",
-                        "timestamp": new Date(Date.now() - 285000).toISOString(),
-                        "referrer": "http://localhost/newzzimba/",
-                        "url": "http://localhost/newzzimba/about",
-                        "activeNavigation": "about",
-                        "pageTitle": "About Us - Zzimba Online"
-                    },
-                    {
-                        "event": "login_modal_open",
-                        "timestamp": new Date(Date.now() - 280000).toISOString()
-                    },
-                    {
-                        "event": "login_identifier",
-                        "timestamp": new Date(Date.now() - 275000).toISOString(),
-                        "identifier": "+256712345678",
-                        "status": "passed"
-                    },
-                    {
-                        "event": "login_password",
-                        "timestamp": new Date(Date.now() - 270000).toISOString(),
-                        "status": "failed"
-                    },
-                    {
-                        "event": "login_password",
-                        "timestamp": new Date(Date.now() - 265000).toISOString(),
-                        "status": "passed"
-                    },
-                    {
-                        "event": "navigation",
-                        "timestamp": new Date(Date.now() - 260000).toISOString(),
-                        "url": "http://localhost/newzzimba/dashboard",
-                        "pageTitle": "Dashboard - Zzimba Online"
-                    },
-                    {
-                        "event": "form_interaction",
-                        "timestamp": new Date(Date.now() - 255000).toISOString(),
-                        "formType": "search",
-                        "action": "focus"
-                    },
-                    {
-                        "event": "search_query",
-                        "timestamp": new Date(Date.now() - 250000).toISOString(),
-                        "query": "building materials"
-                    },
-                    {
-                        "event": "click",
-                        "timestamp": new Date(Date.now() - 30000).toISOString(),
-                        "element": "Product Card",
-                        "productId": "cement_001"
-                    }
-                ]
+    const simulatedSessions = [
+        {
+            "sessionID": "01k0rk412rc7nxbj7r3qhjszz7",
+            "timestamp": Date.now() - 300000,
+            "ipAddress": "197.239.10.70",
+            "country": "Uganda",
+            "shortName": "ug",
+            "phoneCode": "+256",
+            "browser": "Chrome",
+            "device": "desktop",
+            "coords": {
+                "latitude": 0.3244032,
+                "longitude": 32.571392
             },
-            {
-                "sessionID": "02m1sl523sd8oyck8s4rijt008",
-                "timestamp": Date.now() - 180000,
-                "ipAddress": "102.165.45.123",
-                "country": "Kenya",
-                "shortName": "ke",
-                "phoneCode": "+254",
-                "browser": "Safari",
-                "device": "mobile",
-                "coords": {
-                    "latitude": -1.286389,
-                    "longitude": 36.817223
+            "loggedUser": "john_doe",
+            "logs": [
+                {
+                    "event": "page_load",
+                    "timestamp": new Date(Date.now() - 300000).toISOString(),
+                    "referrer": "",
+                    "url": "http://localhost/newzzimba/",
+                    "activeNavigation": "home",
+                    "pageTitle": "Zzimba Online Uganda"
                 },
-                "loggedUser": "mary_smith",
-                "logs": [
-                    {
-                        "event": "page_load",
-                        "timestamp": new Date(Date.now() - 180000).toISOString(),
-                        "url": "http://localhost/newzzimba/products",
-                        "pageTitle": "Products - Zzimba Online"
-                    },
-                    {
-                        "event": "filter_applied",
-                        "timestamp": new Date(Date.now() - 175000).toISOString(),
-                        "filterType": "category",
-                        "filterValue": "cement"
-                    },
-                    {
-                        "event": "product_view",
-                        "timestamp": new Date(Date.now() - 170000).toISOString(),
-                        "productId": "cement_premium_001",
-                        "productName": "Premium Cement 50kg"
-                    },
-                    {
-                        "event": "add_to_cart",
-                        "timestamp": new Date(Date.now() - 165000).toISOString(),
-                        "productId": "cement_premium_001",
-                        "quantity": 10
-                    },
-                    {
-                        "event": "navigation",
-                        "timestamp": new Date(Date.now() - 160000).toISOString(),
-                        "url": "http://localhost/newzzimba/cart",
-                        "pageTitle": "Shopping Cart - Zzimba Online"
-                    },
-                    {
-                        "event": "checkout_initiated",
-                        "timestamp": new Date(Date.now() - 155000).toISOString(),
-                        "cartValue": 450000
-                    },
-                    {
-                        "event": "form_interaction",
-                        "timestamp": new Date(Date.now() - 150000).toISOString(),
-                        "formType": "checkout",
-                        "step": "delivery_address"
-                    },
-                    {
-                        "event": "payment_method_selected",
-                        "timestamp": new Date(Date.now() - 145000).toISOString(),
-                        "method": "mobile_money"
-                    },
-                    {
-                        "event": "order_placed",
-                        "timestamp": new Date(Date.now() - 140000).toISOString(),
-                        "orderId": "ORD_2025_001234",
-                        "amount": 450000
-                    },
-                    {
-                        "event": "page_load",
-                        "timestamp": new Date(Date.now() - 15000).toISOString(),
-                        "url": "http://localhost/newzzimba/order-confirmation",
-                        "pageTitle": "Order Confirmation - Zzimba Online"
-                    }
-                ]
-            }
-        ];
-
-        document.addEventListener('DOMContentLoaded', function () {
-            loadSessions();
-            setupEventListeners();
-            startAutoRefresh();
-            document.getElementById('sessionModal').classList.add('hidden');
-            document.getElementById('mobileSessionModal').classList.add('hidden');
-            document.body.style.overflow = '';
-        });
-
-        function setupEventListeners() {
-            document.getElementById('refreshBtn').addEventListener('click', refreshSessions);
-            document.getElementById('searchFilter').addEventListener('input', debounce(filterSessions, 300));
-            document.getElementById('countryFilter').addEventListener('change', filterSessions);
-
-            const chatInput = document.getElementById('chatInput');
-            const sendBtn = document.getElementById('sendChatBtn');
-            const charCount = document.getElementById('charCount');
-
-            if (chatInput && sendBtn && charCount) {
-                chatInput.addEventListener('input', function () {
-                    const length = this.value.length;
-                    charCount.textContent = `${length}/500`;
-                    sendBtn.disabled = length === 0;
-                });
-
-                chatInput.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendChatMessage();
-                    }
-                });
-
-                sendBtn.addEventListener('click', sendChatMessage);
-            }
-
-            const mobileChatInput = document.getElementById('mobileChatInput');
-            const mobileSendBtn = document.getElementById('mobileSendChatBtn');
-            const mobileCharCount = document.getElementById('mobileCharCount');
-
-            if (mobileChatInput && mobileSendBtn && mobileCharCount) {
-                mobileChatInput.addEventListener('input', function () {
-                    const length = this.value.length;
-                    mobileCharCount.textContent = `${length}/500`;
-                    mobileSendBtn.disabled = length === 0;
-                });
-
-                mobileChatInput.addEventListener('keypress', function (e) {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMobileChatMessage();
-                    }
-                });
-
-                mobileSendBtn.addEventListener('click', sendMobileChatMessage);
-            }
-        }
-
-        function startAutoRefresh() {
-            refreshInterval = setInterval(() => {
-                loadSessions();
-            }, 5000);
-        }
-
-        function stopAutoRefresh() {
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-                refreshInterval = null;
-            }
-        }
-
-        function startModalRefresh() {
-            modalRefreshInterval = setInterval(() => {
-                if (currentSessionId) {
-                    if (window.innerWidth < 1024) {
-                        loadMobileSessionDetails(currentSessionId, false);
-                    } else {
-                        loadSessionDetails(currentSessionId, false);
-                    }
+                {
+                    "event": "scroll",
+                    "timestamp": new Date(Date.now() - 295000).toISOString(),
+                    "scrollPosition": 250
+                },
+                {
+                    "event": "click",
+                    "timestamp": new Date(Date.now() - 290000).toISOString(),
+                    "element": "About Us Link",
+                    "url": "http://localhost/newzzimba/about"
+                },
+                {
+                    "event": "page_load",
+                    "timestamp": new Date(Date.now() - 285000).toISOString(),
+                    "referrer": "http://localhost/newzzimba/",
+                    "url": "http://localhost/newzzimba/about",
+                    "activeNavigation": "about",
+                    "pageTitle": "About Us - Zzimba Online"
+                },
+                {
+                    "event": "login_modal_open",
+                    "timestamp": new Date(Date.now() - 280000).toISOString()
+                },
+                {
+                    "event": "login_identifier",
+                    "timestamp": new Date(Date.now() - 275000).toISOString(),
+                    "identifier": "+256712345678",
+                    "status": "passed"
+                },
+                {
+                    "event": "login_password",
+                    "timestamp": new Date(Date.now() - 270000).toISOString(),
+                    "status": "failed"
+                },
+                {
+                    "event": "login_password",
+                    "timestamp": new Date(Date.now() - 265000).toISOString(),
+                    "status": "passed"
+                },
+                {
+                    "event": "navigation",
+                    "timestamp": new Date(Date.now() - 260000).toISOString(),
+                    "url": "http://localhost/newzzimba/dashboard",
+                    "pageTitle": "Dashboard - Zzimba Online"
+                },
+                {
+                    "event": "form_interaction",
+                    "timestamp": new Date(Date.now() - 255000).toISOString(),
+                    "formType": "search",
+                    "action": "focus"
+                },
+                {
+                    "event": "search_query",
+                    "timestamp": new Date(Date.now() - 250000).toISOString(),
+                    "query": "building materials"
+                },
+                {
+                    "event": "click",
+                    "timestamp": new Date(Date.now() - 30000).toISOString(),
+                    "element": "Product Card",
+                    "productId": "cement_001"
                 }
-            }, 5000);
+            ]
+        },
+        {
+            "sessionID": "02m1sl523sd8oyck8s4rijt008",
+            "timestamp": Date.now() - 180000,
+            "ipAddress": "102.165.45.123",
+            "country": "Kenya",
+            "shortName": "ke",
+            "phoneCode": "+254",
+            "browser": "Safari",
+            "device": "mobile",
+            "coords": {
+                "latitude": -1.286389,
+                "longitude": 36.817223
+            },
+            "loggedUser": "mary_smith",
+            "logs": [
+                {
+                    "event": "page_load",
+                    "timestamp": new Date(Date.now() - 180000).toISOString(),
+                    "url": "http://localhost/newzzimba/products",
+                    "pageTitle": "Products - Zzimba Online"
+                },
+                {
+                    "event": "filter_applied",
+                    "timestamp": new Date(Date.now() - 175000).toISOString(),
+                    "filterType": "category",
+                    "filterValue": "cement"
+                },
+                {
+                    "event": "product_view",
+                    "timestamp": new Date(Date.now() - 170000).toISOString(),
+                    "productId": "cement_premium_001",
+                    "productName": "Premium Cement 50kg"
+                },
+                {
+                    "event": "add_to_cart",
+                    "timestamp": new Date(Date.now() - 165000).toISOString(),
+                    "productId": "cement_premium_001",
+                    "quantity": 10
+                },
+                {
+                    "event": "navigation",
+                    "timestamp": new Date(Date.now() - 160000).toISOString(),
+                    "url": "http://localhost/newzzimba/cart",
+                    "pageTitle": "Shopping Cart - Zzimba Online"
+                },
+                {
+                    "event": "checkout_initiated",
+                    "timestamp": new Date(Date.now() - 155000).toISOString(),
+                    "cartValue": 450000
+                },
+                {
+                    "event": "form_interaction",
+                    "timestamp": new Date(Date.now() - 150000).toISOString(),
+                    "formType": "checkout",
+                    "step": "delivery_address"
+                },
+                {
+                    "event": "payment_method_selected",
+                    "timestamp": new Date(Date.now() - 145000).toISOString(),
+                    "method": "mobile_money"
+                },
+                {
+                    "event": "order_placed",
+                    "timestamp": new Date(Date.now() - 140000).toISOString(),
+                    "orderId": "ORD_2025_001234",
+                    "amount": 450000
+                },
+                {
+                    "event": "page_load",
+                    "timestamp": new Date(Date.now() - 15000).toISOString(),
+                    "url": "http://localhost/newzzimba/order-confirmation",
+                    "pageTitle": "Order Confirmation - Zzimba Online"
+                }
+            ]
         }
+    ];
 
-        function stopModalRefresh() {
-            if (modalRefreshInterval) {
-                clearInterval(modalRefreshInterval);
-                modalRefreshInterval = null;
-            }
-        }
+    document.addEventListener('DOMContentLoaded', function () {
+        loadSessions();
+        setupEventListeners();
+        startAutoRefresh();
+        document.getElementById('sessionModal').classList.add('hidden');
+        document.getElementById('mobileSessionModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    });
 
-        async function loadSessions() {
-            try {
-                sessions = simulatedSessions;
-                updateStatistics();
-                renderSessionsTable();
-                renderSessionsCards();
-                updateCountryFilter();
-            } catch (error) {
-                console.error('Error loading sessions:', error);
-                showError('Failed to load sessions');
-            }
-        }
+    function setupEventListeners() {
+        document.getElementById('refreshBtn').addEventListener('click', refreshSessions);
+        document.getElementById('searchFilter').addEventListener('input', debounce(filterSessions, 300));
+        document.getElementById('countryFilter').addEventListener('change', filterSessions);
 
-        function updateStatistics() {
-            const activeSessions = sessions.length;
-            const loggedUsers = sessions.filter(s => s.loggedUser !== null).length;
-            const uniqueCountries = [...new Set(sessions.map(s => s.country))].length;
-            const totalEvents = sessions.reduce((sum, s) => sum + (s.logs ? s.logs.length : 0), 0);
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendChatBtn');
+        const charCount = document.getElementById('charCount');
 
-            document.getElementById('activeSessions').textContent = activeSessions.toLocaleString();
-            document.getElementById('loggedUsers').textContent = loggedUsers.toLocaleString();
-            document.getElementById('uniqueCountries').textContent = uniqueCountries.toLocaleString();
-            document.getElementById('totalEvents').textContent = totalEvents.toLocaleString();
-        }
-
-        function updateCountryFilter() {
-            const countryFilter = document.getElementById('countryFilter');
-            const countries = [...new Set(sessions.map(s => s.country))].sort();
-
-            const currentValue = countryFilter.value;
-
-            countryFilter.innerHTML = '<option value="all">All Countries</option>';
-            countries.forEach(country => {
-                const option = document.createElement('option');
-                option.value = country;
-                option.textContent = country;
-                countryFilter.appendChild(option);
+        if (chatInput && sendBtn && charCount) {
+            chatInput.addEventListener('input', function () {
+                const length = this.value.length;
+                charCount.textContent = `${length}/500`;
+                sendBtn.disabled = length === 0;
             });
 
-            if (countries.includes(currentValue)) {
-                countryFilter.value = currentValue;
-            }
+            chatInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendChatMessage();
+                }
+            });
+
+            sendBtn.addEventListener('click', sendChatMessage);
         }
 
-        function renderSessionsTable() {
-            const tbody = document.getElementById('sessionsBody');
+        const mobileChatInput = document.getElementById('mobileChatInput');
+        const mobileSendBtn = document.getElementById('mobileSendChatBtn');
+        const mobileCharCount = document.getElementById('mobileCharCount');
 
-            if (sessions.length === 0) {
-                tbody.innerHTML = `
+        if (mobileChatInput && mobileSendBtn && mobileCharCount) {
+            mobileChatInput.addEventListener('input', function () {
+                const length = this.value.length;
+                mobileCharCount.textContent = `${length}/500`;
+                mobileSendBtn.disabled = length === 0;
+            });
+
+            mobileChatInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMobileChatMessage();
+                }
+            });
+
+            mobileSendBtn.addEventListener('click', sendMobileChatMessage);
+        }
+    }
+
+    function startAutoRefresh() {
+        refreshInterval = setInterval(() => {
+            loadSessions();
+        }, 5000);
+    }
+
+    function stopAutoRefresh() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+    }
+
+    function startModalRefresh() {
+        modalRefreshInterval = setInterval(() => {
+            if (currentSessionId) {
+                if (window.innerWidth < 1024) {
+                    loadMobileSessionDetails(currentSessionId, false);
+                } else {
+                    loadSessionDetails(currentSessionId, false);
+                }
+            }
+        }, 5000);
+    }
+
+    function stopModalRefresh() {
+        if (modalRefreshInterval) {
+            clearInterval(modalRefreshInterval);
+            modalRefreshInterval = null;
+        }
+    }
+
+    async function loadSessions() {
+        try {
+            sessions = simulatedSessions;
+            updateStatistics();
+            renderSessionsTable();
+            renderSessionsCards();
+            updateCountryFilter();
+        } catch (error) {
+            console.error('Error loading sessions:', error);
+            showError('Failed to load sessions');
+        }
+    }
+
+    function updateStatistics() {
+        const activeSessions = sessions.length;
+        const loggedUsers = sessions.filter(s => s.loggedUser !== null).length;
+        const uniqueCountries = [...new Set(sessions.map(s => s.country))].length;
+        const totalEvents = sessions.reduce((sum, s) => sum + (s.logs ? s.logs.length : 0), 0);
+
+        document.getElementById('activeSessions').textContent = activeSessions.toLocaleString();
+        document.getElementById('loggedUsers').textContent = loggedUsers.toLocaleString();
+        document.getElementById('uniqueCountries').textContent = uniqueCountries.toLocaleString();
+        document.getElementById('totalEvents').textContent = totalEvents.toLocaleString();
+    }
+
+    function updateCountryFilter() {
+        const countryFilter = document.getElementById('countryFilter');
+        const countries = [...new Set(sessions.map(s => s.country))].sort();
+
+        const currentValue = countryFilter.value;
+
+        countryFilter.innerHTML = '<option value="all">All Countries</option>';
+        countries.forEach(country => {
+            const option = document.createElement('option');
+            option.value = country;
+            option.textContent = country;
+            countryFilter.appendChild(option);
+        });
+
+        if (countries.includes(currentValue)) {
+            countryFilter.value = currentValue;
+        }
+    }
+
+    function renderSessionsTable() {
+        const tbody = document.getElementById('sessionsBody');
+
+        if (sessions.length === 0) {
+            tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="px-4 py-8 text-center text-gray-500">
                         <i class="fas fa-users text-2xl mb-2"></i>
@@ -662,19 +655,19 @@ ob_start();
                     </td>
                 </tr>
             `;
-                return;
-            }
+            return;
+        }
 
-            let filteredSessions = filterSessionsData();
-            filteredSessions.sort((a, b) => getLastActivity(b) - getLastActivity(a));
+        let filteredSessions = filterSessionsData();
+        filteredSessions.sort((a, b) => getLastActivity(b) - getLastActivity(a));
 
-            tbody.innerHTML = filteredSessions.map(session => {
-                const lastActivity = getLastActivity(session);
-                const timeAgo = getTimeAgo(lastActivity);
-                const displayName = session.loggedUser ? session.loggedUser : session.sessionID;
-                const deviceIcon = getDeviceIcon(session.device);
+        tbody.innerHTML = filteredSessions.map(session => {
+            const lastActivity = getLastActivity(session);
+            const timeAgo = getTimeAgo(lastActivity);
+            const displayName = session.loggedUser ? session.loggedUser : session.sessionID;
+            const deviceIcon = getDeviceIcon(session.device);
 
-                return `
+            return `
                 <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewSessionDetails('${session.sessionID}')">
                     <td class="px-4 py-3 whitespace-nowrap">
                         <div class="flex items-center">
@@ -702,13 +695,13 @@ ob_start();
                     </td>
                     <td class="px-4 py-3 text-center whitespace-nowrap">
                         ${session.loggedUser ?
-                        `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 <i class="fas fa-user-check mr-1"></i>Logged In
                             </span>` :
-                        `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                 <i class="fas fa-globe mr-1"></i>Guest
                             </span>`
-                    }
+                }
                     </td>
                     <td class="px-4 py-3 text-center whitespace-nowrap">
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -721,33 +714,33 @@ ob_start();
                     </td>
                 </tr>
             `;
-            }).join('');
-        }
+        }).join('');
+    }
 
-        function renderSessionsCards() {
-            const container = document.getElementById('sessionsCards');
+    function renderSessionsCards() {
+        const container = document.getElementById('sessionsCards');
 
-            if (sessions.length === 0) {
-                container.innerHTML = `
+        if (sessions.length === 0) {
+            container.innerHTML = `
                 <div class="p-4 text-center text-gray-500">
                     <i class="fas fa-users text-2xl mb-2"></i>
                     <div>No active sessions found</div>
                 </div>
             `;
-                return;
-            }
+            return;
+        }
 
-            let filteredSessions = filterSessionsData();
-            filteredSessions.sort((a, b) => getLastActivity(b) - getLastActivity(a));
+        let filteredSessions = filterSessionsData();
+        filteredSessions.sort((a, b) => getLastActivity(b) - getLastActivity(a));
 
-            container.innerHTML = filteredSessions.map(session => {
-                const lastActivity = getLastActivity(session);
-                const timeAgo = getTimeAgo(lastActivity);
-                const displayName = session.loggedUser ? `${session.loggedUser}` : `${session.sessionID.substring(0, 6)}...`;
-                const deviceIcon = getDeviceIcon(session.device);
-                const countryDisplay = countryShortNames[session.country] || session.country;
+        container.innerHTML = filteredSessions.map(session => {
+            const lastActivity = getLastActivity(session);
+            const timeAgo = getTimeAgo(lastActivity);
+            const displayName = session.loggedUser ? `${session.loggedUser}` : `${session.sessionID.substring(0, 6)}...`;
+            const deviceIcon = getDeviceIcon(session.device);
+            const countryDisplay = countryShortNames[session.country] || session.country;
 
-                return `
+            return `
                 <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewSessionDetails('${session.sessionID}')">
                     <div class="flex items-start gap-3">
                         <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -769,13 +762,13 @@ ob_start();
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     ${session.loggedUser ?
-                        `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                             <i class="fas fa-user-check mr-1"></i>Logged In
                                         </span>` :
-                        `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                             <i class="fas fa-globe mr-1"></i>Guest
                                         </span>`
-                    }
+                }
                                 </div>
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     ${session.logs ? session.logs.length : 0} events
@@ -785,102 +778,102 @@ ob_start();
                     </div>
                 </div>
             `;
-            }).join('');
+        }).join('');
+    }
+
+    function filterSessionsData() {
+        const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
+        const countryFilter = document.getElementById('countryFilter').value;
+
+        return sessions.filter(session => {
+            const matchesSearch = !searchTerm ||
+                session.sessionID.toLowerCase().includes(searchTerm) ||
+                session.ipAddress.includes(searchTerm) ||
+                session.country.toLowerCase().includes(searchTerm) ||
+                session.browser.toLowerCase().includes(searchTerm) ||
+                (session.loggedUser && session.loggedUser.toLowerCase().includes(searchTerm));
+
+            const matchesCountry = countryFilter === 'all' || session.country === countryFilter;
+
+            return matchesSearch && matchesCountry;
+        });
+    }
+
+    function filterSessions() {
+        renderSessionsTable();
+        renderSessionsCards();
+    }
+
+    function getLastActivity(session) {
+        if (!session.logs || session.logs.length === 0) {
+            return session.timestamp;
         }
 
-        function filterSessionsData() {
-            const searchTerm = document.getElementById('searchFilter').value.toLowerCase();
-            const countryFilter = document.getElementById('countryFilter').value;
+        const lastLog = session.logs[session.logs.length - 1];
+        return new Date(lastLog.timestamp).getTime();
+    }
 
-            return sessions.filter(session => {
-                const matchesSearch = !searchTerm ||
-                    session.sessionID.toLowerCase().includes(searchTerm) ||
-                    session.ipAddress.includes(searchTerm) ||
-                    session.country.toLowerCase().includes(searchTerm) ||
-                    session.browser.toLowerCase().includes(searchTerm) ||
-                    (session.loggedUser && session.loggedUser.toLowerCase().includes(searchTerm));
+    function getTimeAgo(timestamp) {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
 
-                const matchesCountry = countryFilter === 'all' || session.country === countryFilter;
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        return `${days}d ago`;
+    }
 
-                return matchesSearch && matchesCountry;
-            });
+    function formatTime(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    function formatDateTime(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    function viewSessionDetails(sessionId) {
+        currentSessionId = sessionId;
+
+        if (window.innerWidth < 1024) {
+            document.getElementById('mobileSessionModal').classList.remove('hidden');
+            loadMobileSessionDetails(sessionId, true);
+        } else {
+            document.getElementById('sessionModal').classList.remove('hidden');
+            loadSessionDetails(sessionId, true);
         }
 
-        function filterSessions() {
-            renderSessionsTable();
-            renderSessionsCards();
+        document.body.style.overflow = 'hidden';
+        startModalRefresh();
+    }
+
+    function loadSessionDetails(sessionId, isInitialLoad = false) {
+        const session = sessions.find(s => s.sessionID === sessionId);
+        if (!session) return;
+
+        if (isInitialLoad) {
+            document.getElementById('modalTitle').textContent = `Session: ${sessionId}`;
+            document.getElementById('modalSubtitle').textContent = `${session.country} • ${session.browser} • ${session.device}`;
         }
 
-        function getLastActivity(session) {
-            if (!session.logs || session.logs.length === 0) {
-                return session.timestamp;
-            }
-
-            const lastLog = session.logs[session.logs.length - 1];
-            return new Date(lastLog.timestamp).getTime();
-        }
-
-        function getTimeAgo(timestamp) {
-            const now = Date.now();
-            const diff = now - timestamp;
-            const minutes = Math.floor(diff / 60000);
-            const hours = Math.floor(diff / 3600000);
-            const days = Math.floor(diff / 86400000);
-
-            if (minutes < 1) return 'Just now';
-            if (minutes < 60) return `${minutes}m ago`;
-            if (hours < 24) return `${hours}h ago`;
-            return `${days}d ago`;
-        }
-
-        function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
-        }
-
-        function formatDateTime(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
-        }
-
-        function viewSessionDetails(sessionId) {
-            currentSessionId = sessionId;
-
-            if (window.innerWidth < 1024) {
-                document.getElementById('mobileSessionModal').classList.remove('hidden');
-                loadMobileSessionDetails(sessionId, true);
-            } else {
-                document.getElementById('sessionModal').classList.remove('hidden');
-                loadSessionDetails(sessionId, true);
-            }
-
-            document.body.style.overflow = 'hidden';
-            startModalRefresh();
-        }
-
-        function loadSessionDetails(sessionId, isInitialLoad = false) {
-            const session = sessions.find(s => s.sessionID === sessionId);
-            if (!session) return;
-
-            if (isInitialLoad) {
-                document.getElementById('modalTitle').textContent = `Session: ${sessionId}`;
-                document.getElementById('modalSubtitle').textContent = `${session.country} • ${session.browser} • ${session.device}`;
-            }
-
-            if (isInitialLoad) {
-                const sessionInfo = document.getElementById('sessionInfo');
-                sessionInfo.innerHTML = `
+        if (isInitialLoad) {
+            const sessionInfo = document.getElementById('sessionInfo');
+            sessionInfo.innerHTML = `
             <div class="bg-white rounded-lg p-3 sm:p-4 border border-gray-200 mb-3 sm:mb-4">
                 <h4 class="font-semibold text-gray-900 mb-3 text-sm sm:text-base">Session Details</h4>
                 <div class="space-y-2 text-xs sm:text-sm">
@@ -913,9 +906,9 @@ ob_start();
                     <div class="flex justify-between">
                         <span class="text-gray-600">User Status:</span>
                         ${session.loggedUser ?
-                        '<span class="text-green-600 font-medium">Logged In</span>' :
-                        '<span class="text-gray-600">Guest</span>'
-                    }
+                    '<span class="text-green-600 font-medium">Logged In</span>' :
+                    '<span class="text-gray-600">Guest</span>'
+                }
                     </div>
                 </div>
             </div>
@@ -935,29 +928,29 @@ ob_start();
             ` : ''}
         `;
 
-                if (session.coords) {
-                    setTimeout(() => initLeafletMap(sessionId, session.coords), 100);
-                }
+            if (session.coords) {
+                setTimeout(() => initLeafletMap(sessionId, session.coords), 100);
             }
+        }
 
-            const activityFeed = document.getElementById('activityFeed');
-            const wasAtBottom = activityFeed.scrollTop + activityFeed.clientHeight >= activityFeed.scrollHeight - 5;
+        const activityFeed = document.getElementById('activityFeed');
+        const wasAtBottom = activityFeed.scrollTop + activityFeed.clientHeight >= activityFeed.scrollHeight - 5;
 
-            if (!session.logs || session.logs.length === 0) {
-                activityFeed.innerHTML = `
+        if (!session.logs || session.logs.length === 0) {
+            activityFeed.innerHTML = `
                 <div class="text-center py-8">
                     <i class="fas fa-clock text-2xl text-gray-400 mb-2"></i>
                     <p class="text-gray-500">No activity recorded yet</p>
                 </div>
             `;
-                return;
-            }
+            return;
+        }
 
-            const sortedLogs = [...session.logs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        const sortedLogs = [...session.logs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-            activityFeed.innerHTML = sortedLogs.map((log, index) => {
-                const isLatest = index === sortedLogs.length - 1;
-                return `
+        activityFeed.innerHTML = sortedLogs.map((log, index) => {
+            const isLatest = index === sortedLogs.length - 1;
+            return `
                 <div class="flex gap-3">
                     <div class="flex-shrink-0">
                         <div class="w-8 h-8 rounded-full ${session.loggedUser ? 'bg-gray-400' : 'bg-gray-500'} flex items-center justify-center">
@@ -977,43 +970,43 @@ ob_start();
                     </div>
                 </div>
             `;
-            }).join('');
+        }).join('');
 
-            if (!isInitialLoad && !wasAtBottom) {
-                document.getElementById('newEventIndicator').classList.remove('hidden');
-            } else if (wasAtBottom) {
-                activityFeed.scrollTop = activityFeed.scrollHeight;
-                document.getElementById('newEventIndicator').classList.add('hidden');
-            }
+        if (!isInitialLoad && !wasAtBottom) {
+            document.getElementById('newEventIndicator').classList.remove('hidden');
+        } else if (wasAtBottom) {
+            activityFeed.scrollTop = activityFeed.scrollHeight;
+            document.getElementById('newEventIndicator').classList.add('hidden');
+        }
+    }
+
+    function loadMobileSessionDetails(sessionId, isInitialLoad = false) {
+        const session = sessions.find(s => s.sessionID === sessionId);
+        if (!session) return;
+
+        if (isInitialLoad) {
+            document.getElementById('mobileModalTitle').textContent = session.loggedUser ? session.loggedUser : `${sessionId.substring(0, 8)}...`;
+            document.getElementById('mobileModalSubtitle').textContent = `${countryShortNames[session.country] || session.country} • ${session.browser}`;
         }
 
-        function loadMobileSessionDetails(sessionId, isInitialLoad = false) {
-            const session = sessions.find(s => s.sessionID === sessionId);
-            if (!session) return;
+        const mobileActivityFeed = document.getElementById('mobileActivityFeed');
+        const wasAtBottom = mobileActivityFeed.scrollTop + mobileActivityFeed.clientHeight >= mobileActivityFeed.scrollHeight - 5;
 
-            if (isInitialLoad) {
-                document.getElementById('mobileModalTitle').textContent = session.loggedUser ? session.loggedUser : `${sessionId.substring(0, 8)}...`;
-                document.getElementById('mobileModalSubtitle').textContent = `${countryShortNames[session.country] || session.country} • ${session.browser}`;
-            }
-
-            const mobileActivityFeed = document.getElementById('mobileActivityFeed');
-            const wasAtBottom = mobileActivityFeed.scrollTop + mobileActivityFeed.clientHeight >= mobileActivityFeed.scrollHeight - 5;
-
-            if (!session.logs || session.logs.length === 0) {
-                mobileActivityFeed.innerHTML = `
+        if (!session.logs || session.logs.length === 0) {
+            mobileActivityFeed.innerHTML = `
                 <div class="text-center py-8">
                     <i class="fas fa-clock text-2xl text-gray-400 mb-2"></i>
                     <p class="text-gray-500">No activity recorded yet</p>
                 </div>
             `;
-                return;
-            }
+            return;
+        }
 
-            const sortedLogs = [...session.logs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        const sortedLogs = [...session.logs].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-            mobileActivityFeed.innerHTML = sortedLogs.map((log, index) => {
-                const isLatest = index === sortedLogs.length - 1;
-                return `
+        mobileActivityFeed.innerHTML = sortedLogs.map((log, index) => {
+            const isLatest = index === sortedLogs.length - 1;
+            return `
                 <div class="flex gap-3">
                     <div class="flex-shrink-0">
                         <div class="w-8 h-8 rounded-full ${session.loggedUser ? 'bg-gray-400' : 'bg-gray-500'} flex items-center justify-center">
@@ -1033,142 +1026,142 @@ ob_start();
                     </div>
                 </div>
             `;
-            }).join('');
+        }).join('');
 
-            if (!isInitialLoad && !wasAtBottom) {
-                document.getElementById('mobileNewEventIndicator').classList.remove('hidden');
-            } else if (wasAtBottom) {
-                mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
-                document.getElementById('mobileNewEventIndicator').classList.add('hidden');
-            }
-        }
-
-        function initLeafletMap(sessionId, coords) {
-            const mapElement = document.getElementById(`map-${sessionId}`);
-            if (!mapElement || typeof L === 'undefined') return;
-
-            try {
-                const map = L.map(mapElement).setView([coords.latitude, coords.longitude], 13);
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors'
-                }).addTo(map);
-
-                const customIcon = L.divIcon({
-                    html: '<i class="fas fa-map-marker-alt" style="color: #3B82F6; font-size: 24px;"></i>',
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 24],
-                    className: 'custom-div-icon'
-                });
-
-                L.marker([coords.latitude, coords.longitude], { icon: customIcon })
-                    .addTo(map)
-                    .bindPopup(`User Location<br>Lat: ${coords.latitude.toFixed(6)}<br>Lng: ${coords.longitude.toFixed(6)}`);
-
-                leafletMaps[sessionId] = map;
-
-                setTimeout(() => {
-                    map.invalidateSize();
-                }, 200);
-            } catch (error) {
-                console.error('Error initializing Leaflet map:', error);
-            }
-        }
-
-        function getDeviceIcon(device) {
-            const icons = {
-                'mobile': 'fas fa-mobile-alt',
-                'tablet': 'fas fa-tablet-alt',
-                'desktop': 'fas fa-desktop'
-            };
-            return icons[device] || 'fas fa-desktop';
-        }
-
-        function scrollToBottom() {
-            const activityFeed = document.getElementById('activityFeed');
-            activityFeed.scrollTop = activityFeed.scrollHeight;
-            document.getElementById('newEventIndicator').classList.add('hidden');
-        }
-
-        function scrollToBottomMobile() {
-            const mobileActivityFeed = document.getElementById('mobileActivityFeed');
+        if (!isInitialLoad && !wasAtBottom) {
+            document.getElementById('mobileNewEventIndicator').classList.remove('hidden');
+        } else if (wasAtBottom) {
             mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
             document.getElementById('mobileNewEventIndicator').classList.add('hidden');
         }
+    }
 
-        function formatEventMessage(log) {
-            switch (log.event) {
-                case 'page_load':
-                    return `Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
+    function initLeafletMap(sessionId, coords) {
+        const mapElement = document.getElementById(`map-${sessionId}`);
+        if (!mapElement || typeof L === 'undefined') return;
 
-                case 'login_modal_open':
-                    return 'Opened login modal';
+        try {
+            const map = L.map(mapElement).setView([coords.latitude, coords.longitude], 13);
 
-                case 'login_identifier':
-                    return `Entered identifier: ${log.identifier} (${log.status === 'passed' ? '✅ Valid' : '❌ Invalid'})`;
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
 
-                case 'login_password':
-                    return `Password attempt: ${log.status === 'passed' ? '✅ Success' : '❌ Failed'}`;
-
-                case 'click':
-                    return log.url ?
-                        `Clicked on "${log.element}" → <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.url}</a>` :
-                        `Clicked on "${log.element}"`;
-
-                case 'navigation':
-                    return `Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
-
-                case 'scroll':
-                    return `Scrolled to position ${log.scrollPosition}px`;
-
-                case 'search_query':
-                    return `Searched for: "<strong>${log.query}</strong>"`;
-
-                case 'add_to_cart':
-                    return `Added ${log.quantity} item(s) to cart (Product ID: ${log.productId})`;
-
-                case 'checkout_initiated':
-                    return `Started checkout process (Cart value: UGX ${log.cartValue?.toLocaleString()})`;
-
-                case 'order_placed':
-                    return `Placed order ${log.orderId} (Amount: UGX ${log.amount?.toLocaleString()})`;
-
-                case 'product_view':
-                    return `Viewed product: <strong>${log.productName}</strong> (ID: ${log.productId})`;
-
-                case 'filter_applied':
-                    return `Applied ${log.filterType} filter: <strong>${log.filterValue}</strong>`;
-
-                case 'form_interaction':
-                    return `Interacted with ${log.formType} form${log.step ? ` (Step: ${log.step})` : ''}${log.action ? ` - ${log.action}` : ''}`;
-
-                case 'payment_method_selected':
-                    return `Selected payment method: <strong>${log.method.replace('_', ' ')}</strong>`;
-
-                default:
-                    return `${log.event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
-            }
-        }
-
-        let chatMessages = {};
-
-        function sendChatMessage() {
-            const chatInput = document.getElementById('chatInput');
-            const message = chatInput.value.trim();
-
-            if (!message || !currentSessionId) return;
-
-            if (!chatMessages[currentSessionId]) {
-                chatMessages[currentSessionId] = [];
-            }
-            chatMessages[currentSessionId].push({
-                message: message,
-                timestamp: Date.now(),
-                type: 'admin'
+            const customIcon = L.divIcon({
+                html: '<i class="fas fa-map-marker-alt" style="color: #3B82F6; font-size: 24px;"></i>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 24],
+                className: 'custom-div-icon'
             });
 
-            const activityFeed = document.getElementById('activityFeed');
-            const adminMessage = `
+            L.marker([coords.latitude, coords.longitude], { icon: customIcon })
+                .addTo(map)
+                .bindPopup(`User Location<br>Lat: ${coords.latitude.toFixed(6)}<br>Lng: ${coords.longitude.toFixed(6)}`);
+
+            leafletMaps[sessionId] = map;
+
+            setTimeout(() => {
+                map.invalidateSize();
+            }, 200);
+        } catch (error) {
+            console.error('Error initializing Leaflet map:', error);
+        }
+    }
+
+    function getDeviceIcon(device) {
+        const icons = {
+            'mobile': 'fas fa-mobile-alt',
+            'tablet': 'fas fa-tablet-alt',
+            'desktop': 'fas fa-desktop'
+        };
+        return icons[device] || 'fas fa-desktop';
+    }
+
+    function scrollToBottom() {
+        const activityFeed = document.getElementById('activityFeed');
+        activityFeed.scrollTop = activityFeed.scrollHeight;
+        document.getElementById('newEventIndicator').classList.add('hidden');
+    }
+
+    function scrollToBottomMobile() {
+        const mobileActivityFeed = document.getElementById('mobileActivityFeed');
+        mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
+        document.getElementById('mobileNewEventIndicator').classList.add('hidden');
+    }
+
+    function formatEventMessage(log) {
+        switch (log.event) {
+            case 'page_load':
+                return `Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
+
+            case 'login_modal_open':
+                return 'Opened login modal';
+
+            case 'login_identifier':
+                return `Entered identifier: ${log.identifier} (${log.status === 'passed' ? '✅ Valid' : '❌ Invalid'})`;
+
+            case 'login_password':
+                return `Password attempt: ${log.status === 'passed' ? '✅ Success' : '❌ Failed'}`;
+
+            case 'click':
+                return log.url ?
+                    `Clicked on "${log.element}" → <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.url}</a>` :
+                    `Clicked on "${log.element}"`;
+
+            case 'navigation':
+                return `Navigated to <a href="${log.url}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">${log.pageTitle || log.url}</a>`;
+
+            case 'scroll':
+                return `Scrolled to position ${log.scrollPosition}px`;
+
+            case 'search_query':
+                return `Searched for: "<strong>${log.query}</strong>"`;
+
+            case 'add_to_cart':
+                return `Added ${log.quantity} item(s) to cart (Product ID: ${log.productId})`;
+
+            case 'checkout_initiated':
+                return `Started checkout process (Cart value: UGX ${log.cartValue?.toLocaleString()})`;
+
+            case 'order_placed':
+                return `Placed order ${log.orderId} (Amount: UGX ${log.amount?.toLocaleString()})`;
+
+            case 'product_view':
+                return `Viewed product: <strong>${log.productName}</strong> (ID: ${log.productId})`;
+
+            case 'filter_applied':
+                return `Applied ${log.filterType} filter: <strong>${log.filterValue}</strong>`;
+
+            case 'form_interaction':
+                return `Interacted with ${log.formType} form${log.step ? ` (Step: ${log.step})` : ''}${log.action ? ` - ${log.action}` : ''}`;
+
+            case 'payment_method_selected':
+                return `Selected payment method: <strong>${log.method.replace('_', ' ')}</strong>`;
+
+            default:
+                return `${log.event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+        }
+    }
+
+    let chatMessages = {};
+
+    function sendChatMessage() {
+        const chatInput = document.getElementById('chatInput');
+        const message = chatInput.value.trim();
+
+        if (!message || !currentSessionId) return;
+
+        if (!chatMessages[currentSessionId]) {
+            chatMessages[currentSessionId] = [];
+        }
+        chatMessages[currentSessionId].push({
+            message: message,
+            timestamp: Date.now(),
+            type: 'admin'
+        });
+
+        const activityFeed = document.getElementById('activityFeed');
+        const adminMessage = `
             <div class="flex gap-3 justify-end">
                 <div class="flex-1 min-w-0 max-w-xs">
                     <div class="bg-blue-500 text-white rounded-lg p-3 shadow-sm">
@@ -1189,46 +1182,46 @@ ob_start();
             </div>
         `;
 
-            activityFeed.insertAdjacentHTML('beforeend', adminMessage);
-            activityFeed.scrollTop = activityFeed.scrollHeight;
+        activityFeed.insertAdjacentHTML('beforeend', adminMessage);
+        activityFeed.scrollTop = activityFeed.scrollHeight;
 
-            chatInput.value = '';
-            document.getElementById('charCount').textContent = '0/500';
-            document.getElementById('sendChatBtn').disabled = true;
+        chatInput.value = '';
+        document.getElementById('charCount').textContent = '0/500';
+        document.getElementById('sendChatBtn').disabled = true;
 
-            console.log(`Sending message to session ${currentSessionId}: ${message}`);
+        console.log(`Sending message to session ${currentSessionId}: ${message}`);
 
-            setTimeout(() => {
-                const deliveryConfirmation = `
+        setTimeout(() => {
+            const deliveryConfirmation = `
                 <div class="text-center">
                     <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
                         <i class="fas fa-check mr-1"></i>Message delivered
                     </span>
                 </div>
             `;
-                activityFeed.insertAdjacentHTML('beforeend', deliveryConfirmation);
-                activityFeed.scrollTop = activityFeed.scrollHeight;
-            }, 1000);
+            activityFeed.insertAdjacentHTML('beforeend', deliveryConfirmation);
+            activityFeed.scrollTop = activityFeed.scrollHeight;
+        }, 1000);
+    }
+
+    function sendMobileChatMessage() {
+        const mobileChatInput = document.getElementById('mobileChatInput');
+        const message = mobileChatInput.value.trim();
+
+        if (!message || !currentSessionId) return;
+
+        if (!chatMessages[currentSessionId]) {
+            chatMessages[currentSessionId] = [];
         }
 
-        function sendMobileChatMessage() {
-            const mobileChatInput = document.getElementById('mobileChatInput');
-            const message = mobileChatInput.value.trim();
+        chatMessages[currentSessionId].push({
+            message: message,
+            timestamp: Date.now(),
+            type: 'admin'
+        });
 
-            if (!message || !currentSessionId) return;
-
-            if (!chatMessages[currentSessionId]) {
-                chatMessages[currentSessionId] = [];
-            }
-
-            chatMessages[currentSessionId].push({
-                message: message,
-                timestamp: Date.now(),
-                type: 'admin'
-            });
-
-            const mobileActivityFeed = document.getElementById('mobileActivityFeed');
-            const adminMessage = `
+        const mobileActivityFeed = document.getElementById('mobileActivityFeed');
+        const adminMessage = `
         <div class="flex gap-3 justify-end">
             <div class="flex-1 min-w-0 max-w-xs">
                 <div class="bg-blue-500 text-white rounded-lg p-3 shadow-sm">
@@ -1249,200 +1242,200 @@ ob_start();
         </div>
     `;
 
-            mobileActivityFeed.insertAdjacentHTML('beforeend', adminMessage);
-            mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
+        mobileActivityFeed.insertAdjacentHTML('beforeend', adminMessage);
+        mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
 
-            mobileChatInput.value = '';
-            document.getElementById('mobileCharCount').textContent = '0/500';
-            document.getElementById('mobileSendChatBtn').disabled = true;
+        mobileChatInput.value = '';
+        document.getElementById('mobileCharCount').textContent = '0/500';
+        document.getElementById('mobileSendChatBtn').disabled = true;
 
-            console.log(`Sending mobile message to session ${currentSessionId}: ${message}`);
+        console.log(`Sending mobile message to session ${currentSessionId}: ${message}`);
 
-            setTimeout(() => {
-                const deliveryConfirmation = `
+        setTimeout(() => {
+            const deliveryConfirmation = `
             <div class="text-center">
                 <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
                     <i class="fas fa-check mr-1"></i>Message delivered
                 </span>
             </div>
         `;
-                mobileActivityFeed.insertAdjacentHTML('beforeend', deliveryConfirmation);
-                mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
+            mobileActivityFeed.insertAdjacentHTML('beforeend', deliveryConfirmation);
+            mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
+        }, 1000);
+    }
+
+    function closeSessionModal() {
+        document.getElementById('sessionModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        currentSessionId = null;
+        stopModalRefresh();
+
+        document.getElementById('chatInput').value = '';
+        document.getElementById('charCount').textContent = '0/500';
+        document.getElementById('sendChatBtn').disabled = true;
+
+        Object.keys(leafletMaps).forEach(mapId => {
+            if (leafletMaps[mapId]) {
+                leafletMaps[mapId].remove();
+                delete leafletMaps[mapId];
+            }
+        });
+    }
+
+    function closeMobileSessionModal() {
+        document.getElementById('mobileSessionModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        currentSessionId = null;
+        stopModalRefresh();
+
+        document.getElementById('mobileChatInput').value = '';
+        document.getElementById('mobileCharCount').textContent = '0/500';
+        document.getElementById('mobileSendChatBtn').disabled = true;
+    }
+
+    function refreshSessions() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        const icon = refreshBtn.querySelector('i');
+
+        icon.classList.add('fa-spin');
+        refreshBtn.disabled = true;
+
+        loadSessions().finally(() => {
+            setTimeout(() => {
+                icon.classList.remove('fa-spin');
+                refreshBtn.disabled = false;
             }, 1000);
-        }
+        });
+    }
 
-        function closeSessionModal() {
-            document.getElementById('sessionModal').classList.add('hidden');
-            document.body.style.overflow = '';
-            currentSessionId = null;
-            stopModalRefresh();
+    function showError(message) {
+        const tbody = document.getElementById('sessionsBody');
+        const cards = document.getElementById('sessionsCards');
 
-            document.getElementById('chatInput').value = '';
-            document.getElementById('charCount').textContent = '0/500';
-            document.getElementById('sendChatBtn').disabled = true;
-
-            Object.keys(leafletMaps).forEach(mapId => {
-                if (leafletMaps[mapId]) {
-                    leafletMaps[mapId].remove();
-                    delete leafletMaps[mapId];
-                }
-            });
-        }
-
-        function closeMobileSessionModal() {
-            document.getElementById('mobileSessionModal').classList.add('hidden');
-            document.body.style.overflow = '';
-            currentSessionId = null;
-            stopModalRefresh();
-
-            document.getElementById('mobileChatInput').value = '';
-            document.getElementById('mobileCharCount').textContent = '0/500';
-            document.getElementById('mobileSendChatBtn').disabled = true;
-        }
-
-        function refreshSessions() {
-            const refreshBtn = document.getElementById('refreshBtn');
-            const icon = refreshBtn.querySelector('i');
-
-            icon.classList.add('fa-spin');
-            refreshBtn.disabled = true;
-
-            loadSessions().finally(() => {
-                setTimeout(() => {
-                    icon.classList.remove('fa-spin');
-                    refreshBtn.disabled = false;
-                }, 1000);
-            });
-        }
-
-        function showError(message) {
-            const tbody = document.getElementById('sessionsBody');
-            const cards = document.getElementById('sessionsCards');
-
-            const errorContent = `
+        const errorContent = `
             <div class="px-4 py-8 text-center text-red-500">
                 <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
                 <div>${message}</div>
             </div>
         `;
 
-            tbody.innerHTML = `<tr><td colspan="6">${errorContent}</td></tr>`;
-            cards.innerHTML = errorContent;
-        }
+        tbody.innerHTML = `<tr><td colspan="6">${errorContent}</td></tr>`;
+        cards.innerHTML = errorContent;
+    }
 
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
                 clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
+                func(...args);
             };
-        }
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
 
-        window.addEventListener('beforeunload', () => {
-            stopAutoRefresh();
-            stopModalRefresh();
+    window.addEventListener('beforeunload', () => {
+        stopAutoRefresh();
+        stopModalRefresh();
 
-            Object.keys(leafletMaps).forEach(mapId => {
-                if (leafletMaps[mapId]) {
-                    leafletMaps[mapId].remove();
-                    delete leafletMaps[mapId];
-                }
-            });
+        Object.keys(leafletMaps).forEach(mapId => {
+            if (leafletMaps[mapId]) {
+                leafletMaps[mapId].remove();
+                delete leafletMaps[mapId];
+            }
         });
+    });
 
-        window.viewSessionDetails = viewSessionDetails;
-        window.closeSessionModal = closeSessionModal;
-        window.closeMobileSessionModal = closeMobileSessionModal;
-        window.scrollToBottom = scrollToBottom;
-        window.scrollToBottomMobile = scrollToBottomMobile;
-    </script>
+    window.viewSessionDetails = viewSessionDetails;
+    window.closeSessionModal = closeSessionModal;
+    window.closeMobileSessionModal = closeMobileSessionModal;
+    window.scrollToBottom = scrollToBottom;
+    window.scrollToBottomMobile = scrollToBottomMobile;
+</script>
 
-    <style>
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+<style>
+    .animate-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
         }
 
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: .5;
-            }
+        50% {
+            opacity: .5;
         }
+    }
 
-        .overflow-x-auto {
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e0 #f7fafc;
-        }
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 #f7fafc;
+    }
 
-        .overflow-x-auto::-webkit-scrollbar {
-            height: 6px;
-        }
+    .overflow-x-auto::-webkit-scrollbar {
+        height: 6px;
+    }
 
-        .overflow-x-auto::-webkit-scrollbar-track {
-            background: #f7fafc;
-            border-radius: 3px;
-        }
+    .overflow-x-auto::-webkit-scrollbar-track {
+        background: #f7fafc;
+        border-radius: 3px;
+    }
 
-        .overflow-x-auto::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 3px;
-        }
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 3px;
+    }
 
-        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
-            background: #a0aec0;
-        }
+    .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+    }
 
-        #chatInput:focus,
-        #mobileChatInput:focus {
-            outline: none;
-            border-color: #3B82F6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
+    #chatInput:focus,
+    #mobileChatInput:focus {
+        outline: none;
+        border-color: #3B82F6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
 
-        #activityFeed,
-        #mobileActivityFeed {
-            scroll-behavior: smooth;
-        }
+    #activityFeed,
+    #mobileActivityFeed {
+        scroll-behavior: smooth;
+    }
 
-        .leaflet-container {
-            border-radius: 0.5rem;
-        }
+    .leaflet-container {
+        border-radius: 0.5rem;
+    }
 
-        .custom-div-icon {
-            background: transparent;
-            border: none;
-        }
+    .custom-div-icon {
+        background: transparent;
+        border: none;
+    }
 
-        .leaflet-default-icon-path {
-            background-image: url('https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png');
-        }
+    .leaflet-default-icon-path {
+        background-image: url('https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png');
+    }
 
-        #mobileSessionModal {
-            background: white;
-        }
+    #mobileSessionModal {
+        background: white;
+    }
 
-        #mobileChatInput {
-            border-radius: 20px;
-        }
+    #mobileChatInput {
+        border-radius: 20px;
+    }
 
-        #mobileSendChatBtn {
-            border-radius: 50%;
-            min-width: 40px;
-            min-height: 40px;
-        }
-    </style>
+    #mobileSendChatBtn {
+        border-radius: 50%;
+        min-width: 40px;
+        min-height: 40px;
+    }
+</style>
 
-    <?php
-    $mainContent = ob_get_clean();
-    include __DIR__ . '/master.php';
-    ?>
+<?php
+$mainContent = ob_get_clean();
+include __DIR__ . '/master.php';
+?>
