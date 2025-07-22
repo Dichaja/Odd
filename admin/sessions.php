@@ -6,7 +6,7 @@ ob_start();
 ?>
 
 <div class="min-h-screen bg-gray-50" id="app-container">
-    <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 sm:py-6">
+    <div class="bg-white border-b border-gray-200 sm:px-6 lg:px-8 py-3 sm:py-6">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
                 <div>
@@ -32,7 +32,7 @@ ob_start();
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8">
         <div class="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
                 <div class="flex items-center justify-between">
