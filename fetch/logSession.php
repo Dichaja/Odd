@@ -7,7 +7,6 @@ $jsonFile = __DIR__ . '/../track/session_log.json';
 $expirySeconds = 30 * 60;
 
 try {
-    // 1) Ensure sessions table exists
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS `sessions` (
           `session_id`     VARCHAR(26)    NOT NULL,
@@ -23,8 +22,6 @@ try {
           `user_id`        VARCHAR(26)    NULL,
           `admin_id`       VARCHAR(26)    NULL,
           PRIMARY KEY (`session_id`),
-          CONSTRAINT `chk_sessions_not_both_user_and_admin`
-            CHECK (`user_id` IS NULL OR `admin_id` IS NULL),
           INDEX `idx_sessions_user`  (`user_id`),
           INDEX `idx_sessions_admin` (`admin_id`),
           CONSTRAINT `fk_sessions_user`
