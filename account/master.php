@@ -62,7 +62,7 @@ $formattedLastLogin = $lastLogin
     : 'First login';
 
 $title = isset($pageTitle)
-    ? $pageTitle . ' | User Dashboard - Zzimba Online'
+    ? $pageTitle . ' | User Dashboard'
     : 'User Dashboard';
 $activeNav = $activeNav ?? 'dashboard';
 $userName = $_SESSION['user']['username'];
@@ -121,6 +121,7 @@ $menuItems = [
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="<?= BASE_URL ?>track/eventLog.js"></script>
 
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
