@@ -819,6 +819,11 @@ function getStepTitle($mode, $step)
         if (typeof window.sessionTracker !== 'undefined') {
             window.sessionTracker.trackLoginModalClose();
         }
+
+        // ✅ Added session status check after modal closes
+        if (typeof checkSessionStatus === 'function') {
+            checkSessionStatus();
+        }
     }
     function openAuthModal() {
         const m = document.getElementById('auth-modal');
