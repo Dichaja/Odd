@@ -777,6 +777,10 @@ function getStepTitle($mode, $step)
                 el.classList.add('active');
             }, 10);
         }
+
+        if (step === 'identifier' && typeof window.sessionTracker !== 'undefined') {
+            window.sessionTracker.trackLoginModalOpen();
+        }
     }
 
     function showRegisterStep(step) {
@@ -806,6 +810,10 @@ function getStepTitle($mode, $step)
             setTimeout(() => {
                 opt.classList.add('active');
             }, 10);
+        }
+
+        if (typeof window.sessionTracker !== 'undefined') {
+            window.sessionTracker.trackPasswordResetRequest();
         }
     }
 
@@ -1151,9 +1159,19 @@ function getStepTitle($mode, $step)
                     loginData.identifierType = identifierType;
                     loginData.userType = response.userType;
                     document.getElementById('login-identifier-display').textContent = identifier;
+
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackLoginIdentifier(identifier, 'success');
+                    }
+
                     showLoginStep('password');
                 } else {
                     const errorCategory = categorizeError(response.message || 'User not found', response.errorCode);
+
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackLoginIdentifier(identifier, 'failed');
+                    }
+
                     if (errorCategory === 'identifier') {
                         showError('login-identifier-error', response.message || 'User not found');
                     } else {
@@ -1176,11 +1194,20 @@ function getStepTitle($mode, $step)
                         hideError('login-identifier-error');
                         showEmptyPasswordOptions();
                     } else if (errorCategory === 'identifier') {
+                        if (typeof window.sessionTracker !== 'undefined') {
+                            window.sessionTracker.trackLoginIdentifier(identifier, 'failed');
+                        }
                         showError('login-identifier-error', response.message || 'User not found');
                     } else {
+                        if (typeof window.sessionTracker !== 'undefined') {
+                            window.sessionTracker.trackLoginIdentifier(identifier, 'failed');
+                        }
                         showError('login-identifier-error', response.message || 'An error occurred');
                     }
                 } catch (e) {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackLoginIdentifier(identifier, 'failed');
+                    }
                     showError('login-identifier-error', 'Server error. Please try again later.');
                 }
             }
@@ -1213,12 +1240,20 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackLoginPassword('success');
+                    }
                     notifications.success('Login successful!');
                     setTimeout(() => {
                         closeAuthModal();
                     }, 1000);
                 } else {
                     const errorCategory = categorizeError(response.message || 'Invalid password', response.errorCode);
+
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackLoginPassword('failed');
+                    }
+
                     if (errorCategory === 'password') {
                         showError('login-password-error', response.message || 'Invalid password');
                     } else {
@@ -1239,11 +1274,20 @@ function getStepTitle($mode, $step)
                         hideError('login-password-error');
                         showEmptyPasswordOptions();
                     } else if (errorCategory === 'password') {
+                        if (typeof window.sessionTracker !== 'undefined') {
+                            window.sessionTracker.trackLoginPassword('failed');
+                        }
                         showError('login-password-error', response.message || 'Invalid password');
                     } else {
+                        if (typeof window.sessionTracker !== 'undefined') {
+                            window.sessionTracker.trackLoginPassword('failed');
+                        }
                         showError('login-password-error', response.message || 'An error occurred');
                     }
                 } catch (e) {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackLoginPassword('failed');
+                    }
                     showError('login-password-error', 'Server error. Please try again later.');
                 }
             }
@@ -1442,16 +1486,25 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackOtpValidation('success');
+                    }
                     notifications.success('Email verified successfully');
                     registrationData.emailVerified = true;
                     showRegisterStep('phone');
                 } else {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackOtpValidation('failed');
+                    }
                     showError('email-otp-error', response.message || 'Invalid verification code');
                 }
             },
             error: function (xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
+                if (typeof window.sessionTracker !== 'undefined') {
+                    window.sessionTracker.trackOtpValidation('failed');
+                }
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('email-otp-error', response.message || 'An error occurred');
@@ -1552,16 +1605,25 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackOtpValidation('success');
+                    }
                     notifications.success('Phone verified successfully');
                     registrationData.phoneVerified = true;
                     showRegisterStep('password');
                 } else {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackOtpValidation('failed');
+                    }
                     showError('phone-otp-error', response.message || 'Invalid verification code');
                 }
             },
             error: function (xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
+                if (typeof window.sessionTracker !== 'undefined') {
+                    window.sessionTracker.trackOtpValidation('failed');
+                }
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('phone-otp-error', response.message || 'An error occurred');
@@ -1762,16 +1824,25 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackOtpValidation('success');
+                    }
                     notifications.success('Code verified successfully');
                     forgotPasswordData.otpVerified = true;
                     showResetPasswordForm();
                 } else {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackOtpValidation('failed');
+                    }
                     showError('reset-otp-error', response.message || 'Invalid verification code');
                 }
             },
             error: function (xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
+                if (typeof window.sessionTracker !== 'undefined') {
+                    window.sessionTracker.trackOtpValidation('failed');
+                }
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('reset-otp-error', response.message || 'An error occurred');
@@ -1817,18 +1888,27 @@ function getStepTitle($mode, $step)
                 button.disabled = false;
                 button.innerHTML = originalText;
                 if (response.success) {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackPasswordResetComplete('success');
+                    }
                     notifications.success('Password reset successfully!');
                     setTimeout(() => {
                         showLoginStep('identifier');
                         notifications.info('Please login with your new password');
                     }, 1500);
                 } else {
+                    if (typeof window.sessionTracker !== 'undefined') {
+                        window.sessionTracker.trackPasswordResetComplete('failed');
+                    }
                     showError('reset-password-error', response.message || 'Password reset failed');
                 }
             },
             error: function (xhr) {
                 button.disabled = false;
                 button.innerHTML = originalText;
+                if (typeof window.sessionTracker !== 'undefined') {
+                    window.sessionTracker.trackPasswordResetComplete('failed');
+                }
                 try {
                     const response = JSON.parse(xhr.responseText);
                     showError('reset-password-error', response.message || 'An error occurred');
