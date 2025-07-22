@@ -5,6 +5,9 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
+require_once __DIR__ . '/../../config/config.php';
+date_default_timezone_set('Africa/Kampala');
+
 function getSessionData()
 {
     $jsonFile = __DIR__ . '/../../track/session_log.json';
