@@ -126,7 +126,7 @@ $sessionUlid = generateUlid();
 
 $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 
-$metaDescription = 'Zzimba Online Uganda - Your one-stop shop for construction materials and services. Buy online and get delivery on-site.';
+$metaDescription = 'Zzimba Online Uganda - Your one-stop shop for construction materials and supplies. Buy online and get delivery on-site.';
 
 $hasSeoTags = isset($seoTags) && is_array($seoTags);
 
