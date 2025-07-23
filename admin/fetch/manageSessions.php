@@ -347,7 +347,7 @@ function formatExpiredSessionData($session, $events)
         'coords' => $coords,
         'loggedUser' => $loggedUser,
         'logs' => $logs,
-        'lastActivity' => null,
+        'lastActivity' => count($events) > 0 ? date('c', strtotime($events[count($events) - 1]['event_timestamp'])) : date('c', $sessionStart),
         'lastActivityTime' => $lastActivityTime,
         'activeDuration' => $activeDuration,
         'isActive' => false,

@@ -695,8 +695,8 @@ ob_start();
             }
 
             const deviceIcon = getDeviceIcon(session.device);
-            const lastActivity = session.isExpired ? '-' : getTimeAgo(getLastActivity(session));
-            const lastActivityTime = session.isExpired ? '-' : formatTime(getLastActivity(session));
+            const lastActivity = session.isExpired ? formatDate(getLastActivity(session)) : getTimeAgo(getLastActivity(session));
+            const lastActivityTime = formatTime(getLastActivity(session));
 
             return `
             <tr class="hover:bg-gray-50 transition-colors cursor-pointer ${session.isExpired ? 'opacity-60 bg-gray-50' : ''}" onclick="viewSessionDetails('${session.sessionID}')">
@@ -771,7 +771,7 @@ ob_start();
         let filteredSessions = filterSessionsData();
 
         container.innerHTML = filteredSessions.map(session => {
-            const lastActivity = session.isExpired ? '-' : getTimeAgo(getLastActivity(session));
+            const lastActivity = session.isExpired ? formatDate(getLastActivity(session)) : getTimeAgo(getLastActivity(session));
             let displayName;
             if (session.loggedUser && session.loggedUser.username) {
                 displayName = session.loggedUser.username;
@@ -886,6 +886,15 @@ ob_start();
         if (minutes < 60) return `${minutes}m ago`;
         if (hours < 24) return `${hours}h ago`;
         return `${days}d ago`;
+    }
+
+    function formatDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
     }
 
     function formatTime(timestamp) {
