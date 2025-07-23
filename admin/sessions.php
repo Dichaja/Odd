@@ -368,6 +368,10 @@ ob_start();
     <source src="../sounds/new.wav" type="audio/wav">
 </audio>
 
+<audio id="newEventSound" preload="auto">
+    <source src="../sounds/chat.wav" type="audio/wav">
+</audio>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -525,42 +529,87 @@ ob_start();
         }
 
         updateConnectionStatus('streaming');
+        console.log('Starting session stream for:', sessionId);
 
         sessionEventSource = new EventSource(`fetch/manageSessions.php?action=stream&session_id=${sessionId}`);
 
         sessionEventSource.onopen = function () {
             console.log('Session stream connected for:', sessionId);
+            updateConnectionStatus('streaming');
         };
 
         sessionEventSource.onmessage = function (event) {
             try {
                 const data = JSON.parse(event.data);
+                console.log('Stream message received:', data.type, data);
 
                 if (data.type === 'session_update' && data.session_id === currentSessionId) {
+                    // Store the previous session data for comparison
                     const sessionIndex = sessions.findIndex(s => s.sessionID === data.session_id);
+                    const previousSession = sessionIndex !== -1 ? { ...sessions[sessionIndex] } : null;
+
+                    // Update the session in the sessions array
                     if (sessionIndex !== -1) {
                         sessions[sessionIndex] = data.data;
-                    }
-
-                    if (window.innerWidth < 1024) {
-                        loadMobileSessionDetails(currentSessionId, false);
                     } else {
-                        loadSessionDetails(currentSessionId, false);
+                        // If session not found in array, add it
+                        sessions.push(data.data);
                     }
-                }
 
+                    // Check for new events and play notification sound
+                    if (previousSession && data.data.logs && previousSession.logs) {
+                        if (data.data.logs.length > previousSession.logs.length) {
+                            playNewEventSound();
+                            console.log('New event detected in monitored session - previous:', previousSession.logs.length, 'current:', data.data.logs.length);
+
+                            // Show new event indicator if user is not at bottom
+                            const activityFeed = document.getElementById('activityFeed');
+                            const mobileActivityFeed = document.getElementById('mobileActivityFeed');
+
+                            if (activityFeed && activityFeed.scrollTop + activityFeed.clientHeight < activityFeed.scrollHeight - 10) {
+                                document.getElementById('newEventIndicator').classList.remove('hidden');
+                            }
+
+                            if (mobileActivityFeed && mobileActivityFeed.scrollTop + mobileActivityFeed.clientHeight < mobileActivityFeed.scrollHeight - 10) {
+                                document.getElementById('mobileNewEventIndicator').classList.remove('hidden');
+                            }
+                        }
+                    }
+
+                    // Load the updated session details directly with the new data
+                    if (window.innerWidth < 1024) {
+                        loadMobileSessionDetails(currentSessionId, false, data.data);
+                    } else {
+                        loadSessionDetails(currentSessionId, false, data.data);
+                    }
+                } else if (data.type === 'session_not_found') {
+                    console.log('Session not found:', data.session_id);
+                    // Optionally close the modal or show an error
+                } else if (data.type === 'heartbeat') {
+                    console.log('Heartbeat received for session:', data.session_id);
+                    // Update connection status to show it's still alive
+                    updateConnectionStatus('streaming');
+                }
             } catch (error) {
-                console.error('Error parsing session stream data:', error);
+                console.error('Error parsing session stream data:', error, event.data);
             }
         };
 
-        sessionEventSource.onerror = function () {
-            console.error('Session stream error for:', sessionId);
+        sessionEventSource.onerror = function (error) {
+            console.error('Session stream error for:', sessionId, error);
+            updateConnectionStatus('error');
+
+            // Retry connection after a delay
             setTimeout(() => {
                 if (currentSessionId === sessionId) {
+                    console.log('Retrying session stream for:', sessionId);
                     startSessionStream(sessionId);
                 }
-            }, 2000);
+            }, 3000);
+        };
+
+        sessionEventSource.onclose = function () {
+            console.log('Session stream closed for:', sessionId);
         };
     }
 
@@ -958,9 +1007,15 @@ ob_start();
         document.body.style.overflow = 'hidden';
     }
 
-    function loadSessionDetails(sessionId, isInitialLoad = false) {
-        const session = sessions.find(s => s.sessionID === sessionId);
-        if (!session) return;
+    function loadSessionDetails(sessionId, isInitialLoad = false, sessionData = null) {
+        // Use provided session data or find it in the sessions array
+        const session = sessionData || sessions.find(s => s.sessionID === sessionId);
+        if (!session) {
+            console.error('Session not found for ID:', sessionId);
+            return;
+        }
+
+        console.log('Loading session details for:', sessionId, 'isInitialLoad:', isInitialLoad, 'hasSessionData:', !!sessionData);
 
         if (isInitialLoad) {
             const modalTitle = session.loggedUser && session.loggedUser.username ?
@@ -1142,9 +1197,15 @@ ob_start();
         }
     }
 
-    function loadMobileSessionDetails(sessionId, isInitialLoad = false) {
-        const session = sessions.find(s => s.sessionID === sessionId);
-        if (!session) return;
+    function loadMobileSessionDetails(sessionId, isInitialLoad = false, sessionData = null) {
+        // Use provided session data or find it in the sessions array
+        const session = sessionData || sessions.find(s => s.sessionID === sessionId);
+        if (!session) {
+            console.error('Mobile session not found for ID:', sessionId);
+            return;
+        }
+
+        console.log('Loading mobile session details for:', sessionId, 'isInitialLoad:', isInitialLoad, 'hasSessionData:', !!sessionData);
 
         if (isInitialLoad) {
             const mobileTitle = session.loggedUser && session.loggedUser.username ?
@@ -1669,6 +1730,20 @@ ob_start();
             }
         } catch (error) {
             console.error('Error playing new session sound:', error);
+        }
+    }
+
+    function playNewEventSound() {
+        try {
+            const audio = document.getElementById('newEventSound');
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(error => {
+                    console.log('Could not play new event sound:', error);
+                });
+            }
+        } catch (error) {
+            console.error('Error playing new event sound:', error);
         }
     }
 

@@ -45,9 +45,19 @@ function getSessionData($page = 1, $limit = 20, $startDate = null, $endDate = nu
 
 function getSpecificSessionData($sessionId)
 {
-    $allSessions = getSessionData();
+    // Get live sessions from JSON
+    $liveSessions = getLiveSessionsFromJson();
 
-    foreach ($allSessions as $session) {
+    // Check live sessions first
+    foreach ($liveSessions as $session) {
+        if ($session['sessionID'] === $sessionId) {
+            return $session;
+        }
+    }
+
+    // If not found in live sessions, check expired sessions from database
+    $expiredSessions = getExpiredSessionsFromDatabase(null, null, 'monthly');
+    foreach ($expiredSessions as $session) {
         if ($session['sessionID'] === $sessionId) {
             return $session;
         }
@@ -600,6 +610,7 @@ function streamSpecificSession($sessionId)
 
     $lastSessionUpdate = 0;
     $lastHeartbeat = 0;
+    $previousSession = null;
 
     while (true) {
         if (connection_aborted()) {
@@ -608,25 +619,42 @@ function streamSpecificSession($sessionId)
 
         $currentTime = time();
 
-        if ($currentTime >= $lastSessionUpdate + 1) { // Update every 1 second for specific session
+        if ($currentTime >= $lastSessionUpdate + 1) {
             $lastSessionUpdate = $currentTime;
 
             $session = getSpecificSessionData($sessionId);
 
             if ($session) {
+                // Add country info if missing
                 if (isset($session['country']) && $session['country'] !== 'Unknown' && $session['country'] !== 'Fetching...' && !isset($session['flag'])) {
                     $countryInfo = getCountryInfo($session['country']);
                     $session['shortName'] = strtolower($countryInfo['shortName']);
                     $session['flag'] = $countryInfo['flag'];
-                    if (!isset($session['phoneCode'])) {
+                    if (!isset($session['phoneCode']) || $session['phoneCode'] === 'N/A') {
                         $session['phoneCode'] = $countryInfo['phoneCode'];
                     }
                 }
 
+                // Always send session update (even if no changes detected)
                 echo "data: " . json_encode([
                     'type' => 'session_update',
                     'session_id' => $sessionId,
                     'data' => $session,
+                    'timestamp' => $currentTime,
+                    'has_changes' => $previousSession === null || json_encode($session) !== json_encode($previousSession)
+                ]) . "\n\n";
+
+                $previousSession = $session;
+
+                if (ob_get_level()) {
+                    ob_flush();
+                }
+                flush();
+            } else {
+                // Session not found, send null data
+                echo "data: " . json_encode([
+                    'type' => 'session_not_found',
+                    'session_id' => $sessionId,
                     'timestamp' => $currentTime,
                 ]) . "\n\n";
 
@@ -651,7 +679,7 @@ function streamSpecificSession($sessionId)
             flush();
         }
 
-        usleep(100000);
+        usleep(100000); // 100ms
     }
 }
 
