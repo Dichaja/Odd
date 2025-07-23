@@ -1,8 +1,8 @@
 $(function () {
     const SESSION_EXPIRY = 30 * 60 * 1000;
     const STORAGE_KEY = 'session_event_log';
-
-    const TRACKER_URL = BASE_URL + 'track/s';
+   
+ const TRACKER_URL = BASE_URL + 'track/s';
     function checkSessionExpired() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
@@ -212,7 +212,7 @@ $(function () {
         $.getJSON('https://api64.ipify.org?format=json')
             .done(data => {
                 const ip = data.ip;
-                $.getJSON(`${BASE_URL}track/fetch-ip-info.php`, { ip })
+                $.getJSON(`https://ipapi.co/${ip}/json/`)
                     .done(loc => {
                         let s = getSession();
                         if (s.ipAddress !== 'Fetching...' && s.ipAddress !== ip) {
