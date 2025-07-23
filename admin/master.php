@@ -334,7 +334,7 @@ $menuItems = [
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="<?= BASE_URL ?>track/eventLog.js"></script>
+    <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
 
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
