@@ -529,19 +529,16 @@ ob_start();
         }
 
         updateConnectionStatus('streaming');
-        console.log('Starting session stream for:', sessionId);
 
         sessionEventSource = new EventSource(`fetch/manageSessions.php?action=stream&session_id=${sessionId}`);
 
         sessionEventSource.onopen = function () {
-            console.log('Session stream connected for:', sessionId);
             updateConnectionStatus('streaming');
         };
 
         sessionEventSource.onmessage = function (event) {
             try {
                 const data = JSON.parse(event.data);
-                console.log('Stream message received:', data.type, data);
 
                 if (data.type === 'session_update' && data.session_id === currentSessionId) {
                     // Store the previous session data for comparison
@@ -560,7 +557,6 @@ ob_start();
                     if (previousSession && data.data.logs && previousSession.logs) {
                         if (data.data.logs.length > previousSession.logs.length) {
                             playNewEventSound();
-                            console.log('New event detected in monitored session - previous:', previousSession.logs.length, 'current:', data.data.logs.length);
 
                             // Show new event indicator if user is not at bottom
                             const activityFeed = document.getElementById('activityFeed');
@@ -586,7 +582,6 @@ ob_start();
                     console.log('Session not found:', data.session_id);
                     // Optionally close the modal or show an error
                 } else if (data.type === 'heartbeat') {
-                    console.log('Heartbeat received for session:', data.session_id);
                     // Update connection status to show it's still alive
                     updateConnectionStatus('streaming');
                 }
@@ -609,7 +604,6 @@ ob_start();
         };
 
         sessionEventSource.onclose = function () {
-            console.log('Session stream closed for:', sessionId);
         };
     }
 
@@ -677,7 +671,6 @@ ob_start();
 
                     if (newSessions.length > 0 && previousSessionIds.size > 0) {
                         playNewSessionSound();
-                        console.log(`${newSessions.length} new session(s) detected`);
                     }
 
                     // Update previous session IDs for next comparison
@@ -1015,8 +1008,6 @@ ob_start();
             return;
         }
 
-        console.log('Loading session details for:', sessionId, 'isInitialLoad:', isInitialLoad, 'hasSessionData:', !!sessionData);
-
         if (isInitialLoad) {
             const modalTitle = session.loggedUser && session.loggedUser.username ?
                 session.loggedUser.username :
@@ -1205,7 +1196,6 @@ ob_start();
             return;
         }
 
-        console.log('Loading mobile session details for:', sessionId, 'isInitialLoad:', isInitialLoad, 'hasSessionData:', !!sessionData);
 
         if (isInitialLoad) {
             const mobileTitle = session.loggedUser && session.loggedUser.username ?
@@ -1509,7 +1499,6 @@ ob_start();
         document.getElementById('charCount').textContent = '0/500';
         document.getElementById('sendChatBtn').disabled = true;
 
-        console.log(`Sending message to session ${currentSessionId}: ${message}`);
 
         setTimeout(() => {
             const deliveryConfirmation = `
@@ -1572,7 +1561,6 @@ ob_start();
         document.getElementById('mobileCharCount').textContent = '0/500';
         document.getElementById('mobileSendChatBtn').disabled = true;
 
-        console.log(`Sending mobile message to session ${currentSessionId}: ${message}`);
 
         setTimeout(() => {
             const deliveryConfirmation = `
