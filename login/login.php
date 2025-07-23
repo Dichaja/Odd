@@ -816,6 +816,8 @@ function getStepTitle($mode, $step)
             document.body.style.overflow = 'auto';
         }, 300);
 
+        resetAuthForms();
+
         if (typeof window.sessionTracker !== 'undefined') {
             window.sessionTracker.trackLoginModalClose();
         }
@@ -823,6 +825,53 @@ function getStepTitle($mode, $step)
         if (typeof checkSessionStatus === 'function') {
             checkSessionStatus();
         }
+    }
+    function resetAuthForms() {
+        // Reset tracking objects
+        registrationData = {};
+        loginData = {};
+        forgotPasswordData = {};
+        resetMethod = '';
+        spaceCount = 0;
+
+        // Clear all form inputs
+        document.querySelectorAll('.auth-form form').forEach(form => {
+            form.reset();
+        });
+
+        // Clear all OTP inputs and hidden fields
+        document.querySelectorAll('.otp-input').forEach(input => input.value = '');
+        ['email-otp', 'phone-otp', 'reset-otp'].forEach(id => {
+            const hidden = document.getElementById(id);
+            if (hidden) hidden.value = '';
+        });
+
+        // Reset login inputs view
+        toggleLoginInputs('username');
+
+        // Clear all error messages
+        document.querySelectorAll('[id$="-error"]').forEach(el => {
+            el.classList.add('hidden');
+            el.textContent = '';
+        });
+
+        // Reset password meters
+        document.querySelectorAll('.password-strength-meter-fill').forEach(meter => {
+            meter.style.width = '0%';
+            meter.style.backgroundColor = '#e0e0e0';
+        });
+        document.querySelectorAll('.password-strength-text').forEach(el => {
+            el.textContent = '';
+        });
+
+        // Hide all forms and show only login identifier step
+        hideAllForms();
+        showLoginStep('identifier');
+
+        // Stop any active OTP timers
+        if (emailOTPTimer) clearInterval(emailOTPTimer);
+        if (phoneOTPTimer) clearInterval(phoneOTPTimer);
+        if (resetOTPTimer) clearInterval(resetOTPTimer);
     }
     function openAuthModal() {
         const m = document.getElementById('auth-modal');
