@@ -687,7 +687,7 @@ ob_start();
                                     <button id="addPartnerBtn"
                                         class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
                                         <i class="fas fa-plus"></i>
-                                        <span>Add New Partner</span>
+                                        <span>Add New</span>
                                     </button>
                                 </div>
                             </div>
@@ -1059,7 +1059,7 @@ ob_start();
     <div class="absolute inset-0 bg-black/20" onclick="hidePartnerModal()"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl mx-4 relative z-10 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary" id="partnerModalTitle">Add New Partner</h3>
+            <h3 class="text-lg font-semibold text-secondary" id="partnerModalTitle">Add New</h3>
             <button onclick="hidePartnerModal()" class="text-gray-400 hover:text-gray-500">
                 <i class="fas fa-times"></i>
             </button>
@@ -1286,7 +1286,6 @@ ob_start();
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script>
-    const BASE_URL = '<?= BASE_URL ?>';
     let heroCropper = null;
     let partnerCropper = null;
     let deleteItemType = '';
@@ -2372,7 +2371,7 @@ ob_start();
                     showErrorNotification('Error loading partner data: ' + error.message);
                 });
         } else {
-            document.getElementById('partnerModalTitle').textContent = 'Add New Partner';
+            document.getElementById('partnerModalTitle').textContent = 'Add New';
             document.getElementById('submitPartner').textContent = 'Save Partner';
         }
 
