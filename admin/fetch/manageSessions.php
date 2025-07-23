@@ -78,13 +78,20 @@ function getLiveSessionsFromJson()
     $now = time();
 
     foreach ($sessions as $session) {
-        // Handle unknown country and IP data
-        $session['country'] = $session['country'] ?? 'Unknown';
-        $session['shortName'] = isset($session['shortName']) ? strtolower($session['shortName']) : 'unknown';
-        $session['phoneCode'] = $session['phoneCode'] ?? 'N/A';
-        $session['ipAddress'] = $session['ipAddress'] ?? 'Unknown';
-        $session['browser'] = $session['browser'] ?? 'Unknown';
-        $session['device'] = $session['device'] ?? 'unknown';
+        // Handle unknown country and IP data - check for "Fetching..." values
+        $session['country'] = (isset($session['country']) && $session['country'] !== 'Fetching...') ? $session['country'] : 'Unknown';
+        $session['shortName'] = (isset($session['shortName']) && $session['shortName'] !== 'Fetching...') ? strtolower($session['shortName']) : 'unknown';
+        $session['phoneCode'] = (isset($session['phoneCode']) && $session['phoneCode'] !== 'Fetching...') ? $session['phoneCode'] : 'N/A';
+        $session['ipAddress'] = (isset($session['ipAddress']) && $session['ipAddress'] !== 'Fetching...') ? $session['ipAddress'] : 'Unknown';
+        $session['browser'] = (isset($session['browser']) && $session['browser'] !== 'Fetching...') ? $session['browser'] : 'Unknown';
+        $session['device'] = (isset($session['device']) && $session['device'] !== 'Fetching...') ? $session['device'] : 'unknown';
+
+        // Handle null coordinates
+        if (isset($session['coords']) && is_array($session['coords'])) {
+            if ($session['coords']['latitude'] === null || $session['coords']['longitude'] === null) {
+                $session['coords'] = null;
+            }
+        }
 
         if (!isset($session['loggedUser']) || $session['loggedUser'] === null) {
             $session['loggedUser'] = extractLoggedUserFromEvents($session['logs'] ?? []);
@@ -541,11 +548,11 @@ function streamAllSessions()
 
             if (!isset($sessions['error'])) {
                 foreach ($sessions as &$session) {
-                    if (isset($session['country']) && !isset($session['flag'])) {
+                    if (isset($session['country']) && $session['country'] !== 'Unknown' && $session['country'] !== 'Fetching...' && !isset($session['flag'])) {
                         $countryInfo = getCountryInfo($session['country']);
                         $session['shortName'] = strtolower($countryInfo['shortName']);
                         $session['flag'] = $countryInfo['flag'];
-                        if (!isset($session['phoneCode'])) {
+                        if (!isset($session['phoneCode']) || $session['phoneCode'] === 'N/A') {
                             $session['phoneCode'] = $countryInfo['phoneCode'];
                         }
                     }
@@ -607,7 +614,7 @@ function streamSpecificSession($sessionId)
             $session = getSpecificSessionData($sessionId);
 
             if ($session) {
-                if (isset($session['country']) && !isset($session['flag'])) {
+                if (isset($session['country']) && $session['country'] !== 'Unknown' && $session['country'] !== 'Fetching...' && !isset($session['flag'])) {
                     $countryInfo = getCountryInfo($session['country']);
                     $session['shortName'] = strtolower($countryInfo['shortName']);
                     $session['flag'] = $countryInfo['flag'];
@@ -672,7 +679,7 @@ switch ($action) {
 
         if (!isset($sessions['error'])) {
             foreach ($sessions as &$session) {
-                if (isset($session['country']) && $session['country'] !== 'Unknown' && !isset($session['flag'])) {
+                if (isset($session['country']) && $session['country'] !== 'Unknown' && $session['country'] !== 'Fetching...' && !isset($session['flag'])) {
                     $countryInfo = getCountryInfo($session['country']);
                     $session['shortName'] = strtolower($countryInfo['shortName']);
                     $session['flag'] = $countryInfo['flag'];
