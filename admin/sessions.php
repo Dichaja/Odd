@@ -527,7 +527,7 @@ ob_start();
         sessionEventSource = new EventSource(`fetch/manageSessions.php?action=stream&session_id=${sessionId}`);
 
         sessionEventSource.onopen = function () {
-            console.log('Session stream connected for:', sessionId);
+            // console.log('Session stream connected for:', sessionId);
         };
 
         sessionEventSource.onmessage = function (event) {
