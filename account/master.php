@@ -128,6 +128,7 @@ $menuItems = [
 
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
+        const SESSION_ULID = "<?php echo $sessionUlid; ?>";
         tailwind.config = {
             theme: {
                 extend: {
