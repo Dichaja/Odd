@@ -364,6 +364,10 @@ ob_start();
     </div>
 </div>
 
+<audio id="newSessionSound" preload="auto">
+    <source src="../sounds/new.wav" type="audio/wav">
+</audio>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -380,6 +384,7 @@ ob_start();
     let itemsPerPage = 20;
     let currentPeriod = 'monthly';
     let totalSessions = 0;
+    let previousSessionIds = new Set();
 
     document.addEventListener('DOMContentLoaded', function () {
         setupEventListeners();
@@ -543,6 +548,7 @@ ob_start();
                         loadSessionDetails(currentSessionId, false);
                     }
                 }
+
             } catch (error) {
                 console.error('Error parsing session stream data:', error);
             }
@@ -615,6 +621,23 @@ ob_start();
             const data = await response.json();
 
             if (data.success) {
+                // Check for new sessions and play notification sound
+                if (sessions.length > 0) {
+                    const currentSessionIds = new Set(data.data.map(s => s.sessionID));
+                    const newSessions = data.data.filter(s => !previousSessionIds.has(s.sessionID) && s.isActive);
+
+                    if (newSessions.length > 0 && previousSessionIds.size > 0) {
+                        playNewSessionSound();
+                        console.log(`${newSessions.length} new session(s) detected`);
+                    }
+
+                    // Update previous session IDs for next comparison
+                    previousSessionIds = currentSessionIds;
+                } else {
+                    // Initialize with current sessions on first load
+                    previousSessionIds = new Set(data.data.map(s => s.sessionID));
+                }
+
                 sessions = data.data;
                 totalSessions = data.total;
                 updateStatistics(data.stats);
@@ -1633,6 +1656,20 @@ ob_start();
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
         };
+    }
+
+    function playNewSessionSound() {
+        try {
+            const audio = document.getElementById('newSessionSound');
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(error => {
+                    console.log('Could not play new session sound:', error);
+                });
+            }
+        } catch (error) {
+            console.error('Error playing new session sound:', error);
+        }
     }
 
     window.addEventListener('beforeunload', () => {
