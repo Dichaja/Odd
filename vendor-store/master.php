@@ -130,6 +130,8 @@ $menuItems = [
         ]
     ]
 ];
+
+$sessionUlid = generateUlid();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -149,7 +151,7 @@ $menuItems = [
     <!-- jQuery & Alpine -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="<?= BASE_URL ?>track/eventLog.js"></script>
+    <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
 
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
