@@ -24,6 +24,19 @@ function getSessionData()
     return $allSessions;
 }
 
+function getSpecificSessionData($sessionId)
+{
+    $allSessions = getSessionData();
+
+    foreach ($allSessions as $session) {
+        if ($session['sessionID'] === $sessionId) {
+            return $session;
+        }
+    }
+
+    return null;
+}
+
 function getLiveSessionsFromJson()
 {
     $jsonFile = __DIR__ . '/../../track/session_log.json';
@@ -447,7 +460,7 @@ function getCountryInfo($countryName)
     return $countryInfo;
 }
 
-function streamSessions()
+function streamAllSessions()
 {
     header('Content-Type: text/event-stream');
     header('Cache-Control: no-cache');
@@ -514,11 +527,82 @@ function streamSessions()
     }
 }
 
+function streamSpecificSession($sessionId)
+{
+    header('Content-Type: text/event-stream');
+    header('Cache-Control: no-cache');
+    header('Connection: keep-alive');
+
+    ignore_user_abort(true);
+    set_time_limit(0);
+
+    $lastSessionUpdate = 0;
+    $lastHeartbeat = 0;
+
+    while (true) {
+        if (connection_aborted()) {
+            break;
+        }
+
+        $currentTime = time();
+
+        if ($currentTime >= $lastSessionUpdate + 1) { // Update every 1 second for specific session
+            $lastSessionUpdate = $currentTime;
+
+            $session = getSpecificSessionData($sessionId);
+
+            if ($session) {
+                if (isset($session['country']) && !isset($session['flag'])) {
+                    $countryInfo = getCountryInfo($session['country']);
+                    $session['shortName'] = strtolower($countryInfo['shortName']);
+                    $session['flag'] = $countryInfo['flag'];
+                    if (!isset($session['phoneCode'])) {
+                        $session['phoneCode'] = $countryInfo['phoneCode'];
+                    }
+                }
+
+                echo "data: " . json_encode([
+                    'type' => 'session_update',
+                    'session_id' => $sessionId,
+                    'data' => $session,
+                    'timestamp' => $currentTime,
+                ]) . "\n\n";
+
+                if (ob_get_level()) {
+                    ob_flush();
+                }
+                flush();
+            }
+        }
+
+        if ($currentTime >= $lastHeartbeat + 5) {
+            $lastHeartbeat = $currentTime;
+            echo "data: " . json_encode([
+                'type' => 'heartbeat',
+                'session_id' => $sessionId,
+                'timestamp' => $currentTime,
+            ]) . "\n\n";
+
+            if (ob_get_level()) {
+                ob_flush();
+            }
+            flush();
+        }
+
+        usleep(100000);
+    }
+}
+
 $action = $_GET['action'] ?? 'get';
+$sessionId = $_GET['session_id'] ?? null;
 
 switch ($action) {
     case 'stream':
-        streamSessions();
+        if ($sessionId) {
+            streamSpecificSession($sessionId);
+        } else {
+            streamAllSessions();
+        }
         break;
 
     case 'get':

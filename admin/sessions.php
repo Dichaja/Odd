@@ -13,9 +13,9 @@ ob_start();
                     <div class="flex items-center gap-2 sm:gap-3">
                         <h1 class="text-lg sm:text-2xl font-bold text-gray-900">Sessions Monitor</h1>
                         <div id="connectionStatus"
-                            class="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                            <span class="text-xs sm:text-sm font-medium text-yellow-700">Connecting...</span>
+                            class="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-green-50 border border-green-200 rounded-lg">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span class="text-xs sm:text-sm font-medium text-green-700">Live Polling</span>
                         </div>
                     </div>
                     <p class="text-gray-600 mt-1 text-sm sm:text-base hidden sm:block">Monitor real-time user activity
@@ -296,13 +296,14 @@ ob_start();
 <script>
     let sessions = [];
     let currentSessionId = null;
-    let eventSource = null;
+    let sessionEventSource = null;
+    let pollingInterval = null;
     let leafletMaps = {};
-    let isConnected = false;
+    let isPolling = false;
 
     document.addEventListener('DOMContentLoaded', function () {
         setupEventListeners();
-        initializeEventStream();
+        startPolling();
         loadInitialSessions();
     });
 
@@ -355,74 +356,102 @@ ob_start();
         }
     }
 
-    function initializeEventStream() {
-        if (eventSource) {
-            eventSource.close();
+    function startPolling() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
         }
 
-        updateConnectionStatus('connecting');
+        isPolling = true;
+        updateConnectionStatus('polling');
 
-        eventSource = new EventSource('fetch/manageSessions.php?action=stream');
+        // Poll every 5 seconds
+        pollingInterval = setInterval(() => {
+            if (!currentSessionId) { // Only poll when no modal is open
+                loadSessionsData();
+            }
+        }, 5000);
+    }
 
-        eventSource.onopen = function () {
-            updateConnectionStatus('connected');
-            isConnected = true;
+    function stopPolling() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+        isPolling = false;
+    }
+
+    function startSessionStream(sessionId) {
+        if (sessionEventSource) {
+            sessionEventSource.close();
+        }
+
+        updateConnectionStatus('streaming');
+
+        sessionEventSource = new EventSource(`fetch/manageSessions.php?action=stream&session_id=${sessionId}`);
+
+        sessionEventSource.onopen = function () {
+            console.log('Session stream connected for:', sessionId);
         };
 
-        eventSource.onmessage = function (event) {
+        sessionEventSource.onmessage = function (event) {
             try {
                 const data = JSON.parse(event.data);
 
-                if (data.type === 'sessions_update') {
-                    sessions = data.data;
-                    updateStatistics();
-                    renderSessionsTable();
-                    renderSessionsCards();
-                    updateCountryFilter();
+                if (data.type === 'session_update' && data.session_id === currentSessionId) {
+                    // Update the specific session in our sessions array
+                    const sessionIndex = sessions.findIndex(s => s.sessionID === data.session_id);
+                    if (sessionIndex !== -1) {
+                        sessions[sessionIndex] = data.data;
+                    }
 
-                    if (currentSessionId) {
-                        if (window.innerWidth < 1024) {
-                            loadMobileSessionDetails(currentSessionId, false);
-                        } else {
-                            loadSessionDetails(currentSessionId, false);
-                        }
+                    // Update the modal with new data
+                    if (window.innerWidth < 1024) {
+                        loadMobileSessionDetails(currentSessionId, false);
+                    } else {
+                        loadSessionDetails(currentSessionId, false);
                     }
                 }
             } catch (error) {
-                console.error('Error parsing SSE data:', error);
+                console.error('Error parsing session stream data:', error);
             }
         };
 
-        eventSource.onerror = function () {
-            updateConnectionStatus('error');
-            isConnected = false;
-
+        sessionEventSource.onerror = function () {
+            console.error('Session stream error for:', sessionId);
             setTimeout(() => {
-                if (!isConnected) {
-                    initializeEventStream();
+                if (currentSessionId === sessionId) {
+                    startSessionStream(sessionId);
                 }
             }, 2000);
         };
+    }
+
+    function stopSessionStream() {
+        if (sessionEventSource) {
+            sessionEventSource.close();
+            sessionEventSource = null;
+        }
+        updateConnectionStatus('polling');
     }
 
     function updateConnectionStatus(status) {
         const statusElement = document.getElementById('connectionStatus');
 
         switch (status) {
-            case 'connecting':
-                statusElement.innerHTML = `
-                <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                <span class="text-xs sm:text-sm font-medium text-yellow-700">Connecting...</span>
-            `;
-                statusElement.className = 'flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-yellow-50 border border-yellow-200 rounded-lg';
-                break;
-
-            case 'connected':
+            case 'polling':
                 statusElement.innerHTML = `
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-xs sm:text-sm font-medium text-green-700">Live</span>
+                <span class="text-xs sm:text-sm font-medium text-green-700">Live Polling</span>
             `;
                 statusElement.className = 'flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-green-50 border border-green-200 rounded-lg';
+                break;
+
+            case 'streaming':
+                statusElement.innerHTML = `
+                <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span class="text-xs sm:text-sm font-medium text-blue-700">Live Stream</span>
+            `;
+                statusElement.className = 'flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 bg-blue-50 border border-blue-200 rounded-lg';
                 break;
 
             case 'error':
@@ -436,6 +465,10 @@ ob_start();
     }
 
     async function loadInitialSessions() {
+        await loadSessionsData();
+    }
+
+    async function loadSessionsData() {
         try {
             const response = await fetch('fetch/manageSessions.php?action=get');
             const data = await response.json();
@@ -452,6 +485,7 @@ ob_start();
         } catch (error) {
             console.error('Error loading sessions:', error);
             showError('Failed to load sessions');
+            updateConnectionStatus('error');
         }
     }
 
@@ -726,6 +760,10 @@ ob_start();
 
     function viewSessionDetails(sessionId) {
         currentSessionId = sessionId;
+
+        // Stop polling and start streaming for this specific session
+        stopPolling();
+        startSessionStream(sessionId);
 
         if (window.innerWidth < 1024) {
             document.getElementById('mobileSessionModal').classList.remove('hidden');
@@ -1303,7 +1341,11 @@ ob_start();
     function closeSessionModal() {
         document.getElementById('sessionModal').classList.add('hidden');
         document.body.style.overflow = '';
+
+        // Stop session stream and resume polling
+        stopSessionStream();
         currentSessionId = null;
+        startPolling();
 
         document.getElementById('chatInput').value = '';
         document.getElementById('charCount').textContent = '0/500';
@@ -1320,7 +1362,11 @@ ob_start();
     function closeMobileSessionModal() {
         document.getElementById('mobileSessionModal').classList.add('hidden');
         document.body.style.overflow = '';
+
+        // Stop session stream and resume polling
+        stopSessionStream();
         currentSessionId = null;
+        startPolling();
 
         document.getElementById('mobileChatInput').value = '';
         document.getElementById('mobileCharCount').textContent = '0/500';
@@ -1334,7 +1380,7 @@ ob_start();
         icon.classList.add('fa-spin');
         refreshBtn.disabled = true;
 
-        loadInitialSessions().finally(() => {
+        loadSessionsData().finally(() => {
             setTimeout(() => {
                 icon.classList.remove('fa-spin');
                 refreshBtn.disabled = false;
@@ -1370,8 +1416,12 @@ ob_start();
     }
 
     window.addEventListener('beforeunload', () => {
-        if (eventSource) {
-            eventSource.close();
+        if (sessionEventSource) {
+            sessionEventSource.close();
+        }
+
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
         }
 
         Object.keys(leafletMaps).forEach(mapId => {

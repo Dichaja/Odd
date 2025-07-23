@@ -111,8 +111,8 @@ $menuItems = [
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="<?= BASE_URL ?>/img/favicon.png">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <!-- <script src="<?= BASE_URL ?>track/eventLog.js"></script> -->
     <script>
+        const BASE_URL = "<?= BASE_URL ?>";
         tailwind.config = {
             theme: {
                 extend: {
@@ -331,7 +331,12 @@ $menuItems = [
             </main>
         </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="<?= BASE_URL ?>track/eventLog.js"></script>
+
     <script>
+        const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
+
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
         const overlay = Object.assign(document.createElement('div'), {
