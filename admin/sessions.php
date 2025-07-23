@@ -82,6 +82,43 @@ ob_start();
             </div>
         </div>
 
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-2">Time Period</h2>
+                    <p class="text-sm text-gray-600">Filter sessions by time range</p>
+                </div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            data-period="daily">
+                            <i class="fas fa-calendar-day mr-2"></i>Daily
+                        </button>
+                        <button
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            data-period="weekly">
+                            <i class="fas fa-calendar-week mr-2"></i>Weekly
+                        </button>
+                        <button
+                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            data-period="monthly">
+                            <i class="fas fa-calendar-alt mr-2"></i>Monthly
+                        </button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input type="date" id="startDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <span class="text-gray-500 text-center sm:text-left">to</span>
+                        <input type="date" id="endDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <button id="applyCustomRange"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                            Apply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
             <div class="p-4 sm:p-6 border-b border-gray-100">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -147,10 +184,49 @@ ob_start();
                 </table>
             </div>
 
+            <div class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600 text-center sm:text-left">
+                    Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> sessions
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prevPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Previous
+                    </button>
+                    <span id="pageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
+                    <button id="nextPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
+
             <div class="lg:hidden" id="sessionsCards">
                 <div class="p-4 text-center text-gray-500">
                     <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                     <div>Loading sessions...</div>
+                </div>
+            </div>
+
+            <div
+                class="lg:hidden p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600 text-center sm:text-left">
+                    Showing <span id="mobileShowingCount">0</span> of <span id="mobileTotalCount">0</span> sessions
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="mobilePrevPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Previous
+                    </button>
+                    <span id="mobilePageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
+                    <button id="mobileNextPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Next
+                    </button>
                 </div>
             </div>
         </div>
@@ -300,11 +376,15 @@ ob_start();
     let pollingInterval = null;
     let leafletMaps = {};
     let isPolling = false;
+    let currentPage = 1;
+    let itemsPerPage = 20;
+    let currentPeriod = 'monthly';
+    let totalSessions = 0;
 
     document.addEventListener('DOMContentLoaded', function () {
         setupEventListeners();
+        initializeDateFilters();
         startPolling();
-        loadInitialSessions();
     });
 
     function setupEventListeners() {
@@ -354,6 +434,63 @@ ob_start();
 
             mobileSendBtn.addEventListener('click', sendMobileChatMessage);
         }
+
+        // Add date filter event listeners
+        document.querySelectorAll('.date-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.date-filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-blue-600', 'text-white', 'border-blue-600');
+                    b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+                });
+
+                this.classList.add('active', 'bg-blue-600', 'text-white', 'border-blue-600');
+                this.classList.remove('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+
+                const period = this.dataset.period;
+                setDateRangeForPeriod(period);
+            });
+        });
+
+        document.getElementById('applyCustomRange').addEventListener('click', function () {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (startDate && endDate) {
+                document.querySelectorAll('.date-filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-blue-600', 'text-white', 'border-blue-600');
+                    b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+                });
+
+                currentPeriod = 'custom';
+                currentPage = 1;
+                loadSessionsData();
+            }
+        });
+
+        // Pagination event listeners
+        document.getElementById('prevPage').addEventListener('click', function () {
+            if (currentPage > 1) {
+                currentPage--;
+                loadSessionsData();
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', function () {
+            currentPage++;
+            loadSessionsData();
+        });
+
+        document.getElementById('mobilePrevPage').addEventListener('click', function () {
+            if (currentPage > 1) {
+                currentPage--;
+                loadSessionsData();
+            }
+        });
+
+        document.getElementById('mobileNextPage').addEventListener('click', function () {
+            currentPage++;
+            loadSessionsData();
+        });
     }
 
     function startPolling() {
@@ -470,15 +607,26 @@ ob_start();
 
     async function loadSessionsData() {
         try {
-            const response = await fetch('fetch/manageSessions.php?action=get');
+            const params = new URLSearchParams({
+                action: 'get',
+                page: currentPage,
+                limit: itemsPerPage,
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value,
+                period: currentPeriod
+            });
+
+            const response = await fetch(`fetch/manageSessions.php?${params}`);
             const data = await response.json();
 
             if (data.success) {
                 sessions = data.data;
+                totalSessions = data.total;
                 updateStatistics(data.stats);
                 renderSessionsTable();
                 renderSessionsCards();
                 updateCountryFilter();
+                updatePagination(data.total, data.page);
             } else {
                 showError('Failed to load sessions');
             }
@@ -564,16 +712,19 @@ ob_start();
                         </div>
                         <div class="ml-4">
                             <div class="text-sm font-medium text-gray-900">${displayName}</div>
-                            <div class="text-sm text-gray-500">${session.ipAddress}</div>
+                            <div class="text-sm text-gray-500">${session.ipAddress || 'Unknown'}</div>
                         </div>
                     </div>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
                     <div class="flex items-center justify-center gap-2">
-                        <img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
-                        <span class="text-sm text-gray-900">${session.country}</span>
+                        ${session.country && session.country !== 'Unknown' ?
+                    `<img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
+                             <span class="text-sm text-gray-900">${session.country}</span>` :
+                    `<span class="text-sm text-gray-500">Unknown</span>`
+                }
                     </div>
-                    <div class="text-xs text-gray-500">${session.phoneCode}</div>
+                    <div class="text-xs text-gray-500">${session.phoneCode || 'N/A'}</div>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
                     <div class="flex items-center justify-center gap-2">
@@ -645,8 +796,11 @@ ob_start();
                             <span class="text-xs text-gray-500">${lastActivity}</span>
                         </div>
                         <div class="flex items-center gap-2 mb-2">
-                            <img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
-                            <span class="text-sm text-gray-600">${session.country}</span>
+                            ${session.country && session.country !== 'Unknown' ?
+                    `<img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
+                                 <span class="text-sm text-gray-600">${session.country}</span>` :
+                    `<span class="text-sm text-gray-500">Unknown</span>`
+                }
                             <span class="text-xs text-gray-500">•</span>
                             <span class="text-sm text-gray-600">${session.browser}</span>
                             <span class="text-xs text-gray-500">•</span>
@@ -1373,6 +1527,43 @@ ob_start();
         document.getElementById('mobileSendChatBtn').disabled = true;
     }
 
+    function initializeDateFilters() {
+        setDateRangeForPeriod('monthly');
+    }
+
+    function setDateRangeForPeriod(period) {
+        const today = new Date();
+        let startDate, endDate;
+
+        switch (period) {
+            case 'daily':
+                startDate = new Date(today);
+                endDate = new Date(today);
+                break;
+            case 'weekly':
+                const dayOfWeek = today.getDay();
+                startDate = new Date(today);
+                startDate.setDate(today.getDate() - dayOfWeek);
+                endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+                break;
+            case 'monthly':
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                endDate = new Date(today);
+                break;
+            default:
+                startDate = new Date(today);
+                endDate = new Date(today);
+        }
+
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+
+        currentPeriod = period;
+        currentPage = 1;
+        loadSessionsData();
+    }
+
     function refreshSessions() {
         const refreshBtn = document.getElementById('refreshBtn');
         const icon = refreshBtn.querySelector('i');
@@ -1401,6 +1592,28 @@ ob_start();
 
         tbody.innerHTML = `<tr><td colspan="7">${errorContent}</td></tr>`;
         cards.innerHTML = errorContent;
+    }
+
+    function updatePagination(total, page) {
+        const totalPages = Math.ceil(total / itemsPerPage);
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, total);
+
+        // Desktop pagination
+        document.getElementById('showingCount').textContent = `${startIndex + 1}-${endIndex}`;
+        document.getElementById('totalCount').textContent = total;
+        document.getElementById('pageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
+
+        document.getElementById('prevPage').disabled = page === 1;
+        document.getElementById('nextPage').disabled = page === totalPages || totalPages === 0;
+
+        // Mobile pagination
+        document.getElementById('mobileShowingCount').textContent = `${startIndex + 1}-${endIndex}`;
+        document.getElementById('mobileTotalCount').textContent = total;
+        document.getElementById('mobilePageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
+
+        document.getElementById('mobilePrevPage').disabled = page === 1;
+        document.getElementById('mobileNextPage').disabled = page === totalPages || totalPages === 0;
     }
 
     function debounce(func, wait) {
@@ -1517,6 +1730,22 @@ ob_start();
         border-radius: 50%;
         min-width: 40px;
         min-height: 40px;
+    }
+
+    .date-filter-btn {
+        border-color: #d1d5db;
+        color: #374151;
+        transition: all 0.2s ease;
+    }
+
+    .date-filter-btn:hover:not(.active) {
+        background-color: #f9fafb;
+    }
+
+    .date-filter-btn.active {
+        background-color: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
     }
 </style>
 

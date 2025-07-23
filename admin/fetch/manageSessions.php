@@ -8,11 +8,20 @@ header('Access-Control-Allow-Headers: Content-Type');
 require_once __DIR__ . '/../../config/config.php';
 date_default_timezone_set('Africa/Kampala');
 
-function getSessionData()
+function getSessionData($page = 1, $limit = 20, $startDate = null, $endDate = null, $period = 'monthly')
 {
     $liveSessions = getLiveSessionsFromJson();
-    $expiredSessions = getExpiredSessionsFromDatabase();
-    $allSessions = array_merge($liveSessions, $expiredSessions);
+    $expiredSessions = getExpiredSessionsFromDatabase($startDate, $endDate, $period);
+
+    // Always include active sessions regardless of time filter
+    $activeSessions = array_filter($liveSessions, function ($session) {
+        return $session['isActive'];
+    });
+
+    // Filter expired sessions by date if provided
+    $filteredExpiredSessions = $expiredSessions;
+
+    $allSessions = array_merge($activeSessions, $filteredExpiredSessions);
 
     usort($allSessions, function ($a, $b) {
         if ($a['isActive'] !== $b['isActive']) {
@@ -21,7 +30,17 @@ function getSessionData()
         return $b['lastActivityTime'] - $a['lastActivityTime'];
     });
 
-    return $allSessions;
+    $total = count($allSessions);
+    $offset = ($page - 1) * $limit;
+    $paginatedSessions = array_slice($allSessions, $offset, $limit);
+
+    return [
+        'data' => $paginatedSessions,
+        'total' => $total,
+        'page' => $page,
+        'limit' => $limit,
+        'total_pages' => ceil($total / $limit)
+    ];
 }
 
 function getSpecificSessionData($sessionId)
@@ -59,7 +78,13 @@ function getLiveSessionsFromJson()
     $now = time();
 
     foreach ($sessions as $session) {
-        $session['shortName'] = strtolower($session['shortName']);
+        // Handle unknown country and IP data
+        $session['country'] = $session['country'] ?? 'Unknown';
+        $session['shortName'] = isset($session['shortName']) ? strtolower($session['shortName']) : 'unknown';
+        $session['phoneCode'] = $session['phoneCode'] ?? 'N/A';
+        $session['ipAddress'] = $session['ipAddress'] ?? 'Unknown';
+        $session['browser'] = $session['browser'] ?? 'Unknown';
+        $session['device'] = $session['device'] ?? 'unknown';
 
         if (!isset($session['loggedUser']) || $session['loggedUser'] === null) {
             $session['loggedUser'] = extractLoggedUserFromEvents($session['logs'] ?? []);
@@ -100,21 +125,45 @@ function getLiveSessionsFromJson()
     return $formattedSessions;
 }
 
-function getExpiredSessionsFromDatabase()
+function getExpiredSessionsFromDatabase($startDate = null, $endDate = null, $period = 'monthly')
 {
     global $pdo;
 
     try {
+        $whereClause = "WHERE 1=1";
+        $params = [];
+
+        if ($startDate && $endDate) {
+            $whereClause .= " AND DATE(s.created_at) BETWEEN ? AND ?";
+            $params[] = $startDate;
+            $params[] = $endDate;
+        } elseif ($period) {
+            // Apply default period filtering
+            switch ($period) {
+                case 'daily':
+                    $whereClause .= " AND DATE(s.created_at) = CURDATE()";
+                    break;
+                case 'weekly':
+                    $whereClause .= " AND s.created_at >= DATE_SUB(NOW(), INTERVAL 1 WEEK)";
+                    break;
+                case 'monthly':
+                    $whereClause .= " AND s.created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)";
+                    break;
+            }
+        }
+
         $stmt = $pdo->prepare("
             SELECT 
                 s.*,
                 COALESCE(MAX(se.event_timestamp), s.created_at) as last_activity_time
             FROM sessions s
             LEFT JOIN session_events se ON s.session_id = se.session_id
+            $whereClause
             GROUP BY s.session_id
             ORDER BY last_activity_time DESC
         ");
-        $stmt->execute();
+
+        $stmt->execute($params);
         $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $formattedSessions = [];
@@ -175,6 +224,12 @@ function formatExpiredSessionData($session, $events)
             'longitude' => (float) $session['longitude']
         ];
     }
+
+    // Handle unknown country and IP
+    $country = $session['country'] ?: 'Unknown';
+    $shortName = $session['short_name'] ? strtolower($session['short_name']) : 'unknown';
+    $phoneCode = $session['phone_code'] ?: 'N/A';
+    $ipAddress = $session['ip_address'] ?: 'Unknown';
 
     $logs = [];
     foreach ($events as $event) {
@@ -276,12 +331,12 @@ function formatExpiredSessionData($session, $events)
     return [
         'sessionID' => $session['session_id'],
         'timestamp' => date('c', $sessionStart),
-        'ipAddress' => $session['ip_address'],
-        'country' => $session['country'],
-        'shortName' => strtolower($session['short_name']),
-        'phoneCode' => $session['phone_code'],
-        'browser' => $session['browser'],
-        'device' => $session['device'],
+        'ipAddress' => $ipAddress,
+        'country' => $country,
+        'shortName' => $shortName,
+        'phoneCode' => $phoneCode,
+        'browser' => $session['browser'] ?: 'Unknown',
+        'device' => $session['device'] ?: 'unknown',
         'coords' => $coords,
         'loggedUser' => $loggedUser,
         'logs' => $logs,
@@ -595,6 +650,11 @@ function streamSpecificSession($sessionId)
 
 $action = $_GET['action'] ?? 'get';
 $sessionId = $_GET['session_id'] ?? null;
+$page = max(1, intval($_GET['page'] ?? 1));
+$limit = max(1, min(100, intval($_GET['limit'] ?? 20)));
+$startDate = $_GET['start_date'] ?? null;
+$endDate = $_GET['end_date'] ?? null;
+$period = $_GET['period'] ?? 'monthly';
 
 switch ($action) {
     case 'stream':
@@ -607,15 +667,16 @@ switch ($action) {
 
     case 'get':
     default:
-        $sessions = getSessionData();
+        $result = getSessionData($page, $limit, $startDate, $endDate, $period);
+        $sessions = $result['data'];
 
         if (!isset($sessions['error'])) {
             foreach ($sessions as &$session) {
-                if (isset($session['country']) && !isset($session['flag'])) {
+                if (isset($session['country']) && $session['country'] !== 'Unknown' && !isset($session['flag'])) {
                     $countryInfo = getCountryInfo($session['country']);
                     $session['shortName'] = strtolower($countryInfo['shortName']);
                     $session['flag'] = $countryInfo['flag'];
-                    if (!isset($session['phoneCode'])) {
+                    if (!isset($session['phoneCode']) || $session['phoneCode'] === 'N/A') {
                         $session['phoneCode'] = $countryInfo['phoneCode'];
                     }
                 }
@@ -626,15 +687,16 @@ switch ($action) {
         echo json_encode([
             'success' => !isset($sessions['error']),
             'data' => $sessions,
+            'total' => $result['total'],
+            'page' => $result['page'],
+            'limit' => $result['limit'],
+            'total_pages' => $result['total_pages'],
             'timestamp' => time(),
             'stats' => !isset($sessions['error']) ? [
-                'total_sessions' => count($sessions),
+                'total_sessions' => $result['total'],
                 'active_sessions' => count(array_filter($sessions, fn($s) => $s['isActive'])),
                 'logged_users' => count(array_filter($sessions, fn($s) => $s['loggedUser'] !== null)),
                 'unique_countries' => count(array_unique(array_column($sessions, 'country'))),
-                'total_login_attempts' => array_sum(array_map(fn($s) => $s['authStats']['login_attempts'] ?? 0, $sessions)),
-                'total_login_successes' => array_sum(array_map(fn($s) => $s['authStats']['login_successes'] ?? 0, $sessions)),
-                'total_login_failures' => array_sum(array_map(fn($s) => $s['authStats']['login_failures'] ?? 0, $sessions)),
             ] : null,
         ]);
         break;
