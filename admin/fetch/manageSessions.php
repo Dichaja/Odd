@@ -1,4 +1,9 @@
 <?php
+session_start();
+if (isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in']) {
+    $_SESSION['last_activity'] = time();
+}
+
 header('Content-Type: application/json');
 header('Cache-Control: no-cache');
 header('Access-Control-Allow-Origin: *');
