@@ -122,7 +122,7 @@ $menuItems = [
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
+    <script src="<?= BASE_URL ?>track/eventLog.js"></script>
 
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
