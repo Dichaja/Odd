@@ -435,7 +435,6 @@ ob_start();
             mobileSendBtn.addEventListener('click', sendMobileChatMessage);
         }
 
-        // Add date filter event listeners
         document.querySelectorAll('.date-filter-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 document.querySelectorAll('.date-filter-btn').forEach(b => {
@@ -467,7 +466,6 @@ ob_start();
             }
         });
 
-        // Pagination event listeners
         document.getElementById('prevPage').addEventListener('click', function () {
             if (currentPage > 1) {
                 currentPage--;
@@ -501,9 +499,8 @@ ob_start();
         isPolling = true;
         updateConnectionStatus('polling');
 
-        // Poll every 5 seconds
         pollingInterval = setInterval(() => {
-            if (!currentSessionId) { // Only poll when no modal is open
+            if (!currentSessionId) {
                 loadSessionsData();
             }
         }, 5000);
@@ -527,7 +524,7 @@ ob_start();
         sessionEventSource = new EventSource(`fetch/manageSessions.php?action=stream&session_id=${sessionId}`);
 
         sessionEventSource.onopen = function () {
-            // console.log('Session stream connected for:', sessionId);
+            console.log('Session stream connected for:', sessionId);
         };
 
         sessionEventSource.onmessage = function (event) {
@@ -535,13 +532,11 @@ ob_start();
                 const data = JSON.parse(event.data);
 
                 if (data.type === 'session_update' && data.session_id === currentSessionId) {
-                    // Update the specific session in our sessions array
                     const sessionIndex = sessions.findIndex(s => s.sessionID === data.session_id);
                     if (sessionIndex !== -1) {
                         sessions[sessionIndex] = data.data;
                     }
 
-                    // Update the modal with new data
                     if (window.innerWidth < 1024) {
                         loadMobileSessionDetails(currentSessionId, false);
                     } else {
@@ -712,24 +707,25 @@ ob_start();
                         </div>
                         <div class="ml-4">
                             <div class="text-sm font-medium text-gray-900">${displayName}</div>
-                            <div class="text-sm text-gray-500">${session.ipAddress || 'Unknown'}</div>
+                            <div class="text-sm text-gray-500">${session.ipAddress === 'Fetching...' ? 'Unknown' : session.ipAddress}</div>
                         </div>
                     </div>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
                     <div class="flex items-center justify-center gap-2">
-                        ${session.country && session.country !== 'Unknown' ?
+                        ${session.country === 'Fetching...' || session.country === 'Unknown' ?
+                    `<i class="fas fa-globe text-gray-500"></i>
+                             <span class="text-sm text-gray-500">Unknown</span>` :
                     `<img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
-                             <span class="text-sm text-gray-900">${session.country}</span>` :
-                    `<span class="text-sm text-gray-500">Unknown</span>`
+                             <span class="text-sm text-gray-900">${session.country}</span>`
                 }
                     </div>
-                    <div class="text-xs text-gray-500">${session.phoneCode || 'N/A'}</div>
+                    <div class="text-xs text-gray-500">${session.phoneCode === 'Fetching...' ? 'N/A' : session.phoneCode}</div>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
                     <div class="flex items-center justify-center gap-2">
                         <i class="${deviceIcon} text-gray-600"></i>
-                        <span class="text-sm text-gray-900">${session.browser}</span>
+                        <span class="text-sm text-gray-900">${session.browser === 'Fetching...' ? 'Unknown' : session.browser}</span>
                     </div>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
@@ -796,13 +792,14 @@ ob_start();
                             <span class="text-xs text-gray-500">${lastActivity}</span>
                         </div>
                         <div class="flex items-center gap-2 mb-2">
-                            ${session.country && session.country !== 'Unknown' ?
+                            ${session.country === 'Fetching...' || session.country === 'Unknown' ?
+                    `<i class="fas fa-globe text-gray-500"></i>
+                                 <span class="text-sm text-gray-500">Unknown</span>` :
                     `<img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
-                                 <span class="text-sm text-gray-600">${session.country}</span>` :
-                    `<span class="text-sm text-gray-500">Unknown</span>`
+                                 <span class="text-sm text-gray-600">${session.country}</span>`
                 }
                             <span class="text-xs text-gray-500">•</span>
-                            <span class="text-sm text-gray-600">${session.browser}</span>
+                            <span class="text-sm text-gray-600">${session.browser === 'Fetching...' ? 'Unknown' : session.browser}</span>
                             <span class="text-xs text-gray-500">•</span>
                             <i class="${deviceIcon} text-gray-600 text-sm"></i>
                         </div>
@@ -837,9 +834,9 @@ ob_start();
         return sessions.filter(session => {
             const matchesSearch = !searchTerm ||
                 session.sessionID.toLowerCase().includes(searchTerm) ||
-                session.ipAddress.includes(searchTerm) ||
-                session.country.toLowerCase().includes(searchTerm) ||
-                session.browser.toLowerCase().includes(searchTerm) ||
+                (session.ipAddress !== 'Fetching...' && session.ipAddress.includes(searchTerm)) ||
+                (session.country !== 'Fetching...' && session.country.toLowerCase().includes(searchTerm)) ||
+                (session.browser !== 'Fetching...' && session.browser.toLowerCase().includes(searchTerm)) ||
                 (session.loggedUser && session.loggedUser.username && session.loggedUser.username.toLowerCase().includes(searchTerm));
 
             const matchesCountry = countryFilter === 'all' || session.country === countryFilter;
@@ -915,7 +912,6 @@ ob_start();
     function viewSessionDetails(sessionId) {
         currentSessionId = sessionId;
 
-        // Stop polling and start streaming for this specific session
         stopPolling();
         startSessionStream(sessionId);
 
@@ -940,7 +936,7 @@ ob_start();
                 `Session: ${sessionId}`;
 
             document.getElementById('modalTitle').textContent = modalTitle;
-            document.getElementById('modalSubtitle').textContent = `${session.country} • ${session.browser} • ${session.device} • ${session.activeDuration}`;
+            document.getElementById('modalSubtitle').textContent = `${session.country === 'Fetching...' ? 'Unknown' : session.country} • ${session.browser === 'Fetching...' ? 'Unknown' : session.browser} • ${session.device} • ${session.activeDuration}`;
 
             const statusIndicator = document.getElementById('modalStatusIndicator');
             if (session.isExpired) {
@@ -977,18 +973,22 @@ ob_start();
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">IP Address:</span>
-                        <span class="font-medium">${session.ipAddress}</span>
+                        <span class="font-medium">${session.ipAddress === 'Fetching...' ? 'Unknown' : session.ipAddress}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Location:</span>
                         <div class="flex items-center gap-1">
-                            <img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
-                            <span>${session.country}</span>
+                            ${session.country === 'Fetching...' || session.country === 'Unknown' ?
+                    `<i class="fas fa-globe text-gray-500"></i>
+                                 <span>Unknown</span>` :
+                    `<img src="https://flagcdn.com/16x12/${session.shortName}.png" alt="${session.country}" class="rounded">
+                                 <span>${session.country}</span>`
+                }
                         </div>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Browser:</span>
-                        <span class="font-medium">${session.browser}</span>
+                        <span class="font-medium">${session.browser === 'Fetching...' ? 'Unknown' : session.browser}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">Device:</span>
@@ -1101,11 +1101,12 @@ ob_start();
         `;
         }).join('');
 
-        if (!isInitialLoad && !wasAtBottom && !session.isExpired) {
+        if (isInitialLoad || wasAtBottom) {
+            setTimeout(() => {
+                activityFeed.scrollTop = activityFeed.scrollHeight;
+            }, 100);
+        } else if (!wasAtBottom && !session.isExpired) {
             document.getElementById('newEventIndicator').classList.remove('hidden');
-        } else if (wasAtBottom) {
-            activityFeed.scrollTop = activityFeed.scrollHeight;
-            document.getElementById('newEventIndicator').classList.add('hidden');
         }
     }
 
@@ -1119,7 +1120,7 @@ ob_start();
                 `${sessionId.substring(0, 8)}...`;
 
             document.getElementById('mobileModalTitle').textContent = mobileTitle;
-            document.getElementById('mobileModalSubtitle').textContent = `${session.country} • ${session.browser} • ${session.activeDuration}`;
+            document.getElementById('mobileModalSubtitle').textContent = `${session.country === 'Fetching...' ? 'Unknown' : session.country} • ${session.browser === 'Fetching...' ? 'Unknown' : session.browser} • ${session.activeDuration}`;
 
             const mobileStatusIndicator = document.getElementById('mobileModalStatusIndicator');
             if (session.isExpired) {
@@ -1183,11 +1184,12 @@ ob_start();
         `;
         }).join('');
 
-        if (!isInitialLoad && !wasAtBottom && !session.isExpired) {
+        if (isInitialLoad || wasAtBottom) {
+            setTimeout(() => {
+                mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
+            }, 100);
+        } else if (!wasAtBottom && !session.isExpired) {
             document.getElementById('mobileNewEventIndicator').classList.remove('hidden');
-        } else if (wasAtBottom) {
-            mobileActivityFeed.scrollTop = mobileActivityFeed.scrollHeight;
-            document.getElementById('mobileNewEventIndicator').classList.add('hidden');
         }
     }
 
@@ -1496,7 +1498,6 @@ ob_start();
         document.getElementById('sessionModal').classList.add('hidden');
         document.body.style.overflow = '';
 
-        // Stop session stream and resume polling
         stopSessionStream();
         currentSessionId = null;
         startPolling();
@@ -1517,7 +1518,6 @@ ob_start();
         document.getElementById('mobileSessionModal').classList.add('hidden');
         document.body.style.overflow = '';
 
-        // Stop session stream and resume polling
         stopSessionStream();
         currentSessionId = null;
         startPolling();
@@ -1599,7 +1599,6 @@ ob_start();
         const startIndex = (page - 1) * itemsPerPage;
         const endIndex = Math.min(startIndex + itemsPerPage, total);
 
-        // Desktop pagination
         document.getElementById('showingCount').textContent = `${startIndex + 1}-${endIndex}`;
         document.getElementById('totalCount').textContent = total;
         document.getElementById('pageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
@@ -1607,7 +1606,6 @@ ob_start();
         document.getElementById('prevPage').disabled = page === 1;
         document.getElementById('nextPage').disabled = page === totalPages || totalPages === 0;
 
-        // Mobile pagination
         document.getElementById('mobileShowingCount').textContent = `${startIndex + 1}-${endIndex}`;
         document.getElementById('mobileTotalCount').textContent = total;
         document.getElementById('mobilePageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
