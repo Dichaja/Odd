@@ -121,7 +121,20 @@ $(function () {
             url: TRACKER_URL,
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(sessionData)
+            data: JSON.stringify(sessionData),
+            success: function (resp) {
+                // If server rejects the session data, clear and start a new session immediately
+                if (resp.status === 'error' && resp.message === 'Invalid session data.') {
+                    console.error('Invalid session data from server—resetting session.');
+                    localStorage.removeItem(STORAGE_KEY);
+                    const fresh = getSession();        // will create a new session object
+                    const initLog = logPageLoad();     // record initial page_load for new session
+                    sendSessionToServer(initLog);      // send new session to server
+                }
+            },
+            error: function () {
+                // network or server error
+            }
         });
     }
 
