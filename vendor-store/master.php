@@ -382,12 +382,16 @@ $sessionUlid = generateUlid();
                                 <i class="fas fa-chevron-down text-sm text-gray-400"></i>
                             </button>
                             <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg
-                                    border border-gray-100 py-2 z-50">
+            border border-gray-100 py-2 z-50">
                                 <div class="px-4 py-3 bg-gray-50">
                                     <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500"><?= htmlspecialchars($storeName) ?></p>
                                     <p class="text-xs text-gray-500 mt-1">Role: <?= $userRole ?></p>
                                 </div>
+                                <a href="<?= BASE_URL ?>account/dashboard"
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-user-circle w-5 h-5 text-gray-400"></i>User Dashboard
+                                </a>
                                 <a href="<?= BASE_URL ?>vendor-store/store-profile"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                                     <i class="fas fa-store w-5 h-5 text-gray-400"></i>Store Profile
@@ -611,6 +615,4 @@ $sessionUlid = generateUlid();
             };
         }
     </script>
-</body>
-
-</html>
+</body></html>
