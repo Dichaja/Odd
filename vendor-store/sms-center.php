@@ -13,7 +13,7 @@ function formatCurrency($amount)
 <div class="min-h-screen bg-gray-50" id="app-container">
     <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
         <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
                     <div class="flex items-center justify-between">
                         <div>
@@ -53,20 +53,6 @@ function formatCurrency($amount)
                         </div>
                         <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
                             <i class="fas fa-clock text-purple-600"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">SMS Rate</p>
-                            <p class="text-lg font-bold text-orange-900 whitespace-nowrap" id="sms-rate-display">
-                                Loading...</p>
-                            <p class="text-sm font-medium text-orange-700 whitespace-nowrap">Per Message</p>
-                        </div>
-                        <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-tag text-orange-600"></i>
                         </div>
                     </div>
                 </div>
@@ -200,7 +186,6 @@ function formatCurrency($amount)
                             <label for="bulk-number-input" class="block text-sm font-semibold text-gray-700 mb-2">Add
                                 Recipients</label>
 
-                            <!-- Template Upload Section -->
                             <div class="bg-blue-50 rounded-xl p-4 mb-4 border border-blue-200">
                                 <div class="flex items-center gap-3 mb-3">
                                     <div class="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -228,7 +213,6 @@ function formatCurrency($amount)
                                     0.</p>
                             </div>
 
-                            <!-- Manual Entry Section -->
                             <div class="border-t border-gray-200 pt-4">
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Or Add Manually</label>
                                 <div class="flex gap-2">
@@ -343,13 +327,13 @@ function formatCurrency($amount)
                                         <i class="fas fa-search text-gray-400"></i>
                                     </div>
                                     <input type="text" id="searchHistory"
-                                        class="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white"
+                                        class="block w-full pl-10 pr-4 py-3	border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all	duration-200 bg-gray-50 focus:bg-white"
                                         placeholder="Search SMS history..." oninput="filterHistory()">
                                 </div>
                             </div>
                             <div class="flex flex-col sm:flex-row gap-3">
                                 <select id="statusFilter"
-                                    class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                    class="px-4 py-3	border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all	duration-200"
                                     onchange="filterHistory()">
                                     <option value="">All Status</option>
                                     <option value="sent">Sent</option>
@@ -357,10 +341,10 @@ function formatCurrency($amount)
                                     <option value="failed">Failed</option>
                                 </select>
                                 <input type="date" id="dateFromFilter"
-                                    class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                    class="px-4 py-3	border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all	duration-200"
                                     onchange="filterHistory()" placeholder="From Date">
                                 <input type="date" id="dateToFilter"
-                                    class="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                    class="px-4 py-3	border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all	duration-200"
                                     onchange="filterHistory()" placeholder="To Date">
                             </div>
                         </div>
@@ -393,14 +377,12 @@ function formatCurrency($amount)
                                             Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="history-table-body" class="divide-y divide-gray-100">
-                                </tbody>
+                                <tbody id="history-table-body" class="divide-y divide-gray-100"></tbody>
                             </table>
                         </div>
                     </div>
 
-                    <div class="lg:hidden p-4 space-y-4 max-h-[70vh] overflow-y-auto" id="history-mobile">
-                    </div>
+                    <div class="lg:hidden p-4 space-y-4 max-h-[70vh] overflow-y-auto" id="history-mobile"></div>
 
                     <div id="history-empty-state" class="hidden text-center py-16">
                         <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -426,7 +408,7 @@ function formatCurrency($amount)
                                         <i class="fas fa-search text-gray-400"></i>
                                     </div>
                                     <input type="text" id="searchTemplates"
-                                        class="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-gray-50 focus:bg-white"
+                                        class="block w-full pl-10 pr-4 py-3	border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all	duration-200 bg-gray-50 focus:bg-white"
                                         placeholder="Search templates..." oninput="filterTemplates()">
                                 </div>
                             </div>
@@ -439,8 +421,7 @@ function formatCurrency($amount)
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="templates-grid">
-                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="templates-grid"></div>
 
                 <div id="templates-empty-state" class="hidden text-center py-16">
                     <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -633,8 +614,7 @@ function formatCurrency($amount)
             </div>
         </div>
         <div class="p-6 overflow-y-auto max-h-96">
-            <div id="upload-results-content">
-            </div>
+            <div id="upload-results-content"></div>
             <div class="flex gap-3 pt-4">
                 <button type="button" onclick="hideBulkUploadModal()"
                     class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
@@ -645,7 +625,7 @@ function formatCurrency($amount)
     </div>
 </div>
 
-<!-- Modals -->
+<!-- Template Selector Modal -->
 <div id="templateSelectorModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideTemplateSelector()"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 max-h-[80vh] overflow-hidden">
@@ -659,12 +639,12 @@ function formatCurrency($amount)
             </div>
         </div>
         <div class="p-6 overflow-y-auto max-h-96">
-            <div class="space-y-3" id="template-selector-list">
-            </div>
+            <div class="space-y-3" id="template-selector-list"></div>
         </div>
     </div>
 </div>
 
+<!-- Template Editor Modal -->
 <div id="templateModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideTemplateModal()"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10">
@@ -708,6 +688,7 @@ function formatCurrency($amount)
     </div>
 </div>
 
+<!-- Message Modal -->
 <div id="messageModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideMessageModal()"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10">
@@ -722,8 +703,7 @@ function formatCurrency($amount)
         </div>
         <div class="p-6">
             <div class="flex items-center gap-3 mb-4">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center" id="message-modal-icon">
-                </div>
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" id="message-modal-icon"></div>
                 <p class="text-gray-900" id="message-modal-text"></p>
             </div>
             <button onclick="hideMessageModal()"
@@ -732,6 +712,7 @@ function formatCurrency($amount)
     </div>
 </div>
 
+<!-- Confirmation Modal -->
 <div id="confirmationModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideConfirmationModal()"></div>
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10">
@@ -745,8 +726,7 @@ function formatCurrency($amount)
             </div>
         </div>
         <div class="p-6">
-            <div class="space-y-4" id="confirmation-details">
-            </div>
+            <div class="space-y-4" id="confirmation-details"></div>
             <div class="flex gap-3 pt-6">
                 <button type="button" onclick="hideConfirmationModal()"
                     class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium">Cancel</button>
@@ -760,17 +740,15 @@ function formatCurrency($amount)
 </div>
 
 <script>
-    // Global variables
     let smsStats = {};
     let smsHistory = [];
     let smsTemplates = [];
     let currentTab = 'send';
     let bulkRecipients = [];
-    let currentSmsRate = 35;
+    let currentSmsRate = 0;
     let walletBalance = 0;
     let walletCredits = 0;
 
-    // Initialize the application
     document.addEventListener('DOMContentLoaded', function () {
         loadSmsStats();
         switchTab('send');
@@ -778,10 +756,7 @@ function formatCurrency($amount)
     });
 
     function setupEventListeners() {
-        // Mobile tab toggle
         document.getElementById('mobile-tab-toggle').addEventListener('click', toggleMobileTabDropdown);
-
-        // Mobile tab options
         document.querySelectorAll('.mobile-tab-option').forEach(option => {
             option.addEventListener('click', (e) => {
                 const tab = e.currentTarget.getAttribute('data-tab');
@@ -789,13 +764,9 @@ function formatCurrency($amount)
                 toggleMobileTabDropdown();
             });
         });
-
-        // Form submissions
         document.getElementById('sms-form').addEventListener('submit', handleSendSms);
         document.getElementById('topup-form').addEventListener('submit', handlePurchaseCredits);
         document.getElementById('template-form').addEventListener('submit', handleSaveTemplate);
-
-        // Input events
         document.getElementById('recipient').addEventListener('input', updateSendFormCalculations);
         document.getElementById('bulk-number-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
@@ -804,12 +775,9 @@ function formatCurrency($amount)
             }
         });
         document.getElementById('add-number-btn').addEventListener('click', addBulkRecipient);
-
-        // Close dropdowns when clicking outside
         document.addEventListener('click', function (event) {
             const mobileDropdown = document.getElementById('mobile-tab-dropdown');
             const mobileToggle = document.getElementById('mobile-tab-toggle');
-
             if (mobileDropdown && mobileToggle && !mobileDropdown.contains(event.target) && !mobileToggle.contains(event.target)) {
                 mobileDropdown.classList.add('hidden');
                 document.getElementById('mobile-tab-chevron').classList.remove('rotate-180');
@@ -817,17 +785,14 @@ function formatCurrency($amount)
         });
     }
 
-    // API Functions
     function makeApiCall(action, data = {}, method = 'POST') {
         const formData = new FormData();
         formData.append('action', action);
-
         for (const key in data) {
             if (data[key] !== null && data[key] !== undefined) {
                 formData.append(key, data[key]);
             }
         }
-
         return fetch('fetch/manageSmsCenter.php', {
             method: method,
             body: formData
@@ -850,12 +815,14 @@ function formatCurrency($amount)
                 }
             });
 
-        // Load wallet balance
         makeApiCall('getWalletBalance')
             .then(response => {
                 if (response.success) {
                     walletBalance = response.data.balance;
                     walletCredits = response.data.equivalent_credits;
+                    currentSmsRate = response.data.sms_rate;
+                    document.getElementById('topup-sms-rate').textContent = `Sh. ${formatCurrency(currentSmsRate)}/=`;
+                    updatePackageCosts();
                     updateWalletDisplay();
                 }
             });
@@ -866,18 +833,12 @@ function formatCurrency($amount)
         document.getElementById('sent-today-count').textContent = smsStats.sent_today || 0;
         document.getElementById('sent-today-cost').textContent = `Sh. ${formatCurrency(smsStats.sent_today_cost || 0)}`;
         document.getElementById('scheduled-count').textContent = smsStats.scheduled_count || 0;
-        document.getElementById('sms-rate-display').textContent = `Sh. ${formatCurrency(smsStats.sms_rate || 35)}/=`;
-
-        // Update topup display
-        document.getElementById('topup-sms-rate').textContent = `Sh. ${formatCurrency(currentSmsRate)}/=`;
-        updatePackageCosts();
-        updateSendFormCalculations();
     }
 
     function updateWalletDisplay() {
         document.getElementById('wallet-balance').textContent = `Sh. ${formatCurrency(walletBalance)}`;
         document.getElementById('wallet-credits').textContent = walletCredits;
-        updateTopupCalculation(); // Refresh the topup calculations
+        updateTopupCalculation();
     }
 
     function updatePackageCosts() {
@@ -886,74 +847,45 @@ function formatCurrency($amount)
         document.getElementById('package-1000-cost').textContent = `Sh. ${formatCurrency(1000 * currentSmsRate)}`;
     }
 
-    // Tab Management
     function switchTab(tabName) {
-        // Update tab buttons
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('border-b-primary', 'text-primary');
             btn.classList.add('border-b-transparent', 'text-gray-500');
         });
-
         const activeTab = document.getElementById(`${tabName}-tab`);
         if (activeTab) {
             activeTab.classList.remove('border-b-transparent', 'text-gray-500');
             activeTab.classList.add('border-b-primary', 'text-primary');
         }
-
-        // Update tab content
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.add('hidden');
-        });
-
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
         const activeContent = document.getElementById(`${tabName}-content`);
-        if (activeContent) {
-            activeContent.classList.remove('hidden');
-        }
-
+        if (activeContent) activeContent.classList.remove('hidden');
         currentTab = tabName;
-
-        // Load tab-specific data
-        switch (tabName) {
-            case 'history':
-                setDefaultDateFilters();
-                loadSmsHistory();
-                break;
-            case 'templates':
-                loadSmsTemplates();
-                break;
+        if (tabName === 'history') {
+            setDefaultDateFilters();
+            loadSmsHistory();
         }
-
-        // Update mobile tab label
-        const tabLabels = {
-            'send': { label: 'Send SMS', icon: 'fas fa-paper-plane' },
-            'history': { label: 'SMS History', icon: 'fas fa-history' },
-            'templates': { label: 'Templates', icon: 'fas fa-file-alt' },
-            'topup': { label: 'Top Up Credit', icon: 'fas fa-plus-circle' },
-            'credit': { label: 'Credit Status', icon: 'fas fa-wallet' }
-        };
-        const tabInfo = tabLabels[tabName] || tabLabels['send'];
-        updateMobileTabLabel(tabInfo.label, tabInfo.icon);
+        if (tabName === 'templates') {
+            loadSmsTemplates();
+        }
+        updateMobileTabLabel(
+            { send: ['Send SMS', 'fas fa-paper-plane'], history: ['SMS History', 'fas fa-history'], templates: ['Templates', 'fas fa-file-alt'], topup: ['Top Up Credit', 'fas fa-plus-circle'] }[tabName] || ['Send SMS', 'fas fa-paper-plane']
+        );
     }
 
     function setDefaultDateFilters() {
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
         const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
         document.getElementById('dateFromFilter').value = firstDay.toISOString().split('T')[0];
         document.getElementById('dateToFilter').value = lastDay.toISOString().split('T')[0];
     }
 
-    function updateMobileTabLabel(label, icon) {
-        const labelElement = document.getElementById('mobile-tab-label');
-        const toggleButton = document.getElementById('mobile-tab-toggle');
-        if (labelElement && toggleButton) {
-            labelElement.textContent = label;
-            const iconElement = toggleButton.querySelector('i');
-            if (iconElement) {
-                iconElement.className = `${icon} text-primary`;
-            }
-        }
+    function updateMobileTabLabel([label, icon]) {
+        const labelEl = document.getElementById('mobile-tab-label');
+        const iconEl = document.getElementById('mobile-tab-toggle').querySelector('i');
+        if (labelEl) labelEl.textContent = label;
+        if (iconEl) iconEl.className = `${icon} text-primary`;
     }
 
     function toggleMobileTabDropdown() {
@@ -963,30 +895,21 @@ function formatCurrency($amount)
         chevron.classList.toggle('rotate-180');
     }
 
-    // Send SMS Functions
     function toggleSendType() {
         const sendType = document.querySelector('input[name="sendType"]:checked').value;
-        const singleRecipient = document.getElementById('single-recipient');
-        const bulkRecipientsDiv = document.getElementById('bulk-recipients');
-
+        document.getElementById('single-recipient').classList.toggle('hidden', sendType !== 'single');
+        document.getElementById('bulk-recipients').classList.toggle('hidden', sendType !== 'bulk');
         if (sendType === 'single') {
-            singleRecipient.classList.remove('hidden');
-            bulkRecipientsDiv.classList.add('hidden');
             bulkRecipients = [];
             renderRecipientTags();
-        } else {
-            singleRecipient.classList.add('hidden');
-            bulkRecipientsDiv.classList.remove('hidden');
         }
         updateSendFormCalculations();
     }
 
     function toggleSchedule() {
-        const sendOption = document.querySelector('input[name="sendOption"]:checked').value;
         const scheduleOptions = document.getElementById('schedule-options');
         const sendButtonText = document.getElementById('send-button-text');
-
-        if (sendOption === 'schedule') {
+        if (document.querySelector('input[name="sendOption"]:checked').value === 'schedule') {
             scheduleOptions.classList.remove('hidden');
             sendButtonText.textContent = 'Schedule SMS';
         } else {
@@ -996,51 +919,31 @@ function formatCurrency($amount)
     }
 
     function updateCharCount() {
-        const message = document.getElementById('message').value;
-        const charCount = document.getElementById('char-count');
-        const smsParts = document.getElementById('sms-parts');
-
-        charCount.textContent = `${message.length}/160 characters`;
-
-        const parts = Math.ceil(message.length / 160) || 1;
-        smsParts.textContent = `${parts} SMS part${parts > 1 ? 's' : ''}`;
-
+        const msg = document.getElementById('message').value;
+        const parts = Math.ceil(msg.length / 160) || 1;
+        document.getElementById('char-count').textContent = `${msg.length}/160 characters`;
+        document.getElementById('sms-parts').textContent = `${parts} SMS part${parts > 1 ? 's' : ''}`;
         updateSendFormCalculations();
     }
 
     function validatePhoneNumber(number) {
-        const cleaned = number.replace(/\s+/g, '');
-        // Accept both 10-digit (starting with 0) and 9-digit numbers
-        return /^0[7][0-9]{8}$/.test(cleaned) || /^[7][0-9]{8}$/.test(cleaned);
+        const n = number.replace(/\s+/g, '');
+        return /^0[7]\d{8}$/.test(n) || /^[7]\d{8}$/.test(n);
     }
 
     function normalizePhoneNumber(number) {
-        const cleaned = number.replace(/\s+/g, '');
-        // If it's a 9-digit number starting with 7, add 0 prefix
-        if (/^[7][0-9]{8}$/.test(cleaned)) {
-            return '0' + cleaned;
-        }
-        return cleaned;
+        const n = number.replace(/\s+/g, '');
+        return /^[7]\d{8}$/.test(n) ? '0' + n : n;
     }
 
     function addBulkRecipient() {
         const input = document.getElementById('bulk-number-input');
-        const number = input.value.trim();
-
-        if (!number) return;
-
-        if (!validatePhoneNumber(number)) {
-            showMessageModal('Invalid Number', 'Please enter a valid 10-digit phone number (e.g., 0700123456)', 'error');
-            return;
-        }
-
-        const normalizedNumber = normalizePhoneNumber(number);
-        if (bulkRecipients.includes(normalizedNumber)) {
-            showMessageModal('Duplicate Number', 'This number has already been added', 'warning');
-            return;
-        }
-
-        bulkRecipients.push(normalizedNumber);
+        const num = input.value.trim();
+        if (!num) return;
+        if (!validatePhoneNumber(num)) { showMessageModal('Invalid Number', 'Please enter a valid 10-digit phone number (e.g., 0700123456)', 'error'); return; }
+        const norm = normalizePhoneNumber(num);
+        if (bulkRecipients.includes(norm)) { showMessageModal('Duplicate Number', 'This number has already been added', 'warning'); return; }
+        bulkRecipients.push(norm);
         input.value = '';
         renderRecipientTags();
         updateSendFormCalculations();
@@ -1053,11 +956,10 @@ function formatCurrency($amount)
     }
 
     function renderRecipientTags() {
-        const container = document.getElementById('recipient-tags');
-        container.innerHTML = bulkRecipients.map(number => `
+        document.getElementById('recipient-tags').innerHTML = bulkRecipients.map(n => `
             <span class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm">
-                ${number}
-                <button type="button" onclick="removeRecipient('${number}')" class="hover:bg-primary/20 rounded-full p-1 transition-colors">
+                ${n}
+                <button type="button" onclick="removeRecipient('${n}')" class="hover:bg-primary/20 rounded-full p-1 transition-colors">
                     <i class="fas fa-times text-xs"></i>
                 </button>
             </span>
@@ -1065,21 +967,13 @@ function formatCurrency($amount)
     }
 
     function updateSendFormCalculations() {
+        const parts = Math.ceil(document.getElementById('message').value.length / 160) || 1;
         const sendType = document.querySelector('input[name="sendType"]:checked').value;
-        const message = document.getElementById('message').value;
-        const parts = Math.ceil(message.length / 160) || 1;
-
-        let recipientCount = 0;
-        if (sendType === 'single') {
-            const recipient = document.getElementById('recipient').value.trim();
-            recipientCount = recipient ? 1 : 0;
-        } else {
-            recipientCount = bulkRecipients.length;
-        }
-
+        const recipientCount = sendType === 'single'
+            ? (document.getElementById('recipient').value.trim() ? 1 : 0)
+            : bulkRecipients.length;
         const creditsNeeded = recipientCount * parts;
         const totalCost = creditsNeeded * currentSmsRate;
-
         document.getElementById('recipient-count').textContent = recipientCount;
         document.getElementById('credits-needed').textContent = creditsNeeded;
         document.getElementById('estimated-cost').textContent = `Sh. ${formatCurrency(totalCost)}`;
@@ -1087,65 +981,39 @@ function formatCurrency($amount)
 
     function handleSendSms(e) {
         e.preventDefault();
-
-        const sendType = document.querySelector('input[name="sendType"]:checked').value;
         const message = document.getElementById('message').value.trim();
+        const sendType = document.querySelector('input[name="sendType"]:checked').value;
         const sendOption = document.querySelector('input[name="sendOption"]:checked').value;
-
-        if (!message) {
-            showMessageModal('Missing Message', 'Please enter a message', 'error');
-            return;
-        }
-
+        if (!message) { showMessageModal('Missing Message', 'Please enter a message', 'error'); return; }
         let recipients = [];
         if (sendType === 'single') {
-            const recipient = document.getElementById('recipient').value.trim();
-            if (!recipient) {
-                showMessageModal('Missing Recipient', 'Please enter a recipient phone number', 'error');
-                return;
-            }
-            if (!validatePhoneNumber(recipient)) {
-                showMessageModal('Invalid Number', 'Please enter a valid 10-digit phone number', 'error');
-                return;
-            }
-            recipients = [recipient];
+            const r = document.getElementById('recipient').value.trim();
+            if (!r) { showMessageModal('Missing Recipient', 'Please enter a recipient phone number', 'error'); return; }
+            if (!validatePhoneNumber(r)) { showMessageModal('Invalid Number', 'Please enter a valid 10-digit phone number', 'error'); return; }
+            recipients = [r];
         } else {
-            if (bulkRecipients.length === 0) {
-                showMessageModal('No Recipients', 'Please add at least one recipient', 'error');
-                return;
-            }
+            if (!bulkRecipients.length) { showMessageModal('No Recipients', 'Please add at least one recipient', 'error'); return; }
             recipients = [...bulkRecipients];
         }
-
         let scheduledAt = null;
         if (sendOption === 'schedule') {
-            const scheduleDate = document.getElementById('schedule-date').value;
-            const scheduleTime = document.getElementById('schedule-time').value;
-
-            if (!scheduleDate || !scheduleTime) {
-                showMessageModal('Missing Schedule', 'Please select both date and time for scheduling', 'error');
-                return;
-            }
-
-            scheduledAt = `${scheduleDate} ${scheduleTime}:00`;
+            const sd = document.getElementById('schedule-date').value;
+            const st = document.getElementById('schedule-time').value;
+            if (!sd || !st) { showMessageModal('Missing Schedule', 'Please select both date and time for scheduling', 'error'); return; }
+            scheduledAt = `${sd} ${st}:00`;
         }
-
-        // Show confirmation modal
         showConfirmationModal(sendType, message, recipients, sendOption, scheduledAt);
     }
 
     function showConfirmationModal(sendType, message, recipients, sendOption, scheduledAt) {
         const modal = document.getElementById('confirmationModal');
         const detailsContainer = document.getElementById('confirmation-details');
-
         const parts = Math.ceil(message.length / 160) || 1;
         const creditsNeeded = recipients.length * parts;
         const totalCost = creditsNeeded * currentSmsRate;
-
-        const scheduleText = sendOption === 'schedule' ?
-            `<div><strong>Scheduled for:</strong> ${formatDateTime(scheduledAt)}</div>` :
-            '<div><strong>Send:</strong> Immediately</div>';
-
+        const scheduleText = sendOption === 'schedule'
+            ? `<div><strong>Scheduled for:</strong> ${formatDateTime(scheduledAt)}</div>`
+            : '<div><strong>Send:</strong> Immediately</div>';
         detailsContainer.innerHTML = `
         <div><strong>Type:</strong> ${sendType === 'single' ? 'Single SMS' : 'Bulk SMS'}</div>
         <div><strong>Recipients:</strong> ${recipients.length} (${recipients.slice(0, 3).join(', ')}${recipients.length > 3 ? '...' : ''})</div>
@@ -1155,44 +1023,37 @@ function formatCurrency($amount)
         <div><strong>Total Cost:</strong> Sh. ${formatCurrency(totalCost)}</div>
         ${scheduleText}
     `;
-
-        // Store the data for confirmation
         window.pendingSmsData = {
-            message: message,
-            recipients: JSON.stringify(recipients),
-            send_type: sendType,
-            send_option: sendOption,
+            message, recipients: JSON.stringify(recipients),
+            send_type: sendType, send_option: sendOption,
             scheduled_at: scheduledAt
         };
-
         modal.classList.remove('hidden');
     }
 
     function confirmSendSms() {
         hideConfirmationModal();
-
-        const sendButton = document.getElementById('send-sms-btn');
-        const originalText = sendButton.innerHTML;
-        sendButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
-        sendButton.disabled = true;
-
+        const btn = document.getElementById('send-sms-btn');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+        btn.disabled = true;
         makeApiCall('sendSms', window.pendingSmsData)
-            .then(response => {
-                if (response.success) {
-                    showMessageModal('Success', response.message, 'success');
+            .then(resp => {
+                if (resp.success) {
+                    showMessageModal('Success', resp.message, 'success');
                     document.getElementById('sms-form').reset();
                     bulkRecipients = [];
                     renderRecipientTags();
                     updateSendFormCalculations();
                     updateCharCount();
-                    loadSmsStats(); // Refresh stats
+                    loadSmsStats();
                 } else {
-                    showMessageModal('Error', response.message, 'error');
+                    showMessageModal('Error', resp.message, 'error');
                 }
             })
             .finally(() => {
-                sendButton.innerHTML = originalText;
-                sendButton.disabled = false;
+                btn.innerHTML = orig;
+                btn.disabled = false;
                 delete window.pendingSmsData;
             });
     }
@@ -1201,46 +1062,31 @@ function formatCurrency($amount)
         document.getElementById('confirmationModal').classList.add('hidden');
     }
 
-    function formatDateTime(dateTimeString) {
-        if (!dateTimeString) return '';
-        const date = new Date(dateTimeString);
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
+    function formatDateTime(dt) {
+        if (!dt) return '';
+        const d = new Date(dt);
+        return d.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
     }
 
-    // History Functions
     function loadSmsHistory() {
-        const search = document.getElementById('searchHistory').value;
-        const status = document.getElementById('statusFilter').value;
-        const dateFrom = document.getElementById('dateFromFilter').value;
-        const dateTo = document.getElementById('dateToFilter').value;
-
         const params = new URLSearchParams({
-            search: search,
-            status: status,
-            date_from: dateFrom,
-            date_to: dateTo,
+            search: document.getElementById('searchHistory').value,
+            status: document.getElementById('statusFilter').value,
+            date_from: document.getElementById('dateFromFilter').value,
+            date_to: document.getElementById('dateToFilter').value,
             limit: '50'
         });
-
         fetch(`fetch/manageSmsCenter.php?action=getSmsHistory&${params}`)
-            .then(response => response.json())
-            .then(response => {
-                if (response.success) {
-                    smsHistory = response.data.history;
+            .then(res => res.json())
+            .then(resp => {
+                if (resp.success) {
+                    smsHistory = resp.data.history;
                     renderSmsHistory();
                 } else {
-                    showMessageModal('Error', response.message || 'Failed to load SMS history', 'error');
+                    showMessageModal('Error', resp.message || 'Failed to load SMS history', 'error');
                 }
             })
-            .catch(error => {
-                console.error('Error loading SMS history:', error);
+            .catch(_ => {
                 showMessageModal('Error', 'Failed to load SMS history', 'error');
             });
     }
@@ -1249,28 +1095,21 @@ function formatCurrency($amount)
         const tableBody = document.getElementById('history-table-body');
         const mobileContainer = document.getElementById('history-mobile');
         const emptyState = document.getElementById('history-empty-state');
-
-        if (smsHistory.length === 0) {
+        if (!smsHistory.length) {
             tableBody.innerHTML = '';
             mobileContainer.innerHTML = '';
             emptyState.classList.remove('hidden');
             return;
         }
-
         emptyState.classList.add('hidden');
-
-        // Desktop table
         tableBody.innerHTML = smsHistory.map(sms => {
             const statusClass = getStatusClass(sms.status);
             const statusIcon = getStatusIcon(sms.status);
             const displayDate = sms.sent_at || sms.scheduled_at || sms.created_at;
-
             return `
             <tr class="hover:bg-gray-50 transition-colors">
                 <td class="px-4 py-3">
-                    <div class="max-w-xs">
-                        <p class="text-sm text-gray-900 truncate" title="${sms.message}">${sms.message}</p>
-                    </div>
+                    <p class="text-sm text-gray-900 truncate" title="${sms.message}">${sms.message}</p>
                 </td>
                 <td class="px-4 py-3">
                     <div class="text-sm text-gray-900">${sms.recipient_count} recipient${sms.recipient_count > 1 ? 's' : ''}</div>
@@ -1278,8 +1117,7 @@ function formatCurrency($amount)
                 </td>
                 <td class="px-4 py-3">
                     <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
-                        <i class="${statusIcon}"></i>
-                        ${sms.status}
+                        <i class="${statusIcon}"></i>${sms.status}
                     </span>
                 </td>
                 <td class="px-4 py-3">
@@ -1294,16 +1132,12 @@ function formatCurrency($amount)
                         <i class="fas fa-eye"></i>
                     </button>
                 </td>
-            </tr>
-        `;
+            </tr>`;
         }).join('');
-
-        // Mobile cards
         mobileContainer.innerHTML = smsHistory.map(sms => {
             const statusClass = getStatusClass(sms.status);
             const statusIcon = getStatusIcon(sms.status);
             const displayDate = sms.sent_at || sms.scheduled_at || sms.created_at;
-
             return `
             <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
                 <div class="flex items-start justify-between mb-3">
@@ -1315,8 +1149,7 @@ function formatCurrency($amount)
                         </div>
                     </div>
                     <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${statusClass}">
-                        <i class="${statusIcon}"></i>
-                        ${sms.status}
+                        <i class="${statusIcon}"></i>${sms.status}
                     </span>
                 </div>
                 <div class="flex items-center justify-between">
@@ -1324,46 +1157,27 @@ function formatCurrency($amount)
                         <span class="font-medium text-gray-900">Sh. ${formatCurrency(sms.total_cost)}</span>
                         <span class="text-gray-500 ml-2">${sms.credits_used} credits</span>
                     </div>
-                    <div class="text-xs text-gray-500">
-                        ${formatDateTime(displayDate)}
-                    </div>
+                    <div class="text-xs text-gray-500">${formatDateTime(displayDate)}</div>
                 </div>
-            </div>
-        `;
+            </div>`;
         }).join('');
     }
 
-    function filterHistory() {
-        loadSmsHistory();
-    }
+    function filterHistory() { loadSmsHistory(); }
 
     function getStatusClass(status) {
-        const classes = {
-            'sent': 'bg-green-100 text-green-800',
-            'scheduled': 'bg-blue-100 text-blue-800',
-            'failed': 'bg-red-100 text-red-800',
-            'cancelled': 'bg-gray-100 text-gray-800'
-        };
-        return classes[status] || 'bg-gray-100 text-gray-800';
+        return { sent: 'bg-green-100 text-green-800', scheduled: 'bg-blue-100 text-blue-800', failed: 'bg-red-100 text-red-800', cancelled: 'bg-gray-100 text-gray-800' }[status] || 'bg-gray-100 text-gray-800';
     }
 
     function getStatusIcon(status) {
-        const icons = {
-            'sent': 'fas fa-check',
-            'scheduled': 'fas fa-clock',
-            'failed': 'fas fa-times',
-            'cancelled': 'fas fa-ban'
-        };
-        return icons[status] || 'fas fa-question';
+        return { sent: 'fas fa-check', scheduled: 'fas fa-clock', failed: 'fas fa-times', cancelled: 'fas fa-ban' }[status] || 'fas fa-question';
     }
 
     function viewSmsDetails(smsId) {
         const sms = smsHistory.find(s => s.id === smsId);
         if (!sms) return;
-
-        const recipients = Array.isArray(sms.recipients) ? sms.recipients : [];
-        const recipientList = recipients.join(', ');
-
+        const recips = Array.isArray(sms.recipients) ? sms.recipients : JSON.parse(sms.recipients || '[]');
+        const recipientList = recips.join(', ');
         showMessageModal('SMS Details', `
         <div class="text-left space-y-3">
             <div><strong>Message:</strong> ${sms.message}</div>
@@ -1372,71 +1186,53 @@ function formatCurrency($amount)
             <div><strong>Cost:</strong> Sh. ${formatCurrency(sms.total_cost)}</div>
             <div><strong>Credits Used:</strong> ${sms.credits_used}</div>
             <div><strong>Date & Time:</strong> ${formatDateTime(sms.sent_at || sms.scheduled_at || sms.created_at)}</div>
-        </div>
-    `, 'info');
+        </div>`, `info`);
     }
 
-    // Template Functions
     function loadSmsTemplates() {
-        makeApiCall('getSmsTemplates')
-            .then(response => {
-                if (response.success) {
-                    smsTemplates = response.data;
-                    renderSmsTemplates();
-                } else {
-                    showMessageModal('Error', response.message || 'Failed to load templates', 'error');
-                }
-            });
+        makeApiCall('getSmsTemplates').then(resp => {
+            if (resp.success) {
+                smsTemplates = resp.data;
+                renderSmsTemplates();
+            } else {
+                showMessageModal('Error', resp.message || 'Failed to load templates', 'error');
+            }
+        });
     }
 
     function renderSmsTemplates() {
         const grid = document.getElementById('templates-grid');
-        const emptyState = document.getElementById('templates-empty-state');
-
-        if (smsTemplates.length === 0) {
+        const empty = document.getElementById('templates-empty-state');
+        if (!smsTemplates.length) {
             grid.innerHTML = '';
-            emptyState.classList.remove('hidden');
+            empty.classList.remove('hidden');
             return;
         }
-
-        emptyState.classList.add('hidden');
-
-        grid.innerHTML = smsTemplates.map(template => `
+        empty.classList.add('hidden');
+        grid.innerHTML = smsTemplates.map(t => `
             <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200">
                 <div class="flex items-start justify-between mb-4">
-                    <h4 class="font-semibold text-gray-900 truncate">${template.name}</h4>
+                    <h4 class="font-semibold text-gray-900 truncate">${t.name}</h4>
                     <div class="flex items-center gap-2 ml-2">
-                        <button onclick="editTemplate('${template.id}')" class="text-gray-400 hover:text-primary transition-colors">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="deleteTemplate('${template.id}')" class="text-gray-400 hover:text-red-600 transition-colors">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <button onclick="editTemplate('${t.id}')" class="text-gray-400 hover:text-primary transition-colors"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteTemplate('${t.id}')" class="text-gray-400 hover:text-red-600 transition-colors"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
-                <p class="text-gray-600 text-sm mb-4 line-clamp-3">${template.message}</p>
+                <p class="text-gray-600 text-sm mb-4 line-clamp-3">${t.message}</p>
                 <div class="flex items-center justify-between">
-                    <span class="text-xs text-gray-500">${template.message.length} characters</span>
-                    <button onclick="useTemplate('${template.id}')" class="px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm hover:bg-primary/20 transition-colors">
-                        Use Template
-                    </button>
+                    <span class="text-xs text-gray-500">${t.message.length} characters</span>
+                    <button onclick="useTemplate('${t.id}')" class="px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm hover:bg-primary/20 transition-colors">Use Template</button>
                 </div>
             </div>
         `).join('');
     }
 
     function filterTemplates() {
-        const search = document.getElementById('searchTemplates').value.toLowerCase();
-        const filtered = smsTemplates.filter(template =>
-            template.name.toLowerCase().includes(search) ||
-            template.message.toLowerCase().includes(search)
-        );
-
-        // Temporarily update the templates array for rendering
-        const originalTemplates = [...smsTemplates];
-        smsTemplates = filtered;
+        const q = document.getElementById('searchTemplates').value.toLowerCase();
+        const original = [...smsTemplates];
+        smsTemplates = original.filter(t => t.name.toLowerCase().includes(q) || t.message.toLowerCase().includes(q));
         renderSmsTemplates();
-        smsTemplates = originalTemplates;
+        smsTemplates = original;
     }
 
     function showCreateTemplateForm() {
@@ -1448,436 +1244,280 @@ function formatCurrency($amount)
         document.getElementById('templateModal').classList.remove('hidden');
     }
 
-    function editTemplate(templateId) {
-        const template = smsTemplates.find(t => t.id === templateId);
-        if (!template) return;
-
+    function editTemplate(id) {
+        const t = smsTemplates.find(x => x.id === id);
+        if (!t) return;
         document.getElementById('template-modal-title').textContent = 'Edit Template';
-        document.getElementById('template-id').value = template.id;
-        document.getElementById('template-name').value = template.name;
-        document.getElementById('template-message').value = template.message;
+        document.getElementById('template-id').value = t.id;
+        document.getElementById('template-name').value = t.name;
+        document.getElementById('template-message').value = t.message;
         updateTemplateCharCount();
         document.getElementById('templateModal').classList.remove('hidden');
     }
 
-    function deleteTemplate(templateId) {
+    function deleteTemplate(id) {
         if (!confirm('Are you sure you want to delete this template?')) return;
-
-        makeApiCall('deleteTemplate', { template_id: templateId })
-            .then(response => {
-                if (response.success) {
-                    showMessageModal('Success', response.message, 'success');
-                    loadSmsTemplates();
-                } else {
-                    showMessageModal('Error', response.message, 'error');
-                }
+        makeApiCall('deleteTemplate', { template_id: id })
+            .then(resp => {
+                if (resp.success) { showMessageModal('Success', resp.message, 'success'); loadSmsTemplates(); }
+                else showMessageModal('Error', resp.message, 'error');
             });
     }
 
-    function useTemplate(templateId) {
-        const template = smsTemplates.find(t => t.id === templateId);
-        if (!template) return;
-
-        document.getElementById('message').value = template.message;
+    function useTemplate(id) {
+        const t = smsTemplates.find(x => x.id === id);
+        if (!t) return;
+        document.getElementById('message').value = t.message;
         updateCharCount();
         switchTab('send');
-        showMessageModal('Template Applied', `Template "${template.name}" has been applied to your message`, 'success');
+        showMessageModal('Template Applied', `Template "${t.name}" has been applied to your message`, 'success');
     }
 
     function handleSaveTemplate(e) {
         e.preventDefault();
-
-        const templateId = document.getElementById('template-id').value;
+        const id = document.getElementById('template-id').value;
         const name = document.getElementById('template-name').value.trim();
-        const message = document.getElementById('template-message').value.trim();
-
-        if (!name || !message) {
-            showMessageModal('Missing Information', 'Please fill in all fields', 'error');
-            return;
-        }
-
-        const data = {
-            template_id: templateId,
-            name: name,
-            message: message
-        };
-
-        makeApiCall('saveTemplate', data)
-            .then(response => {
-                if (response.success) {
-                    showMessageModal('Success', response.message, 'success');
-                    hideTemplateModal();
-                    loadSmsTemplates();
-                } else {
-                    showMessageModal('Error', response.message, 'error');
-                }
+        const msg = document.getElementById('template-message').value.trim();
+        if (!name || !msg) { showMessageModal('Missing Information', 'Please fill in all fields', 'error'); return; }
+        makeApiCall('saveTemplate', { template_id: id, name: name, message: msg })
+            .then(resp => {
+                if (resp.success) { showMessageModal('Success', resp.message, 'success'); hideTemplateModal(); loadSmsTemplates(); }
+                else showMessageModal('Error', resp.message, 'error');
             });
     }
 
     function updateTemplateCharCount() {
-        const message = document.getElementById('template-message').value;
-        const charCount = document.getElementById('template-char-count');
-        charCount.textContent = `${message.length}/160 characters`;
-    }
-
-    function showTemplateSelector() {
-        if (smsTemplates.length === 0) {
-            loadSmsTemplates();
-        }
-
-        const list = document.getElementById('template-selector-list');
-        list.innerHTML = smsTemplates.map(template => `
-            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors" onclick="selectTemplate('${template.id}')">
-                <div class="font-medium text-gray-900 mb-1">${template.name}</div>
-                <div class="text-sm text-gray-600 line-clamp-2">${template.message}</div>
-            </div>
-        `).join('');
-
-        if (smsTemplates.length === 0) {
-            list.innerHTML = '<div class="text-center py-8 text-gray-500">No templates found</div>';
-        }
-
-        document.getElementById('templateSelectorModal').classList.remove('hidden');
-    }
-
-    function selectTemplate(templateId) {
-        useTemplate(templateId);
-        hideTemplateSelector();
+        document.getElementById('template-char-count').textContent = `${document.getElementById('template-message').value.length}/160 characters`;
     }
 
     function hideTemplateSelector() {
         document.getElementById('templateSelectorModal').classList.add('hidden');
+    }
+    function selectTemplate(id) {
+        useTemplate(id);
+        hideTemplateSelector();
+    }
+    function showTemplateSelector() {
+        if (!smsTemplates.length) loadSmsTemplates();
+        document.getElementById('template-selector-list').innerHTML = smsTemplates.length
+            ? smsTemplates.map(t => `<div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors" onclick="selectTemplate('${t.id}')"><div class="font-medium text-gray-900 mb-1">${t.name}</div><div class="text-sm text-gray-600 line-clamp-2">${t.message}</div></div>`).join('')
+            : '<div class="text-center py-8 text-gray-500">No templates found</div>';
+        document.getElementById('templateSelectorModal').classList.remove('hidden');
     }
 
     function hideTemplateModal() {
         document.getElementById('templateModal').classList.add('hidden');
     }
 
-    // Top Up Functions
+    function formatCurrency(amount) {
+        return parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     function updateTopupCalculation() {
-        const selectedPackage = document.querySelector('input[name="package"]:checked');
-        if (!selectedPackage) return;
-
-        const customAmountSection = document.getElementById('custom-amount-section');
-        const customAmountInput = document.getElementById('custom-amount');
-
-        let credits = 0;
-        let cost = 0;
-
-        if (selectedPackage.value === 'custom') {
-            customAmountSection.classList.remove('hidden');
-            const customAmount = parseFloat(customAmountInput.value) || 0;
-            cost = customAmount;
+        const pkg = document.querySelector('input[name="package"]:checked');
+        if (!pkg) return;
+        const customSec = document.getElementById('custom-amount-section');
+        const customAmt = parseFloat(document.getElementById('custom-amount').value) || 0;
+        let credits = 0, cost = 0;
+        if (pkg.value === 'custom') {
+            customSec.classList.remove('hidden');
+            cost = customAmt;
             credits = Math.floor(cost / currentSmsRate);
         } else {
-            customAmountSection.classList.add('hidden');
-            credits = parseInt(selectedPackage.value);
+            customSec.classList.add('hidden');
+            credits = parseInt(pkg.value);
             cost = credits * currentSmsRate;
         }
-
         document.getElementById('topup-credits').textContent = credits;
         document.getElementById('topup-cost').textContent = `Sh. ${formatCurrency(cost)}`;
-
-        // Update balance status
-        const balanceStatus = document.getElementById('balance-status');
-        const insufficientWarning = document.getElementById('insufficient-balance-warning');
-        const purchaseButton = document.getElementById('purchase-credits-btn');
-
+        const balEl = document.getElementById('balance-status');
+        const warn = document.getElementById('insufficient-balance-warning');
+        const btn = document.getElementById('purchase-credits-btn');
         if (cost > walletBalance) {
-            balanceStatus.textContent = `Sh. ${formatCurrency(walletBalance)} (Insufficient)`;
-            balanceStatus.className = 'font-semibold text-red-600';
-            insufficientWarning.classList.remove('hidden');
-            purchaseButton.disabled = true;
-            purchaseButton.classList.add('opacity-50', 'cursor-not-allowed');
+            balEl.textContent = `Sh. ${formatCurrency(walletBalance)} (Insufficient)`;
+            balEl.className = 'font-semibold text-red-600';
+            warn.classList.remove('hidden');
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
         } else {
-            balanceStatus.textContent = `Sh. ${formatCurrency(walletBalance)} (Sufficient)`;
-            balanceStatus.className = 'font-semibold text-green-600';
-            insufficientWarning.classList.add('hidden');
-            purchaseButton.disabled = false;
-            purchaseButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            balEl.textContent = `Sh. ${formatCurrency(walletBalance)} (Sufficient)`;
+            balEl.className = 'font-semibold text-green-600';
+            warn.classList.add('hidden');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
     }
 
     function handlePurchaseCredits(e) {
         e.preventDefault();
-
-        const selectedPackage = document.querySelector('input[name="package"]:checked');
-        if (!selectedPackage) {
-            showMessageModal('No Package Selected', 'Please select a package', 'error');
-            return;
-        }
-
+        const pkg = document.querySelector('input[name="package"]:checked');
+        if (!pkg) { showMessageModal('No Package Selected', 'Please select a package', 'error'); return; }
         let amount = 0;
-        if (selectedPackage.value === 'custom') {
+        if (pkg.value === 'custom') {
             amount = parseFloat(document.getElementById('custom-amount').value) || 0;
-            if (amount < 1000) {
-                showMessageModal('Invalid Amount', 'Minimum top-up amount is Sh. 1,000', 'error');
-                return;
-            }
+            if (amount < 1000) { showMessageModal('Invalid Amount', 'Minimum top-up amount is Sh. 1,000', 'error'); return; }
         } else {
-            const credits = parseInt(selectedPackage.value);
-            amount = credits * currentSmsRate;
+            amount = parseInt(pkg.value) * currentSmsRate;
         }
-
-        if (amount > walletBalance) {
-            showMessageModal('Insufficient Balance', 'Your wallet balance is insufficient for this purchase', 'error');
-            return;
-        }
-
-        const purchaseButton = document.getElementById('purchase-credits-btn');
-        const originalText = purchaseButton.innerHTML;
-        purchaseButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
-        purchaseButton.disabled = true;
-
-        makeApiCall('purchaseSmsCredits', { amount: amount })
-            .then(response => {
-                if (response.success) {
-                    showMessageModal('Success', response.message, 'success');
-                    document.getElementById('topup-form').reset();
-                    updateTopupCalculation();
-                    loadSmsStats(); // Refresh stats
-                } else {
-                    showMessageModal('Error', response.message, 'error');
-                }
-            })
-            .finally(() => {
-                purchaseButton.innerHTML = originalText;
-                purchaseButton.disabled = false;
-            });
-    }
-
-    // Utility Functions
-    function formatCurrency(amount) {
-        return parseFloat(amount).toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+        if (amount > walletBalance) { showMessageModal('Insufficient Balance', 'Your wallet balance is insufficient for this purchase', 'error'); return; }
+        const btn = document.getElementById('purchase-credits-btn');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        btn.disabled = true;
+        makeApiCall('purchaseSmsCredits', { amount: amount }).then(resp => {
+            if (resp.success) {
+                showMessageModal('Success', resp.message, 'success');
+                document.getElementById('topup-form').reset();
+                updateTopupCalculation();
+                loadSmsStats();
+            } else {
+                showMessageModal('Error', resp.message, 'error');
+            }
+        }).finally(() => {
+            btn.innerHTML = orig;
+            btn.disabled = false;
         });
     }
 
-    function formatDate(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    }
-
-    function formatTime(dateString) {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-
-    // Modal Functions
-    function showMessageModal(title, message, type = 'info') {
-        const modal = document.getElementById('messageModal');
-        const titleElement = document.getElementById('message-modal-title');
-        const textElement = document.getElementById('message-modal-text');
-        const iconElement = document.getElementById('message-modal-icon');
-
-        titleElement.textContent = title;
-        textElement.innerHTML = message;
-
-        // Set icon based on type
-        const iconClasses = {
-            'success': 'bg-green-100 text-green-600 fas fa-check',
-            'error': 'bg-red-100 text-red-600 fas fa-times',
-            'warning': 'bg-yellow-100 text-yellow-600 fas fa-exclamation-triangle',
-            'info': 'bg-blue-100 text-blue-600 fas fa-info'
-        };
-
-        const iconClass = iconClasses[type] || iconClasses['info'];
-        const [bgClass, textClass, iconName] = iconClass.split(' ');
-
-        iconElement.className = `w-8 h-8 rounded-lg flex items-center justify-center ${bgClass}`;
-        iconElement.innerHTML = `<i class="${iconName} ${textClass}"></i>`;
-
-        modal.classList.remove('hidden');
-    }
-
-    function hideMessageModal() {
-        document.getElementById('messageModal').classList.add('hidden');
-    }
-
-    // Bulk Upload Functions
     function downloadSampleTemplate() {
-        // Create a simple CSV template with 9-digit numbers (Excel friendly)
-        const csvContent = "Phone Number\n700123456\n701234567\n702345678";
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
+        const csv = "Phone Number\n700123456\n701234567\n702345678";
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = 'sms_bulk_template.csv';
+        a.href = url; a.download = 'sms_bulk_template.csv';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
+        URL.revokeObjectURL(url);
         showMessageModal('Template Downloaded', 'Sample template has been downloaded. Add 9-digit phone numbers (without leading 0) in the first column and upload the file.', 'success');
     }
 
     function handleBulkUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
-
-        const fileExtension = file.name.split('.').pop().toLowerCase();
-
-        if (!['csv', 'xlsx', 'xls'].includes(fileExtension)) {
-            showMessageModal('Invalid File Type', 'Please upload a CSV or Excel file (.csv, .xlsx, .xls)', 'error');
-            return;
-        }
-
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!['csv', 'xls', 'xlsx'].includes(ext)) { showMessageModal('Invalid File Type', 'Please upload a CSV or Excel file (.csv, .xlsx, .xls)', 'error'); return; }
         const reader = new FileReader();
-        reader.onload = function (e) {
+        reader.onload = e => {
             try {
-                let phoneNumbers = [];
-
-                if (fileExtension === 'csv') {
-                    phoneNumbers = parseCSV(e.target.result);
-                } else {
-                    // For Excel files, we'll need to use a library like SheetJS
-                    // For now, show a message to use CSV
-                    showMessageModal('Excel Support', 'Please save your Excel file as CSV format and upload again.', 'info');
-                    return;
-                }
-
-                processBulkNumbers(phoneNumbers);
-            } catch (error) {
-                console.error('Error parsing file:', error);
+                let phones = [];
+                if (ext === 'csv') phones = parseCSV(e.target.result);
+                else { showMessageModal('Excel Support', 'Please save your Excel file as CSV format and upload again.', 'info'); return; }
+                processBulkNumbers(phones);
+            } catch {
                 showMessageModal('File Error', 'Error reading the file. Please check the format and try again.', 'error');
             }
         };
-
         reader.readAsText(file);
-
-        // Reset the file input
         event.target.value = '';
     }
 
-    function parseCSV(csvText) {
-        const lines = csvText.split('\n');
-        const phoneNumbers = [];
-
-        // Skip header row (index 0)
+    function parseCSV(text) {
+        const lines = text.split('\n');
+        const nums = [];
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
-            if (line) {
-                // Get first column (phone number)
-                const columns = line.split(',');
-                const phoneNumber = columns[0].trim().replace(/['"]/g, ''); // Remove quotes
-                if (phoneNumber) {
-                    phoneNumbers.push(phoneNumber);
-                }
-            }
+            if (!line) continue;
+            const num = line.split(',')[0].trim().replace(/['"]/g, '');
+            if (num) nums.push(num);
         }
-
-        return phoneNumbers;
+        return nums;
     }
 
     function processBulkNumbers(phoneNumbers) {
-        const results = {
-            valid: [],
-            invalid: [],
-            duplicates: [],
-            total: phoneNumbers.length
-        };
-
+        const results = { valid: [], invalid: [], duplicates: [], total: phoneNumbers.length };
         phoneNumbers.forEach(number => {
-            const cleanNumber = number.replace(/\s+/g, '');
-            const normalizedNumber = normalizePhoneNumber(cleanNumber);
-
-            // Check if already exists in current list or new valid list
-            if (bulkRecipients.includes(normalizedNumber) || results.valid.includes(normalizedNumber)) {
-                results.duplicates.push(normalizedNumber);
-            } else if (validatePhoneNumber(cleanNumber)) {
-                results.valid.push(normalizedNumber);
-            } else {
-                results.invalid.push(cleanNumber);
-            }
+            const clean = number.replace(/\s+/g, '');
+            const norm = normalizePhoneNumber(clean);
+            if (bulkRecipients.includes(norm) || results.valid.includes(norm)) results.duplicates.push(norm);
+            else if (validatePhoneNumber(clean)) results.valid.push(norm);
+            else results.invalid.push(clean);
         });
-
-        // Add valid numbers to bulk recipients
         bulkRecipients.push(...results.valid);
         renderRecipientTags();
         updateSendFormCalculations();
-
-        // Show results modal
         showBulkUploadResults(results);
     }
 
     function showBulkUploadResults(results) {
         const modal = document.getElementById('bulkUploadModal');
         const content = document.getElementById('upload-results-content');
-
-        const validCount = results.valid.length;
-        const invalidCount = results.invalid.length;
-        const duplicateCount = results.duplicates.length;
-
+        const { valid, invalid, duplicates, total } = results;
         let html = `
             <div class="space-y-4">
                 <div class="bg-green-50 rounded-lg p-4 border border-green-200">
                     <div class="flex items-center gap-2 mb-2">
                         <i class="fas fa-check-circle text-green-600"></i>
-                        <h4 class="font-semibold text-green-900">Successfully Added: ${validCount}</h4>
+                        <h4 class="font-semibold text-green-900">Successfully Added: ${valid.length}</h4>
                     </div>
-                    ${validCount > 0 ? `<p class="text-sm text-green-700">Valid phone numbers have been added to your recipient list.</p>` : ''}
-                </div>
-        `;
-
-        if (invalidCount > 0) {
+                    ${valid.length ? `<p class="text-sm text-green-700">Valid phone numbers have been added to your recipient list.</p>` : ''}
+                </div>`;
+        if (invalid.length) {
             html += `
                 <div class="bg-red-50 rounded-lg p-4 border border-red-200">
                     <div class="flex items-center gap-2 mb-2">
                         <i class="fas fa-times-circle text-red-600"></i>
-                        <h4 class="font-semibold text-red-900">Invalid Numbers: ${invalidCount}</h4>
+                        <h4 class="font-semibold text-red-900">Invalid Numbers: ${invalid.length}</h4>
                     </div>
                     <div class="text-sm text-red-700 max-h-32 overflow-y-auto">
-                        ${results.invalid.slice(0, 10).map(num => `<div>${num}</div>`).join('')}
-                        ${invalidCount > 10 ? `<div class="font-medium">... and ${invalidCount - 10} more</div>` : ''}
+                        ${invalid.slice(0, 10).map(n => `<div>${n}</div>`).join('')}
+                        ${invalid.length > 10 ? `<div class="font-medium">... and ${invalid.length - 10} more</div>` : ''}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
-
-        if (duplicateCount > 0) {
+        if (duplicates.length) {
             html += `
                 <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
                     <div class="flex items-center gap-2 mb-2">
                         <i class="fas fa-exclamation-triangle text-yellow-600"></i>
-                        <h4 class="font-semibold text-yellow-900">Duplicate Numbers: ${duplicateCount}</h4>
+                        <h4 class="font-semibold text-yellow-900">Duplicate Numbers: ${duplicates.length}</h4>
                     </div>
                     <div class="text-sm text-yellow-700 max-h-32 overflow-y-auto">
-                        ${results.duplicates.slice(0, 10).map(num => `<div>${num}</div>`).join('')}
-                        ${duplicateCount > 10 ? `<div class="font-medium">... and ${duplicateCount - 10} more</div>` : ''}
+                        ${duplicates.slice(0, 10).map(n => `<div>${n}</div>`).join('')}
+                        ${duplicates.length > 10 ? `<div class="font-medium">... and ${duplicates.length - 10} more</div>` : ''}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
-
         html += `
                 <div class="bg-gray-50 rounded-lg p-4">
                     <h4 class="font-semibold text-gray-900 mb-2">Summary</h4>
                     <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div>Total Processed: ${results.total}</div>
-                        <div>Successfully Added: ${validCount}</div>
-                        <div>Invalid Format: ${invalidCount}</div>
-                        <div>Duplicates Skipped: ${duplicateCount}</div>
+                        <div>Total Processed: ${total}</div>
+                        <div>Successfully Added: ${valid.length}</div>
+                        <div>Invalid Format: ${invalid.length}</div>
+                        <div>Duplicates Skipped: ${duplicates.length}</div>
                     </div>
                 </div>
-            </div>
-        `;
-
+            </div>`;
         content.innerHTML = html;
         modal.classList.remove('hidden');
     }
 
     function hideBulkUploadModal() {
         document.getElementById('bulkUploadModal').classList.add('hidden');
+    }
+
+    function showMessageModal(title, message, type = 'info') {
+        const modal = document.getElementById('messageModal');
+        const titleEl = document.getElementById('message-modal-title');
+        const textEl = document.getElementById('message-modal-text');
+        const iconEl = document.getElementById('message-modal-icon');
+        titleEl.textContent = title;
+        textEl.innerHTML = message;
+        const icons = {
+            success: 'bg-green-100 text-green-600 fas fa-check',
+            error: 'bg-red-100 text-red-600 fas fa-times',
+            warning: 'bg-yellow-100 text-yellow-600 fas fa-exclamation-triangle',
+            info: 'bg-blue-100 text-blue-600 fas fa-info'
+        };
+        const [bg, text, cls] = icons[type].split(' ');
+        iconEl.className = `w-8 h-8 rounded-lg flex items-center justify-center ${bg}`;
+        iconEl.innerHTML = `<i class="${cls} ${text}"></i>`;
+        modal.classList.remove('hidden');
+    }
+
+    function hideMessageModal() {
+        document.getElementById('messageModal').classList.add('hidden');
     }
 </script>
 

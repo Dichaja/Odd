@@ -10,13 +10,15 @@ session_start();
 
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../lib/ZzimbaCreditModule.php';
+require_once __DIR__ . '/../../lib/NotificationService.php';
 require_once __DIR__ . '/../../sms/SMS.php';
 
 use ZzimbaCreditModule\CreditService;
 
+$notificationService = new NotificationService($pdo);
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
-// Create tables if they don't exist
 createSMSTables();
 
 switch ($action) {
@@ -54,13 +56,12 @@ function createSMSTables()
     global $pdo;
 
     try {
-        // SMS Wallet table - tracks SMS balance in currency amount for users/vendors
         $pdo->exec("CREATE TABLE IF NOT EXISTS `zzimba_sms_wallet` (
             `id` char(26) NOT NULL PRIMARY KEY,
             `owner_type` enum('USER','VENDOR') NOT NULL,
             `user_id` char(26) DEFAULT NULL,
             `vendor_id` char(26) DEFAULT NULL,
-            `current_balance` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `current_balance` int(11) NOT NULL DEFAULT 0,
             `status` enum('active','inactive','suspended') NOT NULL DEFAULT 'active',
             `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -71,7 +72,6 @@ function createSMSTables()
             INDEX `idx_status` (`status`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
 
-        // SMS History table - tracks all SMS sending activity
         $pdo->exec("CREATE TABLE IF NOT EXISTS `zzimba_sms_history` (
             `id` char(26) NOT NULL PRIMARY KEY,
             `vendor_id` char(26) NOT NULL,
@@ -89,8 +89,8 @@ function createSMSTables()
             `type` enum('single','bulk') NOT NULL DEFAULT 'single',
             `sent_at` datetime DEFAULT NULL,
             `scheduled_at` datetime DEFAULT NULL,
-            `balance_before` decimal(10,2) NOT NULL DEFAULT 0.00,
-            `balance_after` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `balance_before` int(11) NOT NULL DEFAULT 0,
+            `balance_after` int(11) NOT NULL DEFAULT 0,
             `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX `idx_vendor_id` (`vendor_id`),
@@ -101,7 +101,6 @@ function createSMSTables()
             INDEX `idx_sent_at` (`sent_at`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
 
-        // SMS Templates table
         $pdo->exec("CREATE TABLE IF NOT EXISTS `zzimba_sms_templates` (
             `id` char(26) NOT NULL PRIMARY KEY,
             `vendor_id` char(26) NOT NULL,
@@ -115,7 +114,6 @@ function createSMSTables()
             INDEX `idx_user_id` (`user_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
 
-        // SMS Topup History table - tracks SMS credit purchases
         $pdo->exec("CREATE TABLE IF NOT EXISTS `zzimba_sms_topup_history` (
             `id` char(26) NOT NULL PRIMARY KEY,
             `sms_wallet_id` char(26) NOT NULL,
@@ -126,14 +124,13 @@ function createSMSTables()
             `sms_rate` decimal(10,2) NOT NULL,
             `credits_purchased` int(11) NOT NULL,
             `status` enum('completed','pending','failed') NOT NULL DEFAULT 'completed',
-            `balance_before` decimal(10,2) NOT NULL DEFAULT 0.00,
-            `balance_after` decimal(10,2) NOT NULL DEFAULT 0.00,
+            `balance_before` int(11) NOT NULL DEFAULT 0,
+            `balance_after` int(11) NOT NULL DEFAULT 0,
             `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX `idx_sms_wallet_id` (`sms_wallet_id`),
             INDEX `idx_vendor_id` (`vendor_id`),
             INDEX `idx_transaction_id` (`transaction_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
-
     } catch (Exception $e) {
         error_log("Error creating SMS tables: " . $e->getMessage());
     }
@@ -147,31 +144,28 @@ function getSmsRate($vendorId = null)
         $appKey = 'vendors';
         $sql = "SELECT setting_value FROM zzimba_credit_settings 
                 WHERE setting_key = 'sms_cost' 
-                AND status = 'active' 
-                AND applicable_to IN ('all', ?)
+                  AND status = 'active' 
+                  AND category = 'sms' 
+                  AND applicable_to IN ('all', ?)
                 ORDER BY (applicable_to = 'all') DESC, (applicable_to = ?) DESC
                 LIMIT 1";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$appKey, $appKey]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result ? (float) $result['setting_value'] : 35.00; // Default rate
+        return (float) $result['setting_value'];
     } catch (Exception $e) {
         error_log("Error getting SMS rate: " . $e->getMessage());
-        return 35.00; // Default fallback
+        return 0;
     }
 }
 
 function getVendorWallet($vendorId)
 {
     global $pdo;
-
     try {
         $sql = "SELECT * FROM zzimba_wallets 
                 WHERE vendor_id = ? AND owner_type = 'VENDOR' AND status = 'active' 
                 LIMIT 1";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$vendorId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -181,12 +175,25 @@ function getVendorWallet($vendorId)
     }
 }
 
+function getStoreName($storeId)
+{
+    global $pdo;
+    try {
+        $sql = "SELECT name FROM vendor_stores WHERE id = ? LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$storeId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['name'] : 'Unknown Store';
+    } catch (Exception $e) {
+        error_log("Error fetching store name: " . $e->getMessage());
+        return 'Unknown Store';
+    }
+}
+
 function getSmsWallet($ownerType, $userId = null, $vendorId = null, $createIfNotExists = true)
 {
     global $pdo;
-
     try {
-        // Build query based on owner type
         if ($ownerType === 'USER' && $userId) {
             $sql = "SELECT * FROM zzimba_sms_wallet 
                     WHERE owner_type = 'USER' AND user_id = ? AND vendor_id IS NULL 
@@ -200,18 +207,13 @@ function getSmsWallet($ownerType, $userId = null, $vendorId = null, $createIfNot
         } else {
             return null;
         }
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         $smsWallet = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Create SMS wallet if it doesn't exist and createIfNotExists is true
         if (!$smsWallet && $createIfNotExists) {
             $smsWallet = createSmsWallet($ownerType, $userId, $vendorId);
         }
-
         return $smsWallet;
-
     } catch (Exception $e) {
         error_log("Error getting SMS wallet: " . $e->getMessage());
         return null;
@@ -221,20 +223,14 @@ function getSmsWallet($ownerType, $userId = null, $vendorId = null, $createIfNot
 function createSmsWallet($ownerType, $userId = null, $vendorId = null)
 {
     global $pdo;
-
     try {
         $walletId = generateUlid();
-
         $sql = "INSERT INTO zzimba_sms_wallet 
                 (id, owner_type, user_id, vendor_id, current_balance, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, 0.00, 'active', NOW(), NOW())";
-
+                VALUES (?, ?, ?, ?, 0, 'active', NOW(), NOW())";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$walletId, $ownerType, $userId, $vendorId]);
-
-        // Return the created wallet
         return getSmsWallet($ownerType, $userId, $vendorId, false);
-
     } catch (Exception $e) {
         error_log("Error creating SMS wallet: " . $e->getMessage());
         return null;
@@ -244,40 +240,29 @@ function createSmsWallet($ownerType, $userId = null, $vendorId = null)
 function updateSmsWalletBalance($smsWalletId, $amountChange)
 {
     global $pdo;
-
     try {
-        // Get current balance with row lock (no transaction here since parent handles it)
         $sql = "SELECT current_balance FROM zzimba_sms_wallet WHERE id = ? FOR UPDATE";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$smsWalletId]);
         $current = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$current) {
             return false;
         }
-
-        $balanceBefore = (float) $current['current_balance'];
+        $balanceBefore = (int) $current['current_balance'];
         $balanceAfter = $balanceBefore + $amountChange;
-
-        // Ensure balance doesn't go negative
         if ($balanceAfter < 0) {
             return false;
         }
-
-        // Update the wallet balance
         $sql = "UPDATE zzimba_sms_wallet 
                 SET current_balance = ?, updated_at = NOW()
                 WHERE id = ?";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$balanceAfter, $smsWalletId]);
-
         return [
             'balance_before' => $balanceBefore,
             'balance_after' => $balanceAfter,
             'amount_change' => $amountChange
         ];
-
     } catch (Exception $e) {
         error_log("Error updating SMS wallet balance: " . $e->getMessage());
         return false;
@@ -286,35 +271,27 @@ function updateSmsWalletBalance($smsWalletId, $amountChange)
 
 function handlePurchaseSmsCredits()
 {
-    global $pdo;
-
+    global $pdo, $notificationService;
     $amount = isset($_POST['amount']) ? (float) $_POST['amount'] : 0;
     $vendorId = $_SESSION['active_store'] ?? null;
     $userId = $_SESSION['user']['user_id'] ?? null;
-
     if (!$vendorId) {
         echo json_encode(['success' => false, 'message' => 'No active store found']);
         return;
     }
-
     if ($amount <= 0) {
         echo json_encode(['success' => false, 'message' => 'Invalid amount']);
         return;
     }
-
     if ($amount < 1000) {
         echo json_encode(['success' => false, 'message' => 'Minimum top-up amount is Sh. 1,000']);
         return;
     }
-
-    // Get vendor wallet for payment
     $wallet = getVendorWallet($vendorId);
     if (!$wallet) {
         echo json_encode(['success' => false, 'message' => 'Vendor wallet not found']);
         return;
     }
-
-    // Check if wallet has sufficient balance
     $walletBalance = (float) $wallet['current_balance'];
     if ($walletBalance < $amount) {
         echo json_encode([
@@ -328,15 +305,11 @@ function handlePurchaseSmsCredits()
         ]);
         return;
     }
-
-    // Get or create SMS wallet
     $smsWallet = getSmsWallet('VENDOR', null, $vendorId, true);
     if (!$smsWallet) {
         echo json_encode(['success' => false, 'message' => 'Failed to create SMS wallet']);
         return;
     }
-
-    // Build payload for CreditService to handle the payment (no payment_method needed)
     $payload = [
         'wallet_id' => $wallet['wallet_id'],
         'owner_type' => 'VENDOR',
@@ -344,43 +317,28 @@ function handlePurchaseSmsCredits()
         'vendor_id' => $vendorId,
         'user_id' => $userId
     ];
-
-    // Log the payload for debugging
     error_log('[handlePurchaseSmsCredits] payload: ' . json_encode($payload));
-
-    // Call the CreditService to handle payment
     $result = CreditService::purchaseSmsCredits($payload);
-
-    // Log the result for debugging
     error_log('[handlePurchaseSmsCredits] CreditService result: ' . json_encode($result));
-
     if (!$result['success']) {
         echo json_encode($result);
         return;
     }
-
     try {
         $pdo->beginTransaction();
-
-        // Get current SMS rate for calculation
         $smsRate = getSmsRate($vendorId);
         $creditsPurchased = floor($amount / $smsRate);
-
-        // Update SMS wallet balance by adding the amount paid
-        $balanceUpdate = updateSmsWalletBalance($smsWallet['id'], $amount);
+        $balanceUpdate = updateSmsWalletBalance($smsWallet['id'], $creditsPurchased);
         if (!$balanceUpdate) {
             $pdo->rollBack();
             echo json_encode(['success' => false, 'message' => 'Failed to update SMS wallet balance']);
             return;
         }
-
-        // Record topup history (without payment_method)
         $topupId = generateUlid();
         $sql = "INSERT INTO zzimba_sms_topup_history 
                 (id, sms_wallet_id, vendor_id, user_id, transaction_id, amount_paid, 
                  sms_rate, credits_purchased, status, balance_before, balance_after, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, NOW())";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             $topupId,
@@ -394,8 +352,19 @@ function handlePurchaseSmsCredits()
             $balanceUpdate['balance_before'],
             $balanceUpdate['balance_after']
         ]);
-
         $pdo->commit();
+
+        $notificationService->create(
+            'system',
+            "Purchased {$creditsPurchased} SMS credits",
+            [
+                ['type' => 'admin', 'id' => '', 'message' => "Vendor {$vendorId} purchased {$creditsPurchased} SMS credits"],
+                ['type' => 'store', 'id' => $vendorId, 'message' => "You purchased {$creditsPurchased} SMS credits"]
+            ],
+            null,
+            'normal',
+            $userId
+        );
 
         echo json_encode([
             'success' => true,
@@ -409,7 +378,6 @@ function handlePurchaseSmsCredits()
                 'sms_wallet_id' => $smsWallet['id']
             ]
         ]);
-
     } catch (Exception $e) {
         $pdo->rollBack();
         error_log("Error processing SMS credit purchase: " . $e->getMessage());
@@ -420,55 +388,36 @@ function handlePurchaseSmsCredits()
 function handleGetSmsStats()
 {
     global $pdo;
-
     $vendorId = $_SESSION['active_store'] ?? null;
-    $userId = $_SESSION['user']['user_id'] ?? null;
-
     if (!$vendorId) {
         echo json_encode(['success' => false, 'message' => 'No active store found']);
         return;
     }
-
     try {
-        // Get SMS wallet
         $smsWallet = getSmsWallet('VENDOR', null, $vendorId, true);
-        $currentBalance = $smsWallet ? (float) $smsWallet['current_balance'] : 0.00;
-
-        // Get current SMS rate to calculate available credits
-        $smsRate = getSmsRate($vendorId);
-        $currentCredits = $smsRate > 0 ? floor($currentBalance / $smsRate) : 0;
-
-        // Get today's stats
+        $currentCredits = $smsWallet ? (int) $smsWallet['current_balance'] : 0;
         $today = date('Y-m-d');
         $sql = "SELECT COUNT(*) as sent_count, SUM(credits_used) as credits_used, SUM(total_cost) as total_cost
                 FROM zzimba_sms_history 
                 WHERE vendor_id = ? AND DATE(sent_at) = ? AND status = 'sent'";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$vendorId, $today]);
         $todayStats = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Get scheduled count
         $sql = "SELECT COUNT(*) as scheduled_count FROM zzimba_sms_history 
                 WHERE vendor_id = ? AND status = 'scheduled'";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$vendorId]);
         $scheduledStats = $stmt->fetch(PDO::FETCH_ASSOC);
-
         echo json_encode([
             'success' => true,
             'data' => [
                 'current_credits' => $currentCredits,
-                'current_balance' => $currentBalance,
-                'credit_value' => $currentBalance,
-                'sms_rate' => $smsRate,
                 'sent_today' => (int) $todayStats['sent_count'],
+                'sent_today_credits' => (int) $todayStats['credits_used'],
                 'sent_today_cost' => (float) $todayStats['total_cost'],
                 'scheduled_count' => (int) $scheduledStats['scheduled_count']
             ]
         ]);
-
     } catch (Exception $e) {
         error_log("Error getting SMS stats: " . $e->getMessage());
         echo json_encode(['success' => false, 'message' => 'Failed to get stats']);
@@ -478,28 +427,20 @@ function handleGetSmsStats()
 function handleGetWalletBalance()
 {
     global $pdo;
-
     $vendorId = $_SESSION['active_store'] ?? null;
-
     if (!$vendorId) {
         echo json_encode(['success' => false, 'message' => 'No active store found']);
         return;
     }
-
     try {
-        // Get vendor wallet
         $wallet = getVendorWallet($vendorId);
         if (!$wallet) {
             echo json_encode(['success' => false, 'message' => 'Vendor wallet not found']);
             return;
         }
-
         $balance = (float) $wallet['current_balance'];
-
-        // Get current SMS rate to calculate equivalent credits
         $smsRate = getSmsRate($vendorId);
         $equivalentCredits = $smsRate > 0 ? floor($balance / $smsRate) : 0;
-
         echo json_encode([
             'success' => true,
             'data' => [
@@ -508,7 +449,6 @@ function handleGetWalletBalance()
                 'sms_rate' => $smsRate
             ]
         ]);
-
     } catch (Exception $e) {
         error_log("Error getting wallet balance: " . $e->getMessage());
         echo json_encode(['success' => false, 'message' => 'Failed to get wallet balance']);
@@ -517,78 +457,58 @@ function handleGetWalletBalance()
 
 function handleSendSms()
 {
-    global $pdo;
-
+    global $pdo, $notificationService;
     $vendorId = $_SESSION['active_store'] ?? null;
     $userId = $_SESSION['user']['user_id'] ?? null;
-
     $message = trim($_POST['message'] ?? '');
     $recipients = json_decode($_POST['recipients'] ?? '[]', true);
     $sendType = $_POST['send_type'] ?? 'single';
     $sendOption = $_POST['send_option'] ?? 'now';
     $scheduledAt = $_POST['scheduled_at'] ?? null;
-
     if (!$vendorId) {
         echo json_encode(['success' => false, 'message' => 'No active store found']);
         return;
     }
-
     if (empty($message) || empty($recipients)) {
         echo json_encode(['success' => false, 'message' => 'Message and recipients are required']);
         return;
     }
-
-    // Get SMS wallet
     $smsWallet = getSmsWallet('VENDOR', null, $vendorId, true);
     if (!$smsWallet) {
         echo json_encode(['success' => false, 'message' => 'SMS wallet not found']);
         return;
     }
-
-    // Get current SMS rate and calculate cost
     $smsRate = getSmsRate($vendorId);
     $smsParts = max(1, ceil(strlen($message) / 160));
     $creditsNeeded = count($recipients) * $smsParts;
-    $totalCost = $creditsNeeded * $smsRate;
-    $currentBalance = (float) $smsWallet['current_balance'];
-
-    // Check if sufficient balance for immediate sending
-    if ($sendOption === 'now' && $totalCost > $currentBalance) {
-        $availableCredits = floor($currentBalance / $smsRate);
+    $currentBalance = (int) $smsWallet['current_balance'];
+    if ($sendOption === 'now' && $creditsNeeded > $currentBalance) {
         echo json_encode([
             'success' => false,
-            'message' => "Insufficient balance. Need Sh. {$totalCost}, have Sh. {$currentBalance} ({$availableCredits} credits)"
+            'message' => "Insufficient credits. Need {$creditsNeeded}, have {$currentBalance}"
         ]);
         return;
     }
-
     try {
         $pdo->beginTransaction();
-
         $smsId = generateUlid();
         $status = $sendOption === 'schedule' ? 'scheduled' : 'sent';
         $sentAt = $sendOption === 'now' ? date('Y-m-d H:i:s') : null;
-
         $balanceAfter = $currentBalance;
-
-        // If sending now, deduct cost from SMS wallet
         if ($sendOption === 'now') {
-            $balanceUpdate = updateSmsWalletBalance($smsWallet['id'], -$totalCost);
+            $balanceUpdate = updateSmsWalletBalance($smsWallet['id'], -$creditsNeeded);
             if (!$balanceUpdate) {
                 $pdo->rollBack();
-                echo json_encode(['success' => false, 'message' => 'Failed to deduct SMS cost from wallet']);
+                echo json_encode(['success' => false, 'message' => 'Failed to deduct SMS credits from wallet']);
                 return;
             }
             $balanceAfter = $balanceUpdate['balance_after'];
         }
-
-        // Insert SMS history
         $sql = "INSERT INTO zzimba_sms_history 
                 (id, vendor_id, user_id, sms_wallet_id, message, recipients, recipient_count, sms_parts, 
                  sms_rate, total_cost, credits_used, status, type, sent_at, scheduled_at, 
                  balance_before, balance_after, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             $smsId,
@@ -600,7 +520,7 @@ function handleSendSms()
             count($recipients),
             $smsParts,
             $smsRate,
-            $totalCost,
+            $creditsNeeded * $smsRate,
             $creditsNeeded,
             $status,
             $sendType,
@@ -609,20 +529,38 @@ function handleSendSms()
             $currentBalance,
             $balanceAfter
         ]);
-
         $pdo->commit();
 
-        // If sending now, actually send the SMS
+        $storeName = getStoreName($vendorId);
+
+        $notificationService->create(
+            'system',
+            $sendOption === 'schedule'
+            ? "Scheduled {$creditsNeeded} SMS messages"
+            : "Sent {$creditsNeeded} SMS messages",
+            [
+                ['type' => 'admin', 'id' => '', 'message' => "Store '{$storeName}' sent {$creditsNeeded} SMSes"],
+                [
+                    'type' => 'store',
+                    'id' => $vendorId,
+                    'message' => $sendOption === 'schedule'
+                        ? "You scheduled {$creditsNeeded} SMS messages"
+                        : "You sent {$creditsNeeded} SMS messages"
+                ]
+            ],
+            null,
+            'normal',
+            $userId
+        );
+
         if ($sendOption === 'now') {
             try {
                 if (count($recipients) === 1) {
-                    // Single SMS
                     $smsResult = SMS::send($recipients[0], $message);
                     if (!$smsResult['success']) {
                         error_log("SMS sending failed for {$recipients[0]}: " . ($smsResult['error'] ?? 'Unknown error'));
                     }
                 } else {
-                    // Bulk SMS
                     $bulkResult = SMS::sendBulk($recipients, $message);
                     if ($bulkResult['failure_count'] > 0) {
                         error_log("SMS bulk sending had {$bulkResult['failure_count']} failures out of {$bulkResult['total']} messages");
@@ -630,12 +568,8 @@ function handleSendSms()
                 }
             } catch (Exception $e) {
                 error_log("SMS sending exception: " . $e->getMessage());
-                // Don't fail the transaction if SMS sending fails - the credits are already deducted
             }
         }
-
-        // Calculate new available credits
-        $newCredits = $smsRate > 0 ? floor($balanceAfter / $smsRate) : 0;
 
         echo json_encode([
             'success' => true,
@@ -643,13 +577,12 @@ function handleSendSms()
             'data' => [
                 'sms_id' => $smsId,
                 'credits_used' => $creditsNeeded,
-                'total_cost' => $totalCost,
+                'total_cost' => $creditsNeeded * $smsRate,
                 'new_balance' => $balanceAfter,
-                'new_credits' => $newCredits,
+                'new_credits' => $balanceAfter,
                 'sms_wallet_id' => $smsWallet['id']
             ]
         ]);
-
     } catch (Exception $e) {
         $pdo->rollBack();
         error_log("Error sending SMS: " . $e->getMessage());
@@ -660,7 +593,6 @@ function handleSendSms()
 function handleGetSmsHistory()
 {
     global $pdo;
-
     $vendorId = $_SESSION['active_store'] ?? null;
     $page = (int) ($_GET['page'] ?? 1);
     $limit = (int) ($_GET['limit'] ?? 20);
@@ -668,61 +600,45 @@ function handleGetSmsHistory()
     $status = trim($_GET['status'] ?? '');
     $dateFrom = trim($_GET['date_from'] ?? '');
     $dateTo = trim($_GET['date_to'] ?? '');
-
     if (!$vendorId) {
         echo json_encode(['success' => false, 'message' => 'No active store found']);
         return;
     }
-
     try {
         $offset = ($page - 1) * $limit;
-
         $whereConditions = ["vendor_id = ?"];
         $params = [$vendorId];
-
         if ($search) {
             $whereConditions[] = "message LIKE ?";
             $params[] = "%{$search}%";
         }
-
         if ($status) {
             $whereConditions[] = "status = ?";
             $params[] = $status;
         }
-
         if ($dateFrom) {
             $whereConditions[] = "DATE(COALESCE(sent_at, scheduled_at)) >= ?";
             $params[] = $dateFrom;
         }
-
         if ($dateTo) {
             $whereConditions[] = "DATE(COALESCE(sent_at, scheduled_at)) <= ?";
             $params[] = $dateTo;
         }
-
         $whereClause = implode(' AND ', $whereConditions);
-
-        // Get total count
         $countSql = "SELECT COUNT(*) as total FROM zzimba_sms_history WHERE {$whereClause}";
         $stmt = $pdo->prepare($countSql);
         $stmt->execute($params);
         $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-
-        // Get records
         $sql = "SELECT * FROM zzimba_sms_history 
                 WHERE {$whereClause}
                 ORDER BY created_at DESC 
                 LIMIT {$limit} OFFSET {$offset}";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Decode recipients JSON
         foreach ($history as &$record) {
             $record['recipients'] = json_decode($record['recipients'], true);
         }
-
         echo json_encode([
             'success' => true,
             'data' => [
@@ -733,7 +649,6 @@ function handleGetSmsHistory()
                 'total_pages' => ceil($total / $limit)
             ]
         ]);
-
     } catch (Exception $e) {
         error_log("Error getting SMS history: " . $e->getMessage());
         echo json_encode(['success' => false, 'message' => 'Failed to get history']);
@@ -743,28 +658,19 @@ function handleGetSmsHistory()
 function handleGetSmsTemplates()
 {
     global $pdo;
-
     $vendorId = $_SESSION['active_store'] ?? null;
-
     if (!$vendorId) {
         echo json_encode(['success' => false, 'message' => 'No active store found']);
         return;
     }
-
     try {
         $sql = "SELECT * FROM zzimba_sms_templates 
                 WHERE vendor_id = ? AND is_active = 1
                 ORDER BY created_at DESC";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$vendorId]);
         $templates = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode([
-            'success' => true,
-            'data' => $templates
-        ]);
-
+        echo json_encode(['success' => true, 'data' => $templates]);
     } catch (Exception $e) {
         error_log("Error getting SMS templates: " . $e->getMessage());
         echo json_encode(['success' => false, 'message' => 'Failed to get templates']);
@@ -774,53 +680,37 @@ function handleGetSmsTemplates()
 function handleSaveTemplate()
 {
     global $pdo;
-
     $vendorId = $_SESSION['active_store'] ?? null;
     $userId = $_SESSION['user']['user_id'] ?? null;
-
     $templateId = trim($_POST['template_id'] ?? '');
     $name = trim($_POST['name'] ?? '');
     $message = trim($_POST['message'] ?? '');
-
     if (!$vendorId) {
         echo json_encode(['success' => false, 'message' => 'No active store found']);
         return;
     }
-
     if (empty($name) || empty($message)) {
         echo json_encode(['success' => false, 'message' => 'Name and message are required']);
         return;
     }
-
     try {
         if ($templateId) {
-            // Update existing template
             $sql = "UPDATE zzimba_sms_templates 
                     SET name = ?, message = ?, updated_at = NOW()
                     WHERE id = ? AND vendor_id = ?";
-
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$name, $message, $templateId, $vendorId]);
-
             $responseMessage = 'Template updated successfully';
         } else {
-            // Create new template
             $newId = generateUlid();
             $sql = "INSERT INTO zzimba_sms_templates 
                     (id, vendor_id, user_id, name, message, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
-
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$newId, $vendorId, $userId, $name, $message]);
-
             $responseMessage = 'Template created successfully';
         }
-
-        echo json_encode([
-            'success' => true,
-            'message' => $responseMessage
-        ]);
-
+        echo json_encode(['success' => true, 'message' => $responseMessage]);
     } catch (Exception $e) {
         error_log("Error saving SMS template: " . $e->getMessage());
         echo json_encode(['success' => false, 'message' => 'Failed to save template']);
@@ -830,28 +720,19 @@ function handleSaveTemplate()
 function handleDeleteTemplate()
 {
     global $pdo;
-
     $vendorId = $_SESSION['active_store'] ?? null;
     $templateId = trim($_POST['template_id'] ?? '');
-
     if (!$vendorId || !$templateId) {
         echo json_encode(['success' => false, 'message' => 'Invalid request']);
         return;
     }
-
     try {
         $sql = "UPDATE zzimba_sms_templates 
                 SET is_active = 0, updated_at = NOW()
                 WHERE id = ? AND vendor_id = ?";
-
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$templateId, $vendorId]);
-
-        echo json_encode([
-            'success' => true,
-            'message' => 'Template deleted successfully'
-        ]);
-
+        echo json_encode(['success' => true, 'message' => 'Template deleted successfully']);
     } catch (Exception $e) {
         error_log("Error deleting SMS template: " . $e->getMessage());
         echo json_encode(['success' => false, 'message' => 'Failed to delete template']);
