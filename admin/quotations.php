@@ -237,7 +237,7 @@ ob_start();
         <div
             class="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100">
             <div>
-                <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Quotation Report</h3>
+                <h3 class="text-xl font-bold text-gray-900" id="modalTitle">RFQ Report</h3>
                 <p class="text-sm text-gray-600 mt-1" id="modalSubtitle">Manage pricing and quotation details</p>
             </div>
             <div class="flex items-center gap-3">
@@ -1015,7 +1015,7 @@ ob_start();
         pdfContainer.innerHTML = `
     <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.4; font-size: 12px;">
         <div style="text-align: center; margin-bottom: 20px; page-break-inside: avoid;">
-            <h1 style="font-size: 24px; margin: 0 0 10px 0; color: #2563eb;">Quotation Report</h1>
+            <h1 style="font-size: 24px; margin: 0 0 10px 0; color: #2563eb;">RFQ Report</h1>
             <p style="font-size: 14px; color: #666; margin: 0;">Generated on ${formatDateReadable(new Date())} at ${formatTimeReadable(new Date())}</p>
         </div>
         
