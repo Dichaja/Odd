@@ -127,13 +127,20 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+
     .item-report {
         border-collapse: separate;
         border-spacing: 0;
         width: 100%;
+        min-width: 600px;
         border-radius: 0.5rem;
         overflow: hidden;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     }
 
     .item-report thead {
@@ -146,12 +153,38 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         text-align: left;
         color: #374151;
         border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
     }
 
     .item-report td {
         padding: 0.75rem 1rem;
         border-bottom: 1px solid #e5e7eb;
         color: #4b5563;
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .item-report .col-brand {
+        width: 40%;
+        min-width: 200px;
+    }
+
+    .item-report .col-size {
+        width: 35%;
+        min-width: 150px;
+    }
+
+    .item-report .col-quantity {
+        width: 15%;
+        min-width: 80px;
+    }
+
+    .item-report .col-actions {
+        width: 10%;
+        min-width: 80px;
+        text-align: center;
     }
 
     .item-report tbody tr {
@@ -205,7 +238,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.7);
+        background-color: rgba(0, 0, 0, 0.6);
         backdrop-filter: blur(4px);
         display: flex;
         align-items: center;
@@ -214,6 +247,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease;
+        padding: 1rem;
     }
 
     .modal.active {
@@ -230,6 +264,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         transform: scale(0.95);
         transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
     }
 
     .modal.active .modal-content {
@@ -237,10 +273,26 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     }
 
     .map-modal-content {
-        width: 90%;
-        max-width: 800px;
-        height: 80vh;
-        max-height: 600px;
+        width: 100%;
+        max-width: 900px;
+        height: 90vh;
+        max-height: 700px;
+    }
+
+    .map-modal-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        overflow: hidden;
+    }
+
+    .map-modal-footer {
+        padding: 1rem;
+        border-top: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+        border-radius: 0 0 0.75rem 0.75rem;
+        flex-shrink: 0;
     }
 
     .search-dropdown {
@@ -313,10 +365,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     .action-icon {
         cursor: pointer;
         transition: all 0.2s ease;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
     }
 
     .action-icon:hover {
-        transform: scale(1.2);
+        transform: scale(1.1);
+        background-color: rgba(0, 0, 0, 0.05);
     }
 
     .edit-icon:hover {
@@ -328,14 +383,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     }
 
     #map {
-        height: 400px;
+        height: 350px;
         width: 100%;
         border-radius: 0.5rem;
+        flex: 1;
+        min-height: 250px;
     }
 
     .map-search-container {
         position: relative;
         margin-bottom: 1rem;
+        flex-shrink: 0;
     }
 
     .map-search-input {
@@ -406,6 +464,32 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         gap: 0.5rem;
     }
 
+    .uganda-notice {
+        background-color: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        color: #92400e;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .cors-notice {
+        background-color: #fef2f2;
+        border: 1px solid #f87171;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        color: #dc2626;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
     @media (max-width: 768px) {
         .mobile-hide {
             display: none !important;
@@ -413,6 +497,79 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
         .mobile-hide-title {
             display: none !important;
+        }
+
+        .modal {
+            padding: 0.5rem;
+        }
+
+        .map-modal-content {
+            height: 95vh;
+            max-height: none;
+        }
+
+        .map-modal-body {
+            padding: 0.75rem;
+        }
+
+        .map-modal-footer {
+            padding: 0.75rem;
+        }
+
+        #map {
+            height: 250px;
+            min-height: 200px;
+        }
+
+        .modal-content {
+            max-height: 95vh;
+        }
+
+        .item-report th,
+        .item-report td {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .action-icon {
+            padding: 0.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        #map {
+            height: 200px;
+            min-height: 180px;
+        }
+
+        .map-modal-body {
+            padding: 0.5rem;
+        }
+
+        .map-modal-footer {
+            padding: 0.5rem;
+        }
+
+        .item-report th,
+        .item-report td {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .item-report .col-brand {
+            min-width: 150px;
+        }
+
+        .item-report .col-size {
+            min-width: 120px;
+        }
+
+        .item-report .col-quantity {
+            min-width: 60px;
+        }
+
+        .item-report .col-actions {
+            min-width: 60px;
         }
     }
 </style>
@@ -439,18 +596,20 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                         </div>
                         <div class="bg-white rounded-lg overflow-hidden">
                             <div id="items-container" class="w-full">
-                                <table class="item-report">
-                                    <thead>
-                                        <tr>
-                                            <th class="w-5/12">Brand/Material</th>
-                                            <th class="w-4/12">Size/Specification</th>
-                                            <th class="w-2/12">Quantity</th>
-                                            <th class="w-1/12 text-center">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="items-list">
-                                    </tbody>
-                                </table>
+                                <div class="table-container">
+                                    <table class="item-report">
+                                        <thead>
+                                            <tr>
+                                                <th class="col-brand">Brand/Material</th>
+                                                <th class="col-size">Size/Specification</th>
+                                                <th class="col-quantity">Quantity</th>
+                                                <th class="col-actions">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="items-list">
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <div id="empty-items-state"
                                     class="flex flex-col items-center justify-center text-center py-10 px-4 bg-white rounded-lg border border-gray-200 shadow-sm">
                                     <div class="text-gray-400 mb-4">
@@ -563,23 +722,39 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 </div>
 
 <div id="location-modal" class="modal">
-    <div class="modal-content map-modal-content p-0">
+    <div class="modal-content map-modal-content">
         <div
-            class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 flex justify-between items-center border-b border-gray-200">
+            class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 flex justify-between items-center border-b border-gray-200 flex-shrink-0">
             <h3 class="text-lg font-semibold text-gray-800">Select Delivery Location</h3>
             <button type="button" class="text-gray-400 hover:text-gray-600 focus:outline-none"
                 id="close-location-modal">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <div class="p-4">
+        <div class="map-modal-body">
+            <div class="uganda-notice">
+                <i class="fas fa-map-marked-alt"></i>
+                <span>Location selection is restricted to Uganda only. Search and pin placement outside Uganda borders
+                    are not allowed.</span>
+            </div>
+            <div id="cors-notice"
+                class="cors-notice bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded relative flex items-start gap-2"
+                style="display: none;">
+                <i class="fas fa-exclamation-triangle mt-1"></i>
+                <span class="flex-1">Map search is temporarily unavailable. Please click directly on the map to select
+                    your location in Uganda.</span>
+                <button onclick="document.getElementById('cors-notice').style.display='none'"
+                    class="ml-2 text-xl leading-none focus:outline-none hover:text-red-600">&times;</button>
+            </div>
             <div class="map-search-container">
-                <input type="text" id="map-search-input" placeholder="Search for a location..."
+                <input type="text" id="map-search-input" placeholder="Search for a location in Uganda..."
                     class="map-search-input">
                 <div id="map-search-results" class="map-search-results"></div>
             </div>
             <div id="map"></div>
-            <div class="mt-4 flex justify-end space-x-3">
+        </div>
+        <div class="map-modal-footer">
+            <div class="flex justify-end space-x-3">
                 <button type="button" id="cancel-location"
                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors">
                     Cancel
@@ -742,6 +917,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     document.addEventListener('DOMContentLoaded', function () {
         const API_BASE = "<?php echo BASE_URL; ?>fetch/manageRFQ";
         const BASE_URL = "<?php echo BASE_URL; ?>";
+        const PAGE_TITLE = "<?php echo addslashes($pageTitle); ?>";
         const MAX_ITEMS = 5;
         let IS_LOGGED_IN = <?php echo (isset($_SESSION['user']) && $_SESSION['user']['logged_in']) ? 'true' : 'false'; ?>;
         const IS_ADMIN = <?php echo (isset($_SESSION['user']) && $_SESSION['user']['logged_in'] && $_SESSION['user']['is_admin']) ? 'true' : 'false'; ?>;
@@ -756,6 +932,19 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         let marker;
         let selectedLocation = null;
         let walletInfo = { balance: 0, fee: 0, canSubmit: false, noWallet: false };
+        let corsIssue = false;
+
+        const UGANDA_BOUNDS = {
+            north: 4.234077,
+            south: -1.484456,
+            east: 35.036133,
+            west: 29.573252
+        };
+
+        function isWithinUganda(lat, lng) {
+            return lat >= UGANDA_BOUNDS.south && lat <= UGANDA_BOUNDS.north &&
+                lng >= UGANDA_BOUNDS.west && lng <= UGANDA_BOUNDS.east;
+        }
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('en-UG', {
@@ -769,10 +958,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             return fetch(`${BASE_URL}fetch/check-session.php`)
                 .then(res => res.json())
                 .then(data => {
-                    IS_LOGGED_IN = data.logged_in || false;
-                    return IS_LOGGED_IN;
+                    if (data.success) {
+                        IS_LOGGED_IN = data.logged_in || false;
+                        return data;
+                    }
+                    return { logged_in: false };
                 })
-                .catch(() => false);
+                .catch(() => ({ logged_in: false }));
         }
 
         function checkWalletBalance() {
@@ -806,7 +998,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             const modal = document.getElementById('no-wallet-modal');
             modal.classList.add('active');
             document.getElementById('activate-wallet-btn').onclick = function () {
-                window.open(`${BASE_URL}account/zzimba-credit`, '_self');
+                localStorage.setItem('return_url', window.location.href);
+                localStorage.setItem('return_title', PAGE_TITLE);
+                window.location.href = `${BASE_URL}account/zzimba-credit`;
             };
             document.getElementById('close-no-wallet-modal').onclick = function () {
                 modal.classList.remove('active');
@@ -849,7 +1043,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 btn.innerHTML = '<i class="fas fa-wallet mr-2"></i> Top Up Wallet';
                 btn.className = 'btn-topup px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors';
                 btn.onclick = function () {
-                    window.open(`${BASE_URL}account/zzimba-credit`, '_self');
+                    window.location.href = `${BASE_URL}account/zzimba-credit`;
                 };
             } else {
                 btn.innerHTML = '<i class="fas fa-check mr-2"></i> Confirm & Submit';
@@ -870,9 +1064,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
         function checkInactivity() {
             const now = Date.now();
-            const tenMin = 10 * 60 * 1000;
+            const tenMin = 30 * 60 * 1000;
+            const hasReturnUrl = localStorage.getItem('return_url');
+            const hasReturnTitle = localStorage.getItem('return_title');
+
             if (now - lastActivityTime > tenMin) {
-                localStorage.removeItem('rfq_form_data');
+                if (!hasReturnUrl || !hasReturnTitle) {
+                    localStorage.removeItem('rfq_form_data');
+                }
             } else {
                 activityTimer = setTimeout(checkInactivity, 60000);
             }
@@ -909,13 +1108,18 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         }
 
         function checkAuthenticationBeforeSubmit() {
-            return checkSession().then(ok => {
-                if (!ok) {
+            return checkSession().then(sessionData => {
+                if (!sessionData.logged_in) {
                     saveFormData();
+                    if (typeof openAuthModal === 'function') {
+                        openAuthModal();
+                    } else {
+                        alert('Please log in to submit a quote request.');
+                    }
                     return false;
                 }
-                if (IS_ADMIN) {
-                    saveFormData();
+                if (sessionData.user && sessionData.user.is_admin) {
+                    alert('Admin users cannot submit quote requests.');
                     return false;
                 }
                 return true;
@@ -923,22 +1127,54 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         }
 
         function initializeMap() {
-            map = L.map('map').setView([0.3476, 32.5825], 10);
+            map = L.map('map').setView([0.3476, 32.5825], 7);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
-            map.on('click', e => setMapMarker(e.latlng.lat, e.latlng.lng));
+
+            const ugandaBounds = L.latLngBounds(
+                [UGANDA_BOUNDS.south, UGANDA_BOUNDS.west],
+                [UGANDA_BOUNDS.north, UGANDA_BOUNDS.east]
+            );
+            map.setMaxBounds(ugandaBounds);
+            map.setMinZoom(6);
+
+            map.on('click', e => {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+
+                if (!isWithinUganda(lat, lng)) {
+                    alert('Please select a location within Uganda borders only.');
+                    return;
+                }
+
+                setMapMarker(lat, lng);
+            });
         }
 
         function setMapMarker(lat, lng) {
+            if (!isWithinUganda(lat, lng)) {
+                alert('Location must be within Uganda borders.');
+                return;
+            }
+
             if (marker) map.removeLayer(marker);
             marker = L.marker([lat, lng]).addTo(map);
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&countrycodes=ug`)
                 .then(res => res.json())
                 .then(data => {
-                    const addr = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    selectedLocation = { lat, lng, address: addr };
-                    document.getElementById('confirm-location').disabled = false;
+                    if (data && data.address && data.address.country_code === 'ug') {
+                        const addr = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        selectedLocation = { lat, lng, address: addr };
+                        document.getElementById('confirm-location').disabled = false;
+                    } else {
+                        alert('Selected location is not within Uganda. Please choose a location within Uganda borders.');
+                        if (marker) map.removeLayer(marker);
+                        marker = null;
+                        selectedLocation = null;
+                        document.getElementById('confirm-location').disabled = true;
+                    }
                 })
                 .catch(() => {
                     selectedLocation = { lat, lng, address: `${lat.toFixed(6)}, ${lng.toFixed(6)}` };
@@ -951,31 +1187,65 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 document.getElementById('map-search-results').style.display = 'none';
                 return;
             }
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
-                .then(res => res.json())
+
+            if (corsIssue) {
+                return;
+            }
+
+            const ugandaQuery = `${query}, Uganda`;
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(ugandaQuery)}&limit=5&countrycodes=ug&bounded=1&viewbox=${UGANDA_BOUNDS.west},${UGANDA_BOUNDS.north},${UGANDA_BOUNDS.east},${UGANDA_BOUNDS.south}`)
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error('CORS or API error');
+                    }
+                    return res.json();
+                })
                 .then(data => {
                     const cont = document.getElementById('map-search-results');
                     cont.innerHTML = '';
-                    if (data.length) {
-                        data.forEach(r => {
+
+                    const ugandaResults = data.filter(r => {
+                        const lat = parseFloat(r.lat);
+                        const lng = parseFloat(r.lon);
+                        return isWithinUganda(lat, lng);
+                    });
+
+                    if (ugandaResults.length) {
+                        ugandaResults.forEach(r => {
                             const div = document.createElement('div');
                             div.className = 'map-search-result';
                             div.textContent = r.display_name;
                             div.addEventListener('click', () => {
-                                const lat = parseFloat(r.lat), lng = parseFloat(r.lon);
-                                map.setView([lat, lng], 15);
-                                setMapMarker(lat, lng);
-                                cont.style.display = 'none';
-                                document.getElementById('map-search-input').value = r.display_name;
+                                const lat = parseFloat(r.lat);
+                                const lng = parseFloat(r.lon);
+
+                                if (isWithinUganda(lat, lng)) {
+                                    map.setView([lat, lng], 15);
+                                    setMapMarker(lat, lng);
+                                    cont.style.display = 'none';
+                                    document.getElementById('map-search-input').value = r.display_name;
+                                } else {
+                                    alert('Selected location is outside Uganda borders.');
+                                }
                             });
                             cont.appendChild(div);
                         });
                         cont.style.display = 'block';
                     } else {
-                        cont.style.display = 'none';
+                        const div = document.createElement('div');
+                        div.className = 'map-search-result';
+                        div.style.color = '#6b7280';
+                        div.style.fontStyle = 'italic';
+                        div.textContent = 'No locations found in Uganda. Try a different search term.';
+                        cont.appendChild(div);
+                        cont.style.display = 'block';
                     }
                 })
                 .catch(() => {
+                    corsIssue = true;
+                    document.getElementById('cors-notice').style.display = 'flex';
+                    document.getElementById('map-search-input').disabled = true;
+                    document.getElementById('map-search-input').placeholder = 'Search unavailable - click on map to select location';
                     document.getElementById('map-search-results').style.display = 'none';
                 });
         }
@@ -1104,9 +1374,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                             img.classList.remove('loading');
                         }
                     });
-                    const items = dropdown.querySelectorAll('.search-dropdown-item');
-                    items.forEach(item => {
-                        item.addEventListener('click', function () {
+                    const itemsEl = dropdown.querySelectorAll('.search-dropdown-item');
+                    itemsEl.forEach(itemEl => {
+                        itemEl.addEventListener('click', function () {
                             const title = this.dataset.productTitle;
                             isSelectionMade = true;
                             input.value = title;
@@ -1162,11 +1432,11 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 const row = document.createElement('tr');
                 row.className = 'fade-in';
                 row.innerHTML = `
-                    <td class="align-middle">${i.brand}</td>
-                    <td class="align-middle">${i.size}</td>
-                    <td class="align-middle">${i.quantity}</td>
-                    <td class="align-middle text-center">
-                        <div class="flex justify-center space-x-3">
+                    <td class="align-middle col-brand" title="${escapeHtml(i.brand)}">${escapeHtml(i.brand)}</td>
+                    <td class="align-middle col-size" title="${escapeHtml(i.size)}">${escapeHtml(i.size)}</td>
+                    <td class="align-middle col-quantity">${i.quantity}</td>
+                    <td class="align-middle col-actions">
+                        <div class="flex justify-center space-x-2">
                             <i class="fas fa-edit text-gray-500 hover:text-blue-500 cursor-pointer action-icon edit-icon" data-index="${idx}" title="Edit Item"></i>
                             <i class="fas fa-trash-alt text-gray-500 hover:text-red-500 cursor-pointer action-icon delete-icon" data-index="${idx}" title="Remove Item"></i>
                         </div>
@@ -1285,9 +1555,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                         updateItemsDisplay();
                         localStorage.removeItem('rfq_form_data');
                         checkWalletBalance();
-                    } else {
-                        btn.disabled = false;
-                        btn.innerHTML = orig;
                     }
                 })
                 .catch(() => {

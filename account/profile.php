@@ -31,7 +31,8 @@ ob_start();
                             <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Email Status</p>
                             <p class="text-lg font-bold text-green-900 whitespace-nowrap" id="email-status-display">
                                 Loading...</p>
-                            <p class="text-sm font-medium text-green-700 whitespace-nowrap" id="email-value-display">Not Set</p>
+                            <p class="text-sm font-medium text-green-700 whitespace-nowrap" id="email-value-display">Not
+                                Set</p>
                         </div>
                         <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
                             <i class="fas fa-envelope text-green-600"></i>
@@ -45,7 +46,8 @@ ob_start();
                             <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Phone Status</p>
                             <p class="text-lg font-bold text-purple-900 whitespace-nowrap" id="phone-status-display">
                                 Loading...</p>
-                            <p class="text-sm font-medium text-purple-700 whitespace-nowrap" id="phone-value-display">Not Set</p>
+                            <p class="text-sm font-medium text-purple-700 whitespace-nowrap" id="phone-value-display">
+                                Not Set</p>
                         </div>
                         <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
                             <i class="fas fa-phone text-purple-600"></i>
@@ -59,7 +61,8 @@ ob_start();
                             <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">Member Since</p>
                             <p class="text-lg font-bold text-orange-900 whitespace-nowrap" id="member-since-display">
                                 Loading...</p>
-                            <p class="text-sm font-medium text-orange-700 whitespace-nowrap" id="last-login-display">Last Login</p>
+                            <p class="text-sm font-medium text-orange-700 whitespace-nowrap" id="last-login-display">
+                                Last Login</p>
                         </div>
                         <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
                             <i class="fas fa-calendar text-orange-600"></i>
@@ -72,15 +75,20 @@ ob_start();
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="incompleteBanner"
-            class="hidden bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 px-4 py-3 rounded-xl mb-6" role="alert">
+            class="hidden bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 px-4 py-3 rounded-xl mb-6"
+            role="alert">
             <div class="flex items-start gap-3">
                 <i class="fas fa-exclamation-triangle mt-0.5"></i>
-                <p class="text-sm leading-relaxed">
-                    Your profile is incomplete. Please set
-                    <strong>First Name</strong>, <strong>Email</strong> and
-                    <strong>Phone Number</strong> before you can continue using
-                    all system features.
-                </p>
+                <div>
+                    <p class="text-sm leading-relaxed">
+                        Your profile is incomplete. Please complete the following required fields:
+                        <span id="missing-fields-list" class="font-semibold"></span>
+                    </p>
+                    <button id="complete-profile-btn"
+                        class="mt-2 text-sm bg-yellow-600 text-white px-3 py-1 rounded-md hover:bg-yellow-700 transition-colors">
+                        Complete Profile Now
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -97,6 +105,8 @@ ob_start();
                             class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
                             onclick="switchTab('details')">
                             <i class="fas fa-edit mr-2"></i>Edit Details
+                            <span id="details-tab-indicator"
+                                class="hidden ml-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                         </button>
                         <button id="security-tab"
                             class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
@@ -113,6 +123,8 @@ ob_start();
                             <div class="flex items-center gap-2">
                                 <i class="fas fa-user text-primary"></i>
                                 <span id="mobile-tab-label" class="font-medium text-gray-900">Profile Overview</span>
+                                <span id="mobile-details-indicator"
+                                    class="hidden w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                             </div>
                             <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"
                                 id="mobile-tab-chevron"></i>
@@ -132,6 +144,8 @@ ob_start();
                                     data-tab="details">
                                     <i class="fas fa-edit text-green-600"></i>
                                     <span>Edit Details</span>
+                                    <span id="mobile-details-tab-indicator"
+                                        class="hidden ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                                 </button>
                                 <button
                                     class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
@@ -153,8 +167,11 @@ ob_start();
                     <div class="lg:col-span-1">
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                             <div class="text-center">
-                                <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 flex items-center justify-center bg-gradient-to-r from-user-primary to-blue-700 text-white text-5xl font-bold mx-auto"
-                                    id="user-initials"><span>…</span></div>
+                                <div
+                                    class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 mx-auto">
+                                    <img id="user-profile-pic" src="https://placehold.co/128x128/3B82F6/FFFFFF?text=..."
+                                        alt="Profile Picture" class="w-full h-full object-cover">
+                                </div>
                                 <h1 class="text-2xl font-bold text-gray-900 mb-2" id="user-fullname">Loading…</h1>
                                 <p class="text-gray-600 mb-4" id="user-username">@loading</p>
                                 <div class="space-y-2 text-sm text-gray-600">
@@ -176,39 +193,49 @@ ob_start();
 
                             <div class="space-y-6">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="bg-gray-50 rounded-xl p-4">
+                                    <div class="bg-gray-50 rounded-xl p-4" id="names-overview-card">
                                         <div class="flex items-center gap-3 mb-3">
-                                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <div
+                                                class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                                                 <i class="fas fa-user text-blue-600"></i>
                                             </div>
                                             <h4 class="font-semibold text-gray-900">Full Name</h4>
+                                            <i class="fas fa-exclamation-circle text-red-500 hidden"
+                                                id="names-required-icon" title="Required field"></i>
                                         </div>
                                         <p class="text-gray-700" id="overview-names">Loading...</p>
                                     </div>
 
-                                    <div class="bg-gray-50 rounded-xl p-4">
+                                    <div class="bg-gray-50 rounded-xl p-4" id="email-overview-card">
                                         <div class="flex items-center gap-3 mb-3">
-                                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <div
+                                                class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                                                 <i class="fas fa-envelope text-green-600"></i>
                                             </div>
                                             <h4 class="font-semibold text-gray-900">Email Address</h4>
+                                            <i class="fas fa-exclamation-circle text-red-500 hidden"
+                                                id="email-required-icon" title="Required field"></i>
                                         </div>
                                         <p class="text-gray-700" id="overview-email">Loading...</p>
                                     </div>
 
-                                    <div class="bg-gray-50 rounded-xl p-4">
+                                    <div class="bg-gray-50 rounded-xl p-4" id="phone-overview-card">
                                         <div class="flex items-center gap-3 mb-3">
-                                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <div
+                                                class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                                                 <i class="fas fa-phone text-purple-600"></i>
                                             </div>
                                             <h4 class="font-semibold text-gray-900">Phone Number</h4>
+                                            <i class="fas fa-exclamation-circle text-red-500 hidden"
+                                                id="phone-required-icon" title="Required field"></i>
                                         </div>
                                         <p class="text-gray-700" id="overview-phone">Loading...</p>
                                     </div>
 
                                     <div class="bg-gray-50 rounded-xl p-4">
                                         <div class="flex items-center gap-3 mb-3">
-                                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                            <div
+                                                class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                                                 <i class="fas fa-shield-alt text-orange-600"></i>
                                             </div>
                                             <h4 class="font-semibold text-gray-900">Account Status</h4>
@@ -236,24 +263,31 @@ ob_start();
             <!-- Edit Details Tab -->
             <div id="details-content" class="tab-content hidden">
                 <div class="space-y-6">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6" id="names-form-section">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-user text-blue-600"></i>
                             </div>
                             <h3 class="text-xl font-semibold text-gray-900">Edit Names</h3>
+                            <i class="fas fa-exclamation-circle text-red-500 hidden" id="names-form-required-icon"
+                                title="Required field"></i>
                         </div>
 
                         <form id="namesForm" class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label for="firstName" class="block text-sm font-semibold text-gray-700 mb-2">First Name *</label>
+                                    <label for="firstName" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        First Name *
+                                        <i class="fas fa-exclamation-circle text-red-500 ml-1 hidden"
+                                            id="firstName-required-icon"></i>
+                                    </label>
                                     <input type="text" id="firstName" name="first_name"
                                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                         autocomplete="off">
                                 </div>
                                 <div>
-                                    <label for="lastName" class="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
+                                    <label for="lastName" class="block text-sm font-semibold text-gray-700 mb-2">Last
+                                        Name</label>
                                     <input type="text" id="lastName" name="last_name"
                                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                         autocomplete="off">
@@ -267,12 +301,14 @@ ob_start();
                         </form>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6" id="email-form-section">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-envelope text-green-600"></i>
                             </div>
                             <h3 class="text-xl font-semibold text-gray-900">Email Address</h3>
+                            <i class="fas fa-exclamation-circle text-red-500 hidden" id="email-form-required-icon"
+                                title="Required field"></i>
                         </div>
 
                         <div class="bg-gray-50 rounded-xl p-4 mb-4">
@@ -289,17 +325,21 @@ ob_start();
                         </div>
 
                         <div class="text-xs text-gray-500 bg-blue-50 rounded-lg p-3 border border-blue-200">
-                            <p><strong>Note:</strong> If you have an existing email, you'll need to verify it with an OTP before updating.</p>
-                            <p>Can't access your current email? <a href="#" class="text-primary hover:underline" onclick="showContactAdminModal()">Contact Admin for assistance</a></p>
+                            <p><strong>Note:</strong> If you have an existing email, you'll need to verify it with an
+                                OTP before updating.</p>
+                            <p>Can't access your current email? <a href="#" class="text-primary hover:underline"
+                                    onclick="showContactAdminModal()">Contact Admin for assistance</a></p>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6" id="phone-form-section">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                                 <i class="fas fa-phone text-purple-600"></i>
                             </div>
                             <h3 class="text-xl font-semibold text-gray-900">Phone Number</h3>
+                            <i class="fas fa-exclamation-circle text-red-500 hidden" id="phone-form-required-icon"
+                                title="Required field"></i>
                         </div>
 
                         <div class="bg-gray-50 rounded-xl p-4 mb-4">
@@ -316,8 +356,10 @@ ob_start();
                         </div>
 
                         <div class="text-xs text-gray-500 bg-blue-50 rounded-lg p-3 border border-blue-200">
-                            <p><strong>Note:</strong> If you have an existing phone number, you'll need to verify it with an OTP before updating.</p>
-                            <p>Can't access your current phone? <a href="#" class="text-primary hover:underline" onclick="showContactAdminModal()">Contact Admin for assistance</a></p>
+                            <p><strong>Note:</strong> If you have an existing phone number, you'll need to verify it
+                                with an OTP before updating.</p>
+                            <p>Can't access your current phone? <a href="#" class="text-primary hover:underline"
+                                    onclick="showContactAdminModal()">Contact Admin for assistance</a></p>
                         </div>
                     </div>
                 </div>
@@ -355,7 +397,8 @@ ob_start();
                                 </div>
                                 <div>
                                     <h4 class="font-semibold text-red-900">Danger Zone</h4>
-                                    <p class="text-sm text-red-700 mt-1">Once you delete your account, there is no going back. Please be certain.</p>
+                                    <p class="text-sm text-red-700 mt-1">Once you delete your account, there is no going
+                                        back. Please be certain.</p>
                                 </div>
                             </div>
                         </div>
@@ -391,7 +434,8 @@ ob_start();
                     <p class="font-medium text-gray-900" id="current-email-modal">Loading...</p>
                 </div>
                 <div id="verifyExistingEmailSection">
-                    <p class="text-sm text-gray-600 mb-3">To change your email, first verify your current email address.</p>
+                    <p class="text-sm text-gray-600 mb-3">To change your email, first verify your current email address.
+                    </p>
                     <button type="button" id="verifyExistingEmailBtn"
                         class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium">
                         <i class="fas fa-shield-alt mr-2"></i>Verify Current Email
@@ -400,7 +444,8 @@ ob_start();
                 <div id="noExistingEmailSection" class="hidden">
                     <p class="text-sm text-gray-600 mb-3">You don't have an email set. Enter your new email address.</p>
                     <div>
-                        <label for="newEmailDirect" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                        <label for="newEmailDirect" class="block text-sm font-semibold text-gray-700 mb-2">Email
+                            Address</label>
                         <input type="email" id="newEmailDirect"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                             autocomplete="off">
@@ -415,7 +460,8 @@ ob_start();
             <div id="emailStep2" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600">Enter the verification code sent to your current email.</p>
                 <div>
-                    <label for="existingEmailOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification Code</label>
+                    <label for="existingEmailOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification
+                        Code</label>
                     <input type="text" id="existingEmailOTP" maxlength="6"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
                         autocomplete="off" placeholder="000000">
@@ -429,7 +475,8 @@ ob_start();
             <div id="emailStep3" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600">Enter your new email address.</p>
                 <div>
-                    <label for="newEmail" class="block text-sm font-semibold text-gray-700 mb-2">New Email Address</label>
+                    <label for="newEmail" class="block text-sm font-semibold text-gray-700 mb-2">New Email
+                        Address</label>
                     <input type="email" id="newEmail"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                         autocomplete="off">
@@ -443,7 +490,8 @@ ob_start();
             <div id="emailStep4" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600">Enter the verification code sent to your new email.</p>
                 <div>
-                    <label for="newEmailOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification Code</label>
+                    <label for="newEmailOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification
+                        Code</label>
                     <input type="text" id="newEmailOTP" maxlength="6"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
                         autocomplete="off" placeholder="000000">
@@ -479,7 +527,8 @@ ob_start();
                     <p class="font-medium text-gray-900" id="current-phone-modal">Loading...</p>
                 </div>
                 <div id="verifyExistingPhoneSection">
-                    <p class="text-sm text-gray-600 mb-3">To change your phone, first verify your current phone number.</p>
+                    <p class="text-sm text-gray-600 mb-3">To change your phone, first verify your current phone number.
+                    </p>
                     <button type="button" id="verifyExistingPhoneBtn"
                         class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium">
                         <i class="fas fa-shield-alt mr-2"></i>Verify Current Phone
@@ -488,7 +537,8 @@ ob_start();
                 <div id="noExistingPhoneSection" class="hidden">
                     <p class="text-sm text-gray-600 mb-3">You don't have a phone set. Enter your new phone number.</p>
                     <div>
-                        <label for="newPhoneDirect" class="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                        <label for="newPhoneDirect" class="block text-sm font-semibold text-gray-700 mb-2">Phone
+                            Number</label>
                         <input type="tel" id="newPhoneDirect"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                             autocomplete="off">
@@ -504,7 +554,8 @@ ob_start();
             <div id="phoneStep2" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600">Enter the verification code sent to your current phone.</p>
                 <div>
-                    <label for="existingPhoneOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification Code</label>
+                    <label for="existingPhoneOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification
+                        Code</label>
                     <input type="text" id="existingPhoneOTP" maxlength="6"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
                         autocomplete="off" placeholder="000000">
@@ -518,7 +569,8 @@ ob_start();
             <div id="phoneStep3" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600">Enter your new phone number.</p>
                 <div>
-                    <label for="newPhone" class="block text-sm font-semibold text-gray-700 mb-2">New Phone Number</label>
+                    <label for="newPhone" class="block text-sm font-semibold text-gray-700 mb-2">New Phone
+                        Number</label>
                     <input type="tel" id="newPhone"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                         autocomplete="off">
@@ -533,7 +585,8 @@ ob_start();
             <div id="phoneStep4" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600">Enter the verification code sent to your new phone.</p>
                 <div>
-                    <label for="newPhoneOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification Code</label>
+                    <label for="newPhoneOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification
+                        Code</label>
                     <input type="text" id="newPhoneOTP" maxlength="6"
                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
                         autocomplete="off" placeholder="000000">
@@ -565,7 +618,8 @@ ob_start();
         <div class="p-6">
             <form id="changePasswordForm" class="space-y-4">
                 <div>
-                    <label for="currentPassword" class="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                    <label for="currentPassword" class="block text-sm font-semibold text-gray-700 mb-2">Current
+                        Password</label>
                     <div class="relative">
                         <input type="password" id="currentPassword" name="current_password"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
@@ -592,12 +646,14 @@ ob_start();
                     <div class="mt-2">
                         <div class="text-xs text-gray-600 mb-1">Password strength:</div>
                         <div class="w-full h-2 bg-gray-200 rounded-full">
-                            <div id="passwordStrength" class="h-2 bg-red-500 rounded-full transition-all duration-200" style="width: 0%"></div>
+                            <div id="passwordStrength" class="h-2 bg-red-500 rounded-full transition-all duration-200"
+                                style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
                 <div>
-                    <label for="confirmPassword" class="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                    <label for="confirmPassword" class="block text-sm font-semibold text-gray-700 mb-2">Confirm New
+                        Password</label>
                     <div class="relative">
                         <input type="password" id="confirmPassword" name="confirm_password"
                             class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
@@ -663,7 +719,7 @@ ob_start();
                 </div>
             </div>
             <p class="text-gray-700 mb-6">
-                This will permanently delete your account and remove all of your data from our servers. 
+                This will permanently delete your account and remove all of your data from our servers.
                 This action cannot be undone.
             </p>
             <div class="flex gap-3">
@@ -696,7 +752,8 @@ ob_start();
         </div>
         <div class="p-6">
             <div class="text-gray-700 space-y-4">
-                <p>If you can't access your current email or phone number, please contact our admin team for assistance.</p>
+                <p>If you can't access your current email or phone number, please contact our admin team for assistance.
+                </p>
                 <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
                     <div class="flex items-center gap-3 mb-3">
                         <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -744,6 +801,7 @@ ob_start();
     let phoneInput, phoneInputDirect;
     let currentUserData = {};
     let currentTab = 'overview';
+    let missingFields = [];
 
     $(document).ready(function () {
         phoneInput = window.intlTelInput(document.querySelector('#newPhone'), {
@@ -782,6 +840,11 @@ ob_start();
             });
         });
 
+        // Complete profile button
+        $('#complete-profile-btn').click(() => {
+            navigateToIncompleteFields();
+        });
+
         $('#namesForm').submit(e => {
             e.preventDefault();
             updateNames();
@@ -794,15 +857,15 @@ ob_start();
 
         $('#deleteAccountConfirmBtn').click(() => doDeleteAccount());
 
-        $('#newPassword').on('input', function() {
+        $('#newPassword').on('input', function () {
             checkPasswordStrength($(this).val());
         });
 
-        $('.toggle-password').click(function() {
+        $('.toggle-password').click(function () {
             const target = $(this).data('target');
             const input = $('#' + target);
             const icon = $(this).find('i');
-            
+
             if (input.attr('type') === 'password') {
                 input.attr('type', 'text');
                 icon.removeClass('fa-eye').addClass('fa-eye-slash');
@@ -876,6 +939,13 @@ ob_start();
         };
         const tabInfo = tabLabels[tabName] || tabLabels['overview'];
         updateMobileTabLabel(tabInfo.label, tabInfo.icon);
+
+        // Scroll to first missing field if on details tab
+        if (tabName === 'details' && missingFields.length > 0) {
+            setTimeout(() => {
+                scrollToFirstMissingField();
+            }, 100);
+        }
     }
 
     function updateMobileTabLabel(label, icon) {
@@ -897,12 +967,129 @@ ob_start();
         chevron.classList.toggle('rotate-180');
     }
 
-    function showIncompleteBanner() { $('#incompleteBanner').removeClass('hidden'); }
-    function hideIncompleteBanner() { $('#incompleteBanner').addClass('hidden'); }
+    function generateUserInitials(firstName, lastName, username) {
+        let initials = '';
+        if (firstName) initials += firstName[0].toUpperCase();
+        if (lastName) initials += lastName[0].toUpperCase();
+        if (!initials && username) initials = username[0].toUpperCase();
+        if (!initials) initials = 'U';
+        return initials;
+    }
+
+    function updateProfilePicture(firstName, lastName, username) {
+        const initials = generateUserInitials(firstName, lastName, username);
+        const profilePic = document.getElementById('user-profile-pic');
+        if (profilePic) {
+            profilePic.src = `https://placehold.co/128x128/3B82F6/FFFFFF?text=${encodeURIComponent(initials)}`;
+            profilePic.alt = `${firstName || username || 'User'}'s Profile Picture`;
+        }
+    }
+
+    function showIncompleteBanner(missing) {
+        const banner = $('#incompleteBanner');
+        const fieldsList = $('#missing-fields-list');
+
+        const fieldNames = {
+            'first_name': 'First Name',
+            'email': 'Email Address',
+            'phone': 'Phone Number'
+        };
+
+        const missingNames = missing.map(field => fieldNames[field] || field);
+        fieldsList.text(missingNames.join(', '));
+        banner.removeClass('hidden');
+    }
+
+    function hideIncompleteBanner() {
+        $('#incompleteBanner').addClass('hidden');
+    }
+
+    function updateRequiredFieldIndicators(missing) {
+        // Hide all indicators first
+        $('.fas.fa-exclamation-circle[id$="-required-icon"]').addClass('hidden');
+        $('#details-tab-indicator, #mobile-details-indicator, #mobile-details-tab-indicator').addClass('hidden');
+
+        // Remove highlight classes
+        $('.border-red-200, .bg-red-50').removeClass('border-red-200 bg-red-50');
+
+        if (missing.length > 0) {
+            // Show tab indicators
+            $('#details-tab-indicator, #mobile-details-indicator, #mobile-details-tab-indicator').removeClass('hidden');
+
+            // Show field-specific indicators
+            missing.forEach(field => {
+                if (field === 'first_name') {
+                    $('#names-required-icon, #names-form-required-icon, #firstName-required-icon').removeClass('hidden');
+                    $('#names-overview-card, #names-form-section').addClass('border-red-200 bg-red-50');
+                } else if (field === 'email') {
+                    $('#email-required-icon, #email-form-required-icon').removeClass('hidden');
+                    $('#email-overview-card, #email-form-section').addClass('border-red-200 bg-red-50');
+                } else if (field === 'phone') {
+                    $('#phone-required-icon, #phone-form-required-icon').removeClass('hidden');
+                    $('#phone-overview-card, #phone-form-section').addClass('border-red-200 bg-red-50');
+                }
+            });
+        }
+    }
+
+    function navigateToIncompleteFields() {
+        if (missingFields.length > 0) {
+            switchTab('details');
+            setTimeout(() => {
+                scrollToFirstMissingField();
+            }, 200);
+        }
+    }
+
+    function scrollToFirstMissingField() {
+        if (missingFields.length === 0) return;
+
+        const firstMissing = missingFields[0];
+        let targetElement = null;
+
+        if (firstMissing === 'first_name') {
+            targetElement = document.getElementById('names-form-section');
+        } else if (firstMissing === 'email') {
+            targetElement = document.getElementById('email-form-section');
+        } else if (firstMissing === 'phone') {
+            targetElement = document.getElementById('phone-form-section');
+        }
+
+        if (targetElement) {
+            targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            // Add a subtle highlight animation
+            targetElement.classList.add('animate-pulse');
+            setTimeout(() => {
+                targetElement.classList.remove('animate-pulse');
+            }, 2000);
+        }
+    }
 
     function evaluateProfileCompleteness(user) {
-        const missing = PROFILE_REQUIRED_FIELDS.filter(f => !(user[f] || '').trim());
-        missing.length ? showIncompleteBanner() : hideIncompleteBanner();
+        missingFields = PROFILE_REQUIRED_FIELDS.filter(f => !(user[f] || '').trim());
+
+        if (missingFields.length === 0) {
+            hideIncompleteBanner();
+            updateRequiredFieldIndicators([]);
+
+            if (typeof showReturnModal === 'function') {
+                showReturnModal();
+            }
+        } else {
+            showIncompleteBanner(missingFields);
+            updateRequiredFieldIndicators(missingFields);
+
+            // Auto-navigate to details tab if profile is incomplete
+            if (currentTab === 'overview') {
+                setTimeout(() => {
+                    navigateToIncompleteFields();
+                }, 1000);
+            }
+        }
     }
 
     function fetchUserDetails() {
@@ -936,12 +1123,8 @@ ob_start();
         $('#user-fullname').text(fullName);
         $('#user-username').text('@' + (u.username || ''));
 
-        // Update initials
-        let init = '';
-        if (u.first_name) init += u.first_name[0].toUpperCase();
-        if (u.last_name) init += u.last_name[0].toUpperCase();
-        if (!init) init = (u.username || 'U')[0].toUpperCase();
-        $('#user-initials span').text(init);
+        // Update profile picture with initials
+        updateProfilePicture(u.first_name, u.last_name, u.username);
 
         // Update dates
         const jd = new Date(u.created_at);
@@ -988,7 +1171,7 @@ ob_start();
 
     function editEmail() {
         resetEmailModal();
-        
+
         if (currentUserData.email) {
             $('#verifyExistingEmailSection').show();
             $('#noExistingEmailSection').hide();
@@ -996,13 +1179,13 @@ ob_start();
             $('#verifyExistingEmailSection').hide();
             $('#noExistingEmailSection').show();
         }
-        
+
         showModal('editEmailModal');
     }
 
     function editPhone() {
         resetPhoneModal();
-        
+
         if (currentUserData.phone) {
             $('#verifyExistingPhoneSection').show();
             $('#noExistingPhoneSection').hide();
@@ -1010,7 +1193,7 @@ ob_start();
             $('#verifyExistingPhoneSection').hide();
             $('#noExistingPhoneSection').show();
         }
-        
+
         showModal('editPhoneModal');
     }
 
@@ -1037,7 +1220,7 @@ ob_start();
             first_name: $('#firstName').val().trim(),
             last_name: $('#lastName').val().trim()
         };
-        
+
         if (!fd.first_name) {
             $('#names-form-error').removeClass('hidden').text('First name is required');
             return;
@@ -1556,8 +1739,8 @@ ob_start();
         const b = $('#passwordStrength');
         b.css('width', s + '%');
         b.removeClass('bg-red-500 bg-yellow-500 bg-green-500');
-        if (s < 40) b.addClass('bg-red-500'); 
-        else if (s < 80) b.addClass('bg-yellow-500'); 
+        if (s < 40) b.addClass('bg-red-500');
+        else if (s < 80) b.addClass('bg-yellow-500');
         else b.addClass('bg-green-500');
     }
 
