@@ -67,6 +67,7 @@ $menuItems = [
             'order-catalogue' => ['title' => 'Order Catalogue', 'icon' => 'fa-book'],
             'member-subscription' => ['title' => 'Subscriptions', 'icon' => 'fa-users'],
             'quotations' => ['title' => 'Quotations', 'icon' => 'fa-file-invoice-dollar'],
+            'contact-us-messages' => ['title' => 'Contact Us', 'icon' => 'fa-envelope'],
         ]
     ],
     'marketing' => [
