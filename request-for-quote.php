@@ -7,7 +7,6 @@ ob_start();
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'data') {
     header('Content-Type: application/json');
     header('Cache-Control: public, max-age=1800');
-
     try {
         $products = $pdo->query("
             SELECT
@@ -24,12 +23,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'data') {
             WHERE p.status = 'published'
             ORDER BY p.title ASC
         ")->fetchAll(PDO::FETCH_ASSOC);
-
         echo json_encode([
             'products' => $products,
             'timestamp' => time()
         ]);
-
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode([
@@ -42,45 +39,35 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'data') {
 
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     header('Content-Type: application/json');
-
     $type = $_GET['type'] ?? '';
     $id = $_GET['id'] ?? '';
-
     if (!$type || !$id) {
         echo json_encode(['error' => 'Missing parameters']);
         exit;
     }
-
     $basePath = 'img/products/';
     $fullPath = __DIR__ . '/' . $basePath . $id . '/';
-
     if (!is_dir($fullPath)) {
         echo json_encode(['image' => null]);
         exit;
     }
-
     $allowedExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
     $images = [];
-
     $files = scandir($fullPath);
     foreach ($files as $file) {
         if ($file === '.' || $file === '..')
             continue;
-
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
         if (in_array($extension, $allowedExtensions)) {
             $images[] = $file;
         }
     }
-
     if (empty($images)) {
         echo json_encode(['image' => null]);
         exit;
     }
-
     $randomImage = $images[array_rand($images)];
     $imageUrl = BASE_URL . $basePath . $id . '/' . $randomImage;
-
     echo json_encode(['image' => $imageUrl]);
     exit;
 }
@@ -436,7 +423,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             <div class="form-card p-6 md:p-8 fade-in">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-2">Request Details</h2>
                 <p class="text-gray-600 mb-6">Fields marked with <span class="required-star">*</span> are required</p>
-
                 <form id="rfq-form" class="space-y-6" novalidate autocomplete="off">
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
@@ -447,12 +433,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                                 <i class="fas fa-plus mr-2"></i> Add Item
                             </button>
                         </div>
-
                         <div id="item-limit-notice" class="item-limit-notice" style="display: none;">
                             <i class="fas fa-info-circle"></i>
                             <span>You can add upto 5 items per quote request.</span>
                         </div>
-
                         <div class="bg-white rounded-lg overflow-hidden">
                             <div id="items-container" class="w-full">
                                 <table class="item-report">
@@ -467,7 +451,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                                     <tbody id="items-list">
                                     </tbody>
                                 </table>
-
                                 <div id="empty-items-state"
                                     class="flex flex-col items-center justify-center text-center py-10 px-4 bg-white rounded-lg border border-gray-200 shadow-sm">
                                     <div class="text-gray-400 mb-4">
@@ -484,7 +467,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                             </div>
                         </div>
                     </div>
-
                     <div class="form-group">
                         <input type="text" id="location" name="location" required placeholder=" " readonly
                             class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none cursor-pointer"
@@ -504,7 +486,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                             </div>
                         </div>
                     </div>
-
                     <div class="flex justify-end space-x-4 pt-4">
                         <button type="reset" id="reset-form"
                             class="px-5 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors shadow-sm">
@@ -518,7 +499,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 </form>
             </div>
         </div>
-
         <div class="lg:col-span-1">
             <div
                 class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 fade-in mb-6 border-l-4 border-red-500 shadow-sm mobile-hide">
@@ -547,7 +527,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     </p>
                 </div>
             </div>
-
             <div class="bg-white rounded-xl shadow-sm p-6 fade-in mobile-hide">
                 <div class="flex items-center mb-4">
                     <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
@@ -632,10 +611,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                         own brand/material name.</span>
                 </p>
             </div>
-
             <form id="item-form" class="space-y-4">
                 <input type="hidden" id="item-index" value="-1">
-
                 <div class="form-group">
                     <input type="text" id="item-brand" name="brand" required placeholder=" "
                         class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
@@ -644,7 +621,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                             class="required-star">*</span></label>
                     <div id="brand-search-dropdown" class="search-dropdown"></div>
                 </div>
-
                 <div class="form-group">
                     <input type="text" id="item-size" name="size" required placeholder=" "
                         class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
@@ -652,7 +628,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     <label for="item-size" class="floating-label text-gray-500">Size/Specification <span
                             class="required-star">*</span></label>
                 </div>
-
                 <div class="form-group">
                     <input type="number" id="item-quantity" name="quantity" required placeholder=" " min="1"
                         class="form-input block w-full px-3 py-3 border border-gray-200 rounded-md focus:outline-none"
@@ -660,7 +635,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     <label for="item-quantity" class="floating-label text-gray-500">Quantity <span
                             class="required-star">*</span></label>
                 </div>
-
                 <div class="flex justify-end space-x-3 pt-4">
                     <button type="button" id="cancel-item"
                         class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none transition-colors">
@@ -727,8 +701,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             <div class="text-center mb-6">
                 <h4 class="text-lg font-medium text-gray-900 mb-2">Zzimba Credit Deduction</h4>
                 <p class="text-gray-600 mb-4">A fee will be charged for processing this quote request.</p>
-                <div id="confirmation-details" class="space-y-3">
-                </div>
+                <div id="confirmation-details" class="space-y-3"></div>
             </div>
             <div class="flex justify-center space-x-3">
                 <button type="button" id="cancel-confirmation"
@@ -744,16 +717,34 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     </div>
 </div>
 
-<script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+<div id="no-wallet-modal" class="modal">
+    <div class="modal-content p-0">
+        <div
+            class="bg-gradient-to-r from-yellow-50 to-yellow-100 p-4 flex justify-between items-center border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">No Zzimba Wallet Found</h3>
+            <button type="button" class="text-gray-400 hover:text-gray-600 focus:outline-none"
+                id="close-no-wallet-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6 text-center">
+            <p class="text-gray-700 mb-4">You need to activate your Zzimba Wallet before submitting a quote request.</p>
+            <button type="button" id="activate-wallet-btn"
+                class="btn-primary px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors">
+                Activate Wallet
+            </button>
+        </div>
+    </div>
+</div>
 
+<script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const API_BASE = "<?php echo BASE_URL; ?>fetch/handleRFQ";
+        const API_BASE = "<?php echo BASE_URL; ?>fetch/manageRFQ";
         const BASE_URL = "<?php echo BASE_URL; ?>";
         const MAX_ITEMS = 5;
         let IS_LOGGED_IN = <?php echo (isset($_SESSION['user']) && $_SESSION['user']['logged_in']) ? 'true' : 'false'; ?>;
         const IS_ADMIN = <?php echo (isset($_SESSION['user']) && $_SESSION['user']['logged_in'] && $_SESSION['user']['is_admin']) ? 'true' : 'false'; ?>;
-
         let SEARCH_DATA = { products: [] };
         let fuseProducts = null;
         let searchInitialized = false;
@@ -764,7 +755,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         let map;
         let marker;
         let selectedLocation = null;
-        let walletInfo = { balance: 0, fee: 0, canSubmit: false };
+        let walletInfo = { balance: 0, fee: 0, canSubmit: false, noWallet: false };
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('en-UG', {
@@ -776,76 +767,57 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
         function checkSession() {
             return fetch(`${BASE_URL}fetch/check-session.php`)
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
                     IS_LOGGED_IN = data.logged_in || false;
                     return IS_LOGGED_IN;
                 })
-                .catch(error => {
-                    console.error('Error checking session:', error);
-                    return false;
-                });
+                .catch(() => false);
         }
 
         function checkWalletBalance() {
-            if (!IS_LOGGED_IN) {
-                return Promise.resolve();
-            }
-
+            if (!IS_LOGGED_IN) return Promise.resolve();
             return fetch(`${API_BASE}?action=checkWalletBalance`)
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
                     if (data.success) {
                         walletInfo = {
                             balance: data.balance,
                             fee: data.fee,
-                            canSubmit: data.canSubmit
+                            canSubmit: data.canSubmit,
+                            noWallet: false
                         };
-                        updateSubmitButton();
+                    } else if (data.error === 'No Zzimba Wallet found') {
+                        walletInfo.noWallet = true;
                     }
+                    updateSubmitButton();
                 })
-                .catch(error => {
-                    console.error('Error checking wallet balance:', error);
-                });
+                .catch(() => { });
         }
 
         function updateSubmitButton() {
             const submitBtn = document.getElementById('submit-btn');
-            if (!IS_LOGGED_IN) {
-                submitBtn.disabled = false;
-                return;
-            }
-
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Submit Request';
             submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
-        function updateItemLimitNotice() {
-            const notice = document.getElementById('item-limit-notice');
-            const addBtn = document.getElementById('add-item-btn');
-            const emptyAddBtn = document.getElementById('empty-add-item-btn');
-
-            if (items.length >= MAX_ITEMS) {
-                notice.style.display = 'flex';
-                addBtn.style.display = 'none';
-                emptyAddBtn.style.display = 'none';
-            } else {
-                notice.style.display = 'none';
-                addBtn.style.display = 'inline-flex';
-                if (items.length === 0) {
-                    emptyAddBtn.style.display = 'inline-flex';
-                }
-            }
+        function showNoWalletModal() {
+            const modal = document.getElementById('no-wallet-modal');
+            modal.classList.add('active');
+            document.getElementById('activate-wallet-btn').onclick = function () {
+                window.open(`${BASE_URL}account/zzimba-credit`, '_self');
+            };
+            document.getElementById('close-no-wallet-modal').onclick = function () {
+                modal.classList.remove('active');
+            };
         }
 
         function showConfirmationModal() {
             const modal = document.getElementById('confirmation-modal');
-            const detailsContainer = document.getElementById('confirmation-details');
-
-            const isInsufficient = !walletInfo.canSubmit && walletInfo.fee > 0;
-
-            detailsContainer.innerHTML = `
+            const details = document.getElementById('confirmation-details');
+            const insufficient = !walletInfo.canSubmit && walletInfo.fee > 0;
+            details.innerHTML = `
                 <div class="bg-gray-50 rounded-lg p-4 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600">Quote Request Fee:</span>
@@ -853,9 +825,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600">Current Wallet Balance:</span>
-                        <span class="font-medium ${isInsufficient ? 'text-red-600' : 'text-green-600'}">UGX ${formatCurrency(walletInfo.balance)}</span>
+                        <span class="font-medium ${insufficient ? 'text-red-600' : 'text-green-600'}">UGX ${formatCurrency(walletInfo.balance)}</span>
                     </div>
-                    ${isInsufficient ? `
+                    ${insufficient ? `
                         <div class="flex justify-between items-center border-t pt-2">
                             <span class="text-red-600 font-medium">Amount Needed:</span>
                             <span class="font-medium text-red-600">UGX ${formatCurrency(walletInfo.fee - walletInfo.balance)}</span>
@@ -872,23 +844,21 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     `}
                 </div>
             `;
-
-            const confirmBtn = document.getElementById('confirm-submission');
-            if (isInsufficient) {
-                confirmBtn.innerHTML = '<i class="fas fa-wallet mr-2"></i> Top Up Wallet';
-                confirmBtn.className = 'btn-topup px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors';
-                confirmBtn.onclick = function () {
-                    window.open(`${BASE_URL}account/zzimba-credit`, '_blank');
+            const btn = document.getElementById('confirm-submission');
+            if (insufficient) {
+                btn.innerHTML = '<i class="fas fa-wallet mr-2"></i> Top Up Wallet';
+                btn.className = 'btn-topup px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors';
+                btn.onclick = function () {
+                    window.open(`${BASE_URL}account/zzimba-credit`, '_self');
                 };
             } else {
-                confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Confirm & Submit';
-                confirmBtn.className = 'btn-primary px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors';
-                confirmBtn.onclick = function () {
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i> Confirm & Submit';
+                btn.className = 'btn-primary px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none transition-colors';
+                btn.onclick = function () {
                     document.getElementById('confirmation-modal').classList.remove('active');
                     submitRFQ();
                 };
             }
-
             modal.classList.add('active');
         }
 
@@ -900,142 +870,78 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 
         function checkInactivity() {
             const now = Date.now();
-            const tenMinutes = 10 * 60 * 1000;
-
-            if (now - lastActivityTime > tenMinutes) {
-                clearFormData();
-                notifications.info('Form data expired due to inactivity.', 'Session Expired');
+            const tenMin = 10 * 60 * 1000;
+            if (now - lastActivityTime > tenMin) {
+                localStorage.removeItem('rfq_form_data');
             } else {
                 activityTimer = setTimeout(checkInactivity, 60000);
             }
         }
 
         function saveFormData() {
-            const formData = {
+            const data = {
                 location: selectedLocation,
                 items: items,
-                timestamp: Date.now(),
                 lastActivity: lastActivityTime
             };
-
-            localStorage.setItem('rfq_form_data', JSON.stringify(formData));
+            localStorage.setItem('rfq_form_data', JSON.stringify(data));
         }
 
         function loadFormData() {
-            const savedData = localStorage.getItem('rfq_form_data');
-            if (!savedData) return false;
-
+            const raw = localStorage.getItem('rfq_form_data');
+            if (!raw) return;
             try {
-                const formData = JSON.parse(savedData);
+                const data = JSON.parse(raw);
                 const now = Date.now();
-                const tenMinutes = 10 * 60 * 1000;
-
-                if (now - formData.lastActivity > tenMinutes) {
+                if (now - data.lastActivity > 10 * 60 * 1000) {
                     localStorage.removeItem('rfq_form_data');
-                    return false;
+                    return;
                 }
-
-                if (formData.location) {
-                    selectedLocation = formData.location;
+                if (data.location) {
+                    selectedLocation = data.location;
                     updateLocationDisplay();
                 }
-
-                if (formData.items && Array.isArray(formData.items)) {
-                    items = formData.items;
+                if (Array.isArray(data.items)) {
+                    items = data.items;
                     updateItemsDisplay();
                 }
-
-                return true;
-            } catch (error) {
-                console.error('Error loading form data:', error);
-                localStorage.removeItem('rfq_form_data');
-                return false;
-            }
-        }
-
-        function clearFormData() {
-            localStorage.removeItem('rfq_form_data');
+            } catch { }
         }
 
         function checkAuthenticationBeforeSubmit() {
-            return checkSession().then(isLoggedIn => {
-                if (!isLoggedIn) {
+            return checkSession().then(ok => {
+                if (!ok) {
                     saveFormData();
-                    notifications.error('Please log in to submit a quote request.', 'Authentication Required');
-                    if (typeof openAuthModal === 'function') {
-                        openAuthModal();
-                    }
                     return false;
                 }
-
                 if (IS_ADMIN) {
                     saveFormData();
-                    notifications.error('Admin accounts cannot submit quote requests. Please log in with a regular user account.', 'Admin Account');
-
-                    setTimeout(() => {
-                        if (confirm('Would you like to logout and login with a user account to continue?')) {
-                            logoutAndShowLogin();
-                        }
-                    }, 1000);
                     return false;
                 }
-
                 return true;
             });
         }
 
-        function logoutAndShowLogin() {
-            if (typeof logoutUser === 'function') {
-                logoutUser();
-                setTimeout(() => {
-                    if (typeof openAuthModal === 'function') {
-                        openAuthModal();
-                    }
-                }, 1000);
-            }
-        }
-
-        window.logoutAndShowLogin = logoutAndShowLogin;
-
         function initializeMap() {
             map = L.map('map').setView([0.3476, 32.5825], 10);
-
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
-
-            map.on('click', function (e) {
-                setMapMarker(e.latlng.lat, e.latlng.lng);
-            });
+            map.on('click', e => setMapMarker(e.latlng.lat, e.latlng.lng));
         }
 
         function setMapMarker(lat, lng) {
-            if (marker) {
-                map.removeLayer(marker);
-            }
-
+            if (marker) map.removeLayer(marker);
             marker = L.marker([lat, lng]).addTo(map);
-
             fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
-                    const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    selectedLocation = {
-                        lat: lat,
-                        lng: lng,
-                        address: address
-                    };
-
+                    const addr = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    selectedLocation = { lat, lng, address: addr };
                     document.getElementById('confirm-location').disabled = false;
                 })
-                .catch(error => {
-                    console.error('Geocoding error:', error);
-                    selectedLocation = {
-                        lat: lat,
-                        lng: lng,
-                        address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-                    };
-
+                .catch(() => {
+                    selectedLocation = { lat, lng, address: `${lat.toFixed(6)}, ${lng.toFixed(6)}` };
                     document.getElementById('confirm-location').disabled = false;
                 });
         }
@@ -1045,48 +951,41 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 document.getElementById('map-search-results').style.display = 'none';
                 return;
             }
-
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
-                    const resultsContainer = document.getElementById('map-search-results');
-                    resultsContainer.innerHTML = '';
-
-                    if (data.length > 0) {
-                        data.forEach(result => {
-                            const resultDiv = document.createElement('div');
-                            resultDiv.className = 'map-search-result';
-                            resultDiv.textContent = result.display_name;
-                            resultDiv.addEventListener('click', () => {
-                                const lat = parseFloat(result.lat);
-                                const lng = parseFloat(result.lon);
+                    const cont = document.getElementById('map-search-results');
+                    cont.innerHTML = '';
+                    if (data.length) {
+                        data.forEach(r => {
+                            const div = document.createElement('div');
+                            div.className = 'map-search-result';
+                            div.textContent = r.display_name;
+                            div.addEventListener('click', () => {
+                                const lat = parseFloat(r.lat), lng = parseFloat(r.lon);
                                 map.setView([lat, lng], 15);
                                 setMapMarker(lat, lng);
-                                resultsContainer.style.display = 'none';
-                                document.getElementById('map-search-input').value = result.display_name;
+                                cont.style.display = 'none';
+                                document.getElementById('map-search-input').value = r.display_name;
                             });
-                            resultsContainer.appendChild(resultDiv);
+                            cont.appendChild(div);
                         });
-                        resultsContainer.style.display = 'block';
+                        cont.style.display = 'block';
                     } else {
-                        resultsContainer.style.display = 'none';
+                        cont.style.display = 'none';
                     }
                 })
-                .catch(error => {
-                    console.error('Search error:', error);
+                .catch(() => {
                     document.getElementById('map-search-results').style.display = 'none';
                 });
         }
 
         function openLocationModal() {
-            document.getElementById('location-modal').classList.add('active');
+            const m = document.getElementById('location-modal');
+            m.classList.add('active');
             setTimeout(() => {
-                if (!map) {
-                    initializeMap();
-                } else {
-                    map.invalidateSize();
-                }
-
+                if (!map) initializeMap();
+                else map.invalidateSize();
                 if (selectedLocation) {
                     map.setView([selectedLocation.lat, selectedLocation.lng], 15);
                     setMapMarker(selectedLocation.lat, selectedLocation.lng);
@@ -1095,53 +994,44 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         }
 
         function updateLocationDisplay() {
-            if (selectedLocation) {
-                document.getElementById('location').value = selectedLocation.address;
-                document.getElementById('selected-address').textContent = selectedLocation.address;
-                document.getElementById('selected-coordinates').textContent = `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`;
-                document.getElementById('location-display').style.display = 'block';
-            }
+            if (!selectedLocation) return;
+            document.getElementById('location').value = selectedLocation.address;
+            document.getElementById('selected-address').textContent = selectedLocation.address;
+            document.getElementById('selected-coordinates').textContent = `${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`;
+            document.getElementById('location-display').style.display = 'block';
         }
 
-        window.openLocationModal = openLocationModal;
-
         function getImageUrl(type, id) {
-            const cacheKey = `${type}_${id}`;
-
-            if (imageCache.has(cacheKey)) {
-                return Promise.resolve(imageCache.get(cacheKey));
-            }
-
+            const key = `${type}_${id}`;
+            if (imageCache.has(key)) return Promise.resolve(imageCache.get(key));
             return fetch(`${window.location.href}?ajax=image&type=${type}&id=${id}`)
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
-                    const imageUrl = data.image || `https://placehold.co/60x60?text=No+Image`;
-                    imageCache.set(cacheKey, imageUrl);
-                    return imageUrl;
+                    const url = data.image || `https://placehold.co/60x60?text=No+Image`;
+                    imageCache.set(key, url);
+                    return url;
                 })
                 .catch(() => {
-                    const fallbackUrl = `https://placehold.co/60x60?text=No+Image`;
-                    imageCache.set(cacheKey, fallbackUrl);
-                    return fallbackUrl;
+                    const fallback = `https://placehold.co/60x60?text=No+Image`;
+                    imageCache.set(key, fallback);
+                    return fallback;
                 });
         }
 
         function loadSearchData() {
             return fetch(window.location.href + '?ajax=data')
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
-                    if (data && data.products) {
+                    if (data && Array.isArray(data.products)) {
                         SEARCH_DATA = data;
                         buildSearchIndexes();
                         searchInitialized = true;
                     } else {
-                        console.error('Invalid search data structure:', data);
                         SEARCH_DATA = { products: [] };
                         searchInitialized = false;
                     }
                 })
-                .catch(error => {
-                    console.error('Failed to load search data:', error);
+                .catch(() => {
                     SEARCH_DATA = { products: [] };
                     searchInitialized = false;
                 });
@@ -1152,15 +1042,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 setTimeout(buildSearchIndexes, 100);
                 return;
             }
-
             try {
-                if (!SEARCH_DATA || !SEARCH_DATA.products || !Array.isArray(SEARCH_DATA.products)) {
-                    console.error('Invalid products data for search indexing:', SEARCH_DATA);
-                    fuseProducts = null;
-                    searchInitialized = false;
-                    return;
-                }
-
                 fuseProducts = new Fuse(
                     SEARCH_DATA.products.map(p => ({ ...p })),
                     {
@@ -1175,106 +1057,88 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                             { name: 'meta_keywords', weight: 0.2 },
                             { name: 'category_name', weight: 0.1 }
                         ]
-                    });
-
+                    }
+                );
                 searchInitialized = true;
-            } catch (error) {
-                console.error('Error building search indexes:', error);
+            } catch {
                 fuseProducts = null;
                 searchInitialized = false;
             }
         }
 
-        async function renderProductDropdown(query, dropdownElement, inputElement) {
+        async function renderProductDropdown(query, dropdown, input) {
             query = query.trim().toLowerCase();
-
             if (!query || !fuseProducts || !searchInitialized || isSelectionMade) {
-                dropdownElement.style.display = 'none';
+                dropdown.style.display = 'none';
                 return;
             }
-
             try {
-                const productResults = fuseProducts.search(query, { limit: 8 });
+                const results = fuseProducts.search(query, { limit: 8 });
                 let html = '';
-
-                if (productResults.length) {
+                if (results.length) {
                     html += '<div class="search-dropdown-header">Available Products</div>';
-
-                    for (const result of productResults) {
-                        const product = result.item;
+                    for (const r of results) {
+                        const p = r.item;
                         html += `
-                            <div class="search-dropdown-item" data-product-title="${escapeHtml(product.title)}">
-                                <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="w-10 h-10 rounded flex-shrink-0 object-cover search-image loading" data-type="product" data-id="${product.id}">
+                            <div class="search-dropdown-item" data-product-title="${escapeHtml(p.title)}">
+                                <img src="https://placehold.co/40x40?text=Loading..." alt="Product" class="w-10 h-10 rounded flex-shrink-0 object-cover search-image loading" data-type="product" data-id="${p.id}">
                                 <div>
-                                    <div class="font-medium text-sm">${escapeHtml(product.title)}</div>
-                                    <div class="text-xs text-gray-500">${escapeHtml(product.category_name)}</div>
+                                    <div class="font-medium text-sm">${escapeHtml(p.title)}</div>
+                                    <div class="text-xs text-gray-500">${escapeHtml(p.category_name)}</div>
                                 </div>
                             </div>`;
                     }
                 }
-
                 if (html) {
-                    dropdownElement.innerHTML = html;
-                    dropdownElement.style.display = 'block';
-
-                    const images = dropdownElement.querySelectorAll('.search-image.loading');
-                    images.forEach(async (img) => {
-                        const type = img.dataset.type;
-                        const id = img.dataset.id;
+                    dropdown.innerHTML = html;
+                    dropdown.style.display = 'block';
+                    const imgs = dropdown.querySelectorAll('.search-image.loading');
+                    imgs.forEach(async img => {
+                        const type = img.dataset.type, id = img.dataset.id;
                         try {
-                            const imageUrl = await getImageUrl(type, id);
-                            img.src = imageUrl;
+                            const url = await getImageUrl(type, id);
+                            img.src = url;
                             img.classList.remove('loading');
-                        } catch (error) {
+                        } catch {
                             img.src = 'https://placehold.co/40x40?text=No+Image';
                             img.classList.remove('loading');
                         }
                     });
-
-                    const items = dropdownElement.querySelectorAll('.search-dropdown-item');
+                    const items = dropdown.querySelectorAll('.search-dropdown-item');
                     items.forEach(item => {
                         item.addEventListener('click', function () {
-                            const productTitle = this.dataset.productTitle;
+                            const title = this.dataset.productTitle;
                             isSelectionMade = true;
-                            inputElement.value = productTitle;
-                            dropdownElement.style.display = 'none';
-
-                            setTimeout(() => {
-                                isSelectionMade = false;
-                            }, 100);
+                            input.value = title;
+                            dropdown.style.display = 'none';
+                            setTimeout(() => { isSelectionMade = false; }, 100);
                         });
                     });
                 } else {
-                    dropdownElement.style.display = 'none';
+                    dropdown.style.display = 'none';
                 }
-            } catch (error) {
-                console.error('Error rendering product dropdown:', error);
-                dropdownElement.style.display = 'none';
+            } catch {
+                dropdown.style.display = 'none';
             }
         }
 
         function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
         }
 
-        function debounce(func, wait) {
+        function debounce(fn, wait) {
             let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
+            return function (...args) {
                 clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
+                timeout = setTimeout(() => fn.apply(this, args), wait);
             };
         }
 
         let items = [];
         const itemsList = document.getElementById('items-list');
         const emptyState = document.getElementById('empty-items-state');
-
         const itemModal = document.getElementById('item-modal');
         const modalTitle = document.getElementById('modal-title');
         const itemForm = document.getElementById('item-form');
@@ -1283,63 +1147,65 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         const itemSize = document.getElementById('item-size');
         const itemQuantity = document.getElementById('item-quantity');
         const brandSearchDropdown = document.getElementById('brand-search-dropdown');
-
         const deleteModal = document.getElementById('delete-modal');
         const deleteItemIndex = document.getElementById('delete-item-index');
 
         function updateItemsDisplay() {
             itemsList.innerHTML = '';
-
             if (items.length === 0) {
                 emptyState.style.display = 'flex';
                 updateItemLimitNotice();
                 return;
             }
-
             emptyState.style.display = 'none';
-
-            items.forEach((item, index) => {
+            items.forEach((i, idx) => {
                 const row = document.createElement('tr');
                 row.className = 'fade-in';
                 row.innerHTML = `
-                    <td class="align-middle">${item.brand}</td>
-                    <td class="align-middle">${item.size}</td>
-                    <td class="align-middle">${item.quantity}</td>
+                    <td class="align-middle">${i.brand}</td>
+                    <td class="align-middle">${i.size}</td>
+                    <td class="align-middle">${i.quantity}</td>
                     <td class="align-middle text-center">
                         <div class="flex justify-center space-x-3">
-                            <i class="fas fa-edit text-gray-500 hover:text-blue-500 cursor-pointer action-icon edit-icon" data-index="${index}" title="Edit Item"></i>
-                            <i class="fas fa-trash-alt text-gray-500 hover:text-red-500 cursor-pointer action-icon delete-icon" data-index="${index}" title="Remove Item"></i>
+                            <i class="fas fa-edit text-gray-500 hover:text-blue-500 cursor-pointer action-icon edit-icon" data-index="${idx}" title="Edit Item"></i>
+                            <i class="fas fa-trash-alt text-gray-500 hover:text-red-500 cursor-pointer action-icon delete-icon" data-index="${idx}" title="Remove Item"></i>
                         </div>
                     </td>
                 `;
                 itemsList.appendChild(row);
             });
-
-            document.querySelectorAll('.edit-icon').forEach(icon => {
-                icon.addEventListener('click', function () {
-                    const index = parseInt(this.getAttribute('data-index'));
-                    editItem(index);
+            document.querySelectorAll('.edit-icon').forEach(el => {
+                el.addEventListener('click', function () {
+                    editItem(parseInt(this.getAttribute('data-index')));
                 });
             });
-
-            document.querySelectorAll('.delete-icon').forEach(icon => {
-                icon.addEventListener('click', function () {
-                    const index = parseInt(this.getAttribute('data-index'));
-                    showDeleteModal(index);
+            document.querySelectorAll('.delete-icon').forEach(el => {
+                el.addEventListener('click', function () {
+                    showDeleteModal(parseInt(this.getAttribute('data-index')));
                 });
             });
-
             updateItemLimitNotice();
             updateActivity();
             saveFormData();
         }
 
-        function showAddItemModal() {
+        function updateItemLimitNotice() {
+            const notice = document.getElementById('item-limit-notice');
+            const addBtn = document.getElementById('add-item-btn');
+            const emptyBtn = document.getElementById('empty-add-item-btn');
             if (items.length >= MAX_ITEMS) {
-                notifications.error(`Maximum of ${MAX_ITEMS} items allowed per quote request.`, 'Item Limit Reached');
-                return;
+                notice.style.display = 'flex';
+                addBtn.style.display = 'none';
+                emptyBtn.style.display = 'none';
+            } else {
+                notice.style.display = 'none';
+                addBtn.style.display = 'inline-flex';
+                emptyBtn.style.display = items.length === 0 ? 'inline-flex' : 'none';
             }
+        }
 
+        function showAddItemModal() {
+            if (items.length >= MAX_ITEMS) return;
             modalTitle.textContent = 'Add New Item';
             itemForm.reset();
             itemIndex.value = -1;
@@ -1348,52 +1214,36 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             brandSearchDropdown.style.display = 'none';
         }
 
-        function editItem(index) {
-            const item = items[index];
+        function editItem(idx) {
+            const it = items[idx];
             modalTitle.textContent = 'Edit Item';
-            itemBrand.value = item.brand;
-            itemSize.value = item.size;
-            itemQuantity.value = item.quantity;
-            itemIndex.value = index;
+            itemBrand.value = it.brand;
+            itemSize.value = it.size;
+            itemQuantity.value = it.quantity;
+            itemIndex.value = idx;
             isSelectionMade = false;
             itemModal.classList.add('active');
             brandSearchDropdown.style.display = 'none';
         }
 
-        function showDeleteModal(index) {
-            deleteItemIndex.value = index;
+        function showDeleteModal(idx) {
+            deleteItemIndex.value = idx;
             deleteModal.classList.add('active');
         }
 
         function saveItem(e) {
             e.preventDefault();
-
             const brand = itemBrand.value.trim();
             const size = itemSize.value.trim();
-            const quantity = itemQuantity.value.trim();
-
-            if (!brand || !size || !quantity || parseInt(quantity) <= 0) {
-                notifications.error('Please fill in all required fields with valid values.', 'Validation Error');
-                return;
-            }
-
-            const index = parseInt(itemIndex.value);
-            const item = {
-                brand: brand,
-                size: size,
-                quantity: quantity
-            };
-
-            if (index === -1) {
-                if (items.length >= MAX_ITEMS) {
-                    notifications.error(`Maximum of ${MAX_ITEMS} items allowed per quote request.`, 'Item Limit Reached');
-                    return;
-                }
-                items.push(item);
+            const qty = parseInt(itemQuantity.value.trim());
+            if (!brand || !size || !qty || qty <= 0) return;
+            const idx = parseInt(itemIndex.value);
+            const obj = { brand, size, quantity: qty };
+            if (idx === -1) {
+                if (items.length < MAX_ITEMS) items.push(obj);
             } else {
-                items[index] = item;
+                items[idx] = obj;
             }
-
             updateItemsDisplay();
             itemModal.classList.remove('active');
             brandSearchDropdown.style.display = 'none';
@@ -1401,180 +1251,53 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         }
 
         function deleteItem() {
-            const index = parseInt(deleteItemIndex.value);
-            if (index >= 0 && index < items.length) {
-                items.splice(index, 1);
-                updateItemsDisplay();
-            }
+            const idx = parseInt(deleteItemIndex.value);
+            if (idx >= 0 && idx < items.length) items.splice(idx, 1);
+            updateItemsDisplay();
             deleteModal.classList.remove('active');
         }
 
-        updateActivity();
-        loadFormData();
-        checkWalletBalance();
-
-        document.addEventListener('click', updateActivity);
-        document.addEventListener('keypress', updateActivity);
-
-        document.getElementById('location').addEventListener('click', openLocationModal);
-        document.getElementById('close-location-modal').addEventListener('click', () => {
-            document.getElementById('location-modal').classList.remove('active');
-        });
-        document.getElementById('cancel-location').addEventListener('click', () => {
-            document.getElementById('location-modal').classList.remove('active');
-        });
-        document.getElementById('confirm-location').addEventListener('click', () => {
-            updateLocationDisplay();
-            document.getElementById('location-modal').classList.remove('active');
-            updateActivity();
-            saveFormData();
-        });
-
-        document.getElementById('map-search-input').addEventListener('input', debounce((e) => {
-            searchLocation(e.target.value);
-        }, 300));
-
-        document.addEventListener('click', (e) => {
-            if (!document.getElementById('map-search-input').contains(e.target) &&
-                !document.getElementById('map-search-results').contains(e.target)) {
-                document.getElementById('map-search-results').style.display = 'none';
-            }
-        });
-
-        loadSearchData().then(() => {
-            if (searchInitialized && fuseProducts) {
-                itemBrand.addEventListener('input', debounce((e) => {
-                    if (!isSelectionMade) {
-                        renderProductDropdown(e.target.value, brandSearchDropdown, itemBrand);
-                    }
-                }, 200));
-
-                itemBrand.addEventListener('focus', () => {
-                    if (itemBrand.value.trim() && !isSelectionMade) {
-                        renderProductDropdown(itemBrand.value, brandSearchDropdown, itemBrand);
-                    }
-                });
-
-                itemBrand.addEventListener('keydown', () => {
-                    isSelectionMade = false;
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (!itemBrand.contains(e.target) && !brandSearchDropdown.contains(e.target)) {
-                        brandSearchDropdown.style.display = 'none';
-                    }
-                });
-            } else {
-                console.warn('Product search functionality disabled due to initialization failure');
-            }
-        });
-
-        document.getElementById('add-item-btn').addEventListener('click', showAddItemModal);
-        document.getElementById('empty-add-item-btn').addEventListener('click', showAddItemModal);
-        document.getElementById('close-modal').addEventListener('click', () => {
-            itemModal.classList.remove('active');
-            brandSearchDropdown.style.display = 'none';
-            isSelectionMade = false;
-        });
-        document.getElementById('cancel-item').addEventListener('click', () => {
-            itemModal.classList.remove('active');
-            brandSearchDropdown.style.display = 'none';
-            isSelectionMade = false;
-        });
-        document.getElementById('close-delete-modal').addEventListener('click', () => deleteModal.classList.remove('active'));
-        document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.remove('active'));
-        document.getElementById('confirm-delete').addEventListener('click', deleteItem);
-        itemForm.addEventListener('submit', saveItem);
-
-        document.getElementById('close-confirmation-modal').addEventListener('click', () => {
-            document.getElementById('confirmation-modal').classList.remove('active');
-        });
-        document.getElementById('cancel-confirmation').addEventListener('click', () => {
-            document.getElementById('confirmation-modal').classList.remove('active');
-        });
-
-        window.addEventListener('click', function (e) {
-            if (e.target === itemModal) {
-                itemModal.classList.remove('active');
-                brandSearchDropdown.style.display = 'none';
-                isSelectionMade = false;
-            }
-            if (e.target === deleteModal) {
-                deleteModal.classList.remove('active');
-            }
-            if (e.target === document.getElementById('location-modal')) {
-                document.getElementById('location-modal').classList.remove('active');
-            }
-            if (e.target === document.getElementById('confirmation-modal')) {
-                document.getElementById('confirmation-modal').classList.remove('active');
-            }
-        });
-
-        document.getElementById('reset-form').addEventListener('click', function (e) {
-            e.preventDefault();
-            const form = document.getElementById('rfq-form');
-            form.reset();
-            items = [];
-            selectedLocation = null;
-            document.getElementById('location-display').style.display = 'none';
-            updateItemsDisplay();
-            clearFormData();
-        });
-
         function submitRFQ() {
-            const payload = {
-                location: selectedLocation,
-                items: items
-            };
-
-            const submitButton = document.getElementById('submit-btn');
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
-
+            const payload = { location: selectedLocation, items: items };
+            const btn = document.getElementById('submit-btn');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
             fetch(`${API_BASE}?action=submitRFQ`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             })
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
+                    btn.disabled = false;
+                    btn.innerHTML = orig;
                     if (data.success) {
-                        let message = 'Thank you! Your quote request has been received. We will contact you shortly.';
+                        let msg = 'Thank you! Your quote request has been received. We will contact you shortly.';
                         if (data.fee_charged > 0) {
-                            message += ` A fee of UGX ${formatCurrency(data.fee_charged)} has been deducted from your wallet. Your remaining balance is UGX ${formatCurrency(data.remaining_balance)}.`;
+                            msg += ` A fee of UGX ${formatCurrency(data.fee_charged)} has been deducted from your wallet. Your remaining balance is UGX ${formatCurrency(data.remaining_balance)}.`;
                         }
-
-                        showSuccessModal(message);
-
+                        showSuccessModal(msg);
                         document.getElementById('rfq-form').reset();
                         items = [];
                         selectedLocation = null;
                         document.getElementById('location-display').style.display = 'none';
                         updateItemsDisplay();
-                        clearFormData();
+                        localStorage.removeItem('rfq_form_data');
                         checkWalletBalance();
                     } else {
-                        if (data.error === 'Insufficient wallet balance') {
-                            notifications.error(`Insufficient wallet balance. You need UGX ${formatCurrency(data.required)} more to submit this request.`, 'Insufficient Balance');
-                        } else {
-                            notifications.error(data.error || 'Submission failed. Please try again.', 'RFQ Error');
-                        }
+                        btn.disabled = false;
+                        btn.innerHTML = orig;
                     }
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
                 })
-                .catch(error => {
-                    notifications.error('Submission failed. Please try again.', 'RFQ Error');
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
+                .catch(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = orig;
                 });
         }
 
         function showSuccessModal(message) {
-            const modalHtml = `
+            const html = `
                 <div id="success-modal" class="modal active">
                     <div class="modal-content p-0">
                         <div class="bg-gradient-to-r from-green-50 to-green-100 p-4 flex justify-between items-center border-b border-gray-200">
@@ -1603,76 +1326,128 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     </div>
                 </div>
             `;
-
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-
+            document.body.insertAdjacentHTML('beforeend', html);
             document.getElementById('close-success-modal').addEventListener('click', () => {
                 document.getElementById('success-modal').remove();
             });
-
             document.getElementById('view-quotations').addEventListener('click', () => {
                 window.location.href = BASE_URL + 'account/quotations';
             });
-
-            window.addEventListener('click', function (e) {
-                const modal = document.getElementById('success-modal');
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
         }
 
-        const form = document.getElementById('rfq-form');
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
+        document.addEventListener('click', updateActivity);
+        document.addEventListener('keypress', updateActivity);
 
-            checkAuthenticationBeforeSubmit().then(isAuthenticated => {
-                if (!isAuthenticated) {
+        document.getElementById('location').addEventListener('click', openLocationModal);
+        document.getElementById('close-location-modal').addEventListener('click', () => {
+            document.getElementById('location-modal').classList.remove('active');
+        });
+        document.getElementById('cancel-location').addEventListener('click', () => {
+            document.getElementById('location-modal').classList.remove('active');
+        });
+        document.getElementById('confirm-location').addEventListener('click', () => {
+            updateLocationDisplay();
+            document.getElementById('location-modal').classList.remove('active');
+            updateActivity();
+            saveFormData();
+        });
+
+        document.getElementById('map-search-input').addEventListener('input', debounce(e => {
+            searchLocation(e.target.value);
+        }, 300));
+
+        document.addEventListener('click', e => {
+            if (!document.getElementById('map-search-input').contains(e.target) &&
+                !document.getElementById('map-search-results').contains(e.target)) {
+                document.getElementById('map-search-results').style.display = 'none';
+            }
+        });
+
+        loadSearchData().then(() => {
+            if (searchInitialized && fuseProducts) {
+                itemBrand.addEventListener('input', debounce(e => {
+                    if (!isSelectionMade) renderProductDropdown(e.target.value, brandSearchDropdown, itemBrand);
+                }, 200));
+                itemBrand.addEventListener('focus', () => {
+                    if (itemBrand.value.trim() && !isSelectionMade) {
+                        renderProductDropdown(itemBrand.value, brandSearchDropdown, itemBrand);
+                    }
+                });
+                itemBrand.addEventListener('keydown', () => isSelectionMade = false);
+                document.addEventListener('click', e => {
+                    if (!itemBrand.contains(e.target) && !brandSearchDropdown.contains(e.target)) {
+                        brandSearchDropdown.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        document.getElementById('add-item-btn').addEventListener('click', showAddItemModal);
+        document.getElementById('empty-add-item-btn').addEventListener('click', showAddItemModal);
+        document.getElementById('close-modal').addEventListener('click', () => {
+            itemModal.classList.remove('active');
+            brandSearchDropdown.style.display = 'none';
+            isSelectionMade = false;
+        });
+        document.getElementById('cancel-item').addEventListener('click', () => {
+            itemModal.classList.remove('active');
+            brandSearchDropdown.style.display = 'none';
+            isSelectionMade = false;
+        });
+        document.getElementById('close-delete-modal').addEventListener('click', () => deleteModal.classList.remove('active'));
+        document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.remove('active'));
+        document.getElementById('confirm-delete').addEventListener('click', deleteItem);
+        itemForm.addEventListener('submit', saveItem);
+
+        document.getElementById('close-confirmation-modal').addEventListener('click', () => {
+            document.getElementById('confirmation-modal').classList.remove('active');
+        });
+        document.getElementById('cancel-confirmation').addEventListener('click', () => {
+            document.getElementById('confirmation-modal').classList.remove('active');
+        });
+
+        window.addEventListener('click', e => {
+            if (e.target === itemModal) {
+                itemModal.classList.remove('active'); brandSearchDropdown.style.display = 'none'; isSelectionMade = false;
+            }
+            if (e.target === deleteModal) deleteModal.classList.remove('active');
+            if (e.target === document.getElementById('location-modal')) document.getElementById('location-modal').classList.remove('active');
+            if (e.target === document.getElementById('confirmation-modal')) document.getElementById('confirmation-modal').classList.remove('active');
+        });
+
+        document.getElementById('reset-form').addEventListener('click', e => {
+            e.preventDefault();
+            const form = document.getElementById('rfq-form');
+            form.reset();
+            items = [];
+            selectedLocation = null;
+            document.getElementById('location-display').style.display = 'none';
+            updateItemsDisplay();
+            localStorage.removeItem('rfq_form_data');
+        });
+
+        const form = document.getElementById('rfq-form');
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            checkAuthenticationBeforeSubmit().then(auth => {
+                if (!auth) return;
+                if (walletInfo.noWallet) {
+                    showNoWalletModal();
                     return;
                 }
-
-                let hasError = false;
-
-                if (!selectedLocation) {
-                    notifications.error('Please select a delivery location.', 'Input Required');
-                    hasError = true;
-                }
-
-                if (items.length === 0) {
-                    notifications.error('Please add at least one item.', 'Input Required');
-                    hasError = true;
-                }
-
-                if (items.length > MAX_ITEMS) {
-                    notifications.error(`Maximum of ${MAX_ITEMS} items allowed per quote request.`, 'Item Limit Exceeded');
-                    hasError = true;
-                }
-
-                if (hasError) return;
-
-                if (walletInfo.fee > 0) {
-                    showConfirmationModal();
-                } else {
-                    submitRFQ();
-                }
+                let err = false;
+                if (!selectedLocation) err = true;
+                if (items.length === 0) err = true;
+                if (items.length > MAX_ITEMS) err = true;
+                if (err) return;
+                if (walletInfo.fee > 0) showConfirmationModal();
+                else submitRFQ();
             });
         });
 
         updateItemsDisplay();
-
-        const originalCloseAuthModal = window.closeAuthModal;
-        if (originalCloseAuthModal) {
-            window.closeAuthModal = function () {
-                originalCloseAuthModal();
-
-                setTimeout(() => {
-                    checkSession().then(() => {
-                        loadFormData();
-                        checkWalletBalance();
-                    });
-                }, 500);
-            };
-        }
+        loadFormData();
+        checkWalletBalance();
     });
 </script>
 
