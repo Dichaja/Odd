@@ -5,12 +5,10 @@ $activeNav = 'profile';
 ob_start();
 ?>
 
-<!-- Add intl-tel-input CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css">
 
 <div class="space-y-6">
 
-    <!-- 🔔 Incomplete Profile Banner -->
     <div id="incompleteBanner"
         class="hidden bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 px-4 py-3 rounded" role="alert">
         <div class="flex items-start gap-3">
@@ -24,7 +22,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Profile Header -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div class="md:flex">
             <div
@@ -55,10 +52,6 @@ ob_start();
                     </div>
                 </div>
                 <div class="mt-6 flex flex-wrap gap-3">
-                    <button id="editProfileBtn"
-                        class="h-10 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors flex items-center gap-2">
-                        <i class="fas fa-user-edit"></i><span>Edit Profile</span>
-                    </button>
                     <button id="changePasswordBtn"
                         class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
                         <i class="fas fa-lock"></i><span>Change Password</span>
@@ -72,15 +65,83 @@ ob_start();
         </div>
     </div>
 
-    <!-- Personal Information Section -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-100">
         <div class="p-6 border-b border-gray-100">
-            <h2 class="text-xl font-semibold text-secondary">Personal Information</h2>
-            <p class="text-sm text-gray-text mt-1">Update your personal details</p>
+            <h2 class="text-xl font-semibold text-secondary">Profile Details</h2>
+            <p class="text-sm text-gray-text mt-1">Manage your personal information</p>
         </div>
+        <div class="p-6 space-y-4">
+
+            <div
+                class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900">Full Name</h3>
+                            <p class="text-sm text-gray-600" id="display-names">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="editNames()" class="text-gray-400 hover:text-user-primary transition-colors">
+                    <i class="fas fa-edit text-lg"></i>
+                </button>
+            </div>
+
+            <div
+                class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-envelope text-green-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900">Email Address</h3>
+                            <p class="text-sm text-gray-600" id="display-email">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="editEmail()" class="text-gray-400 hover:text-user-primary transition-colors">
+                    <i class="fas fa-edit text-lg"></i>
+                </button>
+            </div>
+
+            <div
+                class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-phone text-purple-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900">Phone Number</h3>
+                            <p class="text-sm text-gray-600" id="display-phone">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="editPhone()" class="text-gray-400 hover:text-user-primary transition-colors">
+                    <i class="fas fa-edit text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editNamesModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/20" onclick="hideModal('editNamesModal')"></div>
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
         <div class="p-6">
-            <form id="personalInfoForm" autocomplete="off">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Edit Names</h3>
+                <button onclick="hideModal('editNamesModal')" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="namesForm" autocomplete="off">
+                <div class="space-y-4">
                     <div>
                         <label for="firstName" class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
                         <input type="text" id="firstName" name="first_name"
@@ -93,34 +154,199 @@ ob_start();
                             class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
                             autocomplete="off">
                     </div>
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                        <input type="email" id="email" name="email"
-                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
-                            autocomplete="off">
-                    </div>
-                    <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-                        <input type="tel" id="phone" name="phone"
-                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
-                            autocomplete="off">
-                        <div id="phone-error" class="text-red-500 text-xs mt-1 hidden"></div>
-                    </div>
-                </div>
-                <div class="mt-6">
+                    <div id="names-form-error" class="text-red-500 text-sm hidden"></div>
                     <button type="submit"
-                        class="h-10 px-6 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
-                        Save Changes
+                        class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                        Update Names
                     </button>
-                    <div id="profile-form-error" class="text-red-500 text-sm mt-2 hidden"></div>
-                    <div id="profile-form-success" class="text-green-500 text-sm mt-2 hidden"></div>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Change Password Modal -->
+<div id="editEmailModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/20" onclick="hideModal('editEmailModal')"></div>
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Edit Email Address</h3>
+                <button onclick="hideModal('editEmailModal')" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div id="emailStep1" class="space-y-4">
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-sm text-gray-700">Current Email:</p>
+                    <p class="font-medium" id="current-email-display">Loading...</p>
+                </div>
+                <div id="verifyExistingEmailSection">
+                    <p class="text-sm text-gray-600 mb-3">To change your email, first verify your current email address.
+                    </p>
+                    <button type="button" id="verifyExistingEmailBtn"
+                        class="w-full h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Verify Current Email
+                    </button>
+                </div>
+                <div id="noExistingEmailSection" class="hidden">
+                    <p class="text-sm text-gray-600 mb-3">You don't have an email set. Enter your new email address.</p>
+                    <div>
+                        <label for="newEmailDirect" class="block text-sm font-medium text-gray-700 mb-1">Email
+                            Address</label>
+                        <input type="email" id="newEmailDirect"
+                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                            autocomplete="off">
+                    </div>
+                    <button type="button" id="sendDirectEmailOTPBtn"
+                        class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors mt-3">
+                        Send Verification Code
+                    </button>
+                </div>
+            </div>
+
+            <div id="emailStep2" class="space-y-4 hidden">
+                <p class="text-sm text-gray-600">Enter the verification code sent to your current email.</p>
+                <div>
+                    <label for="existingEmailOTP" class="block text-sm font-medium text-gray-700 mb-1">Verification
+                        Code</label>
+                    <input type="text" id="existingEmailOTP" maxlength="6"
+                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary text-center text-lg tracking-widest"
+                        autocomplete="off" placeholder="000000">
+                </div>
+                <button type="button" id="verifyExistingEmailOTPBtn"
+                    class="w-full h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Verify Code
+                </button>
+            </div>
+
+            <div id="emailStep3" class="space-y-4 hidden">
+                <p class="text-sm text-gray-600">Enter your new email address.</p>
+                <div>
+                    <label for="newEmail" class="block text-sm font-medium text-gray-700 mb-1">New Email Address</label>
+                    <input type="email" id="newEmail"
+                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                        autocomplete="off">
+                </div>
+                <button type="button" id="sendNewEmailOTPBtn"
+                    class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                    Send Verification Code
+                </button>
+            </div>
+
+            <div id="emailStep4" class="space-y-4 hidden">
+                <p class="text-sm text-gray-600">Enter the verification code sent to your new email.</p>
+                <div>
+                    <label for="newEmailOTP" class="block text-sm font-medium text-gray-700 mb-1">Verification
+                        Code</label>
+                    <input type="text" id="newEmailOTP" maxlength="6"
+                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary text-center text-lg tracking-widest"
+                        autocomplete="off" placeholder="000000">
+                </div>
+                <button type="button" id="verifyNewEmailOTPBtn"
+                    class="w-full h-10 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    Complete Update
+                </button>
+            </div>
+
+            <div id="email-form-error" class="text-red-500 text-sm mt-3 hidden"></div>
+        </div>
+    </div>
+</div>
+
+<div id="editPhoneModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/20" onclick="hideModal('editPhoneModal')"></div>
+    <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-lg shadow-lg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Edit Phone Number</h3>
+                <button onclick="hideModal('editPhoneModal')" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div id="phoneStep1" class="space-y-4">
+                <div class="bg-gray-50 p-3 rounded-lg">
+                    <p class="text-sm text-gray-700">Current Phone:</p>
+                    <p class="font-medium" id="current-phone-display">Loading...</p>
+                </div>
+                <div id="verifyExistingPhoneSection">
+                    <p class="text-sm text-gray-600 mb-3">To change your phone, first verify your current phone number.
+                    </p>
+                    <button type="button" id="verifyExistingPhoneBtn"
+                        class="w-full h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Verify Current Phone
+                    </button>
+                </div>
+                <div id="noExistingPhoneSection" class="hidden">
+                    <p class="text-sm text-gray-600 mb-3">You don't have a phone set. Enter your new phone number.</p>
+                    <div>
+                        <label for="newPhoneDirect" class="block text-sm font-medium text-gray-700 mb-1">Phone
+                            Number</label>
+                        <input type="tel" id="newPhoneDirect"
+                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                            autocomplete="off">
+                        <div id="phone-error-direct" class="text-red-500 text-xs mt-1 hidden"></div>
+                    </div>
+                    <button type="button" id="sendDirectPhoneOTPBtn"
+                        class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors mt-3">
+                        Send Verification Code
+                    </button>
+                </div>
+            </div>
+
+            <div id="phoneStep2" class="space-y-4 hidden">
+                <p class="text-sm text-gray-600">Enter the verification code sent to your current phone.</p>
+                <div>
+                    <label for="existingPhoneOTP" class="block text-sm font-medium text-gray-700 mb-1">Verification
+                        Code</label>
+                    <input type="text" id="existingPhoneOTP" maxlength="6"
+                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary text-center text-lg tracking-widest"
+                        autocomplete="off" placeholder="000000">
+                </div>
+                <button type="button" id="verifyExistingPhoneOTPBtn"
+                    class="w-full h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    Verify Code
+                </button>
+            </div>
+
+            <div id="phoneStep3" class="space-y-4 hidden">
+                <p class="text-sm text-gray-600">Enter your new phone number.</p>
+                <div>
+                    <label for="newPhone" class="block text-sm font-medium text-gray-700 mb-1">New Phone Number</label>
+                    <input type="tel" id="newPhone"
+                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary"
+                        autocomplete="off">
+                    <div id="phone-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+                <button type="button" id="sendNewPhoneOTPBtn"
+                    class="w-full h-10 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition-colors">
+                    Send Verification Code
+                </button>
+            </div>
+
+            <div id="phoneStep4" class="space-y-4 hidden">
+                <p class="text-sm text-gray-600">Enter the verification code sent to your new phone.</p>
+                <div>
+                    <label for="newPhoneOTP" class="block text-sm font-medium text-gray-700 mb-1">Verification
+                        Code</label>
+                    <input type="text" id="newPhoneOTP" maxlength="6"
+                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-user-primary focus:ring-1 focus:ring-user-primary text-center text-lg tracking-widest"
+                        autocomplete="off" placeholder="000000">
+                </div>
+                <button type="button" id="verifyNewPhoneOTPBtn"
+                    class="w-full h-10 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    Complete Update
+                </button>
+            </div>
+
+            <div id="phone-form-error" class="text-red-500 text-sm mt-3 hidden"></div>
+        </div>
+    </div>
+</div>
+
 <div id="changePasswordModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/20" onclick="hideModal('changePasswordModal')"></div>
     <div
@@ -203,7 +429,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Delete Account Modal -->
 <div id="deleteAccountModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/20" onclick="hideModal('deleteAccountModal')"></div>
     <div
@@ -233,7 +458,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Success Notification -->
 <div id="successNotification"
     class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
@@ -241,7 +465,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Error Notification -->
 <div id="errorNotification"
     class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
@@ -249,35 +472,41 @@ ob_start();
     </div>
 </div>
 
-<!-- intl-tel-input JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js"></script>
 
 <script>
     const PROFILE_REQUIRED_FIELDS = ['first_name', 'email', 'phone'];
-
-    let phoneInput;
+    let phoneInput, phoneInputDirect;
+    let currentUserData = {};
 
     $(document).ready(function () {
-        phoneInput = window.intlTelInput(document.querySelector('#phone'), {
+        phoneInput = window.intlTelInput(document.querySelector('#newPhone'), {
             utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
-            preferredCountries: ["ug", "ke", "tz", "rw"],
+            onlyCountries: ["ug"],
             separateDialCode: true,
-            autoPlaceholder: "polite"
+            autoPlaceholder: "polite",
+            initialCountry: "ug"
         });
-        $('.iti').addClass('w-full');
-        $("#phone").on('blur', validatePhoneNumber);
 
-        $('#editProfileBtn').click(() =>
-            $('html, body').animate({ scrollTop: $('#personalInfoForm').offset().top - 100 }, 500)
-        );
+        phoneInputDirect = window.intlTelInput(document.querySelector('#newPhoneDirect'), {
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js",
+            onlyCountries: ["ug"],
+            separateDialCode: true,
+            autoPlaceholder: "polite",
+            initialCountry: "ug"
+        });
+
+        $('.iti').addClass('w-full');
+
         $('#changePasswordBtn').click(() => showModal('changePasswordModal'));
         $('#deleteAccountBtn').click(() => showModal('deleteAccountModal'));
 
-        $('#personalInfoForm').submit(e => {
+        $('#namesForm').submit(e => {
             e.preventDefault();
-            if (validatePhoneNumber()) updateProfile();
+            updateNames();
         });
+
         $('#changePasswordForm').submit(e => {
             e.preventDefault();
             changePassword();
@@ -286,8 +515,73 @@ ob_start();
         $('#deleteAccountCancelBtn').click(() => hideModal('deleteAccountModal'));
         $('#deleteAccountConfirmBtn').click(() => doDeleteAccount());
 
+        $('#newPassword').on('input', function () {
+            checkPasswordStrength($(this).val());
+        });
+
+        $('.toggle-password').click(function () {
+            const target = $(this).data('target');
+            const input = $('#' + target);
+            const icon = $(this).find('i');
+
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('fa-eye').addClass('fa-eye-slash');
+            } else {
+                input.attr('type', 'password');
+                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+            }
+        });
+
+        setupEmailFlow();
+        setupPhoneFlow();
+
         fetchUserDetails();
     });
+
+    function setupEmailFlow() {
+        $('#verifyExistingEmailBtn').click(() => {
+            sendExistingEmailOTP();
+        });
+
+        $('#verifyExistingEmailOTPBtn').click(() => {
+            verifyExistingEmailOTP();
+        });
+
+        $('#sendNewEmailOTPBtn').click(() => {
+            sendNewEmailOTP();
+        });
+
+        $('#verifyNewEmailOTPBtn').click(() => {
+            verifyNewEmailOTP();
+        });
+
+        $('#sendDirectEmailOTPBtn').click(() => {
+            sendDirectEmailOTP();
+        });
+    }
+
+    function setupPhoneFlow() {
+        $('#verifyExistingPhoneBtn').click(() => {
+            sendExistingPhoneOTP();
+        });
+
+        $('#verifyExistingPhoneOTPBtn').click(() => {
+            verifyExistingPhoneOTP();
+        });
+
+        $('#sendNewPhoneOTPBtn').click(() => {
+            sendNewPhoneOTP();
+        });
+
+        $('#verifyNewPhoneOTPBtn').click(() => {
+            verifyNewPhoneOTP();
+        });
+
+        $('#sendDirectPhoneOTPBtn').click(() => {
+            sendDirectPhoneOTP();
+        });
+    }
 
     function showIncompleteBanner() { $('#incompleteBanner').removeClass('hidden'); }
     function hideIncompleteBanner() { $('#incompleteBanner').addClass('hidden'); }
@@ -307,14 +601,17 @@ ob_start();
                     return;
                 }
                 const u = resp.data;
+                currentUserData = u;
 
                 $('#firstName').val(u.first_name || '');
                 $('#lastName').val(u.last_name || '');
-                $('#email').val(u.email || '');
-                if (u.phone) phoneInput.setNumber(u.phone);
 
-                const full = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User';
-                $('#user-fullname').text(full);
+                const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Not set';
+                $('#display-names').text(fullName);
+                $('#display-email').text(u.email || 'Not set');
+                $('#display-phone').text(u.phone || 'Not set');
+
+                $('#user-fullname').text(fullName === 'Not set' ? 'User' : fullName);
                 $('#user-username').text('@' + (u.username || ''));
 
                 let init = '';
@@ -358,35 +655,75 @@ ob_start();
         });
     }
 
-    function validatePhoneNumber() {
-        const e = $('#phone-error').addClass('hidden');
-        const num = phoneInput.getNumber();
-        if (!num) return false;
-        if (!phoneInput.isValidNumber()) {
-            e.text('Invalid phone number').removeClass('hidden');
-            return false;
-        }
-        return true;
+    function editNames() {
+        $('#firstName').val(currentUserData.first_name || '');
+        $('#lastName').val(currentUserData.last_name || '');
+        showModal('editNamesModal');
     }
 
-    function updateProfile() {
-        $('#profile-form-error,#profile-form-success').addClass('hidden').text('');
+    function editEmail() {
+        resetEmailModal();
+        $('#current-email-display').text(currentUserData.email || 'Not set');
+
+        if (currentUserData.email) {
+            $('#verifyExistingEmailSection').show();
+            $('#noExistingEmailSection').hide();
+        } else {
+            $('#verifyExistingEmailSection').hide();
+            $('#noExistingEmailSection').show();
+        }
+
+        showModal('editEmailModal');
+    }
+
+    function editPhone() {
+        resetPhoneModal();
+        $('#current-phone-display').text(currentUserData.phone || 'Not set');
+
+        if (currentUserData.phone) {
+            $('#verifyExistingPhoneSection').show();
+            $('#noExistingPhoneSection').hide();
+        } else {
+            $('#verifyExistingPhoneSection').hide();
+            $('#noExistingPhoneSection').show();
+        }
+
+        showModal('editPhoneModal');
+    }
+
+    function resetEmailModal() {
+        $('#emailStep1').show();
+        $('#emailStep2, #emailStep3, #emailStep4').hide();
+        $('#email-form-error').addClass('hidden').text('');
+        $('#existingEmailOTP, #newEmail, #newEmailOTP, #newEmailDirect').val('');
+    }
+
+    function resetPhoneModal() {
+        $('#phoneStep1').show();
+        $('#phoneStep2, #phoneStep3, #phoneStep4').hide();
+        $('#phone-form-error').addClass('hidden').text('');
+        $('#phone-error, #phone-error-direct').addClass('hidden');
+        $('#existingPhoneOTP, #newPhoneOTP').val('');
+        phoneInput.setNumber('');
+        phoneInputDirect.setNumber('');
+    }
+
+    function updateNames() {
+        $('#names-form-error').addClass('hidden').text('');
         const fd = {
             first_name: $('#firstName').val().trim(),
-            last_name: $('#lastName').val().trim(),
-            email: $('#email').val().trim(),
-            phone: phoneInput.getNumber()
+            last_name: $('#lastName').val().trim()
         };
-        if (!fd.first_name || !fd.email || !fd.phone) {
-            $('#profile-form-error').removeClass('hidden').text('First name, email & phone are required');
+        if (!fd.first_name) {
+            $('#names-form-error').removeClass('hidden').text('First name is required');
             return;
         }
-        const btn = $('#personalInfoForm button[type="submit"]'),
+        const btn = $('#namesForm button[type="submit"]'),
             orig = btn.html();
-        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving…').prop('disabled', true);
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating…').prop('disabled', true);
 
         $.ajax({
-            url: BASE_URL + 'account/fetch/manageProfile.php?action=updateProfile',
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=updateNames',
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(fd),
@@ -394,20 +731,384 @@ ob_start();
             success(r) {
                 btn.html(orig).prop('disabled', false);
                 if (r.success) {
-                    $('#profile-form-success').removeClass('hidden').text(r.message);
+                    hideModal('editNamesModal');
                     showSuccessNotification(r.message);
                     fetchUserDetails();
                 } else {
-                    $('#profile-form-error').removeClass('hidden').text(r.message);
-                    showErrorNotification(r.message);
+                    $('#names-form-error').removeClass('hidden').text(r.message);
                 }
             },
             error(xhr) {
                 btn.html(orig).prop('disabled', false);
                 let msg = 'Server error. Try again.';
                 try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
-                $('#profile-form-error').removeClass('hidden').text(msg);
-                showErrorNotification(msg);
+                $('#names-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function sendExistingEmailOTP() {
+        $('#email-form-error').addClass('hidden').text('');
+        const btn = $('#verifyExistingEmailBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=sendExistingEmailOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({}),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    $('#emailStep1').hide();
+                    $('#emailStep2').show();
+                } else {
+                    $('#email-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#email-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function verifyExistingEmailOTP() {
+        $('#email-form-error').addClass('hidden').text('');
+        const otp = $('#existingEmailOTP').val().trim();
+        if (!otp || otp.length !== 6) {
+            $('#email-form-error').removeClass('hidden').text('Please enter a valid 6-digit code');
+            return;
+        }
+
+        const btn = $('#verifyExistingEmailOTPBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Verifying…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=verifyExistingEmailOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ otp: otp }),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    $('#emailStep2').hide();
+                    $('#emailStep3').show();
+                } else {
+                    $('#email-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#email-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function sendNewEmailOTP() {
+        $('#email-form-error').addClass('hidden').text('');
+        const newEmail = $('#newEmail').val().trim();
+        if (!newEmail) {
+            $('#email-form-error').removeClass('hidden').text('New email is required');
+            return;
+        }
+
+        const btn = $('#sendNewEmailOTPBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=sendNewEmailOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ new_email: newEmail }),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    $('#emailStep3').hide();
+                    $('#emailStep4').show();
+                } else {
+                    $('#email-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#email-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function verifyNewEmailOTP() {
+        $('#email-form-error').addClass('hidden').text('');
+        const otp = $('#newEmailOTP').val().trim();
+        if (!otp || otp.length !== 6) {
+            $('#email-form-error').removeClass('hidden').text('Please enter a valid 6-digit code');
+            return;
+        }
+
+        const btn = $('#verifyNewEmailOTPBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=verifyNewEmailOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ otp: otp }),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    hideModal('editEmailModal');
+                    showSuccessNotification(r.message);
+                    fetchUserDetails();
+                } else {
+                    $('#email-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#email-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function sendDirectEmailOTP() {
+        $('#email-form-error').addClass('hidden').text('');
+        const newEmail = $('#newEmailDirect').val().trim();
+        if (!newEmail) {
+            $('#email-form-error').removeClass('hidden').text('Email is required');
+            return;
+        }
+
+        const btn = $('#sendDirectEmailOTPBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=sendNewEmailOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ new_email: newEmail }),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    $('#newEmailOTP').val('');
+                    $('#emailStep1').hide();
+                    $('#emailStep4').show();
+                } else {
+                    $('#email-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#email-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function sendExistingPhoneOTP() {
+        $('#phone-form-error').addClass('hidden').text('');
+        const btn = $('#verifyExistingPhoneBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=sendExistingPhoneOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({}),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    $('#phoneStep1').hide();
+                    $('#phoneStep2').show();
+                } else {
+                    $('#phone-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#phone-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function verifyExistingPhoneOTP() {
+        $('#phone-form-error').addClass('hidden').text('');
+        const otp = $('#existingPhoneOTP').val().trim();
+        if (!otp || otp.length !== 6) {
+            $('#phone-form-error').removeClass('hidden').text('Please enter a valid 6-digit code');
+            return;
+        }
+
+        const btn = $('#verifyExistingPhoneOTPBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Verifying…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=verifyExistingPhoneOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ otp: otp }),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    $('#phoneStep2').hide();
+                    $('#phoneStep3').show();
+                } else {
+                    $('#phone-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#phone-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function validatePhoneNumber(inputId, errorId) {
+        const errorEl = $(errorId).addClass('hidden');
+        const phoneInputEl = inputId === '#newPhone' ? phoneInput : phoneInputDirect;
+        const num = phoneInputEl.getNumber();
+        if (!num) return false;
+        if (!phoneInputEl.isValidNumber()) {
+            errorEl.text('Invalid phone number').removeClass('hidden');
+            return false;
+        }
+        if (!num.startsWith('+256')) {
+            errorEl.text('Only Uganda (+256) phone numbers are allowed').removeClass('hidden');
+            return false;
+        }
+        return true;
+    }
+
+    function sendNewPhoneOTP() {
+        $('#phone-form-error').addClass('hidden').text('');
+        if (!validatePhoneNumber('#newPhone', '#phone-error')) {
+            return;
+        }
+
+        const newPhone = phoneInput.getNumber();
+        const btn = $('#sendNewPhoneOTPBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=sendNewPhoneOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ new_phone: newPhone }),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    $('#phoneStep3').hide();
+                    $('#phoneStep4').show();
+                } else {
+                    $('#phone-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#phone-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function verifyNewPhoneOTP() {
+        $('#phone-form-error').addClass('hidden').text('');
+        const otp = $('#newPhoneOTP').val().trim();
+        if (!otp || otp.length !== 6) {
+            $('#phone-form-error').removeClass('hidden').text('Please enter a valid 6-digit code');
+            return;
+        }
+
+        const btn = $('#verifyNewPhoneOTPBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=verifyNewPhoneOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ otp: otp }),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    hideModal('editPhoneModal');
+                    showSuccessNotification(r.message);
+                    fetchUserDetails();
+                } else {
+                    $('#phone-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#phone-form-error').removeClass('hidden').text(msg);
+            }
+        });
+    }
+
+    function sendDirectPhoneOTP() {
+        $('#phone-form-error').addClass('hidden').text('');
+        if (!validatePhoneNumber('#newPhoneDirect', '#phone-error-direct')) {
+            return;
+        }
+
+        const newPhone = phoneInputDirect.getNumber();
+        const btn = $('#sendDirectPhoneOTPBtn'),
+            orig = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
+
+        $.ajax({
+            url: BASE_URL + 'account/fetch/manageProfile.php?action=sendNewPhoneOTP',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ new_phone: newPhone }),
+            dataType: 'json',
+            success(r) {
+                btn.html(orig).prop('disabled', false);
+                if (r.success) {
+                    $('#newPhoneOTP').val('');
+                    $('#phoneStep1').hide();
+                    $('#phoneStep4').show();
+                } else {
+                    $('#phone-form-error').removeClass('hidden').text(r.message);
+                }
+            },
+            error(xhr) {
+                btn.html(orig).prop('disabled', false);
+                let msg = 'Server error. Try again.';
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
+                $('#phone-form-error').removeClass('hidden').text(msg);
             }
         });
     }
@@ -447,7 +1148,6 @@ ob_start();
                     showSuccessNotification(r.message);
                 } else {
                     $('#password-form-error').removeClass('hidden').text(r.message);
-                    showErrorNotification(r.message);
                 }
             },
             error(xhr) {
@@ -455,7 +1155,6 @@ ob_start();
                 let msg = 'Server error. Try again.';
                 try { msg = JSON.parse(xhr.responseText).message || msg; } catch { }
                 $('#password-form-error').removeClass('hidden').text(msg);
-                showErrorNotification(msg);
             }
         });
     }

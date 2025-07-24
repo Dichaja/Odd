@@ -8,6 +8,7 @@ function getStepTitle($mode, $step)
         ],
         'register' => [
             'username' => 'Create Account',
+            'verification-method' => 'Choose Verification Method',
             'email' => 'Enter Email',
             'email-verify' => 'Verify Email',
             'phone' => 'Enter Phone Number',
@@ -252,6 +253,56 @@ function getStepTitle($mode, $step)
     </div>
 </div>
 
+<div id="register-step-verification-method" class="auth-form" style="display:none">
+    <div class="p-6 border-b">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'verification-method') ?></h2>
+            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <p class="mb-4 text-center text-sm text-gray-600">
+            <a href="javascript:void(0)" onclick="showRegisterStep('username')"
+                class="text-primary hover:text-red-700 font-medium">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
+        </p>
+        <p class="mb-4 text-sm text-gray-600">Creating account for <strong
+                id="register-username-display-method"></strong></p>
+        <form id="register-verification-method-form" class="space-y-4" autocomplete="off" data-mode="register"
+            data-step="verification-method">
+            <div>
+                <p class="mb-4 text-sm text-gray-600">How would you like to verify your identity?</p>
+                <div class="space-y-3">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="verification_method" value="email"
+                            class="mr-3 text-primary focus:ring-primary" checked>
+                        <div>
+                            <p class="font-medium">Email Address</p>
+                            <p class="text-sm text-gray-500">Verify using your email address</p>
+                        </div>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <input type="radio" name="verification_method" value="phone"
+                            class="mr-3 text-primary focus:ring-primary">
+                        <div>
+                            <p class="font-medium">Phone Number</p>
+                            <p class="text-sm text-gray-500">Verify using your phone number</p>
+                        </div>
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-3">You can add the other contact method later in your profile
+                    settings.</p>
+            </div>
+            <div id="register-verification-method-error" class="text-red-500 text-sm mt-1 hidden"></div>
+            <button type="button" onclick="handleVerificationMethodSubmit()"
+                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                Continue
+            </button>
+        </form>
+    </div>
+</div>
+
 <div id="register-step-email" class="auth-form" style="display:none">
     <div class="p-6 border-b">
         <div class="flex items-center justify-between mb-4">
@@ -261,7 +312,7 @@ function getStepTitle($mode, $step)
             </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('username')"
+            <a href="javascript:void(0)" onclick="showRegisterStep('verification-method')"
                 class="text-primary hover:text-red-700 font-medium">
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
@@ -332,7 +383,7 @@ function getStepTitle($mode, $step)
             </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('email')"
+            <a href="javascript:void(0)" onclick="showRegisterStep('verification-method')"
                 class="text-primary hover:text-red-700 font-medium">
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
@@ -400,7 +451,7 @@ function getStepTitle($mode, $step)
             </button>
         </div>
         <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('phone')"
+            <a href="javascript:void(0)" onclick="goBackFromPassword()"
                 class="text-primary hover:text-red-700 font-medium">
                 <i class="fas fa-arrow-left mr-2"></i>Back
             </a>
@@ -686,6 +737,8 @@ function getStepTitle($mode, $step)
                     } else if (mode === 'register') {
                         if (step === 'username') {
                             handleRegisterUsernameSubmit();
+                        } else if (step === 'verification-method') {
+                            handleVerificationMethodSubmit();
                         } else if (step === 'email') {
                             handleRegisterEmailSubmit();
                         } else if (step === 'email-verify') {
@@ -827,35 +880,29 @@ function getStepTitle($mode, $step)
         }
     }
     function resetAuthForms() {
-        // Reset tracking objects
         registrationData = {};
         loginData = {};
         forgotPasswordData = {};
         resetMethod = '';
         spaceCount = 0;
 
-        // Clear all form inputs
         document.querySelectorAll('.auth-form form').forEach(form => {
             form.reset();
         });
 
-        // Clear all OTP inputs and hidden fields
         document.querySelectorAll('.otp-input').forEach(input => input.value = '');
         ['email-otp', 'phone-otp', 'reset-otp'].forEach(id => {
             const hidden = document.getElementById(id);
             if (hidden) hidden.value = '';
         });
 
-        // Reset login inputs view
         toggleLoginInputs('username');
 
-        // Clear all error messages
         document.querySelectorAll('[id$="-error"]').forEach(el => {
             el.classList.add('hidden');
             el.textContent = '';
         });
 
-        // Reset password meters
         document.querySelectorAll('.password-strength-meter-fill').forEach(meter => {
             meter.style.width = '0%';
             meter.style.backgroundColor = '#e0e0e0';
@@ -864,11 +911,9 @@ function getStepTitle($mode, $step)
             el.textContent = '';
         });
 
-        // Hide all forms and show only login identifier step
         hideAllForms();
         showLoginStep('identifier');
 
-        // Stop any active OTP timers
         if (emailOTPTimer) clearInterval(emailOTPTimer);
         if (phoneOTPTimer) clearInterval(phoneOTPTimer);
         if (resetOTPTimer) clearInterval(resetOTPTimer);
@@ -1108,6 +1153,9 @@ function getStepTitle($mode, $step)
             if (phoneOTPTimer) clearInterval(phoneOTPTimer);
             phoneOTPTimer = iv;
         } else if (type === 'reset-otp') {
+            if (resetOTPTimer) clearInterval(resetOTPTimer);
+            resetOTPTimer = iv;
+        } {
             if (resetOTPTimer) clearInterval(resetOTPTimer);
             resetOTPTimer = iv;
         }
@@ -1437,13 +1485,14 @@ function getStepTitle($mode, $step)
                 button.innerHTML = originalText;
                 if (response.success) {
                     registrationData.username = u;
+                    document.getElementById('register-username-display-method').textContent = u;
                     document.getElementById('register-username-display').textContent = u;
                     document.getElementById('register-username-display-verify').textContent = u;
                     document.getElementById('register-username-display-phone').textContent = u;
                     document.getElementById('register-username-display-phone-verify').textContent = u;
                     document.getElementById('register-username-display-password').textContent = u;
                     trackUserEvent('register_username_success', { username: u });
-                    showRegisterStep('email');
+                    showRegisterStep('verification-method');
                 } else {
                     trackUserEvent('register_username_failed', { username: u, errorMessage: response.message || 'Username is already taken' });
                     showError('register-username-error', response.message || 'Username is already taken');
@@ -1462,6 +1511,25 @@ function getStepTitle($mode, $step)
                 }
             }
         });
+    }
+
+    function handleVerificationMethodSubmit() {
+        const selectedMethod = document.querySelector('input[name="verification_method"]:checked').value;
+        registrationData.verificationMethod = selectedMethod;
+
+        if (selectedMethod === 'email') {
+            showRegisterStep('email');
+        } else if (selectedMethod === 'phone') {
+            showRegisterStep('phone');
+        }
+    }
+
+    function goBackFromPassword() {
+        if (registrationData.verificationMethod === 'email') {
+            showRegisterStep('email-verify');
+        } else if (registrationData.verificationMethod === 'phone') {
+            showRegisterStep('phone-verify');
+        }
     }
 
     function handleRegisterEmailSubmit() {
@@ -1572,7 +1640,7 @@ function getStepTitle($mode, $step)
                     trackUserEvent('email_otp_success');
                     notifications.success('Email verified successfully');
                     registrationData.emailVerified = true;
-                    showRegisterStep('phone');
+                    showRegisterStep('password');
                 } else {
                     trackUserEvent('email_otp_failed', { errorMessage: response.message || 'Invalid verification code' });
                     showError('email-otp-error', response.message || 'Invalid verification code');
@@ -1742,15 +1810,23 @@ function getStepTitle($mode, $step)
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating account...';
         trackUserEvent('register_password_submit');
+
+        const registrationPayload = {
+            username: registrationData.username,
+            password: p,
+            verificationMethod: registrationData.verificationMethod
+        };
+
+        if (registrationData.verificationMethod === 'email') {
+            registrationPayload.email = registrationData.email;
+        } else if (registrationData.verificationMethod === 'phone') {
+            registrationPayload.phone = registrationData.phone;
+        }
+
         $.ajax({
             url: BASE_URL + 'auth/register',
             type: 'POST',
-            data: JSON.stringify({
-                username: registrationData.username,
-                email: registrationData.email,
-                phone: registrationData.phone,
-                password: p
-            }),
+            data: JSON.stringify(registrationPayload),
             contentType: 'application/json',
             dataType: 'json',
             success: function (response) {

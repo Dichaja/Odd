@@ -18,8 +18,8 @@ try {
         "CREATE TABLE IF NOT EXISTS admin_users (
         id VARCHAR(26) PRIMARY KEY,
         username VARCHAR(50) NOT NULL UNIQUE,
-        email VARCHAR(100) NOT NULL UNIQUE,
-        phone VARCHAR(20) NOT NULL,
+        email VARCHAR(100),
+        phone VARCHAR(20),
         password VARCHAR(255) NOT NULL,
         first_name VARCHAR(50),
         last_name VARCHAR(50),
@@ -37,8 +37,8 @@ try {
         "CREATE TABLE IF NOT EXISTS zzimba_users (
         id VARCHAR(26) PRIMARY KEY,
         username VARCHAR(50) NOT NULL UNIQUE,
-        email VARCHAR(100) NOT NULL UNIQUE,
-        phone VARCHAR(20) NOT NULL,
+        email VARCHAR(100),
+        phone VARCHAR(20),
         password VARCHAR(255) NOT NULL,
         first_name VARCHAR(50),
         last_name VARCHAR(50),
@@ -152,9 +152,16 @@ function sendLoginSmsOTP(string $phone, string $otp): bool
     }
 }
 
-function sendWelcomeEmail(string $username, string $email, string $phone): bool
+function sendWelcomeEmail(string $username, ?string $email, ?string $phone = null): bool
 {
+    if (!$email) {
+        return true;
+    }
+
     $subject = 'Welcome to Zzimba Online!';
+    $phoneInfo = $phone ? '<p><strong>Phone:</strong> ' . htmlspecialchars($phone) . '</p>' : '<p><strong>Phone:</strong> Not provided (you can add this in your profile settings)</p>';
+    $emailInfo = '<p><strong>Email:</strong> ' . htmlspecialchars($email) . '</p>';
+
     $content = '
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
         <h2 style="color:#d32f2f;text-align:center;">Welcome to Zzimba Online!</h2>
@@ -163,8 +170,8 @@ function sendWelcomeEmail(string $username, string $email, string $phone): bool
         <div style="background-color:#f5f5f5;border-radius:5px;padding:15px;margin:20px 0;">
             <h3 style="margin-top:0;">Your Account Information:</h3>
             <p><strong>Username:</strong> ' . htmlspecialchars($username) . '</p>
-            <p><strong>Email:</strong> ' . htmlspecialchars($email) . '</p>
-            <p><strong>Phone:</strong> ' . htmlspecialchars($phone) . '</p>
+            ' . $emailInfo . '
+            ' . $phoneInfo . '
         </div>
         <p>We recommend updating your profile information after you log in to enhance your experience with our platform.</p>
         <p>If you have any questions or need assistance, please don\'t hesitate to contact our support team.</p>
@@ -852,15 +859,16 @@ try {
             break;
 
         case 'register':
-            if (!isset($data['username'], $data['email'], $data['phone'], $data['password'])) {
+            if (!isset($data['username'], $data['password'], $data['verificationMethod'])) {
                 http_response_code(400);
                 die(json_encode(['success' => false, 'message' => 'Missing required fields']));
             }
 
             $username = $data['username'];
-            $email = $data['email'];
-            $phone = $data['phone'];
             $password = $data['password'];
+            $verificationMethod = $data['verificationMethod'];
+            $email = isset($data['email']) ? $data['email'] : null;
+            $phone = isset($data['phone']) ? $data['phone'] : null;
 
             if (strlen($username) < 3) {
                 http_response_code(400);
@@ -868,15 +876,21 @@ try {
                 break;
             }
 
-            if (!isValidEmail($email)) {
+            if ($verificationMethod === 'email') {
+                if (!$email || !isValidEmail($email)) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Valid email is required for email verification']);
+                    break;
+                }
+            } elseif ($verificationMethod === 'phone') {
+                if (!$phone || !isValidPhone($phone)) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => 'Valid phone number is required for phone verification']);
+                    break;
+                }
+            } else {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid email format']);
-                break;
-            }
-
-            if (!isValidPhone($phone)) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
+                echo json_encode(['success' => false, 'message' => 'Invalid verification method']);
                 break;
             }
 
@@ -886,28 +900,35 @@ try {
                 break;
             }
 
-            $stmt = $pdo->prepare('SELECT id FROM zzimba_users WHERE username = :username OR email = :email OR phone = :phone');
-            $stmt->execute([':username' => $username, ':email' => $email, ':phone' => $phone]);
+            $checkFields = ['username' => $username];
+            if ($email)
+                $checkFields['email'] = $email;
+            if ($phone)
+                $checkFields['phone'] = $phone;
 
-            if ($stmt->rowCount() > 0) {
-                $recipients = [
-                    [
-                        'type' => 'admin',
-                        'id' => 'admin-global',
-                        'message' => "Failed signup attempt with existing credentials: $username, $email, $phone"
-                    ]
-                ];
-                $ns->create(
-                    'signup',
-                    'Failed Signup Attempt',
-                    $recipients,
-                    null,
-                    'normal'
-                );
+            foreach ($checkFields as $field => $value) {
+                $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE $field = :value");
+                $stmt->execute([':value' => $value]);
+                if ($stmt->rowCount() > 0) {
+                    $recipients = [
+                        [
+                            'type' => 'admin',
+                            'id' => 'admin-global',
+                            'message' => "Failed signup attempt with existing $field: $value"
+                        ]
+                    ];
+                    $ns->create(
+                        'signup',
+                        'Failed Signup Attempt',
+                        $recipients,
+                        null,
+                        'normal'
+                    );
 
-                http_response_code(409);
-                echo json_encode(['success' => false, 'message' => 'Username, email, or phone number is already registered']);
-                break;
+                    http_response_code(409);
+                    echo json_encode(['success' => false, 'message' => ucfirst($field) . ' is already registered']);
+                    break 2;
+                }
             }
 
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
@@ -928,13 +949,15 @@ try {
                 ':updated_at' => $now
             ]);
 
-            sendWelcomeEmail($username, $email, $phone);
+            if ($email) {
+                sendWelcomeEmail($username, $email, $phone);
+            }
 
             $recipients = [
                 [
                     'type' => 'admin',
                     'id' => 'admin-global',
-                    'message' => "New user registered successfully: $username ($email)"
+                    'message' => "New user registered successfully: $username (" . ($email ?: $phone) . ")"
                 ]
             ];
             $ns->create(
