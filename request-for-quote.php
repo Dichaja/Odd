@@ -504,7 +504,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         }
 
         .map-modal-content {
-            height: 95vh;
+            height: 80vh;
             max-height: none;
         }
 
@@ -522,7 +522,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         }
 
         .modal-content {
-            max-height: 95vh;
+            max-height: 80vh;
         }
 
         .item-report th,
