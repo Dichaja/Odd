@@ -1515,6 +1515,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             const orig = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
+
             fetch(`${API_BASE}?action=submitRFQ`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1524,6 +1525,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 .then(data => {
                     btn.disabled = false;
                     btn.innerHTML = orig;
+
                     if (data.success) {
                         let msg = 'Thank you! Your quote request has been received. We will contact you shortly.';
                         if (data.fee_charged > 0) {
@@ -1537,6 +1539,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                         updateItemsDisplay();
                         localStorage.removeItem('rfq_form_data');
                         checkWalletBalance();
+                    } else if (data.error === 'User wallet not found') {
+                        showNoWalletModal();
                     }
                 })
                 .catch(() => {
