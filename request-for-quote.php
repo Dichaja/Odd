@@ -464,19 +464,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
         gap: 0.5rem;
     }
 
-    .uganda-notice {
-        background-color: #fef3c7;
-        border: 1px solid #f59e0b;
-        border-radius: 0.5rem;
-        padding: 0.75rem 1rem;
-        margin-bottom: 1rem;
-        font-size: 0.875rem;
-        color: #92400e;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
     .cors-notice {
         background-color: #fef2f2;
         border: 1px solid #f87171;
@@ -732,11 +719,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             </button>
         </div>
         <div class="map-modal-body">
-            <div class="uganda-notice">
-                <i class="fas fa-map-marked-alt"></i>
-                <span>Location selection is restricted to Uganda only. Search and pin placement outside Uganda borders
-                    are not allowed.</span>
-            </div>
             <div id="cors-notice"
                 class="cors-notice bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded relative flex items-start gap-2"
                 style="display: none;">
