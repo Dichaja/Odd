@@ -1688,13 +1688,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                     showNoWalletModal();
                     return;
                 }
+                checkWalletBalance();
                 let err = false;
                 if (!selectedLocation) err = true;
                 if (items.length === 0) err = true;
                 if (items.length > MAX_ITEMS) err = true;
                 if (err) return;
                 if (walletInfo.fee > 0) showConfirmationModal();
-                else submitRFQ();
             });
         });
 

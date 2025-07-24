@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../lib/ZzimbaCreditModule.php';
+require_once __DIR__ . '/../sms/SMS.php';
 
 use ZzimbaCreditModule\CreditService;
 
@@ -75,10 +76,10 @@ try {
             $feeStmt = $pdo->prepare(
                 "SELECT setting_value FROM zzimba_credit_settings
                  WHERE setting_key = 'request_for_quote'
-                 AND status = 'active'
-                 AND setting_type = 'flat'
-                 AND category = 'quote'
-                 AND (applicable_to = 'users' OR applicable_to = 'all')
+                   AND status = 'active'
+                   AND setting_type = 'flat'
+                   AND category = 'quote'
+                   AND (applicable_to = 'users' OR applicable_to = 'all')
                  ORDER BY applicable_to DESC LIMIT 1"
             );
             $feeStmt->execute();
@@ -113,13 +114,15 @@ try {
                 http_response_code(400);
                 die(json_encode(['error' => 'User ID not found in session']));
             }
+
+            // Determine fee
             $feeStmt = $pdo->prepare(
                 "SELECT setting_value FROM zzimba_credit_settings
                  WHERE setting_key = 'request_for_quote'
-                 AND status = 'active'
-                 AND setting_type = 'flat'
-                 AND category = 'quote'
-                 AND (applicable_to = 'users' OR applicable_to = 'all')
+                   AND status = 'active'
+                   AND setting_type = 'flat'
+                   AND category = 'quote'
+                   AND (applicable_to = 'users' OR applicable_to = 'all')
                  ORDER BY applicable_to DESC LIMIT 1"
             );
             $feeStmt->execute();
@@ -128,6 +131,7 @@ try {
                 $fee = 0.00;
             }
             $fee = floatval($fee);
+
             if ($fee > 0) {
                 $quoteResult = CreditService::processQuoteRequest([
                     'amount' => $fee,
@@ -143,13 +147,18 @@ try {
                     ]));
                 }
             }
+
+            // Begin insertion
             $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
             $rfqId = generateUlid();
-            $location = is_array($data['location']) ? $data['location']['address'] : $data['location'];
+            $location = is_array($data['location'])
+                ? $data['location']['address']
+                : $data['location'];
             $coordinates = null;
             if (is_array($data['location']) && isset($data['location']['lat'], $data['location']['lng'])) {
                 $coordinates = $data['location']['lat'] . ',' . $data['location']['lng'];
             }
+
             $pdo->beginTransaction();
             $stmt = $pdo->prepare(
                 "INSERT INTO request_for_quote
@@ -166,6 +175,7 @@ try {
             $stmt->bindParam(':created_at', $now);
             $stmt->bindParam(':updated_at', $now);
             $stmt->execute();
+
             $stmtDetail = $pdo->prepare(
                 "INSERT INTO request_for_quote_details
                     (RFQD_ID, RFQ_ID, brand_name, size, quantity, unit_price, created_at, updated_at)
@@ -182,6 +192,7 @@ try {
                 $brand = $item['brand'];
                 $size = $item['size'];
                 $quantity = (int) $item['quantity'];
+
                 $stmtDetail->bindParam(':rfqd_id', $rfqdId);
                 $stmtDetail->bindParam(':rfq_id', $rfqId);
                 $stmtDetail->bindParam(':brand', $brand);
@@ -192,20 +203,55 @@ try {
                 $stmtDetail->bindParam(':updated_at', $now);
                 $stmtDetail->execute();
             }
+
             $pdo->commit();
+
+            // SMS notification to active admins if any
+            $username = $_SESSION['user']['username'];
+            $itemCount = count($data['items']);
+            $smsMessage = "{$username} submitted an RFQ with {$itemCount} items.";
+
+            $stmtAdmins = $pdo->prepare(
+                "SELECT phone
+                   FROM admin_users
+                  WHERE status = 'active'
+                    AND phone IS NOT NULL
+                    AND phone != ''"
+            );
+            $stmtAdmins->execute();
+            $adminPhones = $stmtAdmins->fetchAll(PDO::FETCH_COLUMN);
+
+            if (!empty($adminPhones)) {
+                foreach ($adminPhones as $adminPhone) {
+                    if (!$adminPhone) {
+                        continue;
+                    }
+                    try {
+                        SMS::send($adminPhone, $smsMessage);
+                    } catch (Exception $e) {
+                        error_log("RFQ SMS Error for {$adminPhone}: " . $e->getMessage());
+                    }
+                }
+            }
+
+            // Prepare response
             $response = [
                 'success' => true,
                 'message' => 'RFQ submitted successfully.',
                 'fee_charged' => $fee
             ];
+
             if ($fee > 0 && isset($quoteResult)) {
                 $response['remaining_balance'] = $quoteResult['remaining_balance'];
                 $response['transaction_id'] = $quoteResult['transaction_id'];
             } else {
                 $balanceStmt = $pdo->prepare(
-                    "SELECT current_balance FROM zzimba_wallets
-                     WHERE user_id = :user_id AND status = 'active'
-                     ORDER BY created_at DESC LIMIT 1"
+                    "SELECT current_balance
+                       FROM zzimba_wallets
+                      WHERE user_id = :user_id
+                        AND status = 'active'
+                      ORDER BY created_at DESC
+                      LIMIT 1"
                 );
                 $balanceStmt->execute([':user_id' => $userId]);
                 $currentBalance = $balanceStmt->fetchColumn();
@@ -215,6 +261,7 @@ try {
                 }
                 $response['remaining_balance'] = floatval($currentBalance);
             }
+
             echo json_encode($response);
             break;
 
@@ -230,4 +277,3 @@ try {
     http_response_code(500);
     echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
-?>
