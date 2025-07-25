@@ -3,7 +3,6 @@ require_once __DIR__ . '/config/config.php';
 $pageTitle = $pageTitle ?? 'Zzimba Online Uganda';
 $activeNav = $activeNav ?? 'home';
 
-// Load homepage data from JSON file
 function loadHomepageData()
 {
     $filePath = __DIR__ . '/page-data/homepage/index.json';
@@ -14,7 +13,6 @@ function loadHomepageData()
     return [];
 }
 
-// Function to fetch featured products, priced first
 function getFeaturedProducts($pdo, $limit = 8)
 {
     $stmt = $pdo->prepare(
@@ -30,7 +28,12 @@ function getFeaturedProducts($pdo, $limit = 8)
                 FROM store_products sp
                 JOIN product_pricing pp ON pp.store_products_id = sp.id
                 WHERE sp.product_id = p.id
-            ) AS has_pricing
+            ) AS has_pricing,
+            (SELECT MIN(pp.price)
+             FROM store_products sp
+             JOIN product_pricing pp ON pp.store_products_id = sp.id
+             WHERE sp.product_id = p.id
+            ) AS lowest_price
          FROM products p
          LEFT JOIN product_categories c ON p.category_id = c.id
          WHERE p.featured = 1 
@@ -45,11 +48,11 @@ function getFeaturedProducts($pdo, $limit = 8)
     foreach ($products as &$product) {
         $product['images'] = getProductImages($product['id']);
         $product['has_pricing'] = (bool) $product['has_pricing'];
+        $product['lowest_price'] = $product['lowest_price'] ? (float) $product['lowest_price'] : null;
     }
     return $products;
 }
 
-// Function to fetch only featured categories
 function getCategories($pdo, $limit = 8)
 {
     $stmt = $pdo->prepare(
@@ -70,7 +73,6 @@ function getCategories($pdo, $limit = 8)
     return $categories;
 }
 
-// Function to get product images
 function getProductImages($uuid)
 {
     $dir = __DIR__ . '/img/products/' . $uuid;
@@ -93,7 +95,6 @@ function getProductImages($uuid)
     return $out;
 }
 
-// Function to get category image
 function getCategoryImage($uuid)
 {
     $dir = __DIR__ . '/img/product-categories/' . $uuid;
@@ -106,7 +107,14 @@ function getCategoryImage($uuid)
     return 'https://placehold.co/800x450?text=Category';
 }
 
-// Load JSON data
+function formatPrice($price)
+{
+    if ($price === null || $price <= 0) {
+        return null;
+    }
+    return 'UGX ' . number_format($price, 0) . '/=';
+}
+
 $homepageData = loadHomepageData();
 $heroSlides = $homepageData['heroSlides'] ?? [];
 $requestQuoteSection = $homepageData['requestQuoteSection'] ?? [];
@@ -116,7 +124,6 @@ $categoriesSection = $homepageData['categoriesSection'] ?? [];
 $partnersSection = $homepageData['partnersSection'] ?? [];
 $partners = $homepageData['partners'] ?? [];
 
-// Filter and sort
 $activeHeroSlides = array_filter($heroSlides, fn($s) => !empty($s['active']));
 usort($activeHeroSlides, fn($a, $b) => (($a['order'] ?? 999) - ($b['order'] ?? 999)));
 $activeKeyFeatures = array_filter($keyFeatures, fn($f) => !empty($f['active']));
@@ -124,14 +131,134 @@ usort($activeKeyFeatures, fn($a, $b) => (($a['order'] ?? 999) - ($b['order'] ?? 
 $activePartners = array_filter($partners, fn($p) => !empty($p['active']));
 usort($activePartners, fn($a, $b) => (($a['order'] ?? 999) - ($b['order'] ?? 999)));
 
-// Fetch from DB
 $featuredProducts = getFeaturedProducts($pdo, 8);
 $categories = getCategories($pdo, 8);
 
 ob_start();
 ?>
 
-<!-- HERO SLIDER -->
+<style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .hero-aspect-ratio {
+        position: relative;
+    }
+
+    @media (min-width:768px) {
+        .hero-aspect-ratio {
+            padding-bottom: 33.33%;
+        }
+    }
+
+    @media (max-width:767px) {
+        .hero-aspect-ratio {
+            padding-bottom: 56.25%;
+        }
+    }
+
+    .hero-aspect-ratio>* {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        width: 100%;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-clamp: 2;
+    }
+
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-clamp: 3;
+    }
+
+    .product-details-btn {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+
+    .product-card:hover .product-details-btn {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .price-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        font-size: clamp(1rem, 4vw, 1.5rem);
+    }
+
+    @media (min-width: 768px) {
+        .price-text {
+            font-size: clamp(1.25rem, 3vw, 1.4rem);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    .swiper-button-next,
+    .swiper-button-prev {
+        color: #ef4444 !important;
+        width: 30px !important;
+        height: 30px !important;
+    }
+
+    .swiper-button-next:after,
+    .swiper-button-prev:after {
+        font-size: 14px !important;
+    }
+
+    .partners-next,
+    .partners-prev {
+        width: 30px !important;
+        height: 30px !important;
+    }
+</style>
+
 <div class="swiper hero-slider">
     <div class="swiper-wrapper" id="hero-slider-wrapper">
         <?php foreach ($activeHeroSlides as $slide): ?>
@@ -164,7 +291,6 @@ ob_start();
     <div class="swiper-button-prev text-white hidden md:flex"></div>
 </div>
 
-<!-- REQUEST QUOTE -->
 <?php if (!empty($requestQuoteSection['active'])): ?>
     <div class="bg-gray-50 py-8">
         <div class="container mx-auto px-4 text-center">
@@ -184,7 +310,6 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<!-- KEY FEATURES -->
 <?php if (!empty($activeKeyFeatures)): ?>
     <div class="container mx-auto px-4 py-8">
         <div class="grid grid-cols-1 md:grid-cols-<?= min(count($activeKeyFeatures), 3) ?> gap-8">
@@ -199,7 +324,6 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<!-- FEATURED PRODUCTS -->
 <?php if (!empty($featuredProductsSection['active'])): ?>
     <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-8">
@@ -220,44 +344,56 @@ ob_start();
                 $p = $featuredProducts[$i];
                 $img = $p['images'][0] ?? 'https://placehold.co/600x400?text=No+Image';
                 ?>
-                <div class="product-card transform transition-transform duration-300 hover:-translate-y-1 flex flex-col h-full">
+                <div
+                    class="product-card relative border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
                     <div class="relative">
                         <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($p['title']) ?>"
-                            class="w-full h-48 object-cover">
-                        <div class="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-semibold">
+                            class="w-full h-40 md:h-48 object-cover">
+                        <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-semibold">
                             HOT
                         </div>
                         <div class="product-details-btn">
                             <a href="<?= BASE_URL ?>view/product/<?= $p['id'] ?>"
-                                class="bg-white text-gray-800 px-3 py-2 rounded-lg font-medium hover:bg-red-600 hover:text-white transition-colors text-sm">
+                                class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm shadow-lg">
                                 View Details
                             </a>
                         </div>
                     </div>
-                    <div class="p-5 flex flex-col justify-between flex-1">
-                        <div>
-                            <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
-                                <?= htmlspecialchars($p['title']) ?>
-                            </h3>
+                    <div class="p-3 md:p-5 flex flex-col flex-1">
+                        <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
+                            <?= htmlspecialchars($p['title']) ?>
+                        </h3>
+
+                        <div class="flex-1 flex flex-col justify-end">
                             <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
                                 <?= htmlspecialchars($p['description']) ?>
                             </p>
-                            <div class="flex items-center text-gray-500 text-xs md:text-sm mb-4">
+
+                            <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
                                 <i class="fas fa-eye mr-1"></i>
                                 <span><?= number_format($p['views']) ?> views</span>
                             </div>
-                        </div>
-                        <div class="flex space-x-2 mt-auto">
-                            <?php if ($p['has_pricing']): ?>
-                                <a href="<?= BASE_URL ?>view/product/<?= $p['id'] ?>?action=buy"
-                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg transition-colors flex-1 text-center text-xs md:text-sm">
-                                    <i class="fas fa-shopping-cart mr-1"></i> Buy
-                                </a>
+
+                            <?php if ($p['has_pricing'] && $p['lowest_price']): ?>
+                                <div class="text-center mb-3">
+                                    <span class="price-text font-bold" style="color: #D92B13;">
+                                        <?= formatPrice($p['lowest_price']) ?>
+                                    </span>
+                                </div>
                             <?php endif; ?>
-                            <a href="<?= BASE_URL ?>view/product/<?= $p['id'] ?>?action=sell"
-                                class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-2 rounded-lg transition-colors flex-1 text-center text-xs md:text-sm">
-                                <i class="fas fa-tag mr-1"></i> Sell
-                            </a>
+
+                            <div class="flex gap-2">
+                                <?php if ($p['has_pricing']): ?>
+                                    <a href="<?= BASE_URL ?>view/product/<?= $p['id'] ?>?action=buy"
+                                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                        <i class="fas fa-shopping-cart mr-1"></i> Buy
+                                    </a>
+                                <?php endif; ?>
+                                <a href="<?= BASE_URL ?>view/product/<?= $p['id'] ?>?action=sell"
+                                    class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                    <i class="fas fa-tag mr-1"></i> Sell
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -279,7 +415,6 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<!-- CATEGORIES SECTION -->
 <?php if (!empty($categoriesSection['active'])): ?>
     <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-8">
@@ -334,7 +469,6 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<!-- PARTNERS SECTION -->
 <?php if (isset($partnersSection['active']) && $partnersSection['active'] && !empty($activePartners)): ?>
     <div class="bg-gray-50 py-8">
         <div class="container mx-auto px-4">
@@ -413,100 +547,6 @@ ob_start();
     </div>
 <?php endif; ?>
 
-<!-- SHARED STYLES -->
-<style>
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .hero-aspect-ratio {
-        position: relative;
-    }
-
-    @media (min-width:768px) {
-        .hero-aspect-ratio {
-            padding-bottom: 33.33%;
-        }
-    }
-
-    @media (max-width:767px) {
-        .hero-aspect-ratio {
-            padding-bottom: 56.25%;
-        }
-    }
-
-    .hero-aspect-ratio>* {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        width: 100%;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .fade-in {
-        animation: fadeIn 0.5s ease-out forwards;
-    }
-
-    .swiper-button-next,
-    .swiper-button-prev {
-        color: #ef4444 !important;
-        width: 30px !important;
-        height: 30px !important;
-    }
-
-    .swiper-button-next:after,
-    .swiper-button-prev:after {
-        font-size: 14px !important;
-    }
-
-    .partners-next,
-    .partners-prev {
-        width: 30px !important;
-        height: 30px !important;
-    }
-
-    .product-details-btn {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.6);
-        opacity: 0;
-        transition: opacity .3s;
-    }
-
-    .product-card:hover .product-details-btn {
-        opacity: 1;
-    }
-
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        overflow: hidden;
-    }
-</style>
-
-<!-- SHARED SCRIPTS -->
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         var heroSwiper = new Swiper('.hero-slider', {
@@ -550,7 +590,6 @@ ob_start();
             }
         });
 
-        // Load more products
         const loadMoreBtn = document.getElementById('load-more-products');
         if (loadMoreBtn) {
             let loaded = <?= $initial ?>;
@@ -572,24 +611,25 @@ ob_start();
                         const p = products[i];
                         const img = p.images[0] || 'https://placehold.co/600x400?text=No+Image';
                         const el = document.createElement('div');
-                        el.className = 'product-card transform transition-transform duration-300 hover:-translate-y-1 flex flex-col h-full opacity-0';
+                        el.className = 'product-card relative border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col opacity-0';
                         el.innerHTML = `
                         <div class="relative">
-                            <img src="${img}" alt="${p.title}" class="w-full h-48 object-cover">
-                            <div class="absolute top-0 right-0 bg-red-500 text-white px-3 py-1 rounded-bl-lg font-semibold">HOT</div>
+                            <img src="${img}" alt="${p.title}" class="w-full h-40 md:h-48 object-cover">
+                            <div class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-lg text-xs font-semibold">HOT</div>
                             <div class="product-details-btn">
-                                <a href="<?= BASE_URL ?>view/product/${p.id}" class="bg-white text-gray-800 px-3 py-2 rounded-lg hover:bg-red-600 hover:text-white text-sm">View Details</a>
+                                <a href="<?= BASE_URL ?>view/product/${p.id}" class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm shadow-lg">View Details</a>
                             </div>
                         </div>
-                        <div class="p-5 flex flex-col justify-between flex-1">
-                            <div>
-                                <h3 class="font-bold text-gray-800 mb-2 line-clamp-2">${p.title}</h3>
-                                <p class="text-gray-600 mb-3 line-clamp-2">${p.description}</p>
-                                <div class="flex items-center text-gray-500 text-xs mb-4"><i class="fas fa-eye mr-1"></i>${p.views} views</div>
-                            </div>
-                            <div class="flex space-x-2">
-                                ${p.has_pricing ? `<a href="<?= BASE_URL ?>view/product/${p.id}?action=buy" class="bg-emerald-600 text-white px-3 py-2 rounded-lg flex-1 text-center text-xs">Buy</a>` : ''}
-                                <a href="<?= BASE_URL ?>view/product/${p.id}?action=sell" class="bg-sky-600 text-white px-3 py-2 rounded-lg flex-1 text-center text-xs">Sell</a>
+                        <div class="p-3 md:p-5 flex flex-col flex-1">
+                            <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">${p.title}</h3>
+                            <div class="flex-1 flex flex-col justify-end">
+                                <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">${p.description}</p>
+                                <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3"><i class="fas fa-eye mr-1"></i><span>${parseInt(p.views).toLocaleString()} views</span></div>
+                                ${p.has_pricing && p.lowest_price ? `<div class="text-center mb-3"><span class="price-text font-bold" style="color: #D92B13;">${formatPrice(p.lowest_price)}</span></div>` : ''}
+                                <div class="flex gap-2">
+                                    ${p.has_pricing ? `<a href="<?= BASE_URL ?>view/product/${p.id}?action=buy" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium"><i class="fas fa-shopping-cart mr-1"></i> Buy</a>` : ''}
+                                    <a href="<?= BASE_URL ?>view/product/${p.id}?action=sell" class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium"><i class="fas fa-tag mr-1"></i> Sell</a>
+                                </div>
                             </div>
                         </div>`;
                         container.appendChild(el);
@@ -605,8 +645,14 @@ ob_start();
             });
         }
     });
+
+    function formatPrice(price) {
+        if (!price || price <= 0) return null;
+        return 'UGX ' + parseInt(price).toLocaleString() + '/=';
+    }
 </script>
 
 <?php
 $mainContent = ob_get_clean();
 include __DIR__ . '/master.php';
+?>

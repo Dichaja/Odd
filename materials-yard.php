@@ -13,10 +13,8 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
     $response = ['products' => [], 'categories' => [], 'hasMore' => false, 'total' => 0];
 
     if (!empty($searchQuery)) {
-        // Start timing for performance logging
         $searchStartTime = microtime(true);
 
-        // Advanced search implementation
         $allProductsStmt = $pdo->prepare("
             SELECT 
                 p.id, 
@@ -38,7 +36,12 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                     FROM store_products sp
                     JOIN product_pricing pp ON pp.store_products_id = sp.id
                     WHERE sp.product_id = p.id
-                ) AS has_pricing
+                ) AS has_pricing,
+                (SELECT MIN(pp.price)
+                 FROM store_products sp
+                 JOIN product_pricing pp ON pp.store_products_id = sp.id
+                 WHERE sp.product_id = p.id
+                ) AS lowest_price
             FROM products p
             JOIN product_categories c ON c.id = p.category_id
             WHERE p.status = 'published'
@@ -46,10 +49,8 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
         $allProductsStmt->execute();
         $allProducts = $allProductsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Apply advanced search scoring
         $scoredProducts = advancedProductSearch($allProducts, $searchQuery);
 
-        // Calculate search statistics for logging
         $resultsCount = count($scoredProducts);
         $maxMatchScore = 0.00;
         $minMatchScore = 0.00;
@@ -62,21 +63,17 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
             $averageMatchScore = array_sum($scores) / count($scores);
         }
 
-        // Calculate search duration
         $searchEndTime = microtime(true);
         $durationMs = round(($searchEndTime - $searchStartTime) * 1000);
 
-        // Log search activity (only on first page to avoid duplicate logs for pagination)
         if ($page === 1) {
             logSearchActivity($pdo, $searchQuery, $resultsCount, $maxMatchScore, $minMatchScore, $averageMatchScore, $durationMs);
         }
 
-        // Apply pagination to scored results
         $totalProducts = count($scoredProducts);
         $products = array_slice($scoredProducts, $offset, $limit);
 
         if ($page === 1) {
-            // Advanced category search
             $allCategoriesStmt = $pdo->prepare("
                 SELECT id, name, description, meta_title, meta_description, meta_keywords
                 FROM product_categories 
@@ -108,7 +105,12 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                         FROM store_products sp
                         JOIN product_pricing pp ON pp.store_products_id = sp.id
                         WHERE sp.product_id = p.id
-                    ) AS has_pricing
+                    ) AS has_pricing,
+                    (SELECT MIN(pp.price)
+                     FROM store_products sp
+                     JOIN product_pricing pp ON pp.store_products_id = sp.id
+                     WHERE sp.product_id = p.id
+                    ) AS lowest_price
                 FROM products p
                 JOIN product_categories c ON c.id = p.category_id
                 WHERE p.category_id = ? 
@@ -144,7 +146,12 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                         FROM store_products sp
                         JOIN product_pricing pp ON pp.store_products_id = sp.id
                         WHERE sp.product_id = p.id
-                    ) AS has_pricing
+                    ) AS has_pricing,
+                    (SELECT MIN(pp.price)
+                     FROM store_products sp
+                     JOIN product_pricing pp ON pp.store_products_id = sp.id
+                     WHERE sp.product_id = p.id
+                    ) AS lowest_price
                 FROM products p
                 JOIN product_categories c ON c.id = p.category_id
                 WHERE p.status = 'published'
@@ -174,6 +181,7 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
             $product['primary_image'] = "https://placehold.co/600x400/e2e8f0/1e293b?text=" . urlencode($product['title']);
         }
         $product['has_pricing'] = (bool) $product['has_pricing'];
+        $product['lowest_price'] = $product['lowest_price'] ? (float) $product['lowest_price'] : null;
     }
 
     $response['products'] = $products;
@@ -184,19 +192,15 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
     exit;
 }
 
-// Search logging function
 function logSearchActivity($pdo, $searchQuery, $resultsCount, $maxMatchScore, $minMatchScore, $averageMatchScore, $durationMs)
 {
     try {
-        // Generate unique ID using ULID
         $logId = generateUlid();
 
-        // Set timezone to Africa/Kampala
         $timezone = new DateTimeZone('Africa/Kampala');
         $currentDateTime = new DateTime('now', $timezone);
         $createdAt = $currentDateTime->format('Y-m-d H:i:s');
 
-        // Prepare and execute the insert statement
         $logStmt = $pdo->prepare("
             INSERT INTO search_log (
                 id, 
@@ -222,16 +226,13 @@ function logSearchActivity($pdo, $searchQuery, $resultsCount, $maxMatchScore, $m
             $createdAt
         ]);
 
-        // Optional: Log successful search logging for debugging (can be removed in production)
         error_log("Search logged: Query='{$searchQuery}', Results={$resultsCount}, Duration={$durationMs}ms");
 
     } catch (Exception $e) {
-        // Log error but don't break the search functionality
         error_log("Search logging failed: " . $e->getMessage());
     }
 }
 
-// Advanced search functions
 function levenshteinDistance($a, $b)
 {
     if ($a === $b)
@@ -284,11 +285,9 @@ function calculateFieldScore($fieldValue, $searchQuery, $weight = 1.0)
     $searchQuery = strtolower($searchQuery);
     $score = 0;
 
-    // Exact match gets highest score
     if (strpos($fieldValue, $searchQuery) !== false) {
         $score += 1.0;
 
-        // Bonus for exact word match
         if (
             strpos($fieldValue, ' ' . $searchQuery . ' ') !== false ||
             strpos($fieldValue, $searchQuery . ' ') === 0 ||
@@ -298,7 +297,6 @@ function calculateFieldScore($fieldValue, $searchQuery, $weight = 1.0)
         }
     }
 
-    // Tokenized search for partial matches
     $fieldTokens = tokenize($fieldValue);
     $queryTokens = tokenize($searchQuery);
 
@@ -308,23 +306,16 @@ function calculateFieldScore($fieldValue, $searchQuery, $weight = 1.0)
         foreach ($fieldTokens as $fieldToken) {
             $tokenScore = 0;
 
-            // Exact token match
             if ($fieldToken === $queryToken) {
                 $tokenScore = 1.0;
-            }
-            // Partial token match
-            elseif (strpos($fieldToken, $queryToken) !== false || strpos($queryToken, $fieldToken) !== false) {
+            } elseif (strpos($fieldToken, $queryToken) !== false || strpos($queryToken, $fieldToken) !== false) {
                 $tokenScore = 0.7;
-            }
-            // Phonetic similarity
-            elseif (soundex_similarity($fieldToken, $queryToken) || metaphone_similarity($fieldToken, $queryToken)) {
+            } elseif (soundex_similarity($fieldToken, $queryToken) || metaphone_similarity($fieldToken, $queryToken)) {
                 $tokenScore = 0.6;
-            }
-            // Levenshtein distance for typo tolerance
-            else {
+            } else {
                 $distance = levenshteinDistance($fieldToken, $queryToken);
                 $maxLen = max(strlen($fieldToken), strlen($queryToken));
-                if ($maxLen > 0 && $distance <= 2) { // Allow up to 2 character differences
+                if ($maxLen > 0 && $distance <= 2) {
                     $tokenScore = max(0, 1 - ($distance / $maxLen)) * 0.5;
                 }
             }
@@ -345,7 +336,6 @@ function advancedProductSearch($products, $searchQuery)
     foreach ($products as $product) {
         $totalScore = 0;
 
-        // Weight different fields by importance
         $totalScore += calculateFieldScore($product['title'], $searchQuery, 0.4);
         $totalScore += calculateFieldScore($product['meta_title'], $searchQuery, 0.3);
         $totalScore += calculateFieldScore($product['description'], $searchQuery, 0.2);
@@ -353,20 +343,17 @@ function advancedProductSearch($products, $searchQuery)
         $totalScore += calculateFieldScore($product['meta_keywords'], $searchQuery, 0.2);
         $totalScore += calculateFieldScore($product['category_name'], $searchQuery, 0.1);
 
-        // Only include products with a minimum score threshold
         if ($totalScore > 0.1) {
-            $product['search_score'] = min($totalScore, 1.0); // Cap at 1.0 (100%)
+            $product['search_score'] = min($totalScore, 1.0);
             $scoredProducts[] = $product;
         }
     }
 
-    // Sort by score (descending), then by other factors
     usort($scoredProducts, function ($a, $b) {
         if ($a['search_score'] !== $b['search_score']) {
             return $b['search_score'] <=> $a['search_score'];
         }
 
-        // Secondary sorting by has_pricing, then views
         if ($a['has_pricing'] !== $b['has_pricing']) {
             return $b['has_pricing'] <=> $a['has_pricing'];
         }
@@ -384,21 +371,18 @@ function advancedCategorySearch($categories, $searchQuery)
     foreach ($categories as $category) {
         $totalScore = 0;
 
-        // Weight different fields by importance
         $totalScore += calculateFieldScore($category['name'], $searchQuery, 0.5);
         $totalScore += calculateFieldScore($category['meta_title'], $searchQuery, 0.3);
         $totalScore += calculateFieldScore($category['description'], $searchQuery, 0.2);
         $totalScore += calculateFieldScore($category['meta_description'], $searchQuery, 0.2);
         $totalScore += calculateFieldScore($category['meta_keywords'], $searchQuery, 0.2);
 
-        // Only include categories with a minimum score threshold
         if ($totalScore > 0.1) {
-            $category['search_score'] = min($totalScore, 1.0); // Cap at 1.0 (100%)
+            $category['search_score'] = min($totalScore, 1.0);
             $scoredCategories[] = $category;
         }
     }
 
-    // Sort by score (descending)
     usort($scoredCategories, function ($a, $b) {
         return $b['search_score'] <=> $a['search_score'];
     });
@@ -447,6 +431,14 @@ function getCategoryImage($categoryId)
     }
 
     return null;
+}
+
+function formatPrice($price)
+{
+    if ($price === null || $price <= 0) {
+        return null;
+    }
+    return 'UGX ' . number_format($price, 0) . '/=';
 }
 
 $categoryId = isset($_GET['categoryId']) ? $_GET['categoryId'] : '';
@@ -513,7 +505,12 @@ if (empty($searchQuery)) {
                     FROM store_products sp
                     JOIN product_pricing pp ON pp.store_products_id = sp.id
                     WHERE sp.product_id = p.id
-                ) AS has_pricing
+                ) AS has_pricing,
+                (SELECT MIN(pp.price)
+                 FROM store_products sp
+                 JOIN product_pricing pp ON pp.store_products_id = sp.id
+                 WHERE sp.product_id = p.id
+                ) AS lowest_price
             FROM products p
             WHERE p.category_id = ? 
               AND p.status = 'published'
@@ -538,7 +535,12 @@ if (empty($searchQuery)) {
                     FROM store_products sp
                     JOIN product_pricing pp ON pp.store_products_id = sp.id
                     WHERE sp.product_id = p.id
-                ) AS has_pricing
+                ) AS has_pricing,
+                (SELECT MIN(pp.price)
+                 FROM store_products sp
+                 JOIN product_pricing pp ON pp.store_products_id = sp.id
+                 WHERE sp.product_id = p.id
+                ) AS lowest_price
             FROM products p
             WHERE p.status = 'published'
             ORDER BY has_pricing DESC, p.featured DESC, p.views DESC
@@ -557,6 +559,7 @@ if (empty($searchQuery)) {
         }
 
         $row['has_pricing'] = (bool) $row['has_pricing'];
+        $row['lowest_price'] = $row['lowest_price'] ? (float) $row['lowest_price'] : null;
         $products[] = $row;
     }
 }
@@ -565,11 +568,6 @@ ob_start();
 ?>
 
 <style>
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
     .line-clamp-2 {
         display: -webkit-box;
         -webkit-box-orient: vertical;
@@ -586,47 +584,6 @@ ob_start();
         overflow: hidden;
         text-overflow: ellipsis;
         line-clamp: 3;
-    }
-
-    .share-container {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .share-label {
-        font-size: 12px;
-        font-weight: 500;
-        color: #ffffff;
-    }
-
-    .share-buttons {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .share-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.5rem;
-        height: 1.5rem;
-        border-radius: 9999px;
-        color: #ffffff;
-        border: 1.5px solid#ffffff;
-        background-color: transparent;
-        transition: all 0.2s ease;
-        position: relative;
-    }
-
-    .share-button .fa-solid,
-    .share-button .fa-brands {
-        font-size: 10px !important;
-    }
-
-    .share-button:hover {
-        background-color: rgba(220, 38, 38, 0.1);
-        transform: translateY(-2px);
     }
 
     .tooltip {
@@ -662,63 +619,25 @@ ob_start();
         visibility: visible;
     }
 
-    .product-card {
-        position: relative;
-        border: 1px solid #E5E7EB;
-        border-radius: 0.75rem;
-        background-color: #ffffff;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        overflow: hidden;
-    }
-
     .product-details-btn {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.7);
+        background-color: rgba(0, 0, 0, 0.6);
         display: flex;
         align-items: center;
         justify-content: center;
         opacity: 0;
-        transition: opacity 0.3s ease;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 10;
     }
 
     .product-card:hover .product-details-btn {
         opacity: 1;
-    }
-
-    .category-item {
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .category-item:hover {
-        background-color: #F9FAFB;
-    }
-
-    .category-item.active {
-        background-color: #FEF2F2;
-        color: #DC2626;
-    }
-
-    .category-item.active:hover {
-        background-color: #FEE2E2;
-    }
-
-    .category-item.active .category-text {
-        border-bottom: 2px solid #DC2626;
-        padding-bottom: 1px;
-    }
-
-    .category-item:hover .category-text {
-        border-bottom: 2px solid #E5E7EB;
-        padding-bottom: 1px;
-    }
-
-    .category-item.active:hover .category-text {
-        border-bottom: 2px solid #DC2626;
+        visibility: visible;
     }
 
     .checkbox-custom {
@@ -744,40 +663,6 @@ ob_start();
         color: white;
         font-size: 12px;
         font-weight: bold;
-    }
-
-    .mobile-search-dropdown {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #E5E7EB;
-        border-top: none;
-        border-radius: 0 0 0.5rem 0.5rem;
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 50;
-        display: none;
-    }
-
-    .mobile-search-dropdown.show {
-        display: block;
-    }
-
-    .dropdown-item {
-        padding: 0.75rem 1rem;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        border-bottom: 1px solid #F3F4F6;
-    }
-
-    .dropdown-item:hover {
-        background-color: #F9FAFB;
-    }
-
-    .dropdown-item:last-child {
-        border-bottom: none;
     }
 
     .skeleton {
@@ -812,16 +697,6 @@ ob_start();
         }
     }
 
-    .category-card {
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-
-    .category-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
     .loader {
         border-top-color: #D92B13;
         animation: spinner 0.6s linear infinite;
@@ -833,37 +708,30 @@ ob_start();
         }
     }
 
-    .quote-request-section {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border: 1px solid #e2e8f0;
-        border-radius: 1rem;
-        padding: 2rem;
-        text-align: center;
-        margin-top: 3rem;
+    .price-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        font-size: clamp(1rem, 4vw, 1.5rem);
     }
 
-    .quote-request-btn {
-        transition: all 0.3s ease;
-    }
-
-    .quote-request-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.3);
+    @media (min-width: 768px) {
+        .price-text {
+            font-size: clamp(1.25rem, 3vw, 1.4rem);
+        }
     }
 </style>
 
 <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden">
-    <!-- Lighter gradient overlay for better image visibility -->
     <div class="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/50 z-10"></div>
 
-    <!-- Increased image opacity to make it more visible -->
     <img src="<?= $categoryImageUrl ?>" alt="<?= htmlspecialchars($pageTitle) ?> Banner"
         class="w-full h-full object-cover opacity-60">
 
-    <div class="container mx-auto px-4 absolute inset-0 flex flex-col justify-start pt-8 md:pt-12 z-20">
+    <div class="container max-w-6xl mx-auto px-4 absolute inset-0 flex flex-col justify-start pt-8 md:pt-12 z-20">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-                <!-- Added text shadow for better readability -->
                 <h1 class="text-xl md:text-3xl font-bold text-white mb-4 drop-shadow-lg">
                     <?= htmlspecialchars($pageTitle) ?>
                 </h1>
@@ -897,27 +765,32 @@ ob_start();
                     </p>
                 <?php endif; ?>
             </div>
-            <div class="share-container mt-4 md:mt-0 hidden md:flex">
-                <span class="share-label text-white drop-shadow-lg">SHARE</span>
-                <div class="share-buttons">
-                    <button onclick="copyLink()" class="share-button">
-                        <i class="fa-solid fa-link"></i>
+            <div class="flex items-center gap-2 mt-4 md:mt-0 hidden md:flex">
+                <span class="text-xs font-medium text-white drop-shadow-lg">SHARE</span>
+                <div class="flex gap-2">
+                    <button onclick="copyLink()"
+                        class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
+                        <i class="fa-solid fa-link text-[10px]"></i>
                         <span class="tooltip">Copy link to clipboard</span>
                     </button>
-                    <button onclick="shareOnWhatsApp()" class="share-button">
-                        <i class="fa-brands fa-whatsapp"></i>
+                    <button onclick="shareOnWhatsApp()"
+                        class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
+                        <i class="fa-brands fa-whatsapp text-[10px]"></i>
                         <span class="tooltip">Share on WhatsApp</span>
                     </button>
-                    <button onclick="shareOnFacebook()" class="share-button">
-                        <i class="fa-brands fa-facebook-f"></i>
+                    <button onclick="shareOnFacebook()"
+                        class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
+                        <i class="fa-brands fa-facebook-f text-[10px]"></i>
                         <span class="tooltip">Share on Facebook</span>
                     </button>
-                    <button onclick="shareOnTwitter()" class="share-button">
-                        <i class="fa-brands fa-x-twitter"></i>
+                    <button onclick="shareOnTwitter()"
+                        class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
+                        <i class="fa-brands fa-x-twitter text-[10px]"></i>
                         <span class="tooltip">Post on X</span>
                     </button>
-                    <button onclick="shareOnLinkedIn()" class="share-button">
-                        <i class="fa-brands fa-linkedin-in"></i>
+                    <button onclick="shareOnLinkedIn()"
+                        class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
+                        <i class="fa-brands fa-linkedin-in text-[10px]"></i>
                         <span class="tooltip">Share on LinkedIn</span>
                     </button>
                 </div>
@@ -926,7 +799,7 @@ ob_start();
     </div>
 </div>
 
-<div class="container mx-auto px-4 py-8">
+<div class="container max-w-6xl mx-auto px-4 py-8">
     <div class="flex flex-col lg:flex-row gap-8">
         <div class="w-full lg:w-1/4 order-2 lg:order-1 hidden lg:block">
             <div class="bg-white rounded-xl shadow-lg border border-gray-200 sticky top-4">
@@ -935,7 +808,7 @@ ob_start();
 
                     <?php if (!empty($categoryId) || !empty($searchQuery)): ?>
                         <button onclick="clearSelection()"
-                            class="category-item flex items-center justify-between px-3 py-2 rounded-md mb-4 bg-gray-50 hover:bg-gray-100 w-full text-left">
+                            class="flex items-center justify-between px-3 py-2 rounded-md mb-4 bg-gray-50 hover:bg-gray-100 w-full text-left transition-all duration-300 cursor-pointer">
                             <span class="font-medium text-gray-600">
                                 <i class="fas fa-times-circle mr-2"></i> Clear Selection
                             </span>
@@ -952,10 +825,11 @@ ob_start();
                 <div class="p-4 max-h-[500px] overflow-y-auto">
                     <?php foreach ($allCategories as $cat): ?>
                         <a href="<?= BASE_URL ?>view/category/<?= $cat['id'] ?>"
-                            class="category-item flex items-center justify-between px-3 py-2 rounded-md mb-1 <?= ($cat['id'] === $categoryId) ? 'active' : '' ?>"
+                            class="flex items-center justify-between px-3 py-2 rounded-md mb-1 transition-all duration-300 cursor-pointer hover:bg-gray-50 <?= ($cat['id'] === $categoryId) ? 'bg-red-50 text-red-600' : '' ?>"
                             data-category-name="<?= strtolower(htmlspecialchars($cat['name'])) ?>"
                             title="<?= htmlspecialchars($cat['name']) ?>">
-                            <span class="category-text font-medium flex-1 truncate pr-3">
+                            <span
+                                class="font-medium flex-1 truncate pr-3 <?= ($cat['id'] === $categoryId) ? 'border-b-2 border-red-600 pb-0.5' : '' ?>">
                                 <?= htmlspecialchars($cat['name']) ?>
                             </span>
                             <div class="checkbox-custom ml-2 <?= ($cat['id'] === $categoryId) ? 'checked' : '' ?>"></div>
@@ -980,9 +854,11 @@ ob_start();
                         <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
                     <?php endif; ?>
 
-                    <div id="mobileDropdown" class="mobile-search-dropdown">
+                    <div id="mobileDropdown"
+                        class="absolute top-full left-0 right-0 bg-white border border-gray-200 border-t-0 rounded-b-lg max-h-48 overflow-y-auto z-50 hidden">
                         <?php foreach ($allCategories as $cat): ?>
-                            <div class="dropdown-item" data-category-id="<?= $cat['id'] ?>"
+                            <div class="px-4 py-3 cursor-pointer transition-colors duration-200 border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
+                                data-category-id="<?= $cat['id'] ?>"
                                 data-category-name="<?= htmlspecialchars($cat['name']) ?>">
                                 <?= htmlspecialchars($cat['name']) ?>
                             </div>
@@ -1025,7 +901,7 @@ ob_start();
                 <div id="loadingSkeleton"
                     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 <?= !empty($searchQuery) ? '' : 'hidden' ?>">
                     <?php for ($i = 0; $i < 6; $i++): ?>
-                        <div class="product-card">
+                        <div class="relative border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
                             <div class="skeleton h-40 md:h-48"></div>
                             <div class="p-3 md:p-5">
                                 <div class="skeleton h-4 w-3/4 mb-2"></div>
@@ -1055,46 +931,54 @@ ob_start();
                         <?php else: ?>
                             <?php foreach ($products as $product): ?>
                                 <div
-                                    class="product-card transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
+                                    class="product-card relative border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
                                     <div class="relative">
                                         <img src="<?= $product['primary_image'] ?>" alt="<?= htmlspecialchars($product['title']) ?>"
                                             class="w-full h-40 md:h-48 object-cover">
 
                                         <div class="product-details-btn">
                                             <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>"
-                                                class="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm">
+                                                class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm shadow-lg">
                                                 View Details
                                             </a>
                                         </div>
                                     </div>
 
-                                    <div class="p-3 md:p-5 flex flex-col justify-between flex-1">
-                                        <div>
-                                            <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
-                                                <?= htmlspecialchars($product['title']) ?>
-                                            </h3>
+                                    <div class="p-3 md:p-5 flex flex-col flex-1">
+                                        <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
+                                            <?= htmlspecialchars($product['title']) ?>
+                                        </h3>
 
+                                        <div class="flex-1 flex flex-col justify-end">
                                             <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
                                                 <?= htmlspecialchars($product['description']) ?>
                                             </p>
 
-                                            <div class="flex items-center text-gray-500 text-xs md:text-sm mb-4">
+                                            <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
                                                 <i class="fas fa-eye mr-1"></i>
                                                 <span><?= number_format($product['views']) ?> views</span>
                                             </div>
-                                        </div>
 
-                                        <div class="flex space-x-2 mt-auto">
-                                            <?php if ($product['has_pricing']): ?>
-                                                <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=buy"
-                                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
-                                                    <i class="fas fa-shopping-cart mr-1"></i> Buy
-                                                </a>
+                                            <?php if ($product['has_pricing'] && $product['lowest_price']): ?>
+                                                <div class="text-center mb-3">
+                                                    <span class="price-text font-bold" style="color: #D92B13;">
+                                                        <?= formatPrice($product['lowest_price']) ?>
+                                                    </span>
+                                                </div>
                                             <?php endif; ?>
-                                            <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=sell"
-                                                class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
-                                                <i class="fas fa-tag mr-1"></i> Sell
-                                            </a>
+
+                                            <div class="flex gap-2">
+                                                <?php if ($product['has_pricing']): ?>
+                                                    <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=buy"
+                                                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                                        <i class="fas fa-shopping-cart mr-1"></i> Buy
+                                                    </a>
+                                                <?php endif; ?>
+                                                <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=sell"
+                                                    class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                                    <i class="fas fa-tag mr-1"></i> Sell
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1116,14 +1000,14 @@ ob_start();
                     <p class="text-gray-500 text-sm mt-1">Try different keywords or browse our categories</p>
                 </div>
 
-                <!-- Quote Request Section -->
-                <div id="quoteRequestSection" class="quote-request-section">
+                <div id="quoteRequestSection"
+                    class="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-2xl p-8 text-center mt-12">
                     <div class="max-w-md mx-auto">
                         <h3 class="text-lg font-semibold text-gray-800 mb-2">Not found what you're looking for?</h3>
                         <p class="text-gray-600 text-sm mb-6">Get a custom quote for your specific building material
                             needs</p>
                         <a href="<?= BASE_URL ?>request-for-quote"
-                            class="quote-request-btn inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-all duration-300">
+                            class="inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-600/30">
                             <i class="fas fa-file-invoice mr-2"></i>
                             Request a Quote Now
                         </a>
@@ -1145,7 +1029,7 @@ ob_start();
 
     document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('categorySearch');
-        const categoryItems = document.querySelectorAll('.category-item[data-category-name]');
+        const categoryItems = document.querySelectorAll('a[data-category-name]');
         const mobileSearch = document.getElementById('mobileSearch');
         const mobileDropdown = document.getElementById('mobileDropdown');
 
@@ -1174,28 +1058,28 @@ ob_start();
 
         if (mobileSearch && mobileDropdown) {
             mobileSearch.addEventListener('focus', function () {
-                mobileDropdown.classList.add('show');
+                mobileDropdown.classList.remove('hidden');
             });
 
             mobileSearch.addEventListener('input', function () {
                 const searchTerm = this.value.toLowerCase();
-                const dropdownItems = mobileDropdown.querySelectorAll('.dropdown-item');
+                const dropdownItems = mobileDropdown.querySelectorAll('div[data-category-name]');
 
                 dropdownItems.forEach(item => {
                     const categoryName = item.getAttribute('data-category-name').toLowerCase();
                     item.style.display = categoryName.includes(searchTerm) ? 'block' : 'none';
                 });
 
-                mobileDropdown.classList.add('show');
+                mobileDropdown.classList.remove('hidden');
             });
 
             document.addEventListener('click', function (e) {
                 if (!mobileSearch.contains(e.target) && !mobileDropdown.contains(e.target)) {
-                    mobileDropdown.classList.remove('show');
+                    mobileDropdown.classList.add('hidden');
                 }
             });
 
-            const dropdownItems = mobileDropdown.querySelectorAll('.dropdown-item');
+            const dropdownItems = mobileDropdown.querySelectorAll('div[data-category-id]');
             dropdownItems.forEach(item => {
                 item.addEventListener('click', function () {
                     const categoryId = this.getAttribute('data-category-id');
@@ -1348,11 +1232,11 @@ ob_start();
     function renderCategories(categories) {
         const categoriesGrid = document.getElementById('categoriesGrid');
         const html = categories.map(category => `
-            <div class="category-card bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow border border-gray-200" 
+            <div class="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 border border-gray-200 cursor-pointer hover:-translate-y-0.5" 
                  onclick="window.location.href='<?= BASE_URL ?>view/category/${category.id}'">
                 <div class="flex items-center">
-                    <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center mr-4 flex-shrink-0">
-                        <i class="fas fa-tag text-primary-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4 flex-shrink-0">
+                        <i class="fas fa-tag text-red-600"></i>
                     </div>
                     <div>
                         <h3 class="font-medium text-gray-900">${escapeHtml(category.name)}</h3>
@@ -1363,10 +1247,15 @@ ob_start();
         categoriesGrid.innerHTML = html;
     }
 
+    function formatPrice(price) {
+        if (!price || price <= 0) return null;
+        return 'UGX ' + parseInt(price).toLocaleString() + '/=';
+    }
+
     function renderProducts(products, append = false) {
         const productsGrid = document.getElementById('productsGrid');
         const html = products.map(product => `
-            <div class="product-card transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col fade-in">
+            <div class="product-card relative border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col fade-in">
                 <div class="relative">
                     <img src="${product.primary_image}" alt="${escapeHtml(product.title)}"
                         class="w-full h-40 md:h-48 object-cover">
@@ -1378,39 +1267,47 @@ ob_start();
 
                     <div class="product-details-btn">
                         <a href="<?= BASE_URL ?>view/product/${product.id}"
-                            class="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm">
+                            class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm shadow-lg">
                             View Details
                         </a>
                     </div>
                 </div>
 
-                <div class="p-3 md:p-5 flex flex-col justify-between flex-1">
-                    <div>
-                        <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
-                            ${escapeHtml(product.title)}
-                        </h3>
+                <div class="p-3 md:p-5 flex flex-col flex-1">
+                    <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
+                        ${escapeHtml(product.title)}
+                    </h3>
 
+                    <div class="flex-1 flex flex-col justify-end">
                         <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
                             ${escapeHtml(product.description || 'No description available')}
                         </p>
 
-                        <div class="flex items-center text-gray-500 text-xs md:text-sm mb-4">
+                        <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
                             <i class="fas fa-eye mr-1"></i>
                             <span>${parseInt(product.views).toLocaleString()} views</span>
                         </div>
-                    </div>
 
-                    <div class="flex space-x-2 mt-auto">
-                        ${product.has_pricing ? `
-                            <a href="<?= BASE_URL ?>view/product/${product.id}?action=buy"
-                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
-                                <i class="fas fa-shopping-cart mr-1"></i> Buy
-                            </a>
+                        ${product.has_pricing && product.lowest_price ? `
+                            <div class="text-center mb-3">
+                                <span class="price-text font-bold" style="color: #D92B13;">
+                                    ${formatPrice(product.lowest_price)}
+                                </span>
+                            </div>
                         ` : ''}
-                        <a href="<?= BASE_URL ?>view/product/${product.id}?action=sell"
-                            class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
-                            <i class="fas fa-tag mr-1"></i> Sell
-                        </a>
+
+                        <div class="flex gap-2">
+                            ${product.has_pricing ? `
+                                <a href="<?= BASE_URL ?>view/product/${product.id}?action=buy"
+                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                    <i class="fas fa-shopping-cart mr-1"></i> Buy
+                                </a>
+                            ` : ''}
+                            <a href="<?= BASE_URL ?>view/product/${product.id}?action=sell"
+                                class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                <i class="fas fa-tag mr-1"></i> Sell
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
