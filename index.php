@@ -600,8 +600,7 @@ ob_start();
                 const container = document.getElementById('featured-products-container');
                 const toLoad = Math.min(perRow, total - loaded);
                 if (toLoad <= 0) {
-                    loadMoreBtn.disabled = true;
-                    loadMoreBtn.textContent = 'No more products';
+                    loadMoreBtn.classList.add('hidden');
                     return;
                 }
                 loadMoreBtn.textContent = 'Loading...';
@@ -638,8 +637,7 @@ ob_start();
                     loaded += toLoad;
                     loadMoreBtn.textContent = '<?= $featuredProductsSection['loadMoreButtonText'] ?>';
                     if (loaded >= total) {
-                        loadMoreBtn.disabled = true;
-                        loadMoreBtn.textContent = 'No more products';
+                        loadMoreBtn.classList.add('hidden');
                     }
                 }, 600);
             });
