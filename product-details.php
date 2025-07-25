@@ -119,6 +119,29 @@ function formatPrice($price)
     return 'UGX ' . number_format($price, 0) . '/=';
 }
 
+function getSupplierRegions($pdo, $productId)
+{
+    $stmt = $pdo->prepare("
+        SELECT 
+            vs.region,
+            vs.district,
+            COUNT(DISTINCT vs.id) as vendor_count
+        FROM vendor_stores vs
+        INNER JOIN store_categories sc ON vs.id = sc.store_id
+        INNER JOIN store_products sp ON sc.id = sp.store_category_id
+        INNER JOIN product_pricing pp ON sp.id = pp.store_products_id
+        WHERE sp.product_id = ? 
+          AND vs.status = 'active'
+          AND sc.status = 'active'
+          AND sp.status = 'active'
+        GROUP BY vs.region, vs.district
+        ORDER BY vs.region, vendor_count DESC
+    ");
+
+    $stmt->execute([$productId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 $stmt = $pdo->prepare("
     SELECT 
         p.id, 
@@ -166,6 +189,8 @@ $product['primary_image'] = $productImages[0];
 $seoTags = generateSeoMetaTags($product);
 $pageTitle = $seoTags['title'];
 $shortDescription = getShortDescription($product['description']);
+
+$supplierRegions = getSupplierRegions($pdo, $productId);
 
 $relatedStmt = $pdo->prepare("
     SELECT 
@@ -415,6 +440,158 @@ ob_start();
             font-size: clamp(1.25rem, 3vw, 1.4rem);
         }
     }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 0;
+        border: none;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow: hidden;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #D92B13 0%, #B91C1C 100%);
+        color: white;
+        padding: 20px 24px;
+        border-bottom: none;
+    }
+
+    .modal-body {
+        padding: 24px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .close {
+        color: white;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+
+    .close:hover,
+    .close:focus {
+        opacity: 1;
+    }
+
+    .region-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .region-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(217, 43, 19, 0.1), transparent);
+        transition: left 0.5s;
+    }
+
+    .region-card:hover::before {
+        left: 100%;
+    }
+
+    .region-card:hover {
+        border-color: #D92B13;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(217, 43, 19, 0.2);
+    }
+
+    .vendor-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .vendor-card:hover {
+        border-color: #D92B13;
+        box-shadow: 0 4px 12px -2px rgba(217, 43, 19, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .vendor-logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        object-fit: cover;
+        background-color: #f3f4f6;
+        flex-shrink: 0;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #D92B13;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .modal-content {
+            width: 95%;
+            margin: 10% auto;
+        }
+
+        .vendor-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 12px;
+        }
+
+        .vendor-logo {
+            width: 48px;
+            height: 48px;
+        }
+    }
 </style>
 
 <div class="relative h-50 md:h-64 w-full bg-gray-100 overflow-hidden">
@@ -593,6 +770,63 @@ ob_start();
         </div>
     </div>
 
+    <div id="store-tab" class="tab-content hidden">
+        <div class="bg-white rounded-xl shadow-sm p-6 lg:p-8">
+            <h3 class="text-xl font-semibold mb-6 text-gray-800">
+                <i class="fas fa-map-marker-alt mr-2" style="color: #D92B13;"></i>
+                Supplier Regions
+            </h3>
+
+            <?php if (!empty($supplierRegions)): ?>
+                <div class="mb-6">
+                    <p class="text-gray-600 mb-4">
+                        This product is available from suppliers in <strong><?= count($supplierRegions) ?></strong>
+                        region(s).
+                        Click on a region to view available suppliers.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <?php foreach ($supplierRegions as $region): ?>
+                        <div class="region-card" onclick="showVendorsInRegion('<?= htmlspecialchars($region['region']) ?>')">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-bold text-lg text-gray-800">
+                                    <?= htmlspecialchars($region['region']) ?>
+                                </h4>
+                                <span class="bg-[#D92B13] text-white text-sm font-bold px-3 py-1 rounded-full">
+                                    <?= $region['vendor_count'] ?>         <?= $region['vendor_count'] == 1 ? 'Vendor' : 'Vendors' ?>
+                                </span>
+                            </div>
+
+                            <div class="text-sm text-gray-600 mb-3">
+                                <i class="fas fa-map-pin mr-1"></i>
+                                Districts: <?= htmlspecialchars($region['district']) ?>
+                            </div>
+
+                            <div class="flex items-center justify-end">
+                                <div class="text-[#D92B13] font-medium text-sm">
+                                    View Suppliers <i class="fas fa-arrow-right ml-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="text-center py-6">
+                    <div class="mb-4">
+                        <i class="fas fa-store text-6xl text-gray-300"></i>
+                    </div>
+                    <h4 class="text-xl font-semibold text-gray-600 mb-2">No Suppliers Found</h4>
+                    <a href="<?php echo BASE_URL; ?>request-for-quote" class="inline-block">
+                        <button class="bg-[#D92B13] hover:bg-[#B91C1C] text-white px-6 py-3 rounded-lg transition-colors">
+                            <i class="fas fa-envelope mr-2"></i> Request a Quote
+                        </button>
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
     <div id="reviews-tab" class="tab-content hidden">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2">
@@ -678,276 +912,358 @@ ob_start();
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <div id="store-tab" class="tab-content hidden">
-            <div class="bg-white rounded-xl shadow-sm p-6 lg:p-8">
-                <h3 class="text-xl font-semibold mb-6 text-gray-800">Available Store Outlets</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <?php foreach ($storeOutlets as $outlet): ?>
-                        <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow bg-white">
-                            <h4 class="font-semibold text-lg mb-3 text-gray-800"><?= htmlspecialchars($outlet['name']) ?>
-                            </h4>
-                            <div class="space-y-3 text-gray-600">
-                                <div class="flex items-start">
-                                    <i class="fas fa-map-marker-alt mt-1 mr-3 text-[#D92B13]"></i>
-                                    <span><?= htmlspecialchars($outlet['address']) ?></span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-phone-alt mt-1 mr-3 text-[#D92B13]"></i>
-                                    <span><?= htmlspecialchars($outlet['phone']) ?></span>
-                                </div>
-                                <div class="flex items-start">
-                                    <i class="fas fa-clock mt-1 mr-3 text-[#D92B13]"></i>
-                                    <span><?= htmlspecialchars($outlet['hours']) ?></span>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <button
-                                    class="font-medium flex items-center transition-colors text-[#D92B13] hover:text-[#B91C1C]">
-                                    <i class="fas fa-directions mr-2"></i> Get Directions
-                                </button>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+<div id="vendorModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span class="close" onclick="closeVendorModal()">&times;</span>
+            <h2 id="modalTitle" class="text-xl font-bold">
+                <i class="fas fa-store mr-2"></i>
+                Suppliers in <span id="modalRegionName"></span>
+            </h2>
+        </div>
+        <div class="modal-body">
+            <div id="modalLoading" class="text-center py-8">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <p class="text-gray-600">Loading suppliers...</p>
+            </div>
+            <div id="modalContent" class="hidden">
             </div>
         </div>
     </div>
+</div>
 
-    <?php if (!empty($relatedProducts)): ?>
-        <div class="bg-gray-50 py-12">
-            <div class="container mx-auto px-4">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800">You May Also Like</h2>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <?php foreach ($relatedProducts as $relatedProduct): ?>
-                        <div
-                            class="product-card transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
-                            <div class="relative">
-                                <img src="<?= $relatedProduct['primary_image'] ?>"
-                                    alt="<?= htmlspecialchars($relatedProduct['title']) ?>"
-                                    class="w-full h-40 md:h-48 object-cover">
+<?php if (!empty($relatedProducts)): ?>
+    <div class="bg-gray-50 py-12">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">You May Also Like</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <?php foreach ($relatedProducts as $relatedProduct): ?>
+                    <div
+                        class="product-card transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
+                        <div class="relative">
+                            <img src="<?= $relatedProduct['primary_image'] ?>"
+                                alt="<?= htmlspecialchars($relatedProduct['title']) ?>"
+                                class="w-full h-40 md:h-48 object-cover">
 
-                                <div class="product-details-btn">
-                                    <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>"
-                                        class="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium hover:text-white hover:bg-[#D92B13] transition-colors text-sm">
-                                        View Details
+                            <div class="product-details-btn">
+                                <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>"
+                                    class="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-medium hover:text-white hover:bg-[#D92B13] transition-colors text-sm">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                        <div class="p-3 md:p-5 flex flex-col flex-1">
+                            <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
+                                <?= htmlspecialchars($relatedProduct['title']) ?>
+                            </h3>
+                            <div class="flex-1 flex flex-col justify-end">
+                                <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
+                                    <?= htmlspecialchars(getShortDescription($relatedProduct['description'], 100)) ?>
+                                </p>
+                                <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
+                                    <i class="fas fa-eye mr-1 text-[#D92B13]"></i>
+                                    <span><?= number_format($relatedProduct['views']) ?> views</span>
+                                </div>
+                                <?php if ($relatedProduct['has_pricing'] && $relatedProduct['lowest_price']): ?>
+                                    <div class="text-center mb-3">
+                                        <span class="price-text font-bold text-[#D92B13]">
+                                            <?= formatPrice($relatedProduct['lowest_price']) ?>
+                                        </span>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="flex gap-2">
+                                    <?php if ($relatedProduct['has_pricing']): ?>
+                                        <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>?action=buy"
+                                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                            <i class="fas fa-shopping-cart mr-1"></i> Buy
+                                        </a>
+                                    <?php endif; ?>
+                                    <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>?action=sell"
+                                        class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                        <i class="fas fa-tag mr-1"></i> Sell
                                     </a>
                                 </div>
                             </div>
-                            <div class="p-3 md:p-5 flex flex-col flex-1">
-                                <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
-                                    <?= htmlspecialchars($relatedProduct['title']) ?>
-                                </h3>
-                                <div class="flex-1 flex flex-col justify-end">
-                                    <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
-                                        <?= htmlspecialchars(getShortDescription($relatedProduct['description'], 100)) ?>
-                                    </p>
-                                    <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
-                                        <i class="fas fa-eye mr-1 text-[#D92B13]"></i>
-                                        <span><?= number_format($relatedProduct['views']) ?> views</span>
-                                    </div>
-                                    <?php if ($relatedProduct['has_pricing'] && $relatedProduct['lowest_price']): ?>
-                                        <div class="text-center mb-3">
-                                            <span class="price-text font-bold text-[#D92B13]">
-                                                <?= formatPrice($relatedProduct['lowest_price']) ?>
-                                            </span>
-                                        </div>
-                                    <?php endif; ?>
-                                    <div class="flex gap-2">
-                                        <?php if ($relatedProduct['has_pricing']): ?>
-                                            <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>?action=buy"
-                                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
-                                                <i class="fas fa-shopping-cart mr-1"></i> Buy
-                                            </a>
-                                        <?php endif; ?>
-                                        <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>?action=sell"
-                                            class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
-                                            <i class="fas fa-tag mr-1"></i> Sell
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
-    <?php endif; ?>
+    </div>
+<?php endif; ?>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const tabContents = document.querySelectorAll('.tab-content');
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
 
-            tabButtons.forEach(btn => {
-                btn.addEventListener('click', function () {
-                    tabButtons.forEach(b => {
-                        b.classList.remove('text-[#D92B13]', 'border-[#D92B13]');
-                        b.classList.add('border-transparent', 'text-gray-500');
-                        b.style.color = '';
-                        b.style.borderColor = '';
-                    });
-
-                    this.classList.remove('border-transparent', 'text-gray-500');
-                    this.style.color = '#D92B13';
-                    this.style.borderColor = '#D92B13';
-
-                    tabContents.forEach(content => {
-                        content.classList.add('hidden');
-                        content.classList.remove('block');
-                    });
-
-                    const tabId = this.getAttribute('data-tab');
-                    const targetContent = document.getElementById(tabId);
-                    targetContent.classList.remove('hidden');
-                    targetContent.classList.add('block');
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                tabButtons.forEach(b => {
+                    b.classList.remove('text-[#D92B13]', 'border-[#D92B13]');
+                    b.classList.add('border-transparent', 'text-gray-500');
+                    b.style.color = '';
+                    b.style.borderColor = '';
                 });
+
+                this.classList.remove('border-transparent', 'text-gray-500');
+                this.style.color = '#D92B13';
+                this.style.borderColor = '#D92B13';
+
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                    content.classList.remove('block');
+                });
+
+                const tabId = this.getAttribute('data-tab');
+                const targetContent = document.getElementById(tabId);
+                targetContent.classList.remove('hidden');
+                targetContent.classList.add('block');
             });
+        });
 
-            const galleryThumbs = document.querySelectorAll('.gallery-thumb');
-            const mainImage = document.getElementById('main-product-image');
+        const galleryThumbs = document.querySelectorAll('.gallery-thumb');
+        const mainImage = document.getElementById('main-product-image');
 
-            galleryThumbs.forEach(thumb => {
-                thumb.addEventListener('click', function () {
-                    const imageUrl = this.getAttribute('data-image');
-                    mainImage.src = imageUrl;
+        galleryThumbs.forEach(thumb => {
+            thumb.addEventListener('click', function () {
+                const imageUrl = this.getAttribute('data-image');
+                mainImage.src = imageUrl;
 
-                    galleryThumbs.forEach(t => {
-                        t.classList.remove('border-[#D92B13]');
-                        t.classList.add('border-transparent');
-                    });
-                    this.classList.add('border-[#D92B13]');
-                    this.classList.remove('border-transparent');
+                galleryThumbs.forEach(t => {
+                    t.classList.remove('border-[#D92B13]');
+                    t.classList.add('border-transparent');
                 });
+                this.classList.add('border-[#D92B13]');
+                this.classList.remove('border-transparent');
             });
+        });
 
-            const starElements = document.querySelectorAll('#review-stars i');
-            const ratingInput = document.getElementById('reviewRating');
+        const starElements = document.querySelectorAll('#review-stars i');
+        const ratingInput = document.getElementById('reviewRating');
 
-            starElements.forEach(star => {
-                star.addEventListener('mouseover', () => {
-                    const val = parseInt(star.getAttribute('data-value'));
-                    starElements.forEach(s => {
-                        const sVal = parseInt(s.getAttribute('data-value'));
-                        if (sVal <= val) {
-                            s.classList.add('text-amber-400');
-                        }
-                    });
-                });
-
-                star.addEventListener('mouseout', () => {
-                    if (ratingInput.value === '0') {
-                        starElements.forEach(s => s.classList.remove('text-amber-400'));
-                    } else {
-                        starElements.forEach(s => {
-                            const sVal = parseInt(s.getAttribute('data-value'));
-                            if (sVal > parseInt(ratingInput.value)) {
-                                s.classList.remove('text-amber-400');
-                            }
-                        });
+        starElements.forEach(star => {
+            star.addEventListener('mouseover', () => {
+                const val = parseInt(star.getAttribute('data-value'));
+                starElements.forEach(s => {
+                    const sVal = parseInt(s.getAttribute('data-value'));
+                    if (sVal <= val) {
+                        s.classList.add('text-amber-400');
                     }
                 });
+            });
 
-                star.addEventListener('click', () => {
-                    const val = parseInt(star.getAttribute('data-value'));
-                    ratingInput.value = val;
+            star.addEventListener('mouseout', () => {
+                if (ratingInput.value === '0') {
+                    starElements.forEach(s => s.classList.remove('text-amber-400'));
+                } else {
                     starElements.forEach(s => {
                         const sVal = parseInt(s.getAttribute('data-value'));
-                        s.classList.remove('fas', 'far', 'text-amber-400');
-                        if (sVal <= val) {
-                            s.classList.add('fas', 'text-amber-400');
-                        } else {
-                            s.classList.add('far');
+                        if (sVal > parseInt(ratingInput.value)) {
+                            s.classList.remove('text-amber-400');
                         }
                     });
-                });
-            });
-
-            const reviewComment = document.getElementById('reviewComment');
-            const charCount = document.getElementById('char-count');
-
-            reviewComment.addEventListener('input', () => {
-                const remaining = 200 - reviewComment.value.length;
-                charCount.textContent = remaining;
-            });
-
-            document.getElementById('review-form').addEventListener('submit', function (e) {
-                e.preventDefault();
-                const name = document.getElementById('reviewerName').value.trim();
-                const rating = parseInt(document.getElementById('reviewRating').value);
-                const comment = document.getElementById('reviewComment').value.trim();
-
-                if (!name || !comment || rating < 1) {
-                    alert('Please fill all fields and select a rating.');
-                    return;
                 }
+            });
 
-                alert('Thank you for your review! (This is a demo - review not actually saved)');
-
-                this.reset();
-                document.getElementById('reviewRating').value = 0;
-                document.getElementById('char-count').textContent = '200';
+            star.addEventListener('click', () => {
+                const val = parseInt(star.getAttribute('data-value'));
+                ratingInput.value = val;
                 starElements.forEach(s => {
-                    s.classList.remove('fas', 'text-amber-400');
-                    s.classList.add('far');
+                    const sVal = parseInt(s.getAttribute('data-value'));
+                    s.classList.remove('fas', 'far', 'text-amber-400');
+                    if (sVal <= val) {
+                        s.classList.add('fas', 'text-amber-400');
+                    } else {
+                        s.classList.add('far');
+                    }
                 });
             });
         });
 
-        function copyLink() {
-            const currentUrl = window.location.href;
-            navigator.clipboard.writeText(currentUrl).then(() => {
-                showToast('Link copied to clipboard!', 'success');
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-                showToast('Failed to copy link', 'error');
+        const reviewComment = document.getElementById('reviewComment');
+        const charCount = document.getElementById('char-count');
+
+        reviewComment.addEventListener('input', () => {
+            const remaining = 200 - reviewComment.value.length;
+            charCount.textContent = remaining;
+        });
+
+        document.getElementById('review-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const name = document.getElementById('reviewerName').value.trim();
+            const rating = parseInt(document.getElementById('reviewRating').value);
+            const comment = document.getElementById('reviewComment').value.trim();
+
+            if (!name || !comment || rating < 1) {
+                alert('Please fill all fields and select a rating.');
+                return;
+            }
+
+            alert('Thank you for your review! (This is a demo - review not actually saved)');
+
+            this.reset();
+            document.getElementById('reviewRating').value = 0;
+            document.getElementById('char-count').textContent = '200';
+            starElements.forEach(s => {
+                s.classList.remove('fas', 'text-amber-400');
+                s.classList.add('far');
             });
+        });
+    });
+
+    function showVendorsInRegion(region) {
+        const modal = document.getElementById('vendorModal');
+        const modalRegionName = document.getElementById('modalRegionName');
+        const modalLoading = document.getElementById('modalLoading');
+        const modalContent = document.getElementById('modalContent');
+
+        modalRegionName.textContent = region;
+        modal.style.display = 'block';
+        modalLoading.classList.remove('hidden');
+        modalContent.classList.add('hidden');
+
+        fetch('<?= BASE_URL ?>fetch/getVendors.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                product_id: '<?= $productId ?>',
+                region: region
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                modalLoading.classList.add('hidden');
+                modalContent.classList.remove('hidden');
+
+                if (data.success && data.vendors.length > 0) {
+                    displayVendors(data.vendors);
+                } else {
+                    modalContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-store text-4xl text-gray-300 mb-4"></i>
+                        <h4 class="text-lg font-semibold text-gray-600 mb-2">No Suppliers Found</h4>
+                        <p class="text-gray-500">No suppliers found in ${region} for this product.</p>
+                    </div>
+                `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalLoading.classList.add('hidden');
+                modalContent.classList.remove('hidden');
+                modalContent.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-4xl text-red-300 mb-4"></i>
+                    <h4 class="text-lg font-semibold text-red-600 mb-2">Error Loading Suppliers</h4>
+                    <p class="text-gray-500">Please try again later.</p>
+                </div>
+            `;
+            });
+    }
+
+    function displayVendors(vendors) {
+        const modalContent = document.getElementById('modalContent');
+        let vendorsHtml = `
+            <div class="mb-4">
+                <p class="text-gray-600">
+                    Found <strong>${vendors.length}</strong> supplier${vendors.length !== 1 ? 's' : ''} in this region:
+                </p>
+            </div>
+        `;
+
+        vendors.forEach(vendor => {
+            const logoUrl = `<?php echo BASE_URL; ?>${vendor.logo_url}` || `https://placehold.co/56x56/e2e8f0/1e293b?text=${encodeURIComponent(vendor.name.charAt(0))}`;
+
+            vendorsHtml += `
+                <div class="vendor-card">
+                    <img src="${logoUrl}" alt="${vendor.name}" class="vendor-logo" 
+                         onerror="this.src='https://placehold.co/56x56/e2e8f0/1e293b?text=${encodeURIComponent(vendor.name.charAt(0))}'">
+                    
+                    <div class="flex-1">
+                        <h4 class="font-bold text-lg text-gray-800 mb-1">${vendor.name}</h4>
+                        <p class="text-sm text-gray-600">
+                            <i class="fas fa-map-marker-alt mr-1 text-[#D92B13]"></i>
+                            ${vendor.district}
+                        </p>
+                    </div>
+                </div>
+            `;
+        });
+
+        modalContent.innerHTML = vendorsHtml;
+    }
+
+    function closeVendorModal() {
+        document.getElementById('vendorModal').style.display = 'none';
+    }
+
+    window.onclick = function (event) {
+        const modal = document.getElementById('vendorModal');
+        if (event.target === modal) {
+            closeVendorModal();
         }
+    }
 
-        function shareOnWhatsApp() {
-            const currentUrl = window.location.href;
-            const productName = "<?= addslashes($product['title']) ?>";
-            const message = `Check out ${productName} on Zzimba Online: ${currentUrl}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-        }
+    function copyLink() {
+        const currentUrl = window.location.href;
+        navigator.clipboard.writeText(currentUrl).then(() => {
+            showToast('Link copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+            showToast('Failed to copy link', 'error');
+        });
+    }
 
-        function shareOnFacebook() {
-            const currentUrl = window.location.href;
-            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`, '_blank');
-        }
+    function shareOnWhatsApp() {
+        const currentUrl = window.location.href;
+        const productName = "<?= addslashes($product['title']) ?>";
+        const message = `Check out ${productName} on Zzimba Online: ${currentUrl}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    }
 
-        function shareOnTwitter() {
-            const currentUrl = window.location.href;
-            const productName = "<?= addslashes($product['title']) ?>";
-            const message = `Check out ${productName} on Zzimba Online:`;
-            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(currentUrl)}`, '_blank');
-        }
+    function shareOnFacebook() {
+        const currentUrl = window.location.href;
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`, '_blank');
+    }
 
-        function shareOnLinkedIn() {
-            const currentUrl = window.location.href;
-            const productName = "<?= addslashes($product['title']) ?>";
-            const message = `Check out ${productName} on Zzimba Online.`;
-            window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(productName)}&summary=${encodeURIComponent(message)}`, '_blank');
-        }
+    function shareOnTwitter() {
+        const currentUrl = window.location.href;
+        const productName = "<?= addslashes($product['title']) ?>";
+        const message = `Check out ${productName} on Zzimba Online:`;
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(currentUrl)}`, '_blank');
+    }
 
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity duration-300`;
-            toast.textContent = message;
+    function shareOnLinkedIn() {
+        const currentUrl = window.location.href;
+        const productName = "<?= addslashes($product['title']) ?>";
+        const message = `Check out ${productName} on Zzimba Online.`;
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(productName)}&summary=${encodeURIComponent(message)}`, '_blank');
+    }
 
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.add('opacity-100'), 10);
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity duration-300`;
+        toast.textContent = message;
 
-            setTimeout(() => {
-                toast.classList.remove('opacity-100');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-    </script>
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('opacity-100'), 10);
 
-    <?php
-    $mainContent = ob_get_clean();
-    include __DIR__ . '/master.php';
-    ?>
+        setTimeout(() => {
+            toast.classList.remove('opacity-100');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+</script>
+
+<?php
+$mainContent = ob_get_clean();
+include __DIR__ . '/master.php';
+?>
