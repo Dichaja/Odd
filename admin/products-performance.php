@@ -38,7 +38,7 @@ ob_start();
     </div>
 
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
                 <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
@@ -86,18 +86,6 @@ ob_start();
                     </div>
                 </div>
             </div>
-
-            <div class="bg-gradient-to-r from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
-                <div class="flex items-center justify-between">
-                    <div class="min-w-0 flex-1">
-                        <p class="text-xs font-medium text-red-600 uppercase tracking-wide">Avg Views/Product</p>
-                        <p class="text-xl font-bold text-red-900 truncate" id="avgViewsPerProduct">0</p>
-                    </div>
-                    <div class="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-chart-line text-red-600"></i>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-8">
@@ -114,12 +102,12 @@ ob_start();
                             <i class="fas fa-calendar-day mr-2"></i>Today
                         </button>
                         <button
-                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="week">
                             <i class="fas fa-calendar-week mr-2"></i> Weekly
                         </button>
                         <button
-                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="month">
                             <i class="fas fa-calendar-alt mr-2"></i> Monthly
                         </button>
@@ -143,9 +131,9 @@ ob_start();
                     <label class="block text-sm font-medium text-gray-700 mb-2">View Type</label>
                     <select id="viewTypeFilter"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <option value="both">Both View Types</option>
                         <option value="unique">Unique Views (by session)</option>
                         <option value="cumulative">Cumulative Views (all)</option>
-                        <option value="both">Both View Types</option>
                     </select>
                 </div>
                 <div>
@@ -189,7 +177,7 @@ ob_start();
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-semibold text-secondary">Top Categories</h3>
-                    <span class="text-sm text-gray-500" id="categoryChartPeriod">This Month</span>
+                    <span class="text-sm text-gray-500" id="categoryChartPeriod">This Week</span>
                 </div>
                 <div class="h-80">
                     <canvas id="categoryChart"></canvas>
@@ -231,14 +219,14 @@ ob_start();
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Category</th>
-                            <th
-                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                                id="uniqueViewsHeader">
                                 Unique Views</th>
-                            <th
-                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                                id="totalViewsHeader">
                                 Total Views</th>
-                            <th
-                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                                id="engagementHeader">
                                 Engagement Rate</th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -314,7 +302,8 @@ ob_start();
             class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5">
             <div class="flex items-center gap-3">
                 <div id="modalProductImage" class="flex-shrink-0 h-12 w-12 rounded-lg bg-gray-100 overflow-hidden">
-                    <img src="/placeholder.svg" alt="" class="w-full h-full object-cover">
+                    <img src="https://placehold.co/48x48/e2e8f0/1e293b?text=Product" alt=""
+                        class="w-full h-full object-cover">
                 </div>
                 <div>
                     <h3 class="text-lg sm:text-xl font-bold text-secondary" id="modalTitle">Product Analytics</h3>
@@ -342,24 +331,11 @@ ob_start();
     let currentProductId = null;
     let currentPage = 1;
     let itemsPerPage = 20;
-    let currentPeriod = 'month';
+    let currentPeriod = 'week';
+    let currentViewType = 'both';
     let totalProducts = 0;
     let viewsChart = null;
     let categoryChart = null;
-    let autoRefreshInterval;
-
-    function startAutoRefresh() {
-        autoRefreshInterval = setInterval(() => {
-            loadProductsData();
-            loadChartData();
-        }, 30000);
-    }
-
-    function stopAutoRefresh() {
-        if (autoRefreshInterval) {
-            clearInterval(autoRefreshInterval);
-        }
-    }
 
     document.addEventListener('DOMContentLoaded', function () {
         setupEventListeners();
@@ -367,25 +343,16 @@ ob_start();
         loadProductsData();
         loadChartData();
         loadCategories();
-        startAutoRefresh();
-    });
-
-    document.addEventListener('visibilitychange', function () {
-        if (document.hidden) {
-            stopAutoRefresh();
-        } else {
-            startAutoRefresh();
-        }
     });
 
     function setupEventListeners() {
         document.getElementById('refreshBtn').addEventListener('click', refreshData);
         document.getElementById('exportBtn').addEventListener('click', exportData);
-        document.getElementById('searchFilter').addEventListener('input', debounce(filterProducts, 300));
-        document.getElementById('statusFilter').addEventListener('change', filterProducts);
-        document.getElementById('viewTypeFilter').addEventListener('change', loadProductsData);
-        document.getElementById('categoryFilter').addEventListener('change', loadProductsData);
-        document.getElementById('sortFilter').addEventListener('change', loadProductsData);
+        document.getElementById('searchFilter').addEventListener('input', debounce(applyFilters, 300));
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        document.getElementById('viewTypeFilter').addEventListener('change', applyFilters);
+        document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+        document.getElementById('sortFilter').addEventListener('change', applyFilters);
         document.getElementById('chartTypeToggle').addEventListener('click', toggleChartType);
 
         document.querySelectorAll('.date-filter-btn').forEach(btn => {
@@ -415,6 +382,7 @@ ob_start();
 
                 currentPeriod = 'custom';
                 currentPage = 1;
+                updateCategoryChartLabel();
                 loadProductsData();
                 loadChartData();
             }
@@ -433,6 +401,58 @@ ob_start();
         });
     }
 
+    function applyFilters() {
+        currentPage = 1;
+        currentViewType = document.getElementById('viewTypeFilter').value;
+        updateTableHeaders();
+        loadProductsData();
+        loadChartData();
+    }
+
+    function updateTableHeaders() {
+        const uniqueHeader = document.getElementById('uniqueViewsHeader');
+        const totalHeader = document.getElementById('totalViewsHeader');
+        const engagementHeader = document.getElementById('engagementHeader');
+
+        if (currentViewType === 'unique') {
+            uniqueHeader.style.display = '';
+            totalHeader.style.display = 'none';
+            engagementHeader.style.display = 'none';
+        } else if (currentViewType === 'cumulative') {
+            uniqueHeader.style.display = 'none';
+            totalHeader.style.display = '';
+            engagementHeader.style.display = 'none';
+        } else {
+            uniqueHeader.style.display = '';
+            totalHeader.style.display = '';
+            engagementHeader.style.display = '';
+        }
+    }
+
+    function updateCategoryChartLabel() {
+        const label = document.getElementById('categoryChartPeriod');
+        switch (currentPeriod) {
+            case 'today':
+                label.textContent = 'Today';
+                label.style.display = '';
+                break;
+            case 'week':
+                label.textContent = 'This Week';
+                label.style.display = '';
+                break;
+            case 'month':
+                label.textContent = 'This Month';
+                label.style.display = '';
+                break;
+            case 'custom':
+                label.style.display = 'none';
+                break;
+            default:
+                label.textContent = 'This Week';
+                label.style.display = '';
+        }
+    }
+
     async function loadProductsData() {
         try {
             const params = new URLSearchParams({
@@ -442,7 +462,7 @@ ob_start();
                 start_date: document.getElementById('startDate').value,
                 end_date: document.getElementById('endDate').value,
                 period: currentPeriod,
-                view_type: document.getElementById('viewTypeFilter').value,
+                view_type: currentViewType,
                 category: document.getElementById('categoryFilter').value,
                 sort: document.getElementById('sortFilter').value,
                 status: document.getElementById('statusFilter').value,
@@ -475,7 +495,7 @@ ob_start();
                 start_date: document.getElementById('startDate').value,
                 end_date: document.getElementById('endDate').value,
                 period: currentPeriod,
-                view_type: document.getElementById('viewTypeFilter').value
+                view_type: currentViewType
             });
 
             const response = await fetch(`fetch/manageProductsPerformance.php?${params}`);
@@ -517,7 +537,6 @@ ob_start();
             document.getElementById('totalUniqueViews').textContent = stats.total_unique_views.toLocaleString();
             document.getElementById('totalCumulativeViews').textContent = stats.total_cumulative_views.toLocaleString();
             document.getElementById('todayViews').textContent = stats.today_views.toLocaleString();
-            document.getElementById('avgViewsPerProduct').textContent = stats.avg_views_per_product.toFixed(1);
         }
     }
 
@@ -530,25 +549,35 @@ ob_start();
 
         const chartType = document.getElementById('chartTypeToggle').textContent.includes('Line') ? 'line' : 'bar';
 
+        const datasets = [];
+
+        if (currentViewType === 'both' || currentViewType === 'unique') {
+            datasets.push({
+                label: 'Unique Views',
+                data: timelineData.unique_views,
+                borderColor: '#10B981',
+                backgroundColor: chartType === 'bar' ? '#10B981' : 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: chartType === 'line'
+            });
+        }
+
+        if (currentViewType === 'both' || currentViewType === 'cumulative') {
+            datasets.push({
+                label: 'Total Views',
+                data: timelineData.total_views,
+                borderColor: '#8B5CF6',
+                backgroundColor: chartType === 'bar' ? '#8B5CF6' : 'rgba(139, 92, 246, 0.1)',
+                tension: 0.4,
+                fill: chartType === 'line'
+            });
+        }
+
         viewsChart = new Chart(ctx, {
             type: chartType,
             data: {
                 labels: timelineData.labels,
-                datasets: [{
-                    label: 'Unique Views',
-                    data: timelineData.unique_views,
-                    borderColor: '#10B981',
-                    backgroundColor: chartType === 'bar' ? '#10B981' : 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4,
-                    fill: chartType === 'line'
-                }, {
-                    label: 'Total Views',
-                    data: timelineData.total_views,
-                    borderColor: '#8B5CF6',
-                    backgroundColor: chartType === 'bar' ? '#8B5CF6' : 'rgba(139, 92, 246, 0.1)',
-                    tension: 0.4,
-                    fill: chartType === 'line'
-                }]
+                datasets: datasets
             },
             options: {
                 responsive: true,
@@ -621,24 +650,9 @@ ob_start();
         tbody.innerHTML = products.map(product => {
             const engagementRate = product.total_views > 0 ? ((product.unique_views / product.total_views) * 100).toFixed(1) : '0.0';
 
-            return `
-                <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewProductDetails('${product.id}')">
-                    <td class="px-4 py-3 whitespace-nowrap">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10 rounded-lg overflow-hidden bg-gray-100">
-                                <img src="${product.primary_image || 'https://placehold.co/40x40?text=No+Image'}" 
-                                     alt="${product.title}" class="w-full h-full object-cover">
-                            </div>
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-secondary max-w-xs truncate">${product.title}</div>
-                                <div class="text-xs text-gray-500">ID: ${product.id}</div>
-                                ${product.featured ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">Featured</span>' : ''}
-                            </div>
-                        </div>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <span class="text-sm text-gray-900">${product.category_name || 'Uncategorized'}</span>
-                    </td>
+            let viewsColumns = '';
+            if (currentViewType === 'both') {
+                viewsColumns = `
                     <td class="px-4 py-3 text-center">
                         <span class="text-sm font-medium text-green-600">${product.unique_views.toLocaleString()}</span>
                     </td>
@@ -653,6 +667,40 @@ ob_start();
                             <span class="text-xs text-gray-600">${engagementRate}%</span>
                         </div>
                     </td>
+                `;
+            } else if (currentViewType === 'unique') {
+                viewsColumns = `
+                    <td class="px-4 py-3 text-center">
+                        <span class="text-sm font-medium text-green-600">${product.unique_views.toLocaleString()}</span>
+                    </td>
+                `;
+            } else {
+                viewsColumns = `
+                    <td class="px-4 py-3 text-center">
+                        <span class="text-sm font-medium text-purple-600">${product.total_views.toLocaleString()}</span>
+                    </td>
+                `;
+            }
+
+            return `
+                <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewProductDetails('${product.id}')">
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-lg overflow-hidden bg-gray-100">
+                                <img src="${product.primary_image}" 
+                                     alt="${product.title}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-secondary max-w-xs truncate">${product.title}</div>
+                                <div class="text-xs text-gray-500">ID: ${product.id}</div>
+                                ${product.featured ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">Featured</span>' : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="text-sm text-gray-900">${product.category_name || 'Uncategorized'}</span>
+                    </td>
+                    ${viewsColumns}
                     <td class="px-4 py-3 text-center whitespace-nowrap">
                         <div class="text-sm text-gray-900">${product.last_viewed ? formatDate(product.last_viewed) : 'Never'}</div>
                         <div class="text-xs text-gray-500">${product.last_viewed ? formatTime(product.last_viewed) : ''}</div>
@@ -678,11 +726,56 @@ ob_start();
         container.innerHTML = products.map(product => {
             const engagementRate = product.total_views > 0 ? ((product.unique_views / product.total_views) * 100).toFixed(1) : '0.0';
 
+            let viewsSection = '';
+            if (currentViewType === 'both') {
+                viewsSection = `
+                    <div class="grid grid-cols-2 gap-4 mb-2">
+                        <div>
+                            <span class="text-xs text-gray-500">Unique Views</span>
+                            <div class="text-sm font-medium text-green-600">${product.unique_views.toLocaleString()}</div>
+                        </div>
+                        <div>
+                            <span class="text-xs text-gray-500">Total Views</span>
+                            <div class="text-sm font-medium text-purple-600">${product.total_views.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-12 bg-gray-200 rounded-full h-1.5 mr-2">
+                                <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${Math.min(engagementRate, 100)}%"></div>
+                            </div>
+                            <span class="text-xs text-gray-600">${engagementRate}%</span>
+                        </div>
+                        <span class="text-xs text-gray-500">${product.last_viewed ? formatDate(product.last_viewed) : 'Never viewed'}</span>
+                    </div>
+                `;
+            } else if (currentViewType === 'unique') {
+                viewsSection = `
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-gray-500">Unique Views</span>
+                            <div class="text-sm font-medium text-green-600">${product.unique_views.toLocaleString()}</div>
+                        </div>
+                        <span class="text-xs text-gray-500">${product.last_viewed ? formatDate(product.last_viewed) : 'Never viewed'}</span>
+                    </div>
+                `;
+            } else {
+                viewsSection = `
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-gray-500">Total Views</span>
+                            <div class="text-sm font-medium text-purple-600">${product.total_views.toLocaleString()}</div>
+                        </div>
+                        <span class="text-xs text-gray-500">${product.last_viewed ? formatDate(product.last_viewed) : 'Never viewed'}</span>
+                    </div>
+                `;
+            }
+
             return `
                 <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewProductDetails('${product.id}')">
                     <div class="flex items-start gap-3">
                         <div class="flex-shrink-0 h-12 w-12 rounded-lg overflow-hidden bg-gray-100">
-                            <img src="${product.primary_image || 'https://placehold.co/48x48?text=No+Image'}" 
+                            <img src="${product.primary_image}" 
                                  alt="${product.title}" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-1 min-w-0">
@@ -691,25 +784,7 @@ ob_start();
                                 ${product.featured ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Featured</span>' : ''}
                             </div>
                             <div class="text-xs text-gray-500 mb-2">${product.category_name || 'Uncategorized'}</div>
-                            <div class="grid grid-cols-2 gap-4 mb-2">
-                                <div>
-                                    <span class="text-xs text-gray-500">Unique Views</span>
-                                    <div class="text-sm font-medium text-green-600">${product.unique_views.toLocaleString()}</div>
-                                </div>
-                                <div>
-                                    <span class="text-xs text-gray-500">Total Views</span>
-                                    <div class="text-sm font-medium text-purple-600">${product.total_views.toLocaleString()}</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <div class="w-12 bg-gray-200 rounded-full h-1.5 mr-2">
-                                        <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${Math.min(engagementRate, 100)}%"></div>
-                                    </div>
-                                    <span class="text-xs text-gray-600">${engagementRate}%</span>
-                                </div>
-                                <span class="text-xs text-gray-500">${product.last_viewed ? formatDate(product.last_viewed) : 'Never viewed'}</span>
-                            </div>
+                            ${viewsSection}
                         </div>
                     </div>
                 </div>
@@ -750,7 +825,7 @@ ob_start();
         document.getElementById('modalSubtitle').textContent = `${product.category_name || 'Uncategorized'} • ID: ${product.id}`;
 
         const modalImage = document.getElementById('modalProductImage').querySelector('img');
-        modalImage.src = product.primary_image || 'https://placehold.co/48x48?text=No+Image';
+        modalImage.src = product.primary_image;
         modalImage.alt = product.title;
 
         const productContent = document.getElementById('productContent');
@@ -883,10 +958,6 @@ ob_start();
         loadChartData();
     }
 
-    function filterProducts() {
-        loadProductsData();
-    }
-
     function refreshData() {
         const refreshBtn = document.getElementById('refreshBtn');
         const icon = refreshBtn.querySelector('i');
@@ -908,7 +979,7 @@ ob_start();
             start_date: document.getElementById('startDate').value,
             end_date: document.getElementById('endDate').value,
             period: currentPeriod,
-            view_type: document.getElementById('viewTypeFilter').value,
+            view_type: currentViewType,
             category: document.getElementById('categoryFilter').value,
             sort: document.getElementById('sortFilter').value
         });
@@ -917,7 +988,7 @@ ob_start();
     }
 
     function initializeDateFilters() {
-        setDateRangeForPeriod('month');
+        setDateRangeForPeriod('week');
     }
 
     function setDateRangeForPeriod(period) {
@@ -952,6 +1023,7 @@ ob_start();
 
         currentPeriod = period;
         currentPage = 1;
+        updateCategoryChartLabel();
         loadProductsData();
         loadChartData();
     }

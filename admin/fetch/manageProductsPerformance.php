@@ -10,7 +10,28 @@ header('Access-Control-Allow-Headers: Content-Type');
 require_once __DIR__ . '/../../config/config.php';
 date_default_timezone_set('Africa/Kampala');
 
-function getProductsData($page = 1, $limit = 20, $startDate = null, $endDate = null, $period = 'month', $viewType = 'unique', $category = 'all', $sort = 'unique_desc', $status = 'all', $search = '')
+function getProductImage($productId)
+{
+    $productDir = __DIR__ . '/../../img/products/' . $productId . '/';
+
+    if (is_dir($productDir)) {
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+        $files = scandir($productDir);
+
+        foreach ($files as $file) {
+            if ($file !== '.' && $file !== '..') {
+                $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                if (in_array($extension, $allowedExtensions)) {
+                    return BASE_URL . 'img/products/' . $productId . '/' . $file;
+                }
+            }
+        }
+    }
+
+    return "https://placehold.co/400x300/e2e8f0/1e293b?text=" . urlencode("Product Image");
+}
+
+function getProductsData($page = 1, $limit = 20, $startDate = null, $endDate = null, $period = 'week', $viewType = 'both', $category = 'all', $sort = 'unique_desc', $status = 'all', $search = '')
 {
     global $pdo;
 
@@ -77,7 +98,7 @@ function getProductsData($page = 1, $limit = 20, $startDate = null, $endDate = n
                 $orderBy .= "total_views ASC";
                 break;
             case 'recent':
-                $orderBy .= "last_viewed DESC NULLS LAST";
+                $orderBy .= "last_viewed DESC";
                 break;
             case 'title':
                 $orderBy .= "p.title ASC";
@@ -105,7 +126,6 @@ function getProductsData($page = 1, $limit = 20, $startDate = null, $endDate = n
                 p.featured,
                 p.created_at,
                 pc.name as category_name,
-                (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image,
                 EXISTS(SELECT 1 FROM store_products sp JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id) as has_pricing,
                 COALESCE((SELECT COUNT(DISTINCT session_id) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as unique_views,
                 COALESCE((SELECT COUNT(*) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as total_views,
@@ -127,6 +147,7 @@ function getProductsData($page = 1, $limit = 20, $startDate = null, $endDate = n
             $product['total_views'] = (int) $product['total_views'];
             $product['has_pricing'] = (bool) $product['has_pricing'];
             $product['featured'] = (bool) $product['featured'];
+            $product['primary_image'] = getProductImage($product['id']);
         }
 
         $stats = getProductStats($period, $startDate, $endDate);
@@ -150,29 +171,12 @@ function getProductsData($page = 1, $limit = 20, $startDate = null, $endDate = n
     }
 }
 
-function getProductDetails($productId, $startDate = null, $endDate = null, $period = 'month')
+function getProductDetails($productId, $startDate = null, $endDate = null, $period = 'week')
 {
     global $pdo;
 
     try {
         $pdo->exec("SET time_zone = '+03:00'");
-
-        $dateFilter = "";
-        if ($startDate && $endDate) {
-            $dateFilter = "AND DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) BETWEEN '$startDate' AND '$endDate'";
-        } elseif ($period && $period !== 'all') {
-            switch ($period) {
-                case 'today':
-                    $dateFilter = "AND DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+03:00'))";
-                    break;
-                case 'week':
-                    $dateFilter = "AND CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 WEEK)";
-                    break;
-                case 'month':
-                    $dateFilter = "AND CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 MONTH)";
-                    break;
-            }
-        }
 
         $stmt = $pdo->prepare("
             SELECT 
@@ -183,10 +187,7 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
                 p.featured,
                 p.created_at,
                 pc.name as category_name,
-                (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as primary_image,
-                EXISTS(SELECT 1 FROM store_products sp JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id) as has_pricing,
-                COALESCE((SELECT COUNT(DISTINCT session_id) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as unique_views,
-                COALESCE((SELECT COUNT(*) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as total_views
+                EXISTS(SELECT 1 FROM store_products sp JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id) as has_pricing
             FROM products p
             LEFT JOIN product_categories pc ON p.category_id = pc.id
             WHERE p.id = ?
@@ -202,16 +203,49 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
             ];
         }
 
-        $product['unique_views'] = (int) $product['unique_views'];
-        $product['total_views'] = (int) $product['total_views'];
+        // Build date filter for views queries
+        $dateCondition = "1=1";
+        $dateParams = [$productId];
+
+        if ($startDate && $endDate) {
+            $dateCondition = "DATE(CONVERT_TZ(created_at, '+00:00', '+03:00')) BETWEEN ? AND ?";
+            $dateParams = [$productId, $startDate, $endDate];
+        } elseif ($period && $period !== 'all') {
+            switch ($period) {
+                case 'today':
+                    $dateCondition = "DATE(CONVERT_TZ(created_at, '+00:00', '+03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+03:00'))";
+                    break;
+                case 'week':
+                    $dateCondition = "CONVERT_TZ(created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 WEEK)";
+                    break;
+                case 'month':
+                    $dateCondition = "CONVERT_TZ(created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 MONTH)";
+                    break;
+            }
+        }
+
+        // Get view counts
+        $viewsStmt = $pdo->prepare("
+            SELECT 
+                COUNT(DISTINCT session_id) as unique_views,
+                COUNT(*) as total_views
+            FROM product_views 
+            WHERE product_id = ? AND $dateCondition
+        ");
+        $viewsStmt->execute($dateParams);
+        $viewsData = $viewsStmt->fetch(PDO::FETCH_ASSOC);
+
+        $product['unique_views'] = (int) $viewsData['unique_views'];
+        $product['total_views'] = (int) $viewsData['total_views'];
         $product['has_pricing'] = (bool) $product['has_pricing'];
         $product['featured'] = (bool) $product['featured'];
+        $product['primary_image'] = getProductImage($product['id']);
 
-        $daysInPeriod = 30;
+        $daysInPeriod = 7; // Default to week
         if ($period === 'today')
             $daysInPeriod = 1;
-        elseif ($period === 'week')
-            $daysInPeriod = 7;
+        elseif ($period === 'month')
+            $daysInPeriod = 30;
         elseif ($startDate && $endDate) {
             $start = new DateTime($startDate);
             $end = new DateTime($endDate);
@@ -220,16 +254,17 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
 
         $product['avg_daily_views'] = $daysInPeriod > 0 ? $product['total_views'] / $daysInPeriod : 0;
 
+        // Get timeline data
         $timelineStmt = $pdo->prepare("
             SELECT 
                 DATE(CONVERT_TZ(created_at, '+00:00', '+03:00')) as date,
                 COUNT(*) as views
             FROM product_views 
-            WHERE product_id = ? $dateFilter
+            WHERE product_id = ? AND $dateCondition
             GROUP BY DATE(CONVERT_TZ(created_at, '+00:00', '+03:00'))
             ORDER BY date ASC
         ");
-        $timelineStmt->execute([$productId]);
+        $timelineStmt->execute($dateParams);
         $timelineData = $timelineStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $timeline = [
@@ -237,6 +272,7 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
             'values' => array_map('intval', array_column($timelineData, 'views'))
         ];
 
+        // Get recent sessions
         $sessionsStmt = $pdo->prepare("
             SELECT 
                 session_id,
@@ -244,12 +280,12 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
                 MIN(created_at) as first_view,
                 MAX(created_at) as last_view
             FROM product_views 
-            WHERE product_id = ? $dateFilter
+            WHERE product_id = ? AND $dateCondition
             GROUP BY session_id
             ORDER BY last_view DESC
             LIMIT 10
         ");
-        $sessionsStmt->execute([$productId]);
+        $sessionsStmt->execute($dateParams);
         $recentSessions = $sessionsStmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($recentSessions as &$session) {
@@ -268,54 +304,42 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
         error_log("Database error in getProductDetails: " . $e->getMessage());
         return [
             'success' => false,
-            'error' => 'Database error occurred'
+            'error' => 'Database error occurred: ' . $e->getMessage()
         ];
     }
 }
 
-function getChartData($startDate = null, $endDate = null, $period = 'month', $viewType = 'unique')
+function getChartData($startDate = null, $endDate = null, $period = 'week', $viewType = 'both')
 {
     global $pdo;
 
     try {
         $pdo->exec("SET time_zone = '+03:00'");
 
-        $dateFilter = "";
+        $dateCondition = "1=1";
+        $dateParams = [];
+
         if ($startDate && $endDate) {
-            $dateFilter = "WHERE DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) BETWEEN '$startDate' AND '$endDate'";
+            $dateCondition = "DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) BETWEEN ? AND ?";
+            $dateParams = [$startDate, $endDate];
         } elseif ($period && $period !== 'all') {
             switch ($period) {
                 case 'today':
-                    $dateFilter = "WHERE DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+03:00'))";
+                    $dateCondition = "DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+03:00'))";
                     break;
                 case 'week':
-                    $dateFilter = "WHERE CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 WEEK)";
+                    $dateCondition = "CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 WEEK)";
                     break;
                 case 'month':
-                    $dateFilter = "WHERE CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 MONTH)";
+                    $dateCondition = "CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 MONTH)";
                     break;
             }
         }
 
-        $timelineStmt = $pdo->prepare("
-            SELECT 
-                DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) as date,
-                COUNT(DISTINCT pv.session_id) as unique_views,
-                COUNT(*) as total_views
-            FROM product_views pv
-            $dateFilter
-            GROUP BY DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00'))
-            ORDER BY date ASC
-        ");
-        $timelineStmt->execute();
-        $timelineData = $timelineStmt->fetchAll(PDO::FETCH_ASSOC);
+        // Generate timeline with proper intervals
+        $timeline = generateTimelineData($pdo, $period, $startDate, $endDate, $dateCondition, $dateParams);
 
-        $timeline = [
-            'labels' => array_column($timelineData, 'date'),
-            'unique_views' => array_map('intval', array_column($timelineData, 'unique_views')),
-            'total_views' => array_map('intval', array_column($timelineData, 'total_views'))
-        ];
-
+        // Get category data
         $categoryStmt = $pdo->prepare("
             SELECT 
                 COALESCE(pc.name, 'Uncategorized') as category_name,
@@ -324,12 +348,12 @@ function getChartData($startDate = null, $endDate = null, $period = 'month', $vi
             FROM product_views pv
             JOIN products p ON pv.product_id = p.id
             LEFT JOIN product_categories pc ON p.category_id = pc.id
-            $dateFilter
+            WHERE $dateCondition
             GROUP BY pc.id, pc.name
             ORDER BY unique_views DESC
             LIMIT 10
         ");
-        $categoryStmt->execute();
+        $categoryStmt->execute($dateParams);
         $categoryData = $categoryStmt->fetchAll(PDO::FETCH_ASSOC);
 
         $categories = [
@@ -352,26 +376,140 @@ function getChartData($startDate = null, $endDate = null, $period = 'month', $vi
     }
 }
 
-function getProductStats($period = 'month', $startDate = null, $endDate = null)
+function generateTimelineData($pdo, $period, $startDate, $endDate, $dateCondition, $dateParams)
+{
+    // Get actual data from database
+    if ($period === 'today') {
+        // For daily: show 2-hour intervals
+        $stmt = $pdo->prepare("
+            SELECT 
+                HOUR(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) as hour_val,
+                COUNT(DISTINCT pv.session_id) as unique_views,
+                COUNT(*) as total_views
+            FROM product_views pv
+            WHERE $dateCondition
+            GROUP BY HOUR(CONVERT_TZ(pv.created_at, '+00:00', '+03:00'))
+            ORDER BY hour_val ASC
+        ");
+        $stmt->execute($dateParams);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Create 2-hour intervals (0-1, 2-3, 4-5, etc.)
+        $intervals = [];
+        $uniqueViews = [];
+        $totalViews = [];
+
+        for ($i = 0; $i < 24; $i += 2) {
+            $intervalLabel = sprintf("%02d:00-%02d:59", $i, $i + 1);
+            $intervals[] = $intervalLabel;
+
+            $intervalUnique = 0;
+            $intervalTotal = 0;
+
+            foreach ($data as $row) {
+                if ($row['hour_val'] >= $i && $row['hour_val'] <= $i + 1) {
+                    $intervalUnique += $row['unique_views'];
+                    $intervalTotal += $row['total_views'];
+                }
+            }
+
+            $uniqueViews[] = $intervalUnique;
+            $totalViews[] = $intervalTotal;
+        }
+
+        return [
+            'labels' => $intervals,
+            'unique_views' => $uniqueViews,
+            'total_views' => $totalViews
+        ];
+
+    } elseif ($period === 'week') {
+        // For weekly: show each day of the week
+        $stmt = $pdo->prepare("
+            SELECT 
+                DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) as date,
+                COUNT(DISTINCT pv.session_id) as unique_views,
+                COUNT(*) as total_views
+            FROM product_views pv
+            WHERE $dateCondition
+            GROUP BY DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00'))
+            ORDER BY date ASC
+        ");
+        $stmt->execute($dateParams);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Create array indexed by date
+        $dataByDate = [];
+        foreach ($data as $row) {
+            $dataByDate[$row['date']] = $row;
+        }
+
+        // Generate last 7 days
+        $labels = [];
+        $uniqueViews = [];
+        $totalViews = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-$i days"));
+            $dayName = date('D', strtotime($date));
+
+            $labels[] = $dayName;
+            $uniqueViews[] = isset($dataByDate[$date]) ? (int) $dataByDate[$date]['unique_views'] : 0;
+            $totalViews[] = isset($dataByDate[$date]) ? (int) $dataByDate[$date]['total_views'] : 0;
+        }
+
+        return [
+            'labels' => $labels,
+            'unique_views' => $uniqueViews,
+            'total_views' => $totalViews
+        ];
+
+    } else {
+        // For monthly or custom: show by date
+        $stmt = $pdo->prepare("
+            SELECT 
+                DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) as date,
+                COUNT(DISTINCT pv.session_id) as unique_views,
+                COUNT(*) as total_views
+            FROM product_views pv
+            WHERE $dateCondition
+            GROUP BY DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00'))
+            ORDER BY date ASC
+        ");
+        $stmt->execute($dateParams);
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'labels' => array_column($data, 'date'),
+            'unique_views' => array_map('intval', array_column($data, 'unique_views')),
+            'total_views' => array_map('intval', array_column($data, 'total_views'))
+        ];
+    }
+}
+
+function getProductStats($period = 'week', $startDate = null, $endDate = null)
 {
     global $pdo;
 
     try {
         $pdo->exec("SET time_zone = '+03:00'");
 
-        $dateFilter = "";
+        $dateCondition = "1=1";
+        $dateParams = [];
+
         if ($startDate && $endDate) {
-            $dateFilter = "AND DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) BETWEEN '$startDate' AND '$endDate'";
+            $dateCondition = "DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) BETWEEN ? AND ?";
+            $dateParams = [$startDate, $endDate];
         } elseif ($period && $period !== 'all') {
             switch ($period) {
                 case 'today':
-                    $dateFilter = "AND DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+03:00'))";
+                    $dateCondition = "DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+03:00'))";
                     break;
                 case 'week':
-                    $dateFilter = "AND CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 WEEK)";
+                    $dateCondition = "CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 WEEK)";
                     break;
                 case 'month':
-                    $dateFilter = "AND CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 MONTH)";
+                    $dateCondition = "CONVERT_TZ(pv.created_at, '+00:00', '+03:00') >= DATE_SUB(CONVERT_TZ(NOW(), '+00:00', '+03:00'), INTERVAL 1 MONTH)";
                     break;
             }
         }
@@ -380,26 +518,25 @@ function getProductStats($period = 'month', $startDate = null, $endDate = null)
         $totalProductsStmt->execute();
         $totalProducts = $totalProductsStmt->fetch(PDO::FETCH_ASSOC)['count'];
 
-        $uniqueViewsStmt = $pdo->prepare("SELECT COUNT(DISTINCT session_id) as count FROM product_views pv WHERE 1=1 $dateFilter");
-        $uniqueViewsStmt->execute();
-        $totalUniqueViews = $uniqueViewsStmt->fetch(PDO::FETCH_ASSOC)['count'];
-
-        $cumulativeViewsStmt = $pdo->prepare("SELECT COUNT(*) as count FROM product_views pv WHERE 1=1 $dateFilter");
-        $cumulativeViewsStmt->execute();
-        $totalCumulativeViews = $cumulativeViewsStmt->fetch(PDO::FETCH_ASSOC)['count'];
+        $viewsStmt = $pdo->prepare("
+            SELECT 
+                COUNT(DISTINCT session_id) as unique_views,
+                COUNT(*) as total_views
+            FROM product_views pv 
+            WHERE $dateCondition
+        ");
+        $viewsStmt->execute($dateParams);
+        $viewsData = $viewsStmt->fetch(PDO::FETCH_ASSOC);
 
         $todayViewsStmt = $pdo->prepare("SELECT COUNT(*) as count FROM product_views pv WHERE DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+03:00'))");
         $todayViewsStmt->execute();
         $todayViews = $todayViewsStmt->fetch(PDO::FETCH_ASSOC)['count'];
 
-        $avgViewsPerProduct = $totalProducts > 0 ? $totalUniqueViews / $totalProducts : 0;
-
         return [
             'total_products' => (int) $totalProducts,
-            'total_unique_views' => (int) $totalUniqueViews,
-            'total_cumulative_views' => (int) $totalCumulativeViews,
-            'today_views' => (int) $todayViews,
-            'avg_views_per_product' => (float) $avgViewsPerProduct
+            'total_unique_views' => (int) $viewsData['unique_views'],
+            'total_cumulative_views' => (int) $viewsData['total_views'],
+            'today_views' => (int) $todayViews
         ];
 
     } catch (PDOException $e) {
@@ -408,8 +545,7 @@ function getProductStats($period = 'month', $startDate = null, $endDate = null)
             'total_products' => 0,
             'total_unique_views' => 0,
             'total_cumulative_views' => 0,
-            'today_views' => 0,
-            'avg_views_per_product' => 0.0
+            'today_views' => 0
         ];
     }
 }
@@ -442,7 +578,7 @@ function getCategories()
     }
 }
 
-function exportProductsData($startDate = null, $endDate = null, $period = 'month', $viewType = 'unique', $category = 'all', $sort = 'unique_desc')
+function exportProductsData($startDate = null, $endDate = null, $period = 'week', $viewType = 'both', $category = 'all', $sort = 'unique_desc')
 {
     global $pdo;
 
@@ -489,7 +625,7 @@ function exportProductsData($startDate = null, $endDate = null, $period = 'month
                 $orderBy .= "total_views ASC";
                 break;
             case 'recent':
-                $orderBy .= "last_viewed DESC NULLS LAST";
+                $orderBy .= "last_viewed DESC";
                 break;
             case 'title':
                 $orderBy .= "p.title ASC";
@@ -576,8 +712,8 @@ switch ($action) {
         $limit = max(1, min(100, intval($_GET['limit'] ?? 20)));
         $startDate = $_GET['start_date'] ?? null;
         $endDate = $_GET['end_date'] ?? null;
-        $period = $_GET['period'] ?? 'month';
-        $viewType = $_GET['view_type'] ?? 'unique';
+        $period = $_GET['period'] ?? 'week';
+        $viewType = $_GET['view_type'] ?? 'both';
         $category = $_GET['category'] ?? 'all';
         $sort = $_GET['sort'] ?? 'unique_desc';
         $status = $_GET['status'] ?? 'all';
@@ -599,7 +735,7 @@ switch ($action) {
 
         $startDate = $_GET['start_date'] ?? null;
         $endDate = $_GET['end_date'] ?? null;
-        $period = $_GET['period'] ?? 'month';
+        $period = $_GET['period'] ?? 'week';
 
         $result = getProductDetails($productId, $startDate, $endDate, $period);
         echo json_encode($result);
@@ -608,8 +744,8 @@ switch ($action) {
     case 'get_chart_data':
         $startDate = $_GET['start_date'] ?? null;
         $endDate = $_GET['end_date'] ?? null;
-        $period = $_GET['period'] ?? 'month';
-        $viewType = $_GET['view_type'] ?? 'unique';
+        $period = $_GET['period'] ?? 'week';
+        $viewType = $_GET['view_type'] ?? 'both';
 
         $result = getChartData($startDate, $endDate, $period, $viewType);
         echo json_encode($result);
@@ -623,8 +759,8 @@ switch ($action) {
     case 'export':
         $startDate = $_GET['start_date'] ?? null;
         $endDate = $_GET['end_date'] ?? null;
-        $period = $_GET['period'] ?? 'month';
-        $viewType = $_GET['view_type'] ?? 'unique';
+        $period = $_GET['period'] ?? 'week';
+        $viewType = $_GET['view_type'] ?? 'both';
         $category = $_GET['category'] ?? 'all';
         $sort = $_GET['sort'] ?? 'unique_desc';
 

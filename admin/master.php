@@ -118,9 +118,7 @@ $sessionUlid = generateUlid();
     <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
 
     <script>
-        if (typeof BASE_URL === 'undefined') {
-            const BASE_URL = "<?= BASE_URL ?>";
-        }
+        const BASE_URL = "<?= BASE_URL ?>";
         const SESSION_ULID = "<?php echo $sessionUlid; ?>";
         tailwind.config = {
             theme: {
