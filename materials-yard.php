@@ -23,7 +23,9 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                 p.meta_title,
                 p.meta_description,
                 p.meta_keywords,
-                p.views,
+                (SELECT COUNT(DISTINCT session_id) 
+                 FROM product_views 
+                 WHERE product_id = p.id) AS views,
                 p.category_id,
                 c.name AS category_name,
                 (SELECT image_url 
@@ -92,7 +94,9 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                     p.id, 
                     p.title, 
                     p.description, 
-                    p.views,
+                    (SELECT COUNT(DISTINCT session_id) 
+                     FROM product_views 
+                     WHERE product_id = p.id) AS views,
                     p.category_id,
                     c.name AS category_name,
                     (SELECT image_url 
@@ -115,7 +119,7 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                 JOIN product_categories c ON c.id = p.category_id
                 WHERE p.category_id = ? 
                   AND p.status = 'published'
-                ORDER BY has_pricing DESC, p.featured DESC, p.views DESC
+                ORDER BY has_pricing DESC, p.featured DESC, (SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) DESC
                 LIMIT ? OFFSET ?
             ");
             $productStmt->execute([$categoryId, $limit, $offset]);
@@ -133,7 +137,9 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                     p.id, 
                     p.title, 
                     p.description, 
-                    p.views,
+                    (SELECT COUNT(DISTINCT session_id) 
+                     FROM product_views 
+                     WHERE product_id = p.id) AS views,
                     p.category_id,
                     c.name AS category_name,
                     (SELECT image_url 
@@ -155,7 +161,7 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                 FROM products p
                 JOIN product_categories c ON c.id = p.category_id
                 WHERE p.status = 'published'
-                ORDER BY has_pricing DESC, p.featured DESC, p.views DESC
+                ORDER BY has_pricing DESC, p.featured DESC, (SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) DESC
                 LIMIT ? OFFSET ?
             ");
             $productStmt->execute([$limit, $offset]);
@@ -494,7 +500,9 @@ if (empty($searchQuery)) {
                 p.id, 
                 p.title, 
                 p.description, 
-                p.views, 
+                (SELECT COUNT(DISTINCT session_id) 
+                 FROM product_views 
+                 WHERE product_id = p.id) AS views,
                 (SELECT image_url 
                  FROM product_images 
                  WHERE product_id = p.id 
@@ -514,7 +522,7 @@ if (empty($searchQuery)) {
             FROM products p
             WHERE p.category_id = ? 
               AND p.status = 'published'
-            ORDER BY has_pricing DESC, p.featured DESC, p.views DESC
+            ORDER BY has_pricing DESC, p.featured DESC, (SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) DESC
             LIMIT 12
         ");
         $productsStmt->execute([$categoryId]);
@@ -524,7 +532,9 @@ if (empty($searchQuery)) {
                 p.id, 
                 p.title, 
                 p.description, 
-                p.views, 
+                (SELECT COUNT(DISTINCT session_id) 
+                 FROM product_views 
+                 WHERE product_id = p.id) AS views,
                 (SELECT image_url 
                  FROM product_images 
                  WHERE product_id = p.id 
@@ -543,7 +553,7 @@ if (empty($searchQuery)) {
                 ) AS lowest_price
             FROM products p
             WHERE p.status = 'published'
-            ORDER BY has_pricing DESC, p.featured DESC, p.views DESC
+            ORDER BY has_pricing DESC, p.featured DESC, (SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) DESC
             LIMIT 12
         ");
         $productsStmt->execute();
@@ -1356,7 +1366,7 @@ ob_start();
         const currentUrl = window.location.href;
         const pageTitle = "<?= addslashes($pageTitle) ?>";
         const message = `Check out ${pageTitle} on Zzimba Online:`;
-        window.open(`https://twitter.intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(currentUrl)}`, '_blank');
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(currentUrl)}`, '_blank');
     }
 
     function shareOnLinkedIn() {

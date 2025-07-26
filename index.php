@@ -22,7 +22,9 @@ function getFeaturedProducts($pdo, $limit = 8)
             p.description, 
             p.category_id, 
             c.name AS category_name,
-            p.views,
+            (SELECT COUNT(DISTINCT session_id) 
+             FROM product_views 
+             WHERE product_id = p.id) AS views,
             EXISTS(
                 SELECT 1 
                 FROM store_products sp

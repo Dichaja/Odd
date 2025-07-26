@@ -8,6 +8,36 @@ if (empty($productId)) {
     exit;
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'log_view') {
+    header('Content-Type: application/json');
+
+    $sessionId = isset($_POST['session_id']) ? $_POST['session_id'] : '';
+    $productId = isset($_POST['product_id']) ? $_POST['product_id'] : '';
+
+    if (empty($sessionId) || empty($productId)) {
+        echo json_encode(['success' => false, 'message' => 'Missing required parameters']);
+        exit;
+    }
+
+    try {
+        $viewId = generateUlid();
+        $timezone = new DateTimeZone('Africa/Kampala');
+        $createdAt = new DateTime('now', $timezone);
+
+        $insertStmt = $pdo->prepare("INSERT INTO product_views (id, product_id, session_id, created_at) VALUES (?, ?, ?, ?)");
+        $insertStmt->execute([$viewId, $productId, $sessionId, $createdAt->format('Y-m-d H:i:s')]);
+
+        $countStmt = $pdo->prepare("SELECT COUNT(DISTINCT session_id) as unique_views FROM product_views WHERE product_id = ?");
+        $countStmt->execute([$productId]);
+        $viewCount = $countStmt->fetch()['unique_views'];
+
+        echo json_encode(['success' => true, 'unique_views' => $viewCount]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Database error']);
+    }
+    exit;
+}
+
 function generateSeoMetaTags($product)
 {
     $title = htmlspecialchars($product['title'] ?? 'Product') . ' | Zzimba Online';
@@ -147,7 +177,6 @@ $stmt = $pdo->prepare("
         p.id, 
         p.title, 
         p.description, 
-        p.views, 
         p.featured,
         p.category_id,
         pc.name as category_name,
@@ -166,7 +195,10 @@ $stmt = $pdo->prepare("
          FROM store_products sp
          JOIN product_pricing pp ON pp.store_products_id = sp.id
          WHERE sp.product_id = p.id
-        ) AS min_price
+        ) AS min_price,
+        (SELECT COUNT(DISTINCT session_id) 
+         FROM product_views 
+         WHERE product_id = p.id) AS unique_views
     FROM products p
     LEFT JOIN product_categories pc ON p.category_id = pc.id
     WHERE p.id = ? AND p.status = 'published'
@@ -179,10 +211,6 @@ if (!$product) {
     header('Location: ' . BASE_URL . 'materials-yard');
     exit;
 }
-
-$updateViews = $pdo->prepare("UPDATE products SET views = views + 1 WHERE id = ?");
-$updateViews->execute([$productId]);
-$product['views'] = $product['views'] + 1;
 
 $productImages = getProductImages($productId);
 $product['primary_image'] = $productImages[0];
@@ -197,7 +225,6 @@ $relatedStmt = $pdo->prepare("
         p.id, 
         p.title, 
         p.description, 
-        p.views, 
         p.featured,
         (SELECT image_url 
          FROM product_images 
@@ -214,7 +241,10 @@ $relatedStmt = $pdo->prepare("
          FROM store_products sp
          JOIN product_pricing pp ON pp.store_products_id = sp.id
          WHERE sp.product_id = p.id
-        ) AS lowest_price
+        ) AS lowest_price,
+        (SELECT COUNT(DISTINCT session_id) 
+         FROM product_views 
+         WHERE product_id = p.id) AS unique_views
     FROM products p
     WHERE p.category_id = ? 
       AND p.id != ? 
@@ -699,7 +729,7 @@ ob_start();
                     </div>
                     <div class="flex items-center text-gray-600">
                         <i class="fas fa-eye mr-1" style="color: #D92B13;"></i>
-                        <span><?= number_format($product['views']) ?> Views</span>
+                        <span id="view-count"><?= number_format($product['unique_views']) ?> Views</span>
                     </div>
                 </div>
 
@@ -967,7 +997,7 @@ ob_start();
                                 </p>
                                 <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
                                     <i class="fas fa-eye mr-1 text-[#D92B13]"></i>
-                                    <span><?= number_format($relatedProduct['views']) ?> views</span>
+                                    <span><?= number_format($relatedProduct['unique_views']) ?> views</span>
                                 </div>
                                 <?php if ($relatedProduct['has_pricing'] && $relatedProduct['lowest_price']): ?>
                                     <div class="text-center mb-3">
@@ -998,7 +1028,23 @@ ob_start();
 <?php endif; ?>
 
 <script>
+
+    function checkSession() {
+        return fetch(`${BASE_URL}fetch/check-session.php`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    IS_LOGGED_IN = data.logged_in || false;
+                    return data;
+                }
+                return { logged_in: false };
+            })
+            .catch(() => ({ logged_in: false }));
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        logProductView();
+
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
 
@@ -1117,56 +1163,112 @@ ob_start();
         });
     });
 
-    function showVendorsInRegion(region) {
-        const modal = document.getElementById('vendorModal');
-        const modalRegionName = document.getElementById('modalRegionName');
-        const modalLoading = document.getElementById('modalLoading');
-        const modalContent = document.getElementById('modalContent');
+    function logProductView() {
+        const sessionData = localStorage.getItem('session_event_log');
+        if (!sessionData) {
+            console.warn('No session data found in localStorage');
+            return;
+        }
 
-        modalRegionName.textContent = region;
-        modal.style.display = 'block';
-        modalLoading.classList.remove('hidden');
-        modalContent.classList.add('hidden');
+        let session;
+        try {
+            session = JSON.parse(sessionData);
+        } catch (e) {
+            console.error('Failed to parse session data:', e);
+            return;
+        }
 
-        fetch('<?= BASE_URL ?>fetch/getVendors.php', {
+        if (!session.sessionID) {
+            console.warn('No session ID found in session data');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('action', 'log_view');
+        formData.append('session_id', session.sessionID);
+        formData.append('product_id', '<?= $productId ?>');
+
+        fetch(window.location.href, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                product_id: '<?= $productId ?>',
-                region: region
-            })
+            body: formData
         })
             .then(response => response.json())
             .then(data => {
-                modalLoading.classList.add('hidden');
-                modalContent.classList.remove('hidden');
-
-                if (data.success && data.vendors.length > 0) {
-                    displayVendors(data.vendors);
+                if (data.success) {
+                    const viewCountElement = document.getElementById('view-count');
+                    if (viewCountElement && data.unique_views) {
+                        viewCountElement.textContent = new Intl.NumberFormat().format(data.unique_views) + ' Views';
+                    }
                 } else {
-                    modalContent.innerHTML = `
-                    <div class="text-center py-8">
-                        <i class="fas fa-store text-4xl text-gray-300 mb-4"></i>
-                        <h4 class="text-lg font-semibold text-gray-600 mb-2">No Suppliers Found</h4>
-                        <p class="text-gray-500">No suppliers found in ${region} for this product.</p>
-                    </div>
-                `;
+                    console.error('Failed to log product view:', data.message);
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                modalLoading.classList.add('hidden');
-                modalContent.classList.remove('hidden');
-                modalContent.innerHTML = `
-                <div class="text-center py-8">
-                    <i class="fas fa-exclamation-triangle text-4xl text-red-300 mb-4"></i>
-                    <h4 class="text-lg font-semibold text-red-600 mb-2">Error Loading Suppliers</h4>
-                    <p class="text-gray-500">Please try again later.</p>
-                </div>
-            `;
+                console.error('Error logging product view:', error);
             });
+    }
+
+    function showVendorsInRegion(region) {
+        checkSession().then(sessionData => {
+            if (!sessionData.logged_in) {
+                if (typeof openAuthModal === 'function') {
+                    openAuthModal();
+                } else {
+                    alert('Please log in to view suppliers.');
+                }
+                return;
+            }
+
+            const modal = document.getElementById('vendorModal');
+            const modalRegionName = document.getElementById('modalRegionName');
+            const modalLoading = document.getElementById('modalLoading');
+            const modalContent = document.getElementById('modalContent');
+
+            modalRegionName.textContent = region;
+            modal.style.display = 'block';
+            modalLoading.classList.remove('hidden');
+            modalContent.classList.add('hidden');
+
+            fetch('<?= BASE_URL ?>fetch/getVendors.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: '<?= $productId ?>',
+                    region: region
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    modalLoading.classList.add('hidden');
+                    modalContent.classList.remove('hidden');
+
+                    if (data.success && data.vendors.length > 0) {
+                        displayVendors(data.vendors);
+                    } else {
+                        modalContent.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-store text-4xl text-gray-300 mb-4"></i>
+                            <h4 class="text-lg font-semibold text-gray-600 mb-2">No Suppliers Found</h4>
+                            <p class="text-gray-500">No suppliers found in ${region} for this product.</p>
+                        </div>
+                    `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalLoading.classList.add('hidden');
+                    modalContent.classList.remove('hidden');
+                    modalContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-300 mb-4"></i>
+                        <h4 class="text-lg font-semibold text-red-600 mb-2">Error Loading Suppliers</h4>
+                        <p class="text-gray-500">Please try again later.</p>
+                    </div>
+                `;
+                });
+        });
     }
 
     function displayVendors(vendors) {
