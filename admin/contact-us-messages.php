@@ -73,7 +73,7 @@ ob_start();
             <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
                 <div class="flex items-center justify-between">
                     <div class="min-w-0 flex-1">
-                        <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">This Week</p>
+                        <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">Weekly</p>
                         <p class="text-xl font-bold text-orange-900 truncate" id="weekMessages">0</p>
                     </div>
                     <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -99,12 +99,12 @@ ob_start();
                         <button
                             class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="week">
-                            <i class="fas fa-calendar-week mr-2"></i>This Week
+                            <i class="fas fa-calendar-week mr-2"></i> Weekly
                         </button>
                         <button
                             class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="month">
-                            <i class="fas fa-calendar-alt mr-2"></i>This Month
+                            <i class="fas fa-calendar-alt mr-2"></i> Monthly
                         </button>
                     </div>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
