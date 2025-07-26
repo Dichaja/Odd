@@ -96,6 +96,7 @@ $menuItems = [
     'settings' => [
         'title' => 'Settings',
         'items' => [
+            'system-notifications' => ['title' => 'System Notifications', 'icon' => 'fa-bell'],
             'settings' => ['title' => 'Settings', 'icon' => 'fa-cog'],
         ]
     ],
