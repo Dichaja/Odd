@@ -183,6 +183,8 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+    <script type="text/javascript" src="https://googletagmanager.com/gtag/js?id=G-VNZ06MKK8N"></script>
+
     <script>
         const BASE_URL = "<?php echo BASE_URL; ?>";
         const SESSION_ULID = "<?php echo $sessionUlid; ?>";
