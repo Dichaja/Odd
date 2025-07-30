@@ -481,7 +481,7 @@ ob_start();
         <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-100px)]">
             <div class="mb-4">
                 <div id="image-cropper-container" class="max-h-[60vh] overflow-hidden">
-                    <img id="image-to-crop" src="/placeholder.svg" alt="Image to crop">
+                    <img id="image-to-crop" src="" alt="Image to crop">
                 </div>
             </div>
         </div>
