@@ -481,7 +481,7 @@ ob_start();
         <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-100px)]">
             <div class="mb-4">
                 <div id="image-cropper-container" class="max-h-[60vh] overflow-hidden">
-                    <img id="image-to-crop" src="" alt="Image to crop">
+                    <img id="image-to-crop" src="/placeholder.svg" alt="Image to crop">
                 </div>
             </div>
         </div>
@@ -771,16 +771,28 @@ ob_start();
             }
         });
 
-        ['mobilePrevPage', 'mobileNextPage'].forEach(id => {
-            document.getElementById(id).addEventListener('click', function () {
-                if (id.includes('prev') && currentPage > 1) {
-                    currentPage--;
-                    renderProducts(productsData);
-                } else if (id.includes('next')) {
-                    currentPage++;
-                    renderProducts(productsData);
-                }
-            });
+        document.getElementById('mobilePrevPage').addEventListener('click', function () {
+            const filteredList = filterProducts(productsData);
+            const mobileTotalPages = Math.ceil(filteredList.length / itemsPerPage);
+
+            if (currentPage > 1) {
+                currentPage--;
+                totalPages = mobileTotalPages;
+                renderPagination();
+                renderProducts(productsData);
+            }
+        });
+
+        document.getElementById('mobileNextPage').addEventListener('click', function () {
+            const filteredList = filterProducts(productsData);
+            const mobileTotalPages = Math.ceil(filteredList.length / itemsPerPage);
+
+            if (currentPage < mobileTotalPages) {
+                currentPage++;
+                totalPages = mobileTotalPages;
+                renderPagination();
+                renderProducts(productsData);
+            }
         });
 
         document.getElementById('addImageBtn').addEventListener('click', () => {
@@ -1102,7 +1114,8 @@ ob_start();
                 if (data.success) {
                     productsData = data.products || [];
                     updateStatistics();
-                    totalPages = Math.ceil(productsData.length / itemsPerPage);
+                    const filteredList = filterProducts(productsData);
+                    totalPages = Math.ceil(filteredList.length / itemsPerPage);
                     currentPage = 1;
                     renderPagination();
                     renderProducts(productsData);
@@ -1133,7 +1146,7 @@ ob_start();
         const prevBtn = document.getElementById('prev-page');
         const nextBtn = document.getElementById('next-page');
         prevBtn.disabled = currentPage === 1;
-        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.disabled = currentPage === totalPages || totalPages === 0;
 
         const pagNums = document.getElementById('pagination-numbers');
         pagNums.innerHTML = '';
@@ -1158,7 +1171,9 @@ ob_start();
                 ellipsis.classList.add('px-2');
                 pagNums.appendChild(ellipsis);
             }
-            pagNums.appendChild(createPagButton(totalPages));
+            if (totalPages > 1) {
+                pagNums.appendChild(createPagButton(totalPages));
+            }
         }
     }
 
@@ -1178,6 +1193,12 @@ ob_start();
 
     function renderProducts(list) {
         const filteredList = filterProducts(list);
+        totalPages = Math.ceil(filteredList.length / itemsPerPage);
+
+        if (currentPage > totalPages && totalPages > 0) {
+            currentPage = totalPages;
+        }
+
         const start = (currentPage - 1) * itemsPerPage;
         const end = Math.min(start + itemsPerPage, filteredList.length);
 
@@ -1189,6 +1210,7 @@ ob_start();
         renderProductsTable(filteredList.slice(start, end));
         renderProductsCards(filteredList.slice(start, end));
         updateMobilePagination(filteredList.length, currentPage);
+        renderPagination();
     }
 
     function renderProductsTable(products) {
@@ -1373,7 +1395,6 @@ ob_start();
 
     function applyFilters() {
         currentPage = 1;
-        renderPagination();
         renderProducts(productsData);
     }
 
