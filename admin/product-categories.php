@@ -404,16 +404,16 @@ ob_start();
             </form>
         </div>
 
-        <div class="p-6 border-t border-gray-100 flex justify-between">
+        <div class="p-2 border-t border-gray-100 flex justify-between">
             <button type="button" id="deleteCategoryBtn"
                 class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hidden">
-                <i class="fas fa-trash-alt mr-2"></i>Delete Category
+                <i class="fas fa-trash-alt mr-2"></i>Delete
             </button>
             <div class="flex gap-3 ml-auto">
                 <button type="button" onclick="hideCategoryModal()"
                     class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
                 <button type="button" id="submitCategory"
-                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save Category</button>
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save</button>
             </div>
         </div>
     </div>
