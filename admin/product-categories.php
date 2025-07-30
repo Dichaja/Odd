@@ -149,25 +149,30 @@ ob_start();
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto hidden lg:block">
                 <table class="w-full" id="categories-table">
                     <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Featured</th>
+                                Featured
+                            </th>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Name</th>
+                                Name
+                            </th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Products</th>
+                                Products
+                            </th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Status</th>
+                                Status
+                            </th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                Created</th>
+                                Created
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="categories-table-body" class="divide-y divide-gray-100">
@@ -181,10 +186,11 @@ ob_start();
                 </table>
             </div>
 
-            <div class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div
+                class="p-4 border-t border-gray-100 hidden lg:flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="text-sm text-gray-600 text-center sm:text-left">
-                    Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span
-                        id="total-categories">0</span> categories
+                    Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of
+                    <span id="total-categories">0</span> categories
                 </div>
                 <div class="flex items-center gap-2">
                     <button id="prev-page"
@@ -218,7 +224,7 @@ ob_start();
                 <button id="mobilePrevPage"
                     class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
                     disabled>
-                    Previous
+                    Prev
                 </button>
                 <span id="mobilePageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
                 <button id="mobileNextPage"
