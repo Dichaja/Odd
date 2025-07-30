@@ -559,7 +559,6 @@ ob_start();
 </style>
 
 <script>
-    const BASE_URL = '<?= BASE_URL ?>';
     let productsData = [];
     let currentPage = 1;
     let itemsPerPage = 6;

@@ -353,7 +353,6 @@ ob_start();
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script>
-    const BASE_URL = '<?= BASE_URL ?>';
     let categoriesData = [];
     let currentPage = 1;
     let totalPages = 1;

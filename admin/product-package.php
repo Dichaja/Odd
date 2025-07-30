@@ -353,8 +353,6 @@ ob_start();
 </div>
 
 <script>
-    const BASE_URL = '<?= BASE_URL ?>';
-
     // Package Names variables
     let packageNamesData = [];
     let currentPackageNamesPage = 1;
