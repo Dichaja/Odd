@@ -12,114 +12,229 @@ $activeNav = 'products';
 ob_start();
 ?>
 
-<div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold text-secondary">Manage Products</h1>
-            <p class="text-sm text-gray-text mt-1">View, edit, and manage products</p>
-        </div>
-        <div class="flex flex-col md:flex-row items-center gap-3">
-            <button id="addNewProductBtn"
-                class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
-                <i class="fas fa-plus"></i>
-                <span>Add Product</span>
-            </button>
-            <a href="product-package"
-                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
-                <i class="fas fa-box"></i>
-                <span>Package Definition</span>
-            </a>
-            <a href="product-categories"
-                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
-                <i class="fas fa-tags"></i>
-                <span>Categories</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- Filter/Search Panel -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="relative w-full md:w-auto">
-                <input type="text" id="searchProducts" placeholder="Search products..."
-                    class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-            </div>
-            <div class="flex items-center gap-2 w-full md:w-auto">
-                <label for="sortProducts" class="text-sm text-gray-700 whitespace-nowrap">Sort By:</label>
-                <select id="sortProducts"
-                    class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
-                    <option value="" selected>Select</option>
-                    <option value="latest">Latest</option>
-                    <option value="verify">Verified</option>
-                    <option value="pending">Pending</option>
-                    <option value="usr">User Entries</option>
-                </select>
+<div class="min-h-screen bg-gray-50 font-rubik" id="app-container">
+    <div class="bg-white border-b border-gray-200 sm:px-6 lg:px-8 py-3 sm:py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                <div>
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <h1 class="text-lg sm:text-2xl font-bold text-secondary">Manage Products</h1>
+                    </div>
+                    <p class="text-gray-600 mt-1 text-sm sm:text-base hidden sm:block">View, edit, and manage products
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="addNewProductBtn"
+                        class="px-3 sm:px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-plus text-sm"></i>
+                        <span class="hidden sm:inline">Add Product</span>
+                    </button>
+                    <a href="product-package"
+                        class="px-3 sm:px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-box text-sm"></i>
+                        <span class="hidden sm:inline">Packages</span>
+                    </a>
+                    <a href="product-categories"
+                        class="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-tags text-sm"></i>
+                        <span class="hidden sm:inline">Categories</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Filter Panel -->
-    <div id="filterPanel" class="bg-white rounded-lg shadow-sm border border-gray-100 px-6 py-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label for="filterCategory" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select id="filterCategory"
-                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <option value="">All Categories</option>
-                </select>
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8">
+        <div class="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Products</p>
+                        <p class="text-xl font-bold text-blue-900 truncate" id="totalProducts">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-box text-blue-600"></i>
+                    </div>
+                </div>
             </div>
-            <div>
-                <label for="filterFeatured" class="block text-sm font-medium text-gray-700 mb-1">Featured Status</label>
-                <select id="filterFeatured"
-                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <option value="">All Products</option>
-                    <option value="featured">Featured Only</option>
-                    <option value="not-featured">Not Featured</option>
-                </select>
+
+            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Published</p>
+                        <p class="text-xl font-bold text-green-900 truncate" id="publishedProducts">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                </div>
             </div>
-            <div class="md:col-span-2 flex justify-end">
-                <button id="resetFilters"
-                    class="h-10 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors mr-2">
-                    Reset Filters
-                </button>
-                <button id="applyFilters"
-                    class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                    Apply Filters
-                </button>
+
+            <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Featured</p>
+                        <p class="text-xl font-bold text-purple-900 truncate" id="featuredProducts">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-star text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">Pending</p>
+                        <p class="text-xl font-bold text-orange-900 truncate" id="pendingProducts">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-clock text-orange-600"></i>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Products List -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-lg font-semibold text-secondary">Products</h2>
-                <p class="text-sm text-gray-text mt-1"><span id="productCount">0</span> products found</p>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-lg font-semibold text-secondary mb-2">Filter & Search</h2>
+                    <p class="text-sm text-gray-600">Configure your product view and filters</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Products</label>
+                    <div class="relative">
+                        <input type="text" id="searchProducts" placeholder="Search products..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category Filter</label>
+                    <select id="filterCategory"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status Filter</label>
+                    <select id="filterFeatured"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <option value="">All Products</option>
+                        <option value="featured">Featured Only</option>
+                        <option value="not-featured">Not Featured</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                    <select id="sortProducts"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <option value="">Select</option>
+                        <option value="latest">Latest</option>
+                        <option value="verify">Verified</option>
+                        <option value="pending">Pending</option>
+                        <option value="usr">User Entries</option>
+                    </select>
+                </div>
             </div>
         </div>
 
-        <div class="p-6">
-            <div id="products-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Product cards will be injected here via JS -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
+            <div class="p-4 sm:p-6 border-b border-gray-100">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-secondary">Products</h3>
+                        <p class="text-sm text-gray-600"><span id="productCount">0</span> products found</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <button id="resetFilters"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                            Reset Filters
+                        </button>
+                        <button id="applyFilters"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <!-- Pagination placeholder -->
-            <div class="mt-6 flex justify-between items-center">
-                <div class="text-sm text-gray-500">
+            <div class="hidden lg:block overflow-x-auto">
+                <table class="w-full" id="productsTable">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Product</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Category</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Status</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Featured</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsBody" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <div>Loading products...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600 text-center sm:text-left">
                     Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span
-                        id="totalProducts">0</span>
+                        id="totalProducts">0</span> products
                 </div>
                 <div class="flex items-center gap-2">
                     <button id="prev-page"
-                        class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
-                        <i class="fas fa-chevron-left"></i>
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Previous
                     </button>
                     <div id="pagination-numbers" class="flex items-center"></div>
                     <button id="next-page"
-                        class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50">
-                        <i class="fas fa-chevron-right"></i>
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:hidden" id="productsCards">
+                <div class="p-4 text-center text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <div>Loading products...</div>
+                </div>
+            </div>
+
+            <div
+                class="lg:hidden p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600 text-center sm:text-left">
+                    Showing <span id="mobileShowingStart">0</span> to <span id="mobileShowingEnd">0</span> of <span
+                        id="mobileTotalProducts">0</span> products
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="mobilePrevPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Previous
+                    </button>
+                    <span id="mobilePageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
+                    <button id="mobileNextPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Next
                     </button>
                 </div>
             </div>
@@ -127,7 +242,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Loading Overlay -->
 <div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[999] hidden">
     <div class="bg-white p-5 rounded-lg shadow-lg flex items-center gap-3">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -135,58 +249,65 @@ ob_start();
     </div>
 </div>
 
-<!-- Product Modal (Add/Edit) -->
-<div id="productModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideProductModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 relative z-10 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary" id="modalTitle">Add New Product</h3>
-            <button onclick="hideProductModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
+<div id="productModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="hideProductModal()"></div>
+    <div
+        class="relative w-full h-full max-w-4xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
+        <div
+            class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5">
+            <div class="flex items-center gap-3">
+                <div
+                    class="flex-shrink-0 h-12 w-12 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
+                    <i class="fas fa-box text-gray-400 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-secondary" id="modalTitle">Add New Product</h3>
+                    <p class="text-sm text-gray-600 mt-1">Create or edit product information</p>
+                </div>
+            </div>
+            <button onclick="hideProductModal()"
+                class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
 
-        <div class="p-6">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-160px)]">
             <form id="productForm" class="space-y-6">
                 <input type="hidden" id="edit-product-id" value="">
 
-                <!-- Title & Category -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="productTitle" class="block text-sm font-medium text-gray-700 mb-1">Title <span
                                 class="text-red-500">*</span></label>
                         <input type="text" id="productTitle"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                             placeholder="Enter product title">
                     </div>
                     <div>
                         <label for="productCategory" class="block text-sm font-medium text-gray-700 mb-1">Category <span
                                 class="text-red-500">*</span></label>
                         <select id="productCategory"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            <!-- dynamically populate from DB -->
+                            class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
                             <option value="">Select Category</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Description -->
                 <div>
                     <label for="productDescription"
                         class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                     <textarea id="productDescription" rows="3"
-                        class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                        class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                         placeholder="Enter product description"></textarea>
                 </div>
 
-                <!-- Package Names -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Package Names</label>
                     <div class="space-y-3">
                         <div class="custom-dropdown-container">
                             <div class="relative">
                                 <input type="text" id="packageNameSearch"
-                                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                    class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                                     placeholder="Click to select package names" autocomplete="off">
                                 <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                                     <i class="fas fa-chevron-down"></i>
@@ -198,7 +319,6 @@ ob_start();
                                             placeholder="Search package names...">
                                     </div>
                                     <div id="packageNameOptions" class="max-h-60 overflow-y-auto p-1">
-                                        <!-- Package name options will be populated here -->
                                         <div class="p-2 text-center text-gray-500 text-sm">Loading package names...
                                         </div>
                                     </div>
@@ -207,7 +327,7 @@ ob_start();
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="text" id="newPackageName"
-                                class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                                 placeholder="Enter new package name">
                             <button type="button" id="addPackageNameBtn"
                                 class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
@@ -215,24 +335,23 @@ ob_start();
                             </button>
                         </div>
                         <div id="selectedPackageNames" class="flex flex-wrap gap-2 mt-2">
-                            <!-- Selected package names will appear here -->
                         </div>
                     </div>
                 </div>
 
-                <!-- SEO fields -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="productMetaTitle" class="block text-sm font-medium text-gray-700 mb-1">Meta
                             Title</label>
                         <input type="text" id="productMetaTitle"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200" placeholder="For SEO...">
+                            class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                            placeholder="For SEO...">
                     </div>
                     <div>
                         <label for="productMetaDescription" class="block text-sm font-medium text-gray-700 mb-1">Meta
                             Description</label>
                         <textarea id="productMetaDescription" rows="2"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                             placeholder="For SEO..."></textarea>
                     </div>
                 </div>
@@ -240,10 +359,10 @@ ob_start();
                     <label for="productMetaKeywords" class="block text-sm font-medium text-gray-700 mb-1">Meta
                         Keywords</label>
                     <input type="text" id="productMetaKeywords"
-                        class="w-full px-3 py-2 rounded-lg border border-gray-200" placeholder="keyword1, keyword2...">
+                        class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="keyword1, keyword2...">
                 </div>
 
-                <!-- Images Upload/Preview -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Product Images (16:9
                         recommended)</label>
@@ -254,16 +373,14 @@ ob_start();
                     <input type="file" id="imageUploadInput" class="hidden" accept="image/*" multiple>
 
                     <div id="imagePreviewContainer" class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 sortable-images">
-                        <!-- Image previews will appear here -->
                     </div>
                 </div>
 
-                <!-- Status & Featured -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="productStatus" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <select id="productStatus"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none">
+                            class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
                             <option value="published" selected>Published</option>
                             <option value="pending">Pending</option>
                             <option value="draft">Draft</option>
@@ -285,26 +402,43 @@ ob_start();
             </form>
         </div>
 
-        <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button type="button" onclick="hideProductModal()"
-                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-            <button type="button" id="saveProductBtn"
-                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save Product</button>
+        <div class="p-2 border-t border-gray-100 flex justify-between">
+            <button type="button" id="deleteProductBtn"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hidden">
+                <i class="fas fa-trash-alt mr-2"></i>Delete
+            </button>
+            <div class="flex gap-3 ml-auto">
+                <button type="button" onclick="hideProductModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="button" id="saveProductBtn"
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save</button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div id="deleteProductModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideDeleteModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Delete Product</h3>
-            <button onclick="hideDeleteModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
+<div id="deleteProductModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="hideDeleteModal()"></div>
+    <div
+        class="relative w-full h-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
+        <div
+            class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-red-50 to-red-100">
+            <div class="flex items-center gap-3">
+                <div
+                    class="flex-shrink-0 h-12 w-12 rounded-lg bg-red-100 overflow-hidden flex items-center justify-center">
+                    <i class="fas fa-trash-alt text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-secondary">Delete Product</h3>
+                    <p class="text-sm text-gray-600 mt-1">This action cannot be undone</p>
+                </div>
+            </div>
+            <button onclick="hideDeleteModal()"
+                class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <div class="p-6">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-100px)]">
             <p class="text-gray-600 mb-4">Are you sure you want to delete this product? This action cannot be undone.
             </p>
             <div class="bg-gray-50 p-4 rounded-lg mb-4">
@@ -316,24 +450,35 @@ ob_start();
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
             <button onclick="hideDeleteModal()"
-                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
             <button id="confirmDeleteBtn"
                 class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
         </div>
     </div>
 </div>
 
-<!-- Image Cropper Modal -->
-<div id="cropperModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+<div id="cropperModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/50" onclick="hideCropperModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-4 relative z-10">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Crop Image (16:9)</h3>
-            <button onclick="hideCropperModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
+    <div
+        class="relative w-full h-full max-w-4xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
+        <div
+            class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5">
+            <div class="flex items-center gap-3">
+                <div
+                    class="flex-shrink-0 h-12 w-12 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
+                    <i class="fas fa-crop-alt text-gray-400 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-secondary">Crop Image (16:9)</h3>
+                    <p class="text-sm text-gray-600 mt-1">Adjust the image to fit the recommended aspect ratio</p>
+                </div>
+            </div>
+            <button onclick="hideCropperModal()"
+                class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <div class="p-6">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-100px)]">
             <div class="mb-4">
                 <div id="image-cropper-container" class="max-h-[60vh] overflow-hidden">
                     <img id="image-to-crop" src="" alt="Image to crop">
@@ -342,14 +487,13 @@ ob_start();
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
             <button onclick="hideCropperModal()"
-                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
             <button id="cropImageBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Crop &
                 Save</button>
         </div>
     </div>
 </div>
 
-<!-- Session Expired Modal -->
 <div id="sessionExpiredModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -367,7 +511,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Notifications -->
 <div id="successNotification"
     class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
@@ -383,12 +526,12 @@ ob_start();
     </div>
 </div>
 
-<!-- Include required libraries -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 <link rel="stylesheet" href="https://unpkg.com/swiper@8/swiper-bundle.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 <script src="https://unpkg.com/swiper@8/swiper-bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+
 <style>
     .swiper-container {
         width: 100%;
@@ -451,7 +594,6 @@ ob_start();
         height: 100%;
     }
 
-    /* Custom Dropdown Styles */
     .custom-dropdown-container {
         position: relative;
         width: 100%;
@@ -561,7 +703,7 @@ ob_start();
 <script>
     let productsData = [];
     let currentPage = 1;
-    let itemsPerPage = 6;
+    let itemsPerPage = 20;
     let totalPages = 1;
     let cropper = null;
     let currentImageIndex = null;
@@ -629,6 +771,18 @@ ob_start();
             }
         });
 
+        ['mobilePrevPage', 'mobileNextPage'].forEach(id => {
+            document.getElementById(id).addEventListener('click', function () {
+                if (id.includes('prev') && currentPage > 1) {
+                    currentPage--;
+                    renderProducts(productsData);
+                } else if (id.includes('next')) {
+                    currentPage++;
+                    renderProducts(productsData);
+                }
+            });
+        });
+
         document.getElementById('addImageBtn').addEventListener('click', () => {
             document.getElementById('imageUploadInput').click();
         });
@@ -663,18 +817,15 @@ ob_start();
         const dropdown = document.getElementById('packageNameDropdown');
         const filterInput = document.getElementById('packageNameFilter');
 
-        // Show dropdown when clicking on the search input
         searchInput.addEventListener('click', function () {
             dropdown.classList.remove('hidden');
             renderPackageNameOptions();
         });
 
-        // Filter package names as user types in the filter input
         filterInput.addEventListener('input', function () {
             renderPackageNameOptions(this.value);
         });
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', function (e) {
             if (!searchInput.contains(e.target) &&
                 !dropdown.contains(e.target) &&
@@ -693,7 +844,6 @@ ob_start();
             return;
         }
 
-        // Filter out already selected package names and apply text filter
         const availablePackageNames = packageNamesData.filter(pkg => {
             const isSelected = selectedPackageNames.some(selected => selected.id === pkg.id);
             const matchesFilter = !filterText || pkg.package_name.toLowerCase().includes(filterText.toLowerCase());
@@ -705,7 +855,6 @@ ob_start();
             return;
         }
 
-        // Render available package names
         availablePackageNames.forEach(pkg => {
             const option = document.createElement('div');
             option.className = 'custom-dropdown-option';
@@ -728,15 +877,12 @@ ob_start();
     }
 
     function selectPackageName(pkg) {
-        // Add to selected package names if not already selected
         if (!selectedPackageNames.some(selected => selected.id === pkg.id)) {
             selectedPackageNames.push({
                 id: pkg.id,
                 name: pkg.package_name
             });
             renderSelectedPackageNames();
-
-            // Update the search input placeholder
             updatePackageNameSearchPlaceholder();
         }
     }
@@ -810,14 +956,12 @@ ob_start();
                     showSuccessNotification(data.message || 'Package name created successfully');
                     input.value = '';
 
-                    // Add the new package name to the data
                     const newPackage = {
                         id: data.id,
                         package_name: packageName
                     };
                     packageNamesData.push(newPackage);
 
-                    // Select the newly created package name
                     selectPackageName(newPackage);
                     renderPackageNameOptions(document.getElementById('packageNameFilter').value);
                 } else {
@@ -932,7 +1076,6 @@ ob_start();
     }
 
     function populateFilterDropdowns() {
-        // Populate category filter
         const catFilter = document.getElementById('filterCategory');
         catFilter.innerHTML = '<option value="">All Categories</option>';
         categoriesList.forEach(cat => {
@@ -958,6 +1101,7 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     productsData = data.products || [];
+                    updateStatistics();
                     totalPages = Math.ceil(productsData.length / itemsPerPage);
                     currentPage = 1;
                     renderPagination();
@@ -971,6 +1115,18 @@ ob_start();
                 console.error('Error loading products:', err);
                 showErrorNotification('Failed to load products.');
             });
+    }
+
+    function updateStatistics() {
+        const total = productsData.length;
+        const published = productsData.filter(p => p.status === 'published').length;
+        const featured = productsData.filter(p => p.featured).length;
+        const pending = productsData.filter(p => p.status === 'pending').length;
+
+        document.getElementById('totalProducts').textContent = total.toLocaleString();
+        document.getElementById('publishedProducts').textContent = published.toLocaleString();
+        document.getElementById('featuredProducts').textContent = featured.toLocaleString();
+        document.getElementById('pendingProducts').textContent = pending.toLocaleString();
     }
 
     function renderPagination() {
@@ -1021,10 +1177,6 @@ ob_start();
     }
 
     function renderProducts(list) {
-        const container = document.getElementById('products-container');
-        container.innerHTML = '';
-
-        // Apply filters
         const filteredList = filterProducts(list);
         const start = (currentPage - 1) * itemsPerPage;
         const end = Math.min(start + itemsPerPage, filteredList.length);
@@ -1034,32 +1186,170 @@ ob_start();
         document.getElementById('showingEnd').textContent = end;
         document.getElementById('totalProducts').textContent = filteredList.length;
 
-        if (filteredList.length === 0) {
-            container.innerHTML = '<div class="col-span-full text-center text-gray-500">No products found</div>';
+        renderProductsTable(filteredList.slice(start, end));
+        renderProductsCards(filteredList.slice(start, end));
+        updateMobilePagination(filteredList.length, currentPage);
+    }
+
+    function renderProductsTable(products) {
+        const tbody = document.getElementById('productsBody');
+
+        if (products.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+                        <i class="fas fa-box-open text-2xl mb-2"></i>
+                        <div>No products found</div>
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        const paginated = filteredList.slice(start, end);
-        paginated.forEach(prod => {
-            container.appendChild(createProductCard(prod));
-        });
+        tbody.innerHTML = products.map(product => {
+            let mainImage = 'https://placehold.co/48x48/e2e8f0/1e293b?text=Product';
+            if (product.images && product.images.length > 0) {
+                mainImage = product.images[0];
+            }
 
-        initProductSwipers();
+            const statusBadge = getStatusBadge(product.status);
+            const featuredBadge = product.featured ?
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Featured</span>' :
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Regular</span>';
+
+            return `
+                <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="showProductModal('${product.id}')">
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-lg overflow-hidden bg-gray-100">
+                                <img src="${mainImage}" alt="${product.title}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-secondary max-w-xs hover:text-primary">
+                                    <span class="hidden sm:block truncate">${escapeHtml(product.title)}</span>
+                                    <span class="sm:hidden break-words">${escapeHtml(product.title)}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 hidden sm:block">ID: ${product.id}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="text-sm text-gray-900">${escapeHtml(product.category_name || 'Uncategorized')}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${statusBadge}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${featuredBadge}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderProductsCards(products) {
+        const container = document.getElementById('productsCards');
+
+        if (products.length === 0) {
+            container.innerHTML = `
+                <div class="p-4 text-center text-gray-500">
+                    <i class="fas fa-box-open text-2xl mb-2"></i>
+                    <div>No products found</div>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = products.map(product => {
+            let mainImage = 'https://placehold.co/48x48/e2e8f0/1e293b?text=Product';
+            if (product.images && product.images.length > 0) {
+                mainImage = product.images[0];
+            }
+
+            const statusBadge = getStatusBadge(product.status);
+            const featuredBadge = product.featured ?
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Featured</span>' :
+                '';
+
+            let packageNamesHtml = '';
+            if (product.package_names && product.package_names.length > 0) {
+                packageNamesHtml = `
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        ${product.package_names.map(pkg => `
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                                ${escapeHtml(pkg.package_name)}
+                            </span>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            return `
+                    <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onclick="showProductModal('${product.id}')">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 h-12 w-12 rounded-lg overflow-hidden bg-gray-100">
+                                <img src="${mainImage}" alt="${product.title}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="mb-1">
+                                    <div class="flex items-center gap-1 mb-1">
+                                        ${statusBadge}
+                                        ${featuredBadge}
+                                    </div>
+                                    <h4 class="text-sm font-medium text-secondary hover:text-primary pr-2 break-words">
+                                        ${escapeHtml(product.title)}
+                                    </h4>
+                                </div>
+                                <div class="text-xs text-gray-500 mb-2">${escapeHtml(product.category_name || 'Uncategorized')}</div>
+                                <div class="text-xs text-gray-600 mb-2 line-clamp-2">${escapeHtml(product.description || 'No description available')}</div>
+                                ${packageNamesHtml}
+                                <div class="hidden sm:block">
+                                    <div class="text-xs text-gray-500 mt-2">ID: ${product.id}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        }).join('');
+    }
+
+    function getStatusBadge(status) {
+        switch (status) {
+            case 'published':
+                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Published</span>';
+            case 'pending':
+                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Pending</span>';
+            case 'draft':
+                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Draft</span>';
+            default:
+                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
+        }
+    }
+
+    function updateMobilePagination(total, page) {
+        const totalPages = Math.ceil(total / itemsPerPage);
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, total);
+
+        document.getElementById('mobileShowingStart').textContent = `${startIndex + 1}`;
+        document.getElementById('mobileShowingEnd').textContent = `${endIndex}`;
+        document.getElementById('mobileTotalProducts').textContent = total;
+        document.getElementById('mobilePageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
+
+        document.getElementById('mobilePrevPage').disabled = page === 1;
+        document.getElementById('mobileNextPage').disabled = page === totalPages || totalPages === 0;
     }
 
     function filterProducts(products) {
         return products.filter(prod => {
-            // Search filter
             if (filterData.search &&
                 !prod.title.toLowerCase().includes(filterData.search.toLowerCase()) &&
                 !prod.description.toLowerCase().includes(filterData.search.toLowerCase())) {
                 return false;
             }
-            // Category filter
             if (filterData.category && prod.category !== filterData.category) {
                 return false;
             }
-            // Featured filter
             if (filterData.featured === 'featured' && !prod.featured) {
                 return false;
             }
@@ -1103,194 +1393,18 @@ ob_start();
         applyFilters();
     }
 
-    // Initialize Swiper for product images
-    function initProductSwipers() {
-        document.querySelectorAll('.swiper-container').forEach(container => {
-            new Swiper(container, {
-                loop: true,
-                pagination: {
-                    el: container.querySelector('.swiper-pagination'),
-                    clickable: true
-                },
-                navigation: {
-                    nextEl: container.querySelector('.swiper-button-next'),
-                    prevEl: container.querySelector('.swiper-button-prev')
-                }
-            });
-        });
-    }
-
-    function createProductCard(prod) { 
-        const card = document.createElement('div');
-        card.className = 'product-item bg-white/70 rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col';
-
-        // Main image or placeholder
-        let mainImage = 'https://placehold.co/600x400?text=No+Image';
-        if (prod.images && prod.images.length > 0) {
-            mainImage = prod.images[0];
-        }
-
-        // Image slider HTML
-        let sliderHtml = `
-        <div class="swiper-container h-full">
-            <div class="swiper-wrapper">
-    `;
-
-        if (prod.images && prod.images.length > 0) {
-            prod.images.forEach(img => {
-                sliderHtml += `
-                <div class="swiper-slide">
-                    <img src="${img}" alt="${escapeHtml(prod.title)}" class="w-full h-64 object-cover">
-                </div>
-            `;
-            });
-        } else {
-            sliderHtml += `
-            <div class="swiper-slide">
-                <img src="https://placehold.co/600x400?text=No+Image" alt="No Image" class="w-full h-64 object-cover">
-            </div>
-        `;
-        }
-
-        sliderHtml += `
-            </div>
-            <div class="swiper-pagination"></div>
-        </div>
-    `;
-
-        // Package names display
-        let packageNamesHtml = '';
-        if (prod.package_names && prod.package_names.length > 0) {
-            packageNamesHtml = `
-            <div class="flex flex-wrap gap-1 mt-2">
-                ${prod.package_names.map(pkg => `
-                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                        ${escapeHtml(pkg.package_name)}
-                    </span>
-                `).join('')}
-            </div>
-        `;
-        }
-
-        card.innerHTML = `
-            <div class="relative bg-gray-100 h-64 shrink-0">
-                <div class="product-image-slider h-full">
-                    ${sliderHtml}
-                </div>
-                <button class="absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center ${prod.featured ? 'text-red-500' : 'text-gray-400'} hover:text-primary transition-colors z-10 toggle-featured" data-id="${prod.id}" data-featured="${prod.featured ? 'true' : 'false'}">
-                    <i class="${prod.featured ? 'fas' : 'far'} fa-heart text-lg"></i>
-                </button>
-                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                    <div class="text-white font-medium truncate">${escapeHtml(prod.title)}</div>
-                    <div class="text-white/80 text-sm truncate">${escapeHtml(prod.category_name || '')}</div>
-                </div>
-            </div>
-
-            <div class="flex flex-col justify-between flex-1 p-4"> <!-- Flex wrapper for content and buttons -->
-                <div>
-                <h3 class="text-lg font-semibold mb-1 truncate">${escapeHtml(prod.title)}</h3>
-
-                <div class="flex items-center text-gray-500 mb-2">
-                    <i class="fas fa-tag mr-2"></i>
-                    <span>${escapeHtml(prod.category_name || '')}</span>
-                </div>
-
-                <div class="text-sm text-gray-600 mb-3 line-clamp-2">${escapeHtml(prod.description || 'No description available')}</div>
-
-                ${packageNamesHtml}
-                </div>
-
-                <div class="flex justify-end gap-2 mt-4">
-                    <button class="btn-edit w-10 h-10 bg-white border border-primary text-primary rounded-lg hover:bg-primary/5 flex items-center justify-center" data-id="${prod.id}" title="Edit Product">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-delete w-10 h-10 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center" data-id="${prod.id}" title="Delete Product">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-
-        // Wire up events
-        card.querySelector('.btn-edit').addEventListener('click', () => {
-            showProductModal(prod.id);
-        });
-        card.querySelector('.btn-delete').addEventListener('click', () => {
-            showDeleteModal(prod.id);
-        });
-        card.querySelector('.toggle-featured').addEventListener('click', (e) => {
-            const button = e.currentTarget;
-            const productId = button.getAttribute('data-id');
-            const featured = button.getAttribute('data-featured') === 'true';
-            toggleProductFeatured(productId, !featured);
-        });
-
-        return card;
-    }
-
-    function toggleProductFeatured(productId, featured) {
-        showLoading(featured ? 'Marking as featured...' : 'Removing from featured...');
-
-        fetch(`${BASE_URL}admin/fetch/manageProducts/toggleFeatured`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                id: productId,
-                featured: featured
-            })
-        })
-            .then(res => {
-                if (res.status === 401) {
-                    showSessionExpiredModal();
-                    throw new Error('Session expired');
-                }
-                return res.json();
-            })
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    const product = productsData.find(p => p.id === productId);
-                    if (product) {
-                        product.featured = featured;
-                    }
-
-                    const button = document.querySelector(`.toggle-featured[data-id="${productId}"]`);
-                    if (button) {
-                        button.setAttribute('data-featured', featured ? 'true' : 'false');
-                        if (featured) {
-                            button.classList.remove('text-gray-400');
-                            button.classList.add('text-red-500');
-                            button.querySelector('i').classList.remove('far');
-                            button.querySelector('i').classList.add('fas');
-                        } else {
-                            button.classList.add('text-gray-400');
-                            button.classList.remove('text-red-500');
-                            button.querySelector('i').classList.add('far');
-                            button.querySelector('i').classList.remove('fas');
-                        }
-                    }
-                    showSuccessNotification(featured ? 'Product marked as featured' : 'Product removed from featured');
-                } else {
-                    showErrorNotification(data.message || 'Failed to update featured status');
-                }
-            })
-            .catch(err => {
-                hideLoading();
-                console.error('Error toggling featured status:', err);
-                showErrorNotification('Failed to update featured status');
-            });
-    }
-
     function showProductModal(productId) {
         resetProductForm();
 
         const modal = document.getElementById('productModal');
         const modalTitle = document.getElementById('modalTitle');
+        const deleteBtn = document.getElementById('deleteProductBtn');
 
         if (productId) {
             modalTitle.textContent = 'Edit Product';
+            deleteBtn.classList.remove('hidden');
+            deleteBtn.onclick = () => showDeleteModal(productId);
+
             showLoading('Loading product details...');
 
             fetch(`${BASE_URL}admin/fetch/manageProducts/getProduct?id=${productId}`)
@@ -1318,6 +1432,7 @@ ob_start();
                 });
         } else {
             modalTitle.textContent = 'Add New Product';
+            deleteBtn.classList.add('hidden');
             modal.classList.remove('hidden');
             initSortable();
         }
@@ -1353,7 +1468,6 @@ ob_start();
         document.getElementById('productStatus').value = prod.status;
         document.getElementById('productFeatured').checked = (prod.featured == 1);
 
-        // Set package names
         if (prod.package_names && prod.package_names.length > 0) {
             selectedPackageNames = prod.package_names.map(pkg => ({
                 id: pkg.id,
@@ -1363,7 +1477,6 @@ ob_start();
             updatePackageNameSearchPlaceholder();
         }
 
-        // images
         if (prod.images && prod.images.length > 0) {
             prod.images.forEach((url, index) => {
                 addImagePreview(url, index + 1);
@@ -1382,7 +1495,6 @@ ob_start();
         const status = document.getElementById('productStatus').value;
         const featured = document.getElementById('productFeatured').checked;
 
-        // Get selected package names
         const packageNames = selectedPackageNames.map(pkg => pkg.id);
 
         if (!title || !category) {
@@ -1392,7 +1504,6 @@ ob_start();
 
         showLoading(productId ? 'Updating product...' : 'Creating product...');
 
-        // Gather images from preview container
         const imageDivs = document.querySelectorAll('#imagePreviewContainer .image-preview-item');
         const images = [];
         const tempImages = [];
@@ -1407,8 +1518,7 @@ ob_start();
                     temp_path: tmpPath
                 });
             } else if (imgSrc.startsWith('data:')) {
-                // If there's a base64 image, we could upload it, but the script here
-                // queues it for upload. We'll handle it the same as normal: pass the data along.
+
             } else if (!imgSrc.includes('placehold.co')) {
                 images.push(imgSrc);
             }
@@ -1502,6 +1612,7 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     showSuccessNotification(data.message || 'Product deleted');
+                    hideProductModal();
                     loadProducts();
                 } else {
                     showErrorNotification(data.message || 'Failed to delete product');

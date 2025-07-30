@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Product Categories';
-$activeNav = 'product-categories';
+$activeNav = 'products';
 
 if (
     !isset($_SESSION['user']) ||
@@ -17,105 +17,250 @@ if (
 ob_start();
 ?>
 
-<div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold text-secondary">Product Categories</h1>
-            <p class="text-sm text-gray-text mt-1">Manage product categories and their metadata</p>
-        </div>
-        <div class="flex flex-col md:flex-row items-center gap-3">
-            <button id="addCategoryBtn"
-                class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-plus"></i>
-                <span>Add Category</span>
-            </button>
-            <a href="products"
-                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-arrow-left"></i>
-                <span>Back to Products</span>
-            </a>
+<div class="min-h-screen bg-gray-50 font-rubik" id="app-container">
+    <div class="bg-white border-b border-gray-200 sm:px-6 lg:px-8 py-3 sm:py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                <div>
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <h1 class="text-lg sm:text-2xl font-bold text-secondary">Product Categories</h1>
+                    </div>
+                    <p class="text-gray-600 mt-1 text-sm sm:text-base hidden sm:block">Manage product categories and
+                        their metadata</p>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="addCategoryBtn"
+                        class="px-3 sm:px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-plus text-sm"></i>
+                        <span class="hidden sm:inline">Add Category</span>
+                    </button>
+                    <a href="products"
+                        class="px-3 sm:px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-arrow-left text-sm"></i>
+                        <span class="hidden sm:inline">Back to Products</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-lg font-semibold text-secondary">Product Categories</h2>
-                <p class="text-sm text-gray-text mt-1">
-                    <span id="category-count">0</span> categories found
-                </p>
-            </div>
-            <div class="flex flex-col md:flex-row items-center gap-3">
-                <div class="relative w-full md:w-auto">
-                    <input type="text" id="searchCategories" placeholder="Search categories..."
-                        class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8">
+        <div class="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Categories</p>
+                        <p class="text-xl font-bold text-blue-900 truncate" id="totalCategories">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-tags text-blue-600"></i>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2 w-full md:w-auto">
+            </div>
+
+            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Active</p>
+                        <p class="text-xl font-bold text-green-900 truncate" id="activeCategories">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Featured</p>
+                        <p class="text-xl font-bold text-purple-900 truncate" id="featuredCategories">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-star text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">Inactive</p>
+                        <p class="text-xl font-bold text-orange-900 truncate" id="inactiveCategories">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-pause-circle text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-lg font-semibold text-secondary mb-2">Filter & Search</h2>
+                    <p class="text-sm text-gray-600">Configure your category view and filters</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Categories</label>
+                    <div class="relative">
+                        <input type="text" id="searchCategories" placeholder="Search categories..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status Filter</label>
                     <select id="filterStatus"
-                        class="h-10 pl-3 pr-8 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm w-full">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
                         <option value="">All Statuses</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Featured Filter</label>
+                    <select id="filterFeatured"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <option value="">All Categories</option>
+                        <option value="featured">Featured Only</option>
+                        <option value="not-featured">Not Featured</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="resetFilters"
+                        class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        Reset Filters
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full" id="categories-table">
-                <thead>
-                    <tr class="text-left border-b border-gray-100">
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text text-center">Featured</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Name</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Products</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Status</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text">Created</th>
-                        <th class="px-6 py-3 text-sm font-semibold text-gray-text w-32">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="categories-table-body">
-                    <tr>
-                        <td colspan="6" class="px-6 py-4 text-center">Loading categories...</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
+            <div class="p-4 sm:p-6 border-b border-gray-100">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-secondary">Categories</h3>
+                        <p class="text-sm text-gray-600"><span id="category-count">0</span> categories found</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full" id="categories-table">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Featured</th>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Name</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Products</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Status</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Created</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categories-table-body" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <div>Loading categories...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600 text-center sm:text-left">
+                    Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span
+                        id="total-categories">0</span> categories
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prev-page"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Previous
+                    </button>
+                    <div id="pagination-numbers" class="flex items-center"></div>
+                    <button id="next-page"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="lg:hidden" id="categoriesCards">
+            <div class="p-4 text-center text-gray-500">
+                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                <div>Loading categories...</div>
+            </div>
         </div>
 
-        <div class="p-4 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="text-sm text-gray-text">
-                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of
-                <span id="total-categories">0</span> categories
-            </div>
-            <div class="flex items-center gap-2"> categories
+        <div
+            class="lg:hidden p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-sm text-gray-600 text-center sm:text-left">
+                Showing <span id="mobileShowingStart">0</span> to <span id="mobileShowingEnd">0</span> of <span
+                    id="mobileTotalCategories">0</span> categories
             </div>
             <div class="flex items-center gap-2">
-                <button id="prev-page"
-                    class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-left"></i>
+                <button id="mobilePrevPage"
+                    class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                    disabled>
+                    Previous
                 </button>
-                <div id="pagination-numbers" class="flex items-center">
-                </div>
-                <button id="next-page"
-                    class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-right"></i>
+                <span id="mobilePageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
+                <button id="mobileNextPage"
+                    class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                    disabled>
+                    Next
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Category Modal -->
-<div id="categoryModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideCategoryModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl mx-4 relative z-10 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary" id="modalTitle">Add New Category</h3>
-            <button onclick="hideCategoryModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
+<div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[999] hidden">
+    <div class="bg-white p-5 rounded-lg shadow-lg flex items-center gap-3">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span id="loadingMessage" class="text-gray-700 font-medium">Loading...</span>
+    </div>
+</div>
+
+<div id="categoryModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="hideCategoryModal()"></div>
+    <div
+        class="relative w-full h-full max-w-4xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
+        <div
+            class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5">
+            <div class="flex items-center gap-3">
+                <div
+                    class="flex-shrink-0 h-12 w-12 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
+                    <i class="fas fa-tags text-gray-400 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-secondary" id="modalTitle">Add New Category</h3>
+                    <p class="text-sm text-gray-600 mt-1">Create or edit category information</p>
+                </div>
+            </div>
+            <button onclick="hideCategoryModal()"
+                class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <div class="p-6">
+
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-160px)]">
             <form id="categoryForm" class="space-y-6">
                 <input type="hidden" id="categoryId" name="categoryId" value="">
                 <input type="hidden" id="tempImagePath" name="tempImagePath" value="">
@@ -126,22 +271,20 @@ ob_start();
                         <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Category Name <span
                                 class="text-red-500">*</span></label>
                         <input type="text" id="name" name="name"
-                            class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                             placeholder="Enter category name" required>
                     </div>
 
                     <div>
                         <label for="status-toggle" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <div class="flex items-center space-x-3">
-                            <div
-                                class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                                <input type="checkbox" id="status-toggle"
-                                    class="absolute w-6 h-6 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                                    checked>
-                                <label for="status-toggle"
-                                    class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                            </div>
-                            <span id="status-text" class="text-sm font-medium text-gray-700">Active</span>
+                        <div class="flex items-center h-10">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="status-toggle" class="sr-only peer" checked>
+                                <div
+                                    class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:bg-primary peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all">
+                                </div>
+                                <span id="status-text" class="ml-3 text-sm text-gray-700">Active</span>
+                            </label>
                             <input type="hidden" id="status" name="status" value="active">
                         </div>
                     </div>
@@ -150,7 +293,7 @@ ob_start();
                 <div>
                     <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                     <textarea id="description" name="description" rows="3"
-                        class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                        class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                         placeholder="Enter category description"></textarea>
                 </div>
 
@@ -162,7 +305,7 @@ ob_start();
                             <label for="meta_title" class="block text-sm font-medium text-gray-700 mb-1">Meta
                                 Title</label>
                             <input type="text" id="meta_title" name="meta_title"
-                                class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                                 placeholder="Enter meta title">
                         </div>
 
@@ -171,7 +314,7 @@ ob_start();
                                 Keywords</label>
                             <div class="relative">
                                 <input type="text" id="keywords-input"
-                                    class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                    class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                                     placeholder="Type and press Enter to add keywords">
                                 <input type="hidden" id="meta_keywords" name="meta_keywords" value="">
                             </div>
@@ -184,7 +327,7 @@ ob_start();
                         <label for="meta_description" class="block text-sm font-medium text-gray-700 mb-1">Meta
                             Description</label>
                         <textarea id="meta_description" name="meta_description" rows="2"
-                            class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            class="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                             placeholder="Enter meta description"></textarea>
                     </div>
                 </div>
@@ -223,7 +366,8 @@ ob_start();
                             <div id="cropperContainer" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Crop Image (16:9)</label>
                                 <div class="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                                    <img id="cropperImage" src="" alt="Image to crop" class="max-w-full">
+                                    <img id="cropperImage" src="https://placehold.co/600x338/e2e8f0/1e293b?text=Crop"
+                                        alt="Image to crop" class="max-w-full">
                                 </div>
                                 <div class="flex justify-end mt-3 space-x-2">
                                     <button type="button" id="cancelCrop"
@@ -240,8 +384,8 @@ ob_start();
                             <div id="imagePreviewContainer" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Image Preview</label>
                                 <div class="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                                    <img id="imagePreview" src="" alt="Category image preview"
-                                        class="w-full h-full object-cover">
+                                    <img id="imagePreview" src="https://placehold.co/600x338/e2e8f0/1e293b?text=Preview"
+                                        alt="Category image preview" class="w-full h-full object-cover">
                                     <button type="button" id="removeImageBtn"
                                         class="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition-colors">
                                         <i class="fas fa-times"></i>
@@ -253,30 +397,44 @@ ob_start();
                 </div>
             </form>
         </div>
-        <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
-            <button onclick="hideCategoryModal()"
-                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
-                Cancel
+
+        <div class="p-6 border-t border-gray-100 flex justify-between">
+            <button type="button" id="deleteCategoryBtn"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 hidden">
+                <i class="fas fa-trash-alt mr-2"></i>Delete Category
             </button>
-            <button id="submitCategory"
-                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                Save Category
-            </button>
+            <div class="flex gap-3 ml-auto">
+                <button type="button" onclick="hideCategoryModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="button" id="submitCategory"
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save Category</button>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Modal -->
-<div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideDeleteModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Delete Category</h3>
-            <button onclick="hideDeleteModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
+<div id="deleteModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="hideDeleteModal()"></div>
+    <div
+        class="relative w-full h-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
+        <div
+            class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-red-50 to-red-100">
+            <div class="flex items-center gap-3">
+                <div
+                    class="flex-shrink-0 h-12 w-12 rounded-lg bg-red-100 overflow-hidden flex items-center justify-center">
+                    <i class="fas fa-trash-alt text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-secondary">Delete Category</h3>
+                    <p class="text-sm text-gray-600 mt-1">This action cannot be undone</p>
+                </div>
+            </div>
+            <button onclick="hideDeleteModal()"
+                class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <div class="p-6">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-100px)]">
             <p class="text-gray-600 mb-4">Are you sure you want to delete this category? This action cannot be undone.
             </p>
             <div class="bg-gray-50 p-4 rounded-lg mb-4">
@@ -290,17 +448,13 @@ ob_start();
         </div>
         <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
             <button onclick="hideDeleteModal()"
-                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
-                Cancel
-            </button>
-            <button id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                Delete
-            </button>
+                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button id="confirmDelete"
+                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
         </div>
     </div>
 </div>
 
-<!-- Session Expired Modal -->
 <div id="sessionExpiredModal" class="fixed inset-0 z-[1000] flex items-center justify-center hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
@@ -308,20 +462,16 @@ ob_start();
             <div class="text-center mb-4">
                 <i class="fas fa-clock text-4xl text-amber-600 mb-4"></i>
                 <h3 class="text-lg font-semibold text-gray-900">Session Expired</h3>
-                <p class="text-sm text-gray-500 mt-2">Your session has expired due to inactivity.</p>
-                <p class="text-sm text-gray-500 mt-1">Redirecting in <span id="countdown">10</span> seconds...</p>
+                <p class="text-sm text-gray-500 mt-2">Your session has expired.</p>
             </div>
             <div class="flex justify-center mt-6">
                 <button onclick="redirectToLogin()"
-                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                    Login Now
-                </button>
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Login Now</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Notifications -->
 <div id="successNotification"
     class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
     <div class="flex items-center">
@@ -338,17 +488,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[1000] hidden">
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
-        <div class="flex flex-col items-center">
-            <div class="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
-            <p id="loadingMessage" class="text-gray-700 font-medium text-center">Loading...</p>
-        </div>
-    </div>
-</div>
-
-<!-- Include Cropper.js -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
@@ -361,20 +500,12 @@ ob_start();
     let keywordsList = [];
 
     document.addEventListener('DOMContentLoaded', function () {
-        // Initialize event listeners
         initializeEventListeners();
-
-        // Load categories
         loadCategories();
-
-        // Initialize keywords input
         initializeKeywordsInput();
-
-        // Initialize status toggle
         initializeStatusToggle();
     });
 
-    // Loading overlay functions
     function showLoading(message = 'Loading...') {
         document.getElementById('loadingMessage').textContent = message;
         document.getElementById('loadingOverlay').classList.remove('hidden');
@@ -385,45 +516,45 @@ ob_start();
     }
 
     function initializeEventListeners() {
-        // Add category button
         document.getElementById('addCategoryBtn').addEventListener('click', showAddCategoryModal);
-
-        // Submit category button
         document.getElementById('submitCategory').addEventListener('click', submitCategoryForm);
 
-        // Image upload and cropping
         const imageInput = document.getElementById('image');
         imageInput.addEventListener('change', handleImageUpload);
 
         document.getElementById('cancelCrop').addEventListener('click', cancelCrop);
         document.getElementById('applyCrop').addEventListener('click', applyCrop);
 
-        // Remove image button (renamed to removeImageBtn)
         document.getElementById('removeImageBtn').addEventListener('click', function () {
-            // Set the hidden removeImage input value to "1"
             document.getElementById('removeImage').value = "1";
-            // Clear any temporary image path
             document.getElementById('tempImagePath').value = '';
-            // Hide preview container
             document.getElementById('imagePreviewContainer').classList.add('hidden');
-            // Reset the file input
             document.getElementById('image').value = '';
-            // Update filename indicator
             document.getElementById('selectedFileName').textContent = 'Image will be removed';
         });
 
-        // Search and filter
         document.getElementById('searchCategories').addEventListener('input', function (e) {
             const query = e.target.value.toLowerCase();
-            filterCategories(query, document.getElementById('filterStatus').value);
+            filterCategories(query, document.getElementById('filterStatus').value, document.getElementById('filterFeatured').value);
         });
 
         document.getElementById('filterStatus').addEventListener('change', function (e) {
             const status = e.target.value;
-            filterCategories(document.getElementById('searchCategories').value.toLowerCase(), status);
+            filterCategories(document.getElementById('searchCategories').value.toLowerCase(), status, document.getElementById('filterFeatured').value);
         });
 
-        // Pagination
+        document.getElementById('filterFeatured').addEventListener('change', function (e) {
+            const featured = e.target.value;
+            filterCategories(document.getElementById('searchCategories').value.toLowerCase(), document.getElementById('filterStatus').value, featured);
+        });
+
+        document.getElementById('resetFilters').addEventListener('click', function () {
+            document.getElementById('searchCategories').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterFeatured').value = '';
+            filterCategories('', '', '');
+        });
+
         document.getElementById('prev-page').addEventListener('click', function () {
             if (currentPage > 1) {
                 currentPage--;
@@ -440,8 +571,27 @@ ob_start();
             }
         });
 
-        // Delete category
         document.getElementById('confirmDelete').addEventListener('click', confirmDelete);
+        document.getElementById('deleteCategoryBtn').addEventListener('click', function () {
+            const categoryId = document.getElementById('categoryId').value;
+            if (categoryId) {
+                showDeleteModal(categoryId);
+            }
+        });
+
+        document.getElementById('mobilePrevPage').addEventListener('click', function () {
+            if (currentPage > 1) {
+                currentPage--;
+                renderCategoriesCards(categoriesData);
+            }
+        });
+
+        document.getElementById('mobileNextPage').addEventListener('click', function () {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderCategoriesCards(categoriesData);
+            }
+        });
     }
 
     function initializeKeywordsInput() {
@@ -510,11 +660,9 @@ ob_start();
         const selectedFileName = document.getElementById('selectedFileName');
         selectedFileName.textContent = file.name;
 
-        // Reset remove flag since we're uploading a new image
         document.getElementById('removeImage').value = "0";
         document.getElementById('tempImagePath').value = '';
 
-        // Check file type and size
         const fileType = file.type;
         const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
@@ -524,13 +672,12 @@ ob_start();
             return;
         }
 
-        if (file.size > 5 * 1024 * 1024) { // 5MB
+        if (file.size > 5 * 1024 * 1024) {
             showErrorNotification('File size too large. Maximum 5MB allowed.');
             resetImageUpload();
             return;
         }
 
-        // Initialize cropper
         const reader = new FileReader();
         reader.onload = function (e) {
             const cropperImage = document.getElementById('cropperImage');
@@ -586,7 +733,6 @@ ob_start();
             return;
         }
 
-        // Display the cropped image
         const imagePreview = document.getElementById('imagePreview');
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
         const cropperContainer = document.getElementById('cropperContainer');
@@ -595,12 +741,10 @@ ob_start();
         imagePreviewContainer.classList.remove('hidden');
         cropperContainer.classList.add('hidden');
 
-        // Convert to blob and upload
         canvas.toBlob(function (blob) {
             uploadCroppedImage(blob);
         }, 'image/jpeg', 0.9);
 
-        // Destroy cropper
         cropper.destroy();
         cropper = null;
     }
@@ -675,6 +819,7 @@ ob_start();
         resetCategoryForm();
         document.getElementById('modalTitle').textContent = 'Add New Category';
         document.getElementById('submitCategory').textContent = 'Save Category';
+        document.getElementById('deleteCategoryBtn').classList.add('hidden');
         document.getElementById('categoryModal').classList.remove('hidden');
     }
 
@@ -682,8 +827,8 @@ ob_start();
         resetCategoryForm();
         document.getElementById('modalTitle').textContent = 'Edit Category';
         document.getElementById('submitCategory').textContent = 'Update Category';
+        document.getElementById('deleteCategoryBtn').classList.remove('hidden');
 
-        // Fetch category details
         showLoading('Loading category details...');
 
         fetch(`${BASE_URL}admin/fetch/manageProductCategories/getCategory?id=${categoryId}`)
@@ -706,7 +851,6 @@ ob_start();
                     document.getElementById('meta_title').value = category.meta_title || '';
                     document.getElementById('meta_description').value = category.meta_description || '';
 
-                    // Set status
                     const statusToggle = document.getElementById('status-toggle');
                     const statusText = document.getElementById('status-text');
                     const statusInput = document.getElementById('status');
@@ -721,7 +865,6 @@ ob_start();
                         statusInput.value = 'inactive';
                     }
 
-                    // Set keywords
                     if (category.meta_keywords) {
                         keywordsList = category.meta_keywords.split(',').map(k => k.trim()).filter(k => k);
                         renderKeywords();
@@ -730,12 +873,11 @@ ob_start();
                         renderKeywords();
                     }
 
-                    // Set image
                     if (category.image_url) {
                         document.getElementById('imagePreview').src = category.image_url;
                         document.getElementById('imagePreviewContainer').classList.remove('hidden');
                         document.getElementById('selectedFileName').textContent = 'Current image';
-                        document.getElementById('removeImage').value = "0"; // Reset remove flag
+                        document.getElementById('removeImage').value = "0";
                     } else {
                         document.getElementById('imagePreviewContainer').classList.add('hidden');
                         document.getElementById('selectedFileName').textContent = 'No image selected';
@@ -769,7 +911,6 @@ ob_start();
         document.getElementById('cropperContainer').classList.add('hidden');
         document.getElementById('selectedFileName').textContent = 'No file selected';
 
-        // Reset status toggle
         const statusToggle = document.getElementById('status-toggle');
         const statusText = document.getElementById('status-text');
         const statusInput = document.getElementById('status');
@@ -778,7 +919,6 @@ ob_start();
         statusText.textContent = 'Active';
         statusInput.value = 'active';
 
-        // Reset keywords
         keywordsList = [];
         renderKeywords();
 
@@ -878,7 +1018,7 @@ ob_start();
 
     function loadCategories() {
         const tableBody = document.getElementById('categories-table-body');
-        tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center">Loading categories...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><div>Loading categories...</div></td></tr>';
 
         showLoading('Loading categories...');
 
@@ -898,12 +1038,14 @@ ob_start();
                 hideLoading();
                 if (data.success) {
                     categoriesData = data.categories;
+                    updateStatistics();
                     totalPages = Math.ceil(categoriesData.length / itemsPerPage);
                     renderPagination();
                     renderCategories(categoriesData);
+                    renderCategoriesCards(categoriesData);
                 } else {
                     showErrorNotification(data.message || 'Failed to load categories');
-                    tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error loading categories</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-red-500">Error loading categories</td></tr>';
                 }
             })
             .catch(error => {
@@ -911,9 +1053,21 @@ ob_start();
                 if (error.message !== 'Session expired') {
                     console.error('Error loading categories:', error);
                     showErrorNotification('Failed to load categories. Please try again.');
-                    tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Failed to load categories</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-red-500">Failed to load categories</td></tr>';
                 }
             });
+    }
+
+    function updateStatistics() {
+        const total = categoriesData.length;
+        const active = categoriesData.filter(c => c.status === 'active').length;
+        const featured = categoriesData.filter(c => c.featured).length;
+        const inactive = categoriesData.filter(c => c.status === 'inactive').length;
+
+        document.getElementById('totalCategories').textContent = total.toLocaleString();
+        document.getElementById('activeCategories').textContent = active.toLocaleString();
+        document.getElementById('featuredCategories').textContent = featured.toLocaleString();
+        document.getElementById('inactiveCategories').textContent = inactive.toLocaleString();
     }
 
     function renderPagination() {
@@ -968,6 +1122,7 @@ ob_start();
             currentPage = pageNumber;
             renderPagination();
             renderCategories(categoriesData);
+            renderCategoriesCards(categoriesData);
         });
 
         return button;
@@ -989,79 +1144,40 @@ ob_start();
         const paginatedCategories = categories.slice(start, end);
 
         if (paginatedCategories.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center">No categories found</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500"><i class="fas fa-box-open text-2xl mb-2"></i><div>No categories found</div></td></tr>';
             return;
         }
 
         paginatedCategories.forEach((category, index) => {
             const row = document.createElement('tr');
-            row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors';
+            row.className = 'hover:bg-gray-50 transition-colors cursor-pointer';
+            row.onclick = () => showEditCategoryModal(category.id);
 
-            const statusToggle = `
-                <div class="flex items-center">
-                    <div class="relative inline-block w-10 h-5 transition duration-200 ease-in-out rounded-full cursor-pointer">
-                        <input type="checkbox" class="status-toggle absolute w-5 h-5 transition duration-200 ease-in-out transform bg-white border rounded-full appearance-none cursor-pointer peer border-gray-300 checked:right-0 checked:border-primary checked:bg-primary focus:outline-none focus:ring-1 focus:ring-primary" data-id="${category.id}" ${category.status === 'active' ? 'checked' : ''}>
-                        <label class="block h-full overflow-hidden rounded-full cursor-pointer bg-gray-300 peer-checked:bg-primary/30"></label>
-                    </div>
-                    <span class="ml-2 text-xs font-medium ${category.status === 'active' ? 'text-green-600' : 'text-gray-500'}">${category.status === 'active' ? 'Active' : 'Inactive'}</span>
-                </div>
-            `;
+            const statusBadge = category.status === 'active' ?
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>' :
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
 
             row.innerHTML = `
-                <td class="px-6 py-4 text-center">
-                    <button class="btn-feature" data-id="${category.id}">
+                <td class="px-4 py-3 text-center">
+                    <button class="btn-feature" data-id="${category.id}" onclick="event.stopPropagation()">
                         ${category.featured
                     ? '<i class="fas fa-heart text-red-500"></i>'
                     : '<i class="far fa-heart text-gray-400"></i>'}
                     </button>
                 </td>
-                <td class="px-6 py-4">
-                    <div class="font-medium text-gray-900">${escapeHtml(category.name)}</div>
+                <td class="px-4 py-3">
+                    <div class="font-medium text-gray-900 break-words">${escapeHtml(category.name)}</div>
                     <div class="text-xs text-gray-500 mt-1">${category.description ? escapeHtml(truncateText(category.description, 50)) : ''}</div>
                     ${category.image_url ? '<div class="text-xs text-blue-500 mt-1"><i class="fas fa-image mr-1"></i>Has image</div>' : ''}
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-700">${category.product_count || 0}</td>
-                <td class="px-6 py-4">${statusToggle}</td>
-                <td class="px-6 py-4 text-sm text-gray-text">${formatDate(category.created_at)}</td>
-                <td class="px-6 py-4 text-sm">
-                    <div class="flex items-center gap-2">
-                        <button class="btn-edit text-blue-600 hover:text-blue-800" data-id="${category.id}" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-delete text-red-600 hover:text-red-800" data-id="${category.id}" title="Delete">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </td>
+                <td class="px-4 py-3 text-center text-sm text-gray-700">${category.product_count || 0}</td>
+                <td class="px-4 py-3 text-center">${statusBadge}</td>
+                <td class="px-4 py-3 text-center text-sm text-gray-500">${formatDate(category.created_at)}</td>
             `;
 
             tableBody.appendChild(row);
         });
 
-        // Add event listeners to buttons
-        document.querySelectorAll('.btn-edit').forEach(button => {
-            button.addEventListener('click', function () {
-                const categoryId = this.getAttribute('data-id');
-                showEditCategoryModal(categoryId);
-            });
-        });
-
-        document.querySelectorAll('.btn-delete').forEach(button => {
-            button.addEventListener('click', function () {
-                const categoryId = this.getAttribute('data-id');
-                showDeleteModal(categoryId);
-            });
-        });
-
-        document.querySelectorAll('.status-toggle').forEach(toggle => {
-            toggle.addEventListener('change', function () {
-                const categoryId = this.getAttribute('data-id');
-                const newStatus = this.checked ? 'active' : 'inactive';
-                updateCategoryStatus(categoryId, newStatus);
-            });
-        });
-
-        // Add event listeners to feature toggles
         document.querySelectorAll('.btn-feature').forEach(button => {
             button.addEventListener('click', function () {
                 const categoryId = this.getAttribute('data-id');
@@ -1071,17 +1187,14 @@ ob_start();
                 const oldFeatured = category.featured;
                 const newFeatured = oldFeatured ? 0 : 1;
 
-                // Update UI icon immediately
                 const icon = this.querySelector('i');
                 if (newFeatured) {
                     icon.className = 'fas fa-heart text-red-500';
                 } else {
                     icon.className = 'far fa-heart text-gray-400';
                 }
-                // Update local data
                 category.featured = newFeatured;
 
-                // Send update request
                 fetch(`${BASE_URL}admin/fetch/manageProductCategories/updateFeatured`, {
                     method: 'POST',
                     headers: {
@@ -1101,7 +1214,6 @@ ob_start();
                     })
                     .then(data => {
                         if (!data.success) {
-                            // revert UI and data on error
                             category.featured = oldFeatured;
                             if (oldFeatured) {
                                 icon.className = 'fas fa-heart text-red-500';
@@ -1109,11 +1221,13 @@ ob_start();
                                 icon.className = 'far fa-heart text-gray-400';
                             }
                             showErrorNotification(data.message || 'Failed to update featured');
+                        } else {
+                            updateStatistics();
+                            renderCategoriesCards(categoriesData);
                         }
                     })
                     .catch(err => {
                         if (err.message !== 'Session expired') {
-                            // revert UI and data on error
                             category.featured = oldFeatured;
                             if (oldFeatured) {
                                 icon.className = 'fas fa-heart text-red-500';
@@ -1127,69 +1241,144 @@ ob_start();
         });
     }
 
-    function updateCategoryStatus(categoryId, status) {
-        const category = categoriesData.find(c => c.id === categoryId);
-        if (!category) return;
+    function renderCategoriesCards(categories) {
+        const cardsContainer = document.getElementById('categoriesCards');
+        cardsContainer.innerHTML = '';
 
-        showLoading('Updating category status...');
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = Math.min(start + itemsPerPage, categories.length);
 
-        const categoryData = {
-            id: categoryId,
-            name: category.name,
-            description: category.description || '',
-            meta_title: category.meta_title || '',
-            meta_description: category.meta_description || '',
-            meta_keywords: category.meta_keywords || '',
-            status: status
-        };
+        document.getElementById('mobileShowingStart').textContent = categories.length > 0 ? start + 1 : 0;
+        document.getElementById('mobileShowingEnd').textContent = end;
+        document.getElementById('mobileTotalCategories').textContent = categories.length;
+        document.getElementById('mobilePageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
 
-        fetch(`${BASE_URL}admin/fetch/manageProductCategories/updateCategory`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(categoryData)
-        })
-            .then(response => {
-                if (response.status === 401) {
-                    hideLoading();
-                    showSessionExpiredModal();
-                    throw new Error('Session expired');
-                }
-                return response.json();
-            })
-            .then(data => {
-                hideLoading();
-                if (data.success) {
-                    showSuccessNotification(`Category status updated to ${status}`);
-                    loadCategories();
+        const prevButton = document.getElementById('mobilePrevPage');
+        const nextButton = document.getElementById('mobileNextPage');
+
+        prevButton.disabled = currentPage === 1;
+        nextButton.disabled = currentPage === totalPages;
+
+        const paginatedCategories = categories.slice(start, end);
+
+        if (paginatedCategories.length === 0) {
+            cardsContainer.innerHTML = '<div class="p-4 text-center text-gray-500"><i class="fas fa-box-open text-2xl mb-2"></i><div>No categories found</div></div>';
+            return;
+        }
+
+        paginatedCategories.forEach(category => {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-4 cursor-pointer';
+            card.onclick = () => showEditCategoryModal(category.id);
+
+            const statusBadge = category.status === 'active' ?
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>' :
+                '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-semibold text-secondary break-words">${escapeHtml(category.name)}</h3>
+                    <button class="btn-feature" data-id="${category.id}" onclick="event.stopPropagation()">
+                        ${category.featured
+                    ? '<i class="fas fa-heart text-red-500"></i>'
+                    : '<i class="far fa-heart text-gray-400"></i>'}
+                    </button>
+                </div>
+                <p class="text-sm text-gray-600">${category.description ? escapeHtml(truncateText(category.description, 100)) : ''}</p>
+                <div class="flex items-center justify-between mt-3">
+                    <div class="text-sm text-gray-500">${formatDate(category.created_at)}</div>
+                    <div>${statusBadge}</div>
+                </div>
+            `;
+
+            cardsContainer.appendChild(card);
+        });
+
+        document.querySelectorAll('#categoriesCards .btn-feature').forEach(button => {
+            button.addEventListener('click', function () {
+                const categoryId = this.getAttribute('data-id');
+                const category = categoriesData.find(c => c.id === categoryId);
+                if (!category) return;
+
+                const oldFeatured = category.featured;
+                const newFeatured = oldFeatured ? 0 : 1;
+
+                const icon = this.querySelector('i');
+                if (newFeatured) {
+                    icon.className = 'fas fa-heart text-red-500';
                 } else {
-                    showErrorNotification(data.message || 'Failed to update category status');
-                    loadCategories(); // Reload to reset UI
+                    icon.className = 'far fa-heart text-gray-400';
                 }
-            })
-            .catch(error => {
-                hideLoading();
-                if (error.message !== 'Session expired') {
-                    console.error('Error updating category status:', error);
-                    showErrorNotification('Failed to update category status. Please try again.');
-                    loadCategories(); // Reload to reset UI
-                }
+                category.featured = newFeatured;
+
+                fetch(`${BASE_URL}admin/fetch/manageProductCategories/updateFeatured`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: categoryId,
+                        featured: newFeatured
+                    })
+                })
+                    .then(response => {
+                        if (response.status === 401) {
+                            showSessionExpiredModal();
+                            throw new Error('Session expired');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (!data.success) {
+                            category.featured = oldFeatured;
+                            if (oldFeatured) {
+                                icon.className = 'fas fa-heart text-red-500';
+                            } else {
+                                icon.className = 'far fa-heart text-gray-400';
+                            }
+                            showErrorNotification(data.message || 'Failed to update featured');
+                        } else {
+                            updateStatistics();
+                            renderCategoriesCards(categoriesData);
+                            renderCategories(categoriesData);
+                        }
+                    })
+                    .catch(err => {
+                        if (err.message !== 'Session expired') {
+                            category.featured = oldFeatured;
+                            if (oldFeatured) {
+                                icon.className = 'fas fa-heart text-red-500';
+                            } else {
+                                icon.className = 'far fa-heart text-gray-400';
+                            }
+                            showErrorNotification('Failed to update featured. Try again.');
+                        }
+                    });
             });
+        });
     }
 
-    function filterCategories(query, status) {
-        const filteredCategories = categoriesData.filter(category => {
+    function filterCategories(query, status, featured) {
+        let filteredCategories = categoriesData.filter(category => {
             const text = `${category.name} ${category.description || ''}`.toLowerCase();
             const matchesQuery = text.includes(query);
             const matchesStatus = !status || category.status === status;
-            return matchesQuery && matchesStatus;
+            let matchesFeatured = true;
+
+            if (featured === 'featured') {
+                matchesFeatured = category.featured === 1;
+            } else if (featured === 'not-featured') {
+                matchesFeatured = category.featured === 0;
+            }
+
+            return matchesQuery && matchesStatus && matchesFeatured;
         });
 
         currentPage = 1;
         totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
         renderPagination();
         renderCategories(filteredCategories);
+        renderCategoriesCards(filteredCategories);
     }
 
     function showDeleteModal(categoryId) {
@@ -1273,20 +1462,6 @@ ob_start();
     function showSessionExpiredModal() {
         const modal = document.getElementById('sessionExpiredModal');
         modal.classList.remove('hidden');
-
-        let countdown = 10;
-        const countdownElement = document.getElementById('countdown');
-        countdownElement.textContent = countdown;
-
-        const timer = setInterval(() => {
-            countdown--;
-            countdownElement.textContent = countdown;
-
-            if (countdown <= 0) {
-                clearInterval(timer);
-                redirectToLogin();
-            }
-        }, 1000);
     }
 
     function redirectToLogin() {
