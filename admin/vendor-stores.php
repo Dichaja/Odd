@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         switch ($_POST['action']) {
             case 'load_vendors':
                 $page = intval($_POST['page'] ?? 1);
-                $limit = intval($_POST['limit'] ?? 10);
+                $limit = intval($_POST['limit'] ?? 20);
                 $search = trim($_POST['search'] ?? '');
                 $category = trim($_POST['category'] ?? '');
                 $status = trim($_POST['status'] ?? '');
@@ -125,57 +125,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ob_start();
 ?>
 
-<div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-            <h1 class="text-2xl font-semibold text-secondary">Manage Vendors</h1>
-            <p class="text-sm text-gray-text mt-1">View, verify and manage all vendor accounts</p>
-        </div>
-        <div class="flex flex-col md:flex-row items-center gap-3">
-            <button id="sendNotificationBtn"
-                class="h-10 px-4 bg-success text-white rounded-lg hover:bg-success/90 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-bell"></i>
-                <span>Send Notification</span>
-            </button>
-            <a href="nature-of-business"
-                class="h-10 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
-                <i class="fas fa-tags"></i>
-                <span>Nature of Business</span>
-            </a>
+<div class="min-h-screen bg-gray-50 font-rubik" id="app-container">
+    <div class="bg-white border-b border-gray-200 sm:px-6 lg:px-8 py-3 sm:py-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                <div>
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <h1 class="text-lg sm:text-2xl font-bold text-secondary">Manage Vendors</h1>
+                    </div>
+                    <p class="text-gray-600 mt-1 text-sm sm:text-base hidden sm:block">View, verify and manage all
+                        vendor accounts</p>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="sendNotificationBtn"
+                        class="px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-bell text-sm"></i>
+                        <span class="hidden sm:inline">Send Notification</span>
+                    </button>
+                    <a href="nature-of-business"
+                        class="px-3 sm:px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-tags text-sm"></i>
+                        <span class="hidden sm:inline">Nature of Business</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-lg font-semibold text-secondary">Vendor List</h2>
-                <p class="text-sm text-gray-text mt-1">
-                    <span id="vendor-count">0</span> vendors found
-                </p>
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 py-8">
+        <div class="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Total Vendors</p>
+                        <p class="text-xl font-bold text-blue-900 truncate" id="totalVendors">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-store text-blue-600"></i>
+                    </div>
+                </div>
             </div>
-            <div class="flex flex-col md:flex-row items-center gap-3">
-                <div class="relative w-full md:w-auto">
-                    <input type="text" id="searchVendors" placeholder="Search vendors..."
-                        class="w-full md:w-64 h-10 pl-10 pr-4 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Active</p>
+                        <p class="text-xl font-bold text-green-900 truncate" id="activeVendors">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">Pending</p>
+                        <p class="text-xl font-bold text-orange-900 truncate" id="pendingVendors">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-clock text-orange-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+                <div class="flex items-center justify-between">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-red-600 uppercase tracking-wide">Suspended</p>
+                        <p class="text-xl font-bold text-red-900 truncate" id="suspendedVendors">0</p>
+                    </div>
+                    <div class="w-10 h-10 bg-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-ban text-red-600"></i>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="filterPanel" class="px-6 py-4 border-b border-gray-100">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                 <div>
-                    <label for="filterCategory" class="block text-sm font-medium text-gray-700 mb-1">Vendor
-                        Category</label>
+                    <h2 class="text-lg font-semibold text-secondary mb-2">Filter & Search</h2>
+                    <p class="text-sm text-gray-600">Configure your vendor view and filters</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Vendors</label>
+                    <div class="relative">
+                        <input type="text" id="searchVendors" placeholder="Search vendors..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category Filter</label>
                     <select id="filterCategory"
-                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
                         <option value="">All Categories</option>
                     </select>
                 </div>
                 <div>
-                    <label for="filterStatus" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status Filter</label>
                     <select id="filterStatus"
-                        class="w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
                         <option value="">All Statuses</option>
                         <option value="active">Active</option>
                         <option value="pending">Pending</option>
@@ -183,283 +238,351 @@ ob_start();
                         <option value="suspended">Suspended</option>
                     </select>
                 </div>
-                <div class="md:col-span-2 flex justify-end">
-                    <button id="resetFilters"
-                        class="h-10 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors mr-2">
-                        Reset
-                    </button>
-                    <button id="applyFilters"
-                        class="h-10 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                        Apply
-                    </button>
-                </div>
             </div>
         </div>
 
-        <div id="vendors-list" class="divide-y divide-gray-100">
-        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
+            <div class="p-4 sm:p-6 border-b border-gray-100">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-secondary">Vendors</h3>
+                        <p class="text-sm text-gray-600"><span id="vendorCount">0</span> vendors found</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <button id="resetFilters"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                            Reset Filters
+                        </button>
+                        <button id="applyFilters"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-        <div id="loading-state" class="p-8 text-center">
+            <div class="hidden lg:block overflow-x-auto">
+                <table class="w-full" id="vendorsTable">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Vendor</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Contact</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Category</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Status</th>
+                            <th
+                                class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Products</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendorsBody" class="divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                <div>Loading vendors...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600 text-center sm:text-left">
+                    Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span
+                        id="totalVendorsCount">0</span> vendors
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="prev-page"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Prev
+                    </button>
+                    <div id="pagination-numbers" class="flex items-center"></div>
+                    <button id="next-page"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:hidden" id="vendorsCards">
+                <div class="p-4 text-center text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <div>Loading vendors...</div>
+                </div>
+            </div>
+
             <div
-                class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-gray-500 bg-white">
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                </svg>
-                Loading vendors...
-            </div>
-        </div>
-
-        <div id="empty-state" class="p-8 text-center hidden">
-            <div class="text-gray-500">
-                <i class="fas fa-store text-4xl mb-4"></i>
-                <p class="text-lg font-medium">No vendors found</p>
-                <p class="text-sm">Try adjusting your search or filter criteria</p>
-            </div>
-        </div>
-
-        <div id="pagination-container"
-            class="p-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center hidden">
-            <div class="text-sm text-gray-500 mb-4 md:mb-0">
-                Showing <span id="showing-start">0</span> to <span id="showing-end">0</span> of <span
-                    id="total-vendors">0</span> vendors
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="prev-page"
-                    class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div id="pagination-numbers" class="flex items-center gap-1">
+                class="lg:hidden p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-sm text-gray-600 text-center sm:text-left">
+                    Showing <span id="mobileShowingStart">0</span> to <span id="mobileShowingEnd">0</span> of <span
+                        id="mobileTotalVendors">0</span> vendors
                 </div>
-                <button id="next-page"
-                    class="px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-chevron-right"></i>
+                <div class="flex items-center gap-2">
+                    <button id="mobilePrevPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Prev
+                    </button>
+                    <span id="mobilePageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
+                    <button id="mobileNextPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                        disabled>
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="loadingOverlay" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[999] hidden">
+    <div class="bg-white p-5 rounded-lg shadow-lg flex items-center gap-3">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span id="loadingMessage" class="text-gray-700 font-medium">Loading...</span>
+    </div>
+</div>
+
+<div id="vendorModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="hideVendorModal()"></div>
+    <div
+        class="relative w-full h-full max-w-4xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
+        <div
+            class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5">
+            <div class="flex items-center gap-3">
+                <div
+                    class="flex-shrink-0 h-12 w-12 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
+                    <i class="fas fa-store text-gray-400 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-secondary" id="modalTitle">Vendor Details</h3>
+                    <p class="text-sm text-gray-600 mt-1">View vendor information and manage status</p>
+                </div>
+            </div>
+            <button onclick="hideVendorModal()"
+                class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-160px)]" id="vendorDetails">
+        </div>
+
+        <div class="p-2 border-t border-gray-100 flex justify-between">
+            <button type="button" id="updateStatusBtn"
+                class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                <i class="fas fa-edit mr-2"></i>Update Status
+            </button>
+            <div class="flex gap-3">
+                <button type="button" onclick="hideVendorModal()"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="button" id="manageStoreBtn"
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                    <i class="fas fa-cog mr-2"></i>Manage
                 </button>
             </div>
         </div>
     </div>
 </div>
 
-<div id="statusModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-    <div class="absolute inset-0 bg-black/20" onclick="hideStatusModal()"></div>
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-md mx-4 relative z-10">
-        <div class="flex items-center justify-between p-6 border-b border-gray-100">
-            <h3 class="text-lg font-semibold text-secondary">Update Store Status</h3>
-            <button onclick="hideStatusModal()" class="text-gray-400 hover:text-gray-500">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="p-6">
-            <div id="status-store-info" class="mb-4">
+<div id="statusModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="hideStatusModal()"></div>
+    <div
+        class="relative w-full h-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
+        <div
+            class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-orange-50 to-orange-100">
+            <div class="flex items-center gap-3">
+                <div
+                    class="flex-shrink-0 h-12 w-12 rounded-lg bg-orange-100 overflow-hidden flex items-center justify-center">
+                    <i class="fas fa-edit text-orange-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-secondary">Update Status</h3>
+                    <p class="text-sm text-gray-600 mt-1">Change vendor store status</p>
+                </div>
             </div>
-            <div class="space-y-3">
-                <label class="flex items-center">
-                    <input type="radio" name="new-status" value="active" class="form-radio h-4 w-4 text-primary">
-                    <span class="ml-2 text-sm text-gray-700">Active</span>
-                </label>
-                <label class="flex items-center">
-                    <input type="radio" name="new-status" value="pending" class="form-radio h-4 w-4 text-primary">
-                    <span class="ml-2 text-sm text-gray-700">Pending</span>
-                </label>
-                <label class="flex items-center">
-                    <input type="radio" name="new-status" value="inactive" class="form-radio h-4 w-4 text-primary">
-                    <span class="ml-2 text-sm text-gray-700">Inactive</span>
-                </label>
-                <label class="flex items-center">
-                    <input type="radio" name="new-status" value="suspended" class="form-radio h-4 w-4 text-primary">
-                    <span class="ml-2 text-sm text-gray-700">Suspended</span>
-                </label>
-            </div>
-        </div>
-        <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
             <button onclick="hideStatusModal()"
-                class="px-4 py-2 border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50">
-                Cancel
-            </button>
-            <button id="updateStatus" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
-                Update Status
+                class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
+
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-100px)]">
+            <div id="status-store-info" class="mb-4"></div>
+            <div class="space-y-3">
+                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input type="radio" name="new-status" value="active" class="form-radio h-4 w-4 text-primary">
+                    <span class="ml-3 text-sm text-gray-700 font-medium">Active</span>
+                </label>
+                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input type="radio" name="new-status" value="pending" class="form-radio h-4 w-4 text-primary">
+                    <span class="ml-3 text-sm text-gray-700 font-medium">Pending</span>
+                </label>
+                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input type="radio" name="new-status" value="inactive" class="form-radio h-4 w-4 text-primary">
+                    <span class="ml-3 text-sm text-gray-700 font-medium">Inactive</span>
+                </label>
+                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input type="radio" name="new-status" value="suspended" class="form-radio h-4 w-4 text-primary">
+                    <span class="ml-3 text-sm text-gray-700 font-medium">Suspended</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="p-2 border-t border-gray-100 flex justify-end gap-3">
+            <button onclick="hideStatusModal()"
+                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button id="confirmUpdateStatus"
+                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Update</button>
+        </div>
+    </div>
+</div>
+
+<div id="successNotification"
+    class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md hidden z-50">
+    <div class="flex items-center">
+        <i class="fas fa-check-circle mr-2"></i>
+        <span id="successMessage"></span>
+    </div>
+</div>
+
+<div id="errorNotification"
+    class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md hidden z-50">
+    <div class="flex items-center">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        <span id="errorMessage"></span>
     </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
-    const BASE_URL = "<?= BASE_URL ?>";
+    let vendorsData = [];
     let currentPage = 1;
+    let itemsPerPage = 20;
     let totalPages = 1;
     let currentStoreId = null;
-    const itemsPerPage = 10;
+    let filterData = {
+        category: '',
+        status: '',
+        search: ''
+    };
 
-    function truncateText(text, maxLength = 50) {
-        if (!text || text.length <= maxLength) return text || 'Not provided';
-        return text.substring(0, maxLength) + '...';
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+        loadVendors();
 
-    function getStatusBadgeClass(status) {
-        switch (status) {
-            case 'active':
-                return 'bg-green-100 text-green-800';
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'inactive':
-                return 'bg-gray-100 text-gray-800';
-            case 'suspended':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    }
-
-    function formatDate(dateString) {
-        if (!dateString) return 'Not available';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: '2-digit'
+        let searchTimeout;
+        document.getElementById('searchVendors').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterData.search = e.target.value;
+                applyFilters();
+            }, 500);
         });
-    }
 
-    async function loadVendors(page = 1, search = '', category = '', status = '') {
-        try {
-            showLoading();
+        document.getElementById('filterCategory').addEventListener('change', (e) => {
+            filterData.category = e.target.value;
+        });
 
-            const formData = new FormData();
-            formData.append('action', 'load_vendors');
-            formData.append('page', page);
-            formData.append('limit', itemsPerPage);
-            formData.append('search', search);
-            formData.append('category', category);
-            formData.append('status', status);
+        document.getElementById('filterStatus').addEventListener('change', (e) => {
+            filterData.status = e.target.value;
+        });
 
-            const response = await fetch(window.location.href, {
-                method: 'POST',
-                body: formData
-            });
+        document.getElementById('applyFilters').addEventListener('click', applyFilters);
+        document.getElementById('resetFilters').addEventListener('click', resetFilters);
 
-            const data = await response.json();
-
-            if (data.success) {
-                displayVendors(data.vendors);
-                updatePagination(data.pagination);
-                updateVendorCount(data.pagination.total);
-                loadCategories(data.categories);
-            } else {
-                showError(data.message || 'Failed to load vendors');
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPagination();
+                renderVendors(vendorsData);
             }
-        } catch (error) {
-            console.error('Error loading vendors:', error);
-            showError('Failed to load vendors. Please try again.');
-        } finally {
-            hideLoading();
-        }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderPagination();
+                renderVendors(vendorsData);
+            }
+        });
+
+        ['mobilePrevPage', 'mobileNextPage'].forEach(id => {
+            document.getElementById(id).addEventListener('click', function () {
+                const filteredList = filterVendors(vendorsData);
+                const newTotalPages = Math.ceil(filteredList.length / itemsPerPage);
+
+                if (id.includes('prev') && currentPage > 1) {
+                    currentPage--;
+                } else if (id.includes('next') && currentPage < newTotalPages) {
+                    currentPage++;
+                }
+
+                totalPages = newTotalPages;
+                renderPagination();
+                renderVendors(vendorsData);
+            });
+        });
+
+        document.getElementById('confirmUpdateStatus').addEventListener('click', updateStoreStatus);
+    });
+
+    function showLoading(message = 'Loading...') {
+        document.getElementById('loadingMessage').textContent = message;
+        document.getElementById('loadingOverlay').classList.remove('hidden');
     }
 
-    function displayVendors(vendors) {
-        const container = document.getElementById('vendors-list');
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
 
-        if (!vendors || vendors.length === 0) {
-            container.innerHTML = '';
-            showEmptyState();
-            return;
-        }
+    function loadVendors() {
+        showLoading('Loading vendors...');
 
-        hideEmptyState();
+        const formData = new FormData();
+        formData.append('action', 'load_vendors');
+        formData.append('page', 1);
+        formData.append('limit', 1000);
+        formData.append('search', '');
+        formData.append('category', '');
+        formData.append('status', '');
 
-        container.innerHTML = vendors.map(vendor => `
-        <div class="vendor-item p-6" data-vendor-id="${vendor.id}">
-            <div class="flex flex-col lg:flex-row gap-4">
-                <div class="flex-1">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <h3 class="text-lg font-semibold text-secondary" title="${vendor.name}">
-                                ${truncateText(vendor.name, 40)}
-                            </h3>
-                            ${vendor.nature_of_business ? `
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    ${vendor.nature_of_business}
-                                </span>
-                            ` : ''}
-                            <button onclick="showStatusModal('${vendor.id}', '${vendor.name}', '${vendor.status}')" 
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${getStatusBadgeClass(vendor.status)}">
-                                ${vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
-                                <i class="fas fa-edit ml-1"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-4">
-                        <div>
-                            <span class="text-gray-500">Contact Person:</span>
-                            <p class="font-medium" title="${vendor.contact_person_name}">
-                                ${truncateText(vendor.contact_person_name, 25)}
-                            </p>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Business Email:</span>
-                            <p class="font-medium" title="${vendor.business_email}">
-                                ${truncateText(vendor.business_email, 25)}
-                            </p>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Business Phone:</span>
-                            <p class="font-medium">
-                                ${vendor.business_phone || 'Not provided'}
-                            </p>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Location:</span>
-                            <p class="font-medium" title="${vendor.full_address}">
-                                ${truncateText(vendor.full_address, 30)}
-                            </p>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Owner:</span>
-                            <p class="font-medium" title="${vendor.owner_name}">
-                                ${truncateText(vendor.owner_name, 25)}
-                            </p>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Registered:</span>
-                            <p class="font-medium">${formatDate(vendor.created_at)}</p>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Store ID:</span>
-                            <p class="font-medium">${vendor.vendor_id}</p>
-                        </div>
-                        <div>
-                            <span class="text-gray-500">Products:</span>
-                            <p class="font-medium">${vendor.product_count || 0}</p>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end gap-2">
-                        <button onclick="window.open('${BASE_URL}view/profile/vendor/${vendor.id}', '_blank')"
-                                class="h-8 px-3 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors flex items-center gap-1 text-sm">
-                            <i class="fas fa-user"></i>
-                            <span>View Profile</span>
-                        </button>
-                        <button onclick="redirectToManageStore('${vendor.id}')"
-                            class="h-8 px-3 bg-primary text-white rounded hover:bg-primary/90 transition-colors flex items-center gap-1 text-sm">
-                            <i class="fas fa-cog"></i>
-                            <span>Manage</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `).join('');
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+            .then(res => res.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    vendorsData = data.vendors || [];
+                    loadCategories(data.categories);
+                    updateStatistics();
+                    totalPages = Math.ceil(vendorsData.length / itemsPerPage);
+                    currentPage = 1;
+                    renderPagination();
+                    renderVendors(vendorsData);
+                } else {
+                    showErrorNotification(data.message || 'Failed to load vendors');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                console.error('Error loading vendors:', err);
+                showErrorNotification('Failed to load vendors.');
+            });
     }
 
     function loadCategories(categories) {
         const select = document.getElementById('filterCategory');
-        const currentValue = select.value;
-
         select.innerHTML = '<option value="">All Categories</option>';
 
         if (categories && categories.length > 0) {
@@ -470,91 +593,330 @@ ob_start();
                 select.appendChild(option);
             });
         }
-
-        select.value = currentValue;
     }
 
-    function updatePagination(pagination) {
-        if (!pagination) return;
+    function updateStatistics() {
+        const total = vendorsData.length;
+        const active = vendorsData.filter(v => v.status === 'active').length;
+        const pending = vendorsData.filter(v => v.status === 'pending').length;
+        const suspended = vendorsData.filter(v => v.status === 'suspended').length;
 
-        currentPage = pagination.current_page;
-        totalPages = pagination.total_pages;
+        document.getElementById('totalVendors').textContent = total.toLocaleString();
+        document.getElementById('activeVendors').textContent = active.toLocaleString();
+        document.getElementById('pendingVendors').textContent = pending.toLocaleString();
+        document.getElementById('suspendedVendors').textContent = suspended.toLocaleString();
+    }
 
-        const container = document.getElementById('pagination-container');
-        const numbersContainer = document.getElementById('pagination-numbers');
+    function renderPagination() {
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
 
-        if (totalPages <= 1) {
-            container.classList.add('hidden');
+        const pagNums = document.getElementById('pagination-numbers');
+        pagNums.innerHTML = '';
+        if (totalPages <= 5) {
+            for (let i = 1; i <= totalPages; i++) {
+                pagNums.appendChild(createPagButton(i));
+            }
+        } else {
+            pagNums.appendChild(createPagButton(1));
+            if (currentPage > 3) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.classList.add('px-2');
+                pagNums.appendChild(ellipsis);
+            }
+            for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                pagNums.appendChild(createPagButton(i));
+            }
+            if (currentPage < totalPages - 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.textContent = '...';
+                ellipsis.classList.add('px-2');
+                pagNums.appendChild(ellipsis);
+            }
+            pagNums.appendChild(createPagButton(totalPages));
+        }
+    }
+
+    function createPagButton(page) {
+        const btn = document.createElement('button');
+        btn.className = (page === currentPage) ?
+            'px-3 py-2 rounded-lg bg-primary text-white' :
+            'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
+        btn.textContent = page;
+        btn.addEventListener('click', () => {
+            currentPage = page;
+            renderPagination();
+            renderVendors(vendorsData);
+        });
+        return btn;
+    }
+
+    function renderVendors(list) {
+        const filteredList = filterVendors(list);
+        totalPages = Math.ceil(filteredList.length / itemsPerPage);
+
+        if (currentPage > totalPages && totalPages > 0) {
+            currentPage = totalPages;
+        }
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = Math.min(start + itemsPerPage, filteredList.length);
+
+        document.getElementById('vendorCount').textContent = filteredList.length;
+        document.getElementById('showingStart').textContent = filteredList.length > 0 ? start + 1 : 0;
+        document.getElementById('showingEnd').textContent = end;
+        document.getElementById('totalVendorsCount').textContent = filteredList.length;
+
+        renderVendorsTable(filteredList.slice(start, end));
+        renderVendorsCards(filteredList.slice(start, end));
+        updateMobilePagination(filteredList.length, currentPage);
+        renderPagination();
+    }
+
+    function renderVendorsTable(vendors) {
+        const tbody = document.getElementById('vendorsBody');
+
+        if (vendors.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                        <i class="fas fa-store text-2xl mb-2"></i>
+                        <div>No vendors found</div>
+                    </td>
+                </tr>
+            `;
             return;
         }
 
-        container.classList.remove('hidden');
+        tbody.innerHTML = vendors.map(vendor => {
+            const statusBadge = getStatusBadge(vendor.status);
 
-        document.getElementById('showing-start').textContent = pagination.start;
-        document.getElementById('showing-end').textContent = pagination.end;
-        document.getElementById('total-vendors').textContent = pagination.total;
+            return `
+                <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="showVendorModal('${vendor.id}')">
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                                <i class="fas fa-store text-gray-400"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-secondary max-w-xs hover:text-primary">
+                                    <span class="hidden sm:block truncate">${escapeHtml(vendor.name)}</span>
+                                    <span class="sm:hidden break-words">${escapeHtml(vendor.name)}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 hidden sm:block">${escapeHtml(vendor.owner_name || 'No owner')}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="text-sm text-gray-900">${escapeHtml(vendor.contact_person_name || 'N/A')}</div>
+                        <div class="text-xs text-gray-500">${escapeHtml(vendor.business_email || 'N/A')}</div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="text-sm text-gray-900">${escapeHtml(vendor.nature_of_business || 'Uncategorized')}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${statusBadge}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="text-sm font-medium text-gray-900">${vendor.product_count || 0}</span>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
 
-        document.getElementById('prev-page').disabled = currentPage <= 1;
-        document.getElementById('next-page').disabled = currentPage >= totalPages;
+    function renderVendorsCards(vendors) {
+        const container = document.getElementById('vendorsCards');
 
-        numbersContainer.innerHTML = '';
+        if (vendors.length === 0) {
+            container.innerHTML = `
+                <div class="p-4 text-center text-gray-500">
+                    <i class="fas fa-store text-2xl mb-2"></i>
+                    <div>No vendors found</div>
+                </div>
+            `;
+            return;
+        }
 
-        const startPage = Math.max(1, currentPage - 2);
-        const endPage = Math.min(totalPages, currentPage + 2);
+        container.innerHTML = vendors.map(vendor => {
+            const statusBadge = getStatusBadge(vendor.status);
 
-        for (let i = startPage; i <= endPage; i++) {
-            const button = document.createElement('button');
-            button.className = `px-3 py-2 rounded-lg ${i === currentPage ? 'bg-primary text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}`;
-            button.textContent = i;
-            button.onclick = () => goToPage(i);
-            numbersContainer.appendChild(button);
+            return `
+                <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onclick="showVendorModal('${vendor.id}')">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 h-12 w-12 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                            <i class="fas fa-store text-gray-400"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="mb-1">
+                                <div class="flex items-center gap-1 mb-1">
+                                    ${statusBadge}
+                                    ${vendor.nature_of_business ? `
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            ${escapeHtml(vendor.nature_of_business)}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                <h4 class="text-sm font-medium text-secondary hover:text-primary pr-2 break-words">
+                                    ${escapeHtml(vendor.name)}
+                                </h4>
+                            </div>
+                            <div class="text-xs text-gray-500 mb-2">Owner: ${escapeHtml(vendor.owner_name || 'No owner')}</div>
+                            <div class="text-xs text-gray-600 mb-2">Contact: ${escapeHtml(vendor.contact_person_name || 'N/A')}</div>
+                            <div class="text-xs text-gray-600 mb-2">Email: ${escapeHtml(vendor.business_email || 'N/A')}</div>
+                            <div class="text-xs text-gray-600 mb-2">Location: ${escapeHtml(vendor.full_address || 'N/A')}</div>
+                            <div class="text-xs text-gray-600 mb-2">Products: ${vendor.product_count || 0}</div>
+                            <div class="text-xs text-gray-500">Registered: ${formatDate(vendor.created_at)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getStatusBadge(status) {
+        switch (status) {
+            case 'active':
+                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>';
+            case 'pending':
+                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Pending</span>';
+            case 'inactive':
+                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+            case 'suspended':
+                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Suspended</span>';
+            default:
+                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
         }
     }
 
-    function updateVendorCount(total) {
-        document.getElementById('vendor-count').textContent = total || 0;
+    function updateMobilePagination(total, page) {
+        const totalPages = Math.ceil(total / itemsPerPage);
+        const startIndex = (page - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, total);
+
+        document.getElementById('mobileShowingStart').textContent = `${startIndex + 1}`;
+        document.getElementById('mobileShowingEnd').textContent = `${endIndex}`;
+        document.getElementById('mobileTotalVendors').textContent = total;
+        document.getElementById('mobilePageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
+
+        document.getElementById('mobilePrevPage').disabled = page === 1;
+        document.getElementById('mobileNextPage').disabled = page === totalPages || totalPages === 0;
     }
 
-    function goToPage(page) {
-        if (page >= 1 && page <= totalPages && page !== currentPage) {
-            currentPage = page;
-            applyFilters();
-        }
+    function filterVendors(vendors) {
+        return vendors.filter(vendor => {
+            if (filterData.search &&
+                !vendor.name.toLowerCase().includes(filterData.search.toLowerCase()) &&
+                !vendor.business_email.toLowerCase().includes(filterData.search.toLowerCase()) &&
+                !vendor.contact_person_name.toLowerCase().includes(filterData.search.toLowerCase()) &&
+                !vendor.owner_name.toLowerCase().includes(filterData.search.toLowerCase())) {
+                return false;
+            }
+            if (filterData.category && vendor.nature_of_business !== filterData.category) {
+                return false;
+            }
+            if (filterData.status && vendor.status !== filterData.status) {
+                return false;
+            }
+            return true;
+        });
     }
 
-    function showLoading() {
-        document.getElementById('loading-state').classList.remove('hidden');
-        document.getElementById('vendors-list').classList.add('hidden');
-        document.getElementById('empty-state').classList.add('hidden');
+    function applyFilters() {
+        currentPage = 1;
+        renderPagination();
+        renderVendors(vendorsData);
     }
 
-    function hideLoading() {
-        document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('vendors-list').classList.remove('hidden');
+    function resetFilters() {
+        document.getElementById('filterCategory').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('searchVendors').value = '';
+
+        filterData = {
+            category: '',
+            status: '',
+            search: ''
+        };
+
+        applyFilters();
     }
 
-    function showEmptyState() {
-        document.getElementById('empty-state').classList.remove('hidden');
-        document.getElementById('pagination-container').classList.add('hidden');
+    function showVendorModal(vendorId) {
+        const vendor = vendorsData.find(v => v.id === vendorId);
+        if (!vendor) return;
+
+        currentStoreId = vendorId;
+
+        const detailsHtml = `
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${escapeHtml(vendor.name)}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${escapeHtml(vendor.owner_name || 'No owner')}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${escapeHtml(vendor.contact_person_name || 'N/A')}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Business Email</label>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${escapeHtml(vendor.business_email || 'N/A')}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Business Phone</label>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${escapeHtml(vendor.business_phone || 'N/A')}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nature of Business</label>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${escapeHtml(vendor.nature_of_business || 'Uncategorized')}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <div class="p-2">${getStatusBadge(vendor.status)}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Products Count</label>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${vendor.product_count || 0}</div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Address</label>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${escapeHtml(vendor.full_address || 'N/A')}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Registration Date</label>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${formatDate(vendor.created_at)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('vendorDetails').innerHTML = detailsHtml;
+        document.getElementById('vendorModal').classList.remove('hidden');
+
+        document.getElementById('updateStatusBtn').onclick = () => showStatusModal(vendor.id, vendor.name, vendor.status);
+        document.getElementById('manageStoreBtn').onclick = () => redirectToManageStore(vendor.id);
     }
 
-    function hideEmptyState() {
-        document.getElementById('empty-state').classList.add('hidden');
-    }
-
-    function showError(message) {
-        alert(message);
+    function hideVendorModal() {
+        document.getElementById('vendorModal').classList.add('hidden');
+        currentStoreId = null;
     }
 
     function showStatusModal(storeId, storeName, currentStatus) {
-        currentStoreId = storeId;
-
         document.getElementById('status-store-info').innerHTML = `
-        <div class="bg-gray-50 p-3 rounded-lg">
-            <h4 class="font-medium text-gray-800">${storeName}</h4>
-            <p class="text-sm text-gray-600">Store ID: ${storeId}</p>
-        </div>
-    `;
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <h4 class="font-medium text-gray-800">${escapeHtml(storeName)}</h4>
+                <p class="text-sm text-gray-600">Current Status: ${getStatusBadge(currentStatus)}</p>
+            </div>
+        `;
 
         const statusRadios = document.querySelectorAll('input[name="new-status"]');
         statusRadios.forEach(radio => {
@@ -566,62 +928,49 @@ ob_start();
 
     function hideStatusModal() {
         document.getElementById('statusModal').classList.add('hidden');
-        currentStoreId = null;
     }
 
-    async function updateStoreStatus() {
+    function updateStoreStatus() {
         if (!currentStoreId) return;
 
         const selectedStatus = document.querySelector('input[name="new-status"]:checked');
         if (!selectedStatus) {
-            showError('Please select a status');
+            showErrorNotification('Please select a status');
             return;
         }
 
-        try {
-            const formData = new FormData();
-            formData.append('action', 'update_status');
-            formData.append('store_id', currentStoreId);
-            formData.append('status', selectedStatus.value);
+        showLoading('Updating status...');
 
-            const response = await fetch(window.location.href, {
-                method: 'POST',
-                body: formData
+        const formData = new FormData();
+        formData.append('action', 'update_status');
+        formData.append('store_id', currentStoreId);
+        formData.append('status', selectedStatus.value);
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+            .then(res => res.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    hideStatusModal();
+                    hideVendorModal();
+                    showSuccessNotification(data.message || 'Status updated successfully');
+                    loadVendors();
+                } else {
+                    showErrorNotification(data.message || 'Failed to update status');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                console.error('Error updating status:', err);
+                showErrorNotification('Failed to update status');
             });
-
-            const data = await response.json();
-
-            if (data.success) {
-                hideStatusModal();
-                applyFilters();
-                alert('Store status updated successfully');
-            } else {
-                showError(data.message || 'Failed to update status');
-            }
-        } catch (error) {
-            console.error('Error updating status:', error);
-            showError('Failed to update status. Please try again.');
-        }
-    }
-
-    function applyFilters() {
-        const search = document.getElementById('searchVendors').value.trim();
-        const category = document.getElementById('filterCategory').value;
-        const status = document.getElementById('filterStatus').value;
-
-        loadVendors(currentPage, search, category, status);
-    }
-
-    function resetFilters() {
-        document.getElementById('searchVendors').value = '';
-        document.getElementById('filterCategory').value = '';
-        document.getElementById('filterStatus').value = '';
-        currentPage = 1;
-        loadVendors();
     }
 
     function redirectToManageStore(storeUuid) {
-        showLoading();
+        showLoading('Initiating store session...');
         $.ajax({
             url: BASE_URL + 'account/fetch/initVendorSession.php',
             type: 'POST',
@@ -642,49 +991,37 @@ ob_start();
         });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        loadVendors();
-
-        let searchTimeout;
-        document.getElementById('searchVendors').addEventListener('input', function () {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                currentPage = 1;
-                applyFilters();
-            }, 500);
+    function formatDate(dateString) {
+        if (!dateString) return 'Not available';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit'
         });
+    }
 
-        document.getElementById('filterCategory').addEventListener('change', function () {
-            currentPage = 1;
-            applyFilters();
-        });
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-        document.getElementById('filterStatus').addEventListener('change', function () {
-            currentPage = 1;
-            applyFilters();
-        });
+    function showSuccessNotification(message) {
+        const notif = document.getElementById('successNotification');
+        const msgEl = document.getElementById('successMessage');
+        msgEl.textContent = message;
+        notif.classList.remove('hidden');
+        setTimeout(() => notif.classList.add('hidden'), 3000);
+    }
 
-        document.getElementById('applyFilters').addEventListener('click', function () {
-            currentPage = 1;
-            applyFilters();
-        });
-
-        document.getElementById('resetFilters').addEventListener('click', resetFilters);
-
-        document.getElementById('prev-page').addEventListener('click', function () {
-            if (currentPage > 1) {
-                goToPage(currentPage - 1);
-            }
-        });
-
-        document.getElementById('next-page').addEventListener('click', function () {
-            if (currentPage < totalPages) {
-                goToPage(currentPage + 1);
-            }
-        });
-
-        document.getElementById('updateStatus').addEventListener('click', updateStoreStatus);
-    });
+    function showErrorNotification(message) {
+        const notif = document.getElementById('errorNotification');
+        const msgEl = document.getElementById('errorMessage');
+        msgEl.textContent = message;
+        notif.classList.remove('hidden');
+        setTimeout(() => notif.classList.add('hidden'), 5000);
+    }
 </script>
 
 <?php
