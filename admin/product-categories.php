@@ -832,7 +832,7 @@ ob_start();
     function showEditCategoryModal(categoryId) {
         resetCategoryForm();
         document.getElementById('modalTitle').textContent = 'Edit Category';
-        document.getElementById('submitCategory').textContent = 'Update Category';
+        document.getElementById('submitCategory').textContent = 'Update';
         document.getElementById('deleteCategoryBtn').classList.remove('hidden');
 
         showLoading('Loading category details...');
