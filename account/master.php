@@ -571,12 +571,12 @@ $menuItems = [
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
                 }
-                setTimeout(showReturnModal, 40000);
+                setTimeout(showReturnModal, 120000);
                 document.getElementById('return-later').addEventListener('click', function () {
                     const modal = document.getElementById('return-modal');
                     modal.classList.remove('flex');
                     modal.classList.add('hidden');
-                    setTimeout(showReturnModal, 60000);
+                    setTimeout(showReturnModal, 300000);
                 });
                 document.getElementById('return-continue').addEventListener('click', function () {
                     localStorage.removeItem('return_url');
