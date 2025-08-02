@@ -469,11 +469,13 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
 {
     $storeProductId = $_POST['store_product_id'] ?? '';
     $lineItems = isset($_POST['line_items']) ? json_decode($_POST['line_items'], true) : [];
+
     if (!isValidUlid($storeProductId)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid ID format']);
         return;
     }
+
     try {
         $storeIdStmt = $pdo->prepare("
             SELECT sc.store_id
@@ -483,82 +485,84 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
         ");
         $storeIdStmt->execute([$storeProductId]);
         $storeId = $storeIdStmt->fetchColumn();
+
         if (!$storeId || !canManageStore($pdo, $storeId, $currentUser)) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'Permission denied']);
             return;
         }
+
         $pdo->beginTransaction();
+
+        // Get existing pricing
         $existingStmt = $pdo->prepare("
-            SELECT id, package_mapping_id, si_unit_id, package_size, price, price_category, delivery_capacity
+            SELECT id
             FROM product_pricing
             WHERE store_products_id = ?
         ");
         $existingStmt->execute([$storeProductId]);
-        $existingPricing = $existingStmt->fetchAll(PDO::FETCH_ASSOC);
+        $existingPricingIds = $existingStmt->fetchAll(PDO::FETCH_COLUMN);
 
-        $existingByKey = [];
-        foreach ($existingPricing as $item) {
-            $key = $item['package_mapping_id'] . '_' . $item['si_unit_id'] . '_' . $item['price_category'];
-            $existingByKey[$key] = $item;
-        }
+        $updateStmt = $pdo->prepare("
+            UPDATE product_pricing
+            SET package_mapping_id = ?, si_unit_id = ?, package_size = ?, price = ?, 
+                price_category = ?, delivery_capacity = ?, updated_at = NOW()
+            WHERE id = ?
+        ");
 
-        $updatedIds = [];
-        if (is_array($lineItems) && count($lineItems) > 0) {
-            $updateStmt = $pdo->prepare("
-                UPDATE product_pricing
-                SET package_size = ?, price = ?, delivery_capacity = ?, updated_at = NOW()
-                WHERE id = ?
-            ");
-            $insertStmt = $pdo->prepare("
-                INSERT INTO product_pricing
-                    (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-            ");
-            foreach ($lineItems as $item) {
-                $pmId = $item['package_mapping_id'] ?? '';
-                $siId = $item['si_unit_id'] ?? '';
-                $packageSize = trim($item['package_size'] ?? '1');
-                $price = floatval($item['price'] ?? 0);
-                $cat = $item['price_category'] ?? 'retail';
-                $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
-                if (!isValidUlid($pmId) || !isValidUlid($siId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
-                    throw new Exception('Invalid line item data');
-                }
-                $key = $pmId . '_' . $siId . '_' . $cat;
-                if (isset($existingByKey[$key])) {
-                    $existingId = $existingByKey[$key]['id'];
-                    $updateStmt->execute([
-                        $packageSize,
-                        $price,
-                        $cap,
-                        $existingId
-                    ]);
-                    $updatedIds[] = $existingId;
-                } else {
-                    $ppId = Ulid::generate();
-                    $insertStmt->execute([
-                        $ppId,
-                        $storeProductId,
-                        $pmId,
-                        $siId,
-                        $packageSize,
-                        $currentUser,
-                        $price,
-                        $cat,
-                        $cap
-                    ]);
-                }
+        $insertStmt = $pdo->prepare("
+            INSERT INTO product_pricing
+                (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        ");
+
+        $postedIds = [];
+        foreach ($lineItems as $item) {
+            $pricingId = $item['pricing_id'] ?? '';
+            $pmId = $item['package_mapping_id'] ?? '';
+            $siId = $item['si_unit_id'] ?? '';
+            $packageSize = trim($item['package_size'] ?? '1');
+            $price = floatval($item['price'] ?? 0);
+            $cat = $item['price_category'] ?? 'retail';
+            $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
+
+            if (!isValidUlid($pmId) || !isValidUlid($siId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
+                throw new Exception('Invalid line item data');
+            }
+
+            if ($pricingId && in_array($pricingId, $existingPricingIds)) {
+                // Update existing
+                $updateStmt->execute([
+                    $pmId,
+                    $siId,
+                    $packageSize,
+                    $price,
+                    $cat,
+                    $cap,
+                    $pricingId
+                ]);
+                $postedIds[] = $pricingId;
+            } else {
+                // Insert new
+                $ppId = Ulid::generate();
+                $insertStmt->execute([
+                    $ppId,
+                    $storeProductId,
+                    $pmId,
+                    $siId,
+                    $packageSize,
+                    $currentUser,
+                    $price,
+                    $cat,
+                    $cap
+                ]);
+                $postedIds[] = $ppId;
             }
         }
 
-        if (!empty($existingPricing)) {
-            $toDelete = [];
-            foreach ($existingPricing as $item) {
-                if (!in_array($item['id'], $updatedIds)) {
-                    $toDelete[] = $item['id'];
-                }
-            }
+        // Delete only if not posted
+        if (!empty($existingPricingIds)) {
+            $toDelete = array_diff($existingPricingIds, $postedIds);
             if (!empty($toDelete)) {
                 $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
                 $deleteStmt = $pdo->prepare("DELETE FROM product_pricing WHERE id IN ($placeholders)");
@@ -568,6 +572,7 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
 
         updateEmptyCategories($pdo);
         $pdo->commit();
+
         echo json_encode(['success' => true, 'message' => 'Product pricing updated']);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
