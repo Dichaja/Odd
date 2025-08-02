@@ -107,13 +107,13 @@ function getCategories(PDO $pdo)
              ORDER BY pc.name"
         );
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         foreach ($categories as &$c) {
-            // Add image URL without removing the ID
-            $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
-            // Ensure product_count and featured are proper types
+            $c['image_url'] = getCategoryImageUrl($c['id']);
             $c['product_count'] = (int) $c['product_count'];
             $c['featured'] = (int) $c['featured'];
         }
+
         echo json_encode(['success' => true, 'categories' => $categories]);
     } catch (Exception $e) {
         error_log($e->getMessage());
@@ -129,6 +129,7 @@ function getCategory(PDO $pdo)
         echo json_encode(['success' => false, 'message' => 'Missing category ID']);
         return;
     }
+
     try {
         $stmt = $pdo->prepare(
             'SELECT 
@@ -152,14 +153,15 @@ function getCategory(PDO $pdo)
         );
         $stmt->execute([':id' => $_GET['id']]);
         $c = $stmt->fetch(PDO::FETCH_ASSOC);
+
         if (!$c) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Category not found']);
             return;
         }
-        // Add image URL and has_image flag without removing the ID
-        $c['image_url'] = getCategoryImageUrl($c['id'], $c['name']);
-        $c['has_image'] = doesCategoryImageExist($c['id'], $c['name']);
+
+        $c['image_url'] = getCategoryImageUrl($c['id']);
+        $c['has_image'] = doesCategoryImageExist($c['id']);
         $c['product_count'] = (int) $c['product_count'];
         $c['featured'] = (int) $c['featured'];
 
@@ -474,28 +476,42 @@ function sanitizeFileName($name)
     return strtolower($name);
 }
 
-function getCategoryImageUrl($categoryId, $categoryName)
+function getCategoryImageUrl($categoryId)
 {
-    $base = 'img/product-categories/' . $categoryId . '/';
-    $safe = sanitizeFileName($categoryName);
-    foreach (['webp', 'jpg', 'jpeg', 'png', 'gif'] as $ext) {
-        $file = "$base$safe.$ext";
-        if (file_exists(__DIR__ . '/../../' . $file)) {
-            return BASE_URL . $file;
+    $dir = __DIR__ . '/../../img/product-categories/' . $categoryId . '/';
+    if (!is_dir($dir)) {
+        return null;
+    }
+
+    $extensions = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
+
+    $files = scandir($dir);
+    foreach ($files as $file) {
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (in_array($ext, $extensions)) {
+            return BASE_URL . 'img/product-categories/' . $categoryId . '/' . $file;
         }
     }
+
     return null;
 }
 
-function doesCategoryImageExist($categoryId, $categoryName)
+function doesCategoryImageExist($categoryId)
 {
     $dir = __DIR__ . '/../../img/product-categories/' . $categoryId . '/';
-    $safe = sanitizeFileName($categoryName);
-    foreach (['webp', 'jpg', 'jpeg', 'png', 'gif'] as $ext) {
-        if (file_exists("$dir$safe.$ext")) {
+    if (!is_dir($dir)) {
+        return false;
+    }
+
+    $extensions = ['webp', 'jpg', 'jpeg', 'png', 'gif'];
+    $files = scandir($dir);
+    foreach ($files as $file) {
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (in_array($ext, $extensions)) {
             return true;
         }
     }
+
     return false;
 }
 
