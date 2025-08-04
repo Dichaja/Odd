@@ -438,7 +438,7 @@ ob_start();
                 <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-100px)]">
+        <div class="flex-1 overflow-y-auto px-4 sm:px-6 max-h-[calc(90vh-100px)]">
             <p class="text-gray-600 mb-4">Are you sure you want to delete this product? This action cannot be undone.
             </p>
             <div class="bg-gray-50 p-4 rounded-lg mb-4">
@@ -448,7 +448,7 @@ ob_start();
                 </div>
             </div>
         </div>
-        <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
+        <div class="px-6 border-t border-gray-100 flex justify-end gap-3">
             <button onclick="hideDeleteModal()"
                 class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
             <button id="confirmDeleteBtn"
@@ -478,14 +478,14 @@ ob_start();
                 <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-100px)]">
+        <div class="flex-1 overflow-y-auto px-4 sm:px-6 max-h-[calc(85vh-100px)]">
             <div class="mb-4">
                 <div id="image-cropper-container" class="max-h-[60vh] overflow-hidden">
                     <img id="image-to-crop" src="" alt="Image to crop">
                 </div>
             </div>
         </div>
-        <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
+        <div class="px-6 border-t border-gray-100 flex justify-end gap-3">
             <button onclick="hideCropperModal()"
                 class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
             <button id="cropImageBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Crop &
