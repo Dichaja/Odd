@@ -391,10 +391,13 @@ ob_start();
                                         <i class="fas fa-shopping-cart mr-1"></i> Buy
                                     </a>
                                 <?php endif; ?>
-                                <a href="<?= BASE_URL ?>view/product/<?= $p['id'] ?>?action=sell"
+                                <button onclick="openVendorSellModal(
+                                        '<?= $p['id'] ?>',
+                                        '<?= htmlspecialchars($p['title'], ENT_QUOTES) ?>'
+                                    )"
                                     class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
                                     <i class="fas fa-tag mr-1"></i> Sell
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -629,7 +632,14 @@ ob_start();
                                 ${p.has_pricing && p.lowest_price ? `<div class="text-center mb-3"><span class="price-text font-bold" style="color: #D92B13;">${formatPrice(p.lowest_price)}</span></div>` : ''}
                                 <div class="flex gap-2">
                                     ${p.has_pricing ? `<a href="<?= BASE_URL ?>view/product/${p.id}?action=buy" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium"><i class="fas fa-shopping-cart mr-1"></i> Buy</a>` : ''}
-                                    <a href="<?= BASE_URL ?>view/product/${p.id}?action=sell" class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium"><i class="fas fa-tag mr-1"></i> Sell</a>
+                                    <button
+                                        onclick="openVendorSellModal(
+                                            '${p.id}',
+                                            '${p.title.replace(/'/g, "\\'")}'
+                                        )"
+                                        class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                        <i class="fas fa-tag mr-1"></i> Sell
+                                    </button>
                                 </div>
                             </div>
                         </div>`;

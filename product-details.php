@@ -761,10 +761,14 @@ ob_start();
                                 <i class="fas fa-shopping-cart mr-2"></i> Buy
                             </button>
                         <?php endif; ?>
-                        <button
+                        <button onclick="openVendorSellModal(
+                                '<?= $product['id'] ?>',
+                                '<?= htmlspecialchars($product['title'], ENT_QUOTES) ?>'
+                            )"
                             class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-lg transition-colors flex items-center justify-center flex-1">
                             <i class="fas fa-tag mr-2"></i> Sell
                         </button>
+
                     </div>
                 </div>
             </div>
@@ -1014,10 +1018,12 @@ ob_start();
                                             <i class="fas fa-shopping-cart mr-1"></i> Buy
                                         </a>
                                     <?php endif; ?>
-                                    <a href="<?= BASE_URL ?>view/product/<?= $relatedProduct['id'] ?>?action=sell"
-                                        class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
+                                    <button onclick="openVendorSellModal(
+                                            '<?= $relatedProduct['id'] ?>',
+                                            '<?= htmlspecialchars($relatedProduct['title'], ENT_QUOTES) ?>'
+                                        )" class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
                                         <i class="fas fa-tag mr-1"></i> Sell
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                         </div>
