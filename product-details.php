@@ -1274,30 +1274,34 @@ ob_start();
     function displayVendors(vendors) {
         const modalContent = document.getElementById('modalContent');
         let vendorsHtml = `
-            <div class="mb-4">
-                <p class="text-gray-600">
-                    Found <strong>${vendors.length}</strong> supplier${vendors.length !== 1 ? 's' : ''} in this region:
-                </p>
-            </div>
-        `;
+        <div class="mb-4">
+            <p class="text-gray-600">
+                Found <strong>${vendors.length}</strong> supplier${vendors.length !== 1 ? 's' : ''} in this region:
+            </p>
+        </div>
+    `;
 
         vendors.forEach(vendor => {
-            const logoUrl = `<?php echo BASE_URL; ?>${vendor.logo_url}` || `https://placehold.co/56x56/e2e8f0/1e293b?text=${encodeURIComponent(vendor.name.charAt(0))}`;
+            const logoUrl = vendor.logo_url
+                ? `<?= BASE_URL ?>${vendor.logo_url}`
+                : `https://placehold.co/56x56/e2e8f0/1e293b?text=${encodeURIComponent(vendor.name.charAt(0))}`;
 
+            // Use vendor.id here
             vendorsHtml += `
-                <div class="vendor-card">
-                    <img src="${logoUrl}" alt="${vendor.name}" class="vendor-logo" 
-                         onerror="this.src='https://placehold.co/56x56/e2e8f0/1e293b?text=${encodeURIComponent(vendor.name.charAt(0))}'">
-                    
-                    <div class="flex-1">
-                        <h4 class="font-bold text-lg text-gray-800 mb-1">${vendor.name}</h4>
-                        <p class="text-sm text-gray-600">
-                            <i class="fas fa-map-marker-alt mr-1 text-[#D92B13]"></i>
-                            ${vendor.district}
-                        </p>
-                    </div>
+            <div class="vendor-card cursor-pointer" 
+                 onclick="window.location.href='<?= BASE_URL ?>view/profile/vendor/${vendor.id}'">
+                <img src="${logoUrl}" alt="${vendor.name}" class="vendor-logo" 
+                     onerror="this.src='https://placehold.co/56x56/e2e8f0/1e293b?text=${encodeURIComponent(vendor.name.charAt(0))}'">
+                
+                <div class="flex-1">
+                    <h4 class="font-bold text-lg text-gray-800 mb-1">${vendor.name}</h4>
+                    <p class="text-sm text-gray-600">
+                        <i class="fas fa-map-marker-alt mr-1 text-[#D92B13]"></i>
+                        ${vendor.district}
+                    </p>
                 </div>
-            `;
+            </div>
+        `;
         });
 
         modalContent.innerHTML = vendorsHtml;
