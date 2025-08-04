@@ -763,7 +763,7 @@ ob_start();
                     </div>
                     <div class="space-y-2 text-sm">
                         <p><strong>Email:</strong> admin@zzimbaonline.com</p>
-                        <p><strong>Phone:</strong> +256 700 000 000</p>
+                        <p><strong>Phone:</strong> +256 392 003-406</p>
                     </div>
                 </div>
                 <p class="text-sm">Please provide your username and explain your situation when contacting support.</p>

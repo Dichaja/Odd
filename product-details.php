@@ -745,6 +745,7 @@ ob_start();
 
                     <?php if ($product['has_pricing'] && $product['min_price']): ?>
                         <div class="text-3xl font-bold mb-6" style="color: #D92B13;">
+                            <span class="block text-sm font-medium text-gray-500 mb-1">Starting Price:</span>
                             <?= formatPrice($product['min_price']) ?>
                         </div>
                     <?php else: ?>
