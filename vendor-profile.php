@@ -522,6 +522,9 @@ ob_start();
     </main>
 </div>
 
+<!-- Include Vendor Sell Modal -->
+<?php include __DIR__ . '/vendor-sell.php'; ?>
+
 <div id="buyInStoreModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
         <div class="flex h-full">
@@ -1355,10 +1358,9 @@ ob_start();
                     <i class="fas fa-shopping-cart mr-1"></i> Buy in Store
                 </button>
                 <?php endif; ?>
-                <a href="${BASE_URL}view/product/${product.id}?action=sell"
-                   class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
+                <button onclick="openVendorSellModal('${product.id}', '${escapeHtml(product.name)}')" class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
                     <i class="fas fa-tag mr-1"></i> Sell
-                </a>
+                </button>
             </div>
         </div>`;
 

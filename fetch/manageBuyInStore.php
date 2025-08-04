@@ -16,6 +16,8 @@ header('Content-Type: application/json');
 $isLoggedIn = isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 $currentUser = $isLoggedIn ? $_SESSION['user']['user_id'] : null;
 
+ensureBuyInStoreTable($pdo);
+
 $action = $_GET['action'] ?? '';
 
 try {
@@ -46,6 +48,30 @@ try {
 }
 
 ob_end_flush();
+
+function ensureBuyInStoreTable(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `buy_in_store_requests` (
+            `id` VARCHAR(26) NOT NULL,
+            `user_id` VARCHAR(26) NOT NULL,
+            `store_product_id` VARCHAR(26) NOT NULL,
+            `pricing_id` VARCHAR(26) NOT NULL,
+            `visit_date` DATE NOT NULL,
+            `quantity` INT NOT NULL,
+            `alt_contact` VARCHAR(20) DEFAULT NULL,
+            `alt_email`   VARCHAR(100) DEFAULT NULL,
+            `notes` TEXT DEFAULT NULL,
+            `status` ENUM('pending','confirmed','completed','cancelled') NOT NULL DEFAULT 'pending',
+            `created_at` DATETIME NOT NULL,
+            `updated_at` DATETIME NOT NULL,
+            PRIMARY KEY (`id`),
+            FOREIGN KEY (`user_id`) REFERENCES `zzimba_users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (`store_product_id`) REFERENCES `store_products`(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            FOREIGN KEY (`pricing_id`) REFERENCES `product_pricing`(`id`) ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+    ");
+}
 
 function requireLogin()
 {
@@ -165,17 +191,17 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
         $requestId = (string) Ulid::generate();
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
 
-        // Fixed: Use 'pricing_id' instead of 'product_pricing_id' to match database schema
         $stmt = $pdo->prepare("
             INSERT INTO buy_in_store_requests (
-                id, user_id, pricing_id, visit_date, quantity,
+                id, user_id, store_product_id, pricing_id, visit_date, quantity,
                 alt_contact, alt_email, notes, status, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
         ");
 
         $stmt->execute([
             $requestId,
             $currentUser,
+            $data['productId'],
             $data['packageId'],
             $data['visitDate'],
             $quantity,
@@ -252,7 +278,6 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
 function getBuyInStoreHistory(PDO $pdo, string $currentUser)
 {
     try {
-        // Fixed: Use 'pricing_id' instead of 'product_pricing_id' to match database schema
         $stmt = $pdo->prepare("
             SELECT 
                 bir.id,

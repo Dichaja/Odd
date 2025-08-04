@@ -34,7 +34,6 @@ ob_start();
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900 mb-2">Time Period</h2>
-                    <p class="text-sm text-gray-600">Select the time range for analysis</p>
                 </div>
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <div class="flex flex-wrap gap-2">
