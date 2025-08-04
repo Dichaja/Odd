@@ -69,8 +69,8 @@ RewriteRule ^vendor-store/([a-zA-Z0-9_-]+)$ vendor-store/$1.php [L]
 # 9. View Routes (with ULID patterns)
 ##############################################
 RewriteRule ^view/profile/vendor/([a-zA-Z0-9]{26})$ vendor-profile.php?id=$1 [L,QSA]
-RewriteRule ^view/product/([0-9A-HJKMNP-TV-Z]{26})$        product-details.php?id=$1     [L,QSA]
-RewriteRule ^view/category/([0-9A-HJKMNP-TV-Z]{26})$       materials-yard.php?categoryId=$1 [L,QSA]
+RewriteRule ^view/product/([0-9A-Za-z]{26})$        product-details.php?id=$1     [L,QSA]
+RewriteRule ^view/category/([0-9A-Za-z]{26})$       materials-yard.php?categoryId=$1 [L,QSA]
 
 ##############################################
 # 10. Clean URL for Session Tracker
