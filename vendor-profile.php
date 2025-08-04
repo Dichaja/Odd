@@ -522,9 +522,6 @@ ob_start();
     </main>
 </div>
 
-<!-- Include Vendor Sell Modal -->
-<?php include __DIR__ . '/vendor-sell.php'; ?>
-
 <div id="buyInStoreModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
         <div class="flex h-full">
@@ -916,26 +913,6 @@ ob_start();
     let isLoggedIn = <?= $isLoggedIn ? 'true' : 'false' ?>;
     let canEdit = <?= $canEdit ? 'true' : 'false' ?>;
     let currentProduct = null;
-
-    async function checkUserSession() {
-        try {
-            const response = await fetch(`${BASE_URL}fetch/check-session.php`);
-            const data = await response.json();
-
-            if (data.success) {
-                isLoggedIn = data.logged_in;
-                if (data.logged_in && data.user) {
-                    // Update global user info if available
-                    window.currentUser = data.user;
-                }
-                return data.logged_in;
-            }
-            return false;
-        } catch (error) {
-            console.error('Error checking session:', error);
-            return false;
-        }
-    }
 
     async function getProductImageUrl(product) {
         const placeholderText = encodeURIComponent((product.name || '').substring(0, 2));
@@ -2290,10 +2267,6 @@ ob_start();
         document.getElementById('loading-state').classList.add('hidden');
         document.getElementById('error-state').classList.remove('hidden');
         console.error(message);
-    }
-
-    function formatNumber(num) {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
     function formatTimeAgo(date) {

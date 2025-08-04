@@ -925,6 +925,9 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
         </div>
     </div>
 
+    <!-- Include Vendor Sell Modal -->
+    <?php include __DIR__ . '/vendor-sell.php'; ?>
+
     <div class="mobile-menu-overlay"></div>
     <div class="mobile-menu bg-white p-4">
         <div class="flex justify-between items-center mb-4">
@@ -1047,6 +1050,29 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
         let searchInitialized = false;
         let imageCache = new Map();
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
+
+        async function checkUserSession() {
+            try {
+                const response = await fetch(`${BASE_URL}fetch/check-session.php`);
+                const data = await response.json();
+
+                if (data.success) {
+                    isLoggedIn = data.logged_in;
+                    if (data.logged_in && data.user) {
+                        window.currentUser = data.user;
+                    }
+                    return data.logged_in;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error checking session:', error);
+                return false;
+            }
+        }
+
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
 
         function ld(a, b) {
             if (a === b) return 0;

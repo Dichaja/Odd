@@ -984,10 +984,13 @@ ob_start();
                                                         <i class="fas fa-shopping-cart mr-1"></i> Buy
                                                     </a>
                                                 <?php endif; ?>
-                                                <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=sell"
+                                                <button onclick="openVendorSellModal(
+                                                        '<?= $product['id'] ?>',
+                                                        '<?= htmlspecialchars($product['title'], ENT_QUOTES) ?>'
+                                                    )"
                                                     class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
                                                     <i class="fas fa-tag mr-1"></i> Sell
-                                                </a>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -1313,10 +1316,14 @@ ob_start();
                                     <i class="fas fa-shopping-cart mr-1"></i> Buy
                                 </a>
                             ` : ''}
-                            <a href="<?= BASE_URL ?>view/product/${product.id}?action=sell"
+                            <button
+                                onclick="openVendorSellModal(
+                                    '${product.id}',
+                                    '${escapeHtml(product.title)}'
+                                )"
                                 class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
                                 <i class="fas fa-tag mr-1"></i> Sell
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
