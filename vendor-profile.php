@@ -159,7 +159,6 @@ ob_start();
         font-size: 0.875rem;
         color: #6b7280;
         padding: 0.5rem;
-        margin-top: 0.5rem;
         border-top: 1px dashed #e5e7eb;
     }
 
@@ -647,8 +646,7 @@ ob_start();
                         <div class="mb-6">
                             <h3 id="productName" class="text-xl font-bold text-gray-800 mb-2"></h3>
                             <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-4">
-                                <img id="productImage" src="" alt="Product Image"
-                                    class="w-full h-48 object-cover">
+                                <img id="productImage" src="" alt="Product Image" class="w-full h-48 object-cover">
                             </div>
                             <p id="productDescription" class="text-gray-600 text-sm line-clamp-2 mb-2"></p>
                         </div>
@@ -1217,130 +1215,100 @@ ob_start();
             container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500">No products found for this vendor.</div>`;
             return;
         }
-
         for (const product of products) {
             const imageUrl = await getProductImageUrl(product);
-
             let lowestPrice = 0;
             if (product.pricing && product.pricing.length > 0) {
                 lowestPrice = Math.min(...product.pricing.map(p => parseFloat(p.price)));
             }
-
             let filteredPricing = product.pricing || [];
             let hasRetailPrice = false;
-
             <?php if (!$isLoggedIn): ?>
                 filteredPricing = filteredPricing.filter(p => p.price_category === 'retail');
                 if (filteredPricing.length > 0) {
                     hasRetailPrice = true;
                 }
             <?php endif; ?>
-
             let pricingLines = '';
             let hasHiddenPrices = false;
-
             if (filteredPricing.length > 0) {
                 filteredPricing.forEach((pr, index) => {
                     const unitParts = pr.unit_name.split(' ');
                     const siUnit = unitParts[0] || '';
                     const packageName = unitParts.slice(1).join(' ') || '';
                     const formattedUnit = `${pr.package_size} ${siUnit} ${packageName}`.trim();
-
                     let categoryDisplay = '';
                     <?php if ($isLoggedIn): ?>
                         categoryDisplay = pr.price_category.charAt(0).toUpperCase() + pr.price_category.slice(1);
                     <?php endif; ?>
-
                     let deliveryCapacity = '';
                     <?php if ($isLoggedIn): ?>
                         if (pr.delivery_capacity) {
                             deliveryCapacity = `<span class="ml-2">• ${pr.price_category === 'retail' ? 'Max' : 'Min'} Capacity: ${pr.delivery_capacity}</span>`;
                         }
                     <?php endif; ?>
-
                     const hiddenClass = index >= 2 ? 'hidden hidden-price-row' : '';
                     if (index >= 2) hasHiddenPrices = true;
-
                     pricingLines += `
-                <div class="flex justify-between items-center mb-2 p-2 bg-gray-50 rounded ${hiddenClass}">
-                    <div class="flex flex-col">
-                        <span class="font-medium text-gray-700">${escapeHtml(formattedUnit)}</span>
-                        ${(categoryDisplay || deliveryCapacity) ? `
-                            <div class="flex items-center text-xs text-gray-500">
-                                ${categoryDisplay ? `<span>${categoryDisplay}</span>` : ''}
-                                ${deliveryCapacity}
-                            </div>` : ''}
-                    </div>
-                    <div class="price-container">
-                        <span class="view-btn view-price-btn">View Price</span>
-                        <span class="price-hidden text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
-                    </div>
-                </div>`;
+<div class="flex justify-between items-center p-2 bg-gray-50 rounded ${hiddenClass}">
+    <div class="flex flex-col">
+        <span class="font-medium text-gray-700">${escapeHtml(formattedUnit)}</span>
+        ${(categoryDisplay || deliveryCapacity) ? `
+            <div class="flex items-center text-xs text-gray-500">
+                ${categoryDisplay ? `<span>${categoryDisplay}</span>` : ''}
+                ${deliveryCapacity}
+            </div>` : ''}
+    </div>
+    <div class="flex items-center">
+        <span class="view-btn view-price-btn mr-2">View Price</span>
+        <span class="price-hidden text-red-600 font-bold">UGX ${formatNumber(pr.price)}</span>
+    </div>
+</div>`;
                 });
-
                 if (hasHiddenPrices) {
                     pricingLines = `
-                <div class="pricing-rows">
-                    ${pricingLines}
-                </div>
-                <div class="view-more-prices view-btn">View More Prices</div>`;
+<div class="pricing-rows">
+    ${pricingLines}
+</div>
+<div class="view-more-prices view-btn">View More Prices</div>`;
                 }
-
                 <?php if (!$isLoggedIn): ?>
                     if (hasRetailPrice) {
-                        pricingLines += `<div class="login-note">Login to view more price categories</div>`;
+                        pricingLines += `<div class="login-note text-center text-gray-500 text-sm">Login to view more price categories</div>`;
                     }
                 <?php endif; ?>
             } else {
                 <?php if (!$isLoggedIn): ?>
-                    pricingLines = `<button class="login-btn view-btn">View Price Categories</button>`;
+                    pricingLines = `<button class="login-btn view-btn w-full text-center">View Price Categories</button>`;
                 <?php else: ?>
                     pricingLines = `<div class="text-sm text-gray-600 italic p-2">No price data</div>`;
                 <?php endif; ?>
             }
-
             const productCard = document.createElement('div');
             productCard.className = 'product-card transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden';
-
             productCard.innerHTML = `
-        <div class="relative group">
-            <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-40 md:h-48 object-cover">
-
-            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <a href="${BASE_URL}view/product/${product.id}" target="_blank"
-                   class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm">
-                   View Details
-                </a>
+            <div class="relative group">
+                <img src="${imageUrl}" alt="${escapeHtml(product.name)}" class="w-full h-40 md:h-48 object-cover">
+                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <a href="${BASE_URL}view/product/${product.id}" target="_blank" class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm">View Details</a>
+                </div>
             </div>
-        </div>
-
-        <div class="p-3 md:p-5 flex flex-col justify-between flex-1">
-            <div>
-                <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
-                    ${escapeHtml(product.name)}
-                </h3>
-                <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
-                    ${escapeHtml(product.description || '')}
-                </p>
-                <div class="border-t border-gray-200 pt-3 mb-3">${pricingLines}</div>
-            </div>
-
-            <div class="flex space-x-2 mt-auto">
-                <?php if ($isLoggedIn): ?>
-                <button onclick="buyInStore('${product.store_product_id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
-                    <i class="fas fa-shopping-cart mr-1"></i> Buy in Store
-                </button>
-                <?php else: ?>
-                <button onclick="openAuthModal(); return false;" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
-                    <i class="fas fa-shopping-cart mr-1"></i> Buy in Store
-                </button>
-                <?php endif; ?>
-                <button onclick="openVendorSellModal('${product.id}', '${escapeHtml(product.name)}')" class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
-                    <i class="fas fa-tag mr-1"></i> Sell
-                </button>
-            </div>
-        </div>`;
-
+            <div class="p-3 md:p-5 flex flex-col flex-1">
+                <div class="">
+                    <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">${escapeHtml(product.name)}</h3>
+                    <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">${escapeHtml(product.description || '')}</p>
+                </div>
+                <div class="flex-1"></div>
+                <div class="border-t border-gray-200 pt-3 mb-3 flex flex-col justify-between min-h-[20px]">${pricingLines}</div>
+                <div class="flex space-x-2">
+                    <?php if ($isLoggedIn): ?>
+                    <button onclick="buyInStore('${product.store_product_id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm"><i class="fas fa-shopping-cart mr-1"></i>Buy in Store</button>
+                    <?php else: ?>
+                    <button onclick="openAuthModal(); return false;" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm"><i class="fas fa-shopping-cart mr-1"></i>Buy in Store</button>
+                    <?php endif; ?>
+                    <button onclick="openVendorSellModal('${product.id}', '${escapeHtml(product.name)}')" class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm"><i class="fas fa-tag mr-1"></i>Sell</button>
+                </div>
+            </div>`;
             productCard.dataset.lowestPrice = lowestPrice;
             container.appendChild(productCard);
         }
