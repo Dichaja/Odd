@@ -116,7 +116,7 @@ $menuItems = [
     'store' => [
         'title' => 'Store Management',
         'items' => [
-            'requests' => ['title' => 'Requests', 'icon' => 'fa-calendar-check', 'notifications' => 0],
+            'buy-in-store' => ['title' => 'Buy in Store', 'icon' => 'fa-calendar-check', 'notifications' => 0],
             'products' => ['title' => 'Products', 'icon' => 'fa-box-open', 'notifications' => 0],
             'categories' => ['title' => 'Categories', 'icon' => 'fa-tags', 'notifications' => 0],
             'managers' => ['title' => 'Managers', 'icon' => 'fa-users', 'notifications' => 0],
