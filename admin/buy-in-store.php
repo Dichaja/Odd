@@ -1,20 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-$pageTitle = 'Store Visit Requests';
+$pageTitle = 'Store Visit Requests - Admin';
 $activeNav = 'buy-in-store';
-
-if (!isset($_SESSION['user']) || empty($_SESSION['user']['logged_in'])) {
-    session_unset();
-    session_destroy();
-    header('Location: ' . BASE_URL);
-    exit;
-}
-
-$storeId = $_SESSION['active_store'] ?? null;
-if (!$storeId) {
-    header('Location: ' . BASE_URL . 'account/dashboard');
-    exit;
-}
 
 ob_start();
 ?>
@@ -24,8 +11,8 @@ ob_start();
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
                 <div>
                     <h1 class="text-lg sm:text-2xl font-bold text-gray-900">Store Visit Requests</h1>
-                    <p class="text-gray-600 mt-1 text-sm sm:text-base hidden sm:block">Monitor and manage customer store
-                        visit requests</p>
+                    <p class="text-gray-600 mt-1 text-sm sm:text-base hidden sm:block">Monitor and manage all customer
+                        store visit requests across vendors</p>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3">
                     <button id="refreshBtn"
@@ -94,12 +81,12 @@ ob_start();
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <div class="flex flex-wrap gap-2">
                         <button
-                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="daily">
                             <i class="fas fa-calendar-day mr-2"></i>Daily
                         </button>
                         <button
-                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="weekly">
                             <i class="fas fa-calendar-week mr-2"></i>Weekly
                         </button>
@@ -125,16 +112,15 @@ ob_start();
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
             <div class="p-4 sm:p-6 border-b border-gray-100">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900">Store Visit Requests</h3>
-                        <p class="text-sm text-gray-600">Click on any request to view and manage details</p>
-                    </div>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         <div class="relative">
                             <input type="text" id="searchFilter" placeholder="Search requests..."
                                 class="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
                             <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
                         </div>
+                        <select id="storeFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="all">All Stores</option>
+                        </select>
                         <select id="statusFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
                             <option value="all">All Status</option>
                             <option value="pending">Pending</option>
@@ -159,6 +145,9 @@ ob_start();
                                 Customer Details</th>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Store</th>
+                            <th
+                                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                 Product</th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -176,7 +165,7 @@ ob_start();
                     </thead>
                     <tbody id="requestsBody" class="divide-y divide-gray-100">
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                                 <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                                 <div>Loading requests...</div>
                             </td>
@@ -234,7 +223,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Desktop Request Modal -->
 <div id="requestModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/50" onclick="closeRequestModal()"></div>
     <div
@@ -282,7 +270,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Mobile Request Modal -->
 <div id="mobileRequestModal" class="fixed inset-0 z-50 hidden lg:hidden">
     <div class="absolute inset-0 bg-white">
         <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 flex items-center justify-between">
@@ -310,7 +297,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Date Picker Modal -->
 <div id="datePickerModal" class="fixed inset-0 z-[60] hidden">
     <div class="absolute inset-0 bg-black/50" onclick="closeDatePickerModal()"></div>
     <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
@@ -343,7 +329,6 @@ ob_start();
     </div>
 </div>
 
-<!-- SMS Modal -->
 <div id="smsModal" class="fixed inset-0 z-[60] hidden">
     <div class="absolute inset-0 bg-black/50" onclick="closeSmsModal()"></div>
     <div class="relative w-full max-w-lg mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
@@ -396,7 +381,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Email Modal -->
 <div id="emailModal" class="fixed inset-0 z-[60] hidden">
     <div class="absolute inset-0 bg-black/50" onclick="closeEmailModal()"></div>
     <div class="relative w-full max-w-2xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
@@ -439,7 +423,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Success Modal -->
 <div id="successModal" class="fixed inset-0 z-[70] hidden">
     <div class="absolute inset-0 bg-black/50" onclick="closeSuccessModal()"></div>
     <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
@@ -463,7 +446,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Error Modal -->
 <div id="errorModal" class="fixed inset-0 z-[70] hidden">
     <div class="absolute inset-0 bg-black/50" onclick="closeErrorModal()"></div>
     <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
@@ -489,14 +471,16 @@ ob_start();
 <script>
     let currentPage = 1;
     let itemsPerPage = 20;
-    let currentPeriod = 'daily';
+    let currentPeriod = 'weekly';
     let currentRequestId = null;
     let currentRequestData = null;
     let smsBalance = 0;
+    let currentStoreId = null;
 
     document.addEventListener('DOMContentLoaded', function () {
         initializeDateFilters();
         setupEventListeners();
+        loadStores();
         loadRequests();
         loadStats();
         setInterval(() => {
@@ -549,9 +533,15 @@ ob_start();
             loadRequests();
         });
 
+        document.getElementById('storeFilter').addEventListener('change', () => {
+            currentPage = 1;
+            loadRequests();
+        });
+
         document.getElementById('clearFilters').addEventListener('click', function () {
             document.getElementById('searchFilter').value = '';
             document.getElementById('statusFilter').value = 'all';
+            document.getElementById('storeFilter').value = 'all';
             currentPage = 1;
             loadRequests();
         });
@@ -594,13 +584,12 @@ ob_start();
 
         document.getElementById('smsMessage').addEventListener('input', updateSmsCharCount);
 
-        // Set minimum date for date picker to today
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('newVisitDate').setAttribute('min', today);
     }
 
     function initializeDateFilters() {
-        setDateRangeForPeriod('daily');
+        setDateRangeForPeriod('weekly');
     }
 
     function setDateRangeForPeriod(period) {
@@ -637,8 +626,26 @@ ob_start();
         loadStats();
     }
 
+    function loadStores() {
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getStores`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const storeFilter = document.getElementById('storeFilter');
+                    storeFilter.innerHTML = '<option value="all">All Stores</option>';
+                    data.stores.forEach(store => {
+                        const option = document.createElement('option');
+                        option.value = store.id;
+                        option.textContent = `${store.name} (${store.region}, ${store.district})`;
+                        storeFilter.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Error loading stores:', error));
+    }
+
     function loadStats() {
-        fetch(`${BASE_URL}vendor-store/fetch/manageBuyInStore.php?action=getStats`)
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getStats`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -662,10 +669,11 @@ ob_start();
             end_date: document.getElementById('endDate').value,
             search_term: document.getElementById('searchFilter').value,
             status_filter: document.getElementById('statusFilter').value,
+            store_filter: document.getElementById('storeFilter').value,
             page: currentPage
         });
 
-        fetch(`${BASE_URL}vendor-store/fetch/manageBuyInStore.php?${params}`)
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?${params}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -688,7 +696,7 @@ ob_start();
         if (requests.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                         <i class="fas fa-inbox text-2xl mb-2"></i>
                         <div>No requests found</div>
                     </td>
@@ -707,6 +715,10 @@ ob_start();
                 <td class="px-4 py-3 whitespace-nowrap">
                     <div class="font-medium text-gray-900 text-sm">${request.first_name} ${request.last_name}</div>
                     <div class="text-xs text-gray-500">${request.email}</div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="font-medium text-gray-900 text-sm">${request.store_name}</div>
+                    <div class="text-xs text-gray-500">${request.store_region}, ${request.store_district}</div>
                 </td>
                 <td class="px-4 py-3">
                     <div class="text-sm font-medium text-gray-900 line-clamp-1">${request.product_title}</div>
@@ -762,6 +774,7 @@ ob_start();
                             <span class="text-xs ${visitInfo.color}">${visitInfo.text}</span>
                         </div>
                         <div class="text-sm text-gray-600 mb-1 line-clamp-1">${request.product_title}</div>
+                        <div class="text-xs text-gray-500 mb-1">${request.store_name}</div>
                         <div class="text-xs text-gray-500 mb-2">UGX ${formatCurrency(request.price)} per unit</div>
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
@@ -841,11 +854,12 @@ ob_start();
             </div>
         `;
 
-        fetch(`${BASE_URL}vendor-store/fetch/manageBuyInStore.php?action=getRequestDetails&id=${requestId}`)
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getRequestDetails&id=${requestId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     currentRequestData = data.request;
+                    currentStoreId = data.request.store_id;
                     renderRequestDetails(data.request);
                 } else {
                     showErrorModal('Failed to load request details');
@@ -865,11 +879,12 @@ ob_start();
             </div>
         `;
 
-        fetch(`${BASE_URL}vendor-store/fetch/manageBuyInStore.php?action=getRequestDetails&id=${requestId}`)
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getRequestDetails&id=${requestId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     currentRequestData = data.request;
+                    currentStoreId = data.request.store_id;
                     renderMobileRequestDetails(data.request);
                 } else {
                     showErrorModal('Failed to load request details');
@@ -935,6 +950,28 @@ ob_start();
             </div>
 
             <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+                <h4 class="font-semibold text-gray-900 mb-3 text-sm">Store Details</h4>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Store:</span>
+                        <span class="font-medium">${request.store_name}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Location:</span>
+                        <span class="font-medium">${request.store_region}, ${request.store_district}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Owner:</span>
+                        <span class="font-medium">${request.owner_first_name} ${request.owner_last_name}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Contact:</span>
+                        <span class="font-medium">${request.store_phone}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
                 <h4 class="font-semibold text-gray-900 mb-3 text-sm">Visit Information</h4>
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
@@ -969,6 +1006,28 @@ ob_start();
 
         document.getElementById('requestDetails').innerHTML = `
             <div class="space-y-6">
+                <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-store mr-3 text-blue-600"></i>Store Information
+                    </h4>
+                    <div class="space-y-3">
+                        <div>
+                            <h5 class="font-semibold text-gray-900 text-lg">${request.store_name}</h5>
+                            <p class="text-gray-600 text-sm mt-1">${request.store_address}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-600">Owner</label>
+                                <p class="font-medium">${request.owner_first_name} ${request.owner_last_name}</p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-600">Location</label>
+                                <p class="font-medium">${request.store_region}, ${request.store_district}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                     <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                         <i class="fas fa-box mr-3 text-blue-600"></i>Product Information
@@ -1135,6 +1194,24 @@ ob_start();
                 </div>
 
                 <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <h4 class="font-semibold text-gray-900 mb-3">Store Information</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Store:</span>
+                            <span class="font-medium">${request.store_name}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Location:</span>
+                            <span class="font-medium">${request.store_region}, ${request.store_district}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Owner:</span>
+                            <span class="font-medium">${request.owner_first_name} ${request.owner_last_name}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
                     <h4 class="font-semibold text-gray-900 mb-3">Product Details</h4>
                     <div class="space-y-3">
                         <div>
@@ -1273,7 +1350,7 @@ ob_start();
         formData.append('request_id', currentRequestId);
         formData.append('visit_date', newDate);
 
-        fetch(`${BASE_URL}vendor-store/fetch/manageBuyInStore.php?action=updateVisitDate`, {
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=updateVisitDate`, {
             method: 'POST',
             body: formData
         })
@@ -1306,7 +1383,7 @@ ob_start();
         formData.append('request_id', requestId);
         formData.append('status', newStatus);
 
-        fetch(`${BASE_URL}vendor-store/fetch/manageBuyInStore.php?action=updateRequestStatus`, {
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=updateRequestStatus`, {
             method: 'POST',
             body: formData
         })
@@ -1341,7 +1418,7 @@ ob_start();
     function openEmailModal(email, customerName, productTitle) {
         document.getElementById('emailTo').value = email;
         document.getElementById('emailSubject').value = `Store Visit Request - ${productTitle}`;
-        document.getElementById('emailMessage').value = `Dear ${customerName},\n\nThank you for your store visit request regarding ${productTitle}.\n\nWe look forward to meeting with you.\n\nBest regards,\nStore Team`;
+        document.getElementById('emailMessage').value = `Dear ${customerName},\n\nThank you for your store visit request regarding ${productTitle}.\n\nWe look forward to meeting with you.\n\nBest regards,\nZzimba Team`;
         document.getElementById('emailModal').classList.remove('hidden');
     }
 
@@ -1350,25 +1427,27 @@ ob_start();
         document.getElementById('smsMessage').value = `Hello ${customerName}, regarding your store visit request. Please contact us for more details.`;
         updateSmsCharCount();
 
-        fetch(`${BASE_URL}vendor-store/fetch/manageBuyInStore.php?action=getSmsBalance`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    smsBalance = data.balance;
-                    document.getElementById('smsBalance').textContent = smsBalance;
+        if (currentStoreId) {
+            fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getSmsBalance&store_id=${currentStoreId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        smsBalance = data.balance;
+                        document.getElementById('smsBalance').textContent = smsBalance;
 
-                    if (smsBalance < 1) {
-                        document.getElementById('sendSmsBtn').disabled = true;
-                        document.getElementById('sendSmsBtn').innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Insufficient Credits';
-                        document.getElementById('sendSmsBtn').className = 'px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed';
-                    } else {
-                        document.getElementById('sendSmsBtn').disabled = false;
-                        document.getElementById('sendSmsBtn').innerHTML = '<i class="fas fa-sms mr-2"></i>Send SMS';
-                        document.getElementById('sendSmsBtn').className = 'px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors';
+                        if (smsBalance < 1) {
+                            document.getElementById('sendSmsBtn').disabled = true;
+                            document.getElementById('sendSmsBtn').innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Insufficient Credits';
+                            document.getElementById('sendSmsBtn').className = 'px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed';
+                        } else {
+                            document.getElementById('sendSmsBtn').disabled = false;
+                            document.getElementById('sendSmsBtn').innerHTML = '<i class="fas fa-sms mr-2"></i>Send SMS';
+                            document.getElementById('sendSmsBtn').className = 'px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors';
+                        }
                     }
-                }
-            })
-            .catch(error => console.error('Error loading SMS balance:', error));
+                })
+                .catch(error => console.error('Error loading SMS balance:', error));
+        }
 
         document.getElementById('smsModal').classList.remove('hidden');
     }
@@ -1384,7 +1463,7 @@ ob_start();
         formData.append('subject', document.getElementById('emailSubject').value);
         formData.append('message', document.getElementById('emailMessage').value);
 
-        fetch(`${BASE_URL}vendor-store/fetch/manageBuyInStore.php?action=sendEmail`, {
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=sendEmail`, {
             method: 'POST',
             body: formData
         })
@@ -1428,7 +1507,6 @@ ob_start();
         sendBtn.classList.add('cursor-not-allowed', 'opacity-75');
 
         const recipients = JSON.stringify([phone]);
-
         const formData = new FormData();
         formData.append('action', 'sendSms');
         formData.append('message', message);
@@ -1467,6 +1545,7 @@ ob_start();
         document.body.style.overflow = '';
         currentRequestId = null;
         currentRequestData = null;
+        currentStoreId = null;
     }
 
     function closeMobileRequestModal() {
@@ -1474,6 +1553,7 @@ ob_start();
         document.body.style.overflow = '';
         currentRequestId = null;
         currentRequestData = null;
+        currentStoreId = null;
     }
 
     function closeDatePickerModal() {
@@ -1520,7 +1600,7 @@ ob_start();
             </div>
         `;
 
-        tbody.innerHTML = `<tr><td colspan="6">${errorContent}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7">${errorContent}</td></tr>`;
         cards.innerHTML = errorContent;
     }
 
@@ -1583,6 +1663,7 @@ ob_start();
 
         loadRequests();
         loadStats();
+        loadStores();
 
         setTimeout(() => {
             icon.classList.remove('fa-spin');
@@ -1684,7 +1765,7 @@ ob_start();
     }
 
     #requestsTable {
-        min-width: 700px;
+        min-width: 800px;
     }
 
     @media (max-width: 768px) {

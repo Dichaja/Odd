@@ -69,6 +69,7 @@ $menuItems = [
             'member-subscription' => ['title' => 'Subscriptions', 'icon' => 'fa-users'],
             'quotations' => ['title' => 'Quotations', 'icon' => 'fa-file-invoice-dollar'],
             'contact-us-messages' => ['title' => 'Contact Us', 'icon' => 'fa-envelope'],
+            'buy-in-store' => ['title' => 'Buy In Store', 'icon' => 'fa-shopping-cart'],
         ]
     ],
     'marketing' => [
