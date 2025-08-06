@@ -1360,7 +1360,7 @@ ob_start();
     function shareOnWhatsApp() {
         const currentUrl = window.location.href;
         const pageTitle = "<?= addslashes($pageTitle) ?>";
-        const message = `Check out ${pageTitle} on Zzimba Online: ${currentUrl}`;
+        const message = `Check out *${pageTitle}* on Zzimba Online:\n\n${currentUrl}`;
         window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
     }
 
