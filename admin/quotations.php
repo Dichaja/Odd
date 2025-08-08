@@ -38,12 +38,12 @@ ob_start();
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <div class="flex flex-wrap gap-2">
                         <button
-                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="daily">
                             <i class="fas fa-calendar-day mr-2"></i>Daily
                         </button>
                         <button
-                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="weekly">
                             <i class="fas fa-calendar-week mr-2"></i>Weekly
                         </button>
@@ -346,7 +346,7 @@ ob_start();
 <script>
     let currentPage = 1;
     let itemsPerPage = 20;
-    let currentPeriod = 'daily';
+    let currentPeriod = 'weekly';
     let currentQuotationId = null;
     let currentQuotationData = null;
     let pendingAction = null;
@@ -376,7 +376,7 @@ ob_start();
     }
 
     function initializeDateFilters() {
-        setDateRangeForPeriod('daily');
+        setDateRangeForPeriod('weekly');
     }
 
     function setDateRangeForPeriod(period) {
