@@ -354,7 +354,7 @@ ob_start();
 <div id="vendorModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/50" onclick="hideVendorModal()"></div>
     <div
-        class="relative w-full h-full max-w-4xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
+        class="relative w-full  max-w-4xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
         <div
             class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5">
             <div class="flex items-center gap-3">
@@ -396,7 +396,7 @@ ob_start();
 <div id="statusModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/50" onclick="hideStatusModal()"></div>
     <div
-        class="relative w-full h-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
+        class="relative w-full  max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg max-h-[90vh] overflow-hidden m-4">
         <div
             class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-orange-50 to-orange-100">
             <div class="flex items-center gap-3">
