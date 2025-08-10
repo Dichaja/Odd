@@ -221,6 +221,11 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
     </script>
     <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
     <style>
+        .container {
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+        }
+
         .nav-link {
             position: relative
         }
