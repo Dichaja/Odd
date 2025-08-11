@@ -114,7 +114,7 @@ function getProductsData($page = 1, $limit = 20, $startDate = null, $endDate = n
             $whereClause
         ");
         $countStmt->execute($params);
-        $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+        $total = (int) ($countStmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
 
         $offset = ($page - 1) * $limit;
         $stmt = $pdo->prepare("
@@ -127,9 +127,9 @@ function getProductsData($page = 1, $limit = 20, $startDate = null, $endDate = n
                 p.created_at,
                 pc.name as category_name,
                 EXISTS(SELECT 1 FROM store_products sp JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id) as has_pricing,
-                COALESCE((SELECT COUNT(DISTINCT session_id) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as unique_views,
-                COALESCE((SELECT COUNT(*) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as total_views,
-                (SELECT MAX(created_at) FROM product_views pv WHERE pv.product_id = p.id $dateFilter) as last_viewed
+                COALESCE((SELECT COUNT(*) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as unique_views,
+                COALESCE((SELECT SUM(pv.view_count) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as total_views,
+                (SELECT MAX(pv.created_at) FROM product_views pv WHERE pv.product_id = p.id $dateFilter) as last_viewed
             FROM products p
             LEFT JOIN product_categories pc ON p.category_id = pc.id
             $whereClause
@@ -158,7 +158,7 @@ function getProductsData($page = 1, $limit = 20, $startDate = null, $endDate = n
             'total' => $total,
             'page' => $page,
             'limit' => $limit,
-            'total_pages' => ceil($total / $limit),
+            'total_pages' => (int) ceil($total / $limit),
             'stats' => $stats
         ];
 
@@ -192,18 +192,13 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
             LEFT JOIN product_categories pc ON p.category_id = pc.id
             WHERE p.id = ?
         ");
-
         $stmt->execute([$productId]);
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$product) {
-            return [
-                'success' => false,
-                'error' => 'Product not found'
-            ];
+            return ['success' => false, 'error' => 'Product not found'];
         }
 
-        // Build date filter for views queries
         $dateCondition = "1=1";
         $dateParams = [$productId];
 
@@ -224,24 +219,23 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
             }
         }
 
-        // Get view counts
         $viewsStmt = $pdo->prepare("
             SELECT 
-                COUNT(DISTINCT session_id) as unique_views,
-                COUNT(*) as total_views
+                COUNT(*) as unique_views,
+                COALESCE(SUM(view_count),0) as total_views
             FROM product_views 
             WHERE product_id = ? AND $dateCondition
         ");
         $viewsStmt->execute($dateParams);
         $viewsData = $viewsStmt->fetch(PDO::FETCH_ASSOC);
 
-        $product['unique_views'] = (int) $viewsData['unique_views'];
-        $product['total_views'] = (int) $viewsData['total_views'];
+        $product['unique_views'] = (int) ($viewsData['unique_views'] ?? 0);
+        $product['total_views'] = (int) ($viewsData['total_views'] ?? 0);
         $product['has_pricing'] = (bool) $product['has_pricing'];
         $product['featured'] = (bool) $product['featured'];
         $product['primary_image'] = getProductImage($product['id']);
 
-        $daysInPeriod = 7; // Default to week
+        $daysInPeriod = 7;
         if ($period === 'today')
             $daysInPeriod = 1;
         elseif ($period === 'month')
@@ -254,11 +248,11 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
 
         $product['avg_daily_views'] = $daysInPeriod > 0 ? $product['total_views'] / $daysInPeriod : 0;
 
-        // Get timeline data
         $timelineStmt = $pdo->prepare("
             SELECT 
                 DATE(CONVERT_TZ(created_at, '+00:00', '+03:00')) as date,
-                COUNT(*) as views
+                COUNT(*) as unique_views,
+                COALESCE(SUM(view_count),0) as total_views
             FROM product_views 
             WHERE product_id = ? AND $dateCondition
             GROUP BY DATE(CONVERT_TZ(created_at, '+00:00', '+03:00'))
@@ -267,16 +261,16 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
         $timelineStmt->execute($dateParams);
         $timelineData = $timelineStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $timeline = [
+        $product['timeline'] = [
             'labels' => array_column($timelineData, 'date'),
-            'values' => array_map('intval', array_column($timelineData, 'views'))
+            'unique_views' => array_map('intval', array_column($timelineData, 'unique_views')),
+            'total_views' => array_map('intval', array_column($timelineData, 'total_views')),
         ];
 
-        // Get recent sessions
         $sessionsStmt = $pdo->prepare("
             SELECT 
                 session_id,
-                COUNT(*) as view_count,
+                COALESCE(SUM(view_count),0) as view_count,
                 MIN(created_at) as first_view,
                 MAX(created_at) as last_view
             FROM product_views 
@@ -292,20 +286,16 @@ function getProductDetails($productId, $startDate = null, $endDate = null, $peri
             $session['view_count'] = (int) $session['view_count'];
         }
 
-        $product['timeline'] = $timeline;
-        $product['recent_sessions'] = $recentSessions;
-
         return [
             'success' => true,
-            'data' => $product
+            'data' => array_merge($product, [
+                'recent_sessions' => $recentSessions
+            ])
         ];
 
     } catch (PDOException $e) {
         error_log("Database error in getProductDetails: " . $e->getMessage());
-        return [
-            'success' => false,
-            'error' => 'Database error occurred: ' . $e->getMessage()
-        ];
+        return ['success' => false, 'error' => 'Database error occurred: ' . $e->getMessage()];
     }
 }
 
@@ -336,15 +326,13 @@ function getChartData($startDate = null, $endDate = null, $period = 'week', $vie
             }
         }
 
-        // Generate timeline with proper intervals
         $timeline = generateTimelineData($pdo, $period, $startDate, $endDate, $dateCondition, $dateParams);
 
-        // Get category data
         $categoryStmt = $pdo->prepare("
             SELECT 
                 COALESCE(pc.name, 'Uncategorized') as category_name,
-                COUNT(DISTINCT pv.session_id) as unique_views,
-                COUNT(*) as total_views
+                COUNT(*) as unique_views,
+                COALESCE(SUM(pv.view_count),0) as total_views
             FROM product_views pv
             JOIN products p ON pv.product_id = p.id
             LEFT JOIN product_categories pc ON p.category_id = pc.id
@@ -361,31 +349,22 @@ function getChartData($startDate = null, $endDate = null, $period = 'week', $vie
             'values' => array_map('intval', array_column($categoryData, $viewType === 'unique' ? 'unique_views' : 'total_views'))
         ];
 
-        return [
-            'success' => true,
-            'timeline' => $timeline,
-            'categories' => $categories
-        ];
+        return ['success' => true, 'timeline' => $timeline, 'categories' => $categories];
 
     } catch (PDOException $e) {
         error_log("Database error in getChartData: " . $e->getMessage());
-        return [
-            'success' => false,
-            'error' => 'Database error occurred'
-        ];
+        return ['success' => false, 'error' => 'Database error occurred'];
     }
 }
 
 function generateTimelineData($pdo, $period, $startDate, $endDate, $dateCondition, $dateParams)
 {
-    // Get actual data from database
     if ($period === 'today') {
-        // For daily: show 2-hour intervals
         $stmt = $pdo->prepare("
             SELECT 
                 HOUR(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) as hour_val,
-                COUNT(DISTINCT pv.session_id) as unique_views,
-                COUNT(*) as total_views
+                COUNT(*) as unique_views,
+                COALESCE(SUM(pv.view_count),0) as total_views
             FROM product_views pv
             WHERE $dateCondition
             GROUP BY HOUR(CONVERT_TZ(pv.created_at, '+00:00', '+03:00'))
@@ -394,7 +373,6 @@ function generateTimelineData($pdo, $period, $startDate, $endDate, $dateConditio
         $stmt->execute($dateParams);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Create 2-hour intervals (0-1, 2-3, 4-5, etc.)
         $intervals = [];
         $uniqueViews = [];
         $totalViews = [];
@@ -407,9 +385,9 @@ function generateTimelineData($pdo, $period, $startDate, $endDate, $dateConditio
             $intervalTotal = 0;
 
             foreach ($data as $row) {
-                if ($row['hour_val'] >= $i && $row['hour_val'] <= $i + 1) {
-                    $intervalUnique += $row['unique_views'];
-                    $intervalTotal += $row['total_views'];
+                if ((int) $row['hour_val'] >= $i && (int) $row['hour_val'] <= $i + 1) {
+                    $intervalUnique += (int) $row['unique_views'];
+                    $intervalTotal += (int) $row['total_views'];
                 }
             }
 
@@ -417,19 +395,14 @@ function generateTimelineData($pdo, $period, $startDate, $endDate, $dateConditio
             $totalViews[] = $intervalTotal;
         }
 
-        return [
-            'labels' => $intervals,
-            'unique_views' => $uniqueViews,
-            'total_views' => $totalViews
-        ];
+        return ['labels' => $intervals, 'unique_views' => $uniqueViews, 'total_views' => $totalViews];
 
     } elseif ($period === 'week') {
-        // For weekly: show each day of the week
         $stmt = $pdo->prepare("
             SELECT 
                 DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) as date,
-                COUNT(DISTINCT pv.session_id) as unique_views,
-                COUNT(*) as total_views
+                COUNT(*) as unique_views,
+                COALESCE(SUM(pv.view_count),0) as total_views
             FROM product_views pv
             WHERE $dateCondition
             GROUP BY DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00'))
@@ -438,13 +411,11 @@ function generateTimelineData($pdo, $period, $startDate, $endDate, $dateConditio
         $stmt->execute($dateParams);
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Create array indexed by date
         $dataByDate = [];
         foreach ($data as $row) {
             $dataByDate[$row['date']] = $row;
         }
 
-        // Generate last 7 days
         $labels = [];
         $uniqueViews = [];
         $totalViews = [];
@@ -458,19 +429,14 @@ function generateTimelineData($pdo, $period, $startDate, $endDate, $dateConditio
             $totalViews[] = isset($dataByDate[$date]) ? (int) $dataByDate[$date]['total_views'] : 0;
         }
 
-        return [
-            'labels' => $labels,
-            'unique_views' => $uniqueViews,
-            'total_views' => $totalViews
-        ];
+        return ['labels' => $labels, 'unique_views' => $uniqueViews, 'total_views' => $totalViews];
 
     } else {
-        // For monthly or custom: show by date
         $stmt = $pdo->prepare("
             SELECT 
                 DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) as date,
-                COUNT(DISTINCT pv.session_id) as unique_views,
-                COUNT(*) as total_views
+                COUNT(*) as unique_views,
+                COALESCE(SUM(pv.view_count),0) as total_views
             FROM product_views pv
             WHERE $dateCondition
             GROUP BY DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00'))
@@ -516,27 +482,31 @@ function getProductStats($period = 'week', $startDate = null, $endDate = null)
 
         $totalProductsStmt = $pdo->prepare("SELECT COUNT(*) as count FROM products WHERE status = 'published'");
         $totalProductsStmt->execute();
-        $totalProducts = $totalProductsStmt->fetch(PDO::FETCH_ASSOC)['count'];
+        $totalProducts = (int) ($totalProductsStmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
 
         $viewsStmt = $pdo->prepare("
             SELECT 
-                COUNT(DISTINCT session_id) as unique_views,
-                COUNT(*) as total_views
+                COUNT(*) as unique_views,
+                COALESCE(SUM(pv.view_count),0) as total_views
             FROM product_views pv 
             WHERE $dateCondition
         ");
         $viewsStmt->execute($dateParams);
         $viewsData = $viewsStmt->fetch(PDO::FETCH_ASSOC);
 
-        $todayViewsStmt = $pdo->prepare("SELECT COUNT(*) as count FROM product_views pv WHERE DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+03:00'))");
+        $todayViewsStmt = $pdo->prepare("
+            SELECT COALESCE(SUM(pv.view_count),0) as count 
+            FROM product_views pv 
+            WHERE DATE(CONVERT_TZ(pv.created_at, '+00:00', '+03:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+03:00'))
+        ");
         $todayViewsStmt->execute();
-        $todayViews = $todayViewsStmt->fetch(PDO::FETCH_ASSOC)['count'];
+        $todayViews = (int) ($todayViewsStmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
 
         return [
-            'total_products' => (int) $totalProducts,
-            'total_unique_views' => (int) $viewsData['unique_views'],
-            'total_cumulative_views' => (int) $viewsData['total_views'],
-            'today_views' => (int) $todayViews
+            'total_products' => $totalProducts,
+            'total_unique_views' => (int) ($viewsData['unique_views'] ?? 0),
+            'total_cumulative_views' => (int) ($viewsData['total_views'] ?? 0),
+            'today_views' => $todayViews
         ];
 
     } catch (PDOException $e) {
@@ -564,17 +534,11 @@ function getCategories()
         $stmt->execute();
         $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        return [
-            'success' => true,
-            'categories' => $categories
-        ];
+        return ['success' => true, 'categories' => $categories];
 
     } catch (PDOException $e) {
         error_log("Database error in getCategories: " . $e->getMessage());
-        return [
-            'success' => false,
-            'error' => 'Database error occurred'
-        ];
+        return ['success' => false, 'error' => 'Database error occurred'];
     }
 }
 
@@ -642,15 +606,14 @@ function exportProductsData($startDate = null, $endDate = null, $period = 'week'
                 p.featured,
                 p.created_at,
                 pc.name as category_name,
-                COALESCE((SELECT COUNT(DISTINCT session_id) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as unique_views,
-                COALESCE((SELECT COUNT(*) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as total_views,
-                (SELECT MAX(created_at) FROM product_views pv WHERE pv.product_id = p.id $dateFilter) as last_viewed
+                COALESCE((SELECT COUNT(*) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as unique_views,
+                COALESCE((SELECT SUM(pv.view_count) FROM product_views pv WHERE pv.product_id = p.id $dateFilter), 0) as total_views,
+                (SELECT MAX(pv.created_at) FROM product_views pv WHERE pv.product_id = p.id $dateFilter) as last_viewed
             FROM products p
             LEFT JOIN product_categories pc ON p.category_id = pc.id
             $whereClause
             $orderBy
         ");
-
         $stmt->execute($params);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -673,8 +636,9 @@ function exportProductsData($startDate = null, $endDate = null, $period = 'week'
         ]);
 
         foreach ($products as $product) {
-            $engagementRate = $product['total_views'] > 0 ?
-                round(($product['unique_views'] / $product['total_views']) * 100, 2) : 0;
+            $unique = (int) $product['unique_views'];
+            $total = (int) $product['total_views'];
+            $engagementRate = $total > 0 ? round(($unique / $total) * 100, 2) : 0;
 
             fputcsv($output, [
                 $product['id'],
@@ -682,8 +646,8 @@ function exportProductsData($startDate = null, $endDate = null, $period = 'week'
                 $product['category_name'] ?: 'Uncategorized',
                 $product['status'],
                 $product['featured'] ? 'Yes' : 'No',
-                $product['unique_views'],
-                $product['total_views'],
+                $unique,
+                $total,
                 $engagementRate,
                 $product['last_viewed'] ?: 'Never',
                 $product['created_at']
@@ -696,10 +660,7 @@ function exportProductsData($startDate = null, $endDate = null, $period = 'week'
     } catch (PDOException $e) {
         error_log("Database error in exportProductsData: " . $e->getMessage());
         header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'error' => 'Export failed'
-        ]);
+        echo json_encode(['success' => false, 'error' => 'Export failed']);
         exit;
     }
 }
@@ -726,13 +687,9 @@ switch ($action) {
     case 'get_product_details':
         $productId = $_GET['id'] ?? '';
         if (empty($productId)) {
-            echo json_encode([
-                'success' => false,
-                'error' => 'Product ID is required'
-            ]);
+            echo json_encode(['success' => false, 'error' => 'Product ID is required']);
             break;
         }
-
         $startDate = $_GET['start_date'] ?? null;
         $endDate = $_GET['end_date'] ?? null;
         $period = $_GET['period'] ?? 'week';
@@ -768,10 +725,6 @@ switch ($action) {
         break;
 
     default:
-        echo json_encode([
-            'success' => false,
-            'error' => 'Invalid action'
-        ]);
+        echo json_encode(['success' => false, 'error' => 'Invalid action']);
         break;
 }
-?>

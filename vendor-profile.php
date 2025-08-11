@@ -394,14 +394,13 @@ ob_start();
                         <i class="fa-solid fa-calendar-days text-gray-500 mr-2"></i>
                         <span id="vendor-registered" class="text-gray-700">Joined March 2008</span>
                     </div>
+
                     <div class="mr-8 flex items-center">
                         <div id="location-section">
                             <?php if ($isAdmin || $isOwnerOrManager): ?>
-                                <div id="location-container">
-                                    <div class="flex items-center">
-                                        <i class="fa-solid fa-location-dot text-gray-500 mr-2"></i>
-                                        <span id="vendor-location" class="text-gray-700">Building City, BC 12345</span>
-                                    </div>
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-location-dot text-gray-500 mr-2"></i>
+                                    <span id="vendor-location" class="text-gray-700">Building City, BC 12345</span>
                                 </div>
                             <?php else: ?>
                                 <button id="view-location-btn"
@@ -419,14 +418,13 @@ ob_start();
                             <?php endif; ?>
                         </div>
                     </div>
+
                     <div class="mr-8 flex items-center">
                         <div id="phone-section">
                             <?php if ($isAdmin || $isOwnerOrManager): ?>
-                                <div id="phone-container">
-                                    <div class="flex items-center">
-                                        <i class="fa-solid fa-phone text-gray-500 mr-2"></i>
-                                        <span id="phone-display" class="text-gray-700">Loading...</span>
-                                    </div>
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-phone text-gray-500 mr-2"></i>
+                                    <span id="phone-display" class="text-gray-700">Loading...</span>
                                 </div>
                             <?php else: ?>
                                 <button id="view-phone-btn"
@@ -444,14 +442,13 @@ ob_start();
                             <?php endif; ?>
                         </div>
                     </div>
+
                     <div class="mr-8 flex items-center">
                         <div id="email-section">
                             <?php if ($isAdmin || $isOwnerOrManager): ?>
-                                <div id="email-container">
-                                    <div class="flex items-center">
-                                        <i class="fa-solid fa-envelope text-gray-500 mr-2"></i>
-                                        <span id="email-display" class="text-gray-700">Loading...</span>
-                                    </div>
+                                <div class="flex items-center">
+                                    <i class="fa-solid fa-envelope text-gray-500 mr-2"></i>
+                                    <span id="email-display" class="text-gray-700">Loading...</span>
                                 </div>
                             <?php else: ?>
                                 <button id="view-email-btn"
@@ -469,10 +466,12 @@ ob_start();
                             <?php endif; ?>
                         </div>
                     </div>
+
                     <div class="mr-8 flex items-center">
                         <i class="fa-solid fa-box text-gray-500 mr-2"></i>
                         <span id="product-count" class="text-gray-700">0 Products</span>
                     </div>
+
                     <div class="mr-8 flex items-center">
                         <i class="fa-solid fa-tags text-gray-500 mr-2"></i>
                         <span id="category-count" class="text-gray-700">0 Categories</span>
@@ -488,6 +487,7 @@ ob_start();
                 <div id="vendor-operation-type" class="ml-2 bg-primary text-white px-3 py-1 rounded-full text-sm">
                     Operation Type</div>
             </div>
+
             <div class="flex items-center">
                 <div class="text-xl font-bold text-secondary">4.8</div>
                 <div class="ml-2 flex">
@@ -499,6 +499,7 @@ ob_start();
                     <span class="ml-1 text-sm text-gray-600">(128 reviews)</span>
                 </div>
             </div>
+
             <div class="ml-0 sm:ml-auto flex items-center gap-2">
                 <span class="text-xs font-medium text-gray-500">SHARE</span>
                 <div class="flex gap-2">
@@ -549,6 +550,7 @@ ob_start();
                     No products found for this vendor.
                 </div>
             </div>
+
             <button id="loadMoreBtn"
                 class="mx-auto mt-8 block bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors hidden">
                 Load More Products
@@ -615,8 +617,7 @@ ob_start();
                                     <svg class="h-4 w-4 text-gray-600" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M20 12H4">
-                                        </path>
+                                            d="M20 12H4"></path>
                                     </svg>
                                 </button>
                                 <input type="number" id="quantityInput"
@@ -639,8 +640,7 @@ ob_start();
                                 <input type="checkbox" id="showAltContact"
                                     class="h-4 w-4 text-primary focus:ring-primary/20 border-gray-300 rounded">
                                 <label for="showAltContact" class="ml-2 block text-sm text-gray-700">Add alternative
-                                    contact
-                                    details (optional)</label>
+                                    contact details (optional)</label>
                             </div>
 
                             <div id="altContactFields" class="space-y-4 hidden">
@@ -698,8 +698,7 @@ ob_start();
 
                             <div class="border-t border-gray-200 pt-6 mb-6">
                                 <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Order
-                                    Summary
-                                </h4>
+                                    Summary</h4>
                                 <div class="space-y-3">
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Selected Package:</span>
@@ -730,8 +729,7 @@ ob_start();
 
                             <div class="bg-white rounded-lg shadow-sm p-4">
                                 <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Your
-                                    Information
-                                </h4>
+                                    Information</h4>
                                 <div class="grid grid-cols-1 gap-4">
                                     <div class="flex items-center">
                                         <svg class="h-5 w-5 text-gray-400 mr-3" fill="none" stroke="currentColor"
@@ -791,9 +789,7 @@ ob_start();
                     </svg>
                 </div>
                 <div class="ml-3">
-                    <p class="text-sm text-red-700" id="errorMessage">
-                        An error occurred. Please try again.
-                    </p>
+                    <p class="text-sm text-red-700" id="errorMessage">An error occurred. Please try again.</p>
                 </div>
             </div>
         </div>
@@ -812,8 +808,8 @@ ob_start();
             </svg>
         </div>
         <h3 class="text-lg font-medium text-gray-900 mb-2">Request Submitted!</h3>
-        <p class="text-gray-600 mb-6">Your in-store purchase request has been submitted successfully. We'll be
-            expecting you on your selected date.</p>
+        <p class="text-gray-600 mb-6">Your in-store purchase request has been submitted successfully. We'll be expecting
+            you on your selected date.</p>
         <button onclick="closeBuyInStoreModal()"
             class="w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none">
             Done
@@ -934,12 +930,6 @@ ob_start();
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
 
 <script>
-    <?php if ($canEdit): ?>
-        window.openModal = function (modalId) {
-            document.getElementById(modalId).style.display = 'block';
-        };
-    <?php endif; ?>
-
     let vendorId = '<?= $vendorId ?>';
     let storeData = null;
     let isOwner = false;
@@ -961,6 +951,127 @@ ob_start();
     let isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
     let isOwnerOrManager = <?= $isOwnerOrManager ? 'true' : 'false' ?>;
     let currentProduct = null;
+    let viewedEntities = {
+        contacts: [],
+        prices: []
+    };
+
+    function getSessionId() {
+        const sessionData = localStorage.getItem('session_event_log');
+        if (!sessionData) return null;
+
+        try {
+            const session = JSON.parse(sessionData);
+            return session.sessionID || null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function logProfileView() {
+        if (isAdmin || isOwnerOrManager) return;
+
+        const sessionId = getSessionId();
+        if (!sessionId || !vendorId) return;
+
+        try {
+            await fetch(`${BASE_URL}fetch/manageProfile.php?action=logProfileView`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `store_id=${encodeURIComponent(vendorId)}&session_id=${encodeURIComponent(sessionId)}`
+            });
+        } catch (error) {
+            console.error('Error logging profile view:', error);
+        }
+    }
+
+    async function logContactView(entity) {
+        if (isAdmin || isOwnerOrManager) return;
+
+        const sessionId = getSessionId();
+        if (!sessionId || !vendorId) return;
+
+        try {
+            await fetch(`${BASE_URL}fetch/manageProfile.php?action=logContactView`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `store_id=${encodeURIComponent(vendorId)}&entity=${encodeURIComponent(entity)}&session_id=${encodeURIComponent(sessionId)}`
+            });
+        } catch (error) {
+            console.error('Error logging contact view:', error);
+        }
+    }
+
+    async function logPriceView(pricingId) {
+        if (isAdmin || isOwnerOrManager) return;
+
+        const sessionId = getSessionId();
+        if (!sessionId || !pricingId) return;
+
+        try {
+            await fetch(`${BASE_URL}fetch/manageProfile.php?action=logPriceView`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `pricing_id=${encodeURIComponent(pricingId)}&session_id=${encodeURIComponent(sessionId)}`
+            });
+        } catch (error) {
+            console.error('Error logging price view:', error);
+        }
+    }
+
+    async function loadViewedEntities() {
+        if (isAdmin || isOwnerOrManager) return;
+
+        const sessionId = getSessionId();
+        if (!sessionId || !vendorId) return;
+
+        try {
+            const response = await fetch(`${BASE_URL}fetch/manageProfile.php?action=getViewedEntities&store_id=${encodeURIComponent(vendorId)}&session_id=${encodeURIComponent(sessionId)}`);
+            const data = await response.json();
+
+            if (data.success) {
+                viewedEntities.contacts = data.viewed_contacts || [];
+                viewedEntities.prices = data.viewed_prices || [];
+
+                if (viewedEntities.contacts.includes('location')) {
+                    const locationContainer = document.getElementById('location-container');
+                    const viewLocationBtn = document.getElementById('view-location-btn');
+                    if (locationContainer && viewLocationBtn) {
+                        locationContainer.classList.remove('hidden');
+                        viewLocationBtn.style.display = 'none';
+                    }
+                }
+
+                if (viewedEntities.contacts.includes('contact')) {
+                    const phoneContainer = document.getElementById('phone-container');
+                    const viewPhoneBtn = document.getElementById('view-phone-btn');
+                    if (phoneContainer && viewPhoneBtn) {
+                        phoneContainer.classList.remove('hidden');
+                        viewPhoneBtn.style.display = 'none';
+                        showPhone();
+                    }
+                }
+
+                if (viewedEntities.contacts.includes('email')) {
+                    const emailContainer = document.getElementById('email-container');
+                    const viewEmailBtn = document.getElementById('view-email-btn');
+                    if (emailContainer && viewEmailBtn) {
+                        emailContainer.classList.remove('hidden');
+                        viewEmailBtn.style.display = 'none';
+                        showEmail();
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading viewed entities:', error);
+        }
+    }
 
     async function getProductImageUrl(product) {
         const placeholderText = encodeURIComponent((product.name || '').substring(0, 2));
@@ -979,10 +1090,19 @@ ob_start();
     }
 
     async function showLocation() {
-        if (isAdmin || isOwnerOrManager) return;
+        if (isAdmin || isOwnerOrManager) {
+            return;
+        }
+
+        if (viewedEntities.contacts.includes('location')) {
+            const locationContainer = document.getElementById('location-container');
+            const viewLocationBtn = document.getElementById('view-location-btn');
+            locationContainer.classList.remove('hidden');
+            viewLocationBtn.style.display = 'none';
+            return;
+        }
 
         const sessionActive = await checkUserSession();
-
         if (!sessionActive) {
             if (typeof openAuthModal === 'function') {
                 openAuthModal();
@@ -990,9 +1110,11 @@ ob_start();
             return;
         }
 
+        await logContactView('location');
+        viewedEntities.contacts.push('location');
+
         const locationContainer = document.getElementById('location-container');
         const viewLocationBtn = document.getElementById('view-location-btn');
-
         locationContainer.classList.remove('hidden');
         viewLocationBtn.style.display = 'none';
     }
@@ -1001,9 +1123,31 @@ ob_start();
         if (isAdmin || isOwnerOrManager) {
             const phoneDisplay = document.getElementById('phone-display');
             try {
-                const response = await fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=getStoreContact&id=${vendorId}&type=phone`);
+                const response = await fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreContact&id=${vendorId}&type=phone`);
                 const data = await response.json();
+                if (data.success && data.phone) {
+                    phoneDisplay.textContent = data.phone;
+                } else {
+                    phoneDisplay.textContent = storePhone || 'Not provided';
+                }
+            } catch (error) {
+                console.error('Error fetching phone:', error);
+                phoneDisplay.textContent = storePhone || 'Not provided';
+            }
+            return;
+        }
 
+        if (viewedEntities.contacts.includes('contact')) {
+            const phoneContainer = document.getElementById('phone-container');
+            const viewPhoneBtn = document.getElementById('view-phone-btn');
+            const phoneDisplay = document.getElementById('phone-display');
+
+            phoneContainer.classList.remove('hidden');
+            viewPhoneBtn.style.display = 'none';
+
+            try {
+                const response = await fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreContact&id=${vendorId}&type=phone`);
+                const data = await response.json();
                 if (data.success && data.phone) {
                     phoneDisplay.textContent = data.phone;
                 } else {
@@ -1017,13 +1161,15 @@ ob_start();
         }
 
         const sessionActive = await checkUserSession();
-
         if (!sessionActive) {
             if (typeof openAuthModal === 'function') {
                 openAuthModal();
             }
             return;
         }
+
+        await logContactView('contact');
+        viewedEntities.contacts.push('contact');
 
         const phoneContainer = document.getElementById('phone-container');
         const viewPhoneBtn = document.getElementById('view-phone-btn');
@@ -1034,9 +1180,8 @@ ob_start();
         viewPhoneBtn.style.display = 'none';
 
         try {
-            const response = await fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=getStoreContact&id=${vendorId}&type=phone`);
+            const response = await fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreContact&id=${vendorId}&type=phone`);
             const data = await response.json();
-
             if (data.success && data.phone) {
                 phoneDisplay.textContent = data.phone;
             } else {
@@ -1052,9 +1197,31 @@ ob_start();
         if (isAdmin || isOwnerOrManager) {
             const emailDisplay = document.getElementById('email-display');
             try {
-                const response = await fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=getStoreContact&id=${vendorId}&type=email`);
+                const response = await fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreContact&id=${vendorId}&type=email`);
                 const data = await response.json();
+                if (data.success && data.email) {
+                    emailDisplay.textContent = data.email;
+                } else {
+                    emailDisplay.textContent = storeEmail || 'Not provided';
+                }
+            } catch (error) {
+                console.error('Error fetching email:', error);
+                emailDisplay.textContent = storeEmail || 'Not provided';
+            }
+            return;
+        }
 
+        if (viewedEntities.contacts.includes('email')) {
+            const emailContainer = document.getElementById('email-container');
+            const viewEmailBtn = document.getElementById('view-email-btn');
+            const emailDisplay = document.getElementById('email-display');
+
+            emailContainer.classList.remove('hidden');
+            viewEmailBtn.style.display = 'none';
+
+            try {
+                const response = await fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreContact&id=${vendorId}&type=email`);
+                const data = await response.json();
                 if (data.success && data.email) {
                     emailDisplay.textContent = data.email;
                 } else {
@@ -1068,13 +1235,15 @@ ob_start();
         }
 
         const sessionActive = await checkUserSession();
-
         if (!sessionActive) {
             if (typeof openAuthModal === 'function') {
                 openAuthModal();
             }
             return;
         }
+
+        await logContactView('email');
+        viewedEntities.contacts.push('email');
 
         const emailContainer = document.getElementById('email-container');
         const viewEmailBtn = document.getElementById('view-email-btn');
@@ -1085,9 +1254,8 @@ ob_start();
         viewEmailBtn.style.display = 'none';
 
         try {
-            const response = await fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=getStoreContact&id=${vendorId}&type=email`);
+            const response = await fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreContact&id=${vendorId}&type=email`);
             const data = await response.json();
-
             if (data.success && data.email) {
                 emailDisplay.textContent = data.email;
             } else {
@@ -1255,6 +1423,7 @@ ob_start();
 
     function populateCategoryFilter(categories) {
         if (!categories || categories.length === 0) return;
+
         const filterSelect = document.getElementById('filter-category');
         filterSelect.innerHTML = '<option value="">All Categories</option>';
 
@@ -1264,10 +1433,11 @@ ob_start();
 
         activeCatsWithProducts.forEach(category => {
             const option = document.createElement('option');
-            option.value = category.category_id;
+            option.value = category.id;
             option.textContent = category.name;
             filterSelect.appendChild(option);
         });
+
         filterSelect.addEventListener('change', filterProductsByCategory);
     }
 
@@ -1283,7 +1453,7 @@ ob_start();
         let filtered = [...allProducts];
 
         if (categoryId) {
-            filtered = filtered.filter(p => p.store_category_id == categoryId);
+            filtered = filtered.filter(p => p.store_category_id === categoryId);
         }
         if (searchTerm) {
             filtered = filtered.filter(p =>
@@ -1296,6 +1466,7 @@ ob_start();
             container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500">No products found matching your criteria.</div>`;
             return;
         }
+
         renderProductsForDisplay(filtered, true);
     }
 
@@ -1304,16 +1475,19 @@ ob_start();
         if (clearExisting) {
             container.innerHTML = '';
         }
+
         if (!products || products.length === 0) {
             container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500">No products found for this vendor.</div>`;
             return;
         }
+
         for (const product of products) {
             const imageUrl = await getProductImageUrl(product);
             let lowestPrice = 0;
             if (product.pricing && product.pricing.length > 0) {
                 lowestPrice = Math.min(...product.pricing.map(p => parseFloat(p.price)));
             }
+
             let filteredPricing = product.pricing || [];
             let hasRetailPrice = false;
 
@@ -1326,6 +1500,7 @@ ob_start();
 
             let pricingLines = '';
             let hasHiddenPrices = false;
+
             if (filteredPricing.length > 0) {
                 filteredPricing.forEach((pr, index) => {
                     const unitParts = pr.unit_name.split(' ');
@@ -1348,7 +1523,7 @@ ob_start();
                     const hiddenClass = index >= 2 ? 'hidden hidden-price-row' : '';
                     if (index >= 2) hasHiddenPrices = true;
 
-                    const showPriceDirectly = isAdmin || isOwnerOrManager;
+                    const showPriceDirectly = isAdmin || isOwnerOrManager || viewedEntities.prices.includes(pr.pricing_id);
 
                     pricingLines += `
 <div class="flex justify-between items-center p-2 bg-gray-50 rounded ${hiddenClass}">
@@ -1364,12 +1539,13 @@ ob_start();
         ${showPriceDirectly ? `
             <span class="text-primary font-bold">UGX ${formatNumber(pr.price)}</span>
         ` : `
-            <span class="view-btn view-price-btn mr-2">View Price</span>
+            <span class="view-btn view-price-btn mr-2" data-pricing-id="${pr.pricing_id}">View Price</span>
             <span class="price-hidden text-primary font-bold">UGX ${formatNumber(pr.price)}</span>
         `}
     </div>
 </div>`;
                 });
+
                 if (hasHiddenPrices) {
                     pricingLines = `
 <div class="pricing-rows">
@@ -1431,6 +1607,7 @@ ob_start();
                 <div class="border-t border-gray-200 pt-3 mb-3 flex flex-col justify-between min-h-[20px]">${pricingLines}</div>
                 ${actionButtons ? `<div class="flex space-x-2">${actionButtons}</div>` : ''}
             </div>`;
+
             productCard.dataset.lowestPrice = lowestPrice;
             container.appendChild(productCard);
         }
@@ -1443,7 +1620,6 @@ ob_start();
         }
 
         const sessionActive = await checkUserSession();
-
         if (!sessionActive) {
             if (typeof openAuthModal === 'function') {
                 openAuthModal();
@@ -2025,6 +2201,10 @@ ob_start();
             }, 'image/png');
         }
 
+        window.openModal = function (modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        };
+
         window.closeModal = function (modalId) {
             document.getElementById(modalId).style.display = 'none';
             document.body.style.overflow = 'auto';
@@ -2096,6 +2276,8 @@ ob_start();
     document.addEventListener('DOMContentLoaded', function () {
         if (vendorId) {
             loadVendorProfile(vendorId);
+            logProfileView();
+            loadViewedEntities();
         } else {
             showError("No vendor ID provided");
         }
@@ -2178,6 +2360,12 @@ ob_start();
                     }
                     return false;
                 } else {
+                    const pricingId = e.target.dataset.pricingId;
+                    if (pricingId) {
+                        await logPriceView(pricingId);
+                        viewedEntities.prices.push(pricingId);
+                    }
+
                     const priceValue = e.target.nextElementSibling;
                     priceValue.classList.remove('price-hidden');
                     e.target.classList.add('price-hidden');
@@ -2247,7 +2435,7 @@ ob_start();
     });
 
     function loadVendorProfile(id) {
-        fetch(`${BASE_URL}account/fetch/manageZzimbaStores.php?action=getStoreDetails&id=${id}`)
+        fetch(`${BASE_URL}fetch/manageProfile.php?action=getStoreDetails&id=${id}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.store) {
@@ -2377,6 +2565,10 @@ ob_start();
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    function formatNumber(num) {
+        return new Intl.NumberFormat().format(num);
     }
 
     function showToast(message, type = 'success') {
