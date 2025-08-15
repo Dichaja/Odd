@@ -20,8 +20,6 @@ if (session_status() === PHP_SESSION_NONE) {
     $_SESSION['last_activity'] = time();
 }
 
-define('BASE_URL', 'http://localhost/newzzimba/');
-
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Dotenv\Dotenv;
@@ -29,6 +27,10 @@ use Ulid\Ulid;
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
+
+$base = $_ENV['BASE_URL'] ?? '';
+$base = $base === '' ? '/' : rtrim($base, '/') . '/';
+define('BASE_URL', $base);
 
 $db_host = $_ENV['DB_HOST'] ?? '';
 $db_name = $_ENV['DB_NAME'] ?? '';
