@@ -13,20 +13,22 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 date_default_timezone_set('Africa/Kampala');
 
-$smsProvider = SMS_PROVIDER;
-
-function sendSMSDynamic(string $phone, string $message, string $provider = null): bool
+function sendSMSDynamic(string $phone, string $message, ?string $provider = null): bool
 {
-    $provider = $provider ?? SMS_PROVIDER;
+    $provider = $provider ?: (defined('SMS_PROVIDER') ? SMS_PROVIDER : 'speedamobile');
 
     if ($provider === 'collecto') {
-        $manager = new CollectoSMSManager();
-        $result = $manager->CollectoSendSMS([['phone' => $phone]], $message);
-        return isset($result['success']) && $result['success'] === true;
+        try {
+            $manager = new CollectoSMSManager();
+            $res = $manager->sendSingle($phone, $message);
+            return isset($res['success']) && $res['success'] === true;
+        } catch (Throwable $e) {
+            return false;
+        }
     }
 
-    $result = SMS::send($phone, $message, true);
-    return isset($result['success']) && $result['success'] === true;
+    $res = SMS::send($phone, $message, true);
+    return isset($res['success']) && $res['success'] === true;
 }
 
 try {
