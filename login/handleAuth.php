@@ -116,7 +116,8 @@ function sendSmsOTP(string $phone, string $otp): bool
 {
     try {
         $message = "Your Zzimba Online verification code is: $otp. This code will expire in 10 minutes.";
-        $result = SMS::send($phone, $message);
+        $sms = new CollectoSMSManager();
+        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
         return isset($result['success']) && $result['success'] === true;
     } catch (Exception $e) {
         error_log('SMS OTP Error: ' . $e->getMessage());
@@ -144,7 +145,8 @@ function sendLoginSmsOTP(string $phone, string $otp): bool
 {
     try {
         $message = "Your Zzimba Online login verification code is: $otp. This code will expire in 10 minutes.";
-        $result = SMS::send($phone, $message);
+        $sms = new CollectoSMSManager();
+        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
         return isset($result['success']) && $result['success'] === true;
     } catch (Exception $e) {
         error_log('Login SMS OTP Error: ' . $e->getMessage());
@@ -185,7 +187,8 @@ function sendWelcomeSms(string $username, string $phone): bool
 {
     try {
         $message = "Hello $username, Welcome to Zzimba Online. Your Account has been successfully created. Login with your set password for a better experience on the platform.";
-        $result = SMS::send($phone, $message);
+        $sms = new CollectoSMSManager();
+        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
         return isset($result['success']) && $result['success'] === true;
     } catch (Exception $e) {
         error_log('Welcome SMS Error: ' . $e->getMessage());
@@ -213,7 +216,8 @@ function sendPasswordResetSmsOTP(string $phone, string $otp): bool
 {
     try {
         $message = "Your Zzimba Online password reset code is: $otp. This code will expire in 10 minutes.";
-        $result = SMS::send($phone, $message);
+        $sms = new CollectoSMSManager();
+        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
         return isset($result['success']) && $result['success'] === true;
     } catch (Exception $e) {
         error_log('Password Reset SMS Error: ' . $e->getMessage());
@@ -253,7 +257,8 @@ function sendPasswordChangedSms(string $phone, ?string $username = null): bool
         $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
         $greeting = $username ? "Dear $username," : "Hello,";
         $message = "$greeting Your Zzimba Online password was changed on $now. If you didn't make this change, please contact support immediately.";
-        $result = SMS::send($phone, $message);
+        $sms = new CollectoSMSManager();
+        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
         return isset($result['success']) && $result['success'] === true;
     } catch (Exception $e) {
         error_log('Password Changed SMS Error: ' . $e->getMessage());

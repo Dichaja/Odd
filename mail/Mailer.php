@@ -25,11 +25,11 @@ class Mailer
         $smtpConfigurations = [
             [
                 'SMTPSecure' => PHPMailer::ENCRYPTION_STARTTLS,
-                'Port'       => 587,
+                'Port' => 587,
             ],
             [
                 'SMTPSecure' => PHPMailer::ENCRYPTION_SMTPS,
-                'Port'       => 465,
+                'Port' => 465,
             ]
         ];
 
@@ -40,22 +40,23 @@ class Mailer
 
             try {
                 $mail->isSMTP();
-                $mail->Host       = 'mail.zzimbaonline.com';
-                $mail->SMTPAuth   = true;
-                $mail->Username   = 'no-reply@zzimbaonline.com';
-                $mail->Password   = 'Martie@4728##';
+                $mail->Host = 'mail.zzimbaonline.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = 'no-reply@zzimbaonline.com';
+                $mail->Password = 'Martie@4728##';
 
                 $mail->SMTPSecure = $config['SMTPSecure'];
-                $mail->Port       = $config['Port'];
+                $mail->Port = $config['Port'];
 
                 $mail->SMTPOptions = [
                     'ssl' => [
-                        'verify_peer'       => false,
-                        'verify_peer_name'  => false,
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
                         'allow_self_signed' => true,
                     ],
                 ];
 
+                $mail->CharSet = 'UTF-8';
                 $mail->setFrom('no-reply@zzimbaonline.com', $fromName);
                 $mail->addAddress($to);
 
@@ -113,7 +114,7 @@ class Mailer
                                 <p style="margin: 5px 0;">Email: info@zzimbaonline.com</p>
                             </div>
                             <div style="font-size: 13px; color: #9ca3af; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                                <p style="margin: 5px 0;">&copy; ${currentYear} Zzimba Online. All rights reserved.</p>
+                                <p style="margin: 5px 0;">&copy; {$currentYear} Zzimba Online. All rights reserved.</p>
                                 <p style="margin: 8px 0;">
                                     <a href="https://zzimbaonline.com/terms-and-conditions" style="color: #6b7280; text-decoration: none; margin: 0 8px;">Terms of Service</a>
                                 </p>
@@ -129,6 +130,7 @@ class Mailer
 
                 $finalHtml = $htmlHeader . $content . $htmlFooter;
                 $mail->Body = $finalHtml;
+                $mail->AltBody = strip_tags($content);
 
                 $mail->send();
 

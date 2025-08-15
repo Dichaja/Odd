@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../config/config.php';
+
 class SMS
 {
     private static $api_id = 'API57063841167';
@@ -152,5 +154,75 @@ class SMS
     public static function setApiUrl($url)
     {
         self::$api_url = $url;
+    }
+}
+
+class CollectoSMSManager
+{
+    private string $username;
+    private string $apiKey;
+    private string $baseUrl;
+
+    public function __construct()
+    {
+        $this->username = CISSY_USERNAME;
+        $this->apiKey = CISSY_API_KEY;
+        $this->baseUrl = rtrim(CISSY_COLLECTO_BASE_URL, '/');
+    }
+
+    public function CollectoSendSMS(array $rawPhones, string $message, int $costEach = 40): array
+    {
+        $valid = [];
+        foreach ($rawPhones as $p) {
+            if (isset($p['phone']) && preg_match('/^\d{9}$/', $p['phone'])) {
+                $valid[] = $p;
+            }
+        }
+        if (empty($valid)) {
+            throw new Exception('No valid phone numbers found');
+        }
+
+        $results = [];
+        foreach ($valid as $p) {
+            $payload = [
+                'phone' => '256' . $p['phone'],
+                'message' => $message,
+                'reference' => uniqid(),
+            ];
+            $res = $this->makeRequest('sendSingleSMS', $payload);
+            $results[] = array_merge(['phone' => $p['phone']], $res['data'] ?? []);
+        }
+
+        return ['success' => true, 'results' => $results];
+    }
+
+    private function makeRequest(string $endpoint, array $payload): array
+    {
+        $url = "{$this->baseUrl}/{$this->username}/{$endpoint}";
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'x-api-key: ' . $this->apiKey,
+            ],
+            CURLOPT_USERAGENT => 'Mozilla/5.0',
+        ]);
+        $resp = curl_exec($ch);
+        $error = curl_error($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($error) {
+            throw new Exception("cURL error: $error");
+        }
+        http_response_code($code);
+        $json = json_decode($resp, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception("Invalid JSON response: $resp");
+        }
+        return $json;
     }
 }
