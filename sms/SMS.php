@@ -3,11 +3,21 @@ require_once __DIR__ . '/../config/config.php';
 
 class SMS
 {
-    private static $api_id = 'API57063841167';
-    private static $api_password = 'sample123';
-    private static $sender_id = 'bulksms';
+    private static $api_id;
+    private static $api_password;
+    private static $sender_id;
+    private static $api_url;
 
-    private static $api_url = 'http://apidocs.speedamobile.com/api/SendSMS';
+    // Initialize with config values
+    public static function initFromConfig()
+    {
+        if (defined('SPEEDMOBILE_API_ID')) {
+            self::$api_id       = SPEEDMOBILE_API_ID;
+            self::$api_password = SPEEDMOBILE_API_PASSWORD;
+            self::$sender_id    = SPEEDMOBILE_SENDER_ID;
+            self::$api_url      = SPEEDMOBILE_API_URL;
+        }
+    }
 
     public static function send($phone_number, $message, $validate = true)
     {
@@ -16,17 +26,14 @@ class SMS
             if (!$phone_number) {
                 return [
                     'success' => false,
-                    'error' => 'Invalid phone number format',
+                    'error'   => 'Invalid phone number format',
                     'message' => null
                 ];
             }
         }
 
         $data = self::prepareRequestData($phone_number, $message);
-
-        $response = self::sendRequest($data);
-
-        return $response;
+        return self::sendRequest($data);
     }
 
     public static function sendBulk($phone_numbers, $message, $validate = true)
@@ -39,7 +46,7 @@ class SMS
             $result = self::send($phone_number, $message, $validate);
             $results[] = [
                 'phone_number' => $phone_number,
-                'result' => $result
+                'result'       => $result
             ];
 
             if ($result['success']) {
@@ -50,11 +57,11 @@ class SMS
         }
 
         return [
-            'success' => $success_count > 0,
-            'total' => count($phone_numbers),
-            'success_count' => $success_count,
-            'failure_count' => $failure_count,
-            'results' => $results
+            'success'        => $success_count > 0,
+            'total'          => count($phone_numbers),
+            'success_count'  => $success_count,
+            'failure_count'  => $failure_count,
+            'results'        => $results
         ];
     }
 
@@ -83,19 +90,19 @@ class SMS
     private static function prepareRequestData($phone_number, $message)
     {
         return [
-            'api_id' => self::$api_id,
-            'api_password' => self::$api_password,
-            'sms_type' => 'P',
-            'encoding' => 'T',
-            'sender_id' => self::$sender_id,
+            'api_id'      => self::$api_id,
+            'api_password'=> self::$api_password,
+            'sms_type'    => 'P',
+            'encoding'    => 'T',
+            'sender_id'   => self::$sender_id,
             'phonenumber' => $phone_number,
             'textmessage' => $message,
-            'templateid' => 'null',
-            'V1' => 'null',
-            'V2' => 'null',
-            'V3' => 'null',
-            'V4' => 'null',
-            'V5' => 'null',
+            'templateid'  => 'null',
+            'V1'          => 'null',
+            'V2'          => 'null',
+            'V3'          => 'null',
+            'V4'          => 'null',
+            'V5'          => 'null',
         ];
     }
 
@@ -105,8 +112,8 @@ class SMS
 
         $context_options = [
             'http' => [
-                'method' => 'POST',
-                'header' => 'Content-Type: application/json',
+                'method'  => 'POST',
+                'header'  => 'Content-Type: application/json',
                 'content' => $data_string,
                 'timeout' => 30,
             ],
@@ -120,25 +127,24 @@ class SMS
             if ($result === false) {
                 return [
                     'success' => false,
-                    'error' => 'API request failed',
+                    'error'   => 'API request failed',
                     'message' => null
                 ];
             }
 
             $response_data = json_decode($result, true);
-
-            $is_success = isset($response_data['status']) && $response_data['status'] === 'S';
+            $is_success    = isset($response_data['status']) && $response_data['status'] === 'S';
 
             return [
                 'success' => $is_success,
-                'error' => $is_success ? null : 'API returned error status',
+                'error'   => $is_success ? null : 'API returned error status',
                 'message' => $result,
-                'data' => $response_data
+                'data'    => $response_data
             ];
         } catch (Exception $e) {
             return [
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
                 'message' => null
             ];
         }
@@ -146,9 +152,9 @@ class SMS
 
     public static function setCredentials($api_id, $api_password, $sender_id)
     {
-        self::$api_id = $api_id;
+        self::$api_id       = $api_id;
         self::$api_password = $api_password;
-        self::$sender_id = $sender_id;
+        self::$sender_id    = $sender_id;
     }
 
     public static function setApiUrl($url)
@@ -156,6 +162,8 @@ class SMS
         self::$api_url = $url;
     }
 }
+
+SMS::initFromConfig();
 
 class CollectoSMSManager
 {

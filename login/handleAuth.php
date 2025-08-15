@@ -13,6 +13,23 @@ header('Access-Control-Allow-Headers: Content-Type');
 
 date_default_timezone_set('Africa/Kampala');
 
+$smsProvider = SMS_PROVIDER;
+
+function sendSMSDynamic(string $phone, string $message, string $provider = null): bool
+{
+    $provider = $provider ?? SMS_PROVIDER;
+
+    if ($provider === 'collecto') {
+        $manager = new CollectoSMSManager();
+        $result = $manager->CollectoSendSMS([['phone' => $phone]], $message);
+        return isset($result['success']) && $result['success'] === true;
+    }
+
+    $result = SMS::send($phone, $message, true);
+    return isset($result['success']) && $result['success'] === true;
+}
+
+
 try {
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS admin_users (
@@ -114,15 +131,8 @@ function sendEmailOTP(string $email, string $otp): bool
 
 function sendSmsOTP(string $phone, string $otp): bool
 {
-    try {
-        $message = "Your Zzimba Online verification code is: $otp. This code will expire in 10 minutes.";
-        $sms = new CollectoSMSManager();
-        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
-        return isset($result['success']) && $result['success'] === true;
-    } catch (Exception $e) {
-        error_log('SMS OTP Error: ' . $e->getMessage());
-        return false;
-    }
+    $message = "Your Zzimba Online verification code is: $otp. This code will expire in 10 minutes.";
+    return sendSMSDynamic($phone, $message);
 }
 
 function sendLoginOTP(string $email, string $otp): bool
@@ -143,15 +153,8 @@ function sendLoginOTP(string $email, string $otp): bool
 
 function sendLoginSmsOTP(string $phone, string $otp): bool
 {
-    try {
-        $message = "Your Zzimba Online login verification code is: $otp. This code will expire in 10 minutes.";
-        $sms = new CollectoSMSManager();
-        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
-        return isset($result['success']) && $result['success'] === true;
-    } catch (Exception $e) {
-        error_log('Login SMS OTP Error: ' . $e->getMessage());
-        return false;
-    }
+    $message = "Your Zzimba Online login verification code is: $otp. This code will expire in 10 minutes.";
+    return sendSMSDynamic($phone, $message);
 }
 
 function sendWelcomeEmail(string $username, ?string $email, ?string $phone = null): bool
@@ -185,15 +188,8 @@ function sendWelcomeEmail(string $username, ?string $email, ?string $phone = nul
 
 function sendWelcomeSms(string $username, string $phone): bool
 {
-    try {
-        $message = "Hello $username, Welcome to Zzimba Online. Your Account has been successfully created. Login with your set password for a better experience on the platform.";
-        $sms = new CollectoSMSManager();
-        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
-        return isset($result['success']) && $result['success'] === true;
-    } catch (Exception $e) {
-        error_log('Welcome SMS Error: ' . $e->getMessage());
-        return false;
-    }
+    $message = "Hello $username, Welcome to Zzimba Online. Your Account has been successfully created. Login with your set password for a better experience on the platform.";
+    return sendSMSDynamic($phone, $message);
 }
 
 function sendPasswordResetOTP(string $email, string $otp): bool
@@ -214,15 +210,8 @@ function sendPasswordResetOTP(string $email, string $otp): bool
 
 function sendPasswordResetSmsOTP(string $phone, string $otp): bool
 {
-    try {
-        $message = "Your Zzimba Online password reset code is: $otp. This code will expire in 10 minutes.";
-        $sms = new CollectoSMSManager();
-        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
-        return isset($result['success']) && $result['success'] === true;
-    } catch (Exception $e) {
-        error_log('Password Reset SMS Error: ' . $e->getMessage());
-        return false;
-    }
+    $message = "Your Zzimba Online password reset code is: $otp. This code will expire in 10 minutes.";
+    return sendSMSDynamic($phone, $message);
 }
 
 function sendPasswordChangedEmail(string $email, ?string $username = null): bool
@@ -253,17 +242,10 @@ function sendPasswordChangedEmail(string $email, ?string $username = null): bool
 
 function sendPasswordChangedSms(string $phone, ?string $username = null): bool
 {
-    try {
-        $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
-        $greeting = $username ? "Dear $username," : "Hello,";
-        $message = "$greeting Your Zzimba Online password was changed on $now. If you didn't make this change, please contact support immediately.";
-        $sms = new CollectoSMSManager();
-        $result = $sms->CollectoSendSMS([['phone' => preg_replace('/\D/', '', $phone)]], $message);
-        return isset($result['success']) && $result['success'] === true;
-    } catch (Exception $e) {
-        error_log('Password Changed SMS Error: ' . $e->getMessage());
-        return false;
-    }
+    $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
+    $greeting = $username ? "Dear $username," : "Hello,";
+    $message = "$greeting Your Zzimba Online password was changed on $now. If you didn't make this change, please contact support immediately.";
+    return sendSMSDynamic($phone, $message);
 }
 
 function createOTP(string $type, string $account, PDO $pdo): string
