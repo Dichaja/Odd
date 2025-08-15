@@ -1,6 +1,5 @@
 .env
 track/session_log.json
-/config/
 /img/product-categories/
 /img/products/
 /uploads

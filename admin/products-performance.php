@@ -331,70 +331,134 @@ ob_start();
     let modalMonth = null;  // 'YYYY-MM'
     let modalChart = null;
 
-    document.addEventListener('DOMContentLoaded', function () {
+    // ---- LocalStorage key ----
+    const LS_KEY = 'ppaFilters';
+
+    document.addEventListener('DOMContentLoaded', async function () {
         setupEventListeners();
-        initializeDateFilters();
-        loadProductsData();
-        loadChartData();
-        loadCategories();
+        await loadCategories();          // ensure options exist
+        if (!loadFiltersFromLocalStorage()) {
+            initializeDateFilters();     // defaults if nothing saved
+        }
+        // make sure headers reflect restored view type
+        updateTableHeaders();
+        // If loadFiltersFromLocalStorage didn’t trigger initial loads (custom case handled), do it now:
+        if (!viewsChart) {
+            loadProductsData();
+            loadChartData();
+        }
     });
 
     // ---------- Utilities ----------
     const tzOffsetMinutes = 3 * 60; // Africa/Kampala UTC+3
     const todayISO = () => toISODate(new Date(new Date().getTime() + tzOffsetMinutes * 60000));
-    function toISODate(d) {
-        // strip time, return YYYY-MM-DD in UTC (stable for comparisons)
-        const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        return t.toISOString().slice(0, 10);
-    }
-    function parseISODate(s) {
-        const [y, m, d] = s.split('-').map(Number);
-        return new Date(Date.UTC(y, m - 1, d));
-    }
-    function endOfWeekFromAny(dateISO) { // returns {startISO, endISO} Sun..Sat
-        const d = parseISODate(dateISO);
-        const dow = d.getUTCDay(); // 0 Sun
-        const start = new Date(d); start.setUTCDate(start.getUTCDate() - dow);
-        const end = new Date(start); end.setUTCDate(start.getUTCDate() + 6);
-        return { startISO: toISODate(start), endISO: toISODate(end) };
-    }
-    function monthBounds(yyyyMM) { // 'YYYY-MM' -> {startISO,lastISO}
-        const [y, m] = yyyyMM.split('-').map(Number);
-        const first = new Date(Date.UTC(y, m - 1, 1));
-        const last = new Date(Date.UTC(y, m, 0));
-        return { startISO: toISODate(first), lastISO: toISODate(last) };
-    }
-    function clampToToday(nextStartISO, nextEndISO) {
-        // returns {startISO,endISO, atMax:boolean}
-        const today = todayISO();
-        const end = nextEndISO || nextStartISO;
-        if (end > today) {
-            return { startISO: nextStartISO, endISO: today, atMax: true };
-        }
-        return { startISO: nextStartISO, endISO: nextEndISO, atMax: false };
-    }
+    function toISODate(d) { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); return t.toISOString().slice(0, 10); }
+    function parseISODate(s) { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); }
+    function endOfWeekFromAny(dateISO) { const d = parseISODate(dateISO); const dow = d.getUTCDay(); const start = new Date(d); start.setUTCDate(start.getUTCDate() - dow); const end = new Date(start); end.setUTCDate(start.getUTCDate() + 6); return { startISO: toISODate(start), endISO: toISODate(end) }; }
+    function monthBounds(yyyyMM) { const [y, m] = yyyyMM.split('-').map(Number); const first = new Date(Date.UTC(y, m - 1, 1)); const last = new Date(Date.UTC(y, m, 0)); return { startISO: toISODate(first), lastISO: toISODate(last) }; }
+    function clampToToday(nextStartISO, nextEndISO) { const today = todayISO(); const end = nextEndISO || nextStartISO; if (end > today) { return { startISO: nextStartISO, endISO: today, atMax: true }; } return { startISO: nextStartISO, endISO: nextEndISO, atMax: false }; }
     function ordinal(n) { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+
+    // ---------- LocalStorage helpers ----------
+    function setActivePeriodButton(period) {
+        document.querySelectorAll('.date-filter-btn').forEach(b => {
+            b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
+            b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+            if (period && b.dataset.period === period) {
+                b.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
+                b.classList.remove('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+            }
+        });
+    }
+
+    function setChartTypeUI(type) {
+        const btn = document.getElementById('chartTypeToggle');
+        if (type === 'bar') btn.innerHTML = '<i class="fas fa-chart-bar mr-1"></i> Bar Chart';
+        else btn.innerHTML = '<i class="fas fa-chart-line mr-1"></i> Line Chart';
+    }
+
+    function saveFiltersToLocalStorage() {
+        const obj = {
+            period: currentPeriod,
+            startDate: document.getElementById('startDate').value || null,
+            endDate: document.getElementById('endDate').value || null,
+            viewType: document.getElementById('viewTypeFilter').value,
+            category: document.getElementById('categoryFilter').value,
+            sort: document.getElementById('sortFilter').value,
+            status: document.getElementById('statusFilter').value,
+            search: document.getElementById('searchFilter').value,
+            chartType: document.getElementById('chartTypeToggle').textContent.includes('Line') ? 'line' : 'bar'
+        };
+        try { localStorage.setItem(LS_KEY, JSON.stringify(obj)); } catch (e) { }
+    }
+
+    function loadFiltersFromLocalStorage() {
+        try {
+            const raw = localStorage.getItem(LS_KEY);
+            if (!raw) return false;
+            const saved = JSON.parse(raw);
+
+            // selects / text
+            if (saved.viewType) document.getElementById('viewTypeFilter').value = saved.viewType;
+            if (saved.sort) document.getElementById('sortFilter').value = saved.sort;
+            if (saved.status) document.getElementById('statusFilter').value = saved.status;
+            if (typeof saved.search === 'string') document.getElementById('searchFilter').value = saved.search;
+
+            // category only if exists in options
+            if (saved.category) {
+                const catSel = document.getElementById('categoryFilter');
+                const opt = Array.from(catSel.options).find(o => o.value == saved.category);
+                catSel.value = opt ? saved.category : 'all';
+            }
+
+            // chart type
+            setChartTypeUI(saved.chartType === 'bar' ? 'bar' : 'line');
+
+            // period + dates
+            if (saved.period === 'custom' && saved.startDate && saved.endDate) {
+                setActivePeriodButton(null);
+                document.getElementById('startDate').value = saved.startDate;
+                document.getElementById('endDate').value = (saved.endDate > todayISO()) ? todayISO() : saved.endDate;
+                currentPeriod = 'custom';
+                updateCategoryChartLabel();
+                // initial load after restore
+                loadProductsData(); loadChartData();
+            } else {
+                const period = (saved.period === 'today' || saved.period === 'month') ? saved.period : 'week';
+                setActivePeriodButton(period);
+                setDateRangeForPeriod(period); // triggers loads
+            }
+
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
 
     // ---------- Event wiring ----------
     function setupEventListeners() {
         document.getElementById('refreshBtn').addEventListener('click', refreshData);
         document.getElementById('exportBtn').addEventListener('click', exportData);
-        document.getElementById('searchFilter').addEventListener('input', debounce(applyFilters, 300));
-        document.getElementById('statusFilter').addEventListener('change', applyFilters);
-        document.getElementById('viewTypeFilter').addEventListener('change', applyFilters);
-        document.getElementById('categoryFilter').addEventListener('change', applyFilters);
-        document.getElementById('sortFilter').addEventListener('change', applyFilters);
-        document.getElementById('chartTypeToggle').addEventListener('click', toggleChartType);
+
+        document.getElementById('searchFilter').addEventListener('input', debounce(() => { applyFilters(); saveFiltersToLocalStorage(); }, 300));
+        document.getElementById('statusFilter').addEventListener('change', () => { applyFilters(); saveFiltersToLocalStorage(); });
+        document.getElementById('viewTypeFilter').addEventListener('change', () => { applyFilters(); saveFiltersToLocalStorage(); });
+        document.getElementById('categoryFilter').addEventListener('change', () => { applyFilters(); saveFiltersToLocalStorage(); });
+        document.getElementById('sortFilter').addEventListener('change', () => { applyFilters(); saveFiltersToLocalStorage(); });
+
+        document.getElementById('chartTypeToggle').addEventListener('click', () => {
+            const btn = document.getElementById('chartTypeToggle');
+            const isLine = btn.textContent.includes('Line');
+            btn.innerHTML = isLine ? '<i class="fas fa-chart-bar mr-1"></i> Bar Chart' : '<i class="fas fa-chart-line mr-1"></i> Line Chart';
+            saveFiltersToLocalStorage();
+            loadChartData();
+        });
 
         document.querySelectorAll('.date-filter-btn').forEach(btn => {
             btn.addEventListener('click', function () {
-                document.querySelectorAll('.date-filter-btn').forEach(b => {
-                    b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
-                    b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
-                });
-                this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
-                this.classList.remove('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+                setActivePeriodButton(this.dataset.period);
                 setDateRangeForPeriod(this.dataset.period);
+                saveFiltersToLocalStorage();
             });
         });
 
@@ -402,13 +466,11 @@ ob_start();
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
             if (startDate && endDate) {
-                document.querySelectorAll('.date-filter-btn').forEach(b => {
-                    b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
-                    b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
-                });
+                setActivePeriodButton(null);
                 currentPeriod = 'custom';
                 currentPage = 1;
                 updateCategoryChartLabel();
+                saveFiltersToLocalStorage();
                 loadProductsData();
                 loadChartData();
             }
@@ -496,7 +558,6 @@ ob_start();
             const response = await fetch(`fetch/manageProductsPerformance.php?${params}`);
             const data = await response.json();
             if (data.success) {
-                // Normalize general chart as well (daily/week/month rules)
                 const normalized = buildGlobalTimeline(data.timeline);
                 updateViewsChart(normalized);
                 updateCategoryChart(data.categories);
@@ -726,7 +787,6 @@ ob_start();
 
     async function fetchAndRenderModal() {
         try {
-            // Avoid future navigation
             const capped = clampToToday(modalStart, modalEnd);
             modalStart = capped.startISO; modalEnd = capped.endISO;
 
@@ -759,7 +819,6 @@ ob_start();
 
         const engagementRate = product.total_views > 0 ? ((product.unique_views / product.total_views) * 100).toFixed(1) : '0.0';
 
-        // Build a normalized, zero-filled timeline for the modal
         const fullTimeline = buildModalTimeline(product.timeline);
 
         const productContent = document.getElementById('productContent');
@@ -810,7 +869,6 @@ ob_start();
                 </div>` : ''}
             </div>`;
 
-        // Inject pickers + range label and draw chart
         renderModalPickersAndLabel();
         const ctx = document.getElementById('productTimelineChart').getContext('2d');
         if (modalChart) modalChart.destroy();
@@ -829,11 +887,9 @@ ob_start();
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // Wire modal controls with future-guarding
         document.getElementById('modalPrev').onclick = () => shiftModalRange(-1);
         document.getElementById('modalNext').onclick = () => shiftModalRange(1);
         document.getElementById('modalApply').onclick = applyModalPickers;
-        // Disable next if at max
         const atMax = isModalAtMax();
         document.getElementById('modalNext').disabled = atMax;
         document.getElementById('modalNext').classList.toggle('opacity-50', atMax);
@@ -847,7 +903,6 @@ ob_start();
 
     // ---------- Global timeline normalization ----------
     function buildGlobalTimeline(server) {
-        // server: {labels, unique_views, total_views}
         const startISO = document.getElementById('startDate').value;
         const endISO = document.getElementById('endDate').value;
         return normalizeTimelineForPeriod(server, currentPeriod, startISO, endISO);
@@ -858,7 +913,7 @@ ob_start();
         return normalizeTimelineForPeriod(server, modalPeriod, modalStart, modalEnd);
     }
 
-    // Core normalizer used by both charts
+    // Core normalizer used by both charts (hardened weekly mapping)
     function normalizeTimelineForPeriod(serverTimeline, period, startISO, endISO) {
         const labelsFromServer = serverTimeline?.labels || [];
         const uRaw = serverTimeline?.unique_views ?? serverTimeline?.unique ?? serverTimeline?.values ?? [];
@@ -866,52 +921,68 @@ ob_start();
         const asInt = arr => arr.map(v => parseInt(v || 0, 10));
 
         if (period === 'today') {
-            // 12 bins across 24h => 13 labels: 12,2,4,...,10,12 (duplicate first label at end)
-            const baseLabels = [...Array(12)].map((_, i) => {
-                const h = (i * 2) % 12;
-                return h === 0 ? '12' : String(h);
-            });
+            const baseLabels = [...Array(12)].map((_, i) => { const h = (i * 2) % 12; return h === 0 ? '12' : String(h); });
             const labels = [...baseLabels, '12'];
-            // If server provided 12 points (2-hour bins), use them; otherwise zero-fill
             const uniq12 = (uRaw.length === 12) ? asInt(uRaw) : Array(12).fill(0);
             const tot12 = (tRaw.length === 12) ? asInt(tRaw) : Array(12).fill(0);
-            // close the loop by repeating first point
-            const unique = [...uniq12, uniq12[0] ?? 0];
-            const total = [...tot12, tot12[0] ?? 0];
-            return { labels, unique, total };
+            return { labels, unique: [...uniq12, uniq12[0] || 0], total: [...tot12, tot12[0] || 0] };
         }
 
         if (period === 'week') {
-            // Always Sun..Sat from the selected week
             const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const idxByDate = new Map();
-            labelsFromServer.forEach((d, i) => idxByDate.set(d, i));
-            const uniq = []; const tot = []; const labels = weekDays.slice();
+            let dateLabelCount = 0;
+            labelsFromServer.forEach((d, i) => { if (/^\d{4}-\d{2}-\d{2}$/.test(d)) { idxByDate.set(d, i); dateLabelCount++; } });
 
-            const { startISO: sISO } = endOfWeekFromAny(startISO || todayISO());
-            for (let i = 0; i < 7; i++) {
-                const d = parseISODate(sISO); d.setUTCDate(d.getUTCDate() + i);
-                const key = toISODate(d);
-                const idx = idxByDate.get(key);
-                uniq.push(idx !== undefined ? parseInt(uRaw[idx] || 0, 10) : 0);
-                tot.push(idx !== undefined ? parseInt(tRaw[idx] || 0, 10) : 0);
+            const uniq = Array(7).fill(0);
+            const tot = Array(7).fill(0);
+            let filled = 0;
+
+            if (dateLabelCount > 0) {
+                // Map by exact date
+                const { startISO: sISO } = endOfWeekFromAny(startISO || todayISO());
+                for (let i = 0; i < 7; i++) {
+                    const d = parseISODate(sISO); d.setUTCDate(d.getUTCDate() + i);
+                    const key = toISODate(d);
+                    const idx = idxByDate.get(key);
+                    if (idx !== undefined) { uniq[i] = parseInt(uRaw[idx] || 0, 10); tot[i] = parseInt(tRaw[idx] || 0, 10); filled++; }
+                }
             }
-            return { labels, unique: uniq, total: tot };
+
+            if (filled === 0 && labelsFromServer.length) {
+                // Try weekday-name mapping (Sun..Sat or full names)
+                const short = s => s.trim().slice(0, 3).toLowerCase();
+                const map = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+                labelsFromServer.forEach((lbl, i) => {
+                    const key = short(lbl);
+                    if (key in map) {
+                        const pos = map[key];
+                        uniq[pos] = parseInt(uRaw[i] || 0, 10);
+                        tot[pos] = parseInt(tRaw[i] || 0, 10);
+                        filled++;
+                    }
+                });
+            }
+
+            if (filled === 0 && uRaw.length) {
+                // Last resort: assume server order already corresponds to Sun..Sat (or first 7 points)
+                const u = asInt(uRaw).slice(0, 7);
+                const t = asInt(tRaw).slice(0, 7);
+                for (let i = 0; i < u.length; i++) { uniq[i] = u[i]; tot[i] = t[i] ?? 0; }
+            }
+
+            return { labels: weekDays, unique: uniq, total: tot };
         }
 
         if (period === 'month') {
-            // 1st..last (ordinal labels)
             const start = startISO ? parseISODate(startISO) : parseISODate(todayISO());
-            const end = endISO ? parseISODate(endISO) : parseISODate(todayISO());
             const daysInMonth = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0)).getUTCDate();
             const idxByDate = new Map();
             labelsFromServer.forEach((d, i) => idxByDate.set(d, i));
-
             const labels = []; const uniq = []; const tot = [];
             for (let day = 1; day <= daysInMonth; day++) {
                 const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), day));
-                const key = toISODate(d);
-                const idx = idxByDate.get(key);
+                const key = toISODate(d); const idx = idxByDate.get(key);
                 labels.push(ordinal(day));
                 uniq.push(idx !== undefined ? parseInt(uRaw[idx] || 0, 10) : 0);
                 tot.push(idx !== undefined ? parseInt(tRaw[idx] || 0, 10) : 0);
@@ -919,7 +990,6 @@ ob_start();
             return { labels, unique: uniq, total: tot };
         }
 
-        // custom / fallback: pass through
         return { labels: labelsFromServer, unique: asInt(uRaw), total: asInt(tRaw) };
     }
 
@@ -931,33 +1001,23 @@ ob_start();
 
         if (modalPeriod === 'today') {
             const input = document.createElement('input');
-            input.type = 'date';
-            input.id = 'modalDay';
-            input.className = 'px-2 py-1.5 border rounded text-sm';
-            input.max = todayISO();
-            input.value = modalStart || todayISO();
+            input.type = 'date'; input.id = 'modalDay'; input.className = 'px-2 py-1.5 border rounded text-sm';
+            input.max = todayISO(); input.value = modalStart || todayISO();
             wrap.appendChild(input);
             modalStart = input.value; modalEnd = input.value;
             label.textContent = new Date(modalStart).toDateString();
         } else if (modalPeriod === 'week') {
-            // ONE picker: pick any day; we compute Sun..Sat around it
             const wk = document.createElement('input');
-            wk.type = 'date';
-            wk.id = 'modalWeekAnyDay';
-            wk.className = 'px-2 py-1.5 border rounded text-sm';
-            wk.max = todayISO();
-            wk.value = modalStart || todayISO();
+            wk.type = 'date'; wk.id = 'modalWeekAnyDay'; wk.className = 'px-2 py-1.5 border rounded text-sm';
+            wk.max = todayISO(); wk.value = modalStart || todayISO();
             wrap.appendChild(wk);
             const range = endOfWeekFromAny(wk.value);
             modalStart = range.startISO; modalEnd = range.endISO;
             label.textContent = `${new Date(modalStart).toDateString()} – ${new Date(modalEnd).toDateString()}`;
         } else if (modalPeriod === 'month') {
             const m = document.createElement('input');
-            m.type = 'month';
-            m.id = 'modalMonth';
-            m.className = 'px-2 py-1.5 border rounded text-sm';
+            m.type = 'month'; m.id = 'modalMonth'; m.className = 'px-2 py-1.5 border rounded text-sm';
             const cur = modalMonth || `${parseISODate(modalStart).getUTCFullYear()}-${String(parseISODate(modalStart).getUTCMonth() + 1).padStart(2, '0')}`;
-            // max is current month
             const now = new Date(); const maxMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
             m.max = maxMonth; m.value = cur;
             wrap.appendChild(m);
@@ -971,8 +1031,7 @@ ob_start();
     function shiftModalRange(step) {
         if (modalPeriod === 'today') {
             const d = parseISODate(modalStart); d.setUTCDate(d.getUTCDate() + step);
-            let ns = toISODate(d); let ne = ns;
-            const capped = clampToToday(ns, ne); modalStart = capped.startISO; modalEnd = capped.endISO;
+            const capped = clampToToday(toISODate(d), toISODate(d)); modalStart = capped.startISO; modalEnd = capped.endISO;
         } else if (modalPeriod === 'week') {
             const s = parseISODate(modalStart); s.setUTCDate(s.getUTCDate() + (7 * step));
             const e = new Date(s); e.setUTCDate(s.getUTCDate() + 6);
@@ -1016,12 +1075,7 @@ ob_start();
     }
 
     // ---------- Page helpers ----------
-    function toggleChartType() {
-        const btn = document.getElementById('chartTypeToggle');
-        const isLine = btn.textContent.includes('Line');
-        btn.innerHTML = isLine ? '<i class="fas fa-chart-bar mr-1"></i> Bar Chart' : '<i class="fas fa-chart-line mr-1"></i> Line Chart';
-        loadChartData();
-    }
+    function toggleChartType() { /* handled in listener to save + reload */ }
 
     function refreshData() {
         const btn = document.getElementById('refreshBtn'); const icon = btn.querySelector('i');
@@ -1050,18 +1104,14 @@ ob_start();
         const now = new Date(new Date().getTime() + tzOffsetMinutes * 60000);
         let startDate, endDate;
         switch (period) {
-            case 'today':
-                startDate = new Date(now); endDate = new Date(now); break;
+            case 'today': startDate = new Date(now); endDate = new Date(now); break;
             case 'week':
                 const dow = now.getDay(); startDate = new Date(now); startDate.setDate(now.getDate() - dow);
                 endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6); break;
-            case 'month':
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            case 'month': startDate = new Date(now.getFullYear(), now.getMonth(), 1);
                 endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); break;
-            default:
-                startDate = new Date(now); endDate = new Date(now);
+            default: startDate = new Date(now); endDate = new Date(now);
         }
-        // Cap to today
         const today = toISODate(now);
         let sISO = toISODate(startDate), eISO = toISODate(endDate);
         if (eISO > today) eISO = today;
@@ -1072,6 +1122,7 @@ ob_start();
         currentPeriod = (period === 'today') ? 'today' : period;
         currentPage = 1;
         updateCategoryChartLabel();
+        saveFiltersToLocalStorage();
         loadProductsData();
         loadChartData();
     }
@@ -1101,21 +1152,9 @@ ob_start();
         document.getElementById('mobileNextPage').disabled = page === totalPages || totalPages === 0;
     }
 
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-    function formatTime(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-    }
-    function formatDateTime(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-    }
-    function debounce(func, wait) {
-        let t; return (...args) => { clearTimeout(t); t = setTimeout(() => func(...args), wait); };
-    }
+    function formatDate(dateString) { const date = new Date(dateString); return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+    function formatTime(dateString) { const date = new Date(dateString); return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }); }
+    function debounce(func, wait) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => func(...args), wait); }; }
 
     // Expose for row clicks
     window.viewProductDetails = viewProductDetails;
