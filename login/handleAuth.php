@@ -29,7 +29,6 @@ function sendSMSDynamic(string $phone, string $message, string $provider = null)
     return isset($result['success']) && $result['success'] === true;
 }
 
-
 try {
     $pdo->exec(
         "CREATE TABLE IF NOT EXISTS admin_users (
@@ -250,6 +249,27 @@ function sendPasswordChangedSms(string $phone, ?string $username = null): bool
 
 function createOTP(string $type, string $account, PDO $pdo): string
 {
+    if ($type === 'phone') {
+        $stmt = $pdo->prepare(
+            'SELECT created_at FROM otp_verifications
+             WHERE account = :account AND type = "phone"
+             ORDER BY created_at DESC LIMIT 1'
+        );
+        $stmt->execute([':account' => $account]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row && !empty($row['created_at'])) {
+            $last = new DateTime($row['created_at'], new DateTimeZone('+03:00'));
+            $nowDT = new DateTime('now', new DateTimeZone('+03:00'));
+            $diff = $nowDT->getTimestamp() - $last->getTimestamp();
+            $cooldown = 120;
+            if ($diff < $cooldown) {
+                $remain = $cooldown - $diff;
+                throw new Exception('Please wait ' . $remain . ' seconds before requesting another SMS OTP.');
+            }
+        }
+    }
+
     $stmt = $pdo->prepare('DELETE FROM otp_verifications WHERE account = :account AND type = :type');
     $stmt->execute([':account' => $account, ':type' => $type]);
 
@@ -664,7 +684,13 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
                 break;
             }
-            $otp = createOTP('phone', $phone, $pdo);
+            try {
+                $otp = createOTP('phone', $phone, $pdo);
+            } catch (Exception $ex) {
+                http_response_code(429);
+                echo json_encode(['success' => false, 'message' => $ex->getMessage()]);
+                break;
+            }
             if (!sendSmsOTP($phone, $otp)) {
                 http_response_code(500);
                 echo json_encode(['success' => false, 'message' => 'Failed to send verification code. Please try again.']);
@@ -745,7 +771,13 @@ try {
                 }
                 $userId = $zzimbaUser['id'];
             }
-            $otp = createOTP('phone', $phone, $pdo);
+            try {
+                $otp = createOTP('phone', $phone, $pdo);
+            } catch (Exception $ex) {
+                http_response_code(429);
+                echo json_encode(['success' => false, 'message' => $ex->getMessage()]);
+                break;
+            }
             if (!sendPasswordResetSmsOTP($phone, $otp)) {
                 http_response_code(500);
                 echo json_encode(['success' => false, 'message' => 'Failed to send reset code. Please try again.']);
