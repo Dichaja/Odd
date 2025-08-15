@@ -173,27 +173,78 @@ class CollectoSMSManager
     public function CollectoSendSMS(array $rawPhones, string $message, int $costEach = 40): array
     {
         $valid = [];
+        $invalid = [];
+
         foreach ($rawPhones as $p) {
-            if (isset($p['phone']) && preg_match('/^\d{9}$/', $p['phone'])) {
-                $valid[] = $p;
+            $raw = is_array($p) ? ($p['phone'] ?? '') : $p;
+            $raw = is_string($raw) ? trim($raw) : '';
+
+            $normalized = $this->normalizeUgNumber($raw);
+            if ($normalized !== null) {
+                $valid[] = ['phone' => $normalized, 'original' => $raw];
+            } else {
+                $invalid[] = $raw;
             }
         }
+
         if (empty($valid)) {
-            throw new Exception('No valid phone numbers found');
+            $detail = $invalid ? (' Offenders: ' . implode(', ', $invalid)) : '';
+            throw new Exception('No valid phone numbers found.' . $detail);
         }
 
         $results = [];
-        foreach ($valid as $p) {
+        foreach ($valid as $entry) {
             $payload = [
-                'phone' => '256' . $p['phone'],
+                'phone' => $entry['phone'],
                 'message' => $message,
                 'reference' => uniqid(),
             ];
             $res = $this->makeRequest('sendSingleSMS', $payload);
-            $results[] = array_merge(['phone' => $p['phone']], $res['data'] ?? []);
+            $results[] = array_merge(
+                ['phone' => $entry['original'], 'normalized' => $entry['phone']],
+                $res['data'] ?? []
+            );
         }
 
-        return ['success' => true, 'results' => $results];
+        return [
+            'success' => true,
+            'results' => $results,
+            'invalid' => $invalid
+        ];
+    }
+
+    private function normalizeUgNumber(string $input): ?string
+    {
+        if ($input === '') {
+            return null;
+        }
+
+        $input = preg_replace('/[^\d+]/', '', $input);
+
+        if (strpos($input, '+') === 0) {
+            $input = substr($input, 1);
+        }
+
+        if (preg_match('/^2567\d{8}$/', $input)) {
+            return $input;
+        }
+
+        if (preg_match('/^0?7\d{8}$/', $input)) {
+            if ($input[0] === '0') {
+                $input = substr($input, 1);
+            }
+            return '256' . $input;
+        }
+
+        if (preg_match('/^7\d{8}$/', $input)) {
+            return '256' . $input;
+        }
+
+        if (preg_match('/^\d{12}$/', $input)) {
+            return null;
+        }
+
+        return null;
     }
 
     private function makeRequest(string $endpoint, array $payload): array
