@@ -154,7 +154,7 @@ $menuItems = [
 ];
 ?>
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full overflow-hidden">
 
 <head>
     <meta charset="UTF-8">
