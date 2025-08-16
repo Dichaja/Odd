@@ -20,8 +20,18 @@ ob_start();
                             listings</p>
                     </div>
                 </div>
-                <button id="createStoreBtn" onclick="openStoreModal('create')"
+
+                <!-- Desktop: right-aligned -->
+                <button id="createStoreBtnDesktop" onclick="openStoreModal('create')"
                     class="hidden sm:inline-flex px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 items-center gap-2 font-medium shadow-lg shadow-primary/25">
+                    <i class="fas fa-plus"></i><span>Create New Store</span>
+                </button>
+            </div>
+
+            <!-- Mobile: top-inline action button -->
+            <div class="mt-4 sm:hidden">
+                <button id="createStoreBtnMobile" onclick="openStoreModal('create')"
+                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
                     <i class="fas fa-plus"></i><span>Create New Store</span>
                 </button>
             </div>
@@ -59,10 +69,7 @@ ob_start();
         </div>
     </div>
 
-    <button onclick="openStoreModal('create')"
-        class="sm:hidden fixed bottom-5 right-5 z-40 rounded-full w-14 h-14 bg-primary text-white grid place-items-center shadow-xl hover:bg-primary/90 active:scale-95 transition">
-        <i class="fas fa-plus text-lg"></i>
-    </button>
+    <!-- Removed the old floating mobile button; replaced by the top-inline button -->
 </div>
 
 <div id="storeModal"
@@ -125,18 +132,31 @@ ob_start();
                             <input type="email" id="storeBusinessEmail" placeholder="Enter business email"
                                 class="form-input">
                         </div>
+
+                        <!-- Main Contact Number: Fixed +256 prefix (no intl code dropdown) -->
                         <div class="form-group">
                             <label for="storeContactNumber" class="form-label text-secondary dark:text-white">Main
                                 Contact Number <span class="text-red-500">*</span></label>
-                            <input type="tel" id="storeContactNumber" class="form-input" placeholder="+256 7XX XXX XXX">
+                            <div class="flex items-stretch gap-2">
+                                <div
+                                    class="shrink-0 px-3 flex items-center rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 text-secondary dark:bg-white/10 dark:text-white">
+                                    <span class="text-sm font-medium">+256</span>
+                                </div>
+                                <input type="tel" id="storeContactNumber" class="form-input" placeholder="7XX XXX XXX"
+                                    inputmode="numeric" pattern="^([2375]\d{8})$"
+                                    title="Enter a valid 9-digit UG mobile number starting with 2,3,7, or 5">
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-white/60">Format: 7XX XXX XXX (no leading 0)</p>
                         </div>
+
                         <div class="form-group">
                             <label for="storeNatureOfBusiness" class="form-label text-secondary dark:text-white">Nature
                                 of Business <span class="text-red-500">*</span></label>
-                            <select id="storeNatureOfBusiness" class="form-select">
+                            <select id="storeNatureOfBusiness" class="form-select cselect-target" data-cselect>
                                 <option value="">Select Nature of Business</option>
                             </select>
                         </div>
+
                         <div class="form-group sm:col-span-2">
                             <label for="storeContactPersonName"
                                 class="form-label text-secondary dark:text-white">Contact Person Name <span
@@ -144,6 +164,7 @@ ob_start();
                             <input type="text" id="storeContactPersonName" placeholder="Enter contact person name"
                                 class="form-input">
                         </div>
+
                         <div class="sm:col-span-2">
                             <button type="button" id="storeStep1NextBtn"
                                 class="w-full px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all">Next</button>
@@ -164,7 +185,9 @@ ob_start();
                                 <button id="storeLocateMeBtn" type="button"
                                     class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">Find
                                     My Location</button>
-                                <select id="storeMapStyle" class="form-select w-40">
+
+                                <!-- Custom select for map style -->
+                                <select id="storeMapStyle" class="form-select w-40 cselect-target" data-cselect>
                                     <option value="osm">OpenStreetMap</option>
                                     <option value="satellite">Satellite</option>
                                     <option value="terrain">Terrain</option>
@@ -193,7 +216,7 @@ ob_start();
                                     class="form-label text-secondary dark:text-white">Region/Province <span
                                         class="text-red-500">*</span></label>
                                 <div class="relative">
-                                    <select id="storeLevel1" class="form-select">
+                                    <select id="storeLevel1" class="form-select cselect-target" data-cselect>
                                         <option value="">Select Region/Province</option>
                                     </select>
                                     <span id="storeLoading1"
@@ -204,7 +227,7 @@ ob_start();
                                 <label for="storeLevel2" class="form-label text-secondary dark:text-white">District
                                     <span class="text-red-500">*</span></label>
                                 <div class="relative">
-                                    <select id="storeLevel2" disabled class="form-select">
+                                    <select id="storeLevel2" disabled class="form-select cselect-target" data-cselect>
                                         <option value="">Select District</option>
                                     </select>
                                     <span id="storeLoading2"
@@ -215,7 +238,7 @@ ob_start();
                                 <label for="storeLevel3"
                                     class="form-label text-secondary dark:text-white">Sub-county</label>
                                 <div class="relative">
-                                    <select id="storeLevel3" disabled class="form-select">
+                                    <select id="storeLevel3" disabled class="form-select cselect-target" data-cselect>
                                         <option value="">Select Sub-county</option>
                                     </select>
                                     <span id="storeLoading3"
@@ -226,7 +249,7 @@ ob_start();
                                 <label for="storeLevel4"
                                     class="form-label text-secondary dark:text-white">Parish/Ward</label>
                                 <div class="relative">
-                                    <select id="storeLevel4" disabled class="form-select">
+                                    <select id="storeLevel4" disabled class="form-select cselect-target" data-cselect>
                                         <option value="">Select Parish/Ward</option>
                                     </select>
                                     <span id="storeLoading4"
@@ -337,6 +360,8 @@ ob_start();
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-pip@1.1.0/leaflet-pip.js"></script>
+
+<!-- Keep intl-tel-input for any other forms you may add later (not used on main number now) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css">
 
@@ -441,40 +466,278 @@ ob_start();
             box-shadow: 0 0 0 0 rgba(239, 68, 68, 0)
         }
     }
+
+    /* ===== Custom Select (cselect) ===== */
+    .cselect {
+        position: relative;
+        user-select: none;
+    }
+
+    .cselect>button.cselect-btn {
+        width: 100%;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .5rem;
+        padding: .625rem .75rem;
+        font-size: .875rem;
+        border: 1px solid rgb(209 213 219);
+        border-radius: .75rem;
+        background: #fff;
+        color: rgb(17 24 39);
+        transition: box-shadow .15s, border-color .15s, background .15s, color .15s;
+    }
+
+    .cselect>button.cselect-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 4px rgb(217 43 19 / .15);
+        border-color: rgb(217 43 19)
+    }
+
+    .dark .cselect>button.cselect-btn {
+        background: transparent;
+        color: #fff;
+        border-color: rgba(255, 255, 255, .2);
+    }
+
+    .cselect .cselect-icon {
+        pointer-events: none;
+        display: inline-flex;
+    }
+
+    .cselect.open .cselect-menu {
+        display: block
+    }
+
+    .cselect .cselect-menu {
+        display: none;
+        position: absolute;
+        z-index: 30;
+        margin-top: .25rem;
+        width: 100%;
+        max-height: 16rem;
+        overflow: auto;
+        border-radius: .75rem;
+        border: 1px solid rgb(229 231 235);
+        background: #fff;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
+    }
+
+    .dark .cselect .cselect-menu {
+        background: #1f2937;
+        /* dark gray */
+        border-color: rgba(255, 255, 255, .12);
+        color: #fff;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, .5);
+    }
+
+    .cselect .cselect-option {
+        padding: .625rem .75rem;
+        font-size: .875rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .cselect .cselect-option:hover {
+        background: #f9fafb;
+    }
+
+    .dark .cselect .cselect-option:hover {
+        background: rgba(255, 255, 255, .06);
+    }
+
+    .cselect .cselect-option[aria-selected="true"]::after {
+        content: "\f00c";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: .8rem;
+    }
+
+    .cselect[aria-disabled="true"]>button.cselect-btn {
+        opacity: .6;
+        cursor: not-allowed;
+        background: #f9fafb;
+    }
+
+    .dark .cselect[aria-disabled="true"]>button.cselect-btn {
+        background: rgba(255, 255, 255, .04);
+    }
+
+    /* Hide native select but keep it in the flow for forms & accessibility */
+    .cselect-wrapper {
+        position: relative;
+    }
+
+    .cselect-wrapper select.cselect-target {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        pointer-events: none;
+        /* prevent native from capturing clicks */
+    }
 </style>
 
 <script>
     const STORE_API_BASE = BASE_URL + 'account/fetch/manageZzimbaStores.php'
     let storeMap = null, storeMarker = null, storeGeoJSONLayer = null, storeCurrentGeoJSON = null, storeBaseLayers = {}
-    let storePhoneInput = null, storeContactPhoneInput = null, allStores = [], pendingInvitations = [], currentFilter = 'owned', currentInvitationAction = null, currentInvitationId = null, natureOfBusinessOptions = []
+    let allStores = [], pendingInvitations = [], currentFilter = 'owned', currentInvitationAction = null, currentInvitationId = null, natureOfBusinessOptions = []
+
+    /* ========= Custom Select Component ========= */
+    function buildCSelect(select) {
+        // Skip if already wrapped
+        if (select.closest('.cselect-wrapper')) {
+            refreshCSelect(select);
+            return;
+        }
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cselect-wrapper';
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.appendChild(select);
+
+        const shell = document.createElement('div');
+        shell.className = 'cselect';
+        shell.setAttribute('aria-disabled', select.disabled ? 'true' : 'false');
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cselect-btn';
+        btn.setAttribute('aria-haspopup', 'listbox');
+        btn.setAttribute('aria-expanded', 'false');
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'truncate';
+        labelSpan.textContent = select.options[select.selectedIndex]?.text || (select.options[0]?.text || 'Select');
+
+        const icon = document.createElement('span');
+        icon.className = 'cselect-icon';
+        icon.innerHTML = '<i class="fas fa-chevron-down text-xs opacity-70"></i>';
+
+        btn.appendChild(labelSpan);
+        btn.appendChild(icon);
+
+        const menu = document.createElement('div');
+        menu.className = 'cselect-menu';
+        menu.setAttribute('role', 'listbox');
+
+        function populateMenu() {
+            menu.innerHTML = '';
+            [...select.options].forEach((opt, idx) => {
+                const item = document.createElement('div');
+                item.className = 'cselect-option';
+                item.setAttribute('role', 'option');
+                item.setAttribute('data-value', opt.value);
+                item.setAttribute('aria-selected', opt.selected ? 'true' : 'false');
+                item.textContent = opt.text;
+                item.addEventListener('click', () => {
+                    select.value = opt.value;
+                    labelSpan.textContent = opt.text;
+                    [...menu.children].forEach(ch => ch.setAttribute('aria-selected', 'false'));
+                    item.setAttribute('aria-selected', 'true');
+                    closeMenu();
+                    // Trigger change on native select
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+                menu.appendChild(item);
+            });
+        }
+
+        function openMenu() {
+            if (select.disabled) return;
+            shell.classList.add('open');
+            btn.setAttribute('aria-expanded', 'true');
+            document.addEventListener('click', onDocClick);
+            document.addEventListener('keydown', onKeyDown);
+        }
+        function closeMenu() {
+            shell.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
+            document.removeEventListener('click', onDocClick);
+            document.removeEventListener('keydown', onKeyDown);
+        }
+        function onDocClick(e) {
+            if (!shell.contains(e.target)) closeMenu();
+        }
+        function onKeyDown(e) {
+            if (e.key === 'Escape') { closeMenu(); btn.focus(); }
+        }
+
+        btn.addEventListener('click', () => {
+            if (shell.classList.contains('open')) closeMenu(); else openMenu();
+        });
+
+        shell.appendChild(btn);
+        shell.appendChild(menu);
+        wrapper.appendChild(shell);
+
+        // Keep in sync if disabled/enabled toggled by code
+        const observer = new MutationObserver(() => {
+            shell.setAttribute('aria-disabled', select.disabled ? 'true' : 'false');
+        });
+        observer.observe(select, { attributes: true, attributeFilter: ['disabled'] });
+
+        // Initial menu
+        populateMenu();
+
+        // Store references for refresh
+        select._cselect = { shell, btn, menu, labelSpan, populateMenu };
+    }
+
+    function refreshCSelect(select) {
+        if (!select._cselect) return buildCSelect(select);
+        const { shell, labelSpan, populateMenu } = select._cselect;
+        // Update label and list
+        labelSpan.textContent = select.options[select.selectedIndex]?.text || (select.options[0]?.text || 'Select');
+        populateMenu();
+        shell.setAttribute('aria-disabled', select.disabled ? 'true' : 'false');
+    }
+
+    function initCustomSelects(scope = document) {
+        scope.querySelectorAll('select[data-cselect]').forEach(buildCSelect);
+    }
+
+    /* ========= End Custom Select ========= */
 
     document.addEventListener('DOMContentLoaded', function () {
         loadAllStores()
         loadPendingInvitations()
         loadNatureOfBusiness()
-        initializePhoneInput()
+        initializeLogoPreview()
+        wireStepButtons()
+        // Initialize custom selects on first load
+        initCustomSelects(document)
+    })
+
+    function wireStepButtons() {
         document.getElementById('storeStep1NextBtn').addEventListener('click', () => goToStep2())
         document.getElementById('storeStep2BackBtn').addEventListener('click', () => backToStep1())
         document.getElementById('storeStep2NextBtn').addEventListener('click', () => goToStep3())
         document.getElementById('storeStep3BackBtn').addEventListener('click', () => backToStep2())
         document.getElementById('storeStep3FinishBtn').addEventListener('click', () => saveStoreData())
-        const logoInput = document.getElementById('storeLogo')
-        if (logoInput) {
-            logoInput.addEventListener('change', e => {
-                if (e.target.files && e.target.files[0]) {
-                    const r = new FileReader()
-                    r.onload = function (ev) {
-                        document.getElementById('storeLogoPreview').src = ev.target.result
-                        document.getElementById('storeLogoPreview').classList.remove('hidden')
-                        document.getElementById('storeLogoPlaceholder').classList.add('hidden')
-                    }
-                    r.readAsDataURL(e.target.files[0])
-                }
-            })
-        }
+
         const confirmBtn = document.getElementById('invitationResponseConfirmBtn')
         if (confirmBtn) { confirmBtn.addEventListener('click', function () { if (currentInvitationAction && currentInvitationId) { processInvitationResponse(currentInvitationAction, currentInvitationId) } }) }
-    })
+    }
+
+    function initializeLogoPreview() {
+        const logoInput = document.getElementById('storeLogo')
+        if (!logoInput) return
+        logoInput.addEventListener('change', e => {
+            if (e.target.files && e.target.files[0]) {
+                const r = new FileReader()
+                r.onload = function (ev) {
+                    document.getElementById('storeLogoPreview').src = ev.target.result
+                    document.getElementById('storeLogoPreview').classList.remove('hidden')
+                    document.getElementById('storeLogoPlaceholder').classList.add('hidden')
+                }
+                r.readAsDataURL(e.target.files[0])
+            }
+        })
+    }
 
     function showModal(id) { const m = document.getElementById(id); m.classList.remove('hidden'); setTimeout(() => { m.classList.remove('opacity-0'); const c = m.querySelector('.transform'); if (c) { c.classList.remove('scale-95'); c.classList.add('scale-100') } }, 10) }
     function hideModal(id) { const m = document.getElementById(id); m.classList.add('opacity-0'); const c = m.querySelector('.transform'); if (c) { c.classList.remove('scale-100'); c.classList.add('scale-95') } setTimeout(() => { m.classList.add('hidden') }, 300) }
@@ -486,6 +749,7 @@ ob_start();
                 const dd = document.getElementById('storeNatureOfBusiness')
                 dd.innerHTML = '<option value="">Select Nature of Business</option>'
                 natureOfBusinessOptions.forEach(it => { const o = document.createElement('option'); o.value = it.id; o.textContent = it.name; dd.appendChild(o) })
+                refreshCSelect(dd)
             }
         })
     }
@@ -692,11 +956,13 @@ ob_start();
     function goToStep2() {
         const name = document.getElementById('storeBusinessName').value.trim()
         const email = document.getElementById('storeBusinessEmail').value.trim()
-        const phone = storePhoneInput ? storePhoneInput.getNumber() : ''
+        const phoneRaw = document.getElementById('storeContactNumber').value.replace(/\s+/g, '')
+        const phone = phoneRaw
         const contactName = document.getElementById('storeContactPersonName').value.trim()
         const nature = document.getElementById('storeNatureOfBusiness').value
         if (!name || !email || !phone || !nature || !contactName) { showErrorNotification('Please fill in all required fields'); return }
-        if (storePhoneInput && !storePhoneInput.isValidNumber()) { showErrorNotification('Please enter a valid business phone number'); return }
+        // Very light UG format check (9 digits starting with 2/3/5/7) - no leading 0 since +256 is fixed label
+        if (!/^([2375]\d{8})$/.test(phone)) { showErrorNotification('Please enter a valid UG phone: 7XX XXX XXX (no leading 0)'); return }
         document.getElementById('storeStep1').classList.add('hidden')
         document.getElementById('storeStep2').classList.remove('hidden')
         document.getElementById('storeStep1Indicator').className = 'flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white'
@@ -736,6 +1002,7 @@ ob_start();
         document.getElementById('storeStep2').classList.remove('hidden')
         document.getElementById('storeStep2Indicator').className = 'flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white'
         document.getElementById('storeStep2Indicator').textContent = '2'
+        document.getElementById = 'storeStep2to3Line'
         document.getElementById('storeStep2to3Line').className = 'w-12 h-1 bg-gray-200 dark:bg-white/10'
         document.getElementById('storeStep3Indicator').className = 'flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-white/70'
         document.getElementById('storeStep3Indicator').textContent = '3'
@@ -749,6 +1016,12 @@ ob_start();
         document.getElementById('storeLevel2').innerHTML = '<option value="">Select District</option>'; document.getElementById('storeLevel2').disabled = true
         document.getElementById('storeLevel3').innerHTML = '<option value="">Select Sub-county</option>'; document.getElementById('storeLevel3').disabled = true
         document.getElementById('storeLevel4').innerHTML = '<option value="">Select Parish/Ward</option>'; document.getElementById('storeLevel4').disabled = true
+        refreshCSelect(document.getElementById('storeNatureOfBusiness'))
+        refreshCSelect(document.getElementById('storeLevel1'))
+        refreshCSelect(document.getElementById('storeLevel2'))
+        refreshCSelect(document.getElementById('storeLevel3'))
+        refreshCSelect(document.getElementById('storeLevel4'))
+
         document.getElementById('storeLogo').value = ''
         document.getElementById('storeLogoPreview').src = '#'; document.getElementById('storeLogoPreview').classList.add('hidden'); document.getElementById('storeLogoPlaceholder').classList.remove('hidden')
         document.getElementById('storeStep1').classList.remove('hidden'); document.getElementById('storeStep2').classList.add('hidden'); document.getElementById('storeStep3').classList.add('hidden')
@@ -770,9 +1043,13 @@ ob_start();
             document.getElementById('storeId').value = s.uuid_id
             document.getElementById('storeBusinessName').value = s.name || ''
             document.getElementById('storeBusinessEmail').value = s.business_email || ''
-            if (storePhoneInput) storePhoneInput.setNumber(s.business_phone || '')
+            // main phone uses fixed +256 prefix (we expect the DB to store full intl)
+            const parsed = (s.business_phone || '').replace(/^\+?256/, '')
+            document.getElementById('storeContactNumber').value = parsed || ''
             if (s.contact_person_name) document.getElementById('storeContactPersonName').value = s.contact_person_name
             document.getElementById('storeNatureOfBusiness').value = s.nature_of_business || ''
+            refreshCSelect(document.getElementById('storeNatureOfBusiness'))
+
             document.getElementById('storeLatitude').value = s.latitude || ''
             document.getElementById('storeLongitude').value = s.longitude || ''
             document.getElementById('storeAddress').value = s.address || ''
@@ -789,11 +1066,15 @@ ob_start();
     function saveStoreData() {
         const mode = document.getElementById('storeMode').value
         const storeId = document.getElementById('storeId').value
+        // Compose full intl number with +256
+        const phoneLocal = document.getElementById('storeContactNumber').value.replace(/\s+/g, '')
+        const fullPhone = phoneLocal ? ('+256' + phoneLocal) : ''
+
         const formData = {
             id: storeId,
             name: document.getElementById('storeBusinessName').value,
             business_email: document.getElementById('storeBusinessEmail').value,
-            business_phone: storePhoneInput ? storePhoneInput.getNumber() : '',
+            business_phone: fullPhone,
             contact_person_name: document.getElementById('storeContactPersonName').value,
             nature_of_business: document.getElementById('storeNatureOfBusiness').value,
             region: document.getElementById('storeLevel1').value,
@@ -909,6 +1190,10 @@ ob_start();
             document.getElementById('storeLevel2').onchange = function () { const dist = this.value; const reg = level1.value; if (dist) { updateSubcounties(reg, dist); updateMapGeoJSON({ 1: reg, 2: dist }) } else { resetDropdown('#storeLevel3'); resetDropdown('#storeLevel4'); updateMapGeoJSON({ 1: reg }) } }
             document.getElementById('storeLevel3').onchange = function () { const sub = this.value; const dist = document.getElementById('storeLevel2').value; const reg = level1.value; if (sub) { updateParishes(reg, dist, sub); updateMapGeoJSON({ 1: reg, 2: dist, 3: sub }) } else { resetDropdown('#storeLevel4'); updateMapGeoJSON({ 1: reg, 2: dist }) } }
             document.getElementById('storeLevel4').onchange = function () { const parish = this.value; const sub = document.getElementById('storeLevel3').value; const dist = document.getElementById('storeLevel2').value; const reg = level1.value; if (parish) { updateMapGeoJSON({ 1: reg, 2: dist, 3: sub, 4: parish }) } else { updateMapGeoJSON({ 1: reg, 2: dist, 3: sub }) } }
+
+            // Refresh custom selects after re-populating Region
+            refreshCSelect(level1)
+
             if (selReg) { updateDistricts(selReg, selDist, selSub, selParish); const sel = { 1: selReg }; if (selDist) sel[2] = selDist; if (selSub) sel[3] = selSub; if (selParish) sel[4] = selParish; updateMapGeoJSON(sel) }
         }).catch(() => { showErrorNotification('Failed to load administrative regions. Please try again later.') })
     }
@@ -921,6 +1206,7 @@ ob_start();
         const d = document.getElementById('storeLevel2'); d.innerHTML = '<option value="">Select District</option>'
         Object.keys(l2).sort().forEach(x => { const o = document.createElement('option'); o.value = x; o.textContent = x; if (selDistrict === x) o.selected = true; d.appendChild(o) })
         d.disabled = false; document.getElementById('storeLoading2').classList.add('hidden')
+        refreshCSelect(d)
         if (selDistrict) { updateSubcounties(region, selDistrict, selSub, selParish) } else { resetDropdown('#storeLevel3'); resetDropdown('#storeLevel4') }
     }
 
@@ -932,6 +1218,7 @@ ob_start();
         const s = document.getElementById('storeLevel3'); s.innerHTML = '<option value="">Select Sub-county</option>'
         Object.keys(l3).sort().forEach(x => { const o = document.createElement('option'); o.value = x; o.textContent = x; if (selSub === x) o.selected = true; s.appendChild(o) })
         s.disabled = false; document.getElementById('storeLoading3').classList.add('hidden')
+        refreshCSelect(s)
         if (selSub) { updateParishes(region, dist, selSub, selParish) } else { resetDropdown('#storeLevel4') }
     }
 
@@ -943,6 +1230,7 @@ ob_start();
         const p = document.getElementById('storeLevel4'); p.innerHTML = '<option value="">Select Parish/Ward</option>'
         Object.keys(l4).sort().forEach(x => { const o = document.createElement('option'); o.value = x; o.textContent = x; if (selParish === x) o.selected = true; p.appendChild(o) })
         p.disabled = false; document.getElementById('storeLoading4').classList.add('hidden')
+        refreshCSelect(p)
     }
 
     function updateMapGeoJSON(selections) {
@@ -961,14 +1249,16 @@ ob_start();
     }
 
     function clearGeoJSON() { if (storeGeoJSONLayer) { storeMap.removeLayer(storeGeoJSONLayer); storeGeoJSONLayer = null } storeCurrentGeoJSON = null }
-    function resetDropdown(sel) { const el = document.querySelector(sel); if (el) { el.innerHTML = '<option value="">Select option</option>'; el.disabled = true } }
-
-    function initializePhoneInput() {
-        const opts = { utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js', initialCountry: 'ug', separateDialCode: true, autoPlaceholder: 'polite', onlyCountries: ['ug'], preferredCountries: ['ug'] }
-        const init = (selector) => { const el = document.querySelector(selector); if (!el) return null; const inst = window.intlTelInput(el, opts); const wrapper = el.closest('.iti'); if (wrapper) wrapper.classList.add('w-full'); return inst }
-        storePhoneInput = init('#storeContactNumber')
-        storeContactPhoneInput = init('#storeContactPersonPhone')
+    function resetDropdown(sel) {
+        const el = document.querySelector(sel);
+        if (el) {
+            el.innerHTML = '<option value="">Select option</option>';
+            el.disabled = true;
+            refreshCSelect(el)
+        }
     }
+
+    // Note: intl-tel-input intentionally NOT used on main number anymore (fixed +256)
 </script>
 
 <?php
