@@ -1,12 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-/**
- * PWA endpoints (manifest + service worker) — handled BEFORE sessions/DB work.
- * App Name: Zzimba Online
- * Icons: use favicon
- */
-$appName = 'Zzimba Online';
+$appName = 'Zzimba';
 
 if (isset($_GET['manifest'])) {
     header('Content-Type: application/manifest+json');
