@@ -146,7 +146,7 @@ $menuItems = [
         'title' => 'Shopping',
         'items' => [
             'zzimba-stores' => ['title' => 'Zzimba Store', 'icon' => 'fa-shopping-cart', 'notifications' => 0],
-            'quotations' => ['title' => 'Submitted Quotations', 'icon' => 'fa-file-invoice', 'notifications' => 0],
+            'quotations' => ['title' => 'My RFQs', 'icon' => 'fa-file-invoice', 'notifications' => 0],
         ],
     ],
 ];
