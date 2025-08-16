@@ -59,15 +59,8 @@ ob_start();
 <div class="space-y-6 text-gray-900 dark:text-white">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <div
-            class="bg-white dark:bg-secondary rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-lg grid place-items-center bg-blue-100 dark:bg-white/10">
-                    <i class="fas fa-file-invoice text-blue-600 dark:text-white text-xl"></i>
-                </div>
-                <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-white/10 dark:text-white"
-                    id="quotationStatus">Loading...</span>
-            </div>
-            <div class="space-y-2">
+            class="relative bg-white dark:bg-secondary rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow">
+            <div class="space-y-1">
                 <div class="text-2xl font-bold text-secondary dark:text-white" id="totalQuotations">0</div>
                 <div class="text-sm text-gray-600 dark:text-white/70">Total Quotations</div>
                 <div class="flex items-center gap-4 text-xs">
@@ -77,73 +70,50 @@ ob_start();
                         Pending</span>
                 </div>
             </div>
+            <i
+                class="fas fa-file-invoice absolute bottom-3 right-3 text-4xl text-blue-600 opacity-20 dark:text-white dark:opacity-20"></i>
         </div>
 
         <div
-            class="bg-white dark:bg-secondary rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-lg grid place-items-center bg-green-100 dark:bg-white/10">
-                    <i class="fas fa-wallet text-green-600 dark:text-white text-xl"></i>
-                </div>
-                <span
-                    class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-white/10 dark:text-white">Active</span>
-            </div>
-            <div class="space-y-2">
+            class="relative bg-white dark:bg-secondary rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow">
+            <div class="space-y-1">
                 <div class="text-2xl font-bold text-secondary dark:text-white">UGX <span id="walletBalance">0</span>
                 </div>
                 <div class="text-sm text-gray-600 dark:text-white/70">Wallet Balance</div>
                 <div class="text-xs text-gray-500 dark:text-white/70">SMS Credits: <span id="smsBalance"
                         class="font-medium">0</span></div>
             </div>
+            <i
+                class="fas fa-wallet absolute bottom-3 right-3 text-4xl text-green-600 opacity-20 dark:text-white dark:opacity-20"></i>
         </div>
 
         <div
-            class="bg-white dark:bg-secondary rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-lg grid place-items-center bg-purple-100 dark:bg-white/10">
-                    <i class="fas fa-store text-purple-600 dark:text-white text-xl"></i>
-                </div>
-                <span
-                    class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-white/10 dark:text-white"
-                    id="storeStatus">Loading...</span>
-            </div>
-            <div class="space-y-2">
+            class="relative bg-white dark:bg-secondary rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow">
+            <div class="space-y-1">
                 <div class="text-2xl font-bold text-secondary dark:text-white" id="totalStores">0</div>
                 <div class="text-sm text-gray-600 dark:text-white/70">My Stores</div>
                 <div class="text-xs text-gray-500 dark:text-white/70">Products: <span id="totalProducts"
                         class="font-medium">0</span></div>
             </div>
+            <i
+                class="fas fa-store absolute bottom-3 right-3 text-4xl text-purple-600 opacity-20 dark:text-white dark:opacity-20"></i>
         </div>
 
         <div
-            class="bg-white dark:bg-secondary rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 rounded-lg grid place-items-center bg-orange-100 dark:bg-white/10">
-                    <i class="fas fa-chart-line text-orange-600 dark:text-white text-xl"></i>
-                </div>
-                <span
-                    class="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700 dark:bg-white/10 dark:text-white">This
-                    Month</span>
-            </div>
-            <div class="space-y-2">
+            class="relative bg-white dark:bg-secondary rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow">
+            <div class="space-y-1">
                 <div class="text-2xl font-bold text-secondary dark:text-white">UGX <span
                         id="monthlyTransactions">0</span></div>
                 <div class="text-sm text-gray-600 dark:text-white/70">Monthly Transactions</div>
                 <div class="text-xs text-gray-500 dark:text-white/70">Total: <span id="totalTransactionAmount"
                         class="font-medium">UGX 0</span></div>
             </div>
+            <i
+                class="fas fa-chart-line absolute bottom-3 right-3 text-4xl text-orange-600 opacity-20 dark:text-white dark:opacity-20"></i>
         </div>
     </div>
 
     <div class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10">
-        <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-white/10">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg grid place-items-center bg-user-primary/10">
-                    <i class="fas fa-bolt text-user-primary"></i>
-                </div>
-                <h3 class="text-xl font-semibold text-secondary dark:text-white">Quick Actions</h3>
-            </div>
-        </div>
         <div class="p-4 sm:p-6">
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                 <a href="<?= BASE_URL ?>request-for-quote"
@@ -299,14 +269,10 @@ ob_start();
         document.getElementById('totalQuotations').textContent = stats.quotations.total;
         document.getElementById('processedQuotations').textContent = stats.quotations.processed;
         document.getElementById('pendingQuotations').textContent = stats.quotations.processing + stats.quotations.new;
-        const quotationStatus = stats.quotations.total > 0 ? (stats.quotations.processing > 0 ? 'Active' : 'Complete') : 'None';
-        document.getElementById('quotationStatus').textContent = quotationStatus;
         document.getElementById('walletBalance').textContent = formatCurrency(stats.wallet.main_balance);
         document.getElementById('smsBalance').textContent = formatCurrency(stats.wallet.sms_balance);
         document.getElementById('totalStores').textContent = stats.stores.total_stores;
         document.getElementById('totalProducts').textContent = stats.stores.total_products;
-        const storeStatus = stats.stores.active_stores > 0 ? 'Active' : (stats.stores.pending_stores > 0 ? 'Pending' : 'None');
-        document.getElementById('storeStatus').textContent = storeStatus;
         document.getElementById('monthlyTransactions').textContent = formatCurrency(stats.transactions.this_month_amount);
         document.getElementById('totalTransactionAmount').textContent = formatCurrency(stats.transactions.total_amount);
     }
