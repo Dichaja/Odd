@@ -6,7 +6,9 @@ ob_start();
 ?>
 
 <div class="min-h-screen bg-user-content dark:bg-secondary/10">
-    <div class="bg-white dark:bg-secondary border-b border-gray-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 py-5">
+    <!-- Header (hidden on mobile so stats appear first) -->
+    <div
+        class="bg-white dark:bg-secondary border-b border-gray-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 py-5 hidden sm:block">
         <div class="max-w-6xl mx-auto">
             <div class="flex items-start justify-between gap-4">
                 <div class="flex items-center gap-3">
@@ -28,40 +30,10 @@ ob_start();
         </div>
     </div>
 
-    <div
-        class="sticky top-0 z-30 backdrop-blur bg-white/70 dark:bg-secondary/70 border-b border-gray-200 dark:border-white/10">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3">
-                <div class="relative">
-                    <input type="text" id="searchFilter" placeholder="Search requests..."
-                        class="w-full pl-10 pr-4 py-2.5 rounded-2xl text-sm bg-white dark:bg-white/5 text-secondary dark:text-white border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-4 focus:ring-user-primary/15">
-                    <i class="fas fa-search absolute left-3 top-3 text-gray-400 dark:text-white/50 text-sm"></i>
-                </div>
-                <div class="cselect-wrapper">
-                    <select id="statusFilter" class="form-select cselect-target" data-cselect>
-                        <option value="all">All Status</option>
-                        <option value="New">New</option>
-                        <option value="Processing">Processing</option>
-                        <option value="Processed">Processed</option>
-                        <option value="Cancelled">Cancelled</option>
-                        <option value="Paid">Paid</option>
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <button id="clearFilters"
-                        class="w-full sm:w-auto px-4 py-2.5 text-sm rounded-2xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">
-                        Clear Filters
-                    </button>
-                    <button id="refreshBtnMobile"
-                        class="sm:hidden w-full px-4 py-2.5 bg-user-primary text-white rounded-2xl hover:bg-user-primary/90 transition-all duration-200 font-medium flex items-center justify-center gap-2 shadow-lg shadow-user-primary/25">
-                        <i class="fas fa-sync-alt"></i><span>Refresh</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Removed sticky wrapper; filters will sit inside the table card header -->
 
     <div class="max-w-6xl mx-auto px-2 sm:px-2 lg:px-2 py-4 space-y-6">
+        <!-- Stats -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             <div
                 class="rounded-xl p-4 sm:p-5 border border-blue-200 dark:border-blue-500/20 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-500/5">
@@ -142,13 +114,41 @@ ob_start();
             </div>
         </div>
 
+        <!-- Table card (filters moved here, non-sticky) -->
         <div
             class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
-            <div class="p-4 sm:p-6 border-b border-gray-100 dark:border-white/10">
+            <div class="p-4 sm:p-6 border-b border-gray-100 dark:border-white/10 space-y-3">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-secondary dark:text-white">My Quotation Requests</h3>
                     <p class="hidden sm:block text-sm text-gray-text dark:text-white/70">Tap a row to view and manage
                         quotation details</p>
+                </div>
+
+                <!-- Filters now inside the card header; no sticky. Hide action buttons on mobile -->
+                <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3">
+                    <div class="relative">
+                        <input type="text" id="searchFilter" placeholder="Search requests..."
+                            class="w-full pl-10 pr-4 py-2.5 rounded-2xl text-sm bg-white dark:bg-white/5 text-secondary dark:text-white border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-4 focus:ring-user-primary/15">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400 dark:text-white/50 text-sm"></i>
+                    </div>
+                    <div class="cselect-wrapper">
+                        <select id="statusFilter" class="form-select cselect-target" data-cselect>
+                            <option value="all">All Status</option>
+                            <option value="New">New</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Processed">Processed</option>
+                            <option value="Cancelled">Cancelled</option>
+                            <option value="Paid">Paid</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <!-- Clear filters hidden on mobile -->
+                        <button id="clearFilters"
+                            class="hidden sm:inline-flex px-4 py-2.5 text-sm rounded-2xl border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">
+                            Clear Filters
+                        </button>
+                        <!-- Removed mobile refresh button entirely -->
+                    </div>
                 </div>
             </div>
 
@@ -216,6 +216,7 @@ ob_start();
     </div>
 </div>
 
+<!-- Modals -->
 <div id="quotationModal"
     class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300"
@@ -1038,11 +1039,12 @@ ob_start();
     function setupEventListeners() {
         document.getElementById('searchFilter').addEventListener('input', debounce(() => { currentPage = 1; loadQuotations() }, 400));
         document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; loadQuotations() });
-        document.getElementById('clearFilters').addEventListener('click', () => { document.getElementById('searchFilter').value = ''; document.getElementById('statusFilter').value = 'all'; refreshCSelect(document.getElementById('statusFilter')); currentPage = 1; loadQuotations() });
+        const clearBtn = document.getElementById('clearFilters');
+        if (clearBtn) clearBtn.addEventListener('click', () => { document.getElementById('searchFilter').value = ''; document.getElementById('statusFilter').value = 'all'; refreshCSelect(document.getElementById('statusFilter')); currentPage = 1; loadQuotations() });
         document.getElementById('prevPage').addEventListener('click', () => { if (currentPage > 1) { currentPage--; loadQuotations() } });
         document.getElementById('nextPage').addEventListener('click', () => { currentPage++; loadQuotations() });
         const r = document.getElementById('refreshBtn'); if (r) r.addEventListener('click', refreshData);
-        const rm = document.getElementById('refreshBtnMobile'); if (rm) rm.addEventListener('click', refreshData);
+        // Removed mobile refreshBtnMobile usage (button no longer exists)
         document.getElementById('printQuotationBtn').addEventListener('click', generatePDF);
         ['quotationModal', 'editConfirmModal', 'saveConfirmModal', 'paymentConfirmModal', 'cancelConfirmModal', 'successModal', 'errorModal'].forEach(id => { const el = document.getElementById(id); if (!el) return; el.addEventListener('click', function (e) { if (e.target === this) { if (id === 'quotationModal') closeQuotationModal(); if (id === 'editConfirmModal') closeEditConfirmModal(); if (id === 'saveConfirmModal') closeSaveConfirmModal(); if (id === 'paymentConfirmModal') closePaymentConfirmModal(); if (id === 'cancelConfirmModal') closeCancelConfirmModal(); if (id === 'successModal') closeSuccessModal(); if (id === 'errorModal') closeErrorModal(); } }) });
     }
@@ -1050,7 +1052,7 @@ ob_start();
     function debounce(fn, wait) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), wait) } }
 
     function refreshData() {
-        const btn = document.getElementById('refreshBtn') || document.getElementById('refreshBtnMobile'); if (!btn) return;
+        const btn = document.getElementById('refreshBtn'); if (!btn) return;
         const icon = btn.querySelector('i'); icon.classList.add('fa-spin'); btn.disabled = true; loadQuotations(); setTimeout(() => { icon.classList.remove('fa-spin'); btn.disabled = false }, 800)
     }
 </script>
