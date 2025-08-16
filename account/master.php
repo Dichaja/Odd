@@ -195,15 +195,7 @@ $menuItems = [
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#D92B13',
-                        secondary: '#1a1a1a',
-                        'gray-text': '#4B5563',
-                        'user-primary': '#D92B13',
-                        'user-secondary': '#F8C2BC',
-                        'user-accent': '#E6F2FF',
-                        'user-content': '#F5F9FF'
-                    },
+                    colors: { primary: '#D92B13', secondary: '#1a1a1a', 'gray-text': '#4B5563', 'user-primary': '#D92B13', 'user-secondary': '#F8C2BC', 'user-accent': '#E6F2FF', 'user-content': '#F5F9FF' },
                     fontFamily: { rubik: ['Rubik', 'sans-serif'] }
                 }
             }
@@ -471,6 +463,20 @@ $menuItems = [
             border-color: rgba(255, 255, 255, .10)
         }
 
+        .dark .install-card .title {
+            color: #ffffff
+        }
+
+        .dark .install-card .sub {
+            color: rgba(255, 255, 255, .7)
+        }
+
+        .dark .install-card .later {
+            border: 1px solid rgba(255, 255, 255, .2);
+            color: #ffffff;
+            background: transparent
+        }
+
         .sheet-overlay {
             position: fixed;
             inset: 0;
@@ -555,7 +561,7 @@ $menuItems = [
                         <div class="space-y-1 mb-2">
                             <?php foreach ($category['items'] as $key => $item): ?>
                                 <a href="<?= BASE_URL ?>account/<?= $key ?>"
-                                    class="user-nav-item group flex items-center justify-between px-4 py-2.5 text-sm rounded-lg transition-all duration-200 <?= $activeNav === $key ? 'active' : 'text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:text-white dark:hover:bg:white/10' ?>">
+                                    class="user-nav-item group flex items-center justify-between px-4 py-2.5 text-sm rounded-lg transition-all duration-200 <?= $activeNav === $key ? 'active' : 'text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:text-white dark:hover:bg-white/10' ?>">
                                     <div class="flex items-center gap-3">
                                         <i class="fas <?= $item['icon'] ?> w-5 h-5"></i>
                                         <span><?= htmlspecialchars($item['title']) ?></span>
@@ -572,10 +578,10 @@ $menuItems = [
                 <div class="p-4 border-t border-gray-100 dark:border-white/10">
                     <div class="space-y-2">
                         <a href="<?= BASE_URL ?>account/profile"
-                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text:white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
+                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
                                 class="fas fa-user w-5 h-5 mr-3"></i>My Profile</a>
                         <a href="<?= BASE_URL ?>account/settings"
-                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text:white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
+                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
                                 class="fas fa-cog w-5 h-5 mr-3"></i>Settings</a>
                     </div>
                 </div>
@@ -607,14 +613,14 @@ $menuItems = [
                                     <i class="fa-solid fa-check" x-show="mode==='light'"></i>
                                 </button>
                                 <button
-                                    class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg:white/10"
+                                    class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
                                     :class="{'bg-gray-100 dark:bg-white/10': mode==='dark'}"
                                     @click="setTheme('dark');open=false">
                                     <span><i class="fa-solid fa-moon mr-2"></i>Dark</span>
                                     <i class="fa-solid fa-check" x-show="mode==='dark'"></i>
                                 </button>
                                 <button
-                                    class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg:white/10"
+                                    class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
                                     :class="{'bg-gray-100 dark:bg-white/10': mode==='system'}"
                                     @click="setTheme('system');open=false">
                                     <span><i class="fa-solid fa-circle-half-stroke mr-2"></i>System</span>
@@ -864,7 +870,7 @@ $menuItems = [
                             class="fa-solid fa-circle-half-stroke text-secondary dark:text-white"></i></span>
                     <div class="text-left">
                         <div class="text-sm font-medium text-secondary dark:text-white">Theme</div>
-                        <div id="mobileThemeLabel" class="text-[11px] text-gray-500 dark:text-white/70">Light</div>
+                        <div id="mobileThemeLabel" class="text-[11px] text-gray-500 dark:text-white/70">System</div>
                     </div>
                 </button>
                 <a href="<?= BASE_URL ?>account/order-history"
@@ -888,7 +894,7 @@ $menuItems = [
     <div id="mobileNotifSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-2">
-            <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg:white/20 mb-3"></div>
+            <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-3"></div>
             <div x-data="notifComponent()" x-init="init()">
                 <div class="flex items-center justify-between px-1 pb-2">
                     <div class="text-sm font-medium text-secondary dark:text-white">Notifications</div>
@@ -949,7 +955,7 @@ $menuItems = [
                 <button id="return-ignore"
                     class="px-6 py-2.5 bg-secondary hover:opacity-90 text-white rounded-lg font-medium">Ignore</button>
                 <button id="return-later"
-                    class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-text dark:bg-white/10 dark:hover:bg:white/20 dark:text-white rounded-lg font-medium">Later</button>
+                    class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-text dark:bg-white/10 dark:hover:bg-white/20 dark:text-white rounded-lg font-medium">Later</button>
                 <button id="return-continue"
                     class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium">Continue</button>
             </div>
@@ -1056,9 +1062,9 @@ $menuItems = [
 
         function themeRoot() {
             return {
-                mode: 'light',
+                mode: 'system',
                 init() {
-                    const saved = localStorage.getItem('zzimba_theme') || 'light';
+                    const saved = localStorage.getItem('zzimba_theme') || 'system';
                     this.setTheme(saved, false);
                     const media = window.matchMedia('(prefers-color-scheme: dark)');
                     media.addEventListener('change', () => { if (this.mode === 'system') this.applySystem() });
