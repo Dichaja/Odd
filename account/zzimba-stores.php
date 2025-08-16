@@ -1258,7 +1258,6 @@ ob_start();
         }
     }
 
-    // Note: intl-tel-input intentionally NOT used on main number anymore (fixed +256)
 </script>
 
 <?php
