@@ -5,7 +5,7 @@ $appName = 'Zzimba';
 
 if (isset($_GET['manifest'])) {
     header('Content-Type: application/manifest+json');
-    $base = rtrim(BASE_URL, '/') . '/account/'; // user account app scope
+    $base = rtrim(BASE_URL, '/') . '/account/';
     $icon = rtrim(BASE_URL, '/') . '/img/favicon.png';
     echo json_encode([
         'name' => $appName,
@@ -26,48 +26,56 @@ if (isset($_GET['manifest'])) {
 if (isset($_GET['sw'])) {
     header('Content-Type: application/javascript');
     $scope = rtrim(BASE_URL, '/') . '/account/';
-    $cache = 'zzimba-user-v2';
+    $cache = 'zzimba-user-v3';
     $core = json_encode([
         $scope,
         $scope . 'dashboard',
         rtrim(BASE_URL, '/') . '/img/favicon.png'
     ], JSON_UNESCAPED_SLASHES);
     echo <<<JS
-const CACHE_NAME = '$cache';
-const CORE_ASSETS = $core;
+const CACHE_NAME='$cache';
+const CORE_ASSETS=$core;
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((c) => c.addAll(CORE_ASSETS))
-      .then(() => self.skipWaiting())
-  );
+self.addEventListener('install',e=>{
+  e.waitUntil((async()=>{
+    self.skipWaiting();
+    const cache=await caches.open(CACHE_NAME);
+    await Promise.all(CORE_ASSETS.map(async url=>{
+      try{
+        const res=await fetch(url,{cache:'no-store'});
+        if(res && res.ok) await cache.put(url,res.clone());
+      }catch(_){}
+    }));
+  })());
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
+self.addEventListener('activate',e=>{
+  e.waitUntil((async()=>{
+    const keys=await caches.keys();
+    await Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', (e) => {
-  const u = new URL(e.request.url);
-  if (u.origin !== location.origin) return; // only same-origin for now
-  e.respondWith(
-    fetch(e.request).then((r) => {
-      const copy = r.clone();
-      caches.open(CACHE_NAME).then((c) => c.put(e.request, copy));
-      return r;
-    }).catch(() => caches.match(e.request))
-  );
+self.addEventListener('fetch',e=>{
+  const u=new URL(e.request.url);
+  if(u.origin!==location.origin) return;
+  e.respondWith((async()=>{
+    try{
+      const net=await fetch(e.request);
+      const cache=await caches.open(CACHE_NAME);
+      cache.put(e.request,net.clone()).catch(()=>{});
+      return net;
+    }catch(_){
+      const cached=await caches.match(e.request);
+      return cached || Response.error();
+    }
+  })());
 });
 JS;
     exit;
 }
 
-/** Normal app bootstrap continues below */
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -89,7 +97,6 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 }
 $_SESSION['last_activity'] = time();
 
-/** Existing DB lookups (kept intact) */
 $stmt = $pdo->prepare("
     SELECT 
         first_name,
@@ -153,28 +160,23 @@ $menuItems = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <title><?= htmlspecialchars($title) ?></title>
-
-    <!-- Early theme boot (prevents flash + corrects splash + theme-color at first paint) -->
     <script>
         (function () {
             try {
                 var mode = localStorage.getItem('zzimba_theme') || 'system';
                 var dark = (mode === 'dark') || (mode === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
                 if (dark) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
-                // seed theme-color quickly
                 var m = document.createElement('meta'); m.name = 'theme-color'; m.id = 'meta-theme-color'; m.content = dark ? '#1a1a1a' : '#ffffff'; document.head.appendChild(m);
             } catch (e) { }
         })();
     </script>
-
-    <!-- Icons + PWA -->
     <link rel="icon" type="image/png" href="<?= BASE_URL ?>img/favicon.png">
     <link rel="apple-touch-icon" href="<?= BASE_URL ?>img/favicon.png">
     <link rel="manifest" href="master.php?manifest=1">
     <meta name="color-scheme" content="light dark">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Zzimba Online">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -183,14 +185,12 @@ $menuItems = [
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
-
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
         const SESSION_ULID = "<?= $sessionUlid ?>";
         const PAGE_TITLE = "<?= addslashes($pageTitle ?? '') ?>";
         const APP_SCOPE = (new URL('account/', BASE_URL)).toString();
         const APP_ICON = (new URL('img/favicon.png', BASE_URL)).toString();
-
         tailwind.config = {
             darkMode: 'class',
             theme: {
@@ -354,28 +354,21 @@ $menuItems = [
             border-top-color: rgba(255, 255, 255, .12)
         }
 
-        /* Splash screen (light/dark-aware) */
         .splash {
             position: fixed;
             inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 90;
+            z-index: 90
         }
 
         .splash--light {
-            background:
-                radial-gradient(1200px 600px at 10% -10%, rgba(217, 43, 19, .10), transparent 60%),
-                radial-gradient(900px 500px at 100% 0%, rgba(217, 43, 19, .12), transparent 60%),
-                linear-gradient(135deg, #fff7ed 0%, #f7efe9 100%);
+            background: radial-gradient(1200px 600px at 10% -10%, rgba(217, 43, 19, .10), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(217, 43, 19, .12), transparent 60%), linear-gradient(135deg, #fff7ed 0%, #f7efe9 100%)
         }
 
         .splash--dark {
-            background:
-                radial-gradient(1200px 600px at 10% -10%, rgba(217, 43, 19, .08), transparent 60%),
-                radial-gradient(900px 500px at 100% 0%, rgba(217, 43, 19, .10), transparent 60%),
-                linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            background: radial-gradient(1200px 600px at 10% -10%, rgba(217, 43, 19, .08), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(217, 43, 19, .10), transparent 60%), linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)
         }
 
         .logo-pulse {
@@ -418,7 +411,7 @@ $menuItems = [
             width: 40%;
             border-radius: 9999px;
             background: linear-gradient(90deg, #ffb4a8, #D92B13, #8f1406);
-            animation: slide 1.2s ease-in-out infinite;
+            animation: slide 1.2s ease-in-out infinite
         }
 
         @keyframes slide {
@@ -435,42 +428,85 @@ $menuItems = [
             }
         }
 
-        /* Install banner */
         .install-banner {
             position: fixed;
             left: 0;
             right: 0;
             bottom: 0;
             z-index: 70;
-            padding: 12px max(12px, env(safe-area-inset-bottom));
+            padding: 12px max(12px, env(safe-area-inset-bottom))
         }
 
         .install-card {
             margin: 0 auto;
             max-width: 560px;
-            background: rgba(255, 255, 255, .95);
+            background: rgba(255, 255, 255, .98);
             backdrop-filter: blur(6px);
             border: 1px solid rgba(0, 0, 0, .08);
             border-radius: 14px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .12)
+        }
+
+        .install-card .title {
+            color: #1a1a1a
+        }
+
+        .install-card .sub {
+            color: #4B5563
+        }
+
+        .install-card .later {
+            border: 1px solid rgba(0, 0, 0, .2);
+            color: #1a1a1a;
+            background: #ffffff
+        }
+
+        .install-card .install {
+            background: #D92B13;
+            color: #ffffff
         }
 
         .dark .install-card {
             background: rgba(26, 26, 26, .95);
-            border-color: rgba(255, 255, 255, .10);
+            border-color: rgba(255, 255, 255, .10)
         }
 
-        /* Overlay for sheets */
         .sheet-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, .4);
+            background: rgba(0, 0, 0, .4)
+        }
+
+        .main-fixed {
+            height: calc(100vh - 64px - 56px);
+            overflow: auto
+        }
+
+        .sheet a .fas {
+            color: #1a1a1a
+        }
+
+        .dark .sheet a .fas {
+            color: #ffffff
+        }
+
+        .sheet .sheet-close {
+            color: #1a1a1a;
+            border-color: #e5e7eb
+        }
+
+        .dark .sheet .sheet-close {
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, .1)
+        }
+
+        input[type="checkbox"] {
+            accent-color: #D92B13
         }
     </style>
 </head>
 
 <body class="bg-user-content dark:bg-secondary font-rubik min-h-screen" x-data="themeRoot()" x-init="init()">
-    <!-- Splash (first to paint; hidden later after onload) -->
     <div id="zz-splash" class="splash splash--light">
         <div class="flex flex-col items-center gap-5">
             <div class="relative">
@@ -481,30 +517,26 @@ $menuItems = [
         </div>
     </div>
 
-    <!-- Install banner -->
     <div id="install-banner" class="install-banner hidden">
         <div class="install-card">
             <div class="flex items-center gap-3 p-3 sm:p-4">
                 <img src="<?= BASE_URL ?>img/favicon.png" alt="Zzimba Online" class="h-9 w-9 rounded">
                 <div class="flex-1">
-                    <div class="font-medium text-[15px]">Zzimba Online</div>
-                    <div class="text-xs text-gray-600 dark:text-white/70">Install for quicker access & a full-screen
-                        experience.</div>
+                    <div class="font-medium text-[15px] title">Zzimba Online</div>
+                    <div class="text-xs sub">Install for quicker access & a full-screen experience.</div>
                 </div>
                 <button id="install-later"
-                    class="text-[13px] px-3 py-1.5 rounded-md border hidden sm:block">Later</button>
+                    class="text-[13px] px-3 py-1.5 rounded-md later hidden sm:block">Later</button>
                 <button id="install-now"
-                    class="text-[13px] px-3 py-1.5 rounded-md bg-[#D92B13] text-white hidden sm:block">Install</button>
+                    class="text-[13px] px-3 py-1.5 rounded-md install hidden sm:block">Install</button>
             </div>
             <div class="sm:hidden grid grid-cols-2 gap-2 p-3 pt-0">
-                <button id="install-later-m" class="w-full text-sm py-2 rounded-md border">Later</button>
-                <button id="install-now-m"
-                    class="w-full text-sm py-2 rounded-md bg-[#D92B13] text-white">Install</button>
+                <button id="install-later-m" class="w-full text-sm py-2 rounded-md later">Later</button>
+                <button id="install-now-m" class="w-full text-sm py-2 rounded-md install">Install</button>
             </div>
         </div>
     </div>
 
-    <!-- Sheet overlay (blocks page when any sheet is open) -->
     <div id="sheetOverlay" class="sheet-overlay hidden z-[48]"></div>
 
     <div class="flex min-h-screen">
@@ -523,7 +555,7 @@ $menuItems = [
                         <div class="space-y-1 mb-2">
                             <?php foreach ($category['items'] as $key => $item): ?>
                                 <a href="<?= BASE_URL ?>account/<?= $key ?>"
-                                    class="user-nav-item group flex items-center justify-between px-4 py-2.5 text-sm rounded-lg transition-all duration-200 <?= $activeNav === $key ? 'active' : 'text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:text-white dark:hover:bg-white/10' ?>">
+                                    class="user-nav-item group flex items-center justify-between px-4 py-2.5 text-sm rounded-lg transition-all duration-200 <?= $activeNav === $key ? 'active' : 'text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:text-white dark:hover:bg:white/10' ?>">
                                     <div class="flex items-center gap-3">
                                         <i class="fas <?= $item['icon'] ?> w-5 h-5"></i>
                                         <span><?= htmlspecialchars($item['title']) ?></span>
@@ -540,10 +572,10 @@ $menuItems = [
                 <div class="p-4 border-t border-gray-100 dark:border-white/10">
                     <div class="space-y-2">
                         <a href="<?= BASE_URL ?>account/profile"
-                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
+                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text:white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
                                 class="fas fa-user w-5 h-5 mr-3"></i>My Profile</a>
                         <a href="<?= BASE_URL ?>account/settings"
-                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
+                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text:white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
                                 class="fas fa-cog w-5 h-5 mr-3"></i>Settings</a>
                     </div>
                 </div>
@@ -558,7 +590,6 @@ $menuItems = [
                         <?= htmlspecialchars($pageTitle ?? 'My Dashboard') ?>
                     </h1>
                     <div class="flex items-center gap-1 sm:gap-2">
-                        <!-- Theme menu (fixed hover + tick on active) -->
                         <div class="relative" x-data="{open:false}">
                             <button @click="open=!open"
                                 class="w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
@@ -576,14 +607,14 @@ $menuItems = [
                                     <i class="fa-solid fa-check" x-show="mode==='light'"></i>
                                 </button>
                                 <button
-                                    class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
+                                    class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg:white/10"
                                     :class="{'bg-gray-100 dark:bg-white/10': mode==='dark'}"
                                     @click="setTheme('dark');open=false">
                                     <span><i class="fa-solid fa-moon mr-2"></i>Dark</span>
                                     <i class="fa-solid fa-check" x-show="mode==='dark'"></i>
                                 </button>
                                 <button
-                                    class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
+                                    class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg:white/10"
                                     :class="{'bg-gray-100 dark:bg-white/10': mode==='system'}"
                                     @click="setTheme('system');open=false">
                                     <span><i class="fa-solid fa-circle-half-stroke mr-2"></i>System</span>
@@ -592,7 +623,6 @@ $menuItems = [
                             </div>
                         </div>
 
-                        <!-- Notifications (desktop) -->
                         <div x-data="notifComponent()" x-init="init()" class="relative hidden md:block">
                             <button @click="toggle"
                                 class="relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
@@ -628,7 +658,8 @@ $menuItems = [
                                         <div class="flex-1">
                                             <a :href="note.link_url || '#'" class="block px-0 py-3"
                                                 @click.prevent="handleClick(note)">
-                                                <p class="text-sm font-medium dark:text-white" x-text="note.title"></p>
+                                                <p class="text-sm font-medium text-secondary dark:text-white"
+                                                    x-text="note.title"></p>
                                                 <p class="text-xs mt-1"
                                                     :class="note.is_seen == 0 ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70'"
                                                     x-text="note.message"></p>
@@ -637,7 +668,7 @@ $menuItems = [
                                             </a>
                                         </div>
                                         <button @click.stop="dismiss(note.target_id)"
-                                            class="absolute top-2 right-2 text-gray-300 hover:text-user-primary dark:text-white/40 dark:hover:text-white transition">
+                                            class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -648,7 +679,6 @@ $menuItems = [
                             </div>
                         </div>
 
-                        <!-- User dropdown (desktop) -->
                         <div class="relative hidden md:block" id="userDropdown">
                             <button
                                 class="flex items-center gap-3 rounded-lg px-3 py-2 theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
@@ -691,7 +721,6 @@ $menuItems = [
                             </div>
                         </div>
 
-                        <!-- Mobile header buttons -->
                         <button id="mobileNotifBtn"
                             class="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
                             <i class="fas fa-bell text-lg"></i>
@@ -706,8 +735,9 @@ $menuItems = [
                 </div>
             </header>
 
-            <div>
-                <main class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white">
+            <div class="flex flex-col min-h-[calc(100vh-64px)]">
+                <main
+                    class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white main-fixed">
                     <?= $mainContent ?? '' ?>
                 </main>
                 <footer
@@ -738,13 +768,12 @@ $menuItems = [
                 <i class="fa-solid fa-wallet mb-0.5"></i><span class="leading-none">Credit</span>
             </a>
             <button id="mobileMoreBtn"
-                class="flex flex-col items-center justify-center text-xs text-gray-500 dark:text-white/70">
+                class="flex flex-col items-center justify-center text-xs <?= in_array($activeNav, ['dashboard', 'zzimba-stores', 'order-history', 'zzimba-credit']) ? 'text-gray-500 dark:text-white/70' : 'text-secondary dark:text-white' ?>">
                 <i class="fa-solid fa-ellipsis mb-0.5"></i><span class="leading-none">More</span>
             </button>
         </div>
     </div>
 
-    <!-- Mobile: More sheet -->
     <div id="mobileMoreSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-4">
@@ -756,7 +785,7 @@ $menuItems = [
                             class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                             <span
                                 class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                                    class="fas <?= $item['icon'] ?>"></i></span>
+                                    class="fas <?= $item['icon'] ?> text-secondary dark:text-white"></i></span>
                             <div>
                                 <div class="text-sm font-medium text-secondary dark:text-white">
                                     <?= htmlspecialchars($item['title']) ?>
@@ -772,7 +801,7 @@ $menuItems = [
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-cog"></i></span>
+                            class="fas fa-cog text-secondary dark:text-white"></i></span>
                     <div>
                         <div class="text-sm font-medium text-secondary dark:text-white">Settings</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">Preferences</div>
@@ -782,19 +811,17 @@ $menuItems = [
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-user"></i></span>
+                            class="fas fa-user text-secondary dark:text-white"></i></span>
                     <div>
                         <div class="text-sm font-medium text-secondary dark:text-white">My Profile</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">Account</div>
                     </div>
                 </a>
             </div>
-            <button id="mobileMoreClose"
-                class="mt-4 w-full py-2.5 rounded-xl border text-sm border-gray-200 dark:border-white/10">Close</button>
+            <button id="mobileMoreClose" class="mt-4 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
         </div>
     </div>
 
-    <!-- Mobile: Account sheet -->
     <div id="mobileAccountSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-4">
@@ -814,7 +841,7 @@ $menuItems = [
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-user"></i></span>
+                            class="fas fa-user text-secondary dark:text-white"></i></span>
                     <div>
                         <div class="text-sm font-medium text-secondary dark:text-white">My Profile</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">Account</div>
@@ -824,8 +851,8 @@ $menuItems = [
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-cog"></i></span>
-                    <div>
+                            class="fas fa-cog text-secondary dark:text-white"></i></span>
+                    <div class="text-left">
                         <div class="text-sm font-medium text-secondary dark:text-white">Settings</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">Preferences</div>
                     </div>
@@ -834,7 +861,7 @@ $menuItems = [
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fa-solid fa-circle-half-stroke"></i></span>
+                            class="fa-solid fa-circle-half-stroke text-secondary dark:text-white"></i></span>
                     <div class="text-left">
                         <div class="text-sm font-medium text-secondary dark:text-white">Theme</div>
                         <div id="mobileThemeLabel" class="text-[11px] text-gray-500 dark:text-white/70">Light</div>
@@ -844,7 +871,7 @@ $menuItems = [
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-shopping-bag"></i></span>
+                            class="fas fa-shopping-bag text-secondary dark:text-white"></i></span>
                     <div>
                         <div class="text-sm font-medium text-secondary dark:text-white">My Orders</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">History</div>
@@ -854,15 +881,14 @@ $menuItems = [
             <button id="mobileLogout"
                 class="mt-4 w-full py-2.5 rounded-xl bg-user-primary text-white text-sm">Logout</button>
             <button id="mobileAccountClose"
-                class="mt-2 w-full py-2.5 rounded-xl border text-sm border-gray-200 dark:border-white/10">Close</button>
+                class="mt-2 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
         </div>
     </div>
 
-    <!-- Mobile: Notifications sheet -->
     <div id="mobileNotifSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-2">
-            <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-3"></div>
+            <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg:white/20 mb-3"></div>
             <div x-data="notifComponent()" x-init="init()">
                 <div class="flex items-center justify-between px-1 pb-2">
                     <div class="text-sm font-medium text-secondary dark:text-white">Notifications</div>
@@ -889,7 +915,8 @@ $menuItems = [
                             <div class="flex-1">
                                 <a :href="note.link_url || '#'" class="block px-0 py-3"
                                     @click.prevent="handleClick(note)">
-                                    <p class="text-sm font-medium dark:text-white" x-text="note.title"></p>
+                                    <p class="text-sm font-medium text-secondary dark:text-white" x-text="note.title">
+                                    </p>
                                     <p class="text-xs mt-1"
                                         :class="note.is_seen == 0 ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70'"
                                         x-text="note.message"></p>
@@ -898,7 +925,7 @@ $menuItems = [
                                 </a>
                             </div>
                             <button @click.stop="dismiss(note.target_id)"
-                                class="absolute top-2 right-2 text-gray-300 hover:text-user-primary dark:text-white/40 dark:hover:text-white transition">
+                                class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -908,7 +935,7 @@ $menuItems = [
                 </div>
             </div>
             <button id="mobileNotifClose"
-                class="mt-3 w-full py-2.5 rounded-xl border text-sm border-gray-200 dark:border-white/10">Close</button>
+                class="mt-3 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
         </div>
     </div>
 
@@ -922,7 +949,7 @@ $menuItems = [
                 <button id="return-ignore"
                     class="px-6 py-2.5 bg-secondary hover:opacity-90 text-white rounded-lg font-medium">Ignore</button>
                 <button id="return-later"
-                    class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-text dark:bg-white/10 dark:hover:bg-white/20 dark:text-white rounded-lg font-medium">Later</button>
+                    class="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-text dark:bg-white/10 dark:hover:bg:white/20 dark:text-white rounded-lg font-medium">Later</button>
                 <button id="return-continue"
                     class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium">Continue</button>
             </div>
@@ -932,7 +959,6 @@ $menuItems = [
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
 
-        // Desktop user dropdown
         const userDropdown = document.getElementById('userDropdown');
         const userDropdownMenu = document.getElementById('userDropdownMenu');
         if (userDropdown) {
@@ -961,8 +987,6 @@ $menuItems = [
                             this.selected = this.selected.filter(id => currentIds.includes(id));
                             this.notes = data;
                             this.count = this.notes.filter(n => n.is_seen == 0).length;
-
-                            // update mobile badge
                             const badge = document.getElementById('mobileNotifCount');
                             if (badge) {
                                 if (this.count > 0) { badge.textContent = this.count; badge.classList.remove('hidden'); }
@@ -1002,37 +1026,15 @@ $menuItems = [
             };
         }
 
-        // Overlay + sheet helpers
         const overlay = document.getElementById('sheetOverlay');
         const body = document.body;
-        const sheets = {
-            account: document.getElementById('mobileAccountSheet'),
-            more: document.getElementById('mobileMoreSheet'),
-            notif: document.getElementById('mobileNotifSheet'),
-        };
-        function isAnyOpen() {
-            return Object.values(sheets).some(el => el.classList.contains('open'));
-        }
-        function openSheet(el) {
-            el.classList.add('open');
-            overlay.classList.remove('hidden');
-            body.style.overflow = 'hidden';
-        }
-        function closeSheet(el) {
-            el.classList.remove('open');
-            if (!isAnyOpen()) {
-                overlay.classList.add('hidden');
-                body.style.overflow = '';
-            }
-        }
-        function closeAllSheets() {
-            Object.values(sheets).forEach(el => el.classList.remove('open'));
-            overlay.classList.add('hidden');
-            body.style.overflow = '';
-        }
+        const sheets = { account: document.getElementById('mobileAccountSheet'), more: document.getElementById('mobileMoreSheet'), notif: document.getElementById('mobileNotifSheet') };
+        function isAnyOpen() { return Object.values(sheets).some(el => el.classList.contains('open')) }
+        function openSheet(el) { el.classList.add('open'); overlay.classList.remove('hidden'); body.style.overflow = 'hidden' }
+        function closeSheet(el) { el.classList.remove('open'); if (!isAnyOpen()) { overlay.classList.add('hidden'); body.style.overflow = '' } }
+        function closeAllSheets() { Object.values(sheets).forEach(el => el.classList.remove('open')); overlay.classList.add('hidden'); body.style.overflow = '' }
         overlay.addEventListener('click', closeAllSheets);
 
-        // Mobile toggles
         const mobileAccountBtn = document.getElementById('mobileAccountBtn');
         const mobileAccountSheet = sheets.account;
         const mobileAccountClose = document.getElementById('mobileAccountClose');
@@ -1040,41 +1042,32 @@ $menuItems = [
         const mobileMoreSheet = sheets.more;
         const mobileMoreClose = document.getElementById('mobileMoreClose');
         const mobileLogout = document.getElementById('mobileLogout');
-
         const mobileNotifBtn = document.getElementById('mobileNotifBtn');
         const mobileNotifSheet = sheets.notif;
         const mobileNotifClose = document.getElementById('mobileNotifClose');
 
-        mobileAccountBtn.addEventListener('click', (e) => { e.stopPropagation(); openSheet(mobileAccountSheet); });
+        mobileAccountBtn.addEventListener('click', e => { e.stopPropagation(); openSheet(mobileAccountSheet) });
         mobileAccountClose.addEventListener('click', () => closeSheet(mobileAccountSheet));
-        mobileMoreBtn.addEventListener('click', (e) => { e.stopPropagation(); openSheet(mobileMoreSheet); });
+        mobileMoreBtn.addEventListener('click', e => { e.stopPropagation(); openSheet(mobileMoreSheet) });
         mobileMoreClose.addEventListener('click', () => closeSheet(mobileMoreSheet));
-        mobileNotifBtn.addEventListener('click', (e) => { e.stopPropagation(); openSheet(mobileNotifSheet); });
+        mobileNotifBtn.addEventListener('click', e => { e.stopPropagation(); openSheet(mobileNotifSheet) });
         mobileNotifClose.addEventListener('click', () => closeSheet(mobileNotifSheet));
         mobileLogout.addEventListener('click', () => logoutUser());
 
-        // Theme root (sync theme-color & splash skin)
         function themeRoot() {
             return {
                 mode: 'light',
                 init() {
-                    const saved = localStorage.getItem('zzimba_theme') || 'system';
+                    const saved = localStorage.getItem('zzimba_theme') || 'light';
                     this.setTheme(saved, false);
                     const media = window.matchMedia('(prefers-color-scheme: dark)');
                     media.addEventListener('change', () => { if (this.mode === 'system') this.applySystem() });
                     const themeBtn = document.getElementById('mobileThemeBtn');
-                    if (themeBtn) {
-                        themeBtn.addEventListener('click', () => {
-                            const next = this.mode === 'light' ? 'dark' : this.mode === 'dark' ? 'system' : 'light';
-                            this.setTheme(next);
-                        });
-                    }
+                    if (themeBtn) { themeBtn.addEventListener('click', () => { const next = this.mode === 'light' ? 'dark' : this.mode === 'dark' ? 'system' : 'light'; this.setTheme(next); }); }
                     this.syncMobileLabel();
                     this.syncMetaThemeColor();
                     this.skinSplash();
-                    // Register SW + setup install banner
                     initPWA();
-                    // Splash show/hide on navigation
                     setupSplashNavigation();
                 },
                 setTheme(val, persist = true) {
@@ -1110,7 +1103,6 @@ $menuItems = [
             }
         }
 
-        // PWA install + banner
         let _deferredPrompt = null;
         function initPWA() {
             if ('serviceWorker' in navigator) {
@@ -1122,10 +1114,7 @@ $menuItems = [
             const nowBtn = document.getElementById('install-now');
             const nowBtnM = document.getElementById('install-now-m');
 
-            const canShow = () => {
-                const until = parseInt(localStorage.getItem('zz_install_later_until') || '0', 10);
-                return Date.now() > until;
-            };
+            const canShow = () => { const until = parseInt(localStorage.getItem('zz_install_later_until') || '0', 10); return Date.now() > until; };
 
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
@@ -1140,10 +1129,7 @@ $menuItems = [
                 localStorage.removeItem('zz_install_later_until');
             });
 
-            function closeFor30Min() {
-                localStorage.setItem('zz_install_later_until', String(Date.now() + 30 * 60 * 1000));
-                banner.classList.add('hidden');
-            }
+            function closeFor30Min() { localStorage.setItem('zz_install_later_until', String(Date.now() + 30 * 60 * 1000)); banner.classList.add('hidden'); }
             function doInstall() {
                 if (!_deferredPrompt) { banner.classList.add('hidden'); return; }
                 _deferredPrompt.prompt();
@@ -1156,39 +1142,23 @@ $menuItems = [
             if (nowBtnM) nowBtnM.addEventListener('click', doInstall);
         }
 
-        // Splash handling:
-        // - show immediately (already visible)
-        // - hide only after FULL load (ensures bg is ready)
-        // - on navigation, keep splash until next page takes over
         function setupSplashNavigation() {
             const splash = document.getElementById('zz-splash');
             if (!splash) return;
-
-            // Hide once fully loaded
-            window.addEventListener('load', () => {
-                // small timeout to ensure layout paint finished
-                setTimeout(() => { splash.style.display = 'none'; }, 60);
-            });
-
-            // Intercept internal links for smooth transition
+            window.addEventListener('load', () => { setTimeout(() => { splash.style.display = 'none'; }, 60); });
             document.addEventListener('click', function (e) {
                 const a = e.target.closest('a'); if (!a) return;
                 if (a.hasAttribute('data-no-loader')) return;
                 const href = a.getAttribute('href') || ''; if (href.startsWith('#')) return;
                 if (a.target || a.hasAttribute('download')) return;
                 const url = new URL(a.href, location.href); if (url.origin !== location.origin) return;
-
-                // Show splash and keep it until the new page paints its own splash
                 splash.style.display = '';
                 e.preventDefault();
                 setTimeout(() => { window.location.href = a.href; }, 50);
             });
-
-            // Ensure splash is visible during unload
             window.addEventListener('beforeunload', () => { splash.style.display = ''; });
         }
 
-        // Return modal (kept)
         window.addEventListener('load', function () {
             const url = localStorage.getItem('return_url');
             const title = localStorage.getItem('return_title');
@@ -1196,8 +1166,7 @@ $menuItems = [
                 function showReturnModal() {
                     document.getElementById('return-page-title').textContent = title;
                     const modal = document.getElementById('return-modal');
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
+                    modal.classList.remove('hidden'); modal.classList.add('flex');
                 }
                 setTimeout(showReturnModal, 120000);
                 document.getElementById('return-later').addEventListener('click', function () {
