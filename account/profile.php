@@ -7,151 +7,141 @@ ob_start();
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css">
 
-<div class="min-h-screen bg-gray-50" id="app-container">
-    <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
+<div class="min-h-screen text-gray-900 dark:text-white" id="app-container">
+    <div class="bg-white dark:bg-secondary border-b border-gray-100 dark:border-white/10 px-4 sm:px-6 lg:px-8 py-6">
         <div class="max-w-7xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-medium text-blue-600 uppercase tracking-wide">Profile Status</p>
-                            <p class="text-lg font-bold text-blue-900 whitespace-nowrap" id="profile-status-display">
-                                Loading...</p>
-                            <p class="text-sm font-medium text-blue-700 whitespace-nowrap">Account Status</p>
-                        </div>
-                        <div class="w-10 h-10 bg-blue-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-user-check text-blue-600"></i>
-                        </div>
+                <div
+                    class="relative bg-white dark:bg-secondary rounded-xl p-4 border border-gray-100 dark:border-white/10">
+                    <div class="space-y-1">
+                        <p class="text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wide">Profile
+                            Status</p>
+                        <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap"
+                            id="profile-status-display">Loading...</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap">Account Status
+                        </p>
                     </div>
+                    <i
+                        class="fas fa-user-check absolute bottom-3 right-3 text-3xl text-blue-600/30 dark:text-white/20"></i>
                 </div>
 
-                <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-medium text-green-600 uppercase tracking-wide">Email Status</p>
-                            <p class="text-lg font-bold text-green-900 whitespace-nowrap" id="email-status-display">
-                                Loading...</p>
-                            <p class="text-sm font-medium text-green-700 whitespace-nowrap" id="email-value-display">Not
-                                Set</p>
-                        </div>
-                        <div class="w-10 h-10 bg-green-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-envelope text-green-600"></i>
-                        </div>
+                <div
+                    class="relative bg-white dark:bg-secondary rounded-xl p-4 border border-gray-100 dark:border-white/10">
+                    <div class="space-y-1">
+                        <p class="text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wide">Email
+                            Status</p>
+                        <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap"
+                            id="email-status-display">Loading...</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap"
+                            id="email-value-display">Not Set</p>
                     </div>
+                    <i
+                        class="fas fa-envelope absolute bottom-3 right-3 text-3xl text-green-600/30 dark:text-white/20"></i>
                 </div>
 
-                <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-medium text-purple-600 uppercase tracking-wide">Phone Status</p>
-                            <p class="text-lg font-bold text-purple-900 whitespace-nowrap" id="phone-status-display">
-                                Loading...</p>
-                            <p class="text-sm font-medium text-purple-700 whitespace-nowrap" id="phone-value-display">
-                                Not Set</p>
-                        </div>
-                        <div class="w-10 h-10 bg-purple-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-phone text-purple-600"></i>
-                        </div>
+                <div
+                    class="relative bg-white dark:bg-secondary rounded-xl p-4 border border-gray-100 dark:border-white/10">
+                    <div class="space-y-1">
+                        <p class="text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wide">Phone
+                            Status</p>
+                        <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap"
+                            id="phone-status-display">Loading...</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap"
+                            id="phone-value-display">Not Set</p>
                     </div>
+                    <i
+                        class="fas fa-phone absolute bottom-3 right-3 text-3xl text-purple-600/30 dark:text-white/20"></i>
                 </div>
 
-                <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs font-medium text-orange-600 uppercase tracking-wide">Member Since</p>
-                            <p class="text-lg font-bold text-orange-900 whitespace-nowrap" id="member-since-display">
-                                Loading...</p>
-                            <p class="text-sm font-medium text-orange-700 whitespace-nowrap" id="last-login-display">
-                                Last Login</p>
-                        </div>
-                        <div class="w-10 h-10 bg-orange-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-calendar text-orange-600"></i>
-                        </div>
+                <div
+                    class="relative bg-white dark:bg-secondary rounded-xl p-4 border border-gray-100 dark:border-white/10">
+                    <div class="space-y-1">
+                        <p class="text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wide">Member
+                            Since</p>
+                        <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap"
+                            id="member-since-display">Loading...</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap"
+                            id="last-login-display">Last Login</p>
                     </div>
+                    <i
+                        class="fas fa-calendar absolute bottom-3 right-3 text-3xl text-orange-600/30 dark:text-white/20"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         <div id="incompleteBanner"
-            class="hidden bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 px-4 py-3 rounded-xl mb-6"
+            class="hidden bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 text-yellow-800 dark:text-yellow-200 px-4 py-3 rounded-xl mb-6"
             role="alert">
             <div class="flex items-start gap-3">
                 <i class="fas fa-exclamation-triangle mt-0.5"></i>
                 <div>
-                    <p class="text-sm leading-relaxed">
-                        Your profile is incomplete. Please complete the following required fields:
-                        <span id="missing-fields-list" class="font-semibold"></span>
-                    </p>
+                    <p class="text-sm leading-relaxed">Your profile is incomplete. Please complete the following
+                        required fields: <span id="missing-fields-list" class="font-semibold"></span></p>
                     <button id="complete-profile-btn"
-                        class="mt-2 text-sm bg-yellow-600 text-white px-3 py-1 rounded-md hover:bg-yellow-700 transition-colors">
-                        Complete Profile Now
-                    </button>
+                        class="mt-2 text-sm bg-yellow-600 text-white px-3 py-1 rounded-md hover:bg-yellow-700 transition-colors">Complete
+                        Profile Now</button>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
-            <div class="border-b border-gray-200">
+        <div
+            class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 mb-6 md:mb-8">
+            <div class="border-b border-gray-100 dark:border-white/10">
                 <div class="hidden md:block">
                     <nav class="flex space-x-8 px-6 overflow-x-auto pb-2" aria-label="Tabs">
                         <button id="overview-tab"
                             class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-primary text-primary"
-                            onclick="switchTab('overview')">
-                            <i class="fas fa-user mr-2"></i>Profile Overview
-                        </button>
+                            onclick="switchTab('overview')"><i class="fas fa-user mr-2"></i>Profile Overview</button>
                         <button id="details-tab"
-                            class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
-                            onclick="switchTab('details')">
-                            <i class="fas fa-edit mr-2"></i>Edit Details
-                            <span id="details-tab-indicator"
-                                class="hidden ml-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                        </button>
+                            class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 dark:text-white/70 hover:text-primary hover:border-b-primary/30"
+                            onclick="switchTab('details')"><i class="fas fa-edit mr-2"></i>Edit Details <span
+                                id="details-tab-indicator"
+                                class="hidden ml-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span></button>
                         <button id="security-tab"
-                            class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 hover:text-primary hover:border-b-primary/30"
-                            onclick="switchTab('security')">
-                            <i class="fas fa-shield-alt mr-2"></i>Security
-                        </button>
+                            class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 dark:text-white/70 hover:text-primary hover:border-b-primary/30"
+                            onclick="switchTab('security')"><i class="fas fa-shield-alt mr-2"></i>Security</button>
                     </nav>
                 </div>
 
-                <div class="md:hidden px-6 py-4">
+                <div class="md:hidden px-4 sm:px-6 py-3">
                     <div class="relative">
                         <button id="mobile-tab-toggle"
-                            class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
+                            class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200">
                             <div class="flex items-center gap-2">
                                 <i class="fas fa-user text-primary"></i>
-                                <span id="mobile-tab-label" class="font-medium text-gray-900">Profile Overview</span>
+                                <span id="mobile-tab-label" class="font-medium text-secondary dark:text-white">Profile
+                                    Overview</span>
                                 <span id="mobile-details-indicator"
                                     class="hidden w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                             </div>
-                            <i class="fas fa-chevron-down text-gray-400 transition-transform duration-200"
+                            <i class="fas fa-chevron-down text-gray-400 dark:text-white/50 transition-transform duration-200"
                                 id="mobile-tab-chevron"></i>
                         </button>
 
                         <div id="mobile-tab-dropdown"
-                            class="hidden absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg z-50">
+                            class="hidden absolute top-full left-0 right-0 mt-2 bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-xl shadow-lg z-50">
                             <div class="py-2">
                                 <button
-                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                                     data-tab="overview">
                                     <i class="fas fa-user text-blue-600"></i>
-                                    <span>Profile Overview</span>
+                                    <span class="text-secondary dark:text-white">Profile Overview</span>
                                 </button>
                                 <button
-                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                                     data-tab="details">
                                     <i class="fas fa-edit text-green-600"></i>
-                                    <span>Edit Details</span>
+                                    <span class="text-secondary dark:text-white">Edit Details</span>
                                     <span id="mobile-details-tab-indicator"
                                         class="hidden ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                                 </button>
                                 <button
-                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                                     data-tab="security">
                                     <i class="fas fa-shield-alt text-purple-600"></i>
-                                    <span>Security</span>
+                                    <span class="text-secondary dark:text-white">Security</span>
                                 </button>
                             </div>
                         </div>
@@ -161,98 +151,105 @@ ob_start();
         </div>
 
         <div id="tab-content">
-            <!-- Profile Overview Tab -->
             <div id="overview-content" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                     <div class="lg:col-span-1">
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <div
+                            class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
                             <div class="text-center">
                                 <div
-                                    class="w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 mx-auto">
+                                    class="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-white/10 shadow-md mb-4 mx-auto">
                                     <img id="user-profile-pic" src="https://placehold.co/128x128/3B82F6/FFFFFF?text=..."
                                         alt="Profile Picture" class="w-full h-full object-cover">
                                 </div>
-                                <h1 class="text-2xl font-bold text-gray-900 mb-2" id="user-fullname">Loading…</h1>
-                                <p class="text-gray-600 mb-4" id="user-username">@loading</p>
-                                <div class="space-y-2 text-sm text-gray-600">
+                                <h1 class="text-2xl font-bold text-secondary dark:text-white mb-1" id="user-fullname">
+                                    Loading…</h1>
+                                <p class="text-gray-600 dark:text-white/70 mb-4" id="user-username">@loading</p>
+                                <div class="space-y-2 text-sm text-gray-600 dark:text-white/70">
                                     <p id="user-joined">Member since …</p>
                                     <p id="user-lastlogin">Last login: …</p>
                                 </div>
                             </div>
                         </div>
+                        <div class="md:hidden mt-4 grid grid-cols-2 gap-3">
+                            <button onclick="switchTab('details')"
+                                class="px-4 py-3 bg-primary text-white rounded-xl font-medium">Edit Profile</button>
+                            <button onclick="switchTab('security')"
+                                class="px-4 py-3 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl font-medium">Security</button>
+                        </div>
                     </div>
 
                     <div class="lg:col-span-2">
-                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                        <div
+                            class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <i class="fas fa-info-circle text-blue-600"></i>
+                                <div class="w-8 h-8 bg-user-primary/10 rounded-lg grid place-items-center">
+                                    <i class="fas fa-info-circle text-user-primary"></i>
                                 </div>
-                                <h3 class="text-xl font-semibold text-gray-900">Account Information</h3>
+                                <h3 class="text-xl font-semibold text-secondary dark:text-white">Account Information
+                                </h3>
                             </div>
 
                             <div class="space-y-6">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="bg-gray-50 rounded-xl p-4" id="names-overview-card">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                    <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4" id="names-overview-card">
                                         <div class="flex items-center gap-3 mb-3">
                                             <div
-                                                class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                <i class="fas fa-user text-blue-600"></i>
+                                                class="w-8 h-8 bg-blue-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                                <i class="fas fa-user text-blue-600 dark:text-white"></i>
                                             </div>
-                                            <h4 class="font-semibold text-gray-900">Full Name</h4>
+                                            <h4 class="font-semibold text-secondary dark:text-white">Full Name</h4>
                                             <i class="fas fa-exclamation-circle text-red-500 hidden"
                                                 id="names-required-icon" title="Required field"></i>
                                         </div>
-                                        <p class="text-gray-700" id="overview-names">Loading...</p>
+                                        <p class="text-gray-700 dark:text-white/80" id="overview-names">Loading...</p>
                                     </div>
 
-                                    <div class="bg-gray-50 rounded-xl p-4" id="email-overview-card">
+                                    <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4" id="email-overview-card">
                                         <div class="flex items-center gap-3 mb-3">
                                             <div
-                                                class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                                <i class="fas fa-envelope text-green-600"></i>
+                                                class="w-8 h-8 bg-green-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                                <i class="fas fa-envelope text-green-600 dark:text-white"></i>
                                             </div>
-                                            <h4 class="font-semibold text-gray-900">Email Address</h4>
+                                            <h4 class="font-semibold text-secondary dark:text-white">Email Address</h4>
                                             <i class="fas fa-exclamation-circle text-red-500 hidden"
                                                 id="email-required-icon" title="Required field"></i>
                                         </div>
-                                        <p class="text-gray-700" id="overview-email">Loading...</p>
+                                        <p class="text-gray-700 dark:text-white/80" id="overview-email">Loading...</p>
                                     </div>
 
-                                    <div class="bg-gray-50 rounded-xl p-4" id="phone-overview-card">
+                                    <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4" id="phone-overview-card">
                                         <div class="flex items-center gap-3 mb-3">
                                             <div
-                                                class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                                <i class="fas fa-phone text-purple-600"></i>
+                                                class="w-8 h-8 bg-purple-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                                <i class="fas fa-phone text-purple-600 dark:text-white"></i>
                                             </div>
-                                            <h4 class="font-semibold text-gray-900">Phone Number</h4>
+                                            <h4 class="font-semibold text-secondary dark:text-white">Phone Number</h4>
                                             <i class="fas fa-exclamation-circle text-red-500 hidden"
                                                 id="phone-required-icon" title="Required field"></i>
                                         </div>
-                                        <p class="text-gray-700" id="overview-phone">Loading...</p>
+                                        <p class="text-gray-700 dark:text-white/80" id="overview-phone">Loading...</p>
                                     </div>
 
-                                    <div class="bg-gray-50 rounded-xl p-4">
+                                    <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4">
                                         <div class="flex items-center gap-3 mb-3">
                                             <div
-                                                class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                                <i class="fas fa-shield-alt text-orange-600"></i>
+                                                class="w-8 h-8 bg-orange-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                                <i class="fas fa-shield-alt text-orange-600 dark:text-white"></i>
                                             </div>
-                                            <h4 class="font-semibold text-gray-900">Account Status</h4>
+                                            <h4 class="font-semibold text-secondary dark:text-white">Account Status</h4>
                                         </div>
-                                        <p id="overview-status">Loading...</p>
+                                        <p id="overview-status" class="text-gray-700 dark:text-white/80">Loading...</p>
                                     </div>
                                 </div>
 
-                                <div class="flex flex-wrap gap-3 pt-4">
+                                <div class="hidden md:flex flex-wrap gap-3 pt-2">
                                     <button onclick="switchTab('details')"
-                                        class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
-                                        <i class="fas fa-edit mr-2"></i>Edit Profile
-                                    </button>
+                                        class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"><i
+                                            class="fas fa-edit mr-2"></i>Edit Profile</button>
                                     <button onclick="switchTab('security')"
-                                        class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium">
-                                        <i class="fas fa-shield-alt mr-2"></i>Security Settings
-                                    </button>
+                                        class="px-6 py-3 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors font-medium"><i
+                                            class="fas fa-shield-alt mr-2"></i>Security Settings</button>
                                 </div>
                             </div>
                         </div>
@@ -260,15 +257,15 @@ ob_start();
                 </div>
             </div>
 
-            <!-- Edit Details Tab -->
             <div id="details-content" class="tab-content hidden">
                 <div class="space-y-6">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6" id="names-form-section">
+                    <div class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6"
+                        id="names-form-section">
                         <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-user text-blue-600"></i>
+                            <div class="w-8 h-8 bg-blue-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                <i class="fas fa-user text-blue-600 dark:text-white"></i>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-900">Edit Names</h3>
+                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Edit Names</h3>
                             <i class="fas fa-exclamation-circle text-red-500 hidden" id="names-form-required-icon"
                                 title="Required field"></i>
                         </div>
@@ -276,55 +273,58 @@ ob_start();
                         <form id="namesForm" class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label for="firstName" class="block text-sm font-semibold text-gray-700 mb-2">
-                                        First Name *
-                                        <i class="fas fa-exclamation-circle text-red-500 ml-1 hidden"
-                                            id="firstName-required-icon"></i>
-                                    </label>
+                                    <label for="firstName"
+                                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">First
+                                        Name *</label>
                                     <input type="text" id="firstName" name="first_name"
-                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                         autocomplete="off">
+                                    <i class="fas fa-exclamation-circle text-red-500 ml-1 hidden"
+                                        id="firstName-required-icon"></i>
                                 </div>
                                 <div>
-                                    <label for="lastName" class="block text-sm font-semibold text-gray-700 mb-2">Last
+                                    <label for="lastName"
+                                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Last
                                         Name</label>
                                     <input type="text" id="lastName" name="last_name"
-                                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                                         autocomplete="off">
                                 </div>
                             </div>
                             <div id="names-form-error" class="text-red-500 text-sm hidden"></div>
                             <button type="submit"
-                                class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30">
-                                <i class="fas fa-save mr-2"></i>Update Names
-                            </button>
+                                class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"><i
+                                    class="fas fa-save mr-2"></i>Update Names</button>
                         </form>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6" id="email-form-section">
+                    <div class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6"
+                        id="email-form-section">
                         <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-envelope text-green-600"></i>
+                            <div class="w-8 h-8 bg-green-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                <i class="fas fa-envelope text-green-600 dark:text-white"></i>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-900">Email Address</h3>
+                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Email Address</h3>
                             <i class="fas fa-exclamation-circle text-red-500 hidden" id="email-form-required-icon"
                                 title="Required field"></i>
                         </div>
 
-                        <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                            <div class="flex items-center justify-between">
+                        <div
+                            class="bg-gray-50 dark:bg-white/5 rounded-xl p-4 mb-4 border border-gray-100 dark:border-white/10">
+                            <div class="flex items-center justify-between gap-3">
                                 <div>
-                                    <p class="text-sm text-gray-600">Current Email:</p>
-                                    <p class="font-medium text-gray-900" id="current-email-display">Loading...</p>
+                                    <p class="text-sm text-gray-600 dark:text-white/70">Current Email:</p>
+                                    <p class="font-medium text-secondary dark:text-white" id="current-email-display">
+                                        Loading...</p>
                                 </div>
                                 <button onclick="editEmail()"
-                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                                    <i class="fas fa-edit mr-2"></i>Change Email
-                                </button>
+                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"><i
+                                        class="fas fa-edit mr-2"></i>Change Email</button>
                             </div>
                         </div>
 
-                        <div class="text-xs text-gray-500 bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <div
+                            class="text-xs text-gray-600 dark:text-white/70 bg-blue-50 dark:bg-white/5 rounded-lg p-3 border border-blue-200 dark:border-white/10">
                             <p><strong>Note:</strong> If you have an existing email, you'll need to verify it with an
                                 OTP before updating.</p>
                             <p>Can't access your current email? <a href="#" class="text-primary hover:underline"
@@ -332,30 +332,33 @@ ob_start();
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6" id="phone-form-section">
+                    <div class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6"
+                        id="phone-form-section">
                         <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-phone text-purple-600"></i>
+                            <div class="w-8 h-8 bg-purple-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                <i class="fas fa-phone text-purple-600 dark:text-white"></i>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-900">Phone Number</h3>
+                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Phone Number</h3>
                             <i class="fas fa-exclamation-circle text-red-500 hidden" id="phone-form-required-icon"
                                 title="Required field"></i>
                         </div>
 
-                        <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                            <div class="flex items-center justify-between">
+                        <div
+                            class="bg-gray-50 dark:bg-white/5 rounded-xl p-4 mb-4 border border-gray-100 dark:border-white/10">
+                            <div class="flex items-center justify-between gap-3">
                                 <div>
-                                    <p class="text-sm text-gray-600">Current Phone:</p>
-                                    <p class="font-medium text-gray-900" id="current-phone-display">Loading...</p>
+                                    <p class="text-sm text-gray-600 dark:text-white/70">Current Phone:</p>
+                                    <p class="font-medium text-secondary dark:text-white" id="current-phone-display">
+                                        Loading...</p>
                                 </div>
                                 <button onclick="editPhone()"
-                                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
-                                    <i class="fas fa-edit mr-2"></i>Change Phone
-                                </button>
+                                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"><i
+                                        class="fas fa-edit mr-2"></i>Change Phone</button>
                             </div>
                         </div>
 
-                        <div class="text-xs text-gray-500 bg-blue-50 rounded-lg p-3 border border-blue-200">
+                        <div
+                            class="text-xs text-gray-600 dark:text-white/70 bg-blue-50 dark:bg-white/5 rounded-lg p-3 border border-blue-200 dark:border-white/10">
                             <p><strong>Note:</strong> If you have an existing phone number, you'll need to verify it
                                 with an OTP before updating.</p>
                             <p>Can't access your current phone? <a href="#" class="text-primary hover:underline"
@@ -365,48 +368,48 @@ ob_start();
                 </div>
             </div>
 
-            <!-- Security Tab -->
             <div id="security-content" class="tab-content hidden">
                 <div class="space-y-6">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div
+                        class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
                         <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-lock text-orange-600"></i>
+                            <div class="w-8 h-8 bg-orange-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                <i class="fas fa-lock text-orange-600 dark:text-white"></i>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-900">Change Password</h3>
+                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Change Password</h3>
                         </div>
 
                         <button onclick="showModal('changePasswordModal')"
-                            class="px-6 py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-all duration-200 font-medium shadow-lg shadow-orange-600/25 hover:shadow-xl hover:shadow-orange-600/30">
-                            <i class="fas fa-key mr-2"></i>Change Password
-                        </button>
+                            class="px-6 py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-all duration-200 font-medium shadow-lg shadow-orange-600/25 hover:shadow-xl hover:shadow-orange-600/30"><i
+                                class="fas fa-key mr-2"></i>Change Password</button>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                    <div
+                        class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
                         <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-user-slash text-red-600"></i>
+                            <div class="w-8 h-8 bg-red-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                <i class="fas fa-user-slash text-red-600 dark:text-white"></i>
                             </div>
-                            <h3 class="text-xl font-semibold text-gray-900">Account Deletion</h3>
+                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Account Deletion</h3>
                         </div>
 
-                        <div class="bg-red-50 rounded-xl p-4 mb-4 border border-red-200">
+                        <div
+                            class="bg-red-50 dark:bg-red-900/20 rounded-xl p-4 mb-4 border border-red-200 dark:border-red-700/50">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                <div class="w-8 h-8 bg-red-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                                    <i class="fas fa-exclamation-triangle text-red-600 dark:text-white"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-semibold text-red-900">Danger Zone</h4>
-                                    <p class="text-sm text-red-700 mt-1">Once you delete your account, there is no going
-                                        back. Please be certain.</p>
+                                    <h4 class="font-semibold text-red-900 dark:text-red-200">Danger Zone</h4>
+                                    <p class="text-sm text-red-700 dark:text-red-300 mt-1">Once you delete your account,
+                                        there is no going back. Please be certain.</p>
                                 </div>
                             </div>
                         </div>
 
                         <button onclick="showModal('deleteAccountModal')"
-                            class="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium shadow-lg shadow-red-600/25 hover:shadow-xl hover:shadow-red-600/30">
-                            <i class="fas fa-trash mr-2"></i>Delete Account
-                        </button>
+                            class="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium shadow-lg shadow-red-600/25 hover:shadow-xl hover:shadow-red-600/30"><i
+                                class="fas fa-trash mr-2"></i>Delete Account</button>
                     </div>
                 </div>
             </div>
@@ -414,92 +417,93 @@ ob_start();
     </div>
 </div>
 
-<!-- Email Edit Modal -->
 <div id="editEmailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('editEmailModal')"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10">
-        <div class="p-6 border-b border-gray-200">
+    <div
+        class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
+        <div class="p-6 border-b border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Edit Email Address</h3>
+                <h3 class="text-lg font-semibold text-secondary dark:text-white">Edit Email Address</h3>
                 <button onclick="hideModal('editEmailModal')"
-                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-                    <i class="fas fa-times text-gray-500"></i>
+                    class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-gray-500 dark:text-white/60"></i>
                 </button>
             </div>
         </div>
         <div class="p-6">
             <div id="emailStep1" class="space-y-4">
-                <div class="bg-gray-50 rounded-xl p-4">
-                    <p class="text-sm text-gray-700 mb-1">Current Email:</p>
-                    <p class="font-medium text-gray-900" id="current-email-modal">Loading...</p>
+                <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4">
+                    <p class="text-sm text-gray-700 dark:text-white/80 mb-1">Current Email:</p>
+                    <p class="font-medium text-secondary dark:text-white" id="current-email-modal">Loading...</p>
                 </div>
                 <div id="verifyExistingEmailSection">
-                    <p class="text-sm text-gray-600 mb-3">To change your email, first verify your current email address.
-                    </p>
+                    <p class="text-sm text-gray-600 dark:text-white/70 mb-3">To change your email, first verify your
+                        current email address.</p>
                     <button type="button" id="verifyExistingEmailBtn"
-                        class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium">
-                        <i class="fas fa-shield-alt mr-2"></i>Verify Current Email
-                    </button>
+                        class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"><i
+                            class="fas fa-shield-alt mr-2"></i>Verify Current Email</button>
                 </div>
                 <div id="noExistingEmailSection" class="hidden">
-                    <p class="text-sm text-gray-600 mb-3">You don't have an email set. Enter your new email address.</p>
+                    <p class="text-sm text-gray-600 dark:text-white/70 mb-3">You don't have an email set. Enter your new
+                        email address.</p>
                     <div>
-                        <label for="newEmailDirect" class="block text-sm font-semibold text-gray-700 mb-2">Email
+                        <label for="newEmailDirect"
+                            class="block text-sm font-semibold text-secondary dark:text-white mb-2">Email
                             Address</label>
                         <input type="email" id="newEmailDirect"
-                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                             autocomplete="off">
                     </div>
                     <button type="button" id="sendDirectEmailOTPBtn"
-                        class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium mt-3">
-                        <i class="fas fa-paper-plane mr-2"></i>Send Verification Code
-                    </button>
+                        class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium mt-3"><i
+                            class="fas fa-paper-plane mr-2"></i>Send Verification Code</button>
                 </div>
             </div>
 
             <div id="emailStep2" class="space-y-4 hidden">
-                <p class="text-sm text-gray-600">Enter the verification code sent to your current email.</p>
+                <p class="text-sm text-gray-600 dark:text-white/70">Enter the verification code sent to your current
+                    email.</p>
                 <div>
-                    <label for="existingEmailOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification
+                    <label for="existingEmailOTP"
+                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Verification
                         Code</label>
                     <input type="text" id="existingEmailOTP" maxlength="6"
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
+                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
                         autocomplete="off" placeholder="000000">
                 </div>
                 <button type="button" id="verifyExistingEmailOTPBtn"
-                    class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium">
-                    <i class="fas fa-check mr-2"></i>Verify Code
-                </button>
+                    class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"><i
+                        class="fas fa-check mr-2"></i>Verify Code</button>
             </div>
 
             <div id="emailStep3" class="space-y-4 hidden">
-                <p class="text-sm text-gray-600">Enter your new email address.</p>
+                <p class="text-sm text-gray-600 dark:text-white/70">Enter your new email address.</p>
                 <div>
-                    <label for="newEmail" class="block text-sm font-semibold text-gray-700 mb-2">New Email
-                        Address</label>
+                    <label for="newEmail" class="block text-sm font-semibold text-secondary dark:text-white mb-2">New
+                        Email Address</label>
                     <input type="email" id="newEmail"
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                         autocomplete="off">
                 </div>
                 <button type="button" id="sendNewEmailOTPBtn"
-                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
-                    <i class="fas fa-paper-plane mr-2"></i>Send Verification Code
-                </button>
+                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"><i
+                        class="fas fa-paper-plane mr-2"></i>Send Verification Code</button>
             </div>
 
             <div id="emailStep4" class="space-y-4 hidden">
-                <p class="text-sm text-gray-600">Enter the verification code sent to your new email.</p>
+                <p class="text-sm text-gray-600 dark:text-white/70">Enter the verification code sent to your new email.
+                </p>
                 <div>
-                    <label for="newEmailOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification
+                    <label for="newEmailOTP"
+                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Verification
                         Code</label>
                     <input type="text" id="newEmailOTP" maxlength="6"
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
+                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
                         autocomplete="off" placeholder="000000">
                 </div>
                 <button type="button" id="verifyNewEmailOTPBtn"
-                    class="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium">
-                    <i class="fas fa-check-circle mr-2"></i>Complete Update
-                </button>
+                    class="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium"><i
+                        class="fas fa-check-circle mr-2"></i>Complete Update</button>
             </div>
 
             <div id="email-form-error" class="text-red-500 text-sm mt-3 hidden"></div>
@@ -507,94 +511,94 @@ ob_start();
     </div>
 </div>
 
-<!-- Phone Edit Modal -->
 <div id="editPhoneModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('editPhoneModal')"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10">
-        <div class="p-6 border-b border-gray-200">
+    <div
+        class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
+        <div class="p-6 border-b border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Edit Phone Number</h3>
+                <h3 class="text-lg font-semibold text-secondary dark:text-white">Edit Phone Number</h3>
                 <button onclick="hideModal('editPhoneModal')"
-                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-                    <i class="fas fa-times text-gray-500"></i>
+                    class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-gray-500 dark:text-white/60"></i>
                 </button>
             </div>
         </div>
         <div class="p-6">
             <div id="phoneStep1" class="space-y-4">
-                <div class="bg-gray-50 rounded-xl p-4">
-                    <p class="text-sm text-gray-700 mb-1">Current Phone:</p>
-                    <p class="font-medium text-gray-900" id="current-phone-modal">Loading...</p>
+                <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4">
+                    <p class="text-sm text-gray-700 dark:text-white/80 mb-1">Current Phone:</p>
+                    <p class="font-medium text-secondary dark:text-white" id="current-phone-modal">Loading...</p>
                 </div>
                 <div id="verifyExistingPhoneSection">
-                    <p class="text-sm text-gray-600 mb-3">To change your phone, first verify your current phone number.
-                    </p>
+                    <p class="text-sm text-gray-600 dark:text-white/70 mb-3">To change your phone, first verify your
+                        current phone number.</p>
                     <button type="button" id="verifyExistingPhoneBtn"
-                        class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium">
-                        <i class="fas fa-shield-alt mr-2"></i>Verify Current Phone
-                    </button>
+                        class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"><i
+                            class="fas fa-shield-alt mr-2"></i>Verify Current Phone</button>
                 </div>
                 <div id="noExistingPhoneSection" class="hidden">
-                    <p class="text-sm text-gray-600 mb-3">You don't have a phone set. Enter your new phone number.</p>
+                    <p class="text-sm text-gray-600 dark:text-white/70 mb-3">You don't have a phone set. Enter your new
+                        phone number.</p>
                     <div>
-                        <label for="newPhoneDirect" class="block text-sm font-semibold text-gray-700 mb-2">Phone
-                            Number</label>
+                        <label for="newPhoneDirect"
+                            class="block text-sm font-semibold text-secondary dark:text-white mb-2">Phone Number</label>
                         <input type="tel" id="newPhoneDirect"
-                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                             autocomplete="off">
                         <div id="phone-error-direct" class="text-red-500 text-xs mt-1 hidden"></div>
                     </div>
                     <button type="button" id="sendDirectPhoneOTPBtn"
-                        class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium mt-3">
-                        <i class="fas fa-paper-plane mr-2"></i>Send Verification Code
-                    </button>
+                        class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium mt-3"><i
+                            class="fas fa-paper-plane mr-2"></i>Send Verification Code</button>
                 </div>
             </div>
 
             <div id="phoneStep2" class="space-y-4 hidden">
-                <p class="text-sm text-gray-600">Enter the verification code sent to your current phone.</p>
+                <p class="text-sm text-gray-600 dark:text-white/70">Enter the verification code sent to your current
+                    phone.</p>
                 <div>
-                    <label for="existingPhoneOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification
+                    <label for="existingPhoneOTP"
+                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Verification
                         Code</label>
                     <input type="text" id="existingPhoneOTP" maxlength="6"
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
+                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
                         autocomplete="off" placeholder="000000">
                 </div>
                 <button type="button" id="verifyExistingPhoneOTPBtn"
-                    class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium">
-                    <i class="fas fa-check mr-2"></i>Verify Code
-                </button>
+                    class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"><i
+                        class="fas fa-check mr-2"></i>Verify Code</button>
             </div>
 
             <div id="phoneStep3" class="space-y-4 hidden">
-                <p class="text-sm text-gray-600">Enter your new phone number.</p>
+                <p class="text-sm text-gray-600 dark:text-white/70">Enter your new phone number.</p>
                 <div>
-                    <label for="newPhone" class="block text-sm font-semibold text-gray-700 mb-2">New Phone
-                        Number</label>
+                    <label for="newPhone" class="block text-sm font-semibold text-secondary dark:text-white mb-2">New
+                        Phone Number</label>
                     <input type="tel" id="newPhone"
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                         autocomplete="off">
                     <div id="phone-error" class="text-red-500 text-xs mt-1 hidden"></div>
                 </div>
                 <button type="button" id="sendNewPhoneOTPBtn"
-                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
-                    <i class="fas fa-paper-plane mr-2"></i>Send Verification Code
-                </button>
+                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"><i
+                        class="fas fa-paper-plane mr-2"></i>Send Verification Code</button>
             </div>
 
             <div id="phoneStep4" class="space-y-4 hidden">
-                <p class="text-sm text-gray-600">Enter the verification code sent to your new phone.</p>
+                <p class="text-sm text-gray-600 dark:text-white/70">Enter the verification code sent to your new phone.
+                </p>
                 <div>
-                    <label for="newPhoneOTP" class="block text-sm font-semibold text-gray-700 mb-2">Verification
+                    <label for="newPhoneOTP"
+                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Verification
                         Code</label>
                     <input type="text" id="newPhoneOTP" maxlength="6"
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
+                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
                         autocomplete="off" placeholder="000000">
                 </div>
                 <button type="button" id="verifyNewPhoneOTPBtn"
-                    class="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium">
-                    <i class="fas fa-check-circle mr-2"></i>Complete Update
-                </button>
+                    class="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium"><i
+                        class="fas fa-check-circle mr-2"></i>Complete Update</button>
             </div>
 
             <div id="phone-form-error" class="text-red-500 text-sm mt-3 hidden"></div>
@@ -602,192 +606,183 @@ ob_start();
     </div>
 </div>
 
-<!-- Change Password Modal -->
 <div id="changePasswordModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('changePasswordModal')"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10">
-        <div class="p-6 border-b border-gray-200">
+    <div
+        class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
+        <div class="p-6 border-b border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Change Password</h3>
+                <h3 class="text-lg font-semibold text-secondary dark:text-white">Change Password</h3>
                 <button onclick="hideModal('changePasswordModal')"
-                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-                    <i class="fas fa-times text-gray-500"></i>
+                    class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-gray-500 dark:text-white/60"></i>
                 </button>
             </div>
         </div>
         <div class="p-6">
             <form id="changePasswordForm" class="space-y-4">
                 <div>
-                    <label for="currentPassword" class="block text-sm font-semibold text-gray-700 mb-2">Current
-                        Password</label>
+                    <label for="currentPassword"
+                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Current Password</label>
                     <div class="relative">
                         <input type="password" id="currentPassword" name="current_password"
-                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                             autocomplete="off">
                         <button type="button"
-                            class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white/80"
                             data-target="currentPassword">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 <div>
-                    <label for="newPassword" class="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+                    <label for="newPassword" class="block text-sm font-semibold text-secondary dark:text-white mb-2">New
+                        Password</label>
                     <div class="relative">
                         <input type="password" id="newPassword" name="new_password"
-                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                             autocomplete="off">
                         <button type="button"
-                            class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white/80"
                             data-target="newPassword">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                     <div class="mt-2">
-                        <div class="text-xs text-gray-600 mb-1">Password strength:</div>
-                        <div class="w-full h-2 bg-gray-200 rounded-full">
+                        <div class="text-xs text-gray-600 dark:text-white/70 mb-1">Password strength:</div>
+                        <div class="w-full h-2 bg-gray-200 dark:bg-white/10 rounded-full">
                             <div id="passwordStrength" class="h-2 bg-red-500 rounded-full transition-all duration-200"
                                 style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
                 <div>
-                    <label for="confirmPassword" class="block text-sm font-semibold text-gray-700 mb-2">Confirm New
+                    <label for="confirmPassword"
+                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Confirm New
                         Password</label>
                     <div class="relative">
                         <input type="password" id="confirmPassword" name="confirm_password"
-                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                             autocomplete="off">
                         <button type="button"
-                            class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            class="toggle-password absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white/80"
                             data-target="confirmPassword">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
-                <div class="text-xs text-gray-600 bg-gray-50 rounded-lg p-3">
+                <div
+                    class="text-xs text-gray-600 dark:text-white/70 bg-gray-50 dark:bg-white/5 rounded-lg p-3 border border-gray-100 dark:border-white/10">
                     <p class="font-medium mb-2">Password must:</p>
                     <ul class="space-y-1">
-                        <li id="length-check" class="flex items-center gap-2 text-gray-400">
-                            <i class="fas fa-times text-xs"></i>Be at least 8 characters long
-                        </li>
-                        <li id="uppercase-check" class="flex items-center gap-2 text-gray-400">
-                            <i class="fas fa-times text-xs"></i>Include at least one uppercase letter
-                        </li>
-                        <li id="lowercase-check" class="flex items-center gap-2 text-gray-400">
-                            <i class="fas fa-times text-xs"></i>Include at least one lowercase letter
-                        </li>
-                        <li id="number-check" class="flex items-center gap-2 text-gray-400">
-                            <i class="fas fa-times text-xs"></i>Include at least one number
-                        </li>
-                        <li id="special-check" class="flex items-center gap-2 text-gray-400">
-                            <i class="fas fa-times text-xs"></i>Include at least one special character
-                        </li>
+                        <li id="length-check" class="flex items-center gap-2 text-gray-400 dark:text-white/60"><i
+                                class="fas fa-times text-xs"></i>Be at least 8 characters long</li>
+                        <li id="uppercase-check" class="flex items-center gap-2 text-gray-400 dark:text-white/60"><i
+                                class="fas fa-times text-xs"></i>Include at least one uppercase letter</li>
+                        <li id="lowercase-check" class="flex items-center gap-2 text-gray-400 dark:text-white/60"><i
+                                class="fas fa-times text-xs"></i>Include at least one lowercase letter</li>
+                        <li id="number-check" class="flex items-center gap-2 text-gray-400 dark:text-white/60"><i
+                                class="fas fa-times text-xs"></i>Include at least one number</li>
+                        <li id="special-check" class="flex items-center gap-2 text-gray-400 dark:text-white/60"><i
+                                class="fas fa-times text-xs"></i>Include at least one special character</li>
                     </ul>
                 </div>
                 <div id="password-form-error" class="text-red-500 text-sm hidden"></div>
                 <button type="submit"
-                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
-                    <i class="fas fa-key mr-2"></i>Update Password
-                </button>
+                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"><i
+                        class="fas fa-key mr-2"></i>Update Password</button>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Delete Account Modal -->
 <div id="deleteAccountModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('deleteAccountModal')"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10">
-        <div class="p-6 border-b border-gray-200">
+    <div
+        class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
+        <div class="p-6 border-b border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Delete Account</h3>
+                <h3 class="text-lg font-semibold text-secondary dark:text-white">Delete Account</h3>
                 <button onclick="hideModal('deleteAccountModal')"
-                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-                    <i class="fas fa-times text-gray-500"></i>
+                    class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-gray-500 dark:text-white/60"></i>
                 </button>
             </div>
         </div>
         <div class="p-6">
             <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                <div class="w-12 h-12 bg-red-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 dark:text-white text-xl"></i>
                 </div>
                 <div>
-                    <h4 class="font-semibold text-gray-900">Are you absolutely sure?</h4>
-                    <p class="text-sm text-gray-600">This action cannot be undone.</p>
+                    <h4 class="font-semibold text-secondary dark:text-white">Are you absolutely sure?</h4>
+                    <p class="text-sm text-gray-600 dark:text-white/70">This action cannot be undone.</p>
                 </div>
             </div>
-            <p class="text-gray-700 mb-6">
-                This will permanently delete your account and remove all of your data from our servers.
-                This action cannot be undone.
-            </p>
+            <p class="text-gray-700 dark:text-white/80 mb-6">This will permanently delete your account and remove all of
+                your data from our servers. This action cannot be undone.</p>
             <div class="flex gap-3">
                 <button type="button" id="deleteAccountCancelBtn"
-                    class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors font-medium"
-                    onclick="hideModal('deleteAccountModal')">
-                    Cancel
-                </button>
+                    class="flex-1 px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors font-medium"
+                    onclick="hideModal('deleteAccountModal')">Cancel</button>
                 <button type="button" id="deleteAccountConfirmBtn"
-                    class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium">
-                    <i class="fas fa-trash mr-2"></i>Delete Account
-                </button>
+                    class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"><i
+                        class="fas fa-trash mr-2"></i>Delete Account</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Contact Admin Modal -->
 <div id="contactAdminModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('contactAdminModal')"></div>
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10">
-        <div class="p-6 border-b border-gray-200">
+    <div
+        class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
+        <div class="p-6 border-b border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">Contact Admin</h3>
+                <h3 class="text-lg font-semibold text-secondary dark:text-white">Contact Admin</h3>
                 <button onclick="hideModal('contactAdminModal')"
-                    class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-                    <i class="fas fa-times text-gray-500"></i>
+                    class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-gray-500 dark:text-white/60"></i>
                 </button>
             </div>
         </div>
         <div class="p-6">
-            <div class="text-gray-700 space-y-4">
+            <div class="text-secondary dark:text-white/90 space-y-4">
                 <p>If you can't access your current email or phone number, please contact our admin team for assistance.
                 </p>
-                <div class="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                <div class="bg-blue-50 dark:bg-white/5 rounded-xl p-4 border border-blue-200 dark:border-white/10">
                     <div class="flex items-center gap-3 mb-3">
-                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-headset text-blue-600"></i>
+                        <div class="w-8 h-8 bg-blue-100 dark:bg-white/10 rounded-lg grid place-items-center">
+                            <i class="fas fa-headset text-blue-600 dark:text-white"></i>
                         </div>
-                        <h4 class="font-semibold text-gray-900">Contact Information</h4>
+                        <h4 class="font-semibold text-secondary dark:text-white">Contact Information</h4>
                     </div>
-                    <div class="space-y-2 text-sm">
+                    <div class="space-y-2 text-sm text-secondary dark:text-white/80">
                         <p><strong>Email:</strong> admin@zzimbaonline.com</p>
                         <p><strong>Phone:</strong> +256 392 003-406</p>
                     </div>
                 </div>
-                <p class="text-sm">Please provide your username and explain your situation when contacting support.</p>
+                <p class="text-sm text-gray-700 dark:text-white/80">Please provide your username and explain your
+                    situation when contacting support.</p>
             </div>
             <div class="mt-6">
                 <button onclick="hideModal('contactAdminModal')"
-                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium">
-                    <i class="fas fa-check mr-2"></i>Close
-                </button>
+                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"><i
+                        class="fas fa-check mr-2"></i>Close</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Success/Error Notifications -->
 <div id="successNotification"
-    class="fixed top-4 right-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-xl shadow-lg hidden z-50">
+    class="fixed top-4 right-4 bg-green-100 dark:bg-green-900/20 border-l-4 border-green-500 text-green-700 dark:text-green-200 p-4 rounded-xl shadow-lg hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-check-circle mr-2"></i><span id="successMessage"></span>
     </div>
 </div>
 
 <div id="errorNotification"
-    class="fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-xl shadow-lg hidden z-50">
+    class="fixed top-4 right-4 bg-red-100 dark:bg-red-900/20 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-xl shadow-lg hidden z-50">
     <div class="flex items-center">
         <i class="fas fa-exclamation-circle mr-2"></i><span id="errorMessage"></span>
     </div>
@@ -828,10 +823,8 @@ ob_start();
     });
 
     function setupEventListeners() {
-        // Mobile tab toggle
         document.getElementById('mobile-tab-toggle').addEventListener('click', toggleMobileTabDropdown);
 
-        // Mobile tab options
         document.querySelectorAll('.mobile-tab-option').forEach(option => {
             option.addEventListener('click', (e) => {
                 const tab = e.currentTarget.getAttribute('data-tab');
@@ -840,7 +833,6 @@ ob_start();
             });
         });
 
-        // Complete profile button
         $('#complete-profile-btn').click(() => {
             navigateToIncompleteFields();
         });
@@ -878,7 +870,6 @@ ob_start();
         setupEmailFlow();
         setupPhoneFlow();
 
-        // Close dropdowns when clicking outside
         document.addEventListener('click', function (event) {
             const mobileDropdown = document.getElementById('mobile-tab-dropdown');
             const mobileToggle = document.getElementById('mobile-tab-toggle');
@@ -907,19 +898,17 @@ ob_start();
     }
 
     function switchTab(tabName) {
-        // Update tab buttons
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('border-b-primary', 'text-primary');
-            btn.classList.add('border-b-transparent', 'text-gray-500');
+            btn.classList.add('border-b-transparent', 'text-gray-500', 'dark:text-white/70');
         });
 
         const activeTab = document.getElementById(`${tabName}-tab`);
         if (activeTab) {
-            activeTab.classList.remove('border-b-transparent', 'text-gray-500');
+            activeTab.classList.remove('border-b-transparent', 'text-gray-500', 'dark:text-white/70');
             activeTab.classList.add('border-b-primary', 'text-primary');
         }
 
-        // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.add('hidden');
         });
@@ -931,7 +920,6 @@ ob_start();
 
         currentTab = tabName;
 
-        // Update mobile tab label
         const tabLabels = {
             'overview': { label: 'Profile Overview', icon: 'fas fa-user' },
             'details': { label: 'Edit Details', icon: 'fas fa-edit' },
@@ -940,7 +928,6 @@ ob_start();
         const tabInfo = tabLabels[tabName] || tabLabels['overview'];
         updateMobileTabLabel(tabInfo.label, tabInfo.icon);
 
-        // Scroll to first missing field if on details tab
         if (tabName === 'details' && missingFields.length > 0) {
             setTimeout(() => {
                 scrollToFirstMissingField();
@@ -1005,28 +992,24 @@ ob_start();
     }
 
     function updateRequiredFieldIndicators(missing) {
-        // Hide all indicators first
         $('.fas.fa-exclamation-circle[id$="-required-icon"]').addClass('hidden');
         $('#details-tab-indicator, #mobile-details-indicator, #mobile-details-tab-indicator').addClass('hidden');
 
-        // Remove highlight classes
         $('.border-red-200, .bg-red-50').removeClass('border-red-200 bg-red-50');
 
         if (missing.length > 0) {
-            // Show tab indicators
             $('#details-tab-indicator, #mobile-details-indicator, #mobile-details-tab-indicator').removeClass('hidden');
 
-            // Show field-specific indicators
             missing.forEach(field => {
                 if (field === 'first_name') {
                     $('#names-required-icon, #names-form-required-icon, #firstName-required-icon').removeClass('hidden');
-                    $('#names-overview-card, #names-form-section').addClass('border-red-200 bg-red-50');
+                    $('#names-overview-card, #names-form-section').addClass('border-red-200 bg-red-50 dark:bg-red-900/10');
                 } else if (field === 'email') {
                     $('#email-required-icon, #email-form-required-icon').removeClass('hidden');
-                    $('#email-overview-card, #email-form-section').addClass('border-red-200 bg-red-50');
+                    $('#email-overview-card, #email-form-section').addClass('border-red-200 bg-red-50 dark:bg-red-900/10');
                 } else if (field === 'phone') {
                     $('#phone-required-icon, #phone-form-required-icon').removeClass('hidden');
-                    $('#phone-overview-card, #phone-form-section').addClass('border-red-200 bg-red-50');
+                    $('#phone-overview-card, #phone-form-section').addClass('border-red-200 bg-red-50 dark:bg-red-900/10');
                 }
             });
         }
@@ -1060,8 +1043,6 @@ ob_start();
                 behavior: 'smooth',
                 block: 'center'
             });
-
-            // Add a subtle highlight animation
             targetElement.classList.add('animate-pulse');
             setTimeout(() => {
                 targetElement.classList.remove('animate-pulse');
@@ -1083,7 +1064,6 @@ ob_start();
             showIncompleteBanner(missingFields);
             updateRequiredFieldIndicators(missingFields);
 
-            // Auto-navigate to details tab if profile is incomplete
             if (currentTab === 'overview') {
                 setTimeout(() => {
                     navigateToIncompleteFields();
@@ -1114,19 +1094,15 @@ ob_start();
     }
 
     function updateProfileDisplay(u) {
-        // Update form fields
         $('#firstName').val(u.first_name || '');
         $('#lastName').val(u.last_name || '');
 
-        // Update display elements
         const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User';
         $('#user-fullname').text(fullName);
         $('#user-username').text('@' + (u.username || ''));
 
-        // Update profile picture with initials
         updateProfilePicture(u.first_name, u.last_name, u.username);
 
-        // Update dates
         const jd = new Date(u.created_at);
         $('#user-joined').text('Member since ' + jd.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -1140,26 +1116,22 @@ ob_start();
             $('#user-lastlogin').text('First login');
         }
 
-        // Update overview sections
         $('#overview-names').text(fullName === 'User' ? 'Not set' : fullName);
         $('#overview-email').text(u.email || 'Not set');
         $('#overview-phone').text(u.phone || 'Not set');
 
-        // Update current displays
         $('#current-email-display, #current-email-modal').text(u.email || 'Not set');
         $('#current-phone-display, #current-phone-modal').text(u.phone || 'Not set');
 
-        // Update status
         const statusMap = {
-            active: { text: 'Active', class: 'text-green-600' },
-            inactive: { text: 'Inactive', class: 'text-yellow-600' },
-            suspended: { text: 'Suspended', class: 'text-red-600' },
-            deleted: { text: 'Deleted', class: 'text-gray-600' }
+            active: { text: 'Active', class: 'text-green-600 dark:text-green-400' },
+            inactive: { text: 'Inactive', class: 'text-yellow-600 dark:text-yellow-300' },
+            suspended: { text: 'Suspended', class: 'text-red-600 dark:text-red-400' },
+            deleted: { text: 'Deleted', class: 'text-gray-600 dark:text-white/70' }
         };
-        const status = statusMap[u.status] || { text: 'Unknown', class: 'text-gray-600' };
+        const status = statusMap[u.status] || { text: 'Unknown', class: 'text-gray-600 dark:text-white/70' };
         $('#overview-status').html(`<span class="${status.class}">${status.text}</span>`);
 
-        // Update stats cards
         $('#profile-status-display').text(status.text);
         $('#email-status-display').text(u.email ? 'Verified' : 'Not Set');
         $('#email-value-display').text(u.email || 'Not Set');
@@ -1728,10 +1700,10 @@ ob_start();
             const icon = el.find('i');
             if (check.test) {
                 s += 20;
-                el.removeClass('text-gray-400').addClass('text-green-600');
+                el.removeClass('text-gray-400 dark:text-white/60').addClass('text-green-600 dark:text-green-400');
                 icon.removeClass('fa-times').addClass('fa-check');
             } else {
-                el.removeClass('text-green-600').addClass('text-gray-400');
+                el.removeClass('text-green-600 dark:text-green-400').addClass('text-gray-400 dark:text-white/60');
                 icon.removeClass('fa-check').addClass('fa-times');
             }
         });
