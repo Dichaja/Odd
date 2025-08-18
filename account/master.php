@@ -110,12 +110,27 @@ $stmt->execute([':user_id' => $_SESSION['user']['user_id']]);
 $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $needsProfileCompletion = empty($userRow['first_name']) || empty($userRow['email']) || empty($userRow['phone']);
-if ($needsProfileCompletion) {
-    $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';
-    if (strpos($currentPath, '/account/profile') === false) {
-        header('Location: ' . BASE_URL . 'account/profile');
-        exit;
-    }
+
+/**
+ * NEW: Onboarding checks for Wallet & Store
+ * - Wallet: zzimba_wallets where owner_type='USER' and user_id = current user
+ * - Store: vendor_stores where owner_id = current user
+ */
+$hasWallet = false;
+$hasStore = false;
+
+try {
+    $stmtW = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE owner_type='USER' AND user_id = :uid LIMIT 1");
+    $stmtW->execute([':uid' => $_SESSION['user']['user_id']]);
+    $hasWallet = (bool) $stmtW->fetchColumn();
+
+    $stmtS = $pdo->prepare("SELECT id FROM vendor_stores WHERE owner_id = :uid LIMIT 1");
+    $stmtS->execute([':uid' => $_SESSION['user']['user_id']]);
+    $hasStore = (bool) $stmtS->fetchColumn();
+} catch (Throwable $e) {
+    // Fail-safe: don't break the page if DB hiccups; simply show nothing for onboarding
+    $hasWallet = false;
+    $hasStore = false;
 }
 
 $lastLogin = $userRow['last_login'] ?? '';
@@ -130,6 +145,43 @@ foreach (explode(' ', $userName) as $part) {
         $userInitials .= strtoupper($part[0]);
 }
 $sessionUlid = generateUlid();
+
+/**
+ * NEW: Onboarding progress calculation
+ * Steps order: Profile -> Wallet -> Store (optional)
+ */
+$steps = [
+    'profile' => [
+        'label' => 'Complete your profile',
+        'done' => !$needsProfileCompletion,
+        'url' => BASE_URL . 'account/profile',
+        'icon' => 'fa-id-card',
+        'optional' => false
+    ],
+    'wallet' => [
+        'label' => 'Activate Zzimba Wallet',
+        'done' => $hasWallet,
+        'url' => BASE_URL . 'account/zzimba-credit',
+        'icon' => 'fa-wallet',
+        'optional' => false
+    ],
+    'store' => [
+        'label' => 'Create your Store (Optional)',
+        'done' => $hasStore,
+        'url' => BASE_URL . 'account/zzimba-stores',
+        'icon' => 'fa-shop',
+        'optional' => true
+    ],
+];
+$completed = 0;
+$total = count($steps);
+foreach ($steps as $s) {
+    if ($s['done'])
+        $completed++;
+}
+$progressPercent = (int) round(($completed / max(1, $total)) * 100);
+$showOnboarding = ($completed < $total); // show if at least one step is incomplete
+
 $menuItems = [
     'main' => [
         'title' => 'Main',
@@ -152,6 +204,15 @@ $menuItems = [
         ],
     ],
 ];
+
+// Keep the existing forced redirection only for PROFILE completion
+if ($needsProfileCompletion) {
+    $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';
+    if (strpos($currentPath, '/account/profile') === false) {
+        header('Location: ' . BASE_URL . 'account/profile');
+        exit;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-full overflow-hidden">
@@ -509,6 +570,27 @@ $menuItems = [
         input[type="checkbox"] {
             accent-color: #D92B13
         }
+
+        /* NEW: Getting Started card helpers */
+        .gs-card-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #fff3f1 100%);
+        }
+
+        .dark .gs-card-gradient {
+            background: linear-gradient(135deg, #161616 0%, #1f1b1a 100%);
+        }
+
+        .gs-progress {
+            height: 10px;
+        }
+
+        .gs-step {
+            transition: transform .15s ease;
+        }
+
+        .gs-step:hover {
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 
@@ -744,6 +826,98 @@ $menuItems = [
             <div class="flex flex-col min-h-[calc(100vh-64px)]">
                 <main
                     class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white main-fixed">
+
+                    <?php
+                    // NEW: Getting Started Card (visible when something is incomplete)
+                    if ($showOnboarding):
+                        $dismissKey = 'zz_gs_dismiss_' . htmlspecialchars($_SESSION['user']['user_id']);
+                        ?>
+                        <div id="getting-started"
+                            class="gs-card-gradient border border-gray-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 mb-4 sm:mb-6"
+                            x-data="{
+                            dismissed: localStorage.getItem('<?= $dismissKey ?>') === '1',
+                            percent: <?= (int) $progressPercent ?>,
+                            close() { this.dismissed = true; localStorage.setItem('<?= $dismissKey ?>','1'); },
+                         }" x-show="!dismissed" x-transition>
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <h2 class="text-base sm:text-lg font-semibold text-secondary dark:text-white">
+                                        Getting started
+                                    </h2>
+                                    <p class="text-xs sm:text-sm text-gray-600 dark:text-white/70">
+                                        Finish these steps to unlock the best Zzimba experience.
+                                        <span
+                                            class="inline-block ml-1 text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-user-primary/10 text-user-primary font-medium">
+                                            Profile & Wallet are required
+                                        </span>
+                                    </p>
+                                </div>
+                                <button class="text-gray-500 hover:text-secondary dark:text-white/60 dark:hover:text-white"
+                                    @click="close()" title="Dismiss for now">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+
+                            <!-- Progress bar -->
+                            <div class="mt-3 sm:mt-4">
+                                <div
+                                    class="flex items-center justify-between text-xs text-gray-600 dark:text-white/70 mb-1.5">
+                                    <span><span class="font-semibold"><?= $completed ?></span> / <?= $total ?> steps
+                                        completed</span>
+                                    <span x-text="percent + '%'"></span>
+                                </div>
+                                <div
+                                    class="w-full bg-gray-200/70 dark:bg-white/10 rounded-full gs-progress overflow-hidden">
+                                    <div class="h-full bg-user-primary rounded-full transition-all duration-300"
+                                        :style="{ width: percent + '%' }"></div>
+                                </div>
+                            </div>
+
+                            <!-- Steps -->
+                            <div class="mt-4 grid gap-2 sm:grid-cols-3">
+                                <?php
+                                // enforce order: profile, wallet, store
+                                $orderedKeys = ['profile', 'wallet', 'store'];
+                                foreach ($orderedKeys as $key):
+                                    $s = $steps[$key];
+                                    $isDone = $s['done'];
+                                    $badge = $s['optional'] ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-gray-200/70 dark:bg-white/10 text-gray-700 dark:text-white/70">Optional</span>' : '';
+                                    ?>
+                                    <a href="<?= htmlspecialchars($s['url']) ?>"
+                                        class="block gs-step rounded-xl border transition-colors
+                                       <?= $isDone ? 'border-green-200 dark:border-green-800/40 bg-green-50/60 dark:bg-green-900/10' : 'border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5' ?>">
+                                        <div class="p-3.5 sm:p-4 flex items-center gap-3">
+                                            <span
+                                                class="inline-flex h-9 w-9 items-center justify-center rounded-lg
+                                        <?= $isDone ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-secondary dark:bg-white/10 dark:text-white' ?>">
+                                                <i class="fa-solid <?= htmlspecialchars($s['icon']) ?>"></i>
+                                            </span>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-sm font-medium text-secondary dark:text-white truncate">
+                                                    <?= htmlspecialchars($s['label']) ?>         <?= $badge ?>
+                                                </div>
+                                                <div
+                                                    class="text-[11px] mt-0.5
+                                            <?= $isDone ? 'text-green-700 dark:text-green-300' : 'text-gray-600 dark:text-white/70' ?>">
+                                                    <?php if ($isDone): ?>
+                                                        <i class="fa-solid fa-circle-check mr-1"></i> Completed
+                                                    <?php else: ?>
+                                                        <i class="fa-solid fa-arrow-right mr-1"></i> Click to continue
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                            <?php if ($isDone): ?>
+                                                <i class="fa-solid fa-check text-green-600 dark:text-green-400"></i>
+                                            <?php else: ?>
+                                                <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                                            <?php endif; ?>
+                                        </div>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <?= $mainContent ?? '' ?>
                 </main>
                 <footer
@@ -860,7 +1034,8 @@ $menuItems = [
                             class="fas fa-cog text-secondary dark:text-white"></i></span>
                     <div class="text-left">
                         <div class="text-sm font-medium text-secondary dark:text-white">Settings</div>
-                        <div class="text-[11px] text-gray-500 dark:text-white/70">Preferences</div>
+                        <div id="mobileThemeLabel" class="text-[11px] text-gray-500 dark:text-white/70">Preferences
+                        </div>
                     </div>
                 </a>
                 <button id="mobileThemeBtn"
@@ -870,7 +1045,7 @@ $menuItems = [
                             class="fa-solid fa-circle-half-stroke text-secondary dark:text-white"></i></span>
                     <div class="text-left">
                         <div class="text-sm font-medium text-secondary dark:text-white">Theme</div>
-                        <div id="mobileThemeLabel" class="text-[11px] text-gray-500 dark:text-white/70">System</div>
+                        <div id="mobileThemeLabel2" class="text-[11px] text-gray-500 dark:text-white/70">System</div>
                     </div>
                 </button>
                 <a href="<?= BASE_URL ?>account/order-history"
@@ -1092,7 +1267,9 @@ $menuItems = [
                 },
                 syncMobileLabel() {
                     const lbl = document.getElementById('mobileThemeLabel');
+                    const lbl2 = document.getElementById('mobileThemeLabel2');
                     if (lbl) lbl.textContent = this.mode.charAt(0).toUpperCase() + this.mode.slice(1);
+                    if (lbl2) lbl2.textContent = this.mode.charAt(0).toUpperCase() + this.mode.slice(1);
                 },
                 syncMetaThemeColor() {
                     const meta = document.getElementById('meta-theme-color');
@@ -1165,6 +1342,7 @@ $menuItems = [
             window.addEventListener('beforeunload', () => { splash.style.display = ''; });
         }
 
+        // Return-to page modal logic (unchanged)
         window.addEventListener('load', function () {
             const url = localStorage.getItem('return_url');
             const title = localStorage.getItem('return_title');
