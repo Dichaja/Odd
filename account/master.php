@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-
 $appName = 'Zzimba';
-
 if (isset($_GET['manifest'])) {
     header('Content-Type: application/manifest+json');
     $base = rtrim(BASE_URL, '/') . '/account/';
@@ -22,7 +20,6 @@ if (isset($_GET['manifest'])) {
     ], JSON_UNESCAPED_SLASHES);
     exit;
 }
-
 if (isset($_GET['sw'])) {
     header('Content-Type: application/javascript');
     $scope = rtrim(BASE_URL, '/') . '/account/';
@@ -35,7 +32,6 @@ if (isset($_GET['sw'])) {
     echo <<<JS
 const CACHE_NAME='$cache';
 const CORE_ASSETS=$core;
-
 self.addEventListener('install',e=>{
   e.waitUntil((async()=>{
     self.skipWaiting();
@@ -48,7 +44,6 @@ self.addEventListener('install',e=>{
     }));
   })());
 });
-
 self.addEventListener('activate',e=>{
   e.waitUntil((async()=>{
     const keys=await caches.keys();
@@ -56,7 +51,6 @@ self.addEventListener('activate',e=>{
     await self.clients.claim();
   })());
 });
-
 self.addEventListener('fetch',e=>{
   const u=new URL(e.request.url);
   if(u.origin!==location.origin) return;
@@ -75,7 +69,6 @@ self.addEventListener('fetch',e=>{
 JS;
     exit;
 }
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -96,7 +89,6 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
     exit;
 }
 $_SESSION['last_activity'] = time();
-
 $stmt = $pdo->prepare("
     SELECT 
         first_name,
@@ -108,31 +100,25 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([':user_id' => $_SESSION['user']['user_id']]);
 $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
-
 $needsProfileCompletion = empty($userRow['first_name']) || empty($userRow['email']) || empty($userRow['phone']);
-
-/**
- * NEW: Onboarding checks for Wallet & Store
- * - Wallet: zzimba_wallets where owner_type='USER' and user_id = current user
- * - Store: vendor_stores where owner_id = current user
- */
 $hasWallet = false;
 $hasStore = false;
-
+$hasPurchase = false;
 try {
     $stmtW = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE owner_type='USER' AND user_id = :uid LIMIT 1");
     $stmtW->execute([':uid' => $_SESSION['user']['user_id']]);
     $hasWallet = (bool) $stmtW->fetchColumn();
-
     $stmtS = $pdo->prepare("SELECT id FROM vendor_stores WHERE owner_id = :uid LIMIT 1");
     $stmtS->execute([':uid' => $_SESSION['user']['user_id']]);
     $hasStore = (bool) $stmtS->fetchColumn();
+    $stmtP = $pdo->prepare("SELECT id FROM request_for_quote WHERE user_id = :uid LIMIT 1");
+    $stmtP->execute([':uid' => $_SESSION['user']['user_id']]);
+    $hasPurchase = (bool) $stmtP->fetchColumn();
 } catch (Throwable $e) {
-    // Fail-safe: don't break the page if DB hiccups; simply show nothing for onboarding
-    $hasWallet = false;
-    $hasStore = false;
+    $hasWallet = $hasWallet ?? false;
+    $hasStore = $hasStore ?? false;
+    $hasPurchase = $hasPurchase ?? false;
 }
-
 $lastLogin = $userRow['last_login'] ?? '';
 $formattedLastLogin = $lastLogin ? date('M d, Y g:i A', strtotime($lastLogin)) : 'First login';
 $title = isset($pageTitle) ? $pageTitle . ' | User Dashboard' : 'User Dashboard';
@@ -145,11 +131,6 @@ foreach (explode(' ', $userName) as $part) {
         $userInitials .= strtoupper($part[0]);
 }
 $sessionUlid = generateUlid();
-
-/**
- * NEW: Onboarding progress calculation
- * Steps order: Profile -> Wallet -> Store (optional)
- */
 $steps = [
     'profile' => [
         'label' => 'Complete your profile',
@@ -165,6 +146,13 @@ $steps = [
         'icon' => 'fa-wallet',
         'optional' => false
     ],
+    'purchase' => [
+        'label' => 'Make 1st Purchase (Optional)',
+        'done' => $hasPurchase,
+        'url' => BASE_URL . 'request-for-quote',
+        'icon' => 'fa-cart-shopping',
+        'optional' => true
+    ],
     'store' => [
         'label' => 'Create your Store (Optional)',
         'done' => $hasStore,
@@ -173,15 +161,24 @@ $steps = [
         'optional' => true
     ],
 ];
+$orderedKeys = ['profile', 'wallet', 'purchase', 'store'];
 $completed = 0;
-$total = count($steps);
 foreach ($steps as $s) {
     if ($s['done'])
         $completed++;
 }
+$total = count($steps);
 $progressPercent = (int) round(($completed / max(1, $total)) * 100);
-$showOnboarding = ($completed < $total); // show if at least one step is incomplete
-
+$showOnboarding = ($completed < $total);
+$firstIncompleteKey = null;
+foreach ($orderedKeys as $k) {
+    if (!$steps[$k]['done']) {
+        $firstIncompleteKey = $k;
+        break;
+    }
+}
+$requiredDone = $steps['profile']['done'] && $steps['wallet']['done'];
+$onlyOptionalRemain = $requiredDone && (!$steps['purchase']['done'] || !$steps['store']['done']);
 $menuItems = [
     'main' => [
         'title' => 'Main',
@@ -204,8 +201,6 @@ $menuItems = [
         ],
     ],
 ];
-
-// Keep the existing forced redirection only for PROFILE completion
 if ($needsProfileCompletion) {
     $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';
     if (strpos($currentPath, '/account/profile') === false) {
@@ -319,10 +314,6 @@ if ($needsProfileCompletion) {
             color: #9CA3AF;
             margin: 1.25rem 0 .5rem .75rem;
             letter-spacing: .05em
-        }
-
-        .nav-category:first-of-type {
-            margin-top: 0
         }
 
         .user-sidebar {
@@ -571,25 +562,29 @@ if ($needsProfileCompletion) {
             accent-color: #D92B13
         }
 
-        /* NEW: Getting Started card helpers */
         .gs-card-gradient {
-            background: linear-gradient(135deg, #ffffff 0%, #fff3f1 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #fff3f1 100%)
         }
 
         .dark .gs-card-gradient {
-            background: linear-gradient(135deg, #161616 0%, #1f1b1a 100%);
+            background: linear-gradient(135deg, #161616 0%, #1f1b1a 100%)
         }
 
         .gs-progress {
-            height: 10px;
+            height: 10px
         }
 
         .gs-step {
-            transition: transform .15s ease;
+            transition: transform .15s ease
         }
 
         .gs-step:hover {
-            transform: translateY(-1px);
+            transform: translateY(-1px)
+        }
+
+        .locked {
+            filter: grayscale(1);
+            opacity: .6
         }
     </style>
 </head>
@@ -632,7 +627,7 @@ if ($needsProfileCompletion) {
             class="hidden lg:block user-sidebar dark:text-white fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100 dark:border-white/10">
-                    <a href="<?= BASE_URL ?>account/dashboard" class="flex items-center space-x-3">
+                    <a href="<?= BASE_URL ?>" class="flex items-center space-x-3">
                         <img src="<?= BASE_URL ?>img/logo_alt.png" alt="Logo" class="h-8 w-auto">
                         <span class="text-lg font-semibold text-gray-900 dark:text-white">Zzimba Online</span>
                     </a>
@@ -689,25 +684,22 @@ if ($needsProfileCompletion) {
                                 class="absolute right-0 mt-2 w-44 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-1 z-50">
                                 <button
                                     class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                    :class="{'bg-gray-100 dark:bg-white/10': mode==='light'}"
-                                    @click="setTheme('light');open=false">
-                                    <span><i class="fa-solid fa-sun mr-2"></i>Light</span>
-                                    <i class="fa-solid fa-check" x-show="mode==='light'"></i>
-                                </button>
+                                    :class="{'bg-gray-100 dark:bg:white/10': mode==='light'}"
+                                    @click="setTheme('light');open=false"><span><i
+                                            class="fa-solid fa-sun mr-2"></i>Light</span><i class="fa-solid fa-check"
+                                        x-show="mode==='light'"></i></button>
                                 <button
                                     class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                    :class="{'bg-gray-100 dark:bg-white/10': mode==='dark'}"
-                                    @click="setTheme('dark');open=false">
-                                    <span><i class="fa-solid fa-moon mr-2"></i>Dark</span>
-                                    <i class="fa-solid fa-check" x-show="mode==='dark'"></i>
-                                </button>
+                                    :class="{'bg-gray-100 dark:bg:white/10': mode==='dark'}"
+                                    @click="setTheme('dark');open=false"><span><i
+                                            class="fa-solid fa-moon mr-2"></i>Dark</span><i class="fa-solid fa-check"
+                                        x-show="mode==='dark'"></i></button>
                                 <button
                                     class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                    :class="{'bg-gray-100 dark:bg-white/10': mode==='system'}"
-                                    @click="setTheme('system');open=false">
-                                    <span><i class="fa-solid fa-circle-half-stroke mr-2"></i>System</span>
-                                    <i class="fa-solid fa-check" x-show="mode==='system'"></i>
-                                </button>
+                                    :class="{'bg-gray-100 dark:bg:white/10': mode==='system'}"
+                                    @click="setTheme('system');open=false"><span><i
+                                            class="fa-solid fa-circle-half-stroke mr-2"></i>System</span><i
+                                        class="fa-solid fa-check" x-show="mode==='system'"></i></button>
                             </div>
                         </div>
 
@@ -739,10 +731,8 @@ if ($needsProfileCompletion) {
                                 <template x-for="note in notes" :key="note.target_id">
                                     <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
                                         class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
-                                        <div class="px-3 py-3">
-                                            <input type="checkbox" :value="note.target_id" x-model="selected"
-                                                class="h-4 w-4 text-user-primary rounded">
-                                        </div>
+                                        <div class="px-3 py-3"><input type="checkbox" :value="note.target_id"
+                                                x-model="selected" class="h-4 w-4 text-user-primary rounded"></div>
                                         <div class="flex-1">
                                             <a :href="note.link_url || '#'" class="block px-0 py-3"
                                                 @click.prevent="handleClick(note)">
@@ -756,9 +746,8 @@ if ($needsProfileCompletion) {
                                             </a>
                                         </div>
                                         <button @click.stop="dismiss(note.target_id)"
-                                            class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                                            class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition"><i
+                                                class="fas fa-times"></i></button>
                                     </div>
                                 </template>
                                 <div x-show="notes.length === 0"
@@ -779,33 +768,26 @@ if ($needsProfileCompletion) {
                                 class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
                                 <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        <?= htmlspecialchars($userName) ?>
-                                    </p>
+                                        <?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500 dark:text-white/70">
-                                        <?= htmlspecialchars($userEmail) ?>
-                                    </p>
+                                        <?= htmlspecialchars($userEmail) ?></p>
                                     <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?>
-                                    </p>
+                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
                                 </div>
                                 <a href="<?= BASE_URL ?>account/profile"
-                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10">
-                                    <i class="fas fa-user w-5 h-5 text-gray-400 dark:text-white/60"></i>My Profile
-                                </a>
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
+                                        class="fas fa-user w-5 h-5 text-gray-400 dark:text-white/60"></i>My Profile</a>
                                 <a href="<?= BASE_URL ?>account/order-history"
-                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10">
-                                    <i class="fas fa-shopping-bag w-5 h-5 text-gray-400 dark:text-white/60"></i>My
-                                    Orders
-                                </a>
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
+                                        class="fas fa-shopping-bag w-5 h-5 text-gray-400 dark:text-white/60"></i>My
+                                    Orders</a>
                                 <a href="<?= BASE_URL ?>account/settings"
-                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10">
-                                    <i class="fas fa-cog w-5 h-5 text-gray-400 dark:text-white/60"></i>Settings
-                                </a>
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
+                                        class="fas fa-cog w-5 h-5 text-gray-400 dark:text-white/60"></i>Settings</a>
                                 <div class="my-2 border-t border-gray-100 dark:border-white/10"></div>
                                 <a href="javascript:void(0);" onclick="logoutUser(); return false;"
-                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-user-primary hover:bg-gray-50 dark:hover:bg-white/10">
-                                    <i class="fas fa-sign-out-alt w-5 h-5"></i>Logout
-                                </a>
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-user-primary hover:bg-gray-50 dark:hover:bg-white/10"><i
+                                        class="fas fa-sign-out-alt w-5 h-5"></i>Logout</a>
                             </div>
                         </div>
 
@@ -826,39 +808,42 @@ if ($needsProfileCompletion) {
             <div class="flex flex-col min-h-[calc(100vh-64px)]">
                 <main
                     class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white main-fixed">
-
-                    <?php
-                    // NEW: Getting Started Card (visible when something is incomplete)
-                    if ($showOnboarding):
-                        $dismissKey = 'zz_gs_dismiss_' . htmlspecialchars($_SESSION['user']['user_id']);
+                    <?php if ($showOnboarding):
+                        $hideKey = 'zz_gs_hide_until_' . htmlspecialchars($_SESSION['user']['user_id']);
                         ?>
                         <div id="getting-started"
                             class="gs-card-gradient border border-gray-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 mb-4 sm:mb-6"
                             x-data="{
-                            dismissed: localStorage.getItem('<?= $dismissKey ?>') === '1',
+                            hiddenUntil: parseInt(localStorage.getItem('<?= $hideKey ?>') || '0',10),
+                            now: Date.now(),
+                            dismissed() { return this.hiddenUntil > this.now; },
                             percent: <?= (int) $progressPercent ?>,
-                            close() { this.dismissed = true; localStorage.setItem('<?= $dismissKey ?>','1'); },
-                         }" x-show="!dismissed" x-transition>
+                            canDismiss: <?= $onlyOptionalRemain ? 'true' : 'false' ?>,
+                            hide30() {
+                                if(!this.canDismiss) return;
+                                const until = Date.now() + (30*60*1000);
+                                localStorage.setItem('<?= $hideKey ?>', String(until));
+                                this.hiddenUntil = until;
+                            }
+                         }" x-show="!dismissed()" x-transition>
                             <div class="flex items-start justify-between gap-3">
                                 <div>
-                                    <h2 class="text-base sm:text-lg font-semibold text-secondary dark:text-white">
-                                        Getting started
-                                    </h2>
+                                    <h2 class="text-base sm:text-lg font-semibold text-secondary dark:text-white">Getting
+                                        started</h2>
                                     <p class="text-xs sm:text-sm text-gray-600 dark:text-white/70">
                                         Finish these steps to unlock the best Zzimba experience.
                                         <span
-                                            class="inline-block ml-1 text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-user-primary/10 text-user-primary font-medium">
-                                            Profile & Wallet are required
-                                        </span>
+                                            class="inline-block ml-1 text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-user-primary/10 text-user-primary font-medium">Profile
+                                            & Wallet are required</span>
                                     </p>
                                 </div>
-                                <button class="text-gray-500 hover:text-secondary dark:text-white/60 dark:hover:text-white"
-                                    @click="close()" title="Dismiss for now">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
+                                <template x-if="canDismiss">
+                                    <button
+                                        class="text-xs px-3 py-1.5 rounded-md border border-gray-300/70 dark:border-white/20 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
+                                        @click="hide30()">Hide 30 min</button>
+                                </template>
                             </div>
 
-                            <!-- Progress bar -->
                             <div class="mt-3 sm:mt-4">
                                 <div
                                     class="flex items-center justify-between text-xs text-gray-600 dark:text-white/70 mb-1.5">
@@ -873,47 +858,65 @@ if ($needsProfileCompletion) {
                                 </div>
                             </div>
 
-                            <!-- Steps -->
-                            <div class="mt-4 grid gap-2 sm:grid-cols-3">
-                                <?php
-                                // enforce order: profile, wallet, store
-                                $orderedKeys = ['profile', 'wallet', 'store'];
-                                foreach ($orderedKeys as $key):
+                            <div class="mt-4 grid gap-2 sm:grid-cols-4">
+                                <?php foreach ($orderedKeys as $key):
                                     $s = $steps[$key];
                                     $isDone = $s['done'];
+                                    $isCurrent = (!$isDone && $key === $firstIncompleteKey);
+                                    $isLocked = (!$isDone && $firstIncompleteKey !== null && array_search($key, $orderedKeys, true) > array_search($firstIncompleteKey, $orderedKeys, true));
                                     $badge = $s['optional'] ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-gray-200/70 dark:bg-white/10 text-gray-700 dark:text-white/70">Optional</span>' : '';
+                                    $wrapClasses = 'rounded-xl border gs-step transition-colors';
+                                    if ($isDone) {
+                                        $wrapClasses .= ' border-green-200 dark:border-green-800/40 bg-green-50/60 dark:bg-green-900/10';
+                                    } elseif ($isCurrent) {
+                                        $wrapClasses .= ' border-transparent bg-user-primary text-white';
+                                    } elseif ($isLocked) {
+                                        $wrapClasses .= ' border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 locked';
+                                    } else {
+                                        $wrapClasses .= ' border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5';
+                                    }
+                                    $iconClasses = 'inline-flex h-9 w-9 items-center justify-center rounded-lg';
+                                    if ($isDone) {
+                                        $iconClasses .= ' bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+                                    } elseif ($isCurrent) {
+                                        $iconClasses .= ' bg-white/20 text-white';
+                                    } else {
+                                        $iconClasses .= ' bg-gray-100 text-secondary dark:bg-white/10 dark:text-white';
+                                    }
+                                    $canClick = $isCurrent;
+                                    $startTag = $canClick ? '<a href="' . htmlspecialchars($s['url']) . '" class="block ' . $wrapClasses . '">' : '<div class="block ' . $wrapClasses . ' ' . ($isLocked ? 'cursor-not-allowed' : '') . '">';
+                                    $endTag = $canClick ? '</a>' : '</div>';
+                                    echo $startTag;
                                     ?>
-                                    <a href="<?= htmlspecialchars($s['url']) ?>"
-                                        class="block gs-step rounded-xl border transition-colors
-                                       <?= $isDone ? 'border-green-200 dark:border-green-800/40 bg-green-50/60 dark:bg-green-900/10' : 'border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5' ?>">
-                                        <div class="p-3.5 sm:p-4 flex items-center gap-3">
-                                            <span
-                                                class="inline-flex h-9 w-9 items-center justify-center rounded-lg
-                                        <?= $isDone ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-gray-100 text-secondary dark:bg-white/10 dark:text-white' ?>">
-                                                <i class="fa-solid <?= htmlspecialchars($s['icon']) ?>"></i>
-                                            </span>
-                                            <div class="min-w-0 flex-1">
-                                                <div class="text-sm font-medium text-secondary dark:text-white truncate">
-                                                    <?= htmlspecialchars($s['label']) ?>         <?= $badge ?>
-                                                </div>
-                                                <div
-                                                    class="text-[11px] mt-0.5
-                                            <?= $isDone ? 'text-green-700 dark:text-green-300' : 'text-gray-600 dark:text-white/70' ?>">
-                                                    <?php if ($isDone): ?>
-                                                        <i class="fa-solid fa-circle-check mr-1"></i> Completed
-                                                    <?php else: ?>
-                                                        <i class="fa-solid fa-arrow-right mr-1"></i> Click to continue
-                                                    <?php endif; ?>
-                                                </div>
+                                    <div class="p-3.5 sm:p-4 flex items-center gap-3">
+                                        <span class="<?= $iconClasses ?>"><i
+                                                class="fa-solid <?= htmlspecialchars($s['icon']) ?>"></i></span>
+                                        <div class="min-w-0 flex-1">
+                                            <div
+                                                class="text-sm font-medium <?= $isCurrent ? 'text-white' : 'text-secondary dark:text-white' ?> truncate">
+                                                <?= htmlspecialchars($s['label']) ?>         <?= $badge ?>
                                             </div>
-                                            <?php if ($isDone): ?>
-                                                <i class="fa-solid fa-check text-green-600 dark:text-green-400"></i>
-                                            <?php else: ?>
-                                                <i class="fa-solid fa-chevron-right text-gray-400"></i>
-                                            <?php endif; ?>
+                                            <div
+                                                class="text-[11px] mt-0.5 <?= $isDone ? 'text-green-700 dark:text-green-300' : ($isCurrent ? 'text-white/90' : 'text-gray-600 dark:text-white/70') ?>">
+                                                <?php if ($isDone): ?>
+                                                    <i class="fa-solid fa-circle-check mr-1"></i> Completed
+                                                <?php elseif ($isCurrent): ?>
+                                                    <i class="fa-solid fa-arrow-right mr-1"></i> Continue
+                                                <?php else: ?>
+                                                    <i class="fa-solid fa-lock mr-1"></i> Locked
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
-                                    </a>
-                                <?php endforeach; ?>
+                                        <?php if ($isDone): ?>
+                                            <i class="fa-solid fa-check text-green-600 dark:text-green-400"></i>
+                                        <?php elseif ($isCurrent): ?>
+                                            <i
+                                                class="fa-solid fa-chevron-right <?= $isCurrent ? 'text-white' : 'text-gray-400' ?>"></i>
+                                        <?php else: ?>
+                                            <i class="fa-solid fa-ban text-gray-300 dark:text-white/40"></i>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?= $endTag; endforeach; ?>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -968,11 +971,9 @@ if ($needsProfileCompletion) {
                                     class="fas <?= $item['icon'] ?> text-secondary dark:text-white"></i></span>
                             <div>
                                 <div class="text-sm font-medium text-secondary dark:text-white">
-                                    <?= htmlspecialchars($item['title']) ?>
-                                </div>
+                                    <?= htmlspecialchars($item['title']) ?></div>
                                 <div class="text-[11px] text-gray-500 dark:text-white/70">
-                                    <?= htmlspecialchars(ucfirst($category['title'])) ?>
-                                </div>
+                                    <?= htmlspecialchars(ucfirst($category['title'])) ?></div>
                             </div>
                         </a>
                     <?php endforeach; ?>
@@ -1010,8 +1011,7 @@ if ($needsProfileCompletion) {
                 <div class="user-initials w-10 h-10"><?= htmlspecialchars($userInitials) ?></div>
                 <div class="min-w-0">
                     <div class="text-sm font-medium text-secondary dark:text-white truncate">
-                        <?= htmlspecialchars($userName) ?>
-                    </div>
+                        <?= htmlspecialchars($userName) ?></div>
                     <div class="text-xs text-gray-500 dark:text-white/70 truncate"><?= htmlspecialchars($userEmail) ?>
                     </div>
                 </div>
@@ -1089,10 +1089,8 @@ if ($needsProfileCompletion) {
                     <template x-for="note in notes" :key="note.target_id">
                         <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
                             class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
-                            <div class="px-3 py-3">
-                                <input type="checkbox" :value="note.target_id" x-model="selected"
-                                    class="h-4 w-4 text-user-primary rounded">
-                            </div>
+                            <div class="px-3 py-3"><input type="checkbox" :value="note.target_id" x-model="selected"
+                                    class="h-4 w-4 text-user-primary rounded"></div>
                             <div class="flex-1">
                                 <a :href="note.link_url || '#'" class="block px-0 py-3"
                                     @click.prevent="handleClick(note)">
@@ -1106,9 +1104,8 @@ if ($needsProfileCompletion) {
                                 </a>
                             </div>
                             <button @click.stop="dismiss(note.target_id)"
-                                class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
-                                <i class="fas fa-times"></i>
-                            </button>
+                                class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition"><i
+                                    class="fas fa-times"></i></button>
                         </div>
                     </template>
                     <div x-show="notes.length === 0" class="p-4 text-sm text-center text-gray-500 dark:text-white/70">No
@@ -1139,14 +1136,12 @@ if ($needsProfileCompletion) {
 
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
-
         const userDropdown = document.getElementById('userDropdown');
         const userDropdownMenu = document.getElementById('userDropdownMenu');
         if (userDropdown) {
             userDropdown.addEventListener('click', e => { e.stopPropagation(); userDropdownMenu.classList.toggle('hidden') });
             document.addEventListener('click', () => userDropdownMenu.classList.add('hidden'));
         }
-
         function logoutUser() {
             $.ajax({
                 url: BASE_URL + 'auth/logout', type: 'POST', contentType: 'application/json', dataType: 'json',
@@ -1154,7 +1149,6 @@ if ($needsProfileCompletion) {
                 error() { alert('Failed to connect to server.') }
             });
         }
-
         function notifComponent() {
             return {
                 open: false, notes: [], count: 0, selected: [], evtSource: null,
@@ -1202,11 +1196,17 @@ if ($needsProfileCompletion) {
                         .then(() => { this.notes = this.notes.filter(n => !this.selected.includes(n.target_id)); this.count = this.notes.filter(n => n.is_seen == 0).length; this.selected = []; const b = document.getElementById('selectAll'); if (b) b.checked = false; const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false; })
                 },
                 formatDate(ts) {
-                    const d = new Date(ts.replace(' ', 'T')), now = new Date(), diff = (now - d) / 1000, today = new Date(now.getFullYear(), now.getMonth(), now.getDate()), yesterday = new Date(today); yesterday.setDate(today.getDate() - 1); const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); if (diff < 60) return 'Now'; if (d >= today) return 'Today ' + time; if (d >= yesterday && d < today) return 'Yesterday ' + time; return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                    const d = new Date(ts.replace(' ', 'T')), now = new Date(), diff = (now - d) / 1000;
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+                    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                    if (diff < 60) return 'Now';
+                    if (d >= today) return 'Today ' + time;
+                    if (d >= yesterday && d < today) return 'Yesterday ' + time;
+                    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                 }
             };
         }
-
         const overlay = document.getElementById('sheetOverlay');
         const body = document.body;
         const sheets = { account: document.getElementById('mobileAccountSheet'), more: document.getElementById('mobileMoreSheet'), notif: document.getElementById('mobileNotifSheet') };
@@ -1215,7 +1215,6 @@ if ($needsProfileCompletion) {
         function closeSheet(el) { el.classList.remove('open'); if (!isAnyOpen()) { overlay.classList.add('hidden'); body.style.overflow = '' } }
         function closeAllSheets() { Object.values(sheets).forEach(el => el.classList.remove('open')); overlay.classList.add('hidden'); body.style.overflow = '' }
         overlay.addEventListener('click', closeAllSheets);
-
         const mobileAccountBtn = document.getElementById('mobileAccountBtn');
         const mobileAccountSheet = sheets.account;
         const mobileAccountClose = document.getElementById('mobileAccountClose');
@@ -1226,7 +1225,6 @@ if ($needsProfileCompletion) {
         const mobileNotifBtn = document.getElementById('mobileNotifBtn');
         const mobileNotifSheet = sheets.notif;
         const mobileNotifClose = document.getElementById('mobileNotifClose');
-
         mobileAccountBtn.addEventListener('click', e => { e.stopPropagation(); openSheet(mobileAccountSheet) });
         mobileAccountClose.addEventListener('click', () => closeSheet(mobileAccountSheet));
         mobileMoreBtn.addEventListener('click', e => { e.stopPropagation(); openSheet(mobileMoreSheet) });
@@ -1234,7 +1232,6 @@ if ($needsProfileCompletion) {
         mobileNotifBtn.addEventListener('click', e => { e.stopPropagation(); openSheet(mobileNotifSheet) });
         mobileNotifClose.addEventListener('click', () => closeSheet(mobileNotifSheet));
         mobileLogout.addEventListener('click', () => logoutUser());
-
         function themeRoot() {
             return {
                 mode: 'system',
@@ -1254,8 +1251,8 @@ if ($needsProfileCompletion) {
                 setTheme(val, persist = true) {
                     this.mode = val;
                     if (persist) localStorage.setItem('zzimba_theme', val);
-                    if (val === 'dark') { document.documentElement.classList.add('dark') }
-                    else if (val === 'light') { document.documentElement.classList.remove('dark') }
+                    if (val === 'dark') document.documentElement.classList.add('dark');
+                    else if (val === 'light') document.documentElement.classList.remove('dark');
                     else this.applySystem();
                     this.syncMobileLabel();
                     this.syncMetaThemeColor();
@@ -1285,7 +1282,6 @@ if ($needsProfileCompletion) {
                 }
             }
         }
-
         let _deferredPrompt = null;
         function initPWA() {
             if ('serviceWorker' in navigator) {
@@ -1296,35 +1292,29 @@ if ($needsProfileCompletion) {
             const laterBtnM = document.getElementById('install-later-m');
             const nowBtn = document.getElementById('install-now');
             const nowBtnM = document.getElementById('install-now-m');
-
             const canShow = () => { const until = parseInt(localStorage.getItem('zz_install_later_until') || '0', 10); return Date.now() > until; };
-
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 _deferredPrompt = e;
                 const installed = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
                 if (!installed && canShow()) banner.classList.remove('hidden');
             });
-
             window.addEventListener('appinstalled', () => {
                 banner.classList.add('hidden');
                 _deferredPrompt = null;
                 localStorage.removeItem('zz_install_later_until');
             });
-
             function closeFor30Min() { localStorage.setItem('zz_install_later_until', String(Date.now() + 30 * 60 * 1000)); banner.classList.add('hidden'); }
             function doInstall() {
                 if (!_deferredPrompt) { banner.classList.add('hidden'); return; }
                 _deferredPrompt.prompt();
                 _deferredPrompt.userChoice.finally(() => { _deferredPrompt = null; banner.classList.add('hidden'); });
             }
-
             if (laterBtn) laterBtn.addEventListener('click', closeFor30Min);
             if (laterBtnM) laterBtnM.addEventListener('click', closeFor30Min);
             if (nowBtn) nowBtn.addEventListener('click', doInstall);
             if (nowBtnM) nowBtnM.addEventListener('click', doInstall);
         }
-
         function setupSplashNavigation() {
             const splash = document.getElementById('zz-splash');
             if (!splash) return;
@@ -1335,14 +1325,12 @@ if ($needsProfileCompletion) {
                 const href = a.getAttribute('href') || ''; if (href.startsWith('#')) return;
                 if (a.target || a.hasAttribute('download')) return;
                 const url = new URL(a.href, location.href); if (url.origin !== location.origin) return;
-                splash.style.display = '';
+                document.getElementById('zz-splash').style.display = '';
                 e.preventDefault();
                 setTimeout(() => { window.location.href = a.href; }, 50);
             });
-            window.addEventListener('beforeunload', () => { splash.style.display = ''; });
+            window.addEventListener('beforeunload', () => { document.getElementById('zz-splash').style.display = ''; });
         }
-
-        // Return-to page modal logic (unchanged)
         window.addEventListener('load', function () {
             const url = localStorage.getItem('return_url');
             const title = localStorage.getItem('return_title');

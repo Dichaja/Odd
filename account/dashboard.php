@@ -62,7 +62,7 @@ ob_start();
             class="relative bg-white dark:bg-secondary rounded-xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-white/10 hover:shadow-md transition-shadow">
             <div class="space-y-1">
                 <div class="text-2xl font-bold text-secondary dark:text-white" id="totalQuotations">0</div>
-                <div class="text-sm text-gray-600 dark:text-white/70">Total Quotations</div>
+                <div class="text-sm text-gray-600 dark:text-white/70">Total RFQs</div>
                 <div class="flex items-center gap-4 text-xs">
                     <span class="text-green-600 dark:text-green-400">✓ <span id="processedQuotations">0</span>
                         Processed</span>
