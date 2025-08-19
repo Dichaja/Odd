@@ -536,7 +536,7 @@ if ($needsProfileCompletion) {
         }
 
         .main-fixed {
-            height: calc(100vh - 64px - 56px);
+            height: calc(100vh - 64px);
             overflow: auto
         }
 
@@ -768,11 +768,14 @@ if ($needsProfileCompletion) {
                                 class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
                                 <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        <?= htmlspecialchars($userName) ?></p>
+                                        <?= htmlspecialchars($userName) ?>
+                                    </p>
                                     <p class="text-xs text-gray-500 dark:text-white/70">
-                                        <?= htmlspecialchars($userEmail) ?></p>
+                                        <?= htmlspecialchars($userEmail) ?>
+                                    </p>
                                     <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
+                                        <?= htmlspecialchars($formattedLastLogin) ?>
+                                    </p>
                                 </div>
                                 <a href="<?= BASE_URL ?>account/profile"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
@@ -805,7 +808,7 @@ if ($needsProfileCompletion) {
                 </div>
             </header>
 
-            <div class="flex flex-col">
+            <div class="flex flex-col min-h-[calc(100vh-64px)]">
                 <main
                     class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white main-fixed">
                     <?php if ($showOnboarding):
@@ -967,9 +970,11 @@ if ($needsProfileCompletion) {
                                     class="fas <?= $item['icon'] ?> text-secondary dark:text-white"></i></span>
                             <div>
                                 <div class="text-sm font-medium text-secondary dark:text-white">
-                                    <?= htmlspecialchars($item['title']) ?></div>
+                                    <?= htmlspecialchars($item['title']) ?>
+                                </div>
                                 <div class="text-[11px] text-gray-500 dark:text-white/70">
-                                    <?= htmlspecialchars(ucfirst($category['title'])) ?></div>
+                                    <?= htmlspecialchars(ucfirst($category['title'])) ?>
+                                </div>
                             </div>
                         </a>
                     <?php endforeach; ?>
@@ -1007,7 +1012,8 @@ if ($needsProfileCompletion) {
                 <div class="user-initials w-10 h-10"><?= htmlspecialchars($userInitials) ?></div>
                 <div class="min-w-0">
                     <div class="text-sm font-medium text-secondary dark:text-white truncate">
-                        <?= htmlspecialchars($userName) ?></div>
+                        <?= htmlspecialchars($userName) ?>
+                    </div>
                     <div class="text-xs text-gray-500 dark:text-white/70 truncate"><?= htmlspecialchars($userEmail) ?>
                     </div>
                 </div>
