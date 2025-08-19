@@ -805,7 +805,7 @@ if ($needsProfileCompletion) {
                 </div>
             </header>
 
-            <div class="flex flex-col min-h-[calc(100vh-64px)]">
+            <div class="flex flex-col">
                 <main
                     class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white main-fixed">
                     <?php if ($showOnboarding):
@@ -923,10 +923,6 @@ if ($needsProfileCompletion) {
 
                     <?= $mainContent ?? '' ?>
                 </main>
-                <footer
-                    class="bg-white dark:bg-secondary border-t border-gray-100 dark:border-white/10 py-4 px-6 text-center text-sm text-gray-500 dark:text-white/70">
-                    &copy; <?= date('Y') ?> Zzimba Online. All rights reserved.
-                </footer>
             </div>
         </div>
     </div>
