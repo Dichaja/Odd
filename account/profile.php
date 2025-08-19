@@ -319,7 +319,7 @@ ob_start();
                                 </div>
                                 <button onclick="editEmail()"
                                     class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"><i
-                                        class="fas fa-edit mr-2"></i>Change Email</button>
+                                        class="fas fa-edit mr-2"></i>Update Email</button>
                             </div>
                         </div>
 
@@ -353,7 +353,7 @@ ob_start();
                                 </div>
                                 <button onclick="editPhone()"
                                     class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"><i
-                                        class="fas fa-edit mr-2"></i>Change Phone</button>
+                                        class="fas fa-edit mr-2"></i>Update Phone</button>
                             </div>
                         </div>
 
@@ -376,12 +376,12 @@ ob_start();
                             <div class="w-8 h-8 bg-orange-100 dark:bg-white/10 rounded-lg grid place-items-center">
                                 <i class="fas fa-lock text-orange-600 dark:text-white"></i>
                             </div>
-                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Change Password</h3>
+                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Update Password</h3>
                         </div>
 
                         <button onclick="showModal('changePasswordModal')"
                             class="px-6 py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-all duration-200 font-medium shadow-lg shadow-orange-600/25 hover:shadow-xl hover:shadow-orange-600/30"><i
-                                class="fas fa-key mr-2"></i>Change Password</button>
+                                class="fas fa-key mr-2"></i>Udpate Password</button>
                     </div>
 
                     <div
@@ -612,7 +612,7 @@ ob_start();
         class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
         <div class="p-6 border-b border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-secondary dark:text-white">Change Password</h3>
+                <h3 class="text-lg font-semibold text-secondary dark:text-white">Update Password</h3>
                 <button onclick="hideModal('changePasswordModal')"
                     class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center transition-colors">
                     <i class="fas fa-times text-gray-500 dark:text-white/60"></i>
