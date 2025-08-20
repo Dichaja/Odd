@@ -93,7 +93,7 @@ function formatCurrency($amount)
         </div>
 
         <div
-            class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden">
+            class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 overflow-visible">
             <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-white/10">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
@@ -110,7 +110,7 @@ function formatCurrency($amount)
                         </button>
                         <div class="relative">
                             <div id="columnSelector"
-                                class="hidden absolute right-0 top-full mt-2 bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-lg shadow-lg z-50 min-w-48">
+                                class="hidden absolute right-0 top-full mt-2 bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-lg shadow-lg z-[100] min-w-48">
                                 <div class="p-3 border-b border-gray-100 dark:border-white/10">
                                     <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Show Columns</h4>
                                     <p class="text-xs text-gray-500 dark:text-white/60 mt-1">Select at least 3 columns
@@ -156,14 +156,31 @@ function formatCurrency($amount)
                             </div>
                         </div>
 
-                        <select id="dateFilter" onchange="loadTransactions()"
-                            class="w-full sm:w-auto px-2 py-1 text-sm border border-gray-300 rounded item-size-input dark:bg-secondary dark:text-white dark:border-white/20">
-                            <option value="all">All transactions</option>
-                            <option value="30">Last 30 days</option>
-                            <option value="90">Last 3 months</option>
-                            <option value="180">Last 6 months</option>
-                            <option value="365">Last year</option>
-                        </select>
+                        <div class="relative" id="dateFilterContainer">
+                            <button id="dateFilterBtn"
+                                class="w-full sm:w-auto inline-flex items-center justify-between gap-2 px-4 py-2 border border-gray-300 dark:border-white/20 rounded-lg text-sm bg-white dark:bg-secondary text-secondary dark:text-white">
+                                <span id="dateFilterLabel">All transactions</span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+                            <div id="dateFilterMenu"
+                                class="hidden absolute right-0 top-full mt-2 bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-lg shadow-lg z-[100] min-w-56">
+                                <button data-value="all" data-label="All transactions"
+                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/10">All
+                                    transactions</button>
+                                <button data-value="30" data-label="Last 30 days"
+                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/10">Last
+                                    30 days</button>
+                                <button data-value="90" data-label="Last 3 months"
+                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/10">Last
+                                    3 months</button>
+                                <button data-value="180" data-label="Last 6 months"
+                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/10">Last
+                                    6 months</button>
+                                <button data-value="365" data-label="Last year"
+                                    class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/10">Last
+                                    year</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -303,6 +320,7 @@ function formatCurrency($amount)
         let transactions = [];
         let walletNumberForModal = null;
         let newAccountModalShown = false;
+        let selectedDateFilter = 'all';
 
         function displayTransactionsView() {
             const tableWrapper = document.getElementById('transactionsTable');
@@ -420,7 +438,7 @@ function formatCurrency($amount)
         }
 
         function loadTransactions() {
-            const filter = document.getElementById('dateFilter').value;
+            const filter = selectedDateFilter;
             let params = { action: 'getWalletStatement' };
             if (filter !== 'all') {
                 const days = parseInt(filter); const endDate = new Date(); const startDate = new Date(); startDate.setDate(startDate.getDate() - days);
@@ -604,7 +622,9 @@ function formatCurrency($amount)
         }
         function handleClickOutside(e) {
             const selector = document.getElementById('columnSelector'); const btn = document.getElementById('viewColumnsBtn');
+            const dateWrap = document.getElementById('dateFilterContainer');
             if (!selector.contains(e.target) && !btn.contains(e.target)) { selector.classList.add('hidden'); document.removeEventListener('click', handleClickOutside); }
+            if (!dateWrap.contains(e.target)) { closeDateMenu(); }
         }
 
         function adjustBalanceTextSize() {
@@ -644,6 +664,28 @@ function formatCurrency($amount)
             const colors = { 'New': 'bg-blue-100 text-blue-800', 'Processing': 'bg-yellow-100 text-yellow-800', 'Processed': 'bg-green-100 text-green-800', 'Paid': 'bg-purple-100 text-purple-800', 'SUCCESS': 'bg-green-100 text-green-800', 'PENDING': 'bg-yellow-100 text-yellow-800', 'FAILED': 'bg-red-100 text-red-800' };
             return colors[status] || 'bg-gray-100 text-gray-800';
         }
+
+        const dfBtn = document.getElementById('dateFilterBtn');
+        const dfMenu = document.getElementById('dateFilterMenu');
+        const dfLabel = document.getElementById('dateFilterLabel');
+
+        function openDateMenu() { dfMenu.classList.remove('hidden'); document.addEventListener('click', handleClickOutside); }
+        function closeDateMenu() { dfMenu.classList.add('hidden'); }
+        function setDateFilter(value, label) {
+            selectedDateFilter = value;
+            dfLabel.textContent = label;
+            closeDateMenu();
+            loadTransactions();
+        }
+
+        dfBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (dfMenu.classList.contains('hidden')) openDateMenu(); else closeDateMenu();
+        });
+
+        dfMenu.querySelectorAll('button[data-value]').forEach(btn => {
+            btn.addEventListener('click', () => setDateFilter(btn.dataset.value, btn.dataset.label));
+        });
     });
 </script>
 
