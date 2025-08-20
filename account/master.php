@@ -766,7 +766,7 @@ if ($needsProfileCompletion) {
                             </button>
                             <div id="userDropdownMenu"
                                 class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
-                                <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
+                                <div class="px-4 py-3 bg-gray-50 dark:bg白/5">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
                                         <?= htmlspecialchars($userName) ?>
                                     </p>
@@ -1089,7 +1089,7 @@ if ($needsProfileCompletion) {
                 </div>
                 <div class="max-h-[60vh] overflow-auto border-t border-gray-100 dark:border-white/10">
                     <template x-for="note in notes" :key="note.target_id">
-                        <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
+                        <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg白/5' : 'bg-white dark:bg-secondary'"
                             class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
                             <div class="px-3 py-3"><input type="checkbox" :value="note.target_id" x-model="selected"
                                     class="h-4 w-4 text-user-primary rounded"></div>
@@ -1153,49 +1153,113 @@ if ($needsProfileCompletion) {
         }
         function notifComponent() {
             return {
-                open: false, notes: [], count: 0, selected: [], evtSource: null,
+                open: false,
+                notes: [],
+                count: 0,
+                selected: [],
+                lastTs: null,
+                timer: null,
                 toggle() { this.open = !this.open },
                 init() {
-                    this.evtSource = new EventSource(BASE_URL + 'fetch/manageNotifications.php?action=stream');
-                    this.evtSource.onmessage = e => {
-                        try {
-                            const data = JSON.parse(e.data);
-                            const currentIds = data.map(n => n.target_id);
-                            this.selected = this.selected.filter(id => currentIds.includes(id));
-                            this.notes = data;
-                            this.count = this.notes.filter(n => n.is_seen == 0).length;
-                            const badge = document.getElementById('mobileNotifCount');
-                            if (badge) {
-                                if (this.count > 0) { badge.textContent = this.count; badge.classList.remove('hidden'); }
-                                else { badge.classList.add('hidden'); }
+                    this.fetchNow();
+                    this.timer = setInterval(() => this.fetchNow(), 20000);
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') this.fetchNow();
+                    });
+                },
+                setBadge(c) {
+                    this.count = c;
+                    const badge = document.getElementById('mobileNotifCount');
+                    if (badge) {
+                        if (this.count > 0) { badge.textContent = this.count; badge.classList.remove('hidden'); }
+                        else { badge.classList.add('hidden'); }
+                    }
+                },
+                mergeIncoming(arr) {
+                    if (!Array.isArray(arr) || !arr.length) return;
+                    const existing = new Map(this.notes.map(n => [n.target_id, n]));
+                    for (const n of arr) {
+                        if (!existing.has(n.target_id)) {
+                            this.notes.unshift(n);
+                            existing.set(n.target_id, n);
+                        } else {
+                            const idx = this.notes.findIndex(x => x.target_id === n.target_id);
+                            if (idx >= 0) this.notes[idx] = n;
+                        }
+                    }
+                    this.notes = this.notes.slice(0, 100);
+                },
+                fetchNow() {
+                    const url = new URL(BASE_URL + 'fetch/manageNotifications.php');
+                    url.searchParams.set('action', 'fetch');
+                    if (this.lastTs) url.searchParams.set('since', this.lastTs);
+                    fetch(url.toString(), { cache: 'no-store' })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res && res.status === 'success') {
+                                const incoming = res.data || [];
+                                if (this.lastTs) this.mergeIncoming(incoming);
+                                else this.notes = incoming;
+                                const latest = res.latest_ts || (incoming[0]?.created_at ?? this.lastTs);
+                                if (latest) this.lastTs = latest;
+                                const nextCount = Number.isInteger(res.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                                this.setBadge(nextCount);
+                                this.selected = this.selected.filter(id => this.notes.some(n => n.target_id === id));
+                                const selAll = document.getElementById('selectAll'); if (selAll) selAll.checked = (this.selected.length && this.selected.length === this.notes.length);
+                                const selAllM = document.getElementById('selectAllM'); if (selAllM) selAllM.checked = (this.selected.length && this.selected.length === this.notes.length);
                             }
-                        } catch { }
-                    };
-                    this.evtSource.onerror = () => { };
+                        }).catch(() => { });
                 },
                 selectAll(event) { this.selected = event.target.checked ? this.notes.map(n => n.target_id) : [] },
                 markSeen(id) {
                     const p = new URLSearchParams(); p.append('action', 'markSeen'); p.append('target_id', id);
                     fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
-                        .then(() => { const n = this.notes.find(n => n.target_id === id); if (n) n.is_seen = 1; this.count = this.notes.filter(n => n.is_seen == 0).length; })
+                        .then(r => r.json()).then(res => {
+                            const n = this.notes.find(n => n.target_id === id); if (n) n.is_seen = 1;
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.setBadge(c);
+                        }).catch(() => { });
                 },
                 markBulkSeen() {
                     if (!this.selected.length) return;
-                    const p = new URLSearchParams(); p.append('action', 'markSeen'); this.selected.forEach(id => p.append('target_id[]', id));
+                    const ids = this.selected.slice();
+                    const p = new URLSearchParams(); p.append('action', 'markSeen'); ids.forEach(id => p.append('target_id[]', id));
                     fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
-                        .then(() => { this.notes.forEach(n => { if (this.selected.includes(n.target_id)) n.is_seen = 1 }); this.count = this.notes.filter(n => n.is_seen == 0).length; this.selected = []; const b = document.getElementById('selectAll'); if (b) b.checked = false; const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false; })
+                        .then(r => r.json()).then(res => {
+                            this.notes.forEach(n => { if (ids.includes(n.target_id)) n.is_seen = 1 });
+                            this.selected = [];
+                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
+                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false;
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.setBadge(c);
+                        }).catch(() => { });
                 },
                 handleClick(note) { if (note.is_seen == 0) this.markSeen(note.target_id); if (note.link_url) location.href = note.link_url },
                 dismiss(id) {
                     const p = new URLSearchParams(); p.append('action', 'dismiss'); p.append('target_id', id);
                     fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
-                        .then(() => { this.notes = this.notes.filter(n => n.target_id !== id); this.count = this.notes.filter(n => n.is_seen == 0).length; this.selected = this.selected.filter(sid => sid !== id); const b = document.getElementById('selectAll'); if (b) b.checked = (this.selected.length === this.notes.length && this.notes.length > 0); const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = (this.selected.length === this.notes.length && this.notes.length > 0); })
+                        .then(r => r.json()).then(res => {
+                            this.notes = this.notes.filter(n => n.target_id !== id);
+                            this.selected = this.selected.filter(sid => sid !== id);
+                            const b = document.getElementById('selectAll'); if (b) b.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.setBadge(c);
+                        }).catch(() => { });
                 },
                 dismissBulk() {
                     if (!this.selected.length) return;
-                    const p = new URLSearchParams(); p.append('action', 'dismiss'); this.selected.forEach(id => p.append('target_id[]', id));
+                    const ids = this.selected.slice();
+                    const p = new URLSearchParams(); p.append('action', 'dismiss'); ids.forEach(id => p.append('target_id[]', id));
                     fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
-                        .then(() => { this.notes = this.notes.filter(n => !this.selected.includes(n.target_id)); this.count = this.notes.filter(n => n.is_seen == 0).length; this.selected = []; const b = document.getElementById('selectAll'); if (b) b.checked = false; const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false; })
+                        .then(r => r.json()).then(res => {
+                            this.notes = this.notes.filter(n => !ids.includes(n.target_id));
+                            this.selected = [];
+                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
+                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false;
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.setBadge(c);
+                        }).catch(() => { });
                 },
                 formatDate(ts) {
                     const d = new Date(ts.replace(' ', 'T')), now = new Date(), diff = (now - d) / 1000;

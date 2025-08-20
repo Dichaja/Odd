@@ -11,7 +11,8 @@ try {
         priority ENUM('low','normal','high') NOT NULL DEFAULT 'normal',
         created_by VARCHAR(26) DEFAULT NULL,
         created_at DATETIME NOT NULL,
-        INDEX(type), INDEX(created_at)
+        INDEX(type),
+        INDEX(created_at)
     )");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS notification_targets (
@@ -27,7 +28,9 @@ try {
         updated_at DATETIME NOT NULL,
         CONSTRAINT fk_nt_notification FOREIGN KEY (notification_id)
             REFERENCES notifications(id) ON DELETE CASCADE,
-        INDEX(recipient_type, recipient_id, is_seen)
+        INDEX(recipient_type, recipient_id, is_seen),
+        INDEX(recipient_id, is_dismissed, is_seen, created_at),
+        INDEX(recipient_id, created_at)
     )");
 } catch (PDOException $e) {
     error_log("Table creation error: " . $e->getMessage());
@@ -45,6 +48,15 @@ class NotificationService
         $this->db = $db;
     }
 
+    private function resolveCurrentPrincipal(): array
+    {
+        $sess = $_SESSION['user'] ?? [];
+        $userId = $sess['user_id'] ?? null;
+        $storeId = $_SESSION['store_session_id'] ?? null;
+        $isAdmin = !empty($sess['is_admin']);
+        return [$userId, $storeId, $isAdmin];
+    }
+
     public function create(
         string $type,
         string $title,
@@ -55,7 +67,6 @@ class NotificationService
     ): string {
         $now = (new DateTime())->format('Y-m-d H:i:s');
         $this->db->beginTransaction();
-
         $notificationId = generateUlid();
         $this->db->prepare(
             "INSERT INTO notifications (id,type,title,link_url,priority,created_by,created_at)
@@ -84,13 +95,9 @@ class NotificationService
         return $notificationId;
     }
 
-    public function fetchForCurrent(int $limit = 20, int $offset = 0): array
+    public function fetchForCurrent(int $limit = 20, int $offset = 0, ?string $since = null): array
     {
-        $sess = $_SESSION['user'] ?? [];
-        $userId = $sess['user_id'] ?? null;
-        $storeId = $_SESSION['store_session_id'] ?? null;
-        $isAdmin = $sess['is_admin'] ?? false;
-
+        [$userId, $storeId, $isAdmin] = $this->resolveCurrentPrincipal();
         if (!$userId) {
             return [];
         }
@@ -98,44 +105,99 @@ class NotificationService
         $clauses = [];
         $params = [];
 
-        $clauses[] = "(recipient_type='user' AND recipient_id=?)";
-        $params[] = $userId;
+        $clauses[] = "(nt.recipient_type='user' AND nt.recipient_id=:uid)";
+        $params[':uid'] = $userId;
 
         if ($storeId) {
-            $clauses[] = "(recipient_type='store' AND recipient_id=?)";
-            $params[] = $storeId;
+            $clauses[] = "(nt.recipient_type='store' AND nt.recipient_id=:sid)";
+            $params[':sid'] = $storeId;
+        }
+
+        if ($isAdmin) {
+            $clauses[] = "(nt.recipient_type='admin')";
+        }
+
+        $sinceSql = '';
+        if ($since) {
+            $sinceSql = " AND nt.created_at > :since";
+            $params[':since'] = $since;
+        }
+
+        $sql = "
+            SELECT
+                nt.id AS target_id,
+                n.id AS notification_id,
+                n.type,
+                n.title,
+                nt.message,
+                n.link_url,
+                n.priority,
+                nt.created_at,
+                nt.is_seen,
+                nt.is_dismissed
+            FROM notification_targets nt
+            JOIN notifications n ON n.id = nt.notification_id
+            WHERE (" . implode(' OR ', $clauses) . ")
+              AND nt.is_dismissed=0
+              $sinceSql
+            ORDER BY nt.created_at DESC
+            LIMIT :limit OFFSET :offset
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function countUnreadForCurrent(): int
+    {
+        [$userId, $storeId, $isAdmin] = $this->resolveCurrentPrincipal();
+        if (!$userId) {
+            return 0;
+        }
+
+        $clauses = [];
+        $params = [];
+
+        $clauses[] = "(recipient_type='user' AND recipient_id=:uid)";
+        $params[':uid'] = $userId;
+
+        if ($storeId) {
+            $clauses[] = "(recipient_type='store' AND recipient_id=:sid)";
+            $params[':sid'] = $storeId;
         }
 
         if ($isAdmin) {
             $clauses[] = "(recipient_type='admin')";
         }
 
-        $sql = "SELECT nt.id target_id,n.id notification_id,n.type,n.title,nt.message,n.link_url,
-                       n.priority,n.created_at,nt.is_seen,nt.is_dismissed
-                FROM notification_targets nt
-                JOIN notifications n ON n.id=nt.notification_id
-                WHERE (" . implode(' OR ', $clauses) . ") AND nt.is_dismissed=0
-                ORDER BY n.created_at DESC LIMIT ? OFFSET ?";
+        $sql = "
+            SELECT COUNT(*)
+            FROM notification_targets
+            WHERE (" . implode(' OR ', $clauses) . ")
+              AND is_dismissed=0
+              AND is_seen=0
+        ";
 
-        $params[] = $limit;
-        $params[] = $offset;
-
-        $st = $this->db->prepare($sql);
-        $st->execute($params);
-        return $st->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v);
+        }
+        $stmt->execute();
+        return (int) $stmt->fetchColumn();
     }
 
-    /**
-     * Mark one or multiple notification_targets as seen.
-     *
-     * @param string|array $targetIds A single target ID or an array of target IDs.
-     */
     public function markSeen($targetIds): void
     {
         $now = (new DateTime())->format('Y-m-d H:i:s');
-
         if (is_array($targetIds)) {
-            // Bulk update: build placeholders and bind parameters
+            if (empty($targetIds))
+                return;
             $placeholders = implode(',', array_fill(0, count($targetIds), '?'));
             $params = array_merge([$now, $now], $targetIds);
             $sql = "UPDATE notification_targets
@@ -143,7 +205,6 @@ class NotificationService
                     WHERE id IN ($placeholders)";
             $this->db->prepare($sql)->execute($params);
         } else {
-            // Single ID
             $sql = "UPDATE notification_targets
                     SET is_seen = 1, seen_at = ?, updated_at = ?
                     WHERE id = ?";
@@ -151,17 +212,12 @@ class NotificationService
         }
     }
 
-    /**
-     * Dismiss one or multiple notification_targets.
-     *
-     * @param string|array $targetIds A single target ID or an array of target IDs.
-     */
     public function dismiss($targetIds): void
     {
         $now = (new DateTime())->format('Y-m-d H:i:s');
-
         if (is_array($targetIds)) {
-            // Bulk update: build placeholders and bind parameters
+            if (empty($targetIds))
+                return;
             $placeholders = implode(',', array_fill(0, count($targetIds), '?'));
             $params = array_merge([$now], $targetIds);
             $sql = "UPDATE notification_targets
@@ -169,7 +225,6 @@ class NotificationService
                     WHERE id IN ($placeholders)";
             $this->db->prepare($sql)->execute($params);
         } else {
-            // Single ID
             $sql = "UPDATE notification_targets
                     SET is_dismissed = 1, updated_at = ?
                     WHERE id = ?";

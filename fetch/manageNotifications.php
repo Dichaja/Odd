@@ -8,12 +8,10 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $action = $_REQUEST['action'] ?? '';
 
-// --- Authorization ---
 if (empty($_SESSION['user']) && empty($_SESSION['admin'])) {
     if ($action === 'stream') {
         header('HTTP/1.1 401 Unauthorized');
         header('Content-Type: text/event-stream');
-        // SSE‐style error event
         echo "event: error\ndata: Unauthorized\n\n";
         exit;
     }
@@ -26,34 +24,34 @@ if (empty($_SESSION['user']) && empty($_SESSION['admin'])) {
 $ns = new NotificationService($pdo);
 
 if ($action === 'stream') {
-    // --- SSE Stream ---
     header('Content-Type: text/event-stream');
     header('Cache-Control: no-cache');
     header('Connection: keep-alive');
-    // Release session lock so POSTs (markSeen/dismiss) can run in parallel
     session_write_close();
-    set_time_limit(0);
-
-    while (!connection_aborted()) {
-        $notifications = $ns->fetchForCurrent(50, 0);
-        $json = json_encode($notifications);
-        echo "data: {$json}\n\n";
-        @ob_flush();
-        @flush();
-        sleep(2);
-    }
+    $limit = (int) ($_GET['limit'] ?? 50);
+    $offset = (int) ($_GET['offset'] ?? 0);
+    $since = $_GET['since'] ?? null;
+    $data = $ns->fetchForCurrent($limit, $offset, $since);
+    $latest = !empty($data) ? max(array_column($data, 'created_at')) : ($since ?? null);
+    $unread = $ns->countUnreadForCurrent();
+    $payload = json_encode(['data' => $data, 'unread_count' => $unread, 'latest_ts' => $latest]);
+    echo "data: {$payload}\n\n";
+    @ob_flush();
+    @flush();
     exit;
 }
 
-// --- All other actions return JSON ---
 header('Content-Type: application/json');
 
 switch ($action) {
     case 'fetch':
         $limit = (int) ($_GET['limit'] ?? 20);
         $offset = (int) ($_GET['offset'] ?? 0);
-        $data = $ns->fetchForCurrent($limit, $offset);
-        echo json_encode(['status' => 'success', 'data' => $data]);
+        $since = $_GET['since'] ?? null;
+        $data = $ns->fetchForCurrent($limit, $offset, $since);
+        $unread = $ns->countUnreadForCurrent();
+        $latest = !empty($data) ? max(array_column($data, 'created_at')) : ($since ?? null);
+        echo json_encode(['status' => 'success', 'data' => $data, 'unread_count' => $unread, 'latest_ts' => $latest]);
         break;
 
     case 'markSeen':
@@ -62,13 +60,12 @@ switch ($action) {
             echo json_encode(['status' => 'error', 'message' => 'Method Not Allowed']);
             exit;
         }
-        // Accept either a single 'target_id' (string) or multiple 'target_id' as an array
         $targetIds = $_POST['target_id'] ?? null;
-
         if ($targetIds) {
             $ns->markSeen($targetIds);
         }
-        echo json_encode(['status' => 'success']);
+        $unread = $ns->countUnreadForCurrent();
+        echo json_encode(['status' => 'success', 'unread_count' => $unread]);
         break;
 
     case 'dismiss':
@@ -77,13 +74,12 @@ switch ($action) {
             echo json_encode(['status' => 'error', 'message' => 'Method Not Allowed']);
             exit;
         }
-        // Accept either a single 'target_id' (string) or multiple 'target_id' as an array
         $targetIds = $_POST['target_id'] ?? null;
-
         if ($targetIds) {
             $ns->dismiss($targetIds);
         }
-        echo json_encode(['status' => 'success']);
+        $unread = $ns->countUnreadForCurrent();
+        echo json_encode(['status' => 'success', 'unread_count' => $unread]);
         break;
 
     default:

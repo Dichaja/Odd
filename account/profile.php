@@ -13,10 +13,10 @@ ob_start();
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div
                     class="relative bg-white dark:bg-secondary rounded-xl p-4 border border-gray-100 dark:border-white/10">
-                    <div class="space-y-1">
+                    <div class="space-y-1 pr-6">
                         <p class="text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wide">Profile
                             Status</p>
-                        <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap"
+                        <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap truncate max-w-[180px] sm:max-w-[220px] lg:max-w-[160px]"
                             id="profile-status-display">Loading...</p>
                         <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap">Account Status
                         </p>
@@ -27,13 +27,13 @@ ob_start();
 
                 <div
                     class="relative bg-white dark:bg-secondary rounded-xl p-4 border border-gray-100 dark:border-white/10">
-                    <div class="space-y-1">
+                    <div class="space-y-1 pr-10">
                         <p class="text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wide">Email
                             Status</p>
                         <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap"
                             id="email-status-display">Loading...</p>
-                        <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap"
-                            id="email-value-display">Not Set</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap truncate max-w-[180px] sm:max-w-[220px] lg:max-w-[160px]"
+                            id="email-value-display" title="Not Set">Not Set</p>
                     </div>
                     <i
                         class="fas fa-envelope absolute bottom-3 right-3 text-3xl text-green-600/30 dark:text-white/20"></i>
@@ -41,13 +41,13 @@ ob_start();
 
                 <div
                     class="relative bg-white dark:bg-secondary rounded-xl p-4 border border-gray-100 dark:border-white/10">
-                    <div class="space-y-1">
+                    <div class="space-y-1 pr-10">
                         <p class="text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wide">Phone
                             Status</p>
                         <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap"
                             id="phone-status-display">Loading...</p>
-                        <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap"
-                            id="phone-value-display">Not Set</p>
+                        <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap truncate max-w-[180px] sm:max-w-[220px] lg:max-w-[160px]"
+                            id="phone-value-display" title="Not Set">Not Set</p>
                     </div>
                     <i
                         class="fas fa-phone absolute bottom-3 right-3 text-3xl text-purple-600/30 dark:text-white/20"></i>
@@ -55,10 +55,10 @@ ob_start();
 
                 <div
                     class="relative bg-white dark:bg-secondary rounded-xl p-4 border border-gray-100 dark:border-white/10">
-                    <div class="space-y-1">
+                    <div class="space-y-1 pr-6">
                         <p class="text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wide">Member
                             Since</p>
-                        <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap"
+                        <p class="text-lg font-bold text-secondary dark:text-white whitespace-nowrap truncate max-w-[180px] sm:max-w-[220px] lg:max-w-[160px]"
                             id="member-since-display">Loading...</p>
                         <p class="text-sm font-medium text-gray-600 dark:text-white/70 whitespace-nowrap"
                             id="last-login-display">Last Login</p>
@@ -71,21 +71,6 @@ ob_start();
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-        <div id="incompleteBanner"
-            class="hidden bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 text-yellow-800 dark:text-yellow-200 px-4 py-3 rounded-xl mb-6"
-            role="alert">
-            <div class="flex items-start gap-3">
-                <i class="fas fa-exclamation-triangle mt-0.5"></i>
-                <div>
-                    <p class="text-sm leading-relaxed">Your profile is incomplete. Please complete the following
-                        required fields: <span id="missing-fields-list" class="font-semibold"></span></p>
-                    <button id="complete-profile-btn"
-                        class="mt-2 text-sm bg-yellow-600 text-white px-3 py-1 rounded-md hover:bg-yellow-700 transition-colors">Complete
-                        Profile Now</button>
-                </div>
-            </div>
-        </div>
-
         <div
             class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 mb-6 md:mb-8">
             <div class="border-b border-gray-100 dark:border-white/10">
@@ -94,11 +79,6 @@ ob_start();
                         <button id="overview-tab"
                             class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-primary text-primary"
                             onclick="switchTab('overview')"><i class="fas fa-user mr-2"></i>Profile Overview</button>
-                        <button id="details-tab"
-                            class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 dark:text-white/70 hover:text-primary hover:border-b-primary/30"
-                            onclick="switchTab('details')"><i class="fas fa-edit mr-2"></i>Edit Details <span
-                                id="details-tab-indicator"
-                                class="hidden ml-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span></button>
                         <button id="security-tab"
                             class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none transition-all duration-200 border-b-transparent text-gray-500 dark:text-white/70 hover:text-primary hover:border-b-primary/30"
                             onclick="switchTab('security')"><i class="fas fa-shield-alt mr-2"></i>Security</button>
@@ -113,8 +93,6 @@ ob_start();
                                 <i class="fas fa-user text-primary"></i>
                                 <span id="mobile-tab-label" class="font-medium text-secondary dark:text-white">Profile
                                     Overview</span>
-                                <span id="mobile-details-indicator"
-                                    class="hidden w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                             </div>
                             <i class="fas fa-chevron-down text-gray-400 dark:text-white/50 transition-transform duration-200"
                                 id="mobile-tab-chevron"></i>
@@ -128,14 +106,6 @@ ob_start();
                                     data-tab="overview">
                                     <i class="fas fa-user text-blue-600"></i>
                                     <span class="text-secondary dark:text-white">Profile Overview</span>
-                                </button>
-                                <button
-                                    class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
-                                    data-tab="details">
-                                    <i class="fas fa-edit text-green-600"></i>
-                                    <span class="text-secondary dark:text-white">Edit Details</span>
-                                    <span id="mobile-details-tab-indicator"
-                                        class="hidden ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                                 </button>
                                 <button
                                     class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
@@ -159,23 +129,19 @@ ob_start();
                             <div class="text-center">
                                 <div
                                     class="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-white/10 shadow-md mb-4 mx-auto">
-                                    <img id="user-profile-pic" src="https://placehold.co/128x128/3B82F6/FFFFFF?text=..."
+                                    <img id="user-profile-pic"
+                                        src="https://api.dicebear.com/7.x/initials/svg?seed=U&size=128&radius=50"
                                         alt="Profile Picture" class="w-full h-full object-cover">
                                 </div>
-                                <h1 class="text-2xl font-bold text-secondary dark:text-white mb-1" id="user-fullname">
-                                    Loading…</h1>
-                                <p class="text-gray-600 dark:text-white/70 mb-4" id="user-username">@loading</p>
+                                <h1 class="text-2xl font-bold text-secondary dark:text-white mb-1 truncate max-w-[240px] mx-auto"
+                                    id="user-fullname">Loading…</h1>
+                                <p class="text-gray-600 dark:text-white/70 mb-4 truncate max-w-[240px] mx-auto"
+                                    id="user-username">@loading</p>
                                 <div class="space-y-2 text-sm text-gray-600 dark:text-white/70">
                                     <p id="user-joined">Member since …</p>
                                     <p id="user-lastlogin">Last login: …</p>
                                 </div>
                             </div>
-                        </div>
-                        <div class="md:hidden mt-4 grid grid-cols-2 gap-3">
-                            <button onclick="switchTab('details')"
-                                class="px-4 py-3 bg-primary text-white rounded-xl font-medium">Edit Profile</button>
-                            <button onclick="switchTab('security')"
-                                class="px-4 py-3 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl font-medium">Security</button>
                         </div>
                     </div>
 
@@ -192,8 +158,14 @@ ob_start();
 
                             <div class="space-y-6">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                                    <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4" id="names-overview-card">
-                                        <div class="flex items-center gap-3 mb-3">
+                                    <div class="relative bg-gray-50 dark:bg-white/5 rounded-xl p-4"
+                                        id="names-overview-card">
+                                        <button
+                                            class="absolute top-3 right-3 w-9 h-9 rounded-lg bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/10 grid place-items-center hover:bg-white dark:hover:bg-white/20 transition"
+                                            onclick="openEditNamesModal()">
+                                            <i class="fas fa-pen text-gray-600 dark:text-white/80 text-sm"></i>
+                                        </button>
+                                        <div class="flex items-center gap-3 mb-3 pr-10">
                                             <div
                                                 class="w-8 h-8 bg-blue-100 dark:bg-white/10 rounded-lg grid place-items-center">
                                                 <i class="fas fa-user text-blue-600 dark:text-white"></i>
@@ -202,11 +174,18 @@ ob_start();
                                             <i class="fas fa-exclamation-circle text-red-500 hidden"
                                                 id="names-required-icon" title="Required field"></i>
                                         </div>
-                                        <p class="text-gray-700 dark:text-white/80" id="overview-names">Loading...</p>
+                                        <p class="text-gray-700 dark:text-white/80 truncate" id="overview-names"
+                                            title="Loading...">Loading...</p>
                                     </div>
 
-                                    <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4" id="email-overview-card">
-                                        <div class="flex items-center gap-3 mb-3">
+                                    <div class="relative bg-gray-50 dark:bg-white/5 rounded-xl p-4"
+                                        id="email-overview-card">
+                                        <button
+                                            class="absolute top-3 right-3 w-9 h-9 rounded-lg bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/10 grid place-items-center hover:bg-white dark:hover:bg-white/20 transition"
+                                            onclick="editEmail()">
+                                            <i class="fas fa-pen text-gray-600 dark:text-white/80 text-sm"></i>
+                                        </button>
+                                        <div class="flex items-center gap-3 mb-3 pr-10">
                                             <div
                                                 class="w-8 h-8 bg-green-100 dark:bg-white/10 rounded-lg grid place-items-center">
                                                 <i class="fas fa-envelope text-green-600 dark:text-white"></i>
@@ -215,11 +194,18 @@ ob_start();
                                             <i class="fas fa-exclamation-circle text-red-500 hidden"
                                                 id="email-required-icon" title="Required field"></i>
                                         </div>
-                                        <p class="text-gray-700 dark:text-white/80" id="overview-email">Loading...</p>
+                                        <p class="text-gray-700 dark:text-white/80 truncate" id="overview-email"
+                                            title="Loading...">Loading...</p>
                                     </div>
 
-                                    <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4" id="phone-overview-card">
-                                        <div class="flex items-center gap-3 mb-3">
+                                    <div class="relative bg-gray-50 dark:bg-white/5 rounded-xl p-4"
+                                        id="phone-overview-card">
+                                        <button
+                                            class="absolute top-3 right-3 w-9 h-9 rounded-lg bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/10 grid place-items-center hover:bg-white dark:hover:bg-white/20 transition"
+                                            onclick="editPhone()">
+                                            <i class="fas fa-pen text-gray-600 dark:text-white/80 text-sm"></i>
+                                        </button>
+                                        <div class="flex items-center gap-3 mb-3 pr-10">
                                             <div
                                                 class="w-8 h-8 bg-purple-100 dark:bg-white/10 rounded-lg grid place-items-center">
                                                 <i class="fas fa-phone text-purple-600 dark:text-white"></i>
@@ -228,7 +214,8 @@ ob_start();
                                             <i class="fas fa-exclamation-circle text-red-500 hidden"
                                                 id="phone-required-icon" title="Required field"></i>
                                         </div>
-                                        <p class="text-gray-700 dark:text-white/80" id="overview-phone">Loading...</p>
+                                        <p class="text-gray-700 dark:text-white/80 truncate" id="overview-phone"
+                                            title="Loading...">Loading...</p>
                                     </div>
 
                                     <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4">
@@ -244,125 +231,11 @@ ob_start();
                                 </div>
 
                                 <div class="hidden md:flex flex-wrap gap-3 pt-2">
-                                    <button onclick="switchTab('details')"
-                                        class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"><i
-                                            class="fas fa-edit mr-2"></i>Edit Profile</button>
                                     <button onclick="switchTab('security')"
                                         class="px-6 py-3 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors font-medium"><i
                                             class="fas fa-shield-alt mr-2"></i>Security Settings</button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="details-content" class="tab-content hidden">
-                <div class="space-y-6">
-                    <div class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6"
-                        id="names-form-section">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-blue-100 dark:bg-white/10 rounded-lg grid place-items-center">
-                                <i class="fas fa-user text-blue-600 dark:text-white"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Edit Names</h3>
-                            <i class="fas fa-exclamation-circle text-red-500 hidden" id="names-form-required-icon"
-                                title="Required field"></i>
-                        </div>
-
-                        <form id="namesForm" class="space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="firstName"
-                                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">First
-                                        Name *</label>
-                                    <input type="text" id="firstName" name="first_name"
-                                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                        autocomplete="off">
-                                    <i class="fas fa-exclamation-circle text-red-500 ml-1 hidden"
-                                        id="firstName-required-icon"></i>
-                                </div>
-                                <div>
-                                    <label for="lastName"
-                                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Last
-                                        Name</label>
-                                    <input type="text" id="lastName" name="last_name"
-                                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-                                        autocomplete="off">
-                                </div>
-                            </div>
-                            <div id="names-form-error" class="text-red-500 text-sm hidden"></div>
-                            <button type="submit"
-                                class="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"><i
-                                    class="fas fa-save mr-2"></i>Update Names</button>
-                        </form>
-                    </div>
-
-                    <div class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6"
-                        id="email-form-section">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-green-100 dark:bg-white/10 rounded-lg grid place-items-center">
-                                <i class="fas fa-envelope text-green-600 dark:text-white"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Email Address</h3>
-                            <i class="fas fa-exclamation-circle text-red-500 hidden" id="email-form-required-icon"
-                                title="Required field"></i>
-                        </div>
-
-                        <div
-                            class="bg-gray-50 dark:bg-white/5 rounded-xl p-4 mb-4 border border-gray-100 dark:border-white/10">
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <p class="text-sm text-gray-600 dark:text-white/70">Current Email:</p>
-                                    <p class="font-medium text-secondary dark:text-white" id="current-email-display">
-                                        Loading...</p>
-                                </div>
-                                <button onclick="editEmail()"
-                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"><i
-                                        class="fas fa-edit mr-2"></i>Update Email</button>
-                            </div>
-                        </div>
-
-                        <div
-                            class="text-xs text-gray-600 dark:text-white/70 bg-blue-50 dark:bg-white/5 rounded-lg p-3 border border-blue-200 dark:border-white/10">
-                            <p><strong>Note:</strong> If you have an existing email, you'll need to verify it with an
-                                OTP before updating.</p>
-                            <p>Can't access your current email? <a href="#" class="text-primary hover:underline"
-                                    onclick="showContactAdminModal()">Contact Admin for assistance</a></p>
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 p-6"
-                        id="phone-form-section">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-8 h-8 bg-purple-100 dark:bg-white/10 rounded-lg grid place-items-center">
-                                <i class="fas fa-phone text-purple-600 dark:text-white"></i>
-                            </div>
-                            <h3 class="text-xl font-semibold text-secondary dark:text-white">Phone Number</h3>
-                            <i class="fas fa-exclamation-circle text-red-500 hidden" id="phone-form-required-icon"
-                                title="Required field"></i>
-                        </div>
-
-                        <div
-                            class="bg-gray-50 dark:bg-white/5 rounded-xl p-4 mb-4 border border-gray-100 dark:border-white/10">
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <p class="text-sm text-gray-600 dark:text-white/70">Current Phone:</p>
-                                    <p class="font-medium text-secondary dark:text-white" id="current-phone-display">
-                                        Loading...</p>
-                                </div>
-                                <button onclick="editPhone()"
-                                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"><i
-                                        class="fas fa-edit mr-2"></i>Update Phone</button>
-                            </div>
-                        </div>
-
-                        <div
-                            class="text-xs text-gray-600 dark:text-white/70 bg-blue-50 dark:bg-white/5 rounded-lg p-3 border border-blue-200 dark:border-white/10">
-                            <p><strong>Note:</strong> If you have an existing phone number, you'll need to verify it
-                                with an OTP before updating.</p>
-                            <p>Can't access your current phone? <a href="#" class="text-primary hover:underline"
-                                    onclick="showContactAdminModal()">Contact Admin for assistance</a></p>
                         </div>
                     </div>
                 </div>
@@ -417,7 +290,71 @@ ob_start();
     </div>
 </div>
 
-<div id="editEmailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+<div id="incompleteProfileModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('incompleteProfileModal')"></div>
+    <div
+        class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-lg relative z-10 border border-gray-100 dark:border-white/10">
+        <div class="p-6 border-b border-gray-100 dark:border-white/10">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-secondary dark:text-white">Complete Your Profile</h3>
+                <button onclick="hideModal('incompleteProfileModal')"
+                    class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 grid place-items-center">
+                    <i class="fas fa-times text-gray-500 dark:text-white/60"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-6 space-y-4">
+            <p class="text-sm text-gray-700 dark:text-white/80">To access all features and keep your account secure,
+                finish the steps below.</p>
+            <ul id="incomplete-list" class="space-y-2 text-sm text-gray-700 dark:text-white/80"></ul>
+            <button id="start-complete-profile-btn"
+                class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors font-medium"><i
+                    class="fas fa-play mr-2"></i>Complete Profile Now</button>
+        </div>
+    </div>
+</div>
+
+<div id="editNamesModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('editNamesModal')"></div>
+    <div
+        class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
+        <div class="p-6 border-b border-gray-100 dark:border-white/10">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-secondary dark:text-white">Edit Names</h3>
+                <button onclick="hideModal('editNamesModal')"
+                    class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 grid place-items-center">
+                    <i class="fas fa-times text-gray-500 dark:text-white/60"></i>
+                </button>
+            </div>
+        </div>
+        <div class="p-6">
+            <form id="editNamesForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="firstName"
+                            class="block text-sm font-semibold text-secondary dark:text-white mb-2">First Name *</label>
+                        <input type="text" id="firstName" name="first_name"
+                            class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="lastName"
+                            class="block text-sm font-semibold text-secondary dark:text-white mb-2">Last Name</label>
+                        <input type="text" id="lastName" name="last_name"
+                            class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                            autocomplete="off">
+                    </div>
+                </div>
+                <div id="names-form-error" class="text-red-500 text-sm hidden"></div>
+                <button type="submit"
+                    class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium"><i
+                        class="fas fa-save mr-2"></i>Update Names</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="editEmailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('editEmailModal')"></div>
     <div
         class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
@@ -434,7 +371,8 @@ ob_start();
             <div id="emailStep1" class="space-y-4">
                 <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4">
                     <p class="text-sm text-gray-700 dark:text-white/80 mb-1">Current Email:</p>
-                    <p class="font-medium text-secondary dark:text-white" id="current-email-modal">Loading...</p>
+                    <p class="font-medium text-secondary dark:text-white truncate" id="current-email-modal"
+                        title="Loading...">Loading...</p>
                 </div>
                 <div id="verifyExistingEmailSection">
                     <p class="text-sm text-gray-600 dark:text-white/70 mb-3">To change your email, first verify your
@@ -463,14 +401,8 @@ ob_start();
             <div id="emailStep2" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600 dark:text-white/70">Enter the verification code sent to your current
                     email.</p>
-                <div>
-                    <label for="existingEmailOTP"
-                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Verification
-                        Code</label>
-                    <input type="text" id="existingEmailOTP" maxlength="6"
-                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
-                        autocomplete="off" placeholder="000000">
-                </div>
+                <div id="otp-existing-email" class="flex gap-2 justify-center"></div>
+                <input type="hidden" id="existingEmailOTP">
                 <button type="button" id="verifyExistingEmailOTPBtn"
                     class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"><i
                         class="fas fa-check mr-2"></i>Verify Code</button>
@@ -493,14 +425,8 @@ ob_start();
             <div id="emailStep4" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600 dark:text-white/70">Enter the verification code sent to your new email.
                 </p>
-                <div>
-                    <label for="newEmailOTP"
-                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Verification
-                        Code</label>
-                    <input type="text" id="newEmailOTP" maxlength="6"
-                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
-                        autocomplete="off" placeholder="000000">
-                </div>
+                <div id="otp-new-email" class="flex gap-2 justify-center"></div>
+                <input type="hidden" id="newEmailOTP">
                 <button type="button" id="verifyNewEmailOTPBtn"
                     class="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium"><i
                         class="fas fa-check-circle mr-2"></i>Complete Update</button>
@@ -511,7 +437,7 @@ ob_start();
     </div>
 </div>
 
-<div id="editPhoneModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+<div id="editPhoneModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('editPhoneModal')"></div>
     <div
         class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
@@ -528,7 +454,8 @@ ob_start();
             <div id="phoneStep1" class="space-y-4">
                 <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-4">
                     <p class="text-sm text-gray-700 dark:text-white/80 mb-1">Current Phone:</p>
-                    <p class="font-medium text-secondary dark:text-white" id="current-phone-modal">Loading...</p>
+                    <p class="font-medium text-secondary dark:text-white truncate" id="current-phone-modal"
+                        title="Loading...">Loading...</p>
                 </div>
                 <div id="verifyExistingPhoneSection">
                     <p class="text-sm text-gray-600 dark:text-white/70 mb-3">To change your phone, first verify your
@@ -557,14 +484,8 @@ ob_start();
             <div id="phoneStep2" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600 dark:text-white/70">Enter the verification code sent to your current
                     phone.</p>
-                <div>
-                    <label for="existingPhoneOTP"
-                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Verification
-                        Code</label>
-                    <input type="text" id="existingPhoneOTP" maxlength="6"
-                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
-                        autocomplete="off" placeholder="000000">
-                </div>
+                <div id="otp-existing-phone" class="flex gap-2 justify-center"></div>
+                <input type="hidden" id="existingPhoneOTP">
                 <button type="button" id="verifyExistingPhoneOTPBtn"
                     class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"><i
                         class="fas fa-check mr-2"></i>Verify Code</button>
@@ -588,14 +509,8 @@ ob_start();
             <div id="phoneStep4" class="space-y-4 hidden">
                 <p class="text-sm text-gray-600 dark:text-white/70">Enter the verification code sent to your new phone.
                 </p>
-                <div>
-                    <label for="newPhoneOTP"
-                        class="block text-sm font-semibold text-secondary dark:text-white mb-2">Verification
-                        Code</label>
-                    <input type="text" id="newPhoneOTP" maxlength="6"
-                        class="w-full px-4 py-3 border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center text-lg tracking-widest"
-                        autocomplete="off" placeholder="000000">
-                </div>
+                <div id="otp-new-phone" class="flex gap-2 justify-center"></div>
+                <input type="hidden" id="newPhoneOTP">
                 <button type="button" id="verifyNewPhoneOTPBtn"
                     class="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium"><i
                         class="fas fa-check-circle mr-2"></i>Complete Update</button>
@@ -606,7 +521,7 @@ ob_start();
     </div>
 </div>
 
-<div id="changePasswordModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+<div id="changePasswordModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('changePasswordModal')"></div>
     <div
         class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
@@ -696,7 +611,7 @@ ob_start();
     </div>
 </div>
 
-<div id="deleteAccountModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+<div id="deleteAccountModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('deleteAccountModal')"></div>
     <div
         class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
@@ -733,7 +648,7 @@ ob_start();
     </div>
 </div>
 
-<div id="contactAdminModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+<div id="contactAdminModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="hideModal('contactAdminModal')"></div>
     <div
         class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
@@ -797,6 +712,7 @@ ob_start();
     let currentUserData = {};
     let currentTab = 'overview';
     let missingFields = [];
+    let guidedMode = false;
 
     $(document).ready(function () {
         phoneInput = window.intlTelInput(document.querySelector('#newPhone'), {
@@ -818,12 +734,19 @@ ob_start();
         $('.iti').addClass('w-full');
 
         setupEventListeners();
+        setupOtpInputs('otp-existing-email', 'existingEmailOTP');
+        setupOtpInputs('otp-new-email', 'newEmailOTP');
+        setupOtpInputs('otp-existing-phone', 'existingPhoneOTP');
+        setupOtpInputs('otp-new-phone', 'newPhoneOTP');
+
         switchTab('overview');
         fetchUserDetails();
+        observeThemeForAvatar();
     });
 
     function setupEventListeners() {
-        document.getElementById('mobile-tab-toggle').addEventListener('click', toggleMobileTabDropdown);
+        const mobileToggle = document.getElementById('mobile-tab-toggle');
+        if (mobileToggle) mobileToggle.addEventListener('click', toggleMobileTabDropdown);
 
         document.querySelectorAll('.mobile-tab-option').forEach(option => {
             option.addEventListener('click', (e) => {
@@ -833,11 +756,7 @@ ob_start();
             });
         });
 
-        $('#complete-profile-btn').click(() => {
-            navigateToIncompleteFields();
-        });
-
-        $('#namesForm').submit(e => {
+        $('#editNamesForm').submit(e => {
             e.preventDefault();
             updateNames();
         });
@@ -857,7 +776,6 @@ ob_start();
             const target = $(this).data('target');
             const input = $('#' + target);
             const icon = $(this).find('i');
-
             if (input.attr('type') === 'password') {
                 input.attr('type', 'text');
                 icon.removeClass('fa-eye').addClass('fa-eye-slash');
@@ -870,13 +788,19 @@ ob_start();
         setupEmailFlow();
         setupPhoneFlow();
 
+        $('#start-complete-profile-btn').on('click', function () {
+            guidedMode = true;
+            hideModal('incompleteProfileModal');
+            openNextIncompleteItem();
+        });
+
         document.addEventListener('click', function (event) {
             const mobileDropdown = document.getElementById('mobile-tab-dropdown');
             const mobileToggle = document.getElementById('mobile-tab-toggle');
-
             if (mobileDropdown && mobileToggle && !mobileDropdown.contains(event.target) && !mobileToggle.contains(event.target)) {
                 mobileDropdown.classList.add('hidden');
-                document.getElementById('mobile-tab-chevron').classList.remove('rotate-180');
+                const chev = document.getElementById('mobile-tab-chevron');
+                if (chev) chev.classList.remove('rotate-180');
             }
         });
     }
@@ -922,17 +846,10 @@ ob_start();
 
         const tabLabels = {
             'overview': { label: 'Profile Overview', icon: 'fas fa-user' },
-            'details': { label: 'Edit Details', icon: 'fas fa-edit' },
             'security': { label: 'Security', icon: 'fas fa-shield-alt' }
         };
         const tabInfo = tabLabels[tabName] || tabLabels['overview'];
         updateMobileTabLabel(tabInfo.label, tabInfo.icon);
-
-        if (tabName === 'details' && missingFields.length > 0) {
-            setTimeout(() => {
-                scrollToFirstMissingField();
-            }, 100);
-        }
     }
 
     function updateMobileTabLabel(label, icon) {
@@ -963,112 +880,99 @@ ob_start();
         return initials;
     }
 
+    function getDicebearUrl(seed) {
+        const isDark = document.documentElement.classList.contains('dark');
+        const bg = isDark ? '0F172A' : '3B82F6';
+        return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(seed)}&size=128&radius=50&backgroundColor=${bg}&fontWeight=700`;
+    }
+
     function updateProfilePicture(firstName, lastName, username) {
         const initials = generateUserInitials(firstName, lastName, username);
+        const seed = `${firstName || ''} ${lastName || ''}`.trim() || (username || initials);
         const profilePic = document.getElementById('user-profile-pic');
         if (profilePic) {
-            profilePic.src = `https://placehold.co/128x128/3B82F6/FFFFFF?text=${encodeURIComponent(initials)}`;
+            profilePic.src = getDicebearUrl(seed);
             profilePic.alt = `${firstName || username || 'User'}'s Profile Picture`;
         }
     }
 
-    function showIncompleteBanner(missing) {
-        const banner = $('#incompleteBanner');
-        const fieldsList = $('#missing-fields-list');
-
-        const fieldNames = {
-            'first_name': 'First Name',
-            'email': 'Email Address',
-            'phone': 'Phone Number'
-        };
-
-        const missingNames = missing.map(field => fieldNames[field] || field);
-        fieldsList.text(missingNames.join(', '));
-        banner.removeClass('hidden');
+    function observeThemeForAvatar() {
+        const observer = new MutationObserver(() => {
+            updateProfilePicture(currentUserData.first_name, currentUserData.last_name, currentUserData.username);
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     }
 
-    function hideIncompleteBanner() {
-        $('#incompleteBanner').addClass('hidden');
+    function showIncompleteModal(missing) {
+        const modal = $('#incompleteProfileModal');
+        const list = $('#incomplete-list');
+        const fieldNames = { first_name: 'First Name', email: 'Email Address', phone: 'Phone Number' };
+        list.html('');
+        missing.forEach(f => {
+            const label = fieldNames[f] || f;
+            list.append(`<li class="flex items-center gap-2"><i class="fas fa-circle-exclamation text-yellow-600"></i><span>${label} is required</span></li>`);
+        });
+        modal.removeClass('hidden').addClass('flex');
+    }
+
+    function hideIncompleteModal() {
+        $('#incompleteProfileModal').addClass('hidden').removeClass('flex');
     }
 
     function updateRequiredFieldIndicators(missing) {
-        $('.fas.fa-exclamation-circle[id$="-required-icon"]').addClass('hidden');
-        $('#details-tab-indicator, #mobile-details-indicator, #mobile-details-tab-indicator').addClass('hidden');
-
-        $('.border-red-200, .bg-red-50').removeClass('border-red-200 bg-red-50');
-
+        $('#names-required-icon, #email-required-icon, #phone-required-icon').addClass('hidden');
+        $('#names-overview-card, #email-overview-card, #phone-overview-card').removeClass('border-red-200 bg-red-50 dark:bg-red-900/10');
         if (missing.length > 0) {
-            $('#details-tab-indicator, #mobile-details-indicator, #mobile-details-tab-indicator').removeClass('hidden');
-
             missing.forEach(field => {
                 if (field === 'first_name') {
-                    $('#names-required-icon, #names-form-required-icon, #firstName-required-icon').removeClass('hidden');
-                    $('#names-overview-card, #names-form-section').addClass('border-red-200 bg-red-50 dark:bg-red-900/10');
+                    $('#names-required-icon').removeClass('hidden');
+                    $('#names-overview-card').addClass('border-red-200 bg-red-50 dark:bg-red-900/10');
                 } else if (field === 'email') {
-                    $('#email-required-icon, #email-form-required-icon').removeClass('hidden');
-                    $('#email-overview-card, #email-form-section').addClass('border-red-200 bg-red-50 dark:bg-red-900/10');
+                    $('#email-required-icon').removeClass('hidden');
+                    $('#email-overview-card').addClass('border-red-200 bg-red-50 dark:bg-red-900/10');
                 } else if (field === 'phone') {
-                    $('#phone-required-icon, #phone-form-required-icon').removeClass('hidden');
-                    $('#phone-overview-card, #phone-form-section').addClass('border-red-200 bg-red-50 dark:bg-red-900/10');
+                    $('#phone-required-icon').removeClass('hidden');
+                    $('#phone-overview-card').addClass('border-red-200 bg-red-50 dark:bg-red-900/10');
                 }
             });
         }
     }
 
-    function navigateToIncompleteFields() {
-        if (missingFields.length > 0) {
-            switchTab('details');
-            setTimeout(() => {
-                scrollToFirstMissingField();
-            }, 200);
-        }
+    function openEditNamesModal() {
+        $('#names-form-error').addClass('hidden').text('');
+        $('#firstName').val(currentUserData.first_name || '');
+        $('#lastName').val(currentUserData.last_name || '');
+        showModal('editNamesModal');
     }
 
-    function scrollToFirstMissingField() {
-        if (missingFields.length === 0) return;
-
-        const firstMissing = missingFields[0];
-        let targetElement = null;
-
-        if (firstMissing === 'first_name') {
-            targetElement = document.getElementById('names-form-section');
-        } else if (firstMissing === 'email') {
-            targetElement = document.getElementById('email-form-section');
-        } else if (firstMissing === 'phone') {
-            targetElement = document.getElementById('phone-form-section');
+    function openNextIncompleteItem() {
+        const order = ['first_name', 'phone', 'email'];
+        const next = order.find(f => missingFields.includes(f));
+        if (!next) {
+            guidedMode = false;
+            hideIncompleteModal();
+            showSuccessNotification('Profile complete. Thanks!');
+            return;
         }
-
-        if (targetElement) {
-            targetElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center'
-            });
-            targetElement.classList.add('animate-pulse');
-            setTimeout(() => {
-                targetElement.classList.remove('animate-pulse');
-            }, 2000);
+        if (next === 'first_name') {
+            openEditNamesModal();
+        } else if (next === 'phone') {
+            editPhone();
+        } else if (next === 'email') {
+            editEmail();
         }
     }
 
     function evaluateProfileCompleteness(user) {
         missingFields = PROFILE_REQUIRED_FIELDS.filter(f => !(user[f] || '').trim());
-
+        updateRequiredFieldIndicators(missingFields);
         if (missingFields.length === 0) {
-            hideIncompleteBanner();
-            updateRequiredFieldIndicators([]);
-
+            hideIncompleteModal();
             if (typeof showReturnModal === 'function') {
                 showReturnModal();
             }
         } else {
-            showIncompleteBanner(missingFields);
-            updateRequiredFieldIndicators(missingFields);
-
-            if (currentTab === 'overview') {
-                setTimeout(() => {
-                    navigateToIncompleteFields();
-                }, 1000);
-            }
+            showIncompleteModal(missingFields);
         }
     }
 
@@ -1083,7 +987,6 @@ ob_start();
                 }
                 const u = resp.data;
                 currentUserData = u;
-
                 updateProfileDisplay(u);
                 evaluateProfileCompleteness(u);
             },
@@ -1093,22 +996,23 @@ ob_start();
         });
     }
 
+    function applyTruncationWithTitle(selector, value, fallback = 'Not set') {
+        const v = value || fallback;
+        $(selector).text(v).attr('title', v);
+    }
+
     function updateProfileDisplay(u) {
         $('#firstName').val(u.first_name || '');
         $('#lastName').val(u.last_name || '');
 
         const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'User';
-        $('#user-fullname').text(fullName);
-        $('#user-username').text('@' + (u.username || ''));
+        $('#user-fullname').text(fullName).attr('title', fullName);
+        $('#user-username').text('@' + (u.username || '')).attr('title', '@' + (u.username || ''));
 
         updateProfilePicture(u.first_name, u.last_name, u.username);
 
         const jd = new Date(u.created_at);
-        $('#user-joined').text('Member since ' + jd.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }));
+        $('#user-joined').text('Member since ' + jd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
 
         if (u.last_login) {
             $('#user-lastlogin').text('Last login: ' + getTimeAgo(new Date(u.last_login)));
@@ -1116,12 +1020,18 @@ ob_start();
             $('#user-lastlogin').text('First login');
         }
 
-        $('#overview-names').text(fullName === 'User' ? 'Not set' : fullName);
-        $('#overview-email').text(u.email || 'Not set');
-        $('#overview-phone').text(u.phone || 'Not set');
+        applyTruncationWithTitle('#overview-names', fullName === 'User' ? '' : fullName, 'Not set');
+        applyTruncationWithTitle('#overview-email', u.email, 'Not set');
+        applyTruncationWithTitle('#overview-phone', u.phone, 'Not set');
 
-        $('#current-email-display, #current-email-modal').text(u.email || 'Not set');
-        $('#current-phone-display, #current-phone-modal').text(u.phone || 'Not set');
+        applyTruncationWithTitle('#current-email-modal', u.email, 'Not set');
+        applyTruncationWithTitle('#current-phone-modal', u.phone, 'Not set');
+
+        applyTruncationWithTitle('#current-email-display', u.email, 'Not set');
+        applyTruncationWithTitle('#current-phone-display', u.phone, 'Not set');
+
+        applyTruncationWithTitle('#email-value-display', u.email, 'Not set');
+        applyTruncationWithTitle('#phone-value-display', u.phone, 'Not set');
 
         const statusMap = {
             active: { text: 'Active', class: 'text-green-600 dark:text-green-400' },
@@ -1134,16 +1044,13 @@ ob_start();
 
         $('#profile-status-display').text(status.text);
         $('#email-status-display').text(u.email ? 'Verified' : 'Not Set');
-        $('#email-value-display').text(u.email || 'Not Set');
         $('#phone-status-display').text(u.phone ? 'Verified' : 'Not Set');
-        $('#phone-value-display').text(u.phone || 'Not Set');
         $('#member-since-display').text(jd.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
         $('#last-login-display').text(u.last_login ? getTimeAgo(new Date(u.last_login)) : 'First login');
     }
 
     function editEmail() {
         resetEmailModal();
-
         if (currentUserData.email) {
             $('#verifyExistingEmailSection').show();
             $('#noExistingEmailSection').hide();
@@ -1151,13 +1058,11 @@ ob_start();
             $('#verifyExistingEmailSection').hide();
             $('#noExistingEmailSection').show();
         }
-
         showModal('editEmailModal');
     }
 
     function editPhone() {
         resetPhoneModal();
-
         if (currentUserData.phone) {
             $('#verifyExistingPhoneSection').show();
             $('#noExistingPhoneSection').hide();
@@ -1165,7 +1070,6 @@ ob_start();
             $('#verifyExistingPhoneSection').hide();
             $('#noExistingPhoneSection').show();
         }
-
         showModal('editPhoneModal');
     }
 
@@ -1174,6 +1078,7 @@ ob_start();
         $('#emailStep2, #emailStep3, #emailStep4').hide();
         $('#email-form-error').addClass('hidden').text('');
         $('#existingEmailOTP, #newEmail, #newEmailOTP, #newEmailDirect').val('');
+        $('#otp-existing-email, #otp-new-email').find('input').val('');
     }
 
     function resetPhoneModal() {
@@ -1182,23 +1087,19 @@ ob_start();
         $('#phone-form-error').addClass('hidden').text('');
         $('#phone-error, #phone-error-direct').addClass('hidden');
         $('#existingPhoneOTP, #newPhoneOTP').val('');
+        $('#otp-existing-phone, #otp-new-phone').find('input').val('');
         phoneInput.setNumber('');
         phoneInputDirect.setNumber('');
     }
 
     function updateNames() {
         $('#names-form-error').addClass('hidden').text('');
-        const fd = {
-            first_name: $('#firstName').val().trim(),
-            last_name: $('#lastName').val().trim()
-        };
-
+        const fd = { first_name: $('#firstName').val().trim(), last_name: $('#lastName').val().trim() };
         if (!fd.first_name) {
             $('#names-form-error').removeClass('hidden').text('First name is required');
             return;
         }
-        const btn = $('#namesForm button[type="submit"]'),
-            orig = btn.html();
+        const btn = $('#editNamesForm button[type="submit"]'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating…').prop('disabled', true);
 
         $.ajax({
@@ -1210,8 +1111,10 @@ ob_start();
             success(r) {
                 btn.html(orig).prop('disabled', false);
                 if (r.success) {
+                    hideModal('editNamesModal');
                     showSuccessNotification(r.message);
                     fetchUserDetails();
+                    if (guidedMode) setTimeout(openNextIncompleteItem, 600);
                 } else {
                     $('#names-form-error').removeClass('hidden').text(r.message);
                 }
@@ -1227,8 +1130,7 @@ ob_start();
 
     function sendExistingEmailOTP() {
         $('#email-form-error').addClass('hidden').text('');
-        const btn = $('#verifyExistingEmailBtn'),
-            orig = btn.html();
+        const btn = $('#verifyExistingEmailBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
 
         $.ajax({
@@ -1242,6 +1144,7 @@ ob_start();
                 if (r.success) {
                     $('#emailStep1').hide();
                     $('#emailStep2').show();
+                    focusFirstOtp('otp-existing-email');
                 } else {
                     $('#email-form-error').removeClass('hidden').text(r.message);
                 }
@@ -1258,20 +1161,18 @@ ob_start();
     function verifyExistingEmailOTP() {
         $('#email-form-error').addClass('hidden').text('');
         const otp = $('#existingEmailOTP').val().trim();
-        if (!otp || otp.length !== 6) {
+        if (otp.length !== 6) {
             $('#email-form-error').removeClass('hidden').text('Please enter a valid 6-digit code');
             return;
         }
-
-        const btn = $('#verifyExistingEmailOTPBtn'),
-            orig = btn.html();
+        const btn = $('#verifyExistingEmailOTPBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Verifying…').prop('disabled', true);
 
         $.ajax({
             url: BASE_URL + 'account/fetch/manageProfile.php?action=verifyExistingEmailOTP',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ otp: otp }),
+            data: JSON.stringify({ otp }),
             dataType: 'json',
             success(r) {
                 btn.html(orig).prop('disabled', false);
@@ -1298,9 +1199,7 @@ ob_start();
             $('#email-form-error').removeClass('hidden').text('New email is required');
             return;
         }
-
-        const btn = $('#sendNewEmailOTPBtn'),
-            orig = btn.html();
+        const btn = $('#sendNewEmailOTPBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
 
         $.ajax({
@@ -1314,6 +1213,7 @@ ob_start();
                 if (r.success) {
                     $('#emailStep3').hide();
                     $('#emailStep4').show();
+                    focusFirstOtp('otp-new-email');
                 } else {
                     $('#email-form-error').removeClass('hidden').text(r.message);
                 }
@@ -1330,20 +1230,18 @@ ob_start();
     function verifyNewEmailOTP() {
         $('#email-form-error').addClass('hidden').text('');
         const otp = $('#newEmailOTP').val().trim();
-        if (!otp || otp.length !== 6) {
+        if (otp.length !== 6) {
             $('#email-form-error').removeClass('hidden').text('Please enter a valid 6-digit code');
             return;
         }
-
-        const btn = $('#verifyNewEmailOTPBtn'),
-            orig = btn.html();
+        const btn = $('#verifyNewEmailOTPBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating…').prop('disabled', true);
 
         $.ajax({
             url: BASE_URL + 'account/fetch/manageProfile.php?action=verifyNewEmailOTP',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ otp: otp }),
+            data: JSON.stringify({ otp }),
             dataType: 'json',
             success(r) {
                 btn.html(orig).prop('disabled', false);
@@ -1351,6 +1249,7 @@ ob_start();
                     hideModal('editEmailModal');
                     showSuccessNotification(r.message);
                     fetchUserDetails();
+                    if (guidedMode) setTimeout(openNextIncompleteItem, 600);
                 } else {
                     $('#email-form-error').removeClass('hidden').text(r.message);
                 }
@@ -1371,9 +1270,7 @@ ob_start();
             $('#email-form-error').removeClass('hidden').text('Email is required');
             return;
         }
-
-        const btn = $('#sendDirectEmailOTPBtn'),
-            orig = btn.html();
+        const btn = $('#sendDirectEmailOTPBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
 
         $.ajax({
@@ -1388,6 +1285,7 @@ ob_start();
                     $('#newEmailOTP').val('');
                     $('#emailStep1').hide();
                     $('#emailStep4').show();
+                    focusFirstOtp('otp-new-email');
                 } else {
                     $('#email-form-error').removeClass('hidden').text(r.message);
                 }
@@ -1403,8 +1301,7 @@ ob_start();
 
     function sendExistingPhoneOTP() {
         $('#phone-form-error').addClass('hidden').text('');
-        const btn = $('#verifyExistingPhoneBtn'),
-            orig = btn.html();
+        const btn = $('#verifyExistingPhoneBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
 
         $.ajax({
@@ -1418,6 +1315,7 @@ ob_start();
                 if (r.success) {
                     $('#phoneStep1').hide();
                     $('#phoneStep2').show();
+                    focusFirstOtp('otp-existing-phone');
                 } else {
                     $('#phone-form-error').removeClass('hidden').text(r.message);
                 }
@@ -1434,20 +1332,18 @@ ob_start();
     function verifyExistingPhoneOTP() {
         $('#phone-form-error').addClass('hidden').text('');
         const otp = $('#existingPhoneOTP').val().trim();
-        if (!otp || otp.length !== 6) {
+        if (otp.length !== 6) {
             $('#phone-form-error').removeClass('hidden').text('Please enter a valid 6-digit code');
             return;
         }
-
-        const btn = $('#verifyExistingPhoneOTPBtn'),
-            orig = btn.html();
+        const btn = $('#verifyExistingPhoneOTPBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Verifying…').prop('disabled', true);
 
         $.ajax({
             url: BASE_URL + 'account/fetch/manageProfile.php?action=verifyExistingPhoneOTP',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ otp: otp }),
+            data: JSON.stringify({ otp }),
             dataType: 'json',
             success(r) {
                 btn.html(orig).prop('disabled', false);
@@ -1485,13 +1381,10 @@ ob_start();
 
     function sendNewPhoneOTP() {
         $('#phone-form-error').addClass('hidden').text('');
-        if (!validatePhoneNumber('#newPhone', '#phone-error')) {
-            return;
-        }
+        if (!validatePhoneNumber('#newPhone', '#phone-error')) return;
 
         const newPhone = phoneInput.getNumber();
-        const btn = $('#sendNewPhoneOTPBtn'),
-            orig = btn.html();
+        const btn = $('#sendNewPhoneOTPBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
 
         $.ajax({
@@ -1505,6 +1398,7 @@ ob_start();
                 if (r.success) {
                     $('#phoneStep3').hide();
                     $('#phoneStep4').show();
+                    focusFirstOtp('otp-new-phone');
                 } else {
                     $('#phone-form-error').removeClass('hidden').text(r.message);
                 }
@@ -1521,20 +1415,18 @@ ob_start();
     function verifyNewPhoneOTP() {
         $('#phone-form-error').addClass('hidden').text('');
         const otp = $('#newPhoneOTP').val().trim();
-        if (!otp || otp.length !== 6) {
+        if (otp.length !== 6) {
             $('#phone-form-error').removeClass('hidden').text('Please enter a valid 6-digit code');
             return;
         }
-
-        const btn = $('#verifyNewPhoneOTPBtn'),
-            orig = btn.html();
+        const btn = $('#verifyNewPhoneOTPBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating…').prop('disabled', true);
 
         $.ajax({
             url: BASE_URL + 'account/fetch/manageProfile.php?action=verifyNewPhoneOTP',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ otp: otp }),
+            data: JSON.stringify({ otp }),
             dataType: 'json',
             success(r) {
                 btn.html(orig).prop('disabled', false);
@@ -1542,6 +1434,7 @@ ob_start();
                     hideModal('editPhoneModal');
                     showSuccessNotification(r.message);
                     fetchUserDetails();
+                    if (guidedMode) setTimeout(openNextIncompleteItem, 600);
                 } else {
                     $('#phone-form-error').removeClass('hidden').text(r.message);
                 }
@@ -1557,13 +1450,10 @@ ob_start();
 
     function sendDirectPhoneOTP() {
         $('#phone-form-error').addClass('hidden').text('');
-        if (!validatePhoneNumber('#newPhoneDirect', '#phone-error-direct')) {
-            return;
-        }
+        if (!validatePhoneNumber('#newPhoneDirect', '#phone-error-direct')) return;
 
         const newPhone = phoneInputDirect.getNumber();
-        const btn = $('#sendDirectPhoneOTPBtn'),
-            orig = btn.html();
+        const btn = $('#sendDirectPhoneOTPBtn'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Sending…').prop('disabled', true);
 
         $.ajax({
@@ -1578,6 +1468,7 @@ ob_start();
                     $('#newPhoneOTP').val('');
                     $('#phoneStep1').hide();
                     $('#phoneStep4').show();
+                    focusFirstOtp('otp-new-phone');
                 } else {
                     $('#phone-form-error').removeClass('hidden').text(r.message);
                 }
@@ -1593,9 +1484,7 @@ ob_start();
 
     function changePassword() {
         $('#password-form-error').addClass('hidden').text('');
-        const cur = $('#currentPassword').val(),
-            nw = $('#newPassword').val(),
-            cf = $('#confirmPassword').val();
+        const cur = $('#currentPassword').val(), nw = $('#newPassword').val(), cf = $('#confirmPassword').val();
         if (!cur || !nw || !cf) {
             $('#password-form-error').removeClass('hidden').text('All fields are required');
             return;
@@ -1608,8 +1497,7 @@ ob_start();
             $('#password-form-error').removeClass('hidden').text('Password does not meet requirements');
             return;
         }
-        const btn = $('#changePasswordForm button[type="submit"]'),
-            orig = btn.html();
+        const btn = $('#changePasswordForm button[type="submit"]'), orig = btn.html();
         btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating…').prop('disabled', true);
 
         $.ajax({
@@ -1638,8 +1526,7 @@ ob_start();
     }
 
     function doDeleteAccount() {
-        const btnConfirm = $('#deleteAccountConfirmBtn'),
-            btnCancel = $('#deleteAccountCancelBtn');
+        const btnConfirm = $('#deleteAccountConfirmBtn'), btnCancel = $('#deleteAccountCancelBtn');
         btnConfirm.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Deleting…');
         btnCancel.prop('disabled', true);
 
@@ -1666,12 +1553,10 @@ ob_start();
         });
     }
 
-    function showModal(id) { $('#' + id).removeClass('hidden'); }
-    function hideModal(id) { $('#' + id).addClass('hidden'); }
+    function showModal(id) { $('#' + id).removeClass('hidden').addClass('flex'); }
+    function hideModal(id) { $('#' + id).addClass('hidden').removeClass('flex'); }
 
-    function showContactAdminModal() {
-        showModal('contactAdminModal');
-    }
+    function showContactAdminModal() { showModal('contactAdminModal'); }
 
     function showSuccessNotification(m) {
         const n = $('#successNotification'), t = $('#successMessage');
@@ -1683,6 +1568,55 @@ ob_start();
         const n = $('#errorNotification'), t = $('#errorMessage');
         t.text(m); n.removeClass('hidden');
         setTimeout(() => n.addClass('hidden'), 3000);
+    }
+
+    function setupOtpInputs(containerId, hiddenInputId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        const inputs = [];
+        for (let i = 0; i < 6; i++) {
+            const inp = document.createElement('input');
+            inp.type = 'text';
+            inp.inputMode = 'numeric';
+            inp.maxLength = 1;
+            inp.className = 'w-12 h-12 text-center text-xl border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary text-secondary dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary';
+            container.appendChild(inp);
+            inputs.push(inp);
+        }
+        const hidden = document.getElementById(hiddenInputId);
+        function updateHidden() {
+            hidden.value = inputs.map(x => x.value.replace(/\D/g, '') || '').join('');
+        }
+        inputs.forEach((inp, idx) => {
+            inp.addEventListener('input', e => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+                if (e.target.value && idx < inputs.length - 1) inputs[idx + 1].focus();
+                updateHidden();
+            });
+            inp.addEventListener('keydown', e => {
+                if (e.key === 'Backspace' && !inp.value && idx > 0) {
+                    inputs[idx - 1].focus();
+                }
+            });
+            inp.addEventListener('paste', e => {
+                e.preventDefault();
+                const data = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                for (let i = 0; i < inputs.length; i++) {
+                    inputs[i].value = data[i] || '';
+                }
+                updateHidden();
+                const nextIndex = Math.min(data.length, inputs.length - 1);
+                inputs[nextIndex].focus();
+            });
+        });
+    }
+
+    function focusFirstOtp(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const first = container.querySelector('input');
+        if (first) first.focus();
     }
 
     function checkPasswordStrength(p) {
