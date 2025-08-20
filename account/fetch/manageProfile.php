@@ -287,7 +287,7 @@ function updateNames(PDO $pdo, NotificationService $ns, string $userId, string $
     ]);
 
     $oldNames = trim($current['first_name'] . ' ' . $current['last_name']);
-    $newNames = trim($firstName . ' ' . $lastName);
+    $newNames = trim($firstName . ' $lastName');
 
     $message = "$username updated their name from '$oldNames' to '$newNames'";
     $ns->create(
@@ -675,25 +675,58 @@ function changePassword(PDO $pdo, NotificationService $ns, string $userId, strin
 
 function deleteAccount(PDO $pdo, NotificationService $ns, string $userId, string $username): void
 {
-    $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
-    $stmt = $pdo->prepare("UPDATE zzimba_users SET status = 'deleted', updated_at = :updated_at WHERE id = :user_id");
-    $stmt->execute([':updated_at' => $now, ':user_id' => $userId]);
+    try {
+        $pdo->beginTransaction();
 
-    $message = "$username deleted their account.";
-    $ns->create(
-        'info',
-        'Account Deleted',
-        [
-            ['type' => 'admin', 'id' => 'admin-global', 'message' => $message]
-        ],
-        null,
-        'high',
-        $userId
-    );
+        $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
 
-    session_unset();
-    session_destroy();
+        // Prefix core identity fields with "delete." and mark status deleted
+        // Use COALESCE to avoid NULL -> NULL in CONCAT (which yields NULL)
+        $stmt = $pdo->prepare("
+            UPDATE zzimba_users
+            SET
+                username    = CONCAT('delete.', COALESCE(username, '')),
+                first_name  = CASE WHEN first_name IS NULL OR first_name = '' THEN 'delete.' ELSE CONCAT('delete.', first_name) END,
+                last_name   = CASE WHEN last_name  IS NULL OR last_name  = '' THEN 'delete.' ELSE CONCAT('delete.', last_name)  END,
+                email       = CASE WHEN email      IS NULL OR email      = '' THEN 'delete.' ELSE CONCAT('delete.', email)      END,
+                phone       = CASE WHEN phone      IS NULL OR phone      = '' THEN 'delete.' ELSE CONCAT('delete.', phone)      END,
+                status      = 'deleted',
+                updated_at  = :updated_at
+            WHERE id = :user_id
+        ");
+        $stmt->execute([':updated_at' => $now, ':user_id' => $userId]);
 
-    echo json_encode(['success' => true, 'message' => 'Account deleted successfully']);
+        if ($stmt->rowCount() === 0) {
+            $pdo->rollBack();
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'User not found']);
+            return;
+        }
+
+        $pdo->commit();
+
+        $message = "$username deleted their account.";
+        $ns->create(
+            'info',
+            'Account Deleted',
+            [
+                ['type' => 'admin', 'id' => 'admin-global', 'message' => $message]
+            ],
+            null,
+            'high',
+            $userId
+        );
+
+        session_unset();
+        session_destroy();
+
+        echo json_encode(['success' => true, 'message' => 'Account deleted successfully']);
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to delete account']);
+    }
 }
 ?>
