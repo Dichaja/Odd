@@ -108,28 +108,22 @@ ob_start();
                         <tr>
                             <th
                                 class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                                User Details
-                            </th>
+                                User Details</th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                                Contact
-                            </th>
+                                Contact</th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                                Stores Owned
-                            </th>
+                                Stores Owned</th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                                Stores Managed
-                            </th>
+                                Stores Managed</th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                                Status
-                            </th>
+                                Status</th>
                             <th
                                 class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                                Last Login
-                            </th>
+                                Last Login</th>
                         </tr>
                     </thead>
                     <tbody id="usersBody" class="divide-y divide-gray-100">
@@ -148,24 +142,26 @@ ob_start();
                     Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> users
                 </div>
                 <div class="flex items-center gap-2">
+                    <label for="perPage" class="text-sm text-gray-600">Per page</label>
+                    <select id="perPage" class="px-2 py-1 border border-gray-300 rounded text-sm">
+                        <option value="8">8</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
                     <button id="prevPage"
                         class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                        disabled>
-                        Previous
-                    </button>
+                        disabled>Previous</button>
                     <span id="pageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
                     <button id="nextPage"
                         class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                        disabled>
-                        Next
-                    </button>
+                        disabled>Next</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- User Details Modal -->
 <div id="userModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div
@@ -201,7 +197,6 @@ ob_start();
     </div>
 </div>
 
-<!-- Confirmation Modal -->
 <div id="confirmModal" class="fixed inset-0 z-[60] hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
@@ -217,18 +212,14 @@ ob_start();
             </div>
             <div class="flex justify-end gap-3">
                 <button onclick="closeConfirmModal()"
-                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button id="confirmActionBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                    Confirm
-                </button>
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button id="confirmActionBtn"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Confirm</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Message Modal -->
 <div id="messageModal" class="fixed inset-0 z-[60] hidden">
     <div class="absolute inset-0 bg-black/50"></div>
     <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg">
@@ -244,9 +235,7 @@ ob_start();
             </div>
             <div class="flex justify-end">
                 <button onclick="closeMessageModal()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    OK
-                </button>
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">OK</button>
             </div>
         </div>
     </div>
@@ -254,13 +243,14 @@ ob_start();
 
 <script>
     let currentPage = 1;
-    let itemsPerPage = 20;
+    let itemsPerPage = 8;
     let currentUserData = null;
     let currentUserId = null;
     let isEditMode = false;
 
     document.addEventListener('DOMContentLoaded', function () {
         setupEventListeners();
+        document.getElementById('perPage').value = String(itemsPerPage);
         loadUsers();
     });
 
@@ -271,6 +261,13 @@ ob_start();
         }, 500));
 
         document.getElementById('sortFilter').addEventListener('change', () => {
+            currentPage = 1;
+            loadUsers();
+        });
+
+        document.getElementById('perPage').addEventListener('change', () => {
+            const v = parseInt(document.getElementById('perPage').value, 10);
+            itemsPerPage = [8, 20, 50, 100].includes(v) ? v : 8;
             currentPage = 1;
             loadUsers();
         });
@@ -343,12 +340,10 @@ ob_start();
                     renderUsersTable(data.users || [], data.total || 0, data.page || 1);
                     updateStatistics(data.stats || {});
                 } else {
-                    console.error('Error loading users:', data.message);
                     showError('Failed to load users: ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 showError('An error occurred while loading users');
             });
     }
@@ -442,6 +437,8 @@ ob_start();
             return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
         } else if (statusLower === 'suspended') {
             return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Suspended</span>';
+        } else if (statusLower === 'deleted') {
+            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700">Deleted</span>';
         }
         return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
     }
@@ -450,19 +447,9 @@ ob_start();
         if (!dateString) {
             return '<div class="text-xs text-gray-900">Never</div>';
         }
-
         const date = new Date(dateString);
-        const dateStr = date.toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric'
-        });
-        const timeStr = date.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-
+        const dateStr = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         return `
             <div class="text-xs">
                 <div class="text-gray-900">${dateStr}</div>
@@ -517,7 +504,6 @@ ob_start();
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 document.getElementById('userContent').innerHTML = `
                     <div class="flex items-center justify-center py-12">
                         <div class="text-center text-red-500">
@@ -533,13 +519,13 @@ ob_start();
         const content = document.getElementById('userContent');
         const canEdit = user.status !== 'deleted';
 
-        const emailLink = user.email && user.email !== 'N/A' ?
-            `<a href="mailto:${user.email}" class="text-blue-600 hover:text-blue-800 underline">${user.email}</a>` :
-            (user.email || 'N/A');
+        const emailLink = user.email && user.email !== 'N/A'
+            ? `<a href="mailto:${user.email}" class="text-blue-600 hover:text-blue-800 underline">${user.email}</a>`
+            : (user.email || 'N/A');
 
-        const phoneLink = user.phone && user.phone !== 'N/A' ?
-            `<a href="tel:${user.phone}" class="text-blue-600 hover:text-blue-800 underline">${user.phone}</a>` :
-            (user.phone || 'N/A');
+        const phoneLink = user.phone && user.phone !== 'N/A'
+            ? `<a href="tel:${user.phone}" class="text-blue-600 hover:text-blue-800 underline">${user.phone}</a>`
+            : (user.phone || 'N/A');
 
         content.innerHTML = `
             <div class="space-y-6">
@@ -548,26 +534,11 @@ ob_start();
                         <div>
                             <h4 class="font-medium text-gray-900 mb-2">User Information</h4>
                             <div class="space-y-3 text-sm" id="userInfoSection">
-                                <div>
-                                    <span class="text-gray-600">Username:</span> 
-                                    <span class="font-medium" id="usernameDisplay">${user.username || 'N/A'}</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-600">First Name:</span> 
-                                    <span class="font-medium" id="firstNameDisplay">${user.first_name || 'N/A'}</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-600">Last Name:</span> 
-                                    <span class="font-medium" id="lastNameDisplay">${user.last_name || 'N/A'}</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-600">Email:</span> 
-                                    <span class="font-medium" id="emailDisplay">${emailLink}</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-600">Phone:</span> 
-                                    <span class="font-medium" id="phoneDisplay">${phoneLink}</span>
-                                </div>
+                                <div><span class="text-gray-600">Username:</span> <span class="font-medium" id="usernameDisplay">${user.username || 'N/A'}</span></div>
+                                <div><span class="text-gray-600">First Name:</span> <span class="font-medium" id="firstNameDisplay">${user.first_name || 'N/A'}</span></div>
+                                <div><span class="text-gray-600">Last Name:</span> <span class="font-medium" id="lastNameDisplay">${user.last_name || 'N/A'}</span></div>
+                                <div><span class="text-gray-600">Email:</span> <span class="font-medium" id="emailDisplay">${emailLink}</span></div>
+                                <div><span class="text-gray-600">Phone:</span> <span class="font-medium" id="phoneDisplay">${phoneLink}</span></div>
                                 <div><span class="text-gray-600">Status:</span> ${getStatusBadge(user.status)}</div>
                             </div>
                         </div>
@@ -587,7 +558,7 @@ ob_start();
                         </div>
                     </div>
                 </div>
-                
+
                 ${user.owned_stores && user.owned_stores.length > 0 ? `
                     <div>
                         <h4 class="font-medium text-gray-900 mb-3">Owned Stores</h4>
@@ -643,20 +614,21 @@ ob_start();
                         </div>
                     </div>
                 ` : ''}
-                
+
                 <div class="flex justify-between items-center pt-4 border-t border-gray-200">
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3">
                         ${canEdit ? `
-                            <button onclick="confirmUserAction('${user.id}', '${user.status}')" 
-                                class="px-4 py-2 ${user.status === 'active' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white rounded-lg transition-colors">
+                            <button onclick="confirmSuspendActivate('${user.id}', '${user.status}')" class="px-4 py-2 ${user.status === 'active' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white rounded-lg transition-colors">
                                 ${user.status === 'active' ? 'Suspend User' : 'Activate User'}
                             </button>
-                        ` : ''}
+                            <button onclick="confirmDeleteUser('${user.id}')" class="px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800 transition-colors">
+                                Delete User
+                            </button>
+                        ` : `
+                            <span class="text-sm text-gray-500">This user is deleted.</span>
+                        `}
                     </div>
-                    <button onclick="closeUserModal()" 
-                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                        Close
-                    </button>
+                    <button onclick="closeUserModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Close</button>
                 </div>
             </div>
         `;
@@ -665,20 +637,11 @@ ob_start();
     function formatDateTime(dateString) {
         if (!dateString) return 'Never';
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric'
-        }) + ' at ' + date.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
+        return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' at ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     }
 
     function toggleEditMode() {
         if (!currentUserData || !currentUserData.user) return;
-
         const user = currentUserData.user;
         isEditMode = !isEditMode;
         const editBtn = document.getElementById('editUserBtn');
@@ -694,43 +657,31 @@ ob_start();
 
     function showEditForm(user) {
         const userInfoSection = document.getElementById('userInfoSection');
-
         userInfoSection.innerHTML = `
             <form id="editUserForm" class="space-y-3">
                 <div>
                     <label class="text-gray-600 text-sm">Username:</label>
-                    <input type="text" id="editUsername" value="${user.username || ''}" 
-                        class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="text" id="editUsername" value="${user.username || ''}" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
                 <div>
                     <label class="text-gray-600 text-sm">First Name:</label>
-                    <input type="text" id="editFirstName" value="${user.first_name || ''}" 
-                        class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" id="editFirstName" value="${user.first_name || ''}" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
                     <label class="text-gray-600 text-sm">Last Name:</label>
-                    <input type="text" id="editLastName" value="${user.last_name || ''}" 
-                        class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" id="editLastName" value="${user.last_name || ''}" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
                     <label class="text-gray-600 text-sm">Email:</label>
-                    <input type="email" id="editEmail" value="${user.email || ''}" 
-                        class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                    <input type="email" id="editEmail" value="${user.email || ''}" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
                 </div>
                 <div>
                     <label class="text-gray-600 text-sm">Phone:</label>
-                    <input type="text" id="editPhone" value="${user.phone || ''}" 
-                        class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" id="editPhone" value="${user.phone || ''}" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="pt-3">
-                    <button type="button" onclick="saveUserChanges()" 
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mr-2">
-                        Save Changes
-                    </button>
-                    <button type="button" onclick="toggleEditMode()" 
-                        class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                        Cancel
-                    </button>
+                    <button type="button" onclick="saveUserChanges()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mr-2">Save Changes</button>
+                    <button type="button" onclick="toggleEditMode()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
                 </div>
             </form>
         `;
@@ -764,34 +715,35 @@ ob_start();
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 showMessage('error', 'Error', 'Failed to update user');
             });
     }
 
-    function confirmUserAction(userId, currentStatus) {
-        const action = currentStatus === 'active' ? 'suspend' : 'activate';
+    function confirmSuspendActivate(userId, currentStatus) {
         const actionText = currentStatus === 'active' ? 'suspend' : 'activate';
-
         document.getElementById('confirmTitle').textContent = 'Confirm Action';
         document.getElementById('confirmText').textContent = `Are you sure you want to ${actionText} this user?`;
-
         document.getElementById('confirmActionBtn').onclick = function () {
             toggleUserStatus(userId, currentStatus);
         };
+        document.getElementById('confirmModal').classList.remove('hidden');
+    }
 
+    function confirmDeleteUser(userId) {
+        document.getElementById('confirmTitle').textContent = 'Confirm Deletion';
+        document.getElementById('confirmText').textContent = 'This will mark the user as deleted and prefix their details with "delete.". Proceed?';
+        document.getElementById('confirmActionBtn').onclick = function () {
+            deleteUser(userId);
+        };
         document.getElementById('confirmModal').classList.remove('hidden');
     }
 
     function toggleUserStatus(userId, currentStatus) {
         const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
         const action = newStatus === 'active' ? 'activate' : 'suspend';
-
         closeConfirmModal();
 
-        fetch(`fetch/manageSystemUsers.php?action=${action}&id=${userId}`, {
-            method: 'POST'
-        })
+        fetch(`fetch/manageSystemUsers.php?action=${action}&id=${userId}`, { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -802,14 +754,39 @@ ob_start();
                             viewUserDetails(userId);
                         }
                         loadUsers();
-                    }, 1500);
+                    }, 1200);
                 } else {
                     showMessage('error', 'Error', data.message);
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 showMessage('error', 'Error', `Failed to ${action} user`);
+            });
+    }
+
+    function deleteUser(userId) {
+        closeConfirmModal();
+        const formData = new FormData();
+        formData.append('action', 'delete');
+        formData.append('id', userId);
+
+        fetch('fetch/manageSystemUsers.php', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('success', 'Deleted', 'User deleted successfully');
+                    setTimeout(() => {
+                        closeMessageModal();
+                        closeUserModal();
+                        currentUserId = null;
+                        loadUsers();
+                    }, 1200);
+                } else {
+                    showMessage('error', 'Error', data.message || 'Failed to delete user');
+                }
+            })
+            .catch(() => {
+                showMessage('error', 'Error', 'Failed to delete user');
             });
     }
 
@@ -844,7 +821,6 @@ ob_start();
 
         titleEl.textContent = title;
         textEl.textContent = message;
-
         modal.classList.remove('hidden');
     }
 
@@ -855,12 +831,9 @@ ob_start();
     function refreshData() {
         const refreshBtn = document.getElementById('refreshBtn');
         const icon = refreshBtn.querySelector('i');
-
         icon.classList.add('fa-spin');
         refreshBtn.disabled = true;
-
         loadUsers();
-
         setTimeout(() => {
             icon.classList.remove('fa-spin');
             refreshBtn.disabled = false;

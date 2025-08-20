@@ -39,13 +39,11 @@ try {
             $params = [];
 
             if ($search) {
-                $whereConditions[] = "(u.username LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR 
-                                   u.first_name LIKE ? OR u.last_name LIKE ?)";
+                $whereConditions[] = "(u.username LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
                 $searchParam = "%$search%";
                 $params = array_merge($params, [$searchParam, $searchParam, $searchParam, $searchParam, $searchParam]);
             }
 
-            // Valid sort columns
             $validSortColumns = [
                 'current_login' => 'u.current_login',
                 'created_at' => 'u.created_at',
@@ -58,7 +56,6 @@ try {
             $sortColumn = $validSortColumns[$sortBy] ?? 'u.current_login';
             $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
 
-            // Base query for users with store counts
             $baseQuery = "
                 SELECT 
                     u.id,
@@ -87,19 +84,16 @@ try {
                 ) manager_counts ON u.id = manager_counts.user_id
                 WHERE " . implode(' AND ', $whereConditions);
 
-            // Get total count
             $countQuery = "SELECT COUNT(*) FROM ($baseQuery) as count_table";
             $stmt = $pdo->prepare($countQuery);
             $stmt->execute($params);
             $totalRecords = $stmt->fetchColumn();
 
-            // Get paginated results with sorting
             $finalQuery = $baseQuery . " ORDER BY $sortColumn $sortOrder LIMIT $limit OFFSET $offset";
             $stmt = $pdo->prepare($finalQuery);
             $stmt->execute($params);
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Get statistics
             $statsQuery = "
                 SELECT 
                     COUNT(*) as totalUsers,
@@ -121,7 +115,6 @@ try {
                 ) manager_counts ON u.id = manager_counts.user_id
                 WHERE u.status != 'deleted'
             ";
-
             $stmt = $pdo->query($statsQuery);
             $stats = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -137,7 +130,6 @@ try {
                 throw new Exception('User ID is required');
             }
 
-            // Get user details
             $stmt = $pdo->prepare("
                 SELECT u.*, 
                        COALESCE(store_counts.stores_owned, 0) as stores_owned,
@@ -164,7 +156,6 @@ try {
                 throw new Exception('User not found');
             }
 
-            // Get owned stores
             $stmt = $pdo->prepare("
                 SELECT vs.id, vs.name, vs.status, vs.district, vs.region, vs.created_at
                 FROM vendor_stores vs
@@ -174,7 +165,6 @@ try {
             $stmt->execute([$userId]);
             $user['owned_stores'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Get managed stores
             $stmt = $pdo->prepare("
                 SELECT sm.role, sm.status, sm.created_at, vs.name as store_name
                 FROM store_managers sm
@@ -204,23 +194,19 @@ try {
             if (!$userId) {
                 throw new Exception('User ID is required');
             }
-
             if (!$username) {
                 throw new Exception('Username is required');
             }
-
             if (!$email) {
                 throw new Exception('Email is required');
             }
 
-            // Check if username exists for other users
             $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE username = ? AND id != ?");
             $stmt->execute([$username, $userId]);
             if ($stmt->fetch()) {
                 throw new Exception('Username already exists');
             }
 
-            // Check if email exists for other users
             $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE email = ? AND id != ?");
             $stmt->execute([$email, $userId]);
             if ($stmt->fetch()) {
@@ -232,7 +218,7 @@ try {
                 SET username = ?, first_name = ?, last_name = ?, email = ?, phone = ?, updated_at = NOW() 
                 WHERE id = ?
             ");
-            $result = $stmt->execute([$username, $firstName, $lastName, $email, $phone, $userId]);
+            $stmt->execute([$username, $firstName, $lastName, $email, $phone, $userId]);
 
             if ($stmt->rowCount() > 0) {
                 echo json_encode([
@@ -253,7 +239,7 @@ try {
             }
 
             $stmt = $pdo->prepare("UPDATE zzimba_users SET status = 'suspended', updated_at = NOW() WHERE id = ?");
-            $result = $stmt->execute([$id]);
+            $stmt->execute([$id]);
 
             if ($stmt->rowCount() > 0) {
                 echo json_encode([
@@ -274,7 +260,7 @@ try {
             }
 
             $stmt = $pdo->prepare("UPDATE zzimba_users SET status = 'active', updated_at = NOW() WHERE id = ?");
-            $result = $stmt->execute([$id]);
+            $stmt->execute([$id]);
 
             if ($stmt->rowCount() > 0) {
                 echo json_encode([
@@ -287,11 +273,58 @@ try {
             }
             exit;
 
+        case 'delete':
+            $id = $_POST['id'] ?? $_GET['id'] ?? '';
+
+            if (!$id) {
+                throw new Exception('User ID is required');
+            }
+
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE id = ?");
+            $stmt->execute([$id]);
+            if (!$stmt->fetch()) {
+                $pdo->rollBack();
+                throw new Exception('User not found');
+            }
+
+            $stmt = $pdo->prepare("
+                UPDATE zzimba_users
+                SET
+                    username = CONCAT('delete.', username),
+                    first_name = CONCAT('delete.', COALESCE(first_name, '')),
+                    last_name = CONCAT('delete.', COALESCE(last_name, '')),
+                    email = CONCAT('delete.', COALESCE(email, '')),
+                    phone = CONCAT('delete.', COALESCE(phone, '')),
+                    status = 'deleted',
+                    updated_at = NOW()
+                WHERE id = ?
+            ");
+            $stmt->execute([$id]);
+
+            if ($stmt->rowCount() < 1) {
+                $pdo->rollBack();
+                throw new Exception('Failed to delete user');
+            }
+
+            $pdo->commit();
+
+            echo json_encode([
+                'success' => true,
+                'message' => 'User deleted successfully',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+            exit;
+
         default:
             throw new Exception('Invalid action specified');
     }
 
 } catch (Exception $e) {
+    if (isset($pdo) && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage(),
