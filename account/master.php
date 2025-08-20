@@ -599,7 +599,6 @@ if ($needsProfileCompletion) {
             <div class="bar"></div>
         </div>
     </div>
-
     <div id="install-banner" class="install-banner hidden">
         <div class="install-card">
             <div class="flex items-center gap-3 p-3 sm:p-4">
@@ -619,9 +618,7 @@ if ($needsProfileCompletion) {
             </div>
         </div>
     </div>
-
     <div id="sheetOverlay" class="sheet-overlay hidden z-[48]"></div>
-
     <div class="flex min-h-screen">
         <aside id="sidebar"
             class="hidden lg:block user-sidebar dark:text-white fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 ease-in-out">
@@ -664,7 +661,6 @@ if ($needsProfileCompletion) {
                 </div>
             </div>
         </aside>
-
         <div class="flex-1 lg:ml-64">
             <header
                 class="user-header sticky top-0 z-40 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary">
@@ -684,25 +680,24 @@ if ($needsProfileCompletion) {
                                 class="absolute right-0 mt-2 w-44 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-1 z-50">
                                 <button
                                     class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                    :class="{'bg-gray-100 dark:bg:white/10': mode==='light'}"
+                                    :class="{'bg-gray-100 dark:bg-white/10': mode==='light'}"
                                     @click="setTheme('light');open=false"><span><i
                                             class="fa-solid fa-sun mr-2"></i>Light</span><i class="fa-solid fa-check"
                                         x-show="mode==='light'"></i></button>
                                 <button
                                     class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                    :class="{'bg-gray-100 dark:bg:white/10': mode==='dark'}"
+                                    :class="{'bg-gray-100 dark:bg-white/10': mode==='dark'}"
                                     @click="setTheme('dark');open=false"><span><i
                                             class="fa-solid fa-moon mr-2"></i>Dark</span><i class="fa-solid fa-check"
                                         x-show="mode==='dark'"></i></button>
                                 <button
                                     class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                    :class="{'bg-gray-100 dark:bg:white/10': mode==='system'}"
+                                    :class="{'bg-gray-100 dark:bg-white/10': mode==='system'}"
                                     @click="setTheme('system');open=false"><span><i
                                             class="fa-solid fa-circle-half-stroke mr-2"></i>System</span><i
                                         class="fa-solid fa-check" x-show="mode==='system'"></i></button>
                             </div>
                         </div>
-
                         <div x-data="notifComponent()" x-init="init()" class="relative hidden md:block">
                             <button @click="toggle"
                                 class="relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
@@ -755,7 +750,6 @@ if ($needsProfileCompletion) {
                                 </div>
                             </div>
                         </div>
-
                         <div class="relative hidden md:block" id="userDropdown">
                             <button
                                 class="flex items-center gap-3 rounded-lg px-3 py-2 theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
@@ -766,16 +760,13 @@ if ($needsProfileCompletion) {
                             </button>
                             <div id="userDropdownMenu"
                                 class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
-                                <div class="px-4 py-3 bg-gray-50 dark:bg白/5">
+                                <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        <?= htmlspecialchars($userName) ?>
-                                    </p>
+                                        <?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500 dark:text-white/70">
-                                        <?= htmlspecialchars($userEmail) ?>
-                                    </p>
+                                        <?= htmlspecialchars($userEmail) ?></p>
                                     <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?>
-                                    </p>
+                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
                                 </div>
                                 <a href="<?= BASE_URL ?>account/profile"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
@@ -793,7 +784,6 @@ if ($needsProfileCompletion) {
                                         class="fas fa-sign-out-alt w-5 h-5"></i>Logout</a>
                             </div>
                         </div>
-
                         <button id="mobileNotifBtn"
                             class="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
                             <i class="fas fa-bell text-lg"></i>
@@ -807,7 +797,6 @@ if ($needsProfileCompletion) {
                     </div>
                 </div>
             </header>
-
             <div class="flex flex-col min-h-[calc(100vh-64px)]">
                 <main
                     class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white main-fixed">
@@ -846,7 +835,6 @@ if ($needsProfileCompletion) {
                                         @click="hide30()">Hide 30 min</button>
                                 </template>
                             </div>
-
                             <div class="mt-3 sm:mt-4">
                                 <div
                                     class="flex items-center justify-between text-xs text-gray-600 dark:text-white/70 mb-1.5">
@@ -860,7 +848,6 @@ if ($needsProfileCompletion) {
                                         :style="{ width: percent + '%' }"></div>
                                 </div>
                             </div>
-
                             <div class="mt-4 grid gap-2 sm:grid-cols-4">
                                 <?php foreach ($orderedKeys as $key):
                                     $s = $steps[$key];
@@ -923,13 +910,11 @@ if ($needsProfileCompletion) {
                             </div>
                         </div>
                     <?php endif; ?>
-
                     <?= $mainContent ?? '' ?>
                 </main>
             </div>
         </div>
     </div>
-
     <div id="mobileTabbar"
         class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-secondary border-t border-gray-200 dark:border-white/10 mobile-tabbar">
         <div class="grid grid-cols-5 h-full">
@@ -955,7 +940,6 @@ if ($needsProfileCompletion) {
             </button>
         </div>
     </div>
-
     <div id="mobileMoreSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-4">
@@ -970,11 +954,9 @@ if ($needsProfileCompletion) {
                                     class="fas <?= $item['icon'] ?> text-secondary dark:text-white"></i></span>
                             <div>
                                 <div class="text-sm font-medium text-secondary dark:text-white">
-                                    <?= htmlspecialchars($item['title']) ?>
-                                </div>
+                                    <?= htmlspecialchars($item['title']) ?></div>
                                 <div class="text-[11px] text-gray-500 dark:text-white/70">
-                                    <?= htmlspecialchars(ucfirst($category['title'])) ?>
-                                </div>
+                                    <?= htmlspecialchars(ucfirst($category['title'])) ?></div>
                             </div>
                         </a>
                     <?php endforeach; ?>
@@ -1003,7 +985,6 @@ if ($needsProfileCompletion) {
             <button id="mobileMoreClose" class="mt-4 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
         </div>
     </div>
-
     <div id="mobileAccountSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-4">
@@ -1012,8 +993,7 @@ if ($needsProfileCompletion) {
                 <div class="user-initials w-10 h-10"><?= htmlspecialchars($userInitials) ?></div>
                 <div class="min-w-0">
                     <div class="text-sm font-medium text-secondary dark:text-white truncate">
-                        <?= htmlspecialchars($userName) ?>
-                    </div>
+                        <?= htmlspecialchars($userName) ?></div>
                     <div class="text-xs text-gray-500 dark:text-white/70 truncate"><?= htmlspecialchars($userEmail) ?>
                     </div>
                 </div>
@@ -1067,7 +1047,6 @@ if ($needsProfileCompletion) {
                 class="mt-2 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
         </div>
     </div>
-
     <div id="mobileNotifSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-2">
@@ -1089,7 +1068,7 @@ if ($needsProfileCompletion) {
                 </div>
                 <div class="max-h-[60vh] overflow-auto border-t border-gray-100 dark:border-white/10">
                     <template x-for="note in notes" :key="note.target_id">
-                        <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg白/5' : 'bg-white dark:bg-secondary'"
+                        <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
                             class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
                             <div class="px-3 py-3"><input type="checkbox" :value="note.target_id" x-model="selected"
                                     class="h-4 w-4 text-user-primary rounded"></div>
@@ -1118,7 +1097,6 @@ if ($needsProfileCompletion) {
                 class="mt-3 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
         </div>
     </div>
-
     <div id="return-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
         <div class="bg-white dark:bg-secondary rounded-xl p-8 max-w-md mx-4 shadow-2xl">
             <h3 class="text-xl font-rubik font-semibold text-secondary dark:text-white mb-6">Resume Your Progress</h3>
@@ -1135,7 +1113,6 @@ if ($needsProfileCompletion) {
             </div>
         </div>
     </div>
-
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
         const userDropdown = document.getElementById('userDropdown');

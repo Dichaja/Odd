@@ -963,31 +963,31 @@ final class CreditService
 
         if ($ownerType === 'PLATFORM') {
             $sql = "
-                SELECT wallet_id, wallet_number, wallet_name,
-                       current_balance, status, created_at
-                  FROM zzimba_wallets
-                 WHERE owner_type = 'PLATFORM'
-                   AND status     = 'active'
-                 LIMIT 1";
+            SELECT wallet_id, wallet_number, wallet_name,
+                   current_balance, status, created_at
+              FROM zzimba_wallets
+             WHERE owner_type = 'PLATFORM'
+               AND status     = 'active'
+             LIMIT 1";
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute();
         } else {
             $col = $ownerType === 'USER' ? 'user_id' : 'vendor_id';
             $sql = "
-                SELECT wallet_id, wallet_number, wallet_name,
-                       current_balance, status, created_at
-                  FROM zzimba_wallets
-                 WHERE owner_type = :ot
-                   AND {$col}    = :oid
-                   AND status    = 'active'
-                 LIMIT 1";
+            SELECT wallet_id, wallet_number, wallet_name,
+                   current_balance, status, created_at
+              FROM zzimba_wallets
+             WHERE owner_type = :ot
+               AND {$col}    = :oid
+               AND status    = 'active'
+             LIMIT 1";
             $stmt = self::$pdo->prepare($sql);
             $stmt->execute([':ot' => $ownerType, ':oid' => $ownerId]);
         }
 
         $wallet = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($wallet) {
-            return ['success' => true, 'wallet' => $wallet];
+            return ['success' => true, 'newAccount' => false, 'wallet' => $wallet];
         }
 
         $wid = \generateUlid();
@@ -1054,28 +1054,28 @@ final class CreditService
         if (in_array($ownerType, ['USER', 'VENDOR'], true)) {
             $appKey = $ownerType === 'USER' ? 'users' : 'vendors';
             $bonusSql = "
-                SELECT id, setting_value
-                  FROM zzimba_credit_settings
-                 WHERE setting_key  = 'welcome_bonus'
-                   AND status       = 'active'
-                   AND applicable_to IN ('all', :ap1)
-                 ORDER BY (applicable_to = 'all') DESC,
-                          (applicable_to = :ap2) DESC
-                 LIMIT 1";
+            SELECT id, setting_value
+              FROM zzimba_credit_settings
+             WHERE setting_key  = 'welcome_bonus'
+               AND status       = 'active'
+               AND applicable_to IN ('all', :ap1)
+             ORDER BY (applicable_to = 'all') DESC,
+                      (applicable_to = :ap2) DESC
+             LIMIT 1";
             $bst = self::$pdo->prepare($bonusSql);
             $bst->execute([':ap1' => $appKey, ':ap2' => $appKey]);
             $setting = $bst->fetch(PDO::FETCH_ASSOC);
 
             if ($setting && ($amount = (float) $setting['setting_value']) > 0) {
                 $src = self::$pdo->prepare("
-                    SELECT w.wallet_id, w.current_balance
-                      FROM zzimba_wallets w
-                      JOIN zzimba_wallet_credit_assignments a
-                        ON a.wallet_id = w.wallet_id
-                     WHERE a.credit_setting_id = :cid
-                       AND w.status            = 'active'
-                     LIMIT 1
-                ");
+                SELECT w.wallet_id, w.current_balance
+                  FROM zzimba_wallets w
+                  JOIN zzimba_wallet_credit_assignments a
+                    ON a.wallet_id = w.wallet_id
+                 WHERE a.credit_setting_id = :cid
+                   AND w.status            = 'active'
+                 LIMIT 1
+            ");
                 $src->execute([':cid' => $setting['id']]);
                 $source = $src->fetch(PDO::FETCH_ASSOC);
 
@@ -1127,10 +1127,10 @@ final class CreditService
                         self::$pdo->rollBack();
                         error_log("[ZzimbaCreditModule][getWallet] welcome‐bonus ledger error: " . $e->getMessage());
                         self::$pdo->prepare("
-                            UPDATE zzimba_financial_transactions
-                               SET status='FAILED', updated_at=NOW()
-                             WHERE transaction_id = :tid
-                        ")->execute([':tid' => $txnId]);
+                        UPDATE zzimba_financial_transactions
+                           SET status='FAILED', updated_at=NOW()
+                         WHERE transaction_id = :tid
+                    ")->execute([':tid' => $txnId]);
                     }
                 }
             }
@@ -1140,6 +1140,7 @@ final class CreditService
 
         return [
             'success' => true,
+            'newAccount' => true,
             'wallet' => [
                 'wallet_id' => $wid,
                 'wallet_number' => $wn,

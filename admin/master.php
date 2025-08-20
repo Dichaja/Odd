@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (
     !isset($_SESSION['user']['logged_in']) || !$_SESSION['user']['logged_in']
     || !isset($_SESSION['user']['is_admin']) || !$_SESSION['user']['is_admin']
@@ -118,56 +122,49 @@ $sessionUlid = generateUlid();
     <link rel="icon" type="image/png" href="<?= BASE_URL ?>/img/favicon.png">
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
-
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
-        const SESSION_ULID = "<?php echo $sessionUlid; ?>";
+        const SESSION_ULID = "<?= $sessionUlid; ?>";
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#D92B13',
-                        secondary: '#1a1a1a',
-                        'gray-text': '#4B5563'
-                    },
-                    fontFamily: {
-                        rubik: ['Rubik', 'sans-serif']
-                    }
+                    colors: { primary: '#D92B13', secondary: '#1a1a1a', 'gray-text': '#4B5563' },
+                    fontFamily: { rubik: ['Rubik', 'sans-serif'] }
                 }
             }
         }
     </script>
     <style>
         body {
-            font-family: 'Rubik', sans-serif;
+            font-family: 'Rubik', sans-serif
         }
 
         ::-webkit-scrollbar {
             width: 4px;
-            height: 4px;
+            height: 4px
         }
 
         ::-webkit-scrollbar-thumb {
             background: #C00000;
-            border-radius: 4px;
+            border-radius: 4px
         }
 
         ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #f1f1f1
         }
 
         @keyframes slideIn {
             from {
-                transform: translateX(-100%);
+                transform: translateX(-100%)
             }
 
             to {
-                transform: translateX(0);
+                transform: translateX(0)
             }
         }
 
         .animate-slide-in {
-            animation: slideIn .3s ease-out;
+            animation: slideIn .3s ease-out
         }
 
         .user-initials {
@@ -180,7 +177,7 @@ $sessionUlid = generateUlid();
             background: #C00000;
             color: #fff;
             font-weight: 600;
-            font-size: .875rem;
+            font-size: .875rem
         }
 
         .nav-category {
@@ -189,20 +186,19 @@ $sessionUlid = generateUlid();
             text-transform: uppercase;
             color: #9CA3AF;
             margin: 1.25rem 0 .5rem .75rem;
-            letter-spacing: .05em;
+            letter-spacing: .05em
         }
 
         .nav-category:first-of-type {
-            margin-top: 0;
+            margin-top: 0
         }
     </style>
 </head>
 
 <body class="bg-gray-50 font-rubik">
     <div class="flex min-h-screen">
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg
-                      transform -translate-x-full lg:translate-x-0
-                      transition-transform duration-300 ease-in-out">
+        <aside id="sidebar"
+            class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
                     <a href="<?= BASE_URL ?>admin/dashboard" class="flex items-center space-x-3">
@@ -214,11 +210,8 @@ $sessionUlid = generateUlid();
                         <div class="nav-category"><?= htmlspecialchars($category['title']) ?></div>
                         <div class="space-y-1 mb-2">
                             <?php foreach ($category['items'] as $key => $item): ?>
-                                <a href="<?= BASE_URL ?>admin/<?= $key ?>" class="group flex items-center px-4 py-2.5 text-sm rounded-lg
-                                       transition-all duration-200
-                                       <?= $activeNav === $key
-                                           ? 'bg-primary/10 text-primary active-nav-item'
-                                           : 'text-gray-text hover:bg-gray-50 hover:text-primary' ?>">
+                                <a href="<?= BASE_URL ?>admin/<?= $key ?>"
+                                    class="group flex items-center px-4 py-2.5 text-sm rounded-lg transition-all duration-200 <?= $activeNav === $key ? 'bg-primary/10 text-primary active-nav-item' : 'text-gray-text hover:bg-gray-50 hover:text-primary' ?>">
                                     <i class="fas <?= $item['icon'] ?> w-5 h-5 mr-3"></i>
                                     <?= htmlspecialchars($item['title']) ?>
                                 </a>
@@ -232,8 +225,8 @@ $sessionUlid = generateUlid();
             <header class="sticky top-0 z-40 bg-white border-b border-gray-100">
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
-                        <button id="sidebarToggle" class="lg:hidden w-10 h-10 flex items-center justify-center
-                                       text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
+                        <button id="sidebarToggle"
+                            class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
                         <h1 class="hidden lg:block text-xl font-semibold text-secondary">
@@ -242,17 +235,14 @@ $sessionUlid = generateUlid();
                     </div>
                     <div class="flex items-center gap-2">
                         <div x-data="notifComponent()" x-init="init()" class="relative mr-2">
-                            <button @click="toggle" class="relative w-10 h-10 flex items-center justify-center
-                                           text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
+                            <button @click="toggle"
+                                class="relative w-10 h-10 flex items-center justify-center text-gray-500 hover:text-primary rounded-lg hover:bg-gray-50">
                                 <i class="fas fa-bell text-xl"></i>
-                                <span x-show="count > 0" x-text="count" class="absolute -top-1 -right-1 text-[10px] font-semibold
-                                             text-white bg-primary rounded-full h-4 w-4
-                                             grid place-items-center"></span>
+                                <span x-show="count > 0" x-text="count"
+                                    class="absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-primary rounded-full h-4 w-4 grid place-items-center"></span>
                             </button>
-                            <div x-show="open" @click.away="open = false" x-transition class="fixed top-14 left-2 right-2 w-auto max-w-full
-                                        sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2
-                                        sm:w-80 sm:max-w-none bg-white rounded-lg
-                                        shadow-lg border border-gray-100 z-50 max-h-96 overflow-auto">
+                            <div x-show="open" @click.away="open = false" x-transition
+                                class="fixed top-14 left-2 right-2 w-auto max-w-full sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white rounded-lg shadow-lg border border-gray-100 z-50 max-h-96 overflow-auto">
                                 <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                                     <div class="flex items-center gap-2">
                                         <input type="checkbox" id="selectAll" @change="selectAll($event)"
@@ -260,14 +250,11 @@ $sessionUlid = generateUlid();
                                         <label for="selectAll" class="text-xs text-gray-600">Select All</label>
                                     </div>
                                     <div class="flex gap-2">
-                                        <button @click="markBulkSeen" class="text-xs px-2 py-1 bg-primary text-white rounded
-                                                       hover:bg-opacity-90 transition">
-                                            Mark Read
-                                        </button>
-                                        <button @click="dismissBulk" class="text-xs px-2 py-1 bg-red-500 text-white rounded
-                                                       hover:bg-opacity-90 transition">
-                                            Dismiss
-                                        </button>
+                                        <button @click="markBulkSeen"
+                                            class="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition">Mark
+                                            Read</button>
+                                        <button @click="dismissBulk"
+                                            class="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-opacity-90 transition">Dismiss</button>
                                     </div>
                                 </div>
                                 <template x-for="note in notes" :key="note.target_id">
@@ -288,33 +275,31 @@ $sessionUlid = generateUlid();
                                                     x-text="formatDate(note.created_at)"></span>
                                             </a>
                                         </div>
-                                        <button @click.stop="dismiss(note.target_id)" class="absolute top-2 right-2 text-gray-300 hover:text-primary
-                                                       opacity-0 group-hover:opacity-100 transition">
+                                        <button @click.stop="dismiss(note.target_id)"
+                                            class="absolute top-2 right-2 text-gray-300 hover:text-primary opacity-0 group-hover:opacity-100 transition">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
                                 </template>
-                                <div x-show="notes.length === 0" class="p-4 text-sm text-center text-gray-500">
-                                    No notifications
-                                </div>
+                                <div x-show="notes.length === 0" class="p-4 text-sm text-center text-gray-500">No
+                                    notifications</div>
                             </div>
                         </div>
                         <div class="relative" id="userDropdown">
                             <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2"
                                 title="Last login: <?= htmlspecialchars($formattedLastLogin) ?>">
                                 <div class="user-initials"><?= htmlspecialchars($userInitials) ?></div>
-                                <span class="hidden md:block text-sm font-medium text-gray-700">
-                                    <?= htmlspecialchars($userName) ?>
-                                </span>
+                                <span
+                                    class="hidden md:block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
                                 <i class="fas fa-chevron-down text-sm text-gray-400"></i>
                             </button>
-                            <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white
-                                        shadow-lg border border-gray-100 py-2 z-50">
+                            <div id="userDropdownMenu"
+                                class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
                                 <div class="px-4 py-2 border-b border-gray-100 mb-1">
                                     <p class="text-sm font-medium"><?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500"><?= htmlspecialchars($userEmail) ?></p>
-                                    <p class="text-xs text-gray-400 mt-1">
-                                        Last login: <?= htmlspecialchars($formattedLastLogin) ?>
+                                    <p class="text-xs text-gray-400 mt-1">Last login:
+                                        <?= htmlspecialchars($formattedLastLogin) ?>
                                     </p>
                                 </div>
                                 <a href="<?= BASE_URL ?>admin/profile"
@@ -342,15 +327,12 @@ $sessionUlid = generateUlid();
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
-
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
 
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebarToggle');
-        const overlay = Object.assign(document.createElement('div'), {
-            className: 'fixed inset-0 bg-black/20 z-40 lg:hidden hidden'
-        });
+        const overlay = Object.assign(document.createElement('div'), { className: 'fixed inset-0 bg-black/20 z-40 lg:hidden hidden' });
         document.body.appendChild(overlay);
         sidebarToggle.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
@@ -366,10 +348,7 @@ $sessionUlid = generateUlid();
         }
         const userDropdown = document.getElementById('userDropdown');
         const userDropdownMenu = document.getElementById('userDropdownMenu');
-        userDropdown.addEventListener('click', e => {
-            e.stopPropagation();
-            userDropdownMenu.classList.toggle('hidden');
-        });
+        userDropdown.addEventListener('click', e => { e.stopPropagation(); userDropdownMenu.classList.toggle('hidden'); });
         document.addEventListener('click', () => userDropdownMenu.classList.add('hidden'));
         window.addEventListener('resize', () => {
             if (innerWidth >= 1024) {
@@ -381,10 +360,7 @@ $sessionUlid = generateUlid();
         function logoutUser() {
             fetch('<?= BASE_URL ?>auth/logout', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
             })
                 .then(r => r.json())
                 .then(d => d.success ? location.href = '<?= BASE_URL ?>' : alert('Logout failed: ' + d.message))
@@ -396,109 +372,119 @@ $sessionUlid = generateUlid();
                 notes: [],
                 count: 0,
                 selected: [],
-                evtSource: null,
-                toggle() {
-                    this.open = !this.open;
-                },
+                lastTs: null,
+                timer: null,
+                toggle() { this.open = !this.open },
                 init() {
-                    this.evtSource = new EventSource('<?= BASE_URL ?>fetch/manageNotifications.php?action=stream');
-                    this.evtSource.onmessage = e => {
-                        try {
-                            const data = JSON.parse(e.data);
-                            const newIds = data.map(n => n.target_id);
-                            this.selected = this.selected.filter(id => newIds.includes(id));
-                            this.notes = data;
-                            this.count = this.notes.filter(n => n.is_seen == 0).length;
-                            const selectAllBox = document.getElementById('selectAll');
-                            if (selectAllBox) {
-                                selectAllBox.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                    this.fetchNow();
+                    this.timer = setInterval(() => this.fetchNow(), 20000);
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') this.fetchNow();
+                    });
+                },
+                fetchNow() {
+                    const url = new URL('<?= BASE_URL ?>fetch/manageNotifications.php');
+                    url.searchParams.set('action', 'fetch');
+                    if (this.lastTs) url.searchParams.set('since', this.lastTs);
+                    fetch(url.toString(), { cache: 'no-store' })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res && res.status === 'success') {
+                                const incoming = res.data || [];
+                                if (this.lastTs) this.mergeIncoming(incoming);
+                                else this.notes = incoming;
+                                const latest = res.latest_ts || (incoming[0]?.created_at ?? this.lastTs);
+                                if (latest) this.lastTs = latest;
+                                const nextCount = Number.isInteger(res.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                                this.count = nextCount;
+                                this.selected = this.selected.filter(id => this.notes.some(n => n.target_id === id));
+                                const selAll = document.getElementById('selectAll');
+                                if (selAll) selAll.checked = (this.selected.length && this.selected.length === this.notes.length);
                             }
-                        } catch { }
-                    };
-                    this.evtSource.onerror = () => { };
+                        })
+                        .catch(() => { });
                 },
-                selectAll(event) {
-                    this.selected = event.target.checked
-                        ? this.notes.map(n => n.target_id)
-                        : [];
+                mergeIncoming(arr) {
+                    if (!Array.isArray(arr) || !arr.length) return;
+                    const byId = new Map(this.notes.map(n => [n.target_id, n]));
+                    for (const n of arr) {
+                        if (!byId.has(n.target_id)) {
+                            this.notes.unshift(n);
+                            byId.set(n.target_id, n);
+                        } else {
+                            const idx = this.notes.findIndex(x => x.target_id === n.target_id);
+                            if (idx >= 0) this.notes[idx] = n;
+                        }
+                    }
+                    this.notes = this.notes.slice(0, 100);
                 },
+                selectAll(e) { this.selected = e.target.checked ? this.notes.map(n => n.target_id) : [] },
                 markSeenReq(id) {
-                    const params = new URLSearchParams();
-                    params.append('action', 'markSeen');
-                    params.append('target_id', id);
+                    const p = new URLSearchParams(); p.append('action', 'markSeen'); p.append('target_id', id);
                     fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    }).then(() => {
+                        body: p
+                    }).then(r => r.json()).then(res => {
                         const note = this.notes.find(n => n.target_id === id);
                         if (note) note.is_seen = 1;
-                        this.count = this.notes.filter(n => n.is_seen == 0).length;
-                    });
+                        const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                        this.count = c;
+                    }).catch(() => { });
                 },
                 markBulkSeen() {
                     if (!this.selected.length) return;
-                    const params = new URLSearchParams();
-                    params.append('action', 'markSeen');
-                    this.selected.forEach(id => params.append('target_id[]', id));
+                    const ids = this.selected.slice();
+                    const p = new URLSearchParams(); p.append('action', 'markSeen'); ids.forEach(id => p.append('target_id[]', id));
                     fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    }).then(() => {
-                        this.notes.forEach(n => {
-                            if (this.selected.includes(n.target_id)) n.is_seen = 1;
-                        });
-                        this.count = this.notes.filter(n => n.is_seen == 0).length;
+                        body: p
+                    }).then(r => r.json()).then(res => {
+                        this.notes.forEach(n => { if (ids.includes(n.target_id)) n.is_seen = 1; });
                         this.selected = [];
-                        const selectAllBox = document.getElementById('selectAll');
-                        if (selectAllBox) selectAllBox.checked = false;
-                    });
+                        const b = document.getElementById('selectAll'); if (b) b.checked = false;
+                        const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                        this.count = c;
+                    }).catch(() => { });
                 },
-                handleClick(note) {
-                    if (note.is_seen == 0) this.markSeenReq(note.target_id);
-                    if (note.link_url) location.href = note.link_url;
-                },
+                handleClick(note) { if (note.is_seen == 0) this.markSeenReq(note.target_id); if (note.link_url) location.href = note.link_url },
                 dismiss(id) {
-                    const params = new URLSearchParams();
-                    params.append('action', 'dismiss');
-                    params.append('target_id', id);
+                    const p = new URLSearchParams(); p.append('action', 'dismiss'); p.append('target_id', id);
                     fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    }).then(() => {
+                        body: p
+                    }).then(r => r.json()).then(res => {
                         this.notes = this.notes.filter(n => n.target_id !== id);
-                        this.count = this.notes.filter(n => n.is_seen == 0).length;
                         this.selected = this.selected.filter(sid => sid !== id);
-                        const selectAllBox = document.getElementById('selectAll');
-                        if (selectAllBox) selectAllBox.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
-                    });
+                        const b = document.getElementById('selectAll'); if (b) b.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                        const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                        this.count = c;
+                    }).catch(() => { });
                 },
                 dismissBulk() {
                     if (!this.selected.length) return;
-                    const params = new URLSearchParams();
-                    params.append('action', 'dismiss');
-                    this.selected.forEach(id => params.append('target_id[]', id));
+                    const ids = this.selected.slice();
+                    const p = new URLSearchParams(); p.append('action', 'dismiss'); ids.forEach(id => p.append('target_id[]', id));
                     fetch('<?= BASE_URL ?>fetch/manageNotifications.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    }).then(() => {
-                        this.notes = this.notes.filter(n => !this.selected.includes(n.target_id));
-                        this.count = this.notes.filter(n => n.is_seen == 0).length;
+                        body: p
+                    }).then(r => r.json()).then(res => {
+                        this.notes = this.notes.filter(n => !ids.includes(n.target_id));
                         this.selected = [];
-                        const selectAllBox = document.getElementById('selectAll');
-                        if (selectAllBox) selectAllBox.checked = false;
-                    });
+                        const b = document.getElementById('selectAll'); if (b) b.checked = false;
+                        const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                        this.count = c;
+                    }).catch(() => { });
                 },
                 formatDate(ts) {
                     const d = new Date(ts.replace(' ', 'T'));
                     const now = new Date();
                     const diff = (now - d) / 1000;
                     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const yesterday = new Date(today);
-                    yesterday.setDate(today.getDate() - 1);
+                    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
                     const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
                     if (diff < 60) return 'Now';
                     if (d >= today) return 'Today ' + time;
@@ -509,9 +495,7 @@ $sessionUlid = generateUlid();
         }
         const sidebarNavEl = document.getElementById('sidebarNav');
         const activeNavItemEl = sidebarNavEl.querySelector('.active-nav-item');
-        if (activeNavItemEl) {
-            activeNavItemEl.scrollIntoView({ block: 'start' });
-        }
+        if (activeNavItemEl) activeNavItemEl.scrollIntoView({ block: 'start' });
     </script>
 </body>
 

@@ -237,6 +237,42 @@ function formatCurrency($amount)
     </div>
 </div>
 
+<div id="newAccountModal" class="fixed inset-0 z-[1000] hidden">
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative z-[1001] h-full w-full flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-secondary rounded-2xl shadow-xl max-w-lg w-full p-6">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 grid place-items-center">
+                        <i class="fas fa-check text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-secondary dark:text-white font-rubik">Account Activated</h3>
+                        <p class="text-sm text-gray-600 dark:text-white/70">Welcome to Zzimba Credit</p>
+                    </div>
+                </div>
+                <button id="newAccCloseBtn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+            <div class="mt-5 space-y-4">
+                <p id="newAccMessage" class="text-sm text-gray-700 dark:text-white/80 leading-relaxed"></p>
+                <div class="bg-gray-50 dark:bg-white/10 rounded-xl p-4">
+                    <p class="text-sm text-gray-600 dark:text-white/70">Wallet Number</p>
+                    <p id="newAccWalletNo" class="text-2xl font-bold text-secondary dark:text-white tracking-wide mt-1">
+                    </p>
+                </div>
+            </div>
+            <div class="mt-6 flex items-center justify-end gap-3">
+                <button id="newAccOkBtn"
+                    class="px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all">
+                    Got it
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     #balanceText {
         white-space: nowrap !important;
@@ -265,6 +301,8 @@ function formatCurrency($amount)
         const apiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageZzimbaCredit.php') ?>;
         const ownerName = <?= json_encode(trim(($_SESSION['user']['first_name'] ?? '') . ' ' . ($_SESSION['user']['last_name'] ?? ''))) ?>;
         let transactions = [];
+        let walletNumberForModal = null;
+        let newAccountModalShown = false;
 
         function displayTransactionsView() {
             const tableWrapper = document.getElementById('transactionsTable');
@@ -279,12 +317,80 @@ function formatCurrency($amount)
 
         window.addEventListener('resize', function () { adjustTableFontSize(); displayTransactionsView(); });
 
+        function formatAmountSmart(n) {
+            const amt = Number(n || 0);
+            if (Number.isNaN(amt)) return '0';
+            const isInt = Math.floor(amt) === amt;
+            return isInt ? amt.toLocaleString() : amt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function setNewAccMessage(walletNo, bonusAmount) {
+            const msgEl = document.getElementById('newAccMessage');
+            const bonusText = typeof bonusAmount === 'number' ? ` You have been awarded UGX ${formatAmountSmart(bonusAmount)} as welcome bonus to help you explore our premium features.` : '';
+            msgEl.textContent = `Hello, ${ownerName}, your Zzimba Credit Account has been activated, your wallet no is ${walletNo}.${bonusText}`;
+        }
+
+        function fetchWelcomeBonusAmount(walletId) {
+            const params = new URLSearchParams({ action: 'getWalletStatement', filter: 'all' });
+            return fetch(`${apiUrl}?action=getWalletStatement`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data?.success || !Array.isArray(data.statement)) return null;
+                    for (const tx of data.statement) {
+                        const t = tx.transaction || {};
+                        const note = (t.note || '').toLowerCase();
+                        const hasWelcomeNote = note.includes('welcome bonus');
+                        const entries = Array.isArray(t.entries) ? t.entries : [];
+                        const entryHasWelcome = entries.some(e => (e.entry_note || '').toLowerCase().includes('welcome bonus') && e.entry_type === 'CREDIT');
+                        if (hasWelcomeNote || entryHasWelcome) {
+                            if (typeof t.amount_total === 'number') return t.amount_total;
+                            const credit = entries.find(e => e.entry_type === 'CREDIT');
+                            if (credit && typeof credit.amount === 'number') return credit.amount;
+                        }
+                    }
+                    return null;
+                })
+                .catch(() => null);
+        }
+
+        async function maybeShowNewAccountModal(flag, numberSource, bonusAmount, walletId) {
+            if (!flag || newAccountModalShown) return;
+            const no = numberSource || walletNumberForModal;
+            if (!no) return;
+            let bonus = typeof bonusAmount === 'number' ? bonusAmount : null;
+            if (bonus === null && walletId) {
+                bonus = await fetchWelcomeBonusAmount(walletId);
+            }
+            document.getElementById('newAccWalletNo').textContent = no;
+            setNewAccMessage(no, bonus);
+            const modal = document.getElementById('newAccountModal');
+            modal.classList.remove('hidden');
+            newAccountModalShown = true;
+
+            function closeAndReload() {
+                modal.classList.add('hidden');
+                window.location.reload();
+            }
+
+            document.getElementById('newAccCloseBtn').onclick = closeAndReload;
+            document.getElementById('newAccOkBtn').onclick = closeAndReload;
+            modal.addEventListener('click', (e) => { if (e.target.id === 'newAccountModal') closeAndReload(); });
+            document.addEventListener('keydown', function escHandler(e) {
+                if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); closeAndReload(); }
+            });
+        }
+
         function loadWalletData() {
             fetch(`${apiUrl}?action=getWallet`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: '' })
                 .then(r => r.json())
                 .then(data => {
                     if (data.success && data.wallet) {
                         const w = data.wallet;
+                        walletNumberForModal = w.wallet_number || walletNumberForModal;
                         document.getElementById('walletName').textContent = w.wallet_name;
                         document.getElementById('ownerName').textContent = ownerName;
                         document.getElementById('walletId').textContent = w.wallet_number;
@@ -300,6 +406,9 @@ function formatCurrency($amount)
                         document.getElementById('walletInfo').classList.remove('hidden');
                         document.getElementById('balanceInfo').classList.remove('hidden');
                         setTimeout(adjustBalanceTextSize, 100);
+                        if (typeof data.newAccount !== 'undefined') {
+                            maybeShowNewAccountModal(Boolean(data.newAccount), w.wallet_number, data.bonus_amount, w.wallet_id);
+                        }
                     } else { showWalletError('Failed to load wallet data'); }
                 })
                 .catch(() => { showWalletError('Network error loading wallet data'); });
@@ -329,6 +438,10 @@ function formatCurrency($amount)
                 .then(data => {
                     document.getElementById('transactionsLoading').classList.add('hidden');
                     if (data.success && data.statement) {
+                        if (data.wallet && data.wallet.wallet_number) walletNumberForModal = data.wallet.wallet_number;
+                        if (typeof data.newAccount !== 'undefined') {
+                            maybeShowNewAccountModal(Boolean(data.newAccount), data.wallet?.wallet_number, data.bonus_amount, data.wallet?.wallet_id);
+                        }
                         transactions = transformStatementData(data.statement);
                         if (transactions.length > 0) { renderTransactions(transactions); updatePaginationInfo(transactions.length); adjustTableFontSize(); displayTransactionsView(); }
                         else { document.getElementById('transactionsEmpty').classList.remove('hidden'); }

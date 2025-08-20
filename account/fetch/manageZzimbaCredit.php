@@ -1,5 +1,4 @@
 <?php
-// account/fetch/manageZzimbaCredit.php
 ob_start();
 header('Content-Type: application/json');
 error_reporting(E_ALL);
@@ -23,7 +22,6 @@ if (empty($_SESSION['user']['logged_in'])) {
 
 date_default_timezone_set('Africa/Kampala');
 
-// Support both GET and POST for parameters
 $action = $_REQUEST['action'] ?? '';
 
 try {
@@ -58,27 +56,26 @@ try {
             break;
 
         case 'getWalletStatement':
-            // Fetch a wallet statement: 'all' or 'range' using wallet ID
             $userId = $_SESSION['user']['user_id'];
             $filter = strtolower(trim($_REQUEST['filter'] ?? 'all'));
-            $start = $_REQUEST['start'] ?? null;  // expected YYYY-MM-DD or datetime
-            $end = $_REQUEST['end'] ?? null;      // expected YYYY-MM-DD or datetime
+            $start = $_REQUEST['start'] ?? null;
+            $end = $_REQUEST['end'] ?? null;
 
-            // Fetch the wallet ID from the zzimba_wallets table
             try {
-                $stmt = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE owner_type = 'USER' AND user_id = :user_id LIMIT 1");
-                $stmt->execute(['user_id' => $userId]);
-                $wallet = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                if (!$wallet) {
-                    echo json_encode(['success' => false, 'message' => 'Wallet not found for this user.']);
+                $walletRes = CreditService::getWallet('USER', $userId);
+                if (empty($walletRes['success']) || empty($walletRes['wallet']['wallet_id'])) {
+                    echo json_encode(['success' => false, 'message' => 'Wallet not found or could not be created.']);
                     break;
                 }
 
-                $walletId = $wallet['wallet_id'];
-                $result = CreditService::getWalletStatement($walletId, $filter, $start, $end);
-                echo json_encode($result);
+                $walletId = $walletRes['wallet']['wallet_id'];
+                $stmtRes = CreditService::getWalletStatement($walletId, $filter, $start, $end);
 
+                if (isset($walletRes['newAccount'])) {
+                    $stmtRes['newAccount'] = (bool) $walletRes['newAccount'];
+                }
+
+                echo json_encode($stmtRes);
             } catch (Exception $e) {
                 error_log("[getWalletStatement] Error: " . $e->getMessage());
                 echo json_encode(['success' => false, 'message' => 'Failed to fetch wallet statement.']);

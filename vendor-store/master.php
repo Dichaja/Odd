@@ -1,22 +1,19 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-
-// Auth: must be logged in
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['user']) || empty($_SESSION['user']['logged_in'])) {
     session_unset();
     session_destroy();
     header('Location: ' . BASE_URL);
     exit;
 }
-
-// Store context
 $storeId = $_SESSION['active_store'] ?? null;
 if (!$storeId) {
     header('Location: ' . BASE_URL . 'account/dashboard');
     exit;
 }
-
-// Fetch store and resolve role
 $storeStmt = $pdo->prepare("
     SELECT id, name, owner_id 
     FROM vendor_stores
@@ -30,7 +27,6 @@ if (!$store) {
     exit;
 }
 $storeName = $store['name'];
-
 $isAdmin = !empty($_SESSION['user']['is_admin']);
 $isOwner = $store['owner_id'] === $_SESSION['user']['user_id'];
 $isManager = false;
@@ -55,42 +51,25 @@ if (!$isAdmin && !$isOwner && !$isManager) {
     exit;
 }
 $userRole = $isAdmin ? 'Admin' : ($isOwner ? 'Owner' : 'Manager');
-
-// Session timeout
-if (
-    isset($_SESSION['last_activity'])
-    && time() - $_SESSION['last_activity'] > 7200
-) {
+if (isset($_SESSION['last_activity']) && time() - $_SESSION['last_activity'] > 7200) {
     session_unset();
     session_destroy();
     header('Location: ' . BASE_URL);
     exit;
 }
 $_SESSION['last_activity'] = time();
-
-// Ensure store_session_id for notifications
-if (
-    !isset($_SESSION['store_session_id'])
-    || $_SESSION['store_session_id'] !== $storeId
-) {
+if (!isset($_SESSION['store_session_id']) || $_SESSION['store_session_id'] !== $storeId) {
     $_SESSION['store_session_id'] = $storeId;
 }
-
-// Page settings
-$title = isset($pageTitle)
-    ? "{$pageTitle} - {$storeName} | Store Dashboard"
-    : "{$storeName} Store Dashboard";
+$title = isset($pageTitle) ? "{$pageTitle} - {$storeName} | Store Dashboard" : "{$storeName} Store Dashboard";
 $activeNav = $activeNav ?? 'dashboard';
 $userName = $_SESSION['user']['username'];
-// Store initials for avatar (first two words only)
 $storeInitials = '';
-$parts = array_filter(explode(' ', $storeName)); // remove empty parts
-$limitedParts = array_slice($parts, 0, 2); // first 2 words only
-
+$parts = array_filter(explode(' ', $storeName));
+$limitedParts = array_slice($parts, 0, 2);
 foreach ($limitedParts as $part) {
     $storeInitials .= strtoupper($part[0]);
 }
-
 $menuItems = [
     'main' => [
         'title' => 'Main',
@@ -130,7 +109,6 @@ $menuItems = [
         ]
     ]
 ];
-
 $sessionUlid = generateUlid();
 ?>
 <!DOCTYPE html>
@@ -140,69 +118,57 @@ $sessionUlid = generateUlid();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?= htmlspecialchars($title) ?></title>
-
-    <!-- Tailwind & Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="<?= BASE_URL ?>/img/favicon.png">
     <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
-
-    <!-- jQuery & Alpine -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
-
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
-        const SESSION_ULID = "<?php echo $sessionUlid; ?>";
+        const SESSION_ULID = "<?= $sessionUlid; ?>";
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#D92B13',
-                        'user-primary': '#D92B13',
-                        'user-secondary': '#F8C2BC',
-                        'user-content': '#F5F9FF'
-                    },
-                    fontFamily: {
-                        rubik: ['Rubik', 'sans-serif']
-                    }
+                    colors: { primary: '#D92B13', 'user-primary': '#D92B13', 'user-secondary': '#F8C2BC', 'user-content': '#F5F9FF', 'gray-text': '#4B5563' },
+                    fontFamily: { rubik: ['Rubik', 'sans-serif'] }
                 }
             }
         };
     </script>
     <style>
         body {
-            font-family: 'Rubik', sans-serif;
+            font-family: 'Rubik', sans-serif
         }
 
         ::-webkit-scrollbar {
             width: 4px;
-            height: 4px;
+            height: 4px
         }
 
         ::-webkit-scrollbar-thumb {
             background: #0070C0;
-            border-radius: 4px;
+            border-radius: 4px
         }
 
         ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #f1f1f1
         }
 
         @keyframes slideIn {
             from {
-                transform: translateX(-100%);
+                transform: translateX(-100%)
             }
 
             to {
-                transform: translateX(0);
+                transform: translateX(0)
             }
         }
 
         .animate-slide-in {
-            animation: slideIn .3s ease-out;
+            animation: slideIn .3s ease-out
         }
 
         .user-initials {
@@ -215,7 +181,7 @@ $sessionUlid = generateUlid();
             background: #D92B13;
             color: #fff;
             font-weight: 600;
-            font-size: .875rem;
+            font-size: .875rem
         }
 
         .nav-category {
@@ -224,40 +190,38 @@ $sessionUlid = generateUlid();
             text-transform: uppercase;
             color: #9CA3AF;
             margin: 1.25rem 0 .5rem .75rem;
-            letter-spacing: .05em;
+            letter-spacing: .05em
         }
 
         .nav-category:first-of-type {
-            margin-top: 0;
+            margin-top: 0
         }
 
         .user-sidebar {
             background: #F8FAFC;
-            border-right: 1px solid #E2E8F0;
+            border-right: 1px solid #E2E8F0
         }
 
         .user-nav-item.active {
             background: rgba(192, 26, 0, .1);
-            color: #D92B13;
+            color: #D92B13
         }
 
         .user-header {
             background: #fff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .05)
         }
 
         .main-content-area {
-            background: #F0F7FF;
+            background: #F0F7FF
         }
     </style>
 </head>
 
 <body class="bg-user-content font-rubik">
     <div class="flex min-h-screen">
-
-        <!-- Sidebar -->
-        <aside id="sidebar" class="user-sidebar fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full
-                  lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <aside id="sidebar"
+            class="user-sidebar fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
                     <a href="<?= BASE_URL ?>vendor-store/dashboard" class="flex items-center space-x-3">
@@ -269,18 +233,16 @@ $sessionUlid = generateUlid();
                         <div class="nav-category"><?= htmlspecialchars($category['title']) ?></div>
                         <div class="space-y-1 mb-2">
                             <?php foreach ($category['items'] as $key => $item): ?>
-                                <a href="<?= BASE_URL ?>vendor-store/<?= $key ?>" class="user-nav-item group flex items-center justify-between px-4 py-2.5 text-sm rounded-lg
-                                      transition duration-200 <?= $activeNav === $key
-                                          ? 'active' : 'text-gray-text hover:bg-gray-50 hover:text-user-primary' ?>">
+                                <a href="<?= BASE_URL ?>vendor-store/<?=
+                                      $key ?>"
+                                    class="user-nav-item group flex items-center justify-between px-4 py-2.5 text-sm rounded-lg transition duration-200 <?= $activeNav === $key ? 'active' : 'text-gray-text hover:bg-gray-50 hover:text-user-primary' ?>">
                                     <div class="flex items-center gap-3">
                                         <i class="fas <?= $item['icon'] ?> w-5 h-5"></i>
                                         <span><?= htmlspecialchars($item['title']) ?></span>
                                     </div>
                                     <?php if ($item['notifications'] > 0): ?>
-                                        <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-medium
-                                               rounded-full bg-user-primary text-white min-w-[1.5rem]">
-                                            <?= $item['notifications'] ?>
-                                        </span>
+                                        <span
+                                            class="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-user-primary text-white min-w-[1.5rem]"><?= $item['notifications'] ?></span>
                                     <?php endif; ?>
                                 </a>
                             <?php endforeach; ?>
@@ -289,41 +251,29 @@ $sessionUlid = generateUlid();
                 </nav>
             </div>
         </aside>
-
-        <!-- Main -->
         <div class="flex-1 lg:ml-64 flex flex-col justify-between">
-
-            <!-- Header -->
             <header class="user-header sticky top-0 z-40 border-b border-gray-100">
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
-                        <button id="sidebarToggle" class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-500
-                            hover:text-user-primary rounded-lg hover:bg-gray-50">
+                        <button id="sidebarToggle"
+                            class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-500 hover:text-user-primary rounded-lg hover:bg-gray-50">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
-                        <h1 class="text-xl font-semibold text-secondary truncate whitespace-nowrap overflow-hidden
-                            max-w-[8rem] sm:max-w-none" title="<?= htmlspecialchars($storeName) ?>">
+                        <h1 class="text-xl font-semibold text-secondary truncate whitespace-nowrap overflow-hidden max-w-[8rem] sm:max-w-none"
+                            title="<?= htmlspecialchars($storeName) ?>">
                             <?= htmlspecialchars($storeName) ?>
                         </h1>
                     </div>
-
                     <div class="flex items-center gap-2">
-                        <!-- SSE Notifications with Bulk Actions -->
                         <div x-data="notifComponent()" x-init="init()" class="relative mr-2">
-                            <button @click="open = !open" class="relative w-10 h-10 flex items-center justify-center text-gray-500
-                                hover:text-user-primary rounded-lg hover:bg-gray-50">
+                            <button @click="open = !open"
+                                class="relative w-10 h-10 flex items-center justify-center text-gray-500 hover:text-user-primary rounded-lg hover:bg-gray-50">
                                 <i class="fas fa-bell text-xl"></i>
-                                <span x-show="count > 0" x-text="count" class="absolute -top-1 -right-1 text-[10px] font-semibold text-white
-                                    bg-user-primary rounded-full h-4 w-4 grid place-items-center">
-                                </span>
+                                <span x-show="count > 0" x-text="count"
+                                    class="absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center"></span>
                             </button>
-
-                            <div x-show="open" @click.away="open = false" x-transition class="fixed top-14 left-2 right-2 w-auto max-w-full
-                                sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2
-                                sm:w-80 sm:max-w-none
-                                bg-white rounded-lg shadow-lg border border-gray-100
-                                z-50 max-h-96 overflow-auto">
-                                <!-- Bulk action toolbar -->
+                            <div x-show="open" @click.away="open = false" x-transition
+                                class="fixed top-14 left-2 right-2 w-auto max-w-full sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white rounded-lg shadow-lg border border-gray-100 z-50 max-h-96 overflow-auto">
                                 <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                                     <div class="flex items-center gap-2">
                                         <input type="checkbox" id="selectAll" @change="selectAll($event)"
@@ -332,13 +282,10 @@ $sessionUlid = generateUlid();
                                     </div>
                                     <div class="flex gap-2">
                                         <button @click="markBulkSeen"
-                                            class="text-xs px-2 py-1 bg-user-primary text-white rounded hover:bg-opacity-90 transition">
-                                            Mark Read
-                                        </button>
+                                            class="text-xs px-2 py-1 bg-user-primary text-white rounded hover:bg-opacity-90 transition">Mark
+                                            Read</button>
                                         <button @click="dismissBulk"
-                                            class="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-opacity-90 transition">
-                                            Dismiss
-                                        </button>
+                                            class="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-opacity-90 transition">Dismiss</button>
                                     </div>
                                 </div>
                                 <template x-for="note in notes" :key="note.target_id">
@@ -359,30 +306,26 @@ $sessionUlid = generateUlid();
                                                     x-text="formatDate(note.created_at)"></span>
                                             </a>
                                         </div>
-                                        <button @click.stop="dismiss(note.target_id)" class="absolute top-2 right-2 text-gray-300 hover:text-user-primary
-                                            opacity-0 group-hover:opacity-100 transition">
+                                        <button @click.stop="dismiss(note.target_id)"
+                                            class="absolute top-2 right-2 text-gray-300 hover:text-user-primary opacity-0 group-hover:opacity-100 transition">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
                                 </template>
-                                <div x-show="notes.length === 0" class="p-4 text-sm text-center text-gray-500">
-                                    No notifications
-                                </div>
+                                <div x-show="notes.length === 0" class="p-4 text-sm text-center text-gray-500">No
+                                    notifications</div>
                             </div>
                         </div>
-
-                        <!-- User dropdown -->
                         <div class="relative" id="userDropdown">
                             <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2"
                                 title="<?= htmlspecialchars($storeName) ?> (<?= $userRole ?>)">
                                 <div class="user-initials"><?= htmlspecialchars($storeInitials) ?></div>
-                                <span class="hidden md:block text-sm font-medium text-gray-700">
-                                    <?= htmlspecialchars($userName) ?>
-                                </span>
+                                <span
+                                    class="hidden md:block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
                                 <i class="fas fa-chevron-down text-sm text-gray-400"></i>
                             </button>
-                            <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg
-            border border-gray-100 py-2 z-50">
+                            <div id="userDropdownMenu"
+                                class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
                                 <div class="px-4 py-3 bg-gray-50">
                                     <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500"><?= htmlspecialchars($storeName) ?></p>
@@ -414,8 +357,6 @@ $sessionUlid = generateUlid();
                     </div>
                 </div>
             </header>
-
-            <!-- Content -->
             <main class="main-content-area p-6 h-[100%]">
                 <?= $mainContent ?? '' ?>
             </main>
@@ -424,16 +365,11 @@ $sessionUlid = generateUlid();
             </footer>
         </div>
     </div>
-
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
-
-        // Sidebar toggle
-        const sidebar = document.getElementById('sidebar'),
-            sidebarToggle = document.getElementById('sidebarToggle'),
-            overlay = Object.assign(document.createElement('div'), {
-                className: 'fixed inset-0 bg-black/20 z-40 lg:hidden hidden'
-            });
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const overlay = Object.assign(document.createElement('div'), { className: 'fixed inset-0 bg-black/20 z-40 lg:hidden hidden' });
         document.body.appendChild(overlay);
         sidebarToggle.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
@@ -447,14 +383,9 @@ $sessionUlid = generateUlid();
                 setTimeout(() => sidebar.classList.remove('animate-slide-in'), 300);
             }
         }
-
-        // User dropdown
-        const userDropdown = document.getElementById('userDropdown'),
-            userDropdownMenu = document.getElementById('userDropdownMenu');
-        userDropdown.addEventListener('click', e => {
-            e.stopPropagation();
-            userDropdownMenu.classList.toggle('hidden');
-        });
+        const userDropdown = document.getElementById('userDropdown');
+        const userDropdownMenu = document.getElementById('userDropdownMenu');
+        userDropdown.addEventListener('click', e => { e.stopPropagation(); userDropdownMenu.classList.toggle('hidden'); });
         document.addEventListener('click', () => userDropdownMenu.classList.add('hidden'));
         window.addEventListener('resize', () => {
             if (innerWidth >= 1024) {
@@ -463,149 +394,122 @@ $sessionUlid = generateUlid();
                 document.body.classList.remove('overflow-hidden');
             }
         });
-
-        // Logout
         function logoutUser() {
             $.ajax({
                 url: BASE_URL + 'auth/logout',
                 type: 'POST',
                 contentType: 'application/json',
                 dataType: 'json',
-                success(d) {
-                    if (d.success) location.href = BASE_URL;
-                    else alert(d.message || 'Logout failed');
-                },
-                error() {
-                    alert('Server error');
-                }
+                success(d) { if (d.success) location.href = BASE_URL; else alert(d.message || 'Logout failed') },
+                error() { alert('Server error') }
             });
         }
-
-        // SSE notifications component with bulk actions
         function notifComponent() {
             return {
                 open: false,
                 notes: [],
                 count: 0,
                 selected: [],
-                evtSource: null,
-
+                lastTs: null,
+                timer: null,
                 init() {
-                    this.evtSource = new EventSource(
-                        BASE_URL + 'fetch/manageNotifications.php?action=stream'
-                    );
-                    this.evtSource.onmessage = e => {
-                        try {
-                            const data = JSON.parse(e.data);
-                            // Preserve selections if they still exist
-                            const currentIds = data.map(n => n.target_id);
-                            this.selected = this.selected.filter(id => currentIds.includes(id));
-
-                            this.notes = data;
-                            this.count = this.notes.filter(n => n.is_seen == 0).length;
-
-                            // Update "Select All" checkbox
-                            const selectAllBox = document.getElementById('selectAll');
-                            if (selectAllBox) {
-                                selectAllBox.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                    this.fetchNow();
+                    this.timer = setInterval(() => this.fetchNow(), 20000);
+                    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.fetchNow(); });
+                },
+                fetchNow() {
+                    const url = new URL(BASE_URL + 'fetch/manageNotifications.php');
+                    url.searchParams.set('action', 'fetch');
+                    if (this.lastTs) url.searchParams.set('since', this.lastTs);
+                    fetch(url.toString(), { cache: 'no-store' })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res && res.status === 'success') {
+                                const incoming = res.data || [];
+                                if (this.lastTs) this.mergeIncoming(incoming);
+                                else this.notes = incoming;
+                                const latest = res.latest_ts || (incoming[0]?.created_at ?? this.lastTs);
+                                if (latest) this.lastTs = latest;
+                                const nextCount = Number.isInteger(res.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                                this.count = nextCount;
+                                this.selected = this.selected.filter(id => this.notes.some(n => n.target_id === id));
+                                const selAll = document.getElementById('selectAll');
+                                if (selAll) selAll.checked = (this.selected.length && this.selected.length === this.notes.length);
                             }
-                        } catch (err) {
-                            console.error('SSE parse error', err);
+                        })
+                        .catch(() => { });
+                },
+                mergeIncoming(arr) {
+                    if (!Array.isArray(arr) || !arr.length) return;
+                    const byId = new Map(this.notes.map(n => [n.target_id, n]));
+                    for (const n of arr) {
+                        if (!byId.has(n.target_id)) {
+                            this.notes.unshift(n);
+                            byId.set(n.target_id, n);
+                        } else {
+                            const idx = this.notes.findIndex(x => x.target_id === n.target_id);
+                            if (idx >= 0) this.notes[idx] = n;
                         }
-                    };
-                    this.evtSource.onerror = err => console.error('SSE error', err);
-                },
-
-                selectAll(event) {
-                    if (event.target.checked) {
-                        this.selected = this.notes.map(n => n.target_id);
-                    } else {
-                        this.selected = [];
                     }
+                    this.notes = this.notes.slice(0, 100);
                 },
-
+                selectAll(e) { this.selected = e.target.checked ? this.notes.map(n => n.target_id) : [] },
                 markSeen(id) {
-                    const params = new URLSearchParams();
-                    params.append('action', 'markSeen');
-                    params.append('target_id', id);
-                    fetch(BASE_URL + 'fetch/manageNotifications.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    }).then(() => {
-                        const note = this.notes.find(n => n.target_id === id);
-                        if (note) note.is_seen = 1;
-                        this.count = this.notes.filter(n => n.is_seen == 0).length;
-                    });
+                    const p = new URLSearchParams(); p.append('action', 'markSeen'); p.append('target_id', id);
+                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
+                        .then(r => r.json())
+                        .then(res => {
+                            const note = this.notes.find(n => n.target_id === id);
+                            if (note) note.is_seen = 1;
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.count = c;
+                        }).catch(() => { });
                 },
-
                 markBulkSeen() {
-                    if (this.selected.length === 0) return;
-                    const params = new URLSearchParams();
-                    params.append('action', 'markSeen');
-                    this.selected.forEach(id => params.append('target_id[]', id));
-                    fetch(BASE_URL + 'fetch/manageNotifications.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    }).then(() => {
-                        this.notes.forEach(n => {
-                            if (this.selected.includes(n.target_id)) n.is_seen = 1;
-                        });
-                        this.count = this.notes.filter(n => n.is_seen == 0).length;
-                        this.selected = [];
-                        const selectAllBox = document.getElementById('selectAll');
-                        if (selectAllBox) selectAllBox.checked = false;
-                    });
+                    if (!this.selected.length) return;
+                    const ids = this.selected.slice();
+                    const p = new URLSearchParams(); p.append('action', 'markSeen'); ids.forEach(id => p.append('target_id[]', id));
+                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
+                        .then(r => r.json())
+                        .then(res => {
+                            this.notes.forEach(n => { if (ids.includes(n.target_id)) n.is_seen = 1; });
+                            this.selected = [];
+                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.count = c;
+                        }).catch(() => { });
                 },
-
-                handleClick(note) {
-                    if (note.is_seen == 0) this.markSeen(note.target_id);
-                    if (note.link_url) location.href = note.link_url;
-                },
-
+                handleClick(note) { if (note.is_seen == 0) this.markSeen(note.target_id); if (note.link_url) location.href = note.link_url },
                 dismiss(id) {
-                    const params = new URLSearchParams();
-                    params.append('action', 'dismiss');
-                    params.append('target_id', id);
-                    fetch(BASE_URL + 'fetch/manageNotifications.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    }).then(() => {
-                        this.notes = this.notes.filter(n => n.target_id !== id);
-                        this.count = this.notes.filter(n => n.is_seen == 0).length;
-                        this.selected = this.selected.filter(sid => sid !== id);
-                        const selectAllBox = document.getElementById('selectAll');
-                        if (selectAllBox) selectAllBox.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
-                    });
+                    const p = new URLSearchParams(); p.append('action', 'dismiss'); p.append('target_id', id);
+                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
+                        .then(r => r.json())
+                        .then(res => {
+                            this.notes = this.notes.filter(n => n.target_id !== id);
+                            this.selected = this.selected.filter(sid => sid !== id);
+                            const b = document.getElementById('selectAll'); if (b) b.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.count = c;
+                        }).catch(() => { });
                 },
-
                 dismissBulk() {
-                    if (this.selected.length === 0) return;
-                    const params = new URLSearchParams();
-                    params.append('action', 'dismiss');
-                    this.selected.forEach(id => params.append('target_id[]', id));
-                    fetch(BASE_URL + 'fetch/manageNotifications.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: params
-                    }).then(() => {
-                        this.notes = this.notes.filter(n => !this.selected.includes(n.target_id));
-                        this.count = this.notes.filter(n => n.is_seen == 0).length;
-                        this.selected = [];
-                        const selectAllBox = document.getElementById('selectAll');
-                        if (selectAllBox) selectAllBox.checked = false;
-                    });
+                    if (!this.selected.length) return;
+                    const ids = this.selected.slice();
+                    const p = new URLSearchParams(); p.append('action', 'dismiss'); ids.forEach(id => p.append('target_id[]', id));
+                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
+                        .then(r => r.json())
+                        .then(res => {
+                            this.notes = this.notes.filter(n => !ids.includes(n.target_id));
+                            this.selected = [];
+                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.count = c;
+                        }).catch(() => { });
                 },
-
                 formatDate(ts) {
-                    const d = new Date(ts.replace(' ', 'T'));
-                    const now = new Date();
-                    const diff = (now - d) / 1000;
+                    const d = new Date(ts.replace(' ', 'T')); const now = new Date(); const diff = (now - d) / 1000;
                     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const yesterday = new Date(today);
-                    yesterday.setDate(today.getDate() - 1);
+                    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
                     const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
                     if (diff < 60) return 'Now';
                     if (d >= today) return 'Today ' + time;
@@ -615,4 +519,6 @@ $sessionUlid = generateUlid();
             };
         }
     </script>
-</body></html>
+</body>
+
+</html>
