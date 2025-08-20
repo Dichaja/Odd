@@ -179,6 +179,10 @@ foreach ($orderedKeys as $k) {
 }
 $requiredDone = $steps['profile']['done'] && $steps['wallet']['done'];
 $onlyOptionalRemain = $requiredDone && (!$steps['purchase']['done'] || !$steps['store']['done']);
+
+/**
+ * MENU: added "Communication" with sms-center & email-center
+ */
 $menuItems = [
     'main' => [
         'title' => 'Main',
@@ -193,6 +197,13 @@ $menuItems = [
             'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card', 'notifications' => 0],
         ],
     ],
+    'communication' => [
+        'title' => 'Communication',
+        'items' => [
+            'sms-center' => ['title' => 'SMS Center', 'icon' => 'fa-comment-dots', 'notifications' => 0],
+            'email-center' => ['title' => 'Email Center', 'icon' => 'fa-envelope', 'notifications' => 0],
+        ],
+    ],
     'shopping' => [
         'title' => 'Shopping',
         'items' => [
@@ -201,6 +212,7 @@ $menuItems = [
         ],
     ],
 ];
+
 if ($needsProfileCompletion) {
     $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';
     if (strpos($currentPath, '/account/profile') === false) {
@@ -760,13 +772,17 @@ if ($needsProfileCompletion) {
                             </button>
                             <div id="userDropdownMenu"
                                 class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
-                                <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
+                                <div class="px-4 py-3 bg-gray-50 dark:bg:white/5 dark:bg-white/5">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        <?= htmlspecialchars($userName) ?></p>
+                                        <?= htmlspecialchars($userName) ?>
+                                    </p>
                                     <p class="text-xs text-gray-500 dark:text-white/70">
-                                        <?= htmlspecialchars($userEmail) ?></p>
-                                    <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
+                                        <?= htmlspecialchars($userEmail) ?>
+                                    </p>
+                                    <p class="text-xs text-gray-500 dark:text:white/70 dark:text-white/70 mt-1">Last
+                                        login:
+                                        <?= htmlspecialchars($formattedLastLogin) ?>
+                                    </p>
                                 </div>
                                 <a href="<?= BASE_URL ?>account/profile"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
@@ -778,14 +794,15 @@ if ($needsProfileCompletion) {
                                 <a href="<?= BASE_URL ?>account/settings"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
                                         class="fas fa-cog w-5 h-5 text-gray-400 dark:text-white/60"></i>Settings</a>
-                                <div class="my-2 border-t border-gray-100 dark:border-white/10"></div>
+                                <div class="my-2 border-t border-gray-100 dark:border:white/10 dark:border-white/10">
+                                </div>
                                 <a href="javascript:void(0);" onclick="logoutUser(); return false;"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-user-primary hover:bg-gray-50 dark:hover:bg-white/10"><i
                                         class="fas fa-sign-out-alt w-5 h-5"></i>Logout</a>
                             </div>
                         </div>
                         <button id="mobileNotifBtn"
-                            class="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
+                            class="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg:white/10 dark:hover:bg-white/10">
                             <i class="fas fa-bell text-lg"></i>
                             <span id="mobileNotifCount"
                                 class="hidden absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center">0</span>
@@ -915,31 +932,34 @@ if ($needsProfileCompletion) {
             </div>
         </div>
     </div>
+
+    <!-- MOBILE TABBAR: Home (BASE_URL), SMS, Credit, Stores, More -->
     <div id="mobileTabbar"
         class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-secondary border-t border-gray-200 dark:border-white/10 mobile-tabbar">
         <div class="grid grid-cols-5 h-full">
-            <a href="<?= BASE_URL ?>account/dashboard"
-                class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'dashboard' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
+            <a href="<?= BASE_URL ?>"
+                class="flex flex-col items-center justify-center text-xs text-gray-500 dark:text-white/70">
                 <i class="fa-solid fa-house mb-0.5"></i><span class="leading-none">Home</span>
             </a>
-            <a href="<?= BASE_URL ?>account/zzimba-stores"
-                class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'zzimba-stores' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
-                <i class="fa-solid fa-shop mb-0.5"></i><span class="leading-none">Stores</span>
-            </a>
-            <a href="<?= BASE_URL ?>account/order-history"
-                class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'order-history' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
-                <i class="fa-solid fa-bag-shopping mb-0.5"></i><span class="leading-none">Orders</span>
+            <a href="<?= BASE_URL ?>account/sms-center"
+                class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'sms-center' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
+                <i class="fa-solid fa-comment-dots mb-0.5"></i><span class="leading-none">SMS</span>
             </a>
             <a href="<?= BASE_URL ?>account/zzimba-credit"
                 class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'zzimba-credit' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
                 <i class="fa-solid fa-wallet mb-0.5"></i><span class="leading-none">Credit</span>
             </a>
+            <a href="<?= BASE_URL ?>account/zzimba-stores"
+                class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'zzimba-stores' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
+                <i class="fa-solid fa-shop mb-0.5"></i><span class="leading-none">Stores</span>
+            </a>
             <button id="mobileMoreBtn"
-                class="flex flex-col items-center justify-center text-xs <?= in_array($activeNav, ['dashboard', 'zzimba-stores', 'order-history', 'zzimba-credit']) ? 'text-gray-500 dark:text-white/70' : 'text-secondary dark:text-white' ?>">
+                class="flex flex-col items-center justify-center text-xs <?= in_array($activeNav, ['sms-center', 'zzimba-stores', 'zzimba-credit']) ? 'text-gray-500 dark:text-white/70' : 'text-secondary dark:text-white' ?>">
                 <i class="fa-solid fa-ellipsis mb-0.5"></i><span class="leading-none">More</span>
             </button>
         </div>
     </div>
+
     <div id="mobileMoreSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-4">
@@ -954,9 +974,11 @@ if ($needsProfileCompletion) {
                                     class="fas <?= $item['icon'] ?> text-secondary dark:text-white"></i></span>
                             <div>
                                 <div class="text-sm font-medium text-secondary dark:text-white">
-                                    <?= htmlspecialchars($item['title']) ?></div>
+                                    <?= htmlspecialchars($item['title']) ?>
+                                </div>
                                 <div class="text-[11px] text-gray-500 dark:text-white/70">
-                                    <?= htmlspecialchars(ucfirst($category['title'])) ?></div>
+                                    <?= htmlspecialchars(ucfirst($category['title'])) ?>
+                                </div>
                             </div>
                         </a>
                     <?php endforeach; ?>
@@ -985,6 +1007,7 @@ if ($needsProfileCompletion) {
             <button id="mobileMoreClose" class="mt-4 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
         </div>
     </div>
+
     <div id="mobileAccountSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-4">
@@ -993,7 +1016,8 @@ if ($needsProfileCompletion) {
                 <div class="user-initials w-10 h-10"><?= htmlspecialchars($userInitials) ?></div>
                 <div class="min-w-0">
                     <div class="text-sm font-medium text-secondary dark:text-white truncate">
-                        <?= htmlspecialchars($userName) ?></div>
+                        <?= htmlspecialchars($userName) ?>
+                    </div>
                     <div class="text-xs text-gray-500 dark:text-white/70 truncate"><?= htmlspecialchars($userEmail) ?>
                     </div>
                 </div>
@@ -1047,6 +1071,7 @@ if ($needsProfileCompletion) {
                 class="mt-2 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
         </div>
     </div>
+
     <div id="mobileNotifSheet"
         class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
         <div class="px-4 pt-3 pb-2">
@@ -1097,6 +1122,7 @@ if ($needsProfileCompletion) {
                 class="mt-3 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
         </div>
     </div>
+
     <div id="return-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
         <div class="bg-white dark:bg-secondary rounded-xl p-8 max-w-md mx-4 shadow-2xl">
             <h3 class="text-xl font-rubik font-semibold text-secondary dark:text-white mb-6">Resume Your Progress</h3>
@@ -1113,6 +1139,7 @@ if ($needsProfileCompletion) {
             </div>
         </div>
     </div>
+
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
         const userDropdown = document.getElementById('userDropdown');
@@ -1158,7 +1185,7 @@ if ($needsProfileCompletion) {
                     for (const n of arr) {
                         if (!existing.has(n.target_id)) {
                             this.notes.unshift(n);
-                            existing.set(n.target_id, n);
+                            existing.set(n, n);
                         } else {
                             const idx = this.notes.findIndex(x => x.target_id === n.target_id);
                             if (idx >= 0) this.notes[idx] = n;
