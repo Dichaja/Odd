@@ -75,8 +75,8 @@ $menuItems = [
         'title' => 'Main',
         'items' => [
             'dashboard' => ['title' => 'Dashboard', 'icon' => 'fa-home', 'notifications' => 0],
-            'orders' => ['title' => 'Orders', 'icon' => 'fa-shopping-bag', 'notifications' => 0],
-            'order-history' => ['title' => 'Order History', 'icon' => 'fa-history', 'notifications' => 0],
+            // 'orders' => ['title' => 'Orders', 'icon' => 'fa-shopping-bag', 'notifications' => 0],
+            // 'order-history' => ['title' => 'Order History', 'icon' => 'fa-history', 'notifications' => 0],
         ]
     ],
     'finance' => [
@@ -224,7 +224,7 @@ $sessionUlid = generateUlid();
             class="user-sidebar fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
-                    <a href="<?= BASE_URL ?>vendor-store/dashboard" class="flex items-center space-x-3">
+                    <a href="<?= BASE_URL ?>" target="_blank" class="flex items-center space-x-3">
                         <img src="<?= BASE_URL ?>img/logo_alt.png" alt="Logo" class="h-8 w-auto">
                     </a>
                 </div>

@@ -47,7 +47,86 @@ ob_start();
 ?>
 
 <div class="space-y-6" id="app-container">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div class="p-6 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-user-primary/10 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-store text-user-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-secondary"><?= htmlspecialchars($storeName) ?> • Store
+                        Overview</h3>
+                </div>
+                <a href="<?= BASE_URL ?>view/profile/vendor/<?= htmlspecialchars($storeId) ?>" target="_blank"
+                    class="h-9 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition flex items-center gap-2 text-sm">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span class="hidden sm:inline">View Public Profile</span>
+                </a>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <a href="<?= BASE_URL ?>vendor-store/buy-in-store"
+                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
+                    <div
+                        class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
+                        <i class="fas fa-calendar-check text-yellow-600 group-hover:text-user-primary text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900 text-center">Buy in Store</span>
+                </a>
+                <a href="<?= BASE_URL ?>vendor-store/products"
+                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
+                    <div
+                        class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
+                        <i class="fas fa-box text-red-600 group-hover:text-user-primary text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900 text-center">Products</span>
+                </a>
+                <a href="<?= BASE_URL ?>vendor-store/zzimba-credit"
+                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
+                    <div
+                        class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
+                        <i class="fas fa-credit-card text-purple-600 group-hover:text-user-primary text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900 text-center">Zzimba Credit</span>
+                </a>
+                <a href="<?= BASE_URL ?>vendor-store/sms-center"
+                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
+                    <div
+                        class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
+                        <i class="fas fa-comment-dots text-green-600 group-hover:text-user-primary text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900 text-center">SMS Center</span>
+                </a>
+                <a href="<?= BASE_URL ?>vendor-store/store-profile"
+                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
+                    <div
+                        class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
+                        <i class="fas fa-store text-indigo-600 group-hover:text-user-primary text-xl"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900 text-center">Store Profile</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a href="<?= BASE_URL ?>vendor-store/zzimba-credit"
+            class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-wallet text-indigo-600 text-xl"></i>
+                </div>
+                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Active</span>
+            </div>
+            <div class="space-y-2">
+                <div class="text-3xl font-bold text-secondary">UGX <span id="vendorWalletBalance">0</span></div>
+                <div class="text-sm text-gray-text">Zzimba Credit</div>
+                <div class="text-xs text-gray-500">SMS Credits: <span id="vendorSmsBalance" class="font-medium">0</span>
+                </div>
+            </div>
+        </a>
+
         <a href="<?= BASE_URL ?>vendor-store/buy-in-store"
             class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between mb-4">
@@ -100,22 +179,6 @@ ob_start();
             </div>
         </a>
 
-        <a href="<?= BASE_URL ?>vendor-store/zzimba-credit"
-            class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-wallet text-indigo-600 text-xl"></i>
-                </div>
-                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Active</span>
-            </div>
-            <div class="space-y-2">
-                <div class="text-3xl font-bold text-secondary">UGX <span id="vendorWalletBalance">0</span></div>
-                <div class="text-sm text-gray-text">Zzimba Credit</div>
-                <div class="text-xs text-gray-500">SMS Credits: <span id="vendorSmsBalance" class="font-medium">0</span>
-                </div>
-            </div>
-        </a>
-
         <a href="<?= BASE_URL ?>vendor-store/zzimba-credit#transactions"
             class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between mb-4">
@@ -143,77 +206,6 @@ ob_start();
             <div class="space-y-2">
                 <div class="text-3xl font-bold text-secondary" id="monthlyStoreViews">0</div>
                 <div class="text-sm text-gray-text">Store Profile Views</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
-        <div class="p-6 border-b border-gray-100">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-user-primary/10 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-store text-user-primary"></i>
-                    </div>
-                    <h3 class="text-xl font-semibold text-secondary"><?= htmlspecialchars($storeName) ?> • Store
-                        Overview</h3>
-                </div>
-                <a href="<?= BASE_URL ?>view/profile/vendor/<?= htmlspecialchars($storeId) ?>" target="_blank"
-                    class="h-9 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition flex items-center gap-2 text-sm">
-                    <i class="fas fa-external-link-alt"></i>
-                    <span class="hidden sm:inline">View Public Profile</span>
-                </a>
-            </div>
-        </div>
-        <div class="p-6">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <a href="<?= BASE_URL ?>vendor-store/buy-in-store"
-                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
-                    <div
-                        class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
-                        <i class="fas fa-calendar-check text-yellow-600 group-hover:text-user-primary text-xl"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900 text-center">Visit Requests</span>
-                </a>
-                <a href="<?= BASE_URL ?>vendor-store/orders"
-                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
-                    <div
-                        class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
-                        <i class="fas fa-shopping-bag text-blue-600 group-hover:text-user-primary text-xl"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900 text-center">Orders</span>
-                </a>
-                <a href="<?= BASE_URL ?>vendor-store/products"
-                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
-                    <div
-                        class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
-                        <i class="fas fa-box text-red-600 group-hover:text-user-primary text-xl"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900 text-center">Products</span>
-                </a>
-                <a href="<?= BASE_URL ?>vendor-store/zzimba-credit"
-                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
-                    <div
-                        class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
-                        <i class="fas fa-credit-card text-purple-600 group-hover:text-user-primary text-xl"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900 text-center">Zzimba Credit</span>
-                </a>
-                <a href="<?= BASE_URL ?>vendor-store/sms-center"
-                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
-                    <div
-                        class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
-                        <i class="fas fa-comment-dots text-green-600 group-hover:text-user-primary text-xl"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900 text-center">SMS Center</span>
-                </a>
-                <a href="<?= BASE_URL ?>vendor-store/store-profile"
-                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">
-                    <div
-                        class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-3 group-hover:bg-user-primary/10 transition-colors">
-                        <i class="fas fa-store text-indigo-600 group-hover:text-user-primary text-xl"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900 text-center">Store Profile</span>
-                </a>
             </div>
         </div>
     </div>

@@ -565,7 +565,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2">
             <div class="form-card p-6 md:p-8 fade-in">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-2">Request Details</h2>
+                <h2 class="text-2xl font-semibold text-gray-900 mb-2">RFQ Details</h2>
                 <p class="text-gray-600 mb-6">Fields marked with <span class="required-star">*</span> are required</p>
                 <form id="rfq-form" class="space-y-6" novalidate autocomplete="off">
                     <div class="space-y-4">
