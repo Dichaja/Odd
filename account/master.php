@@ -22,7 +22,7 @@ if (isset($_GET['manifest'])) {
 }
 if (isset($_GET['sw'])) {
     header('Content-Type: application/javascript');
-    $scope = rtrim(BASE_URL, '/') . '/account/';
+    $scope = rtrim(BASE_URL, '/') . '/';
     $cache = 'zzimba-user-v3';
     $core = json_encode([
         $scope,
