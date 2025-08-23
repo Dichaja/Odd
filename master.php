@@ -1049,6 +1049,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
         </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+    <script src="<?php echo BASE_URL; ?>js/google-analytics.js"></script>
     <script>
         let SEARCH_DATA = { products: [], categories: [] };
         let fuseProducts = null, fuseCategories = null, fuseWords = null;
