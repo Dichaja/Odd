@@ -1,6 +1,5 @@
 <?php
 ob_start();
-
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
@@ -8,6 +7,7 @@ ini_set('error_log', __DIR__ . '/../logs/php-errors.log');
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../lib/NotificationService.php';
+require_once __DIR__ . '/../sms/SMS.php';
 
 use Ulid\Ulid;
 
@@ -215,12 +215,22 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
         logAction($pdo, "User {$currentUser} submitted a buy-in-store request for pricing ID {$data['packageId']}");
 
         $storeStmt = $pdo->prepare("
-            SELECT vs.id   AS store_id,
-                   vs.name AS store_name
+            SELECT 
+                vs.id   AS store_id,
+                vs.name AS store_name,
+                vs.business_phone,
+                p.title AS product_name,
+                ppn.package_name,
+                pp.package_size,
+                psu.si_unit
             FROM   product_pricing pp
-            JOIN   store_products  sp ON pp.store_products_id = sp.id
-            JOIN   store_categories sc ON sp.store_category_id = sc.id
-            JOIN   vendor_stores   vs ON sc.store_id = vs.id
+            JOIN   store_products  sp  ON pp.store_products_id = sp.id
+            JOIN   products        p   ON sp.product_id        = p.id
+            JOIN   product_package_name_mappings ppm ON pp.package_mapping_id = ppm.id
+            JOIN   product_package_name     ppn ON ppm.product_package_name_id = ppn.id
+            JOIN   product_si_units         psu ON pp.si_unit_id = psu.id
+            JOIN   store_categories         sc  ON sp.store_category_id = sc.id
+            JOIN   vendor_stores            vs  ON sc.store_id = vs.id
             WHERE  pp.id = ?
             LIMIT 1
         ");
@@ -236,6 +246,8 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
         $userName = trim(
             ($_SESSION['user']['first_name'] ?? '') . ' ' . ($_SESSION['user']['last_name'] ?? '')
         ) ?: ($_SESSION['user']['username'] ?? 'User');
+
+        $userPhone = $_SESSION['user']['phone'] ?? ($data['altContact'] ?? null);
 
         $visitDatePretty = $visitDate->format('j M Y');
 
@@ -261,10 +273,30 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
             $currentUser
         );
 
+        $productLabelParts = [];
+        if (!empty($storeData['product_name']))
+            $productLabelParts[] = $storeData['product_name'];
+        $pkg = trim(($storeData['package_name'] ?? '') . ' ' . ($storeData['package_size'] ?? '') . ($storeData['si_unit'] ? ' ' . $storeData['si_unit'] : ''));
+        $pkg = trim($pkg);
+        if ($pkg !== '')
+            $productLabelParts[] = "($pkg)";
+        $productLabel = trim(implode(' ', $productLabelParts));
+        $storePhone = $storeData['business_phone'] ?? '';
+        $smsResult = null;
+        if ($storePhone !== '') {
+            $smsText = "Zzimba: $userName requested in-store visit for $productLabel, qty $quantity, on $visitDatePretty.";
+            $send = SMS::send($storePhone, $smsText, true);
+            $smsResult = [
+                'success' => !empty($send['success']),
+                'error' => $send['error'] ?? null
+            ];
+        }
+
         echo json_encode([
             'success' => true,
             'message' => 'Your in-store purchase request has been submitted successfully!',
-            'requestId' => $requestId
+            'requestId' => $requestId,
+            'sms' => $smsResult
         ]);
     } catch (Exception $e) {
         if ($pdo->inTransaction())
