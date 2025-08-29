@@ -25,702 +25,775 @@ function getStepTitle($mode, $step)
             'form' => 'Reset Password'
         ]
     ];
-
     return $titles[$mode][$step] ?? 'Authentication';
 }
 ?>
-
-<div id="login-step-identifier" class="auth-form active">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'identifier') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            Don't have an account?
-            <a href="javascript:void(0)" onclick="showRegisterStep('username')"
-                class="text-primary hover:text-red-700 font-medium">Create Account</a>
-        </p>
-        <form id="login-identifier-form" class="space-y-4" autocomplete="off" data-mode="login" data-step="identifier">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-3">How would you like to login?</label>
-                <div class="flex gap-3 mb-4">
-                    <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="login_method" value="username"
-                            class="mr-3 text-primary focus:ring-primary" checked>
+<div x-data="authUI()" x-init="init()" class="relative">
+    <div x-show="step==='start'" :class="step==='start'?'active':''" class="auth-form">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary">Welcome</h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="rounded-xl border border-gray-200 p-4">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="user-plus" class="w-6 h-6 text-primary"></i>
                         <div>
-                            <p class="font-medium">Username</p>
+                            <p class="font-semibold">New user?</p>
+                            <p class="text-sm text-gray-600">Create an account to get started.</p>
                         </div>
-                    </label>
-                    <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="login_method" value="email"
-                            class="mr-3 text-primary focus:ring-primary">
-                        <div>
-                            <p class="font-medium">Email</p>
-                        </div>
-                    </label>
-                    <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="login_method" value="phone"
-                            class="mr-3 text-primary focus:ring-primary">
-                        <div>
-                            <p class="font-medium">Phone</p>
-                        </div>
-                    </label>
+                    </div>
+                    <button @click="go('register-username')"
+                        class="mt-4 w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Create
+                        Account</button>
                 </div>
+                <div class="rounded-xl border border-gray-200 p-4">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="log-in" class="w-6 h-6 text-secondary"></i>
+                        <div>
+                            <p class="font-semibold">Already have an account?</p>
+                            <p class="text-sm text-gray-600">Log in to continue.</p>
+                        </div>
+                    </div>
+                    <button @click="go('login-identifier')"
+                        class="mt-4 w-full bg-secondary text-white py-2 rounded-lg hover:bg-gray-800 transition-colors">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <div id="username-input" class="login-input-group">
+    <div id="login-step-identifier" x-show="step==='login-identifier'" :class="step==='login-identifier'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'identifier') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                Don't have an account?
+                <a href="javascript:void(0)" @click="go('register-username')"
+                    class="text-primary hover:text-red-700 font-medium">Create Account</a>
+            </p>
+            <form id="login-identifier-form" class="space-y-4" autocomplete="off" data-mode="login"
+                data-step="identifier">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">How would you like to login?</label>
+                    <div class="flex gap-3 mb-4" x-data="{method: 'username'}"
+                        x-init="$watch('method', v => {document.querySelectorAll('input[name=login_method]').forEach(r=>r.checked=(r.value===v));})">
+                        <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg border"
+                            :class="{'border-primary': method==='username'}">
+                            <input type="radio" name="login_method" value="username"
+                                class="mr-3 text-primary focus:ring-primary" x-model="method">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="user" class="w-4 h-4 text-gray-500"></i>
+                                <p class="font-medium">Username</p>
+                            </div>
+                        </label>
+                        <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg border"
+                            :class="{'border-primary': method==='email'}">
+                            <input type="radio" name="login_method" value="email"
+                                class="mr-3 text-primary focus:ring-primary" x-model="method">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="mail" class="w-4 h-4 text-gray-500"></i>
+                                <p class="font-medium">Email</p>
+                            </div>
+                        </label>
+                        <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg border"
+                            :class="{'border-primary': method==='phone'}">
+                            <input type="radio" name="login_method" value="phone"
+                                class="mr-3 text-primary focus:ring-primary" x-model="method">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="phone" class="w-4 h-4 text-gray-500"></i>
+                                <p class="font-medium">Phone</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="username-input" class="login-input-group" x-show="$root.__method==='username'"
+                        x-init="$root.__method='username'">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <div class="relative">
+                            <i data-lucide="user"
+                                class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="login-username" required
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                placeholder="Enter your username" autofocus autocomplete="off"
+                                onkeyup="checkTripleSpace(this)">
+                        </div>
+                    </div>
+
+                    <div id="email-input" class="login-input-group" x-show="$root.__method==='email'">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <div class="relative">
+                            <i data-lucide="mail"
+                                class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="email" id="login-email" required
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                placeholder="Enter your email address" autocomplete="off"
+                                onkeyup="checkTripleSpace(this)">
+                        </div>
+                    </div>
+
+                    <div id="phone-input" class="login-input-group" x-show="$root.__method==='phone'">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <div class="flex">
+                            <div
+                                class="flex items-center px-3 py-2 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50">
+                                <span class="text-gray-700 font-medium">+256</span>
+                            </div>
+                            <input type="text" id="login-phone" required maxlength="9" minlength="9"
+                                class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                placeholder="7XXXXXXXX" autocomplete="off" oninput="validatePhoneInput(this)"
+                                onkeyup="checkTripleSpace(this)">
+                        </div>
+                    </div>
+
+                    <div id="login-identifier-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                </div>
+                <button type="button" @click="handleLoginIdentifierSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="login-step-password" x-show="step==='login-password'" :class="step==='login-password'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'password') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showLoginStep('identifier')"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <form id="login-password-form" class="space-y-4" autocomplete="off" data-mode="login" data-step="password">
+                <div class="relative">
+                    <p class="mb-4">Logging in as <strong id="login-identifier-display"></strong></p>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" required
+                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="Enter your password" id="login-password" autofocus autocomplete="off"
+                            onkeyup="checkTripleSpace(this)">
+                        <button type="button"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            onclick="togglePasswordVisibility('login-password')"><i data-lucide="eye"
+                                class="w-5 h-5"></i></button>
+                    </div>
+                    <div id="login-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                </div>
+                <div class="flex items-center justify-end">
+                    <a href="javascript:void(0)" @click="showForgotPasswordOptions()"
+                        class="text-sm text-primary hover:text-red-700">Forgot Password?</a>
+                </div>
+                <button type="button" @click="handleLoginPasswordSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="empty-password-options" x-show="step==='empty-options'" :class="step==='empty-options'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary">Verify Account</h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showLoginStep('password')"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <form id="empty-password-options-form" class="space-y-4" autocomplete="off" data-mode="empty_password"
+                data-step="options">
+                <div>
+                    <p class="mb-4 text-sm text-gray-600">Logging in as <strong id="empty-username-display"></strong>
+                    </p>
+                    <p class="mb-4 text-sm text-gray-600">Please select how you would like to verify your account
+                        ownership:</p>
+                    <div class="space-y-3">
+                        <label id="empty-password-email-option"
+                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input id="empty-password-email" type="radio" name="verify_method" value="email"
+                                class="mr-3 text-primary focus:ring-primary" checked>
+                            <div>
+                                <p class="font-medium">Email</p>
+                                <p class="text-sm text-gray-500">Receive a verification code via <span
+                                        id="empty-password-email-hint"></span></p>
+                            </div>
+                        </label>
+                        <label id="empty-password-phone-option"
+                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input id="empty-password-phone" type="radio" name="verify_method" value="phone"
+                                class="mr-3 text-primary focus:ring-primary">
+                            <div>
+                                <p class="font-medium">Phone</p>
+                                <p class="text-sm text-gray-500">Receive a verification code via <span
+                                        id="empty-password-phone-hint"></span></p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div id="empty-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                <button id="empty-password-continue" type="button"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+                <div id="empty-password-loading" class="text-sm text-gray-500 mt-2 hidden">Sending OTP...</div>
+            </form>
+            <p class="mt-4 text-center text-sm text-gray-600">Need assistance?
+                <a href="javascript:void(0)" @click="showLoginStep('identifier')"
+                    class="text-primary hover:text-red-700 font-medium">Contact Support</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="register-step-username" x-show="step==='register-username'" :class="step==='register-username'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'username') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                Already have an account?
+                <a href="javascript:void(0)" @click="showLoginStep('identifier')"
+                    class="text-primary hover:text-red-700 font-medium">Sign In</a>
+            </p>
+            <form id="register-username-form" class="space-y-4" autocomplete="off" data-mode="register"
+                data-step="username">
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                     <div class="relative">
-                        <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="login-username" required
+                        <i data-lucide="user"
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="register-username" required
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            placeholder="Enter your username" autofocus autocomplete="off"
-                            onkeyup="checkTripleSpace(this)">
+                            placeholder="Choose a username (letters and numbers only)" autofocus autocomplete="off"
+                            minlength="3" onkeyup="checkTripleSpace(this)">
                     </div>
+                    <div id="register-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                    <p class="text-xs text-gray-500 mt-1">Username must be at least 3 characters.</p>
                 </div>
+                <button type="button" @click="handleRegisterUsernameSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            </form>
+        </div>
+    </div>
 
-                <div id="email-input" class="login-input-group" style="display:none">
+    <div id="register-step-verification-method" x-show="step==='register-verification-method'"
+        :class="step==='register-verification-method'?'active':''" class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'verification-method') ?>
+                </h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showRegisterStep('username')"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <p class="mb-4 text-sm text-gray-600">Creating account for <strong
+                    id="register-username-display-method"></strong></p>
+            <form id="register-verification-method-form" class="space-y-4" autocomplete="off" data-mode="register"
+                data-step="verification-method">
+                <div>
+                    <p class="mb-4 text-sm text-gray-600">How would you like to verify your identity?</p>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="verification_method" value="email"
+                                class="mr-3 text-primary focus:ring-primary" checked>
+                            <div>
+                                <p class="font-medium">Email Address</p>
+                                <p class="text-sm text-gray-500">Verify using your email address</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="verification_method" value="phone"
+                                class="mr-3 text-primary focus:ring-primary">
+                            <div>
+                                <p class="font-medium">Phone Number</p>
+                                <p class="text-sm text-gray-500">Verify using your phone number</p>
+                            </div>
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-3">You can add the other contact method later in your profile
+                        settings.</p>
+                </div>
+                <div id="register-verification-method-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                <button type="button" @click="handleVerificationMethodSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="register-step-email" x-show="step==='register-email'" :class="step==='register-email'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'email') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showRegisterStep('verification-method')"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <p class="mb-4 text-sm text-gray-600">Creating account for <strong id="register-username-display"></strong>
+            </p>
+            <form id="register-email-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="email">
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                     <div class="relative">
-                        <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="email" id="login-email" required
+                        <i data-lucide="mail"
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="email" id="register-email" required
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            placeholder="Enter your email address" autocomplete="off" onkeyup="checkTripleSpace(this)">
-                    </div>
-                </div>
-
-                <div id="phone-input" class="login-input-group" style="display:none">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                    <div class="flex">
-                        <div
-                            class="flex items-center px-3 py-2 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50">
-                            <span class="text-gray-700 font-medium">+256</span>
-                        </div>
-                        <input type="text" id="login-phone" required maxlength="9" minlength="9"
-                            class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            placeholder="7XXXXXXXX" autocomplete="off" oninput="validatePhoneInput(this)"
+                            placeholder="Enter your email" autofocus autocomplete="off"
                             onkeyup="checkTripleSpace(this)">
                     </div>
+                    <div id="register-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
-
-                <div id="login-identifier-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            </div>
-            <button type="button" onclick="handleLoginIdentifierSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Continue
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="login-step-password" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'password') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+                <button type="button" id="register-email-submit-btn" @click="handleRegisterEmailSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            </form>
         </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showLoginStep('identifier')"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <form id="login-password-form" class="space-y-4" autocomplete="off" data-mode="login" data-step="password">
-            <div class="relative">
-                <p class="mb-4">Logging in as <strong id="login-identifier-display"></strong></p>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <div class="relative">
-                    <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required
-                        class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                        placeholder="Enter your password" id="login-password" autofocus autocomplete="off"
-                        onkeyup="checkTripleSpace(this)">
-                    <button type="button"
-                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        onclick="togglePasswordVisibility('login-password')"><i class="fas fa-eye"></i></button>
-                </div>
-                <div id="login-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
+    </div>
+
+    <div id="register-step-email-verify" x-show="step==='register-email-verify'"
+        :class="step==='register-email-verify'?'active':''" class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'email-verify') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
-            <div class="flex items-center justify-end">
-                <a href="javascript:void(0)" onclick="showForgotPasswordOptions()"
-                    class="text-sm text-primary hover:text-red-700">
-                    Forgot Password?
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showRegisterStep('email')"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
-            </div>
-            <button type="button" onclick="handleLoginPasswordSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Login
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="empty-password-options" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary">Verify Account</h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showLoginStep('password')"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <form id="empty-password-options-form" class="space-y-4" autocomplete="off" data-mode="empty_password"
-            data-step="options">
-            <div>
-                <p class="mb-4 text-sm text-gray-600">Logging in as <strong id="empty-username-display"></strong></p>
-                <p class="mb-4 text-sm text-gray-600">Please select how you would like to verify your account ownership:
+            </p>
+            <p class="mb-4 text-center text-sm text-gray-600">Verifying for <strong
+                    id="register-username-display-verify"></strong></p>
+            <p class="mb-4 text-center">We've sent a verification code to <strong id="register-email-display"></strong>
+            </p>
+            <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
+            <form id="register-email-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
+                data-step="email-verify">
+                <div id="email-otp-inputs"></div>
+                <input type="hidden" id="email-otp" value="">
+                <div id="email-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                <p class="mt-2 text-sm text-gray-500 text-center">
+                    Didn't receive the code?
+                    <button type="button" id="resend-email-otp"
+                        class="text-primary hover:text-red-700 text-sm">Resend</button>
+                    <span id="email-otp-timer" class="text-sm"></span>
                 </p>
-                <div class="space-y-3">
-                    <label id="empty-password-email-option"
-                        class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input id="empty-password-email" type="radio" name="verify_method" value="email"
-                            class="mr-3 text-primary focus:ring-primary" checked>
-                        <div>
-                            <p class="font-medium">Email</p>
-                            <p class="text-sm text-gray-500">
-                                Receive a verification code via <span id="empty-password-email-hint"></span>
-                            </p>
-                        </div>
-                    </label>
-                    <label id="empty-password-phone-option"
-                        class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input id="empty-password-phone" type="radio" name="verify_method" value="phone"
-                            class="mr-3 text-primary focus:ring-primary">
-                        <div>
-                            <p class="font-medium">Phone</p>
-                            <p class="text-sm text-gray-500">
-                                Receive a verification code via <span id="empty-password-phone-hint"></span>
-                            </p>
-                        </div>
-                    </label>
-                </div>
-            </div>
-            <div id="empty-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            <button id="empty-password-continue" type="button"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Continue
-            </button>
-            <div id="empty-password-loading" class="text-sm text-gray-500 mt-2 hidden">Sending OTP...</div>
-        </form>
-        <p class="mt-4 text-center text-sm text-gray-600">Need assistance?
-            <a href="javascript:void(0)" onclick="showLoginStep('identifier')"
-                class="text-primary hover:text-red-700 font-medium">Contact Support</a>
-        </p>
-    </div>
-</div>
-
-<div id="register-step-username" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'username') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+                <button type="button" id="email-otp-submit-btn" @click="handleEmailOTPSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify
+                    Email</button>
+            </form>
         </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            Already have an account?
-            <a href="javascript:void(0)" onclick="showLoginStep('identifier')"
-                class="text-primary hover:text-red-700 font-medium">Sign In</a>
-        </p>
-        <form id="register-username-form" class="space-y-4" autocomplete="off" data-mode="register"
-            data-step="username">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <div class="relative">
-                    <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="register-username" required
-                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                        placeholder="Choose a username (letters and numbers only)" autofocus autocomplete="off"
-                        minlength="3" onkeyup="checkTripleSpace(this)">
-                </div>
-                <div id="register-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                <p class="text-xs text-gray-500 mt-1">Username must be at least 3 characters.</p>
-            </div>
-            <button type="button" onclick="handleRegisterUsernameSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Continue
-            </button>
-        </form>
     </div>
-</div>
 
-<div id="register-step-verification-method" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'verification-method') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('username')"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-4 text-sm text-gray-600">Creating account for <strong
-                id="register-username-display-method"></strong></p>
-        <form id="register-verification-method-form" class="space-y-4" autocomplete="off" data-mode="register"
-            data-step="verification-method">
-            <div>
-                <p class="mb-4 text-sm text-gray-600">How would you like to verify your identity?</p>
-                <div class="space-y-3">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="verification_method" value="email"
-                            class="mr-3 text-primary focus:ring-primary" checked>
-                        <div>
-                            <p class="font-medium">Email Address</p>
-                            <p class="text-sm text-gray-500">Verify using your email address</p>
-                        </div>
-                    </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="verification_method" value="phone"
-                            class="mr-3 text-primary focus:ring-primary">
-                        <div>
-                            <p class="font-medium">Phone Number</p>
-                            <p class="text-sm text-gray-500">Verify using your phone number</p>
-                        </div>
-                    </label>
-                </div>
-                <p class="text-xs text-gray-500 mt-3">You can add the other contact method later in your profile
-                    settings.</p>
+    <div id="register-step-phone" x-show="step==='register-phone'" :class="step==='register-phone'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'phone') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
-            <div id="register-verification-method-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            <button type="button" onclick="handleVerificationMethodSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Continue
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="register-step-email" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'email') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('verification-method')"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-4 text-sm text-gray-600">Creating account for <strong id="register-username-display"></strong></p>
-        <form id="register-email-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="email">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                <div class="relative">
-                    <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="email" id="register-email" required
-                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                        placeholder="Enter your email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
-                </div>
-                <div id="register-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            </div>
-            <button type="button" id="register-email-submit-btn" onclick="handleRegisterEmailSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Continue
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="register-step-email-verify" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'email-verify') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('email')"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-4 text-center text-sm text-gray-600">Verifying for <strong
-                id="register-username-display-verify"></strong></p>
-        <p class="mb-4 text-center">We've sent a verification code to <strong id="register-email-display"></strong></p>
-        <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-        <form id="register-email-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
-            data-step="email-verify">
-            <div id="email-otp-inputs"></div>
-            <input type="hidden" id="email-otp" value="">
-            <div id="email-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            <p class="mt-2 text-sm text-gray-500 text-center">
-                Didn't receive the code?
-                <button type="button" id="resend-email-otp"
-                    class="text-primary hover:text-red-700 text-sm">Resend</button>
-                <span id="email-otp-timer" class="text-sm"></span>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showRegisterStep('verification-method')"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
             </p>
-            <button type="button" id="email-otp-submit-btn" onclick="handleEmailOTPSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Verify Email
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="register-step-phone" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'phone') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+            <p class="mb-4 text-sm text-gray-600">Creating account for <strong
+                    id="register-username-display-phone"></strong></p>
+            <form id="register-phone-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="phone">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" required placeholder="Phone Number"
+                        class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
+                    <div id="register-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                </div>
+                <button type="button" id="register-phone-submit-btn" @click="handleRegisterPhoneSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            </form>
         </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('verification-method')"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-4 text-sm text-gray-600">Creating account for <strong
-                id="register-username-display-phone"></strong></p>
-        <form id="register-phone-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="phone">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input type="tel" id="phone" name="phone" required placeholder="Phone Number"
-                    class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
-                <div id="register-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
+    </div>
+
+    <div id="register-step-phone-verify" x-show="step==='register-phone-verify'"
+        :class="step==='register-phone-verify'?'active':''" class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'phone-verify') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
-            <button type="button" id="register-phone-submit-btn" onclick="handleRegisterPhoneSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Continue
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="register-step-phone-verify" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'phone-verify') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showRegisterStep('phone')"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-4 text-sm text-gray-600">Creating account for <strong
-                id="register-username-display-phone-verify"></strong></p>
-        <p class="mb-4 text-center">We've sent a verification code to <strong id="register-phone-display"></strong></p>
-        <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-        <form id="register-phone-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
-            data-step="phone-verify">
-            <div id="phone-otp-inputs"></div>
-            <input type="hidden" id="phone-otp" value="">
-            <div id="phone-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            <p class="mt-2 text-sm text-gray-500 text-center">
-                Didn't receive the code?
-                <button type="button" id="resend-phone-otp"
-                    class="text-primary hover:text-red-700 text-sm">Resend</button>
-                <span id="phone-otp-timer" class="text-sm"></span>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showRegisterStep('phone')"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
             </p>
-            <button type="button" id="phone-otp-submit-btn" onclick="handlePhoneOTPSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Verify Phone
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="register-step-password" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'password') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="goBackFromPassword()"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-4 text-sm text-gray-600">Creating account for <strong
-                id="register-username-display-password"></strong></p>
-        <form id="register-password-form" class="space-y-4" autocomplete="off" data-mode="register"
-            data-step="password">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <div class="relative">
-                    <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required
-                        class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                        placeholder="Create a password" id="register-password" autofocus autocomplete="new-password"
-                        oninput="checkPasswordStrength(this.value)" onkeyup="checkTripleSpace(this)">
-                    <button type="button"
-                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        onclick="togglePasswordVisibility('register-password')"><i class="fas fa-eye"></i></button>
-                </div>
-                <div class="password-strength-meter mt-2">
-                    <div class="password-strength-meter-fill"></div>
-                </div>
-                <div class="password-strength-text text-xs text-gray-500"></div>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                <div class="relative">
-                    <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required
-                        class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                        placeholder="Confirm your password" id="register-confirm-password" autocomplete="new-password"
-                        onkeyup="checkTripleSpace(this)">
-                    <button type="button"
-                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        onclick="togglePasswordVisibility('register-confirm-password')"><i
-                            class="fas fa-eye"></i></button>
-                </div>
-                <div id="register-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            </div>
-            <div class="flex items-start">
-                <input type="checkbox" id="terms-checkbox" required
-                    class="mt-1 rounded border-gray-300 text-primary focus:ring-primary">
-                <span class="ml-2 text-sm text-gray-600">I agree to the
-                    <a href="terms-and-conditions" class="text-primary hover:text-red-700">Terms of Service</a> and
-                    <a href="#" class="text-primary hover:text-red-700">Privacy Policy</a>
-                </span>
-            </div>
-            <button type="button" id="register-password-submit-btn" onclick="handleRegisterPasswordSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Create Account
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="forgot-password-options" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'options') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showLoginStep('password')"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong id="forgot-username-display"></strong></p>
-        <form id="forgot-password-options-form" class="space-y-4" autocomplete="off" data-mode="forgot_password"
-            data-step="options">
-            <div>
-                <p class="mb-4 text-sm text-gray-600">Please select how you would like to receive your verification
-                    code:</p>
-                <div class="space-y-3">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="reset_method" value="email"
-                            class="mr-3 text-primary focus:ring-primary" checked>
-                        <div>
-                            <p class="font-medium">Email</p>
-                            <p class="text-sm text-gray-500">Receive a verification code via email</p>
-                        </div>
-                    </label>
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="reset_method" value="phone"
-                            class="mr-3 text-primary focus:ring-primary">
-                        <div>
-                            <p class="font-medium">Phone</p>
-                            <p class="text-sm text-gray-500">Receive a verification code via SMS</p>
-                        </div>
-                    </label>
-                </div>
-            </div>
-            <button type="button" onclick="handleForgotPasswordMethodSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Continue
-            </button>
-        </form>
-        <p class="mt-4 text-center text-sm text-gray-600">Remember your password?
-            <a href="javascript:void(0)" onclick="showLoginStep('identifier')"
-                class="text-primary hover:text-red-700 font-medium">Back to Sign In</a>
-        </p>
-    </div>
-</div>
-
-<div id="forgot-password-email-form" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'email-form') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showForgotPasswordOptions()"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
-                id="forgot-username-display-email"></strong></p>
-        <form id="forgot-password-email-form-element" class="space-y-4" autocomplete="off" data-mode="forgot_password"
-            data-step="email">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                <div class="relative">
-                    <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="email" id="forgot-email" required
-                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                        placeholder="Enter your email" autofocus autocomplete="off" onkeyup="checkTripleSpace(this)">
-                </div>
-                <div id="forgot-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            </div>
-            <button type="button" id="forgot-email-submit-btn" onclick="handleForgotEmailSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Send Reset Code
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="forgot-password-phone-form" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'phone-form') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showForgotPasswordOptions()"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
-                id="forgot-username-display-phone"></strong></p>
-        <form id="forgot-password-phone-form-element" class="space-y-4" autocomplete="off" data-mode="forgot_password"
-            data-step="phone">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input type="tel" id="forgot-phone" name="forgot-phone" required placeholder="Phone Number"
-                    class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
-                <div id="forgot-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            </div>
-            <button type="button" id="forgot-phone-submit-btn" onclick="handleForgotPhoneSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Send Reset Code
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="reset-password-verify" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('reset_password', 'verify') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" id="reset-back-link" class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
-                id="forgot-username-display-reset"></strong></p>
-        <p class="mb-4 text-center">We've sent a verification code to <strong id="reset-contact-display"></strong></p>
-        <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
-        <form id="reset-verify-form" class="space-y-4" autocomplete="off" data-mode="reset_password"
-            data-step="verify_otp">
-            <div id="reset-otp-inputs"></div>
-            <input type="hidden" id="reset-otp" value="">
-            <div id="reset-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-            <p class="mt-2 text-sm text-gray-500 text-center">
-                Didn't receive the code?
-                <button type="button" id="resend-reset-otp"
-                    class="text-primary hover:text-red-700 text-sm">Resend</button>
-                <span id="reset-otp-timer" class="text-sm"></span>
+            <p class="mb-4 text-sm text-gray-600">Creating account for <strong
+                    id="register-username-display-phone-verify"></strong></p>
+            <p class="mb-4 text-center">We've sent a verification code to <strong id="register-phone-display"></strong>
             </p>
-            <button type="button" id="reset-otp-submit-btn" onclick="handleResetOTPSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Verify Code
-            </button>
-        </form>
-    </div>
-</div>
-
-<div id="reset-password-form" class="auth-form" style="display:none">
-    <div class="p-6 border-b">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('reset_password', 'form') ?></h2>
-            <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+            <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
+            <form id="register-phone-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
+                data-step="phone-verify">
+                <div id="phone-otp-inputs"></div>
+                <input type="hidden" id="phone-otp" value="">
+                <div id="phone-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                <p class="mt-2 text-sm text-gray-500 text-center">
+                    Didn't receive the code?
+                    <button type="button" id="resend-phone-otp"
+                        class="text-primary hover:text-red-700 text-sm">Resend</button>
+                    <span id="phone-otp-timer" class="text-sm"></span>
+                </p>
+                <button type="button" id="phone-otp-submit-btn" @click="handlePhoneOTPSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify
+                    Phone</button>
+            </form>
         </div>
-        <p class="mb-4 text-center text-sm text-gray-600">
-            <a href="javascript:void(0)" onclick="showResetVerifyForm()"
-                class="text-primary hover:text-red-700 font-medium">
-                <i class="fas fa-arrow-left mr-2"></i>Back
-            </a>
-        </p>
-        <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
-                id="forgot-username-display-reset-form"></strong></p>
-        <form id="reset-password-form-element" class="space-y-4" autocomplete="off" data-mode="reset_password"
-            data-step="new_password">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                <div class="relative">
-                    <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required
-                        class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                        placeholder="Enter new password" id="new-password" autofocus autocomplete="new-password"
-                        oninput="checkPasswordStrength(this.value,'new-password')" onkeyup="checkTripleSpace(this)">
-                    <button type="button"
-                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        onclick="togglePasswordVisibility('new-password')"><i class="fas fa-eye"></i></button>
-                </div>
-                <div class="password-strength-meter mt-2">
-                    <div class="password-strength-meter-fill"></div>
-                </div>
-                <div class="password-strength-text text-xs text-gray-500"></div>
+    </div>
+
+    <div id="register-step-password" x-show="step==='register-password'" :class="step==='register-password'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'password') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                <div class="relative">
-                    <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="password" required
-                        class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                        placeholder="Confirm new password" id="confirm-new-password" autocomplete="new-password"
-                        onkeyup="checkTripleSpace(this)">
-                    <button type="button"
-                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        onclick="togglePasswordVisibility('confirm-new-password')"><i class="fas fa-eye"></i></button>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="goBackFromPassword()"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <p class="mb-4 text-sm text-gray-600">Creating account for <strong
+                    id="register-username-display-password"></strong></p>
+            <form id="register-password-form" class="space-y-4" autocomplete="off" data-mode="register"
+                data-step="password">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" required
+                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="Create a password" id="register-password" autofocus autocomplete="new-password"
+                            oninput="checkPasswordStrength(this.value)" onkeyup="checkTripleSpace(this)">
+                        <button type="button"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            onclick="togglePasswordVisibility('register-password')"><i data-lucide="eye"
+                                class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="password-strength-meter mt-2">
+                        <div class="password-strength-meter-fill"></div>
+                    </div>
+                    <div class="password-strength-text text-xs text-gray-500"></div>
                 </div>
-                <div id="reset-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" required
+                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="Confirm your password" id="register-confirm-password"
+                            autocomplete="new-password" onkeyup="checkTripleSpace(this)">
+                        <button type="button"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            onclick="togglePasswordVisibility('register-confirm-password')"><i data-lucide="eye"
+                                class="w-5 h-5"></i></button>
+                    </div>
+                    <div id="register-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                </div>
+                <div class="flex items-start">
+                    <input type="checkbox" id="terms-checkbox" required
+                        class="mt-1 rounded border-gray-300 text-primary focus:ring-primary">
+                    <span class="ml-2 text-sm text-gray-600">I agree to the
+                        <a href="terms-and-conditions" class="text-primary hover:text-red-700">Terms of Service</a> and
+                        <a href="#" class="text-primary hover:text-red-700">Privacy Policy</a>
+                    </span>
+                </div>
+                <button type="button" id="register-password-submit-btn" @click="handleRegisterPasswordSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Create
+                    Account</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="forgot-password-options" x-show="step==='forgot-options'" :class="step==='forgot-options'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'options') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
-            <button type="button" id="reset-password-submit-btn" onclick="handleResetPasswordSubmit()"
-                class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
-                Reset Password
-            </button>
-        </form>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showLoginStep('password')"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong id="forgot-username-display"></strong>
+            </p>
+            <form id="forgot-password-options-form" class="space-y-4" autocomplete="off" data-mode="forgot_password"
+                data-step="options">
+                <div>
+                    <p class="mb-4 text-sm text-gray-600">Please select how you would like to receive your verification
+                        code:</p>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="reset_method" value="email"
+                                class="mr-3 text-primary focus:ring-primary" checked>
+                            <div>
+                                <p class="font-medium">Email</p>
+                                <p class="text-sm text-gray-500">Receive a verification code via email</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="reset_method" value="phone"
+                                class="mr-3 text-primary focus:ring-primary">
+                            <div>
+                                <p class="font-medium">Phone</p>
+                                <p class="text-sm text-gray-500">Receive a verification code via SMS</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <button type="button" @click="handleForgotPasswordMethodSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+            </form>
+            <p class="mt-4 text-center text-sm text-gray-600">Remember your password?
+                <a href="javascript:void(0)" @click="showLoginStep('identifier')"
+                    class="text-primary hover:text-red-700 font-medium">Back to Sign In</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="forgot-password-email-form" x-show="step==='forgot-email'" :class="step==='forgot-email'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'email-form') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showForgotPasswordOptions()"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
+                    id="forgot-username-display-email"></strong></p>
+            <form id="forgot-password-email-form-element" class="space-y-4" autocomplete="off"
+                data-mode="forgot_password" data-step="email">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <div class="relative">
+                        <i data-lucide="mail"
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="email" id="forgot-email" required
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="Enter your email" autofocus autocomplete="off"
+                            onkeyup="checkTripleSpace(this)">
+                    </div>
+                    <div id="forgot-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                </div>
+                <button type="button" id="forgot-email-submit-btn" @click="handleForgotEmailSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset
+                    Code</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="forgot-password-phone-form" x-show="step==='forgot-phone'" :class="step==='forgot-phone'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'phone-form') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showForgotPasswordOptions()"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
+                    id="forgot-username-display-phone"></strong></p>
+            <form id="forgot-password-phone-form-element" class="space-y-4" autocomplete="off"
+                data-mode="forgot_password" data-step="phone">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input type="tel" id="forgot-phone" name="forgot-phone" required placeholder="Phone Number"
+                        class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
+                    <div id="forgot-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                </div>
+                <button type="button" id="forgot-phone-submit-btn" @click="handleForgotPhoneSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset
+                    Code</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="reset-password-verify" x-show="step==='reset-verify'" :class="step==='reset-verify'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('reset_password', 'verify') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" id="reset-back-link" class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
+                    id="forgot-username-display-reset"></strong></p>
+            <p class="mb-4 text-center">We've sent a verification code to <strong id="reset-contact-display"></strong>
+            </p>
+            <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
+            <form id="reset-verify-form" class="space-y-4" autocomplete="off" data-mode="reset_password"
+                data-step="verify_otp">
+                <div id="reset-otp-inputs"></div>
+                <input type="hidden" id="reset-otp" value="">
+                <div id="reset-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                <p class="mt-2 text-sm text-gray-500 text-center">
+                    Didn't receive the code?
+                    <button type="button" id="resend-reset-otp"
+                        class="text-primary hover:text-red-700 text-sm">Resend</button>
+                    <span id="reset-otp-timer" class="text-sm"></span>
+                </p>
+                <button type="button" id="reset-otp-submit-btn" @click="handleResetOTPSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify
+                    Code</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="reset-password-form" x-show="step==='reset-form'" :class="step==='reset-form'?'active':''"
+        class="auth-form" style="display:none">
+        <div class="p-6 border-b">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('reset_password', 'form') ?></h2>
+                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <p class="mb-4 text-center text-sm text-gray-600">
+                <a href="javascript:void(0)" @click="showResetVerifyForm()"
+                    class="text-primary hover:text-red-700 font-medium">
+                    <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
+                </a>
+            </p>
+            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
+                    id="forgot-username-display-reset-form"></strong></p>
+            <form id="reset-password-form-element" class="space-y-4" autocomplete="off" data-mode="reset_password"
+                data-step="new_password">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" required
+                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="Enter new password" id="new-password" autofocus autocomplete="new-password"
+                            oninput="checkPasswordStrength(this.value,'new-password')" onkeyup="checkTripleSpace(this)">
+                        <button type="button"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            onclick="togglePasswordVisibility('new-password')"><i data-lucide="eye"
+                                class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="password-strength-meter mt-2">
+                        <div class="password-strength-meter-fill"></div>
+                    </div>
+                    <div class="password-strength-text text-xs text-gray-500"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock"
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" required
+                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            placeholder="Confirm new password" id="confirm-new-password" autocomplete="new-password"
+                            onkeyup="checkTripleSpace(this)">
+                        <button type="button"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            onclick="togglePasswordVisibility('confirm-new-password')"><i data-lucide="eye"
+                                class="w-5 h-5"></i></button>
+                    </div>
+                    <div id="reset-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
+                </div>
+                <button type="button" id="reset-password-submit-btn" @click="handleResetPasswordSubmit()"
+                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Reset
+                    Password</button>
+            </form>
+        </div>
     </div>
 </div>
 
 <script>
+    const SPINNER = '<svg class="animate-spin inline h-5 w-5 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>';
+
+    function authUI() {
+        return {
+            step: 'start',
+            __method: 'username',
+            init() {
+                if (window.lucide && lucide.createIcons) lucide.createIcons();
+                this.$watch('step', () => { if (window.lucide && lucide.createIcons) lucide.createIcons(); });
+                this.$root.__method = 'username';
+                window.__auth = { go: (s) => { this.go(s); }, get step() { return this.step; } };
+            },
+            go(s) { this.step = s; }
+        }
+    }
+
     (function () {
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('keypress', function (e) {
@@ -770,12 +843,6 @@ function getStepTitle($mode, $step)
                 }
             });
         });
-
-        document.querySelectorAll('input[name="login_method"]').forEach(radio => {
-            radio.addEventListener('change', function () {
-                toggleLoginInputs(this.value);
-            });
-        });
     })();
 
     let registrationData = {};
@@ -794,21 +861,6 @@ function getStepTitle($mode, $step)
         }
     }
 
-    function toggleLoginInputs(method) {
-        document.querySelectorAll('.login-input-group').forEach(group => {
-            group.style.display = 'none';
-        });
-
-        const inputGroup = document.getElementById(method + '-input');
-        if (inputGroup) {
-            inputGroup.style.display = 'block';
-            const input = inputGroup.querySelector('input');
-            if (input) {
-                input.focus();
-            }
-        }
-    }
-
     function checkTripleSpace(input) {
         if (input.value.endsWith(' ')) {
             spaceCount++;
@@ -822,15 +874,8 @@ function getStepTitle($mode, $step)
     }
 
     function showLoginStep(step) {
-        hideAllForms();
-        const el = document.getElementById('login-step-' + step);
-        if (el) {
-            el.style.display = 'block';
-            setTimeout(() => {
-                el.classList.add('active');
-            }, 10);
-        }
-
+        const key = step === 'identifier' ? 'login-identifier' : 'login-' + step;
+        if (typeof Alpine !== 'undefined') { Alpine.store?.auth ? Alpine.store('auth').go(key) : window.__auth?.go(key); } else { window.__auth?.go(key); }
         if (step === 'identifier') {
             if (typeof window.sessionTracker !== 'undefined') {
                 window.sessionTracker.trackLoginModalOpen();
@@ -839,110 +884,17 @@ function getStepTitle($mode, $step)
     }
 
     function showRegisterStep(step) {
-        hideAllForms();
-        const el = document.getElementById('register-step-' + step);
-        if (el) {
-            el.style.display = 'block';
-            setTimeout(() => {
-                el.classList.add('active');
-            }, 10);
-        }
+        const key = 'register-' + step;
+        if (typeof Alpine !== 'undefined') { Alpine.store?.auth ? Alpine.store('auth').go(key) : window.__auth?.go(key); } else { window.__auth?.go(key); }
     }
 
-    function hideAllForms() {
-        document.querySelectorAll('.auth-form').forEach(form => {
-            form.classList.remove('active');
-            form.style.display = 'none';
-        });
-    }
+    function hideAllForms() { }
 
-    function closeAuthModal() {
-        const m = document.getElementById('auth-modal');
-        const c = m.querySelector('.modal-container');
-
-        c.classList.remove('active');
-
-        setTimeout(() => {
-            m.classList.remove('flex');
-            m.classList.add('hidden');
-            m.style.display = '';
-            document.body.style.overflow = 'auto';
-        }, 300);
-
-        resetAuthForms();
-
-        if (typeof window.sessionTracker !== 'undefined') {
-            window.sessionTracker.trackLoginModalClose();
-        }
-
-        if (typeof checkSessionStatus === 'function') {
-            checkSessionStatus();
-        }
-    }
-    function resetAuthForms() {
-        registrationData = {};
-        loginData = {};
-        forgotPasswordData = {};
-        resetMethod = '';
-        spaceCount = 0;
-
-        document.querySelectorAll('.auth-form form').forEach(form => {
-            form.reset();
-        });
-
-        document.querySelectorAll('.otp-input').forEach(input => input.value = '');
-        ['email-otp', 'phone-otp', 'reset-otp'].forEach(id => {
-            const hidden = document.getElementById(id);
-            if (hidden) hidden.value = '';
-        });
-
-        toggleLoginInputs('username');
-
-        document.querySelectorAll('[id$="-error"]').forEach(el => {
-            el.classList.add('hidden');
-            el.textContent = '';
-        });
-
-        document.querySelectorAll('.password-strength-meter-fill').forEach(meter => {
-            meter.style.width = '0%';
-            meter.style.backgroundColor = '#e0e0e0';
-        });
-        document.querySelectorAll('.password-strength-text').forEach(el => {
-            el.textContent = '';
-        });
-
-        hideAllForms();
-        showLoginStep('identifier');
-
-        if (emailOTPTimer) clearInterval(emailOTPTimer);
-        if (phoneOTPTimer) clearInterval(phoneOTPTimer);
-        if (resetOTPTimer) clearInterval(resetOTPTimer);
-    }
-    function openAuthModal() {
-        const m = document.getElementById('auth-modal');
-        const c = m.querySelector('.modal-container');
-
-        m.classList.remove('hidden');
-        m.classList.add('flex');
-
-        m.style.display = 'flex';
-
-        c.offsetHeight;
-        c.classList.add('active');
-
-        document.body.style.overflow = 'hidden';
-    }
     function showForgotPasswordOptions() {
         hideAllForms();
-        const opt = document.getElementById('forgot-password-options');
-        if (opt) {
-            document.getElementById('forgot-username-display').textContent = loginData.identifier || '';
-            opt.style.display = 'block';
-            setTimeout(() => {
-                opt.classList.add('active');
-            }, 10);
-        }
-
+        if (typeof Alpine !== 'undefined') { Alpine.store?.auth ? Alpine.store('auth').go('forgot-options') : window.__auth?.go('forgot-options'); } else { window.__auth?.go('forgot-options'); }
+        const el = document.getElementById('forgot-password-options');
+        if (el) { document.getElementById('forgot-username-display').textContent = loginData.identifier || ''; }
         if (typeof window.sessionTracker !== 'undefined') {
             window.sessionTracker.trackPasswordResetRequest();
         }
@@ -950,20 +902,13 @@ function getStepTitle($mode, $step)
 
     function showEmptyPasswordOptions() {
         hideAllForms();
-        const container = document.getElementById('empty-password-options');
-        container.style.display = 'block';
-        setTimeout(() => {
-            container.classList.add('active');
-        }, 10);
-
+        if (typeof Alpine !== 'undefined') { Alpine.store?.auth ? Alpine.store('auth').go('empty-options') : window.__auth?.go('empty-options'); } else { window.__auth?.go('empty-options'); }
         const emailOption = document.getElementById('empty-password-email-option');
         const phoneOption = document.getElementById('empty-password-phone-option');
         const emailInput = document.getElementById('empty-password-email');
         const phoneInput = document.getElementById('empty-password-phone');
-
         const hasEmail = !!loginData.email;
         const hasPhone = !!loginData.phone;
-
         if (hasEmail && hasPhone) {
             emailOption.style.display = 'flex';
             phoneOption.style.display = 'flex';
@@ -977,105 +922,19 @@ function getStepTitle($mode, $step)
             emailOption.style.display = 'none';
             phoneInput.checked = true;
         }
-
         document.getElementById('empty-username-display').textContent = loginData.identifier || '';
-
         const emailHintSpan = document.getElementById('empty-password-email-hint');
         const phoneHintSpan = document.getElementById('empty-password-phone-hint');
-
         emailHintSpan.textContent = loginData.email || '';
         phoneHintSpan.textContent = loginData.phone || '';
     }
 
-    function showLoading(elementId) {
-        const el = document.getElementById(elementId);
-        if (el) el.classList.remove('hidden');
-    }
-
-    function hideLoading(elementId) {
-        const el = document.getElementById(elementId);
-        if (el) el.classList.add('hidden');
-    }
-
-    $(document).ready(function () {
-        const continueBtn = document.getElementById('empty-password-continue');
-        if (continueBtn) {
-            continueBtn.addEventListener('click', () => {
-                const method = document.getElementById('empty-password-email').checked ? 'email' : 'phone';
-                const identifier = method === 'email' ? loginData.email : loginData.phone;
-
-                if (!identifier) {
-                    showError('empty-password-error', 'No contact method available.');
-                    return;
-                }
-
-                hideError('empty-password-error');
-                showLoading('empty-password-loading');
-
-                if (method === 'email') {
-                    showForgotPasswordForm('email');
-                    document.getElementById('forgot-email').value = identifier;
-                } else {
-                    showForgotPasswordForm('phone');
-                    const phoneInput = document.getElementById('forgot-phone');
-                    const itiPhone = window.intlTelInputGlobals.getInstance(phoneInput);
-                    itiPhone.setNumber(identifier);
-                }
-
-                hideLoading('empty-password-loading');
-            });
-        }
-    });
-
-    function handleForgotPasswordMethodSubmit() {
-        const methodRadios = document.getElementsByName('reset_method');
-        let selectedMethod = '';
-        for (const radio of methodRadios) {
-            if (radio.checked) {
-                selectedMethod = radio.value;
-                break;
-            }
-        }
-        if (selectedMethod === 'email') {
-            showForgotPasswordForm('email');
-        } else if (selectedMethod === 'phone') {
-            showForgotPasswordForm('phone');
-        }
-    }
-
-    function showForgotPasswordForm(m) {
-        resetMethod = m;
-        hideAllForms();
-        if (m === 'email') {
-            const ef = document.getElementById('forgot-password-email-form');
-            if (ef) {
-                document.getElementById('forgot-username-display-email').textContent = loginData.identifier || '';
-                ef.style.display = 'block';
-                setTimeout(() => {
-                    ef.classList.add('active');
-                }, 10);
-            }
-        } else if (m === 'phone') {
-            const pf = document.getElementById('forgot-password-phone-form');
-            if (pf) {
-                document.getElementById('forgot-username-display-phone').textContent = loginData.identifier || '';
-                pf.style.display = 'block';
-                setTimeout(() => {
-                    pf.classList.add('active');
-                }, 10);
-            }
-        }
-    }
-
     function showResetVerifyForm() {
         hideAllForms();
+        if (typeof Alpine !== 'undefined') { Alpine.store?.auth ? Alpine.store('auth').go('reset-verify') : window.__auth?.go('reset-verify'); } else { window.__auth?.go('reset-verify'); }
         const rv = document.getElementById('reset-password-verify');
         if (rv) {
             document.getElementById('forgot-username-display-reset').textContent = loginData.identifier || '';
-            rv.style.display = 'block';
-            setTimeout(() => {
-                rv.classList.add('active');
-            }, 10);
         }
         document.getElementById('reset-back-link').onclick = function () {
             showForgotPasswordForm(resetMethod);
@@ -1084,40 +943,24 @@ function getStepTitle($mode, $step)
 
     function showResetPasswordForm() {
         hideAllForms();
+        if (typeof Alpine !== 'undefined') { Alpine.store?.auth ? Alpine.store('auth').go('reset-form') : window.__auth?.go('reset-form'); } else { window.__auth?.go('reset-form'); }
         const rf = document.getElementById('reset-password-form');
         if (rf) {
             document.getElementById('forgot-username-display-reset-form').textContent = loginData.identifier || '';
-            rf.style.display = 'block';
-            setTimeout(() => {
-                rf.classList.add('active');
-            }, 10);
         }
     }
 
     function renderOtpInputs(target) {
         const container = document.getElementById(target + '-inputs');
         if (!container) return;
-
         container.innerHTML = `
             <div class="flex justify-between gap-2 mb-2">
-                <input type="text" maxlength="1"
-                       class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                       data-otp-target="${target}" autofocus>
-                <input type="text" maxlength="1"
-                       class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                       data-otp-target="${target}">
-                <input type="text" maxlength="1"
-                       class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                       data-otp-target="${target}">
-                <input type="text" maxlength="1"
-                       class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                       data-otp-target="${target}">
-                <input type="text" maxlength="1"
-                       class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                       data-otp-target="${target}">
-                <input type="text" maxlength="1"
-                       class="otp-input w-full text-center py-2	border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl"
-                       data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}" autofocus>
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
             </div>
         `;
     }
@@ -1171,10 +1014,8 @@ function getStepTitle($mode, $step)
     function resendOtp(endpoint, payload, timerType, successMsg, errorMsg) {
         const button = $('#resend-' + timerType);
         if (button.prop('disabled')) return;
-
         const originalText = button.html();
-        button.prop('disabled', true).addClass('text-gray-400').html('<i class="fas fa-spinner fa-spin mr-1"></i>Resending...');
-
+        button.prop('disabled', true).addClass('text-gray-400').html(SPINNER + 'Resending...');
         $.ajax({
             url: BASE_URL + 'auth/' + endpoint,
             type: 'POST',
@@ -1200,50 +1041,15 @@ function getStepTitle($mode, $step)
 
     function categorizeError(errorMessage, errorCode) {
         const identifierErrors = [
-            'user not found',
-            'account not found',
-            'username not found',
-            'email not found',
-            'phone not found',
-            'invalid username',
-            'invalid email',
-            'invalid phone',
-            'username does not exist',
-            'email does not exist',
-            'phone does not exist',
-            'account does not exist',
-            'no account found',
-            'user does not exist'
+            'user not found', 'account not found', 'username not found', 'email not found', 'phone not found', 'invalid username', 'invalid email', 'invalid phone', 'username does not exist', 'email does not exist', 'phone does not exist', 'account does not exist', 'no account found', 'user does not exist'
         ];
-
         const passwordErrors = [
-            'invalid password',
-            'incorrect password',
-            'wrong password',
-            'password mismatch',
-            'authentication failed',
-            'login failed',
-            'invalid credentials'
+            'invalid password', 'incorrect password', 'wrong password', 'password mismatch', 'authentication failed', 'login failed', 'invalid credentials'
         ];
-
-        if (errorCode === 'EMPTY_PASSWORD') {
-            return 'empty_password';
-        }
-
+        if (errorCode === 'EMPTY_PASSWORD') return 'empty_password';
         const lowerMessage = errorMessage.toLowerCase();
-
-        for (let error of identifierErrors) {
-            if (lowerMessage.includes(error)) {
-                return 'identifier';
-            }
-        }
-
-        for (let error of passwordErrors) {
-            if (lowerMessage.includes(error)) {
-                return 'password';
-            }
-        }
-
+        for (let error of identifierErrors) { if (lowerMessage.includes(error)) return 'identifier'; }
+        for (let error of passwordErrors) { if (lowerMessage.includes(error)) return 'password'; }
         return 'general';
     }
 
@@ -1251,7 +1057,6 @@ function getStepTitle($mode, $step)
         const selectedMethod = document.querySelector('input[name="login_method"]:checked').value;
         let identifier = '';
         let identifierType = '';
-
         if (selectedMethod === 'username') {
             identifier = document.getElementById('login-username').value;
             identifierType = 'username';
@@ -1267,19 +1072,16 @@ function getStepTitle($mode, $step)
             identifier = '+256' + phoneDigits;
             identifierType = 'phone';
         }
-
         if (!identifier) {
             showError('login-identifier-error', `Please enter your ${selectedMethod}`);
             return;
         }
-
         trackUserEvent('login_identifier_submit', { identifier, identifierType });
-
         hideError('login-identifier-error');
         const button = document.querySelector('#login-identifier-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+        button.innerHTML = SPINNER + 'Checking...';
 
         $.ajax({
             url: BASE_URL + 'auth/checkUser',
@@ -1295,15 +1097,11 @@ function getStepTitle($mode, $step)
                     loginData.identifierType = identifierType;
                     loginData.userType = response.userType;
                     document.getElementById('login-identifier-display').textContent = identifier;
-
                     trackUserEvent('login_identifier_success', { identifier, identifierType });
-
                     showLoginStep('password');
                 } else {
                     const errorCategory = categorizeError(response.message || 'User not found', response.errorCode);
-
                     trackUserEvent('login_identifier_failed', { identifier, identifierType, errorMessage: response.message || 'User not found' });
-
                     if (errorCategory === 'identifier') {
                         showError('login-identifier-error', response.message || 'User not found');
                     } else {
@@ -1317,7 +1115,6 @@ function getStepTitle($mode, $step)
                 try {
                     const response = JSON.parse(xhr.responseText);
                     const errorCategory = categorizeError(response.message || 'An error occurred', response.errorCode);
-
                     if (errorCategory === 'empty_password') {
                         loginData.email = response.email;
                         loginData.phone = response.phone;
@@ -1350,7 +1147,7 @@ function getStepTitle($mode, $step)
         const button = document.querySelector('#login-password-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Logging in...';
+        button.innerHTML = SPINNER + 'Logging in...';
         trackUserEvent('login_password_submit');
         $.ajax({
             url: BASE_URL + 'auth/login',
@@ -1376,7 +1173,6 @@ function getStepTitle($mode, $step)
                 } else {
                     const errorCategory = categorizeError(response.message || 'Invalid password', response.errorCode);
                     trackUserEvent('login_password_failed', { errorMessage: response.message || 'Invalid password' });
-
                     if (errorCategory === 'password') {
                         showError('login-password-error', response.message || 'Invalid password');
                     } else {
@@ -1390,7 +1186,6 @@ function getStepTitle($mode, $step)
                 try {
                     const response = JSON.parse(xhr.responseText);
                     const errorCategory = categorizeError(response.message || 'An error occurred', response.errorCode);
-
                     if (errorCategory === 'empty_password') {
                         loginData.email = response.email;
                         loginData.phone = response.phone;
@@ -1411,8 +1206,35 @@ function getStepTitle($mode, $step)
         });
     }
 
-    function handleEmptyPasswordVerification() {
-        const methodRadios = document.getElementsByName('verify_method');
+    $(document).ready(function () {
+        const continueBtn = document.getElementById('empty-password-continue');
+        if (continueBtn) {
+            continueBtn.addEventListener('click', () => {
+                const method = document.getElementById('empty-password-email').checked ? 'email' : 'phone';
+                const identifier = method === 'email' ? loginData.email : loginData.phone;
+                if (!identifier) {
+                    showError('empty-password-error', 'No contact method available.');
+                    return;
+                }
+                hideError('empty-password-error');
+                const loader = document.getElementById('empty-password-loading');
+                loader.classList.remove('hidden');
+                if (method === 'email') {
+                    showForgotPasswordForm('email');
+                    document.getElementById('forgot-email').value = identifier;
+                } else {
+                    showForgotPasswordForm('phone');
+                    const phoneInput = document.getElementById('forgot-phone');
+                    const itiPhone = window.intlTelInputGlobals.getInstance(phoneInput);
+                    itiPhone.setNumber(identifier);
+                }
+                loader.classList.add('hidden');
+            });
+        }
+    });
+
+    function handleForgotPasswordMethodSubmit() {
+        const methodRadios = document.getElementsByName('reset_method');
         let selectedMethod = '';
         for (const radio of methodRadios) {
             if (radio.checked) {
@@ -1420,42 +1242,48 @@ function getStepTitle($mode, $step)
                 break;
             }
         }
-
         if (selectedMethod === 'email') {
-            forgotPasswordData.contact = loginData.email;
-            resetMethod = 'email';
-            document.getElementById('reset-contact-display').textContent = loginData.email;
+            showForgotPasswordForm('email');
         } else if (selectedMethod === 'phone') {
-            forgotPasswordData.contact = loginData.phone;
-            resetMethod = 'phone';
-            document.getElementById('reset-contact-display').textContent = loginData.phone;
+            showForgotPasswordForm('phone');
         }
+    }
 
-        const endpoint = resetMethod === 'email' ? 'sendResetEmail' : 'sendResetPhone';
-        const dataPayload = resetMethod === 'email' ? { email: forgotPasswordData.contact } : { phone: forgotPasswordData.contact };
-
-        $.ajax({
-            url: BASE_URL + 'auth/' + endpoint,
-            type: 'POST',
-            data: JSON.stringify(dataPayload),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function (response) {
-                if (response.success) {
-                    renderOtpInputs('reset-otp');
-                    showResetVerifyForm();
-                    $('.otp-input[data-otp-target="reset-otp"]').val('');
-                    document.getElementById('reset-otp').value = '';
-                    startOTPTimer('reset-otp', 120);
-                    notifications.success('Verification code sent');
-                } else {
-                    notifications.error(response.message || 'Failed to send verification code');
-                }
-            },
-            error: function () {
-                notifications.error('Failed to send verification code. Please try again.');
+    function showForgotPasswordForm(m) {
+        resetMethod = m;
+        hideAllForms();
+        if (m === 'email') {
+            if (typeof Alpine !== 'undefined') { Alpine.store?.auth ? Alpine.store('auth').go('forgot-email') : window.__auth?.go('forgot-email'); } else { window.__auth?.go('forgot-email'); }
+            const ef = document.getElementById('forgot-password-email-form');
+            if (ef) {
+                document.getElementById('forgot-username-display-email').textContent = loginData.identifier || '';
             }
-        });
+        } else if (m === 'phone') {
+            if (typeof Alpine !== 'undefined') { Alpine.store?.auth ? Alpine.store('auth').go('forgot-phone') : window.__auth?.go('forgot-phone'); } else { window.__auth?.go('forgot-phone'); }
+            const pf = document.getElementById('forgot-password-phone-form');
+            if (pf) {
+                document.getElementById('forgot-username-display-phone').textContent = loginData.identifier || '';
+            }
+        }
+    }
+
+    function renderOtpStartForReset() {
+        renderOtpInputs('reset-otp');
+        $('.otp-input[data-otp-target="reset-otp"]').val('');
+        document.getElementById('reset-otp').value = '';
+        startOTPTimer('reset-otp', 120);
+    }
+
+    function showResetBackLink(to) {
+        document.getElementById('reset-back-link').onclick = function () { showForgotPasswordForm(to); };
+    }
+
+    function showResetTargetDisplay(val) {
+        document.getElementById('reset-contact-display').textContent = val;
+    }
+
+    function showResetUserDisplay() {
+        document.getElementById('forgot-username-display-reset').textContent = loginData.identifier || '';
     }
 
     function handleRegisterUsernameSubmit() {
@@ -1472,7 +1300,7 @@ function getStepTitle($mode, $step)
         const button = document.querySelector('#register-username-form button');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+        button.innerHTML = SPINNER + 'Checking...';
         trackUserEvent('register_username_submit', { username: u });
         $.ajax({
             url: BASE_URL + 'auth/checkUsername',
@@ -1516,7 +1344,6 @@ function getStepTitle($mode, $step)
     function handleVerificationMethodSubmit() {
         const selectedMethod = document.querySelector('input[name="verification_method"]:checked').value;
         registrationData.verificationMethod = selectedMethod;
-
         if (selectedMethod === 'email') {
             showRegisterStep('email');
         } else if (selectedMethod === 'phone') {
@@ -1546,7 +1373,7 @@ function getStepTitle($mode, $step)
         const button = document.getElementById('register-email-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending OTP...';
+        button.innerHTML = SPINNER + 'Sending OTP...';
         trackUserEvent('register_email_submit', { email: e });
         $.ajax({
             url: BASE_URL + 'auth/checkEmail',
@@ -1625,7 +1452,7 @@ function getStepTitle($mode, $step)
         const button = document.getElementById('email-otp-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+        button.innerHTML = SPINNER + 'Verifying...';
         trackUserEvent('email_otp_submit', { email: registrationData.email });
         $.ajax({
             url: BASE_URL + 'auth/verifyEmailOTP',
@@ -1673,7 +1500,7 @@ function getStepTitle($mode, $step)
         const button = document.getElementById('register-phone-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking...';
+        button.innerHTML = SPINNER + 'Checking...';
         trackUserEvent('register_phone_submit', { phone: pn });
         $.ajax({
             url: BASE_URL + 'auth/checkPhone',
@@ -1748,7 +1575,7 @@ function getStepTitle($mode, $step)
         const button = document.getElementById('phone-otp-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+        button.innerHTML = SPINNER + 'Verifying...';
         trackUserEvent('phone_otp_submit', { phone: registrationData.phone });
         $.ajax({
             url: BASE_URL + 'auth/verifyPhoneOTP',
@@ -1808,21 +1635,18 @@ function getStepTitle($mode, $step)
         const button = document.getElementById('register-password-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating account...';
+        button.innerHTML = SPINNER + 'Creating account...';
         trackUserEvent('register_password_submit');
-
         const registrationPayload = {
             username: registrationData.username,
             password: p,
             verificationMethod: registrationData.verificationMethod
         };
-
         if (registrationData.verificationMethod === 'email') {
             registrationPayload.email = registrationData.email;
         } else if (registrationData.verificationMethod === 'phone') {
             registrationPayload.phone = registrationData.phone;
         }
-
         $.ajax({
             url: BASE_URL + 'auth/register',
             type: 'POST',
@@ -1872,7 +1696,7 @@ function getStepTitle($mode, $step)
         const button = document.getElementById('forgot-email-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+        button.innerHTML = SPINNER + 'Sending...';
         trackUserEvent('forgot_email_submit', { email: e });
         $.ajax({
             url: BASE_URL + 'auth/sendResetEmail',
@@ -1929,7 +1753,7 @@ function getStepTitle($mode, $step)
         const button = document.getElementById('forgot-phone-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+        button.innerHTML = SPINNER + 'Sending...';
         trackUserEvent('forgot_phone_submit', { phone: pn });
         $.ajax({
             url: BASE_URL + 'auth/sendResetPhone',
@@ -1984,7 +1808,7 @@ function getStepTitle($mode, $step)
         const button = document.getElementById('reset-otp-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verifying...';
+        button.innerHTML = SPINNER + 'Verifying...';
         trackUserEvent('reset_otp_submit', { contact: forgotPasswordData.contact, contactType: resetMethod });
         $.ajax({
             url: BASE_URL + 'auth/verifyResetOTP',
@@ -2039,7 +1863,7 @@ function getStepTitle($mode, $step)
         const button = document.getElementById('reset-password-submit-btn');
         const originalText = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Resetting password...';
+        button.innerHTML = SPINNER + 'Resetting password...';
         trackUserEvent('reset_password_submit');
         $.ajax({
             url: BASE_URL + 'auth/resetPassword',
@@ -2104,11 +1928,7 @@ function getStepTitle($mode, $step)
     }
 
     function isStrongPassword(password) {
-        return (password.length >= 8 &&
-            /[A-Z]/.test(password) &&
-            /[a-z]/.test(password) &&
-            /[0-9]/.test(password) &&
-            /[^A-Za-z0-9]/.test(password));
+        return (password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password));
     }
 
     $(document).on('input', '.otp-input', function () {
@@ -2134,9 +1954,7 @@ function getStepTitle($mode, $step)
     });
 
     $(document).on('click', '#resend-reset-otp', function () {
-        if (!resetMethod) {
-            resetMethod = 'email';
-        }
+        if (!resetMethod) { resetMethod = 'email'; }
         const endpoint = resetMethod === 'email' ? 'sendResetEmail' : 'sendResetPhone';
         const dataPayload = resetMethod === 'email' ? { email: forgotPasswordData.contact } : { phone: forgotPasswordData.contact };
         resendOtp(endpoint, dataPayload, 'reset-otp', 'Verification code resent', 'Failed to resend code. Please try again.');
@@ -2145,65 +1963,33 @@ function getStepTitle($mode, $step)
     function togglePasswordVisibility(inputId) {
         const input = document.getElementById(inputId);
         const button = input.nextElementSibling;
-        const icon = button.querySelector('i');
-
         if (input.type === 'password') {
             input.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
+            button.innerHTML = '<i data-lucide="eye-off" class="w-5 h-5"></i>';
         } else {
             input.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
+            button.innerHTML = '<i data-lucide="eye" class="w-5 h-5"></i>';
         }
+        if (window.lucide && lucide.createIcons) lucide.createIcons();
     }
 
     function checkPasswordStrength(password, id = 'register-password') {
         const meter = document.querySelector(id === 'register-password' ? '.password-strength-meter-fill' : '#reset-password-form .password-strength-meter-fill');
         const text = document.querySelector(id === 'register-password' ? '.password-strength-text' : '#reset-password-form .password-strength-text');
-
         if (!password) {
             meter.style.width = '0%';
             meter.style.backgroundColor = '#e0e0e0';
             text.textContent = '';
             return;
         }
-
         let strength = 0;
         let feedback = [];
-
-        if (password.length >= 8) {
-            strength += 25;
-        } else {
-            feedback.push('at least 8 characters');
-        }
-
-        if (/[A-Z]/.test(password)) {
-            strength += 25;
-        } else {
-            feedback.push('uppercase letter');
-        }
-
-        if (/[a-z]/.test(password)) {
-            strength += 25;
-        } else {
-            feedback.push('lowercase letter');
-        }
-
-        if (/[0-9]/.test(password)) {
-            strength += 12.5;
-        } else {
-            feedback.push('number');
-        }
-
-        if (/[^A-Za-z0-9]/.test(password)) {
-            strength += 12.5;
-        } else {
-            feedback.push('special character');
-        }
-
+        if (password.length >= 8) { strength += 25; } else { feedback.push('at least 8 characters'); }
+        if (/[A-Z]/.test(password)) { strength += 25; } else { feedback.push('uppercase letter'); }
+        if (/[a-z]/.test(password)) { strength += 25; } else { feedback.push('lowercase letter'); }
+        if (/[0-9]/.test(password)) { strength += 12.5; } else { feedback.push('number'); }
+        if (/[^A-Za-z0-9]/.test(password)) { strength += 12.5; } else { feedback.push('special character'); }
         meter.style.width = strength + '%';
-
         if (strength < 40) {
             meter.style.backgroundColor = '#f44336';
             text.textContent = 'Weak password';
@@ -2214,7 +2000,6 @@ function getStepTitle($mode, $step)
             meter.style.backgroundColor = '#4caf50';
             text.textContent = 'Strong password';
         }
-
         if (feedback.length > 0) {
             text.textContent += ' - Add ' + feedback.join(', ');
         }
@@ -2224,8 +2009,7 @@ function getStepTitle($mode, $step)
         renderOtpInputs('email-otp');
         renderOtpInputs('phone-otp');
         renderOtpInputs('reset-otp');
-        toggleLoginInputs('username');
-
+        if (window.lucide && lucide.createIcons) lucide.createIcons();
         const phoneInput = document.querySelector("#phone");
         if (phoneInput) {
             window.intlTelInput(phoneInput, {
@@ -2241,7 +2025,6 @@ function getStepTitle($mode, $step)
                 }
             });
         }
-
         const forgotPhoneInput = document.querySelector("#forgot-phone");
         if (forgotPhoneInput) {
             window.intlTelInput(forgotPhoneInput, {
@@ -2258,4 +2041,8 @@ function getStepTitle($mode, $step)
             });
         }
     });
+
+    function showForgotPasswordFormEntry(m) {
+        showForgotPasswordForm(m);
+    }
 </script>

@@ -1,948 +1,509 @@
-<!-- Vendor Sell Modal -->
-<div id="vendorSellModal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-black/50"></div>
-    <div
-        class="relative w-full max-w-6xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl max-h-[95vh] overflow-hidden">
-        <div
-            class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-red-50 to-red-100">
-            <div>
-                <h3 class="text-lg sm:text-xl font-bold text-gray-900" id="vendorSellModalTitle">Sell Product</h3>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="closeVendorSellModal()"
-                    class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
-                    <i class="fas fa-times text-lg"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="overflow-y-auto max-h-[calc(95vh-120px)]">
-            <div id="vendorSellContent" class="p-4 sm:p-6">
-                <!-- Loading State -->
-                <div id="vendorSellLoading" class="flex items-center justify-center py-12">
-                    <div class="text-center">
-                        <i class="fas fa-spinner fa-spin text-3xl text-red-500 mb-4"></i>
-                        <p class="text-gray-600">Loading your stores...</p>
-                    </div>
+<!-- vendor-sell.php -->
+<div x-data="vendorSell()" x-init="init()" x-cloak>
+    <div x-show="isOpen" id="vendorSellModal" class="fixed inset-0 z-50" x-transition.opacity>
+        <div class="absolute inset-0 bg-black/50" @click="close()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div
+                    class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-red-50 to-red-100">
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-900" x-text="headerTitle"></h3>
+                    <button @click="close()"
+                        class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
                 </div>
 
-                <!-- No Stores Message -->
-                <div id="noStoresMessage" class="hidden text-center py-12">
-                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-store text-red-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-xl font-medium text-gray-900 mb-2">No Stores Found</h3>
-                    <p class="text-gray-600 mb-6 max-w-md mx-auto">You need to create a store before you can sell
-                        products. Create your first store to get started.</p>
-                    <a href="<?= BASE_URL ?>account/zzimba-stores"
-                        class="inline-flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                        <i class="fas fa-plus mr-2"></i>Create Your First Store
-                    </a>
-                </div>
-
-                <!-- Store Selection Section -->
-                <div id="storeSelectionSection" class="hidden space-y-6">
-                    <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Select Store</h4>
-                        <p class="text-sm text-gray-600 mb-6">Choose which store you want to sell this product in</p>
-                        <div id="storesList" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
-                    </div>
-                </div>
-
-                <!-- Pricing Management Section -->
-                <div id="pricingManagementSection" class="hidden space-y-6">
-                    <!-- Store Info Header -->
-                    <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div id="selectedStoreInfo" class="flex items-center space-x-4"></div>
-                            <button onclick="goBackToStoreSelection()"
-                                class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
-                                <i class="fas fa-arrow-left mr-2"></i>Change Store
-                            </button>
+                <div class="p-4 sm:p-6">
+                    <div x-show="loading" class="flex items-center justify-center py-12">
+                        <div class="text-center">
+                            <i data-lucide="loader-2" class="w-10 h-10 text-red-500 mx-auto mb-4 animate-spin"></i>
+                            <p class="text-gray-600">Loading your stores...</p>
                         </div>
                     </div>
 
-                    <!-- Current Pricing Section -->
-                    <div id="existingPricingSection" class="bg-white border border-gray-200 rounded-xl">
-                        <div class="p-4 sm:p-6 border-b border-gray-100">
+                    <div x-show="!loading && stores.length===0" class="text-center py-12">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="store" class="w-8 h-8 text-red-600"></i>
+                        </div>
+                        <h3 class="text-xl font-medium text-gray-900 mb-2">No Stores Found</h3>
+                        <p class="text-gray-600 mb-6 max-w-md mx-auto">You need to create a store before you can sell
+                            products. Create your first store to get started.</p>
+                        <a href="<?= BASE_URL ?>account/zzimba-stores"
+                            class="inline-flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                            <i data-lucide="plus" class="w-5 h-5 mr-2"></i>Create Your First Store
+                        </a>
+                    </div>
+
+                    <div x-show="!loading && stores.length>0 && !selectedStore" class="space-y-6">
+                        <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4">Select Store</h4>
+                            <p class="text-sm text-gray-600 mb-6">Choose which store you want to sell this product in
+                            </p>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                <template x-for="store in stores" :key="store.id">
+                                    <div @click="selectStore(store)"
+                                        class="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 hover:border-red-300 hover:shadow-md transition-all cursor-pointer">
+                                        <div class="flex items-center space-x-4">
+                                            <template x-if="store.logo_url">
+                                                <img :src="`${BASE_URL}${store.logo_url}`" :alt="store.name"
+                                                    class="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover">
+                                            </template>
+                                            <template x-if="!store.logo_url">
+                                                <div
+                                                    class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                                                    <i data-lucide="store" class="w-7 h-7 text-gray-500"></i>
+                                                </div>
+                                            </template>
+                                            <div class="flex-1 min-w-0">
+                                                <h5 class="font-semibold text-gray-900 text-sm sm:text-base truncate"
+                                                    x-text="store.name"></h5>
+                                                <p class="text-xs sm:text-sm text-gray-600 truncate"
+                                                    x-text="store.district"></p>
+                                                <div class="flex flex-wrap items-center gap-2 mt-2">
+                                                    <span class="text-xs px-2 py-1 rounded-full font-medium"
+                                                        :class="store.status==='active' ? 'bg-green-100 text-green-800':'bg-yellow-100 text-yellow-800'"
+                                                        x-text="store.status.charAt(0).toUpperCase()+store.status.slice(1)"></span>
+                                                    <span class="text-xs text-gray-500 capitalize"
+                                                        x-text="store.role"></span>
+                                                </div>
+                                            </div>
+                                            <i data-lucide="chevron-right"
+                                                class="w-6 h-6 text-gray-400 flex-shrink-0"></i>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div x-show="!loading && selectedStore" class="space-y-6">
+                        <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div>
-                                    <h5 class="text-lg font-semibold text-gray-900">Current Pricing</h5>
-                                    <p class="text-sm text-gray-600 mt-1">Existing pricing entries for this product in
-                                        the selected store</p>
+                                <div class="flex items-center space-x-4">
+                                    <template x-if="selectedStore.logo_url">
+                                        <img :src="`${BASE_URL}${selectedStore.logo_url}`" :alt="selectedStore.name"
+                                            class="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover">
+                                    </template>
+                                    <template x-if="!selectedStore.logo_url">
+                                        <div
+                                            class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                                            <i data-lucide="store" class="w-7 h-7 text-gray-500"></i>
+                                        </div>
+                                    </template>
+                                    <div class="min-w-0">
+                                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base"
+                                            x-text="selectedStore.name"></h4>
+                                        <div class="text-xs sm:text-sm text-gray-700 mt-1">
+                                            <strong>Product:</strong> <span x-text="product.name"></span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <button type="button" id="addPricingLineBtn"
-                                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm sm:text-base">
-                                    <i class="fas fa-plus mr-2"></i>Add Pricing
+                                <button @click="goBackToStoreSelection()"
+                                    class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
+                                    <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>Change Store
                                 </button>
                             </div>
                         </div>
-                        <div class="p-4 sm:p-6">
-                            <div id="existingPricingList" class="space-y-4"></div>
+
+                        <div class="bg-white border border-gray-200 rounded-xl">
+                            <div class="p-4 sm:p-6 border-b border-gray-100">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <div>
+                                        <h5 class="text-lg font-semibold text-gray-900">Current Pricing</h5>
+                                        <p class="text-sm text-gray-600 mt-1">Existing pricing entries for this product
+                                            in the selected store</p>
+                                    </div>
+                                    <button type="button" @click="openPricingEntryModal()"
+                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm sm:text-base">
+                                        <i data-lucide="plus" class="w-5 h-5 mr-2"></i>Add Pricing
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-4 sm:p-6">
+                                <div class="space-y-4">
+                                    <template x-if="displayPricing().length===0">
+                                        <div class="text-center py-8">
+                                            <i data-lucide="tag" class="w-8 h-8 text-gray-300 mx-auto mb-4"></i>
+                                            <p class="text-gray-500">No pricing entries for this product in this store.
+                                            </p>
+                                            <p class="text-sm text-gray-400 mt-1">Add pricing entries to start selling
+                                                this product.</p>
+                                        </div>
+                                    </template>
+
+                                    <template x-for="p in displayPricing()" :key="p._key">
+                                        <div
+                                            :class="(p._pending ? 'bg-blue-50 border-blue-200' : 'bg-gray-50') + ' border border-gray-200 rounded-lg p-4'">
+                                            <div class="flex flex-col">
+                                                <div
+                                                    class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                                    <div class="flex-1">
+                                                        <div class="font-semibold text-gray-900 mb-2">
+                                                            <span x-text="formattedUnit(p)"></span>
+                                                            <span x-show="p._pending"
+                                                                class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">New</span>
+                                                        </div>
+                                                        <div class="flex flex-wrap items-center gap-2 text-sm">
+                                                            <span
+                                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                                                                :class="categoryClass(p.price_category)"
+                                                                x-text="categoryLabel(p.price_category)"></span>
+                                                            <template x-if="p.delivery_capacity">
+                                                                <span class="text-gray-600"
+                                                                    x-text="(p.price_category==='retail' ? 'Max' : 'Min') + ': ' + p.delivery_capacity"></span>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                                        <div class="text-right">
+                                                            <div class="text-lg font-bold text-red-600"
+                                                                x-text="'UGX ' + formatNumber(p.price)"></div>
+                                                        </div>
+                                                        <div class="hidden sm:flex flex-col items-end gap-2">
+                                                            <template x-if="p._pending">
+                                                                <div class="flex flex-col gap-2">
+                                                                    <button @click="editPendingPricing(p)"
+                                                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                                                        <i data-lucide="pencil"
+                                                                            class="w-4 h-4 mr-1"></i>Edit
+                                                                    </button>
+                                                                    <button @click="removePendingPricing(p)"
+                                                                        class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
+                                                                        <i data-lucide="trash-2"
+                                                                            class="w-4 h-4 mr-1"></i>Remove
+                                                                    </button>
+                                                                </div>
+                                                            </template>
+                                                            <template x-if="!p._pending">
+                                                                <div class="flex flex-col gap-2">
+                                                                    <button @click="editExistingPricing(p.pricing_id)"
+                                                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                                                        <i data-lucide="pencil"
+                                                                            class="w-4 h-4 mr-1"></i>Edit
+                                                                    </button>
+                                                                    <button
+                                                                        @click="confirmDeleteExistingPricing(p.pricing_id)"
+                                                                        class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
+                                                                        <i data-lucide="trash-2"
+                                                                            class="w-4 h-4 mr-1"></i>Delete
+                                                                    </button>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    class="flex sm:hidden items-center justify-center gap-5 mt-3 pt-3 border-t border-gray-200">
+                                                    <template x-if="p._pending">
+                                                        <div class="flex items-center gap-5">
+                                                            <button @click="editPendingPricing(p)"
+                                                                class="flex items-center justify-center w-12 h-12 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors">
+                                                                <i data-lucide="pencil" class="w-7 h-7"></i>
+                                                            </button>
+                                                            <button @click="removePendingPricing(p)"
+                                                                class="flex items-center justify-center w-12 h-12 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors">
+                                                                <i data-lucide="trash-2" class="w-7 h-7"></i>
+                                                            </button>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!p._pending">
+                                                        <div class="flex items-center gap-5">
+                                                            <button @click="editExistingPricing(p.pricing_id)"
+                                                                class="flex items-center justify-center w-12 h-12 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors">
+                                                                <i data-lucide="pencil" class="w-7 h-7"></i>
+                                                            </button>
+                                                            <button @click="confirmDeleteExistingPricing(p.pricing_id)"
+                                                                class="flex items-center justify-center w-12 h-12 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors">
+                                                                <i data-lucide="trash-2" class="w-7 h-7"></i>
+                                                            </button>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+
+                    <div x-show="!selectedStore"
+                        class="flex flex-col sm:flex-row justify-end p-4 sm:p-6 border-t border-gray-200 gap-3">
+                        <button @click="close()"
+                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Modal Footer - Only show for store selection step -->
-        <div id="vendorSellModalFooter"
-            class="flex flex-col sm:flex-row justify-end p-4 sm:p-6 border-t border-gray-200 gap-3">
-            <button onclick="closeVendorSellModal()"
-                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                Cancel
-            </button>
-        </div>
     </div>
-</div>
 
-<!-- Pricing Entry Modal -->
-<div id="pricingEntryModal" class="fixed inset-0 z-[60] hidden">
-    <div class="absolute inset-0 bg-black/50"></div>
-    <div
-        class="relative w-full max-w-2xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl max-h-[95vh] overflow-hidden">
-        <div
-            class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-green-50 to-green-100">
-            <div>
-                <h3 class="text-lg font-semibold text-gray-900" id="pricingEntryModalTitle">Add Pricing Entry</h3>
-                <p class="text-sm text-gray-600 mt-1">Configure pricing details for this product</p>
-            </div>
-            <button onclick="closePricingEntryModal()"
-                class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
-                <i class="fas fa-times text-lg"></i>
-            </button>
-        </div>
+    <div x-show="isPricingOpen" id="pricingEntryModal" class="fixed inset-0 z-[60]" x-transition.opacity>
+        <div class="absolute inset-0 bg-black/50" @click="closePricingEntryModal()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+                <div
+                    class="p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-green-50 to-green-100">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900" x-text="pricingEntryTitle"></h3>
+                        <p class="text-sm text-gray-600 mt-1">Configure pricing details for this product</p>
+                    </div>
+                    <button @click="closePricingEntryModal()"
+                        class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
 
-        <div class="overflow-y-auto max-h-[calc(95vh-200px)]">
-            <div class="p-4 sm:p-6">
-                <form id="pricingEntryForm" class="space-y-6">
-                    <input type="hidden" id="editingPricingId" name="editing_pricing_id">
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Package *</label>
-                            <div class="relative">
-                                <input type="text" id="pricingPkgSearchInput"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                                    placeholder="Search package..." autocomplete="off" />
-                                <input type="hidden" id="pricingPkgMappingId" name="package_mapping_id" />
-                                <div id="pricingPkgDropdown"
-                                    class="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden z-40">
+                <div class="p-4 sm:p-6">
+                    <form @submit.prevent="submitPricingEntry" class="space-y-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Package *</label>
+                                <div class="relative">
+                                    <input type="text" x-model="form.package_search" @focus="pkgOpen=true"
+                                        @input="pkgOpen=true"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                                        placeholder="Search package..." autocomplete="off">
+                                    <input type="hidden" x-model="form.package_mapping_id">
+                                    <div x-show="pkgOpen"
+                                        class="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
+                                        <template x-if="filteredPackages().length===0">
+                                            <div class="p-3 text-center text-gray-500 text-sm">No matching packages
+                                            </div>
+                                        </template>
+                                        <template x-for="m in filteredPackages()" :key="m.id">
+                                            <div class="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-sm"
+                                                @click="choosePackage(m)" x-text="m.package_name"></div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Unit of Measure *</label>
+                                <div class="relative">
+                                    <input type="text" x-model="form.si_search" @focus="siOpen=true"
+                                        @input="siOpen=true"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                                        placeholder="Search SI unit..." autocomplete="off">
+                                    <input type="hidden" x-model="form.si_unit_id">
+                                    <div x-show="siOpen"
+                                        class="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
+                                        <template x-if="filteredSiUnits().length===0">
+                                            <div class="p-3 text-center text-gray-500 text-sm">No matching SI units
+                                                found</div>
+                                        </template>
+                                        <template x-for="u in filteredSiUnits()" :key="u.id">
+                                            <div class="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-sm"
+                                                @click="chooseSi(u)" x-text="u.si_unit"></div>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Unit of Measure *</label>
-                            <div class="relative">
-                                <input type="text" id="pricingSiSearchInput"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                                    placeholder="Search SI unit..." autocomplete="off" />
-                                <input type="hidden" id="pricingSiUnitId" name="si_unit_id" />
-                                <div id="pricingSiDropdown"
-                                    class="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden z-40">
-                                </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Unit Size *</label>
+                                <input type="text" x-model="form.package_size" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Price Category *</label>
+                                <select x-model="form.price_category" @change="updateCapacityLabel()"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                                    <option value="">-- Select Category --</option>
+                                    <option value="retail">Retail</option>
+                                    <option value="wholesale">Wholesale</option>
+                                    <option value="factory">Factory</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Price (UGX) *</label>
+                                <input type="number" step="any" min="1" x-model.number="form.price" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2"
+                                    x-text="capacityLabel"></label>
+                                <input type="number" x-model="form.delivery_capacity"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
                             </div>
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Unit Size *</label>
-                            <input type="text" id="pricingPackageSize" name="package_size" value="1" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                            <button type="button" @click="closePricingEntryModal()"
+                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                <i data-lucide="save" class="w-5 h-5 mr-2"></i>Save Entry
+                            </button>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Price Category *</label>
-                            <select id="pricingPriceCategory" name="price_category"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
-                                <option value="">-- Select Category --</option>
-                                <option value="retail">Retail</option>
-                                <option value="wholesale">Wholesale</option>
-                                <option value="factory">Factory</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Price (UGX) *</label>
-                            <input type="number" step="any" min="1" id="pricingPrice" name="price" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2"
-                                id="pricingDeliveryCapacityLabel">Capacity</label>
-                            <input type="number" id="pricingDeliveryCapacity" name="delivery_capacity"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
-                        <button type="button" onclick="closePricingEntryModal()"
-                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                            Cancel
-                        </button>
-                        <button type="submit" id="savePricingEntryBtn"
-                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                            <i class="fas fa-save mr-2"></i>Save Entry
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Confirmation Modal -->
-<div id="confirmationModal" class="fixed inset-0 z-[70] hidden">
-    <div class="absolute inset-0 bg-black/50"></div>
-    <div class="relative w-full max-w-md mx-auto top-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl">
-        <div class="p-6">
-            <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
-                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-gray-900 text-center mb-2" id="confirmationTitle">Confirm Action</h3>
-            <p class="text-sm text-gray-600 text-center mb-6" id="confirmationMessage">Are you sure you want to proceed?
-            </p>
-            <div class="flex gap-3">
-                <button onclick="closeConfirmationModal()"
-                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                    Cancel
-                </button>
-                <button id="confirmationConfirmBtn"
-                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                    Delete
-                </button>
+    <div x-show="isConfirmOpen" id="confirmationModal" class="fixed inset-0 z-[70]" x-transition.opacity>
+        <div class="absolute inset-0 bg-black/50" @click="closeConfirmationModal()"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl">
+                <div class="p-6">
+                    <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                        <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 text-center mb-2" x-text="confirmTitle">Confirm
+                        Action</h3>
+                    <p class="text-sm text-gray-600 text-center mb-6" x-text="confirmMessage"></p>
+                    <div class="flex gap-3">
+                        <button @click="closeConfirmationModal()"
+                            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">Cancel</button>
+                        <button @click="confirmAction()"
+                            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            x-text="confirmText">Delete</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    let vendorSellCurrentProduct = null;
-    let vendorSellSelectedStore = null;
-    let vendorSellAvailablePackageMappings = [];
-    let vendorSellAvailableSIUnits = [];
-    let vendorSellExistingPricing = [];
-    let vendorSellPendingPricingEntries = [];
-    let vendorSellHiddenPricing = []; // Track pricing being edited
-    let editingPricingIndex = -1;
-    let originalPricingData = null;
-    let confirmationCallback = null;
-
-    async function openVendorSellModal(productId, productName) {
-        const sessionActive = await checkUserSession();
-
-        if (!sessionActive) {
-            if (typeof openAuthModal === 'function') {
-                openAuthModal();
-            }
-            return;
-        }
-
-        vendorSellCurrentProduct = { id: productId, name: productName };
-        document.getElementById('vendorSellModalTitle').textContent = `Sell "${productName}"`;
-
-        // Reset modal state
-        document.getElementById('vendorSellLoading').classList.remove('hidden');
-        document.getElementById('noStoresMessage').classList.add('hidden');
-        document.getElementById('storeSelectionSection').classList.add('hidden');
-        document.getElementById('pricingManagementSection').classList.add('hidden');
-        document.getElementById('vendorSellModalFooter').classList.remove('hidden');
-
-        document.getElementById('vendorSellModal').classList.remove('hidden');
-
-        await loadUserStores();
-    }
-
-    function closeVendorSellModal() {
-        document.getElementById('vendorSellModal').classList.add('hidden');
-        vendorSellCurrentProduct = null;
-        vendorSellSelectedStore = null;
-        vendorSellExistingPricing = [];
-        vendorSellPendingPricingEntries = [];
-        vendorSellHiddenPricing = [];
-        editingPricingIndex = -1;
-        originalPricingData = null;
-    }
-
-    function showConfirmationModal(title, message, onConfirm, confirmText = 'Delete') {
-        document.getElementById('confirmationTitle').textContent = title;
-        document.getElementById('confirmationMessage').textContent = message;
-        document.getElementById('confirmationConfirmBtn').textContent = confirmText;
-        confirmationCallback = onConfirm;
-        document.getElementById('confirmationModal').classList.remove('hidden');
-    }
-
-    function closeConfirmationModal() {
-        document.getElementById('confirmationModal').classList.add('hidden');
-        confirmationCallback = null;
-    }
-
-    function confirmAction() {
-        if (confirmationCallback) {
-            confirmationCallback();
-        }
-        closeConfirmationModal();
-    }
-
-    async function loadUserStores() {
-        try {
-            const response = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getUserStores`);
-            const data = await response.json();
-
-            document.getElementById('vendorSellLoading').classList.add('hidden');
-
-            if (data.success && data.stores && data.stores.length > 0) {
-                renderStoresList(data.stores);
-                document.getElementById('storeSelectionSection').classList.remove('hidden');
-            } else {
-                document.getElementById('noStoresMessage').classList.remove('hidden');
-            }
-        } catch (error) {
-            console.error('Error loading user stores:', error);
-            document.getElementById('vendorSellLoading').classList.add('hidden');
-            document.getElementById('noStoresMessage').classList.remove('hidden');
-        }
-    }
-
-    function renderStoresList(stores) {
-        const container = document.getElementById('storesList');
-        container.innerHTML = '';
-
-        stores.forEach(store => {
-            const storeCard = document.createElement('div');
-            storeCard.className = 'bg-white border border-gray-200 rounded-xl p-4 sm:p-6 hover:border-red-300 hover:shadow-md transition-all cursor-pointer';
-            storeCard.onclick = () => selectStore(store);
-
-            const logoHtml = store.logo_url
-                ? `<img src="${BASE_URL}${store.logo_url}" alt="${store.name}" class="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover">`
-                : `<div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                 <i class="fas fa-store text-gray-500 text-lg sm:text-xl"></i>
-               </div>`;
-
-            const statusBadgeClass = store.status === 'active'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-yellow-100 text-yellow-800';
-
-            storeCard.innerHTML = `
-            <div class="flex items-center space-x-4">
-                ${logoHtml}
-                <div class="flex-1 min-w-0">
-                    <h5 class="font-semibold text-gray-900 text-sm sm:text-base truncate">${escapeHtml(store.name)}</h5>
-                    <p class="text-xs sm:text-sm text-gray-600 truncate">${escapeHtml(store.district)}</p>
-                    <div class="flex flex-wrap items-center gap-2 mt-2">
-                        <span class="text-xs px-2 py-1 rounded-full font-medium ${statusBadgeClass}">
-                            ${store.status.charAt(0).toUpperCase() + store.status.slice(1)}
-                        </span>
-                        <span class="text-xs text-gray-500 capitalize">${store.role}</span>
-                    </div>
-                </div>
-                <i class="fas fa-chevron-right text-gray-400 flex-shrink-0"></i>
-            </div>
-        `;
-
-            container.appendChild(storeCard);
-        });
-    }
-
-    async function selectStore(store) {
-        vendorSellSelectedStore = store;
-        vendorSellPendingPricingEntries = [];
-        vendorSellHiddenPricing = [];
-
-        // Hide footer and show loading
-        document.getElementById('vendorSellModalFooter').classList.add('hidden');
-        document.getElementById('storeSelectionSection').classList.add('hidden');
-        document.getElementById('vendorSellLoading').classList.remove('hidden');
-
-        try {
-            // Load all required data
-            await Promise.all([
-                loadExistingPricing(),
-                loadPackageMappingsForProduct(),
-                ensureVendorSellSIUnits()
-            ]);
-
-            renderSelectedStoreInfo();
-            renderExistingPricing();
-
-            document.getElementById('vendorSellLoading').classList.add('hidden');
-            document.getElementById('pricingManagementSection').classList.remove('hidden');
-
-        } catch (error) {
-            console.error('Error loading store data:', error);
-            showToast('Error loading store information', 'error');
-            goBackToStoreSelection();
+    function vendorSell() {
+        return {
+            isOpen: false, isPricingOpen: false, isConfirmOpen: false, headerTitle: 'Sell Product', pricingEntryTitle: 'Add Pricing Entry', confirmTitle: '', confirmMessage: '', confirmText: 'Delete', confirmCb: null,
+            product: { id: null, name: '' }, stores: [], selectedStore: null, loading: false,
+            availablePackages: [], availableSI: [], existingPricing: [], pendingPricing: [], hiddenPricing: [], editingIndex: -1, originalPricing: null,
+            form: { package_search: '', package_mapping_id: '', si_search: '', si_unit_id: '', package_size: '1', price_category: '', price: '', delivery_capacity: '' },
+            pkgOpen: false, siOpen: false, capacityLabel: 'Capacity',
+            init() {
+                window.openVendorSellModal = (id, name) => { this.open(id, name) };
+                window.closeVendorSellModal = () => { this.close() };
+                document.addEventListener('click', (e) => { if (!e.target.closest('#pricingEntryModal')) { this.pkgOpen = false; this.siOpen = false } });
+                if (window.lucide && lucide.createIcons) lucide.createIcons();
+            },
+            refreshIcons() { try { if (window.lucide && lucide.createIcons) lucide.createIcons(); } catch (e) { } },
+            async open(productId, productName) {
+                const ok = await (typeof checkUserSession === 'function' ? checkUserSession() : true);
+                if (!ok) { if (typeof openAuthModal === 'function') openAuthModal(); return; }
+                this.reset(); this.product = { id: productId, name: productName }; this.headerTitle = `Sell "${productName}"`; this.isOpen = true; this.loading = true; this.refreshIcons();
+                await this.loadUserStores(); this.refreshIcons();
+            },
+            close() { this.reset(); this.isOpen = false },
+            reset() {
+                this.loading = false; this.stores = []; this.selectedStore = null; this.availablePackages = []; this.availableSI = [];
+                this.existingPricing = []; this.pendingPricing = []; this.hiddenPricing = []; this.editingIndex = -1; this.originalPricing = null;
+                this.form = { package_search: '', package_mapping_id: '', si_search: '', si_unit_id: '', package_size: '1', price_category: '', price: '', delivery_capacity: '' };
+                this.pkgOpen = false; this.siOpen = false; this.capacityLabel = 'Capacity';
+            },
+            async loadUserStores() {
+                try { const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getUserStores`); const d = await r.json(); this.stores = (d.success && d.stores) ? d.stores : []; }
+                catch (e) { this.stores = [] }
+                finally { this.loading = false; this.refreshIcons() }
+            },
+            async selectStore(store) {
+                this.selectedStore = store; this.pendingPricing = []; this.hiddenPricing = []; this.loading = true;
+                try { await Promise.all([this.loadExistingPricing(), this.loadPackages(), this.loadSIUnits()]) } catch (e) { }
+                this.loading = false; this.refreshIcons();
+            },
+            async loadExistingPricing() {
+                const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getExistingPricing&store_id=${this.selectedStore.id}&product_id=${this.product.id}`);
+                const d = await r.json(); this.existingPricing = d.success ? (d.pricing || []) : [];
+            },
+            async loadPackages() {
+                const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getPackageNamesForProduct&product_id=${this.product.id}`);
+                const d = await r.json(); if (!d.success) throw new Error(); this.availablePackages = d.mappings || [];
+            },
+            async loadSIUnits() {
+                if (this.availableSI.length) return;
+                const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getSIUnits`); const d = await r.json(); if (d.success) this.availableSI = d.siUnits || [];
+            },
+            goBackToStoreSelection() { this.selectedStore = null; this.existingPricing = []; this.pendingPricing = []; this.hiddenPricing = []; this.editingIndex = -1; this.originalPricing = null; this.refreshIcons() },
+            displayPricing() {
+                const visible = this.existingPricing.filter(p => !this.hiddenPricing.some(h => h.pricing_id === p.pricing_id)).map(p => Object.assign({ _pending: false, _key: 'ex-' + p.pricing_id }, p));
+                const pending = this.pendingPricing.map((p, i) => Object.assign({ _pending: true, _key: 'pe-' + i }, p));
+                return [...visible, ...pending];
+            },
+            formattedUnit(p) {
+                const parts = (p.unit_name || '').split(' '); const si = parts[0] || (p.si_unit || ''); const pkg = parts.slice(1).join(' ') || (p.package_name || ''); const size = p.package_size || '1'; return `${size} ${si} ${pkg}`.trim();
+            },
+            categoryLabel(c) { return c ? c.charAt(0).toUpperCase() + c.slice(1) : '' },
+            categoryClass(c) { if (c === 'retail') return 'bg-blue-100 text-blue-800'; if (c === 'wholesale') return 'bg-green-100 text-green-800'; if (c === 'factory') return 'bg-orange-100 text-orange-800'; return 'bg-gray-100 text-gray-800' },
+            formatNumber(n) { return n == null ? '' : Number(n).toLocaleString('en-US') },
+            openPricingEntryModal(editIndex = -1, existingId = null) {
+                this.pricingEntryTitle = 'Add Pricing Entry'; this.editingIndex = -1; this.originalPricing = null;
+                this.form = { package_search: '', package_mapping_id: '', si_search: '', si_unit_id: '', package_size: '1', price_category: '', price: '', delivery_capacity: '' };
+                if (editIndex >= 0) { this.pricingEntryTitle = 'Edit Pricing Entry'; this.editingIndex = editIndex; this.originalPricing = Object.assign({}, this.pendingPricing[editIndex]); this.populateForm(this.pendingPricing[editIndex]); }
+                else if (existingId) { this.pricingEntryTitle = 'Edit Pricing Entry'; const h = this.hiddenPricing.find(p => p.pricing_id === existingId); if (h) { this.originalPricing = Object.assign({}, h); this.populateForm(h) } }
+                this.updateCapacityLabel(); this.isPricingOpen = true; this.refreshIcons();
+            },
+            closePricingEntryModal() {
+                if (this.editingIndex >= 0 && this.originalPricing) { this.pendingPricing[this.editingIndex] = this.originalPricing }
+                else if (this.originalPricing && this.originalPricing.pricing_id) { const i = this.hiddenPricing.findIndex(p => p.pricing_id === this.originalPricing.pricing_id); if (i >= 0) this.hiddenPricing.splice(i, 1) }
+                this.isPricingOpen = false; this.editingIndex = -1; this.originalPricing = null; this.refreshIcons();
+            },
+            populateForm(d) {
+                this.form.package_search = d.package_name || ''; this.form.package_mapping_id = d.package_mapping_id || ''; this.form.si_search = d.si_unit || ''; this.form.si_unit_id = d.si_unit_id || '';
+                this.form.package_size = d.package_size || '1'; this.form.price_category = d.price_category || ''; this.form.price = d.price || ''; this.form.delivery_capacity = d.delivery_capacity || '';
+            },
+            updateCapacityLabel() {
+                const c = this.form.price_category; this.capacityLabel = c === 'retail' ? 'Max. Capacity' : (c === 'wholesale' || c === 'factory' ? 'Min. Capacity' : 'Capacity');
+            },
+            filteredPackages() { const q = (this.form.package_search || '').toLowerCase(); return this.availablePackages.filter(m => (m.package_name || '').toLowerCase().includes(q)) },
+            filteredSiUnits() { const q = (this.form.si_search || '').toLowerCase(); return this.availableSI.filter(u => (u.si_unit || '').toLowerCase().includes(q)) },
+            choosePackage(m) { this.form.package_mapping_id = m.id; this.form.package_search = m.package_name; this.pkgOpen = false },
+            chooseSi(u) { this.form.si_unit_id = u.id; this.form.si_search = u.si_unit; this.siOpen = false },
+            submitPricingEntry() {
+                const pmId = this.form.package_mapping_id, siId = this.form.si_unit_id, pkgSize = this.form.package_size, priceCat = this.form.price_category, price = this.form.price, cap = this.form.delivery_capacity;
+                if (!pmId || !siId || !price || !priceCat) { if (typeof showToast === 'function') showToast('Please complete all required fields', 'error'); return }
+                const pkg = this.availablePackages.find(p => p.id == pmId), si = this.availableSI.find(s => s.id == siId);
+                const entry = { package_mapping_id: pmId, si_unit_id: siId, package_size: pkgSize, price_category: priceCat, price: parseFloat(price), delivery_capacity: cap || null, package_name: pkg ? pkg.package_name : '', si_unit: si ? si.si_unit : '', unit_name: si && pkg ? `${si.si_unit} ${pkg.package_name}` : '' };
+                if (this.originalPricing && this.originalPricing.pricing_id) entry.pricing_id = this.originalPricing.pricing_id;
+                if (this.editingIndex >= 0) this.pendingPricing[this.editingIndex] = entry; else this.pendingPricing.push(entry);
+                this.saveAllPendingPricing(); this.isPricingOpen = false; if (typeof showToast === 'function') showToast('Pricing entry saved successfully', 'success'); this.originalPricing = null;
+            },
+            editPendingPricing(p) { const i = this.pendingPricing.findIndex(x => x === p); this.openPricingEntryModal(i) },
+            removePendingPricing(p) { const i = this.pendingPricing.findIndex(x => x === p); if (i >= 0) { this.pendingPricing.splice(i, 1) } },
+            editExistingPricing(pricingId) {
+                const pr = this.existingPricing.find(p => p.pricing_id === pricingId); if (!pr) return;
+                const entry = { package_mapping_id: pr.package_mapping_id, si_unit_id: pr.si_unit_id, package_size: pr.package_size, price_category: pr.price_category, price: pr.price, delivery_capacity: pr.delivery_capacity, package_name: pr.unit_name ? pr.unit_name.split(' ').slice(1).join(' ') : '', si_unit: pr.unit_name ? pr.unit_name.split(' ')[0] : '', unit_name: pr.unit_name, pricing_id: pricingId };
+                this.hiddenPricing.push(pr); this.openPricingEntryModal(-1, pricingId);
+            },
+            confirmDeleteExistingPricing(id) { this.showConfirm('Delete Pricing Entry', 'Are you sure you want to delete this pricing entry? This action cannot be undone.', () => this.deleteExistingPricing(id), 'Delete') },
+            async deleteExistingPricing(id) {
+                try {
+                    const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=deletePricing`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pricing_id: id }) });
+                    const d = await r.json();
+                    if (d.success) { this.existingPricing = this.existingPricing.filter(p => p.pricing_id !== id); if (typeof showToast === 'function') showToast('Pricing deleted successfully', 'success') }
+                    else { if (typeof showToast === 'function') showToast(d.error || 'Failed to delete pricing', 'error') }
+                } catch (e) { if (typeof showToast === 'function') showToast('Error deleting pricing', 'error') }
+                finally { this.closeConfirmationModal() }
+            },
+            async saveAllPendingPricing() {
+                if (this.pendingPricing.length === 0) { if (typeof showToast === 'function') showToast('No new pricing entries to save', 'error'); return }
+                try {
+                    const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=addProductToStore`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ store_id: this.selectedStore.id, product_id: this.product.id, line_items: this.pendingPricing }) });
+                    const d = await r.json();
+                    if (d.success) {
+                        if (typeof showToast === 'function') showToast('Product pricing saved successfully', 'success');
+                        for (const e of this.pendingPricing) { if (e.pricing_id) await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=deletePricing`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pricing_id: e.pricing_id }) }) }
+                        await this.loadExistingPricing(); this.pendingPricing = []; this.hiddenPricing = [];
+                    } else { if (typeof showToast === 'function') showToast(d.error || 'Failed to save pricing', 'error') }
+                } catch (e) { if (typeof showToast === 'function') showToast('Error saving pricing', 'error') }
+                finally { this.refreshIcons() }
+            },
+            showConfirm(t, m, cb, txt = 'Delete') { this.confirmTitle = t; this.confirmMessage = m; this.confirmText = txt; this.confirmCb = cb; this.isConfirmOpen = true; this.refreshIcons() },
+            closeConfirmationModal() { this.isConfirmOpen = false; this.confirmCb = null },
+            confirmAction() { if (typeof this.confirmCb === 'function') this.confirmCb() }
         }
     }
-
-    async function loadExistingPricing() {
-        const response = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getExistingPricing&store_id=${vendorSellSelectedStore.id}&product_id=${vendorSellCurrentProduct.id}`);
-        const data = await response.json();
-
-        if (data.success) {
-            vendorSellExistingPricing = data.pricing || [];
-        }
-    }
-
-    async function loadPackageMappingsForProduct() {
-        const response = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getPackageNamesForProduct&product_id=${vendorSellCurrentProduct.id}`);
-        const data = await response.json();
-
-        if (data.success) {
-            vendorSellAvailablePackageMappings = data.mappings;
-        } else {
-            throw new Error('Failed to load package mappings');
-        }
-    }
-
-    async function ensureVendorSellSIUnits() {
-        if (!vendorSellAvailableSIUnits || !vendorSellAvailableSIUnits.length) {
-            const response = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getSIUnits`);
-            const data = await response.json();
-            if (data.success) {
-                vendorSellAvailableSIUnits = data.siUnits;
-            }
-        }
-    }
-
-    function renderSelectedStoreInfo() {
-        const container = document.getElementById('selectedStoreInfo');
-        const store = vendorSellSelectedStore;
-
-        const logoHtml = store.logo_url
-            ? `<img src="${BASE_URL}${store.logo_url}" alt="${store.name}" class="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover">`
-            : `<div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-200 flex items-center justify-center">
-             <i class="fas fa-store text-gray-500 text-lg sm:text-xl"></i>
-           </div>`;
-
-        container.innerHTML = `
-        <div class="flex items-center space-x-4">
-            ${logoHtml}
-            <div class="min-w-0">
-                <h4 class="font-semibold text-gray-900 text-sm sm:text-base">${escapeHtml(store.name)}</h4>
-                <div class="text-xs sm:text-sm text-gray-700 mt-1">
-                    <strong>Product:</strong> ${escapeHtml(vendorSellCurrentProduct.name)}
-                </div>
-            </div>
-        </div>
-    `;
-    }
-
-    function renderExistingPricing() {
-        const container = document.getElementById('existingPricingList');
-
-        // Filter out hidden pricing (being edited)
-        const visibleExistingPricing = vendorSellExistingPricing.filter(p =>
-            !vendorSellHiddenPricing.some(h => h.pricing_id === p.pricing_id)
-        );
-
-        const allPricing = [...visibleExistingPricing, ...vendorSellPendingPricingEntries];
-
-        if (allPricing.length === 0) {
-            container.innerHTML = `
-            <div class="text-center py-8">
-                <i class="fas fa-tag text-3xl text-gray-300 mb-4"></i>
-                <p class="text-gray-500">No pricing entries for this product in this store.</p>
-                <p class="text-sm text-gray-400 mt-1">Add pricing entries to start selling this product.</p>
-            </div>
-        `;
-            return;
-        }
-
-        container.innerHTML = '';
-
-        allPricing.forEach((pricing, index) => {
-            const pricingCard = document.createElement('div');
-            const isPending = !pricing.pricing_id;
-            pricingCard.className = `${isPending ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'} border border-gray-200 rounded-lg p-4`;
-
-            const unitParts = pricing.unit_name ? pricing.unit_name.split(' ') : [];
-            const siUnit = unitParts[0] || '';
-            const packageName = unitParts.slice(1).join(' ') || '';
-            const formattedUnit = `${pricing.package_size} ${siUnit} ${packageName}`.trim();
-
-            const categoryColors = {
-                'retail': 'bg-blue-100 text-blue-800',
-                'wholesale': 'bg-green-100 text-green-800',
-                'factory': 'bg-orange-100 text-orange-800'
-            };
-
-            const categoryDisplay = pricing.price_category.charAt(0).toUpperCase() + pricing.price_category.slice(1);
-            const categoryClass = categoryColors[pricing.price_category] || 'bg-gray-100 text-gray-800';
-
-            pricingCard.innerHTML = `
-            <div class="flex flex-col">
-                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div class="flex-1">
-                        <div class="font-semibold text-gray-900 mb-2">
-                            ${escapeHtml(formattedUnit)}
-                            ${isPending ? '<span class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">New</span>' : ''}
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2 text-sm">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${categoryClass}">
-                                ${categoryDisplay}
-                            </span>
-                            ${pricing.delivery_capacity ? `
-                                <span class="text-gray-600">
-                                    ${pricing.price_category === 'retail' ? 'Max' : 'Min'}: ${pricing.delivery_capacity}
-                                </span>
-                            ` : ''}
-                        </div>
-                    </div>
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                        <div class="text-right">
-                            <div class="text-lg font-bold text-red-600">UGX ${formatNumber(pricing.price)}</div>
-                        </div>
-                        <!-- Desktop Actions -->
-                        <div class="hidden sm:flex items-center gap-2">
-                            ${isPending ? `
-                                <button onclick="editPendingPricing(${vendorSellPendingPricingEntries.indexOf(pricing)})" 
-                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                    <i class="fas fa-edit mr-1"></i>Edit
-                                </button>
-                                <button onclick="removePendingPricing(${vendorSellPendingPricingEntries.indexOf(pricing)})" 
-                                        class="text-red-600 hover:text-red-800 text-sm font-medium">
-                                    <i class="fas fa-trash mr-1"></i>Remove
-                                </button>
-                            ` : `
-                                <button onclick="editExistingPricing('${pricing.pricing_id}')" 
-                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                    <i class="fas fa-edit mr-1"></i>Edit
-                                </button>
-                                <button onclick="confirmDeleteExistingPricing('${pricing.pricing_id}')" 
-                                        class="text-red-600 hover:text-red-800 text-sm font-medium">
-                                    <i class="fas fa-trash mr-1"></i>Delete
-                                </button>
-                            `}
-                        </div>
-                    </div>
-                </div>
-                <!-- Mobile Actions -->
-                <div class="flex sm:hidden items-center justify-center gap-4 mt-3 pt-3 border-t border-gray-200">
-                    ${isPending ? `
-                        <button onclick="editPendingPricing(${vendorSellPendingPricingEntries.indexOf(pricing)})" 
-                                class="flex items-center justify-center w-10 h-10 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors">
-                            <i class="fas fa-edit text-lg"></i>
-                        </button>
-                        <button onclick="removePendingPricing(${vendorSellPendingPricingEntries.indexOf(pricing)})" 
-                                class="flex items-center justify-center w-10 h-10 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors">
-                            <i class="fas fa-trash text-lg"></i>
-                        </button>
-                    ` : `
-                        <button onclick="editExistingPricing('${pricing.pricing_id}')" 
-                                class="flex items-center justify-center w-10 h-10 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors">
-                            <i class="fas fa-edit text-lg"></i>
-                        </button>
-                        <button onclick="confirmDeleteExistingPricing('${pricing.pricing_id}')" 
-                                class="flex items-center justify-center w-10 h-10 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors">
-                            <i class="fas fa-trash text-lg"></i>
-                        </button>
-                    `}
-                </div>
-            </div>
-        `;
-
-            container.appendChild(pricingCard);
-        });
-    }
-
-    function goBackToStoreSelection() {
-        document.getElementById('pricingManagementSection').classList.add('hidden');
-        document.getElementById('storeSelectionSection').classList.remove('hidden');
-        document.getElementById('vendorSellModalFooter').classList.remove('hidden');
-
-        vendorSellSelectedStore = null;
-        vendorSellExistingPricing = [];
-        vendorSellPendingPricingEntries = [];
-        vendorSellHiddenPricing = [];
-        editingPricingIndex = -1;
-        originalPricingData = null;
-    }
-
-    function openPricingEntryModal(editingIndex = -1, existingPricingId = null) {
-        editingPricingIndex = editingIndex;
-
-        const modal = document.getElementById('pricingEntryModal');
-        const title = document.getElementById('pricingEntryModalTitle');
-        const form = document.getElementById('pricingEntryForm');
-
-        if (editingIndex >= 0) {
-            title.textContent = 'Edit Pricing Entry';
-            // Store original data for cancellation
-            originalPricingData = { ...vendorSellPendingPricingEntries[editingIndex] };
-            populatePricingForm(vendorSellPendingPricingEntries[editingIndex]);
-        } else if (existingPricingId) {
-            title.textContent = 'Edit Pricing Entry';
-            const hiddenPricing = vendorSellHiddenPricing.find(p => p.pricing_id === existingPricingId);
-            if (hiddenPricing) {
-                originalPricingData = { ...hiddenPricing };
-                populatePricingForm(hiddenPricing);
-            }
-        } else {
-            title.textContent = 'Add Pricing Entry';
-            originalPricingData = null;
-            form.reset();
-            document.getElementById('pricingPackageSize').value = '1';
-            document.getElementById('pricingDeliveryCapacityLabel').textContent = 'Capacity';
-        }
-
-        modal.classList.remove('hidden');
-        initPricingFormDropdowns();
-    }
-
-    function closePricingEntryModal() {
-        // If editing and user didn't save, restore original data
-        if (editingPricingIndex >= 0 && originalPricingData) {
-            vendorSellPendingPricingEntries[editingPricingIndex] = originalPricingData;
-        } else if (originalPricingData && originalPricingData.pricing_id) {
-            // Restore hidden pricing back to existing pricing
-            const hiddenIndex = vendorSellHiddenPricing.findIndex(p => p.pricing_id === originalPricingData.pricing_id);
-            if (hiddenIndex >= 0) {
-                vendorSellHiddenPricing.splice(hiddenIndex, 1);
-            }
-        }
-
-        renderExistingPricing();
-        document.getElementById('pricingEntryModal').classList.add('hidden');
-        document.getElementById('pricingEntryForm').reset();
-        editingPricingIndex = -1;
-        originalPricingData = null;
-    }
-
-    function initPricingFormDropdowns() {
-        initPricingPackageDropdown();
-        initPricingSiDropdown();
-
-        // Setup price category change handler
-        document.getElementById('pricingPriceCategory').addEventListener('change', function () {
-            const capacityLabel = document.getElementById('pricingDeliveryCapacityLabel');
-            capacityLabel.textContent = this.value === 'retail' ? 'Max. Capacity' :
-                (this.value === 'wholesale' || this.value === 'factory' ? 'Min. Capacity' : 'Capacity');
-        });
-    }
-
-    function initPricingPackageDropdown() {
-        const input = document.getElementById('pricingPkgSearchInput');
-        const hiddenInput = document.getElementById('pricingPkgMappingId');
-        const dropdown = document.getElementById('pricingPkgDropdown');
-
-        function showList(filter = '') {
-            dropdown.innerHTML = '';
-            let found = false;
-
-            vendorSellAvailablePackageMappings.forEach(mapping => {
-                if (mapping.package_name.toLowerCase().includes(filter.toLowerCase())) {
-                    found = true;
-                    const option = document.createElement('div');
-                    option.className = 'px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-sm';
-                    option.textContent = mapping.package_name;
-                    option.addEventListener('click', () => {
-                        hiddenInput.value = mapping.id;
-                        input.value = mapping.package_name;
-                        dropdown.classList.add('hidden');
-                    });
-                    dropdown.appendChild(option);
-                }
-            });
-
-            if (!found) {
-                dropdown.innerHTML = '<div class="p-3 text-center text-gray-500 text-sm">No matching packages</div>';
-            }
-        }
-
-        input.addEventListener('focus', () => {
-            dropdown.classList.remove('hidden');
-            showList(input.value);
-        });
-
-        input.addEventListener('input', () => {
-            dropdown.classList.remove('hidden');
-            showList(input.value);
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!document.getElementById('pricingEntryModal').contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-    }
-
-    function initPricingSiDropdown() {
-        const input = document.getElementById('pricingSiSearchInput');
-        const hiddenInput = document.getElementById('pricingSiUnitId');
-        const dropdown = document.getElementById('pricingSiDropdown');
-
-        function showList(filter = '') {
-            dropdown.innerHTML = '';
-            let found = false;
-
-            vendorSellAvailableSIUnits.forEach(unit => {
-                if (unit.si_unit.toLowerCase().includes(filter.toLowerCase())) {
-                    found = true;
-                    const option = document.createElement('div');
-                    option.className = 'px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-sm';
-                    option.textContent = unit.si_unit;
-                    option.addEventListener('click', () => {
-                        hiddenInput.value = unit.id;
-                        input.value = unit.si_unit;
-                        dropdown.classList.add('hidden');
-                    });
-                    dropdown.appendChild(option);
-                }
-            });
-
-            if (!found) {
-                dropdown.innerHTML = '<div class="p-3 text-center text-gray-500 text-sm">No matching SI units found</div>';
-            }
-        }
-
-        input.addEventListener('focus', () => {
-            dropdown.classList.remove('hidden');
-            showList(input.value);
-        });
-
-        input.addEventListener('input', () => {
-            dropdown.classList.remove('hidden');
-            showList(input.value);
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!document.getElementById('pricingEntryModal').contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-    }
-
-    function populatePricingForm(pricingData) {
-        document.getElementById('pricingPkgSearchInput').value = pricingData.package_name || '';
-        document.getElementById('pricingPkgMappingId').value = pricingData.package_mapping_id || '';
-        document.getElementById('pricingSiSearchInput').value = pricingData.si_unit || '';
-        document.getElementById('pricingSiUnitId').value = pricingData.si_unit_id || '';
-        document.getElementById('pricingPackageSize').value = pricingData.package_size || '1';
-        document.getElementById('pricingPriceCategory').value = pricingData.price_category || '';
-        document.getElementById('pricingPrice').value = pricingData.price || '';
-        document.getElementById('pricingDeliveryCapacity').value = pricingData.delivery_capacity || '';
-
-        // Update capacity label
-        const capacityLabel = document.getElementById('pricingDeliveryCapacityLabel');
-        if (pricingData.price_category === 'retail') {
-            capacityLabel.textContent = 'Max. Capacity';
-        } else if (pricingData.price_category === 'wholesale' || pricingData.price_category === 'factory') {
-            capacityLabel.textContent = 'Min. Capacity';
-        }
-    }
-
-    function editPendingPricing(index) {
-        openPricingEntryModal(index);
-    }
-
-    function removePendingPricing(index) {
-        vendorSellPendingPricingEntries.splice(index, 1);
-        renderExistingPricing();
-    }
-
-    function editExistingPricing(pricingId) {
-        const pricing = vendorSellExistingPricing.find(p => p.pricing_id === pricingId);
-        if (!pricing) return;
-
-        // Convert to pending entry format and hide from existing pricing
-        const pendingEntry = {
-            package_mapping_id: pricing.package_mapping_id,
-            si_unit_id: pricing.si_unit_id,
-            package_size: pricing.package_size,
-            price_category: pricing.price_category,
-            price: pricing.price,
-            delivery_capacity: pricing.delivery_capacity,
-            package_name: pricing.unit_name ? pricing.unit_name.split(' ').slice(1).join(' ') : '',
-            si_unit: pricing.unit_name ? pricing.unit_name.split(' ')[0] : '',
-            unit_name: pricing.unit_name,
-            pricing_id: pricingId // Keep the original ID for reference
-        };
-
-        // Hide the pricing from existing list (don't delete from database yet)
-        vendorSellHiddenPricing.push(pricing);
-
-        // Open edit modal
-        openPricingEntryModal(-1, pricingId);
-        renderExistingPricing();
-    }
-
-    function confirmDeleteExistingPricing(pricingId) {
-        showConfirmationModal(
-            'Delete Pricing Entry',
-            'Are you sure you want to delete this pricing entry? This action cannot be undone.',
-            () => deleteExistingPricing(pricingId),
-            'Delete'
-        );
-    }
-
-    async function deleteExistingPricing(pricingId) {
-        try {
-            const response = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=deletePricing`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ pricing_id: pricingId })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                // Remove from local array
-                vendorSellExistingPricing = vendorSellExistingPricing.filter(p => p.pricing_id !== pricingId);
-                renderExistingPricing();
-                showToast('Pricing deleted successfully', 'success');
-            } else {
-                showToast(data.error || 'Failed to delete pricing', 'error');
-            }
-        } catch (error) {
-            console.error('Error deleting pricing:', error);
-            showToast('Error deleting pricing', 'error');
-        }
-    }
-
-    async function saveAllPendingPricing() {
-        if (vendorSellPendingPricingEntries.length === 0) {
-            showToast('No new pricing entries to save', 'error');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=addProductToStore`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    store_id: vendorSellSelectedStore.id,
-                    product_id: vendorSellCurrentProduct.id,
-                    line_items: vendorSellPendingPricingEntries
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showToast('Product pricing saved successfully', 'success');
-
-                // If we were editing existing pricing, delete the original entries
-                for (const entry of vendorSellPendingPricingEntries) {
-                    if (entry.pricing_id) {
-                        await deleteExistingPricingQuietly(entry.pricing_id);
-                    }
-                }
-
-                // Reload existing pricing to show the saved entries
-                await loadExistingPricing();
-                vendorSellPendingPricingEntries = [];
-                vendorSellHiddenPricing = [];
-                renderExistingPricing();
-            } else {
-                showToast(data.error || 'Failed to save pricing', 'error');
-            }
-        } catch (error) {
-            console.error('Error saving pricing:', error);
-            showToast('Error saving pricing', 'error');
-        }
-    }
-
-    async function deleteExistingPricingQuietly(pricingId) {
-        try {
-            await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=deletePricing`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ pricing_id: pricingId })
-            });
-        } catch (error) {
-            console.error('Error deleting original pricing:', error);
-        }
-    }
-
-    // Event listeners
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('addPricingLineBtn').addEventListener('click', () => openPricingEntryModal());
-
-        // Confirmation modal confirm button
-        document.getElementById('confirmationConfirmBtn').addEventListener('click', confirmAction);
-
-        // Pricing entry form submission
-        document.getElementById('pricingEntryForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(this);
-            const pmId = document.getElementById('pricingPkgMappingId').value;
-            const siId = document.getElementById('pricingSiUnitId').value;
-            const pkgSize = formData.get('package_size');
-            const priceCat = formData.get('price_category');
-            const price = formData.get('price');
-            const cap = formData.get('delivery_capacity');
-
-            if (!pmId || !siId || !price || !priceCat) {
-                showToast('Please complete all required fields', 'error');
-                return;
-            }
-
-            const pkg = vendorSellAvailablePackageMappings.find(p => p.id === pmId);
-            const si = vendorSellAvailableSIUnits.find(s => s.id === siId);
-
-            const pricingEntry = {
-                package_mapping_id: pmId,
-                si_unit_id: siId,
-                package_size: pkgSize,
-                price_category: priceCat,
-                price: parseFloat(price),
-                delivery_capacity: cap || null,
-                package_name: pkg ? pkg.package_name : '',
-                si_unit: si ? si.si_unit : '',
-                unit_name: si && pkg ? `${si.si_unit} ${pkg.package_name}` : ''
-            };
-
-            // If editing existing pricing, preserve the original pricing_id
-            if (originalPricingData && originalPricingData.pricing_id) {
-                pricingEntry.pricing_id = originalPricingData.pricing_id;
-            }
-
-            if (editingPricingIndex >= 0) {
-                vendorSellPendingPricingEntries[editingPricingIndex] = pricingEntry;
-            } else {
-                vendorSellPendingPricingEntries.push(pricingEntry);
-            }
-
-            // Auto-save when entry is added/edited
-            saveAllPendingPricing();
-
-            renderExistingPricing();
-            closePricingEntryModal();
-            showToast('Pricing entry saved successfully', 'success');
-
-            // Clear original data since we saved
-            originalPricingData = null;
-        });
-
-        // Close modals when clicking outside
-        document.getElementById('vendorSellModal').addEventListener('click', function (event) {
-            if (event.target === this) {
-                closeVendorSellModal();
-            }
-        });
-
-        document.getElementById('pricingEntryModal').addEventListener('click', function (event) {
-            if (event.target === this) {
-                closePricingEntryModal();
-            }
-        });
-
-        document.getElementById('confirmationModal').addEventListener('click', function (event) {
-            if (event.target === this) {
-                closeConfirmationModal();
-            }
-        });
-    });
 </script>
 
 <style>
+    [x-cloak] {
+        display: none !important
+    }
+
     #pricingPkgSearchInput:focus,
     #pricingSiSearchInput:focus,
     #pricingPackageSize:focus,
@@ -951,93 +512,23 @@
     #pricingPriceCategory:focus {
         outline: none;
         border-color: #16a34a;
-        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, .1)
     }
 
-    /* Mobile-first responsive design */
-    @media (max-width: 640px) {
-
-        #vendorSellModal .relative,
-        #pricingEntryModal .relative,
-        #confirmationModal .relative {
-            margin: 0.5rem;
-            max-height: calc(100vh - 1rem);
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        #vendorSellModal .overflow-y-auto,
-        #pricingEntryModal .overflow-y-auto {
-            max-height: calc(100vh - 180px);
-        }
-
-        /* Stack form fields vertically on mobile */
-        .lg\\:grid-cols-2 {
-            grid-template-columns: 1fr !important;
-        }
-
-        .lg\\:grid-cols-4 {
-            grid-template-columns: 1fr !important;
-        }
-
-        /* Adjust button sizes for mobile */
-        #addPricingLineBtn {
-            width: 100%;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        /* Better spacing for mobile cards */
+    @media (max-width:640px) {
         .space-y-4>*+* {
-            margin-top: 1rem;
-        }
-    }
-
-    @media (max-width: 768px) {
-
-        /* Tablet adjustments */
-        .lg\\:grid-cols-2 {
-            grid-template-columns: 1fr 1fr;
+            margin-top: 1rem
         }
 
-        .lg\\:grid-cols-4 {
-            grid-template-columns: 1fr 1fr;
-        }
-    }
-
-    /* Ensure dropdowns work well on mobile */
-    @media (max-width: 640px) {
-
-        #pricingPkgDropdown,
-        #pricingSiDropdown {
-            position: fixed;
-            left: 1rem;
-            right: 1rem;
-            max-height: 200px;
-            z-index: 50;
-        }
-    }
-
-    /* Better touch targets for mobile */
-    @media (max-width: 640px) {
         button {
             min-height: 44px;
-            padding: 0.75rem 1rem;
+            padding: .75rem 1rem
         }
 
         input,
         select {
             min-height: 44px;
-            padding: 0.75rem;
-        }
-    }
-
-    /* Mobile action buttons styling */
-    @media (max-width: 639px) {
-        .pricing-card-mobile-actions {
-            border-top: 1px solid #e5e7eb;
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
+            padding: .75rem
         }
     }
 </style>

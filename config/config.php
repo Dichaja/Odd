@@ -28,9 +28,11 @@ use Ulid\Ulid;
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
-$base = $_ENV['BASE_URL'] ?? '';
-$base = $base === '' ? '/' : rtrim($base, '/') . '/';
-define('BASE_URL', $base);
+if (!defined('BASE_URL')) {
+    $base = $_ENV['BASE_URL'] ?? '';
+    $base = $base === '' ? '/' : rtrim($base, '/') . '/';
+    define('BASE_URL', $base);
+}
 
 $db_host = $_ENV['DB_HOST'] ?? '';
 $db_name = $_ENV['DB_NAME'] ?? '';
