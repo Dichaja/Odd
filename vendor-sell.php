@@ -1,4 +1,3 @@
-<!-- vendor-sell.php -->
 <div x-data="vendorSell()" x-init="init()" x-cloak>
     <div x-show="isOpen" id="vendorSellModal" class="fixed inset-0 z-50" x-transition.opacity>
         <div class="absolute inset-0 bg-black/50" @click="close()"></div>
@@ -76,157 +75,162 @@
                         </div>
                     </div>
 
-                    <div x-show="!loading && selectedStore" class="space-y-6">
-                        <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div class="flex items-center space-x-4">
-                                    <template x-if="selectedStore.logo_url">
-                                        <img :src="`${BASE_URL}${selectedStore.logo_url}`" :alt="selectedStore.name"
-                                            class="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover">
-                                    </template>
-                                    <template x-if="!selectedStore.logo_url">
-                                        <div
-                                            class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                                            <i data-lucide="store" class="w-7 h-7 text-gray-500"></i>
-                                        </div>
-                                    </template>
-                                    <div class="min-w-0">
-                                        <h4 class="font-semibold text-gray-900 text-sm sm:text-base"
-                                            x-text="selectedStore.name"></h4>
-                                        <div class="text-xs sm:text-sm text-gray-700 mt-1">
-                                            <strong>Product:</strong> <span x-text="product.name"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button @click="goBackToStoreSelection()"
-                                    class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
-                                    <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>Change Store
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="bg-white border border-gray-200 rounded-xl">
-                            <div class="p-4 sm:p-6 border-b border-gray-100">
+                    <template x-if="!loading && selectedStore">
+                        <div class="space-y-6">
+                            <div class="bg-gray-50 rounded-xl p-4 sm:p-6">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                    <div>
-                                        <h5 class="text-lg font-semibold text-gray-900">Current Pricing</h5>
-                                        <p class="text-sm text-gray-600 mt-1">Existing pricing entries for this product
-                                            in the selected store</p>
+                                    <div class="flex items-center space-x-4">
+                                        <template x-if="selectedStore && selectedStore.logo_url">
+                                            <img :src="`${BASE_URL}${selectedStore.logo_url}`"
+                                                :alt="selectedStore ? selectedStore.name : ''"
+                                                class="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover">
+                                        </template>
+                                        <template x-if="!(selectedStore && selectedStore.logo_url)">
+                                            <div
+                                                class="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                                                <i data-lucide="store" class="w-7 h-7 text-gray-500"></i>
+                                            </div>
+                                        </template>
+                                        <div class="min-w-0">
+                                            <h4 class="font-semibold text-gray-900 text-sm sm:text-base"
+                                                x-text="selectedStore ? selectedStore.name : ''"></h4>
+                                            <div class="text-xs sm:text-sm text-gray-700 mt-1">
+                                                <strong>Product:</strong> <span x-text="product.name"></span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <button type="button" @click="openPricingEntryModal()"
-                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm sm:text-base">
-                                        <i data-lucide="plus" class="w-5 h-5 mr-2"></i>Add Pricing
+                                    <button @click="goBackToStoreSelection()"
+                                        class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
+                                        <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>Change Store
                                     </button>
                                 </div>
                             </div>
-                            <div class="p-4 sm:p-6">
-                                <div class="space-y-4">
-                                    <template x-if="displayPricing().length===0">
-                                        <div class="text-center py-8">
-                                            <i data-lucide="tag" class="w-8 h-8 text-gray-300 mx-auto mb-4"></i>
-                                            <p class="text-gray-500">No pricing entries for this product in this store.
-                                            </p>
-                                            <p class="text-sm text-gray-400 mt-1">Add pricing entries to start selling
-                                                this product.</p>
+
+                            <div class="bg-white border border-gray-200 rounded-xl">
+                                <div class="p-4 sm:p-6 border-b border-gray-100">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                        <div>
+                                            <h5 class="text-lg font-semibold text-gray-900">Current Pricing</h5>
+                                            <p class="text-sm text-gray-600 mt-1">Existing pricing entries for this
+                                                product in the selected store</p>
                                         </div>
-                                    </template>
+                                        <button type="button" @click="openPricingEntryModal()"
+                                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center text-sm sm:text-base">
+                                            <i data-lucide="plus" class="w-5 h-5 mr-2"></i>Add Pricing
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="p-4 sm:p-6">
+                                    <div class="space-y-4">
+                                        <template x-if="displayPricing().length===0">
+                                            <div class="text-center py-8">
+                                                <i data-lucide="tag" class="w-8 h-8 text-gray-300 mx-auto mb-4"></i>
+                                                <p class="text-gray-500">No pricing entries for this product in this
+                                                    store.</p>
+                                                <p class="text-sm text-gray-400 mt-1">Add pricing entries to start
+                                                    selling this product.</p>
+                                            </div>
+                                        </template>
 
-                                    <template x-for="p in displayPricing()" :key="p._key">
-                                        <div
-                                            :class="(p._pending ? 'bg-blue-50 border-blue-200' : 'bg-gray-50') + ' border border-gray-200 rounded-lg p-4'">
-                                            <div class="flex flex-col">
-                                                <div
-                                                    class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                                                    <div class="flex-1">
-                                                        <div class="font-semibold text-gray-900 mb-2">
-                                                            <span x-text="formattedUnit(p)"></span>
-                                                            <span x-show="p._pending"
-                                                                class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">New</span>
+                                        <template x-for="p in displayPricing()" :key="p._key">
+                                            <div
+                                                :class="(p._pending ? 'bg-blue-50 border-blue-200' : 'bg-gray-50') + ' border border-gray-200 rounded-lg p-4'">
+                                                <div class="flex flex-col">
+                                                    <div
+                                                        class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                                        <div class="flex-1">
+                                                            <div class="font-semibold text-gray-900 mb-2">
+                                                                <span x-text="formattedUnit(p)"></span>
+                                                                <span x-show="p._pending"
+                                                                    class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">New</span>
+                                                            </div>
+                                                            <div class="flex flex-wrap items-center gap-2 text-sm">
+                                                                <span
+                                                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                                                                    :class="categoryClass(p.price_category)"
+                                                                    x-text="categoryLabel(p.price_category)"></span>
+                                                                <template x-if="p.delivery_capacity">
+                                                                    <span class="text-gray-600"
+                                                                        x-text="(p.price_category==='retail' ? 'Max' : 'Min') + ': ' + p.delivery_capacity"></span>
+                                                                </template>
+                                                            </div>
                                                         </div>
-                                                        <div class="flex flex-wrap items-center gap-2 text-sm">
-                                                            <span
-                                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                                                                :class="categoryClass(p.price_category)"
-                                                                x-text="categoryLabel(p.price_category)"></span>
-                                                            <template x-if="p.delivery_capacity">
-                                                                <span class="text-gray-600"
-                                                                    x-text="(p.price_category==='retail' ? 'Max' : 'Min') + ': ' + p.delivery_capacity"></span>
-                                                            </template>
+                                                        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                                            <div class="text-right">
+                                                                <div class="text-lg font-bold text-red-600"
+                                                                    x-text="'UGX ' + formatNumber(p.price)"></div>
+                                                            </div>
+                                                            <div class="hidden sm:flex flex-col items-end gap-2">
+                                                                <template x-if="p._pending">
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <button @click="editPendingPricing(p)"
+                                                                            class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                                                            <i data-lucide="pencil"
+                                                                                class="w-4 h-4 mr-1"></i>Edit
+                                                                        </button>
+                                                                        <button @click="removePendingPricing(p)"
+                                                                            class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
+                                                                            <i data-lucide="trash-2"
+                                                                                class="w-4 h-4 mr-1"></i>Remove
+                                                                        </button>
+                                                                    </div>
+                                                                </template>
+                                                                <template x-if="!p._pending">
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <button
+                                                                            @click="editExistingPricing(p.pricing_id)"
+                                                                            class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                                                            <i data-lucide="pencil"
+                                                                                class="w-4 h-4 mr-1"></i>Edit
+                                                                        </button>
+                                                                        <button
+                                                                            @click="confirmDeleteExistingPricing(p.pricing_id)"
+                                                                            class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
+                                                                            <i data-lucide="trash-2"
+                                                                                class="w-4 h-4 mr-1"></i>Delete
+                                                                        </button>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                                                        <div class="text-right">
-                                                            <div class="text-lg font-bold text-red-600"
-                                                                x-text="'UGX ' + formatNumber(p.price)"></div>
-                                                        </div>
-                                                        <div class="hidden sm:flex flex-col items-end gap-2">
-                                                            <template x-if="p._pending">
-                                                                <div class="flex flex-col gap-2">
-                                                                    <button @click="editPendingPricing(p)"
-                                                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
-                                                                        <i data-lucide="pencil"
-                                                                            class="w-4 h-4 mr-1"></i>Edit
-                                                                    </button>
-                                                                    <button @click="removePendingPricing(p)"
-                                                                        class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
-                                                                        <i data-lucide="trash-2"
-                                                                            class="w-4 h-4 mr-1"></i>Remove
-                                                                    </button>
-                                                                </div>
-                                                            </template>
-                                                            <template x-if="!p._pending">
-                                                                <div class="flex flex-col gap-2">
-                                                                    <button @click="editExistingPricing(p.pricing_id)"
-                                                                        class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
-                                                                        <i data-lucide="pencil"
-                                                                            class="w-4 h-4 mr-1"></i>Edit
-                                                                    </button>
-                                                                    <button
-                                                                        @click="confirmDeleteExistingPricing(p.pricing_id)"
-                                                                        class="text-red-600 hover:text-red-800 text-sm font-medium flex items-center">
-                                                                        <i data-lucide="trash-2"
-                                                                            class="w-4 h-4 mr-1"></i>Delete
-                                                                    </button>
-                                                                </div>
-                                                            </template>
-                                                        </div>
-                                                    </div>
-                                                </div>
 
-                                                <div
-                                                    class="flex sm:hidden items-center justify-center gap-5 mt-3 pt-3 border-t border-gray-200">
-                                                    <template x-if="p._pending">
-                                                        <div class="flex items-center gap-5">
-                                                            <button @click="editPendingPricing(p)"
-                                                                class="flex items-center justify-center w-12 h-12 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors">
-                                                                <i data-lucide="pencil" class="w-7 h-7"></i>
-                                                            </button>
-                                                            <button @click="removePendingPricing(p)"
-                                                                class="flex items-center justify-center w-12 h-12 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors">
-                                                                <i data-lucide="trash-2" class="w-7 h-7"></i>
-                                                            </button>
-                                                        </div>
-                                                    </template>
-                                                    <template x-if="!p._pending">
-                                                        <div class="flex items-center gap-5">
-                                                            <button @click="editExistingPricing(p.pricing_id)"
-                                                                class="flex items-center justify-center w-12 h-12 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors">
-                                                                <i data-lucide="pencil" class="w-7 h-7"></i>
-                                                            </button>
-                                                            <button @click="confirmDeleteExistingPricing(p.pricing_id)"
-                                                                class="flex items-center justify-center w-12 h-12 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors">
-                                                                <i data-lucide="trash-2" class="w-7 h-7"></i>
-                                                            </button>
-                                                        </div>
-                                                    </template>
+                                                    <div
+                                                        class="flex sm:hidden items-center justify-center gap-5 mt-3 pt-3 border-t border-gray-200">
+                                                        <template x-if="p._pending">
+                                                            <div class="flex items-center gap-5">
+                                                                <button @click="editPendingPricing(p)"
+                                                                    class="flex items-center justify-center w-12 h-12 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors">
+                                                                    <i data-lucide="pencil" class="w-7 h-7"></i>
+                                                                </button>
+                                                                <button @click="removePendingPricing(p)"
+                                                                    class="flex items-center justify-center w-12 h-12 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors">
+                                                                    <i data-lucide="trash-2" class="w-7 h-7"></i>
+                                                                </button>
+                                                            </div>
+                                                        </template>
+                                                        <template x-if="!p._pending">
+                                                            <div class="flex items-center gap-5">
+                                                                <button @click="editExistingPricing(p.pricing_id)"
+                                                                    class="flex items-center justify-center w-12 h-12 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors">
+                                                                    <i data-lucide="pencil" class="w-7 h-7"></i>
+                                                                </button>
+                                                                <button
+                                                                    @click="confirmDeleteExistingPricing(p.pricing_id)"
+                                                                    class="flex items-center justify-center w-12 h-12 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors">
+                                                                    <i data-lucide="trash-2" class="w-7 h-7"></i>
+                                                                </button>
+                                                            </div>
+                                                        </template>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </template>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </template>
 
                     <div x-show="!selectedStore"
                         class="flex flex-col sm:flex-row justify-end p-4 sm:p-6 border-t border-gray-200 gap-3">
@@ -379,7 +383,7 @@
             init() {
                 window.openVendorSellModal = (id, name) => { this.open(id, name) };
                 window.closeVendorSellModal = () => { this.close() };
-                document.addEventListener('click', (e) => { if (!e.target.closest('#pricingEntryModal')) { this.pkgOpen = false; this.siOpen = false } });
+                document.addEventListener('click', (e) => { const inside = e.target && e.target.closest ? e.target.closest('#pricingEntryModal') : null; if (!inside) { this.pkgOpen = false; this.siOpen = false } });
                 if (window.lucide && lucide.createIcons) lucide.createIcons();
             },
             refreshIcons() { try { if (window.lucide && lucide.createIcons) lucide.createIcons(); } catch (e) { } },
@@ -398,12 +402,12 @@
             },
             async loadUserStores() {
                 try { const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getUserStores`); const d = await r.json(); this.stores = (d.success && d.stores) ? d.stores : []; }
-                catch (e) { this.stores = [] }
-                finally { this.loading = false; this.refreshIcons() }
+                catch (e) { this.stores = []; }
+                finally { this.loading = false; this.refreshIcons(); }
             },
             async selectStore(store) {
                 this.selectedStore = store; this.pendingPricing = []; this.hiddenPricing = []; this.loading = true;
-                try { await Promise.all([this.loadExistingPricing(), this.loadPackages(), this.loadSIUnits()]) } catch (e) { }
+                try { await Promise.all([this.loadExistingPricing(), this.loadPackages(), this.loadSIUnits()]); } catch (e) { }
                 this.loading = false; this.refreshIcons();
             },
             async loadExistingPricing() {
@@ -418,7 +422,7 @@
                 if (this.availableSI.length) return;
                 const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=getSIUnits`); const d = await r.json(); if (d.success) this.availableSI = d.siUnits || [];
             },
-            goBackToStoreSelection() { this.selectedStore = null; this.existingPricing = []; this.pendingPricing = []; this.hiddenPricing = []; this.editingIndex = -1; this.originalPricing = null; this.refreshIcons() },
+            goBackToStoreSelection() { this.selectedStore = null; this.existingPricing = []; this.pendingPricing = []; this.hiddenPricing = []; this.editingIndex = -1; this.originalPricing = null; this.refreshIcons(); },
             displayPricing() {
                 const visible = this.existingPricing.filter(p => !this.hiddenPricing.some(h => h.pricing_id === p.pricing_id)).map(p => Object.assign({ _pending: false, _key: 'ex-' + p.pricing_id }, p));
                 const pending = this.pendingPricing.map((p, i) => Object.assign({ _pending: true, _key: 'pe-' + i }, p));
@@ -434,12 +438,12 @@
                 this.pricingEntryTitle = 'Add Pricing Entry'; this.editingIndex = -1; this.originalPricing = null;
                 this.form = { package_search: '', package_mapping_id: '', si_search: '', si_unit_id: '', package_size: '1', price_category: '', price: '', delivery_capacity: '' };
                 if (editIndex >= 0) { this.pricingEntryTitle = 'Edit Pricing Entry'; this.editingIndex = editIndex; this.originalPricing = Object.assign({}, this.pendingPricing[editIndex]); this.populateForm(this.pendingPricing[editIndex]); }
-                else if (existingId) { this.pricingEntryTitle = 'Edit Pricing Entry'; const h = this.hiddenPricing.find(p => p.pricing_id === existingId); if (h) { this.originalPricing = Object.assign({}, h); this.populateForm(h) } }
+                else if (existingId) { this.pricingEntryTitle = 'Edit Pricing Entry'; const h = this.hiddenPricing.find(p => p.pricing_id === existingId); if (h) { this.originalPricing = Object.assign({}, h); this.populateForm(h); } }
                 this.updateCapacityLabel(); this.isPricingOpen = true; this.refreshIcons();
             },
             closePricingEntryModal() {
-                if (this.editingIndex >= 0 && this.originalPricing) { this.pendingPricing[this.editingIndex] = this.originalPricing }
-                else if (this.originalPricing && this.originalPricing.pricing_id) { const i = this.hiddenPricing.findIndex(p => p.pricing_id === this.originalPricing.pricing_id); if (i >= 0) this.hiddenPricing.splice(i, 1) }
+                if (this.editingIndex >= 0 && this.originalPricing) { this.pendingPricing[this.editingIndex] = this.originalPricing; }
+                else if (this.originalPricing && this.originalPricing.pricing_id) { const i = this.hiddenPricing.findIndex(p => p.pricing_id === this.originalPricing.pricing_id); if (i >= 0) this.hiddenPricing.splice(i, 1); }
                 this.isPricingOpen = false; this.editingIndex = -1; this.originalPricing = null; this.refreshIcons();
             },
             populateForm(d) {
@@ -449,52 +453,52 @@
             updateCapacityLabel() {
                 const c = this.form.price_category; this.capacityLabel = c === 'retail' ? 'Max. Capacity' : (c === 'wholesale' || c === 'factory' ? 'Min. Capacity' : 'Capacity');
             },
-            filteredPackages() { const q = (this.form.package_search || '').toLowerCase(); return this.availablePackages.filter(m => (m.package_name || '').toLowerCase().includes(q)) },
-            filteredSiUnits() { const q = (this.form.si_search || '').toLowerCase(); return this.availableSI.filter(u => (u.si_unit || '').toLowerCase().includes(q)) },
-            choosePackage(m) { this.form.package_mapping_id = m.id; this.form.package_search = m.package_name; this.pkgOpen = false },
-            chooseSi(u) { this.form.si_unit_id = u.id; this.form.si_search = u.si_unit; this.siOpen = false },
+            filteredPackages() { const q = (this.form.package_search || '').toLowerCase(); return this.availablePackages.filter(m => (m.package_name || '').toLowerCase().includes(q)); },
+            filteredSiUnits() { const q = (this.form.si_search || '').toLowerCase(); return this.availableSI.filter(u => (u.si_unit || '').toLowerCase().includes(q)); },
+            choosePackage(m) { this.form.package_mapping_id = m.id; this.form.package_search = m.package_name; this.pkgOpen = false; },
+            chooseSi(u) { this.form.si_unit_id = u.id; this.form.si_search = u.si_unit; this.siOpen = false; },
             submitPricingEntry() {
                 const pmId = this.form.package_mapping_id, siId = this.form.si_unit_id, pkgSize = this.form.package_size, priceCat = this.form.price_category, price = this.form.price, cap = this.form.delivery_capacity;
-                if (!pmId || !siId || !price || !priceCat) { if (typeof showToast === 'function') showToast('Please complete all required fields', 'error'); return }
+                if (!pmId || !siId || !price || !priceCat) { if (typeof showToast === 'function') showToast('Please complete all required fields', 'error'); return; }
                 const pkg = this.availablePackages.find(p => p.id == pmId), si = this.availableSI.find(s => s.id == siId);
                 const entry = { package_mapping_id: pmId, si_unit_id: siId, package_size: pkgSize, price_category: priceCat, price: parseFloat(price), delivery_capacity: cap || null, package_name: pkg ? pkg.package_name : '', si_unit: si ? si.si_unit : '', unit_name: si && pkg ? `${si.si_unit} ${pkg.package_name}` : '' };
                 if (this.originalPricing && this.originalPricing.pricing_id) entry.pricing_id = this.originalPricing.pricing_id;
                 if (this.editingIndex >= 0) this.pendingPricing[this.editingIndex] = entry; else this.pendingPricing.push(entry);
                 this.saveAllPendingPricing(); this.isPricingOpen = false; if (typeof showToast === 'function') showToast('Pricing entry saved successfully', 'success'); this.originalPricing = null;
             },
-            editPendingPricing(p) { const i = this.pendingPricing.findIndex(x => x === p); this.openPricingEntryModal(i) },
-            removePendingPricing(p) { const i = this.pendingPricing.findIndex(x => x === p); if (i >= 0) { this.pendingPricing.splice(i, 1) } },
+            editPendingPricing(p) { const i = this.pendingPricing.findIndex(x => x === p); this.openPricingEntryModal(i); },
+            removePendingPricing(p) { const i = this.pendingPricing.findIndex(x => x === p); if (i >= 0) { this.pendingPricing.splice(i, 1); } },
             editExistingPricing(pricingId) {
                 const pr = this.existingPricing.find(p => p.pricing_id === pricingId); if (!pr) return;
                 const entry = { package_mapping_id: pr.package_mapping_id, si_unit_id: pr.si_unit_id, package_size: pr.package_size, price_category: pr.price_category, price: pr.price, delivery_capacity: pr.delivery_capacity, package_name: pr.unit_name ? pr.unit_name.split(' ').slice(1).join(' ') : '', si_unit: pr.unit_name ? pr.unit_name.split(' ')[0] : '', unit_name: pr.unit_name, pricing_id: pricingId };
                 this.hiddenPricing.push(pr); this.openPricingEntryModal(-1, pricingId);
             },
-            confirmDeleteExistingPricing(id) { this.showConfirm('Delete Pricing Entry', 'Are you sure you want to delete this pricing entry? This action cannot be undone.', () => this.deleteExistingPricing(id), 'Delete') },
+            confirmDeleteExistingPricing(id) { this.showConfirm('Delete Pricing Entry', 'Are you sure you want to delete this pricing entry? This action cannot be undone.', () => this.deleteExistingPricing(id), 'Delete'); },
             async deleteExistingPricing(id) {
                 try {
                     const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=deletePricing`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pricing_id: id }) });
                     const d = await r.json();
-                    if (d.success) { this.existingPricing = this.existingPricing.filter(p => p.pricing_id !== id); if (typeof showToast === 'function') showToast('Pricing deleted successfully', 'success') }
-                    else { if (typeof showToast === 'function') showToast(d.error || 'Failed to delete pricing', 'error') }
-                } catch (e) { if (typeof showToast === 'function') showToast('Error deleting pricing', 'error') }
-                finally { this.closeConfirmationModal() }
+                    if (d.success) { this.existingPricing = this.existingPricing.filter(p => p.pricing_id !== id); if (typeof showToast === 'function') showToast('Pricing deleted successfully', 'success'); }
+                    else { if (typeof showToast === 'function') showToast(d.error || 'Failed to delete pricing', 'error'); }
+                } catch (e) { if (typeof showToast === 'function') showToast('Error deleting pricing', 'error'); }
+                finally { this.closeConfirmationModal(); }
             },
             async saveAllPendingPricing() {
-                if (this.pendingPricing.length === 0) { if (typeof showToast === 'function') showToast('No new pricing entries to save', 'error'); return }
+                if (this.pendingPricing.length === 0) { if (typeof showToast === 'function') showToast('No new pricing entries to save', 'error'); return; }
                 try {
                     const r = await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=addProductToStore`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ store_id: this.selectedStore.id, product_id: this.product.id, line_items: this.pendingPricing }) });
                     const d = await r.json();
                     if (d.success) {
                         if (typeof showToast === 'function') showToast('Product pricing saved successfully', 'success');
-                        for (const e of this.pendingPricing) { if (e.pricing_id) await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=deletePricing`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pricing_id: e.pricing_id }) }) }
+                        for (const e of this.pendingPricing) { if (e.pricing_id) await fetch(`${BASE_URL}fetch/manageVendorSell.php?action=deletePricing`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pricing_id: e.pricing_id }) }); }
                         await this.loadExistingPricing(); this.pendingPricing = []; this.hiddenPricing = [];
-                    } else { if (typeof showToast === 'function') showToast(d.error || 'Failed to save pricing', 'error') }
-                } catch (e) { if (typeof showToast === 'function') showToast('Error saving pricing', 'error') }
-                finally { this.refreshIcons() }
+                    } else { if (typeof showToast === 'function') showToast(d.error || 'Failed to save pricing', 'error'); }
+                } catch (e) { if (typeof showToast === 'function') showToast('Error saving pricing', 'error'); }
+                finally { this.refreshIcons(); }
             },
-            showConfirm(t, m, cb, txt = 'Delete') { this.confirmTitle = t; this.confirmMessage = m; this.confirmText = txt; this.confirmCb = cb; this.isConfirmOpen = true; this.refreshIcons() },
-            closeConfirmationModal() { this.isConfirmOpen = false; this.confirmCb = null },
-            confirmAction() { if (typeof this.confirmCb === 'function') this.confirmCb() }
+            showConfirm(t, m, cb, txt = 'Delete') { this.confirmTitle = t; this.confirmMessage = m; this.confirmText = txt; this.confirmCb = cb; this.isConfirmOpen = true; this.refreshIcons(); },
+            closeConfirmationModal() { this.isConfirmOpen = false; this.confirmCb = null; },
+            confirmAction() { if (typeof this.confirmCb === 'function') this.confirmCb(); }
         }
     }
 </script>

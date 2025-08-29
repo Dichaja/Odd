@@ -2,8 +2,10 @@
 require_once __DIR__ . '/config/config.php';
 
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'data') {
-    header('Content-Type: application/json');
-    header('Cache-Control: public, max-age=1800');
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+        header('Cache-Control: public, max-age=1800');
+    }
     try {
         $products = $pdo->query("
             SELECT
@@ -51,7 +53,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'data') {
 }
 
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
-    header('Content-Type: application/json');
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+    }
     $type = $_GET['type'] ?? '';
     $id = $_GET['id'] ?? '';
     if (!$type || !$id) {
@@ -68,11 +72,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     $images = [];
     $files = scandir($fullPath);
     foreach ($files as $file) {
-        if ($file === '.' || $file === '..')
+        if ($file === '.' || $file === '..') {
             continue;
+        }
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        if (in_array($extension, $allowedExtensions))
+        if (in_array($extension, $allowedExtensions, true)) {
             $images[] = $file;
+        }
     }
     if (empty($images)) {
         echo json_encode(['image' => null]);
@@ -85,15 +91,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 }
 
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'session') {
-    header('Content-Type: application/json');
-    $isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+    }
+    $isLoggedIn = isset($_SESSION['user'], $_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
     if ($isLoggedIn) {
         echo json_encode([
             'logged_in' => true,
             'user' => [
-                'username' => $_SESSION['user']['username'],
-                'email' => $_SESSION['user']['email'],
-                'is_admin' => $_SESSION['user']['is_admin'],
+                'username' => $_SESSION['user']['username'] ?? '',
+                'email' => $_SESSION['user']['email'] ?? '',
+                'is_admin' => isset($_SESSION['user']['is_admin']) ? (bool) $_SESSION['user']['is_admin'] : false,
                 'last_login' => $_SESSION['user']['last_login'] ?? null
             ]
         ]);
@@ -107,14 +115,14 @@ $title = isset($pageTitle) ? $pageTitle . ' | Buy Online - Deliver On-site' : 'Z
 $activeNav = $activeNav ?? 'home';
 date_default_timezone_set('Africa/Kampala');
 $sessionUlid = generateUlid();
-$isLoggedIn = isset($_SESSION['user']) && isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
+$isLoggedIn = isset($_SESSION['user'], $_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 $metaDescription = 'Zzimba Online Uganda - Your one-stop shop for construction materials and supplies. Buy online and get delivery on-site.';
 $hasSeoTags = isset($seoTags) && is_array($seoTags);
 if ($hasSeoTags) {
     $title = $seoTags['title'] ?? $title;
     $metaDescription = $seoTags['description'] ?? $metaDescription;
 }
-$currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+$currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($_SERVER['REQUEST_URI'] ?? '/');
 $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
 ?>
 <!DOCTYPE html>
@@ -504,7 +512,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
 
         * {
             scrollbar-width: thin;
-            scrollbar-color: rgb(135, 135, 135)transparent
+            scrollbar-color: rgb(135, 135, 135) transparent
         }
 
         #scroll-to-top {
@@ -804,26 +812,26 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                             <i data-lucide="shopping-cart" class="w-6 h-6" stroke-width="2.5"></i>
                         </a>
                         <div id="auth-section">
-                            <?php if (isset($_SESSION['user']) && $_SESSION['user']['logged_in']): ?>
+                            <?php if (isset($_SESSION['user'], $_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in']): ?>
                                 <div class="user-dropdown">
                                     <button
                                         class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
                                         <i data-lucide="user" class="w-5 h-5 mr-2" stroke-width="2.5"></i>Halo
-                                        <?= htmlspecialchars($_SESSION['user']['username']) ?>!
+                                        <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?>!
                                         <i data-lucide="chevron-down" class="w-4 h-4 ml-2"></i>
                                     </button>
                                     <div class="user-dropdown-menu">
                                         <div class="px-4 py-3 bg-gray-50">
                                             <p class="text-sm font-medium text-gray-900">
-                                                <?= htmlspecialchars($_SESSION['user']['username']) ?></p>
+                                                <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?></p>
                                             <p class="text-xs text-gray-500">
-                                                <?= htmlspecialchars($_SESSION['user']['email']) ?></p>
+                                                <?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?></p>
                                             <?php if (isset($_SESSION['user']['last_login']) && $_SESSION['user']['last_login']): ?>
                                                 <p class="text-xs text-gray-500 mt-1">Last login:
                                                     <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?></p>
                                             <?php endif; ?>
                                         </div>
-                                        <?php if ($_SESSION['user']['is_admin']): ?>
+                                        <?php if (!empty($_SESSION['user']['is_admin'])): ?>
                                             <a href="<?= BASE_URL ?>admin/dashboard" class="user-dropdown-item">
                                                 <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i>Dashboard
                                             </a>
@@ -906,8 +914,8 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                 class="block text-center bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
                 <i data-lucide="shopping-cart" class="w-5 h-5 mr-2 inline-block"></i>Cart
             </a>
-            <?php if (isset($_SESSION['user']) && $_SESSION['user']['logged_in']): ?>
-                <?php if ($_SESSION['user']['is_admin']): ?>
+            <?php if (isset($_SESSION['user'], $_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in']): ?>
+                <?php if (!empty($_SESSION['user']['is_admin'])): ?>
                     <a href="<?= BASE_URL ?>admin/dashboard"
                         class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
                         <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2 inline-block"></i>Dashboard

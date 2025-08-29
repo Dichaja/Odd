@@ -499,8 +499,6 @@ ob_start();
     }
 </script>
 
-<?php include __DIR__ . '/vendor-sell.php'; ?>
-
 <?php
 $mainContent = ob_get_clean();
 include __DIR__ . '/master.php';
