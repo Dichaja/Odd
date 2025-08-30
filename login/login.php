@@ -79,43 +79,42 @@ function getStepTitle($mode, $step)
                 <a href="javascript:void(0)" @click="go('register-username')"
                     class="text-primary hover:text-red-700 font-medium">Create Account</a>
             </p>
+
             <form id="login-identifier-form" class="space-y-4" autocomplete="off" data-mode="login"
-                data-step="identifier">
+                data-step="identifier" x-data="{ method: 'username' }">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-3">How would you like to login?</label>
-                    <div class="flex gap-3 mb-4" x-data="{method: 'username'}"
-                        x-init="$watch('method', v => {document.querySelectorAll('input[name=login_method]').forEach(r=>r.checked=(r.value===v));})">
-                        <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg border"
-                            :class="{'border-primary': method==='username'}">
-                            <input type="radio" name="login_method" value="username"
-                                class="mr-3 text-primary focus:ring-primary" x-model="method">
+
+                    <div class="grid grid-cols-3 gap-2 md:gap-3 mb-4">
+                        <label class="flex items-center justify-center cursor-pointer p-2 rounded-lg border text-sm"
+                            :class="{'border-primary ring-1 ring-primary': method==='username'}">
+                            <input type="radio" name="login_method" value="username" class="sr-only" x-model="method">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="user" class="w-4 h-4 text-gray-500"></i>
-                                <p class="font-medium">Username</p>
+                                <span class="font-medium">Username</span>
                             </div>
                         </label>
-                        <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg border"
-                            :class="{'border-primary': method==='email'}">
-                            <input type="radio" name="login_method" value="email"
-                                class="mr-3 text-primary focus:ring-primary" x-model="method">
+
+                        <label class="flex items-center justify-center cursor-pointer p-2 rounded-lg border text-sm"
+                            :class="{'border-primary ring-1 ring-primary': method==='email'}">
+                            <input type="radio" name="login_method" value="email" class="sr-only" x-model="method">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="mail" class="w-4 h-4 text-gray-500"></i>
-                                <p class="font-medium">Email</p>
+                                <span class="font-medium">Email</span>
                             </div>
                         </label>
-                        <label class="flex-1 flex items-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg border"
-                            :class="{'border-primary': method==='phone'}">
-                            <input type="radio" name="login_method" value="phone"
-                                class="mr-3 text-primary focus:ring-primary" x-model="method">
+
+                        <label class="flex items-center justify-center cursor-pointer p-2 rounded-lg border text-sm"
+                            :class="{'border-primary ring-1 ring-primary': method==='phone'}">
+                            <input type="radio" name="login_method" value="phone" class="sr-only" x-model="method">
                             <div class="flex items-center gap-2">
                                 <i data-lucide="phone" class="w-4 h-4 text-gray-500"></i>
-                                <p class="font-medium">Phone</p>
+                                <span class="font-medium">Phone</span>
                             </div>
                         </label>
                     </div>
 
-                    <div id="username-input" class="login-input-group" x-show="$root.__method==='username'"
-                        x-init="$root.__method='username'">
+                    <div id="username-input" class="login-input-group" x-show="method==='username'">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
                         <div class="relative">
                             <i data-lucide="user"
@@ -127,7 +126,7 @@ function getStepTitle($mode, $step)
                         </div>
                     </div>
 
-                    <div id="email-input" class="login-input-group" x-show="$root.__method==='email'">
+                    <div id="email-input" class="login-input-group" x-show="method==='email'">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                         <div class="relative">
                             <i data-lucide="mail"
@@ -139,7 +138,7 @@ function getStepTitle($mode, $step)
                         </div>
                     </div>
 
-                    <div id="phone-input" class="login-input-group" x-show="$root.__method==='phone'">
+                    <div id="phone-input" class="login-input-group" x-show="method==='phone'">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                         <div class="flex">
                             <div
@@ -155,6 +154,7 @@ function getStepTitle($mode, $step)
 
                     <div id="login-identifier-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
+
                 <button type="button" @click="handleLoginIdentifierSubmit()"
                     class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
             </form>
