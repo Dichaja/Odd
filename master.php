@@ -782,7 +782,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
 
     <nav class="bg-white shadow-lg">
         <div class="container mx-auto px-4">
-            <div class="grid grid-cols-[auto_1fr_auto] items-center gap-4 py-3">
+            <div class="grid grid-cols-[auto_1fr_auto] items-start gap-4 py-3">
                 <div class="flex items-center">
                     <a href="<?= BASE_URL ?>">
                         <img src="<?= BASE_URL ?>img/logo_alt.png?height=40&width=150" alt="Logo" class="h-10">
