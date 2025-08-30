@@ -782,7 +782,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
 
     <nav class="bg-white shadow-lg">
         <div class="container mx-auto px-4">
-            <div class="grid grid-cols-[auto_1fr_auto] items-start gap-6 py-3">
+            <div class="grid grid-cols-[auto_1fr_auto] items-center gap-4 py-3">
                 <div class="flex items-center">
                     <a href="<?= BASE_URL ?>">
                         <img src="<?= BASE_URL ?>img/logo_alt.png?height=40&width=150" alt="Logo" class="h-10">
@@ -806,7 +806,7 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                     </form>
                 </div>
 
-                <div class="flex items-center space-x-6">
+                <div class="flex items-center justify-self-end">
                     <div class="hidden md:flex items-center space-x-4">
                         <a href="#" class="text-secondary hover:text-primary transition-colors flex items-center">
                             <i data-lucide="shopping-cart" class="w-6 h-6" stroke-width="2.5"></i>
@@ -823,12 +823,15 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                                     <div class="user-dropdown-menu">
                                         <div class="px-4 py-3 bg-gray-50">
                                             <p class="text-sm font-medium text-gray-900">
-                                                <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?></p>
+                                                <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?>
+                                            </p>
                                             <p class="text-xs text-gray-500">
-                                                <?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?></p>
+                                                <?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?>
+                                            </p>
                                             <?php if (isset($_SESSION['user']['last_login']) && $_SESSION['user']['last_login']): ?>
                                                 <p class="text-xs text-gray-500 mt-1">Last login:
-                                                    <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?></p>
+                                                    <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?>
+                                                </p>
                                             <?php endif; ?>
                                         </div>
                                         <?php if (!empty($_SESSION['user']['is_admin'])): ?>
@@ -861,11 +864,13 @@ $searchQuery = isset($_GET['s']) ? htmlspecialchars($_GET['s']) : '';
                             <?php endif; ?>
                         </div>
                     </div>
-                    <div class="flex md:hidden items-center space-x-4">
-                        <button id="mobile-search-toggle" class="text-secondary hover:text-primary transition-colors">
+
+                    <div class="flex md:hidden items-center gap-0">
+                        <button id="mobile-search-toggle"
+                            class="text-secondary hover:text-primary transition-colors p-2">
                             <i data-lucide="search" class="w-6 h-6"></i>
                         </button>
-                        <button class="text-secondary hover:text-primary" id="mobile-menu-button">
+                        <button class="text-secondary hover:text-primary p-2" id="mobile-menu-button">
                             <i data-lucide="menu" class="w-7 h-7"></i>
                         </button>
                     </div>
