@@ -80,7 +80,7 @@ function getStepTitle($mode, $step)
                     class="text-primary hover:text-red-700 font-medium">Create Account</a>
             </p>
 
-            <form id="login-identifier-form" class="space-y-4" autocomplete="off" data-mode="login"
+            <form id="login-identifier-form" class="space-y-4" autocomplete="on" data-mode="login"
                 data-step="identifier" x-data="{ method: 'username' }">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-3">How would you like to login?</label>
@@ -119,9 +119,9 @@ function getStepTitle($mode, $step)
                         <div class="relative">
                             <i data-lucide="user"
                                 class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" id="login-username" required
+                            <input type="text" id="login-username" name="username" required
                                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                placeholder="Enter your username" autofocus autocomplete="off"
+                                placeholder="Enter your username" autofocus autocomplete="username"
                                 onkeyup="checkTripleSpace(this)">
                         </div>
                     </div>
@@ -131,9 +131,9 @@ function getStepTitle($mode, $step)
                         <div class="relative">
                             <i data-lucide="mail"
                                 class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="email" id="login-email" required
+                            <input type="email" id="login-email" name="email" required
                                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                placeholder="Enter your email address" autocomplete="off"
+                                placeholder="Enter your email address" autocomplete="username"
                                 onkeyup="checkTripleSpace(this)">
                         </div>
                     </div>
@@ -145,9 +145,9 @@ function getStepTitle($mode, $step)
                                 class="flex items-center px-3 py-2 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50">
                                 <span class="text-gray-700 font-medium">+256</span>
                             </div>
-                            <input type="text" id="login-phone" required maxlength="9" minlength="9"
+                            <input type="text" id="login-phone" name="tel" required maxlength="9" minlength="9"
                                 class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                                placeholder="7XXXXXXXX" autocomplete="off" oninput="validatePhoneInput(this)"
+                                placeholder="7XXXXXXXX" autocomplete="tel" oninput="validatePhoneInput(this)"
                                 onkeyup="checkTripleSpace(this)">
                         </div>
                     </div>
@@ -155,7 +155,8 @@ function getStepTitle($mode, $step)
                     <div id="login-identifier-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
 
-                <button type="button" @click="handleLoginIdentifierSubmit()"
+                <button type="button" @click="handleLoginIdentifierSubmit()
+                    "
                     class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
             </form>
         </div>
@@ -176,17 +177,17 @@ function getStepTitle($mode, $step)
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <form id="login-password-form" class="space-y-4" autocomplete="off" data-mode="login" data-step="password">
+            <form id="login-password-form" class="space-y-4" autocomplete="on" data-mode="login" data-step="password">
                 <div class="relative">
                     <p class="mb-4">Logging in as <strong id="login-identifier-display"></strong></p>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <div class="relative">
                         <i data-lucide="lock"
                             class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                        <input type="password" required
+                        <input type="password" name="password" required
                             class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            placeholder="Enter your password" id="login-password" autofocus autocomplete="off"
-                            onkeyup="checkTripleSpace(this)">
+                            placeholder="Enter your password" id="login-password" autofocus
+                            autocomplete="current-password" onkeyup="checkTripleSpace(this)">
                         <button type="button"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             onclick="togglePasswordVisibility('login-password')"><i data-lucide="eye"
