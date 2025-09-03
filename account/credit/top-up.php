@@ -146,7 +146,7 @@ try {
                 </div>
                 <button onclick="hidePaymentCategoryModal()"
                     class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:text-white">
-                    <i class="fas fa-times text-lg"></i>
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -158,7 +158,7 @@ try {
                         <div class="selector-title text-secondary dark:text-white">Send Mobile Money</div>
                         <div class="selector-sub text-gray-text dark:text-white/70">Airtel Money • MTN MoMo</div>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
                 </div>
 
                 <div class="selector-item" onclick="selectPaymentCategory('bank')">
@@ -166,7 +166,7 @@ try {
                         <div class="selector-title text-secondary dark:text-white">Bank Deposits</div>
                         <div class="selector-sub text-gray-text dark:text-white/70">Deposit to our bank accounts</div>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
                 </div>
 
                 <div class="selector-item" onclick="selectPaymentCategory('gateway')">
@@ -174,7 +174,7 @@ try {
                         <div class="selector-title text-secondary dark:text-white">Instant Pay</div>
                         <div class="selector-sub text-gray-text dark:text-white/70">Mobile money prompt or Card</div>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
                 </div>
             </div>
         </div>
@@ -191,7 +191,7 @@ try {
                 <div class="flex items-center gap-2">
                     <button onclick="accountSelectionBack()"
                         class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/10 grid place-items-center hover:bg-gray-200 dark:hover:bg-white/20">
-                        <i class="fas fa-chevron-left text-gray-600 dark:text-white/80"></i>
+                        <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600 dark:text-white/80"></i>
                     </button>
                     <div>
                         <h3 id="accountSelectionTitle" class="text-lg font-semibold text-secondary dark:text-white">
@@ -202,7 +202,7 @@ try {
                 </div>
                 <button onclick="hideAccountSelectionModal()"
                     class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:text-white">
-                    <i class="fas fa-times text-lg"></i>
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -226,7 +226,7 @@ try {
                 </div>
                 <button onclick="hideGatewayMethodModal()"
                     class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:text-white">
-                    <i class="fas fa-times text-lg"></i>
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -238,7 +238,7 @@ try {
                         <div class="selector-title text-secondary dark:text-white">Mobile Money</div>
                         <div class="selector-sub text-gray-text dark:text-white/70">Receive a payment prompt</div>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
                 </div>
 
                 <div class="selector-item" onclick="selectGatewayMethod('card')">
@@ -246,7 +246,7 @@ try {
                         <div class="selector-title text-secondary dark:text-white">Card Payment</div>
                         <div class="selector-sub text-gray-text dark:text-white/70">Visa • Mastercard</div>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-400"></i>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
                 </div>
             </div>
         </div>
@@ -263,7 +263,7 @@ try {
                 <div class="flex items-center gap-2">
                     <button onclick="mobileMoneyBack()"
                         class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/10 grid place-items-center hover:bg-gray-200 dark:hover:bg-white/20">
-                        <i class="fas fa-chevron-left text-gray-600 dark:text-white/80"></i>
+                        <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600 dark:text-white/80"></i>
                     </button>
                     <div>
                         <h3 class="text-lg font-semibold text-secondary dark:text-white">Account Number</h3>
@@ -272,7 +272,7 @@ try {
                 </div>
                 <button onclick="hideMobileMoneyModal()"
                     class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:text-white">
-                    <i class="fas fa-times text-lg"></i>
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -347,7 +347,7 @@ try {
                 <div class="flex items-center gap-2">
                     <button onclick="bankTransferBack()"
                         class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/10 grid place-items-center hover:bg-gray-200 dark:hover:bg-white/20">
-                        <i class="fas fa-chevron-left text-gray-600 dark:text-white/80"></i>
+                        <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600 dark:text-white/80"></i>
                     </button>
                     <div>
                         <h3 class="text-lg font-semibold text-secondary dark:text-white">Bank Transfer</h3>
@@ -356,7 +356,7 @@ try {
                 </div>
                 <button onclick="hideBankTransferModal()"
                     class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:text-white">
-                    <i class="fas fa-times text-lg"></i>
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -430,7 +430,7 @@ try {
                 </div>
                 <button onclick="hideGatewayPaymentModal()"
                     class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:text-white">
-                    <i class="fas fa-times text-lg"></i>
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -475,8 +475,7 @@ try {
 
                 <div id="gwPaymentStatus" class="hidden p-3 rounded-lg">
                     <div class="flex items-center gap-3">
-                        <div id="gwStatusIcon" class="w-7 h-7 rounded-full grid place-items-center"><i
-                                class="fas fa-spinner fa-spin"></i></div>
+                        <div id="gwStatusIcon" class="w-7 h-7 rounded-full grid place-items-center"></div>
                         <div>
                             <div id="gwStatusTitle" class="text-sm font-semibold text-secondary dark:text-white">
                                 Processing Payment</div>
@@ -513,7 +512,7 @@ try {
                 </div>
                 <button onclick="hideCardPaymentModal()"
                     class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:text-white">
-                    <i class="fas fa-times text-lg"></i>
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -559,7 +558,7 @@ try {
         class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-sm relative z-10 overflow-hidden transform transition-all duration-300 scale-95">
         <div class="p-6 text-center">
             <div class="w-14 h-14 bg-yellow-100 rounded-full grid place-items-center mx-auto mb-4">
-                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl"></i>
+                <i data-lucide="alert-triangle" class="w-7 h-7 text-yellow-600"></i>
             </div>
             <h3 class="text-lg font-semibold text-secondary dark:text-white mb-1">Confirm Payment</h3>
             <p class="text-gray-text dark:text-white/80 mb-5" id="confirmationMessage"></p>
@@ -600,23 +599,21 @@ try {
     document.addEventListener('DOMContentLoaded', function () {
         const topupUrl = <?= json_encode(BASE_URL . 'account/fetch/manageTopup.php') ?>;
         const gatewayApiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageZzimbaCredit.php') ?>;
+        const baseUrl = <?= json_encode(BASE_URL) ?>;
         const groupedAccounts = <?= json_encode($groupedAccounts) ?>;
         const walletId = <?= json_encode($walletId) ?>;
 
         let selectedAccount = null, selectedCategory = null, selectedGatewayMethod = null, validatedMsisdn = null, customerName = null, currentPaymentReference = null, statusCheckInterval = null, validationTimeout = null, pendingPaymentData = null;
 
         function getKampalaDateTimeLocal() { const parts = new Date().toLocaleString('sv', { timeZone: 'Africa/Kampala', hour12: false }).split(' '); return `${parts[0]}T${parts[1].slice(0, 5)}`; }
-        function showModal(id) { const m = document.getElementById(id); m.classList.remove('hidden'); setTimeout(() => { m.classList.remove('opacity-0'); m.querySelector('.transform').classList.remove('scale-95'); m.querySelector('.transform').classList.add('scale-100'); }, 10); }
+        function showModal(id) { const m = document.getElementById(id); m.classList.remove('hidden'); setTimeout(() => { m.classList.remove('opacity-0'); m.querySelector('.transform').classList.remove('scale-95'); m.querySelector('.transform').classList.add('scale-100'); if (window.lucide?.createIcons) window.lucide.createIcons(); }, 10); }
         function hideModal(id) { const m = document.getElementById(id); m.classList.add('opacity-0'); m.querySelector('.transform').classList.remove('scale-100'); m.querySelector('.transform').classList.add('scale-95'); setTimeout(() => { m.classList.add('hidden'); }, 300); }
 
         function validateForm(id) {
             const f = document.getElementById(id);
             const req = f.querySelectorAll('[required]');
             let ok = true, first = null;
-            req.forEach(el => {
-                if (!el.value.trim()) { el.classList.add('ring-2', 'ring-red-300'); if (!first) first = el; ok = false; }
-                else { el.classList.remove('ring-2', 'ring-red-300'); }
-            });
+            req.forEach(el => { if (!el.value.trim()) { el.classList.add('ring-2', 'ring-red-300'); if (!first) first = el; ok = false; } else { el.classList.remove('ring-2', 'ring-red-300'); } });
             if (!ok && first) { first.focus(); first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
             return ok;
         }
@@ -646,10 +643,10 @@ try {
                 el.className = 'selector-item';
                 el.onclick = () => selectAccount(a);
                 el.innerHTML = `<div>
-        <div class="selector-title text-secondary dark:text-white">${a.name}</div>
-        <div class="selector-sub text-gray-text dark:text-white/70">${a.account_number} • ${a.type.replace('_', ' ')}</div>
-      </div>
-      <i class="fas fa-chevron-right text-gray-400"></i>`;
+                    <div class="selector-title text-secondary dark:text-white">${a.name}</div>
+                    <div class="selector-sub text-gray-text dark:text-white/70">${a.account_number} • ${a.type.replace('_', ' ')}</div>
+                </div>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>`;
                 cards.appendChild(el);
             });
             showModal('accountSelectionModal');
@@ -735,7 +732,7 @@ try {
             if (!validateForm('cardPaymentForm')) return;
             const amount = parseFloat(document.getElementById('cardAmount').value);
             if (!amount || amount < 500) { showCardAmountError('Please enter a valid amount (minimum 500 UGX)'); return; }
-            const paymentUrl = `${BASE_URL}payment/card?amount=${amount}&description=Zzimba+wallet+top-up`;
+            const paymentUrl = `${baseUrl}payment/card?amount=${amount}&description=Zzimba+wallet+top-up`;
             window.open(paymentUrl, '_blank');
             hideCardPaymentModal();
             showTransactionResultModal('success', { title: 'Redirected to Payment', message: 'You have been redirected to our secure payment page. Complete the payment to add money to your wallet.', amount: amount, currency: 'UGX' });
@@ -798,6 +795,10 @@ try {
             } catch (_) { showGatewayPaymentStatus('error', 'Network Error', 'Please check your connection and try again.'); btn.disabled = false; btn.textContent = 'Add Money'; }
         };
 
+        function lucideSvg(name, extraClass) {
+            try { return window.lucide?.icons?.[name]?.toSvg({ class: extraClass || '' }) || ''; } catch (_) { return ''; }
+        }
+
         function showTransactionResultModal(type, data) {
             const modal = document.getElementById('transactionResultModal');
             const icon = document.getElementById('resultIcon');
@@ -808,25 +809,25 @@ try {
             const cont = modal.querySelector('.modal-content');
             cont.className = 'bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden modal-content transform transition-all duration-300 scale-95';
             icon.className = 'w-16 h-16 rounded-full grid place-items-center mx-auto mb-4';
-            function fmt(a) { return new Intl.NumberFormat('en-UG', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a); }
+            function fmt(a) { return new Intl.NumberFormat('en-UG', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a || 0); }
             if (type === 'success') {
-                cont.classList.add('border-t-4', 'border-green-500'); icon.classList.add('bg-green-100'); icon.innerHTML = '<i class="fas fa-check text-green-600 text-2xl"></i>';
+                cont.classList.add('border-t-4', 'border-green-500'); icon.classList.add('bg-green-100'); icon.innerHTML = lucideSvg('check', 'w-7 h-7 text-green-600');
                 det.innerHTML = `<div class="space-y-3 text-sm">
-        <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Amount:</span><span class="font-semibold">${data.currency || 'UGX'} ${fmt(data.amount)}</span></div>
-        ${data.charge ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Transaction Fee:</span><span class="font-semibold">${data.currency || 'UGX'} ${fmt(data.charge)}</span></div>` : ''}
-        <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Provider:</span><span class="font-semibold">${data.provider?.replace('_', ' ') || 'N/A'}</span></div>
-        <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Transaction ID:</span><span class="font-mono text-xs">${data.transactionId || 'N/A'}</span></div>
-        <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Reference:</span><span class="font-mono text-xs">${data.reference || 'N/A'}</span></div>
-        ${data.completedAt && data.completedAt !== 'N/A' ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Completed:</span><span class="text-xs">${new Date(data.completedAt).toLocaleString()}</span></div>` : ''}
-      </div>`;
+                    <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Amount:</span><span class="font-semibold">${data.currency || 'UGX'} ${fmt(data.amount)}</span></div>
+                    ${data.charge ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Transaction Fee:</span><span class="font-semibold">${data.currency || 'UGX'} ${fmt(data.charge)}</span></div>` : ''}
+                    <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Provider:</span><span class="font-semibold">${(data.provider || 'N/A').replace('_', ' ')}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Transaction ID:</span><span class="font-mono text-xs">${data.transactionId || 'N/A'}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Reference:</span><span class="font-mono text-xs">${data.reference || 'N/A'}</span></div>
+                    ${data.completedAt && data.completedAt !== 'N/A' ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Completed:</span><span class="text-xs">${new Date(data.completedAt).toLocaleString()}</span></div>` : ''}
+                </div>`;
             } else {
-                cont.classList.add('border-t-4', 'border-red-500'); icon.classList.add('bg-red-100'); icon.innerHTML = '<i class="fas fa-times text-red-600 text-2xl"></i>';
+                cont.classList.add('border-t-4', 'border-red-500'); icon.classList.add('bg-red-100'); icon.innerHTML = lucideSvg('x', 'w-7 h-7 text-red-600');
                 det.innerHTML = `<div class="space-y-3 text-sm">
-        ${data.amount ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Amount:</span><span class="font-semibold">${data.currency || 'UGX'} ${fmt(data.amount)}</span></div>` : ''}
-        ${data.provider ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Provider:</span><span class="font-semibold">${data.provider.replace('_', ' ')}</span></div>` : ''}
-        ${data.reference ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Reference:</span><span class="font-mono text-xs">${data.reference}</span></div>` : ''}
-        ${data.reason ? `<div class="mt-2 p-3 bg-red-50 dark:bg-white/10 rounded-lg text-red-800 dark:text-red-300 text-xs"><strong>Reason:</strong> ${data.reason}</div>` : ''}
-      </div>`;
+                    ${data.amount ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Amount:</span><span class="font-semibold">${data.currency || 'UGX'} ${fmt(data.amount)}</span></div>` : ''}
+                    ${data.provider ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Provider:</span><span class="font-semibold">${data.provider.replace('_', ' ')}</span></div>` : ''}
+                    ${data.reference ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Reference:</span><span class="font-mono text-xs">${data.reference}</span></div>` : ''}
+                    ${data.reason ? `<div class="mt-2 p-3 bg-red-50 dark:bg-white/10 rounded-lg text-red-800 dark:text-red-300 text-xs"><strong>Reason:</strong> ${data.reason}</div>` : ''}
+                </div>`;
             }
             showModal('transactionResultModal');
         }
@@ -863,12 +864,10 @@ try {
         function showGatewayPaymentStatus(type, title, message) {
             const div = document.getElementById('gwPaymentStatus'); const icon = document.getElementById('gwStatusIcon'); const t = document.getElementById('gwStatusTitle'); const m = document.getElementById('gwStatusMessage');
             t.textContent = title; m.textContent = message; div.className = 'p-3 rounded-lg'; icon.className = 'w-7 h-7 rounded-full grid place-items-center';
-            switch (type) {
-                case 'processing': div.classList.add('bg-blue-50', 'border', 'border-blue-200'); icon.classList.add('bg-blue-100'); icon.innerHTML = '<i class="fas fa-spinner fa-spin text-blue-600"></i>'; break;
-                case 'pending': div.classList.add('bg-yellow-50', 'border', 'border-yellow-200'); icon.classList.add('bg-yellow-100'); icon.innerHTML = '<i class="fas fa-clock text-yellow-600"></i>'; break;
-                case 'success': div.classList.add('bg-green-50', 'border', 'border-green-200'); icon.classList.add('bg-green-100'); icon.innerHTML = '<i class="fas fa-check text-green-600"></i>'; break;
-                case 'error': div.classList.add('bg-red-50', 'border', 'border-red-200'); icon.classList.add('bg-red-100'); icon.innerHTML = '<i class="fas fa-times text-red-600"></i>';
-            }
+            if (type === 'processing') { div.classList.add('bg-blue-50', 'border', 'border-blue-200'); icon.classList.add('bg-blue-100'); icon.innerHTML = lucideSvg('loader-2', 'w-4 h-4 text-blue-600 animate-spin'); }
+            else if (type === 'pending') { div.classList.add('bg-yellow-50', 'border', 'border-yellow-200'); icon.classList.add('bg-yellow-100'); icon.innerHTML = lucideSvg('clock', 'w-4 h-4 text-yellow-600'); }
+            else if (type === 'success') { div.classList.add('bg-green-50', 'border', 'border-green-200'); icon.classList.add('bg-green-100'); icon.innerHTML = lucideSvg('check', 'w-4 h-4 text-green-600'); }
+            else if (type === 'error') { div.classList.add('bg-red-50', 'border', 'border-red-200'); icon.classList.add('bg-red-100'); icon.innerHTML = lucideSvg('x', 'w-4 h-4 text-red-600'); }
             div.classList.remove('hidden');
         }
 

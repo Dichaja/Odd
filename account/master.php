@@ -3,7 +3,7 @@ require_once __DIR__ . '/../config/config.php';
 $appName = 'Zzimba';
 if (isset($_GET['manifest'])) {
     header('Content-Type: application/manifest+json');
-    $base = rtrim(BASE_URL, '/') . '/account/';
+    $base = rtrim(BASE_URL, '/');
     $icon = rtrim(BASE_URL, '/') . '/img/favicon.png';
     echo json_encode([
         'name' => $appName,
@@ -69,9 +69,8 @@ self.addEventListener('fetch',e=>{
 JS;
     exit;
 }
-if (session_status() === PHP_SESSION_NONE) {
+if (session_status() === PHP_SESSION_NONE)
     session_start();
-}
 if (!isset($_SESSION['user']) || empty($_SESSION['user']['logged_in'])) {
     session_unset();
     session_destroy();
@@ -89,15 +88,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
     exit;
 }
 $_SESSION['last_activity'] = time();
-$stmt = $pdo->prepare("
-    SELECT 
-        first_name,
-        email,
-        phone,
-        last_login
-    FROM zzimba_users
-    WHERE id = :user_id
-");
+$stmt = $pdo->prepare("SELECT first_name,email,phone,last_login FROM zzimba_users WHERE id = :user_id");
 $stmt->execute([':user_id' => $_SESSION['user']['user_id']]);
 $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
 $needsProfileCompletion = empty($userRow['first_name']) || empty($userRow['email']) || empty($userRow['phone']);
@@ -132,41 +123,16 @@ foreach (explode(' ', $userName) as $part) {
 }
 $sessionUlid = generateUlid();
 $steps = [
-    'profile' => [
-        'label' => 'Complete your profile',
-        'done' => !$needsProfileCompletion,
-        'url' => BASE_URL . 'account/profile',
-        'icon' => 'fa-id-card',
-        'optional' => false
-    ],
-    'wallet' => [
-        'label' => 'Activate Zzimba Wallet',
-        'done' => $hasWallet,
-        'url' => BASE_URL . 'account/zzimba-credit',
-        'icon' => 'fa-wallet',
-        'optional' => false
-    ],
-    'purchase' => [
-        'label' => 'Make 1st Purchase (Optional)',
-        'done' => $hasPurchase,
-        'url' => BASE_URL . 'request-for-quote',
-        'icon' => 'fa-cart-shopping',
-        'optional' => true
-    ],
-    'store' => [
-        'label' => 'Create your Store (Optional)',
-        'done' => $hasStore,
-        'url' => BASE_URL . 'account/zzimba-stores',
-        'icon' => 'fa-shop',
-        'optional' => true
-    ],
+    'profile' => ['label' => 'Complete your profile', 'done' => !$needsProfileCompletion, 'url' => BASE_URL . 'account/profile', 'icon' => 'badge-check', 'optional' => false],
+    'wallet' => ['label' => 'Activate Zzimba Wallet', 'done' => $hasWallet, 'url' => BASE_URL . 'account/zzimba-credit', 'icon' => 'wallet', 'optional' => false],
+    'purchase' => ['label' => 'Make 1st Purchase (Optional)', 'done' => $hasPurchase, 'url' => BASE_URL . 'request-for-quote', 'icon' => 'shopping-cart', 'optional' => true],
+    'store' => ['label' => 'Create your Store (Optional)', 'done' => $hasStore, 'url' => BASE_URL . 'account/zzimba-stores', 'icon' => 'store', 'optional' => true],
 ];
 $orderedKeys = ['profile', 'wallet', 'purchase', 'store'];
 $completed = 0;
-foreach ($steps as $s) {
+foreach ($steps as $s)
     if ($s['done'])
         $completed++;
-}
 $total = count($steps);
 $progressPercent = (int) round(($completed / max(1, $total)) * 100);
 $showOnboarding = ($completed < $total);
@@ -179,40 +145,34 @@ foreach ($orderedKeys as $k) {
 }
 $requiredDone = $steps['profile']['done'] && $steps['wallet']['done'];
 $onlyOptionalRemain = $requiredDone && (!$steps['purchase']['done'] || !$steps['store']['done']);
-
-/**
- * MENU: added "Communication" with sms-center & email-center
- */
 $menuItems = [
     'main' => [
         'title' => 'Main',
         'items' => [
-            'dashboard' => ['title' => 'Dashboard', 'icon' => 'fa-home', 'notifications' => 0],
-            'order-history' => ['title' => 'Order History', 'icon' => 'fa-history', 'notifications' => 0],
-        ],
+            'dashboard' => ['title' => 'Dashboard', 'icon' => 'home', 'notifications' => 0],
+        ]
     ],
     'finance' => [
         'title' => 'Finance',
         'items' => [
-            'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card', 'notifications' => 0],
-        ],
+            'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'credit-card', 'notifications' => 0],
+        ]
     ],
     'communication' => [
         'title' => 'Communication',
         'items' => [
-            'sms-center' => ['title' => 'SMS Center', 'icon' => 'fa-comment-dots', 'notifications' => 0],
-            'email-center' => ['title' => 'Email Center', 'icon' => 'fa-envelope', 'notifications' => 0],
-        ],
+            'sms-center' => ['title' => 'SMS Center', 'icon' => 'message-circle', 'notifications' => 0],
+            'email-center' => ['title' => 'Email Center', 'icon' => 'mail', 'notifications' => 0],
+        ]
     ],
     'shopping' => [
         'title' => 'Shopping',
         'items' => [
-            'zzimba-stores' => ['title' => 'Zzimba Store', 'icon' => 'fa-shopping-cart', 'notifications' => 0],
-            'quotations' => ['title' => 'My RFQs', 'icon' => 'fa-file-invoice', 'notifications' => 0],
-        ],
+            'zzimba-stores' => ['title' => 'Zzimba Store', 'icon' => 'store', 'notifications' => 0],
+            'quotations' => ['title' => 'My RFQs', 'icon' => 'file-text', 'notifications' => 0],
+        ]
     ],
 ];
-
 if ($needsProfileCompletion) {
     $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';
     if (strpos($currentPath, '/account/profile') === false) {
@@ -247,27 +207,74 @@ if ($needsProfileCompletion) {
     <meta name="apple-mobile-web-app-title" content="Zzimba Online">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
         const SESSION_ULID = "<?= $sessionUlid ?>";
         const PAGE_TITLE = "<?= addslashes($pageTitle ?? '') ?>";
         const APP_SCOPE = (new URL('account/', BASE_URL)).toString();
-        const APP_ICON = (new URL('img/favicon.png', BASE_URL)).toString();
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: { primary: '#D92B13', secondary: '#1a1a1a', 'gray-text': '#4B5563', 'user-primary': '#D92B13', 'user-secondary': '#F8C2BC', 'user-accent': '#E6F2FF', 'user-content': '#F5F9FF' },
-                    fontFamily: { rubik: ['Rubik', 'sans-serif'] }
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: '#D92B13', secondary: '#1a1a1a', 'gray-text': '#4B5563', 'user-primary': '#D92B13', 'user-secondary': '#F8C2BC', 'user-accent': '#E6F2FF', 'user-content': '#F5F9FF' }, fontFamily: { rubik: ['Rubik', 'sans-serif'] } } } }
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('ui', {
+                mode: 'system',
+                sheet: null,
+                init() {
+                    const saved = localStorage.getItem('zzimba_theme') || 'system';
+                    this.setTheme(saved, false);
+                    const media = window.matchMedia('(prefers-color-scheme: dark)');
+                    media.addEventListener('change', () => { if (this.mode === 'system') this.applySystem(); });
+                    this.syncMeta();
+                    this.initPWA();
+                    window.addEventListener('load', () => { const splash = document.getElementById('zz-splash'); if (splash) setTimeout(() => splash.style.display = 'none', 60); });
+                },
+                setTheme(val, persist = true) {
+                    this.mode = val;
+                    if (persist) localStorage.setItem('zzimba_theme', val);
+                    if (val === 'dark') document.documentElement.classList.add('dark');
+                    else if (val === 'light') document.documentElement.classList.remove('dark');
+                    else this.applySystem();
+                    this.syncMeta();
+                },
+                applySystem() {
+                    if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+                    else document.documentElement.classList.remove('dark');
+                },
+                syncMeta() {
+                    const meta = document.getElementById('meta-theme-color');
+                    if (meta) meta.setAttribute('content', document.documentElement.classList.contains('dark') ? '#1a1a1a' : '#ffffff');
+                },
+                openSheet(name) { this.sheet = name; document.body.style.overflow = 'hidden'; },
+                closeSheet() { this.sheet = null; document.body.style.overflow = ''; },
+                initPWA() {
+                    if ('serviceWorker' in navigator) navigator.serviceWorker.register('master.php?sw=1', { scope: APP_SCOPE }).catch(() => { });
+                    const banner = document.getElementById('install-banner');
+                    let _deferred = null;
+                    const canShow = () => { const until = parseInt(localStorage.getItem('zz_install_later_until') || '0', 10); return Date.now() > until; };
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault(); _deferred = e;
+                        const installed = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+                        if (!installed && canShow()) banner?.classList.remove('hidden');
+                    });
+                    window.addEventListener('appinstalled', () => { banner?.classList.add('hidden'); _deferred = null; localStorage.removeItem('zz_install_later_until'); });
+                    function postponeInstall() { localStorage.setItem('zz_install_later_until', String(Date.now() + 12 * 60 * 60 * 1000)); banner?.classList.add('hidden'); }
+                    function doInstall() {
+                        if (!_deferred) { postponeInstall(); return; }
+                        _deferred.prompt();
+                        _deferred.userChoice.then(choice => {
+                            if (choice.outcome !== 'accepted') postponeInstall(); else { banner?.classList.add('hidden'); localStorage.removeItem('zz_install_later_until'); }
+                        }).finally(() => { _deferred = null; });
+                    }
+                    document.getElementById('install-later')?.addEventListener('click', postponeInstall);
+                    document.getElementById('install-later-m')?.addEventListener('click', postponeInstall);
+                    document.getElementById('install-now')?.addEventListener('click', doInstall);
+                    document.getElementById('install-now-m')?.addEventListener('click', doInstall);
                 }
-            }
-        }
+            });
+        });
+        document.addEventListener('alpine:initialized', () => { try { lucide.createIcons(); } catch (e) { } Alpine.store('ui')?.init?.(); });
+        document.addEventListener('alpine:updated', () => { try { lucide.createIcons(); } catch (e) { } });
     </script>
     <style>
         * {
@@ -276,6 +283,10 @@ if ($needsProfileCompletion) {
 
         body {
             font-family: 'Rubik', sans-serif
+        }
+
+        [x-cloak] {
+            display: none !important
         }
 
         ::-webkit-scrollbar {
@@ -370,7 +381,7 @@ if ($needsProfileCompletion) {
         }
 
         .dark .user-sidebar {
-            background-color: var(--tw-color-secondary, #1a1a1a);
+            background-color: #1a1a1a;
             border-right-color: rgba(255, 255, 255, .08)
         }
 
@@ -379,7 +390,7 @@ if ($needsProfileCompletion) {
         }
 
         .dark .user-header {
-            background: var(--tw-color-secondary, #1a1a1a);
+            background: #1a1a1a;
             border-bottom: 1px solid rgba(255, 255, 255, .08);
             box-shadow: none
         }
@@ -399,7 +410,7 @@ if ($needsProfileCompletion) {
         }
 
         .dark .main-content-area {
-            background-color: var(--tw-color-secondary, #1a1a1a)
+            background-color: #1a1a1a
         }
 
         .dark .theme-pill {
@@ -552,24 +563,6 @@ if ($needsProfileCompletion) {
             overflow: auto
         }
 
-        .sheet a .fas {
-            color: #1a1a1a
-        }
-
-        .dark .sheet a .fas {
-            color: #ffffff
-        }
-
-        .sheet .sheet-close {
-            color: #1a1a1a;
-            border-color: #e5e7eb
-        }
-
-        .dark .sheet .sheet-close {
-            color: #ffffff;
-            border-color: rgba(255, 255, 255, .1)
-        }
-
         input[type="checkbox"] {
             accent-color: #D92B13
         }
@@ -601,8 +594,8 @@ if ($needsProfileCompletion) {
     </style>
 </head>
 
-<body class="bg-user-content dark:bg-secondary font-rubik min-h-screen" x-data="themeRoot()" x-init="init()">
-    <div id="zz-splash" class="splash splash--light">
+<body class="bg-user-content dark:bg-secondary font-rubik min-h-screen" x-data>
+    <div id="zz-splash" class="splash splash--light dark:splash--dark">
         <div class="flex flex-col items-center gap-5">
             <div class="relative">
                 <img src="<?= BASE_URL ?>img/favicon.png" alt="Zzimba Online"
@@ -611,6 +604,7 @@ if ($needsProfileCompletion) {
             <div class="bar"></div>
         </div>
     </div>
+
     <div id="install-banner" class="install-banner hidden">
         <div class="install-card">
             <div class="flex items-center gap-3 p-3 sm:p-4">
@@ -630,9 +624,12 @@ if ($needsProfileCompletion) {
             </div>
         </div>
     </div>
-    <div id="sheetOverlay" class="sheet-overlay hidden z-[48]"></div>
+
+    <div x-show="$store.ui.sheet" @click="$store.ui.closeSheet()" class="sheet-overlay hidden z-[48]"
+        x-transition.opacity x-bind:class="{'hidden': !$store.ui.sheet}"></div>
+
     <div class="flex min-h-screen">
-        <aside id="sidebar"
+        <aside
             class="hidden lg:block user-sidebar dark:text-white fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100 dark:border-white/10">
@@ -641,7 +638,7 @@ if ($needsProfileCompletion) {
                         <span class="text-lg font-semibold text-gray-900 dark:text-white">Zzimba Online</span>
                     </a>
                 </div>
-                <nav id="sidebarNav" class="flex-1 overflow-y-auto py-6 px-4 pb-1">
+                <nav class="flex-1 overflow-y-auto py-6 px-4 pb-1">
                     <?php foreach ($menuItems as $category): ?>
                         <div class="nav-category"><?= htmlspecialchars($category['title']) ?></div>
                         <div class="space-y-1 mb-2">
@@ -649,7 +646,7 @@ if ($needsProfileCompletion) {
                                 <a href="<?= BASE_URL ?>account/<?= $key ?>"
                                     class="user-nav-item group flex items-center justify-between px-4 py-2.5 text-sm rounded-lg transition-all duration-200 <?= $activeNav === $key ? 'active' : 'text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:text-white dark:hover:bg-white/10' ?>">
                                     <div class="flex items-center gap-3">
-                                        <i class="fas <?= $item['icon'] ?> w-5 h-5"></i>
+                                        <i data-lucide="<?= htmlspecialchars($item['icon']) ?>" class="w-5 h-5"></i>
                                         <span><?= htmlspecialchars($item['title']) ?></span>
                                     </div>
                                     <?php if ($item['notifications'] > 0): ?>
@@ -664,15 +661,18 @@ if ($needsProfileCompletion) {
                 <div class="p-4 border-t border-gray-100 dark:border-white/10">
                     <div class="space-y-2">
                         <a href="<?= BASE_URL ?>account/profile"
-                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
-                                class="fas fa-user w-5 h-5 mr-3"></i>My Profile</a>
+                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white">
+                            <i data-lucide="user" class="w-5 h-5 mr-3"></i>My Profile
+                        </a>
                         <a href="<?= BASE_URL ?>account/settings"
-                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white"><i
-                                class="fas fa-cog w-5 h-5 mr-3"></i>Settings</a>
+                            class="flex items-center px-4 py-2.5 text-sm rounded-lg text-gray-text hover:bg-gray-50 hover:text-user-primary dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white">
+                            <i data-lucide="settings" class="w-5 h-5 mr-3"></i>Settings
+                        </a>
                     </div>
                 </div>
             </div>
         </aside>
+
         <div class="flex-1 lg:ml-64">
             <header
                 class="user-header sticky top-0 z-40 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary">
@@ -683,41 +683,49 @@ if ($needsProfileCompletion) {
                     <div class="flex items-center gap-1 sm:gap-2">
                         <div class="relative" x-data="{open:false}">
                             <button @click="open=!open"
-                                class="w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
-                                <span x-show="mode==='light'"><i class="fa-solid fa-sun"></i></span>
-                                <span x-show="mode==='dark'"><i class="fa-solid fa-moon"></i></span>
-                                <span x-show="mode==='system'"><i class="fa-solid fa-circle-half-stroke"></i></span>
+                                class="w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
+                                title="Theme">
+                                <i data-lucide="sun" class="w-5 h-5" x-show="$store.ui.mode==='light'"></i>
+                                <i data-lucide="moon" class="w-5 h-5" x-show="$store.ui.mode==='dark'"></i>
+                                <i data-lucide="monitor" class="w-5 h-5" x-show="$store.ui.mode==='system'"></i>
                             </button>
-                            <div x-show="open" @click.away="open=false" x-transition
+                            <div x-show="open" @click.outside="open=false" x-transition
                                 class="absolute right-0 mt-2 w-44 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-1 z-50">
                                 <button
                                     class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                    :class="{'bg-gray-100 dark:bg-white/10': mode==='light'}"
-                                    @click="setTheme('light');open=false"><span><i
-                                            class="fa-solid fa-sun mr-2"></i>Light</span><i class="fa-solid fa-check"
-                                        x-show="mode==='light'"></i></button>
+                                    :class="{'bg-gray-100 dark:bg-white/10': $store.ui.mode==='light'}"
+                                    @click="$store.ui.setTheme('light');open=false">
+                                    <span class="flex items-center"><i data-lucide="sun"
+                                            class="w-4 h-4 mr-2"></i>Light</span>
+                                    <i data-lucide="check" class="w-4 h-4" x-show="$store.ui.mode==='light'"></i>
+                                </button>
                                 <button
                                     class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                    :class="{'bg-gray-100 dark:bg-white/10': mode==='dark'}"
-                                    @click="setTheme('dark');open=false"><span><i
-                                            class="fa-solid fa-moon mr-2"></i>Dark</span><i class="fa-solid fa-check"
-                                        x-show="mode==='dark'"></i></button>
+                                    :class="{'bg-gray-100 dark:bg-white/10': $store.ui.mode==='dark'}"
+                                    @click="$store.ui.setTheme('dark');open=false">
+                                    <span class="flex items-center"><i data-lucide="moon"
+                                            class="w-4 h-4 mr-2"></i>Dark</span>
+                                    <i data-lucide="check" class="w-4 h-4" x-show="$store.ui.mode==='dark'"></i>
+                                </button>
                                 <button
                                     class="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                    :class="{'bg-gray-100 dark:bg-white/10': mode==='system'}"
-                                    @click="setTheme('system');open=false"><span><i
-                                            class="fa-solid fa-circle-half-stroke mr-2"></i>System</span><i
-                                        class="fa-solid fa-check" x-show="mode==='system'"></i></button>
+                                    :class="{'bg-gray-100 dark:bg-white/10': $store.ui.mode==='system'}"
+                                    @click="$store.ui.setTheme('system');open=false">
+                                    <span class="flex items-center"><i data-lucide="monitor"
+                                            class="w-4 h-4 mr-2"></i>System</span>
+                                    <i data-lucide="check" class="w-4 h-4" x-show="$store.ui.mode==='system'"></i>
+                                </button>
                             </div>
                         </div>
+
                         <div x-data="notifComponent()" x-init="init()" class="relative hidden md:block">
                             <button @click="toggle"
                                 class="relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
-                                <i class="fas fa-bell text-lg"></i>
+                                <i data-lucide="bell" class="w-5 h-5"></i>
                                 <span x-show="count > 0" x-text="count"
                                     class="absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center"></span>
                             </button>
-                            <div x-show="open" @click.away="open = false" x-transition
+                            <div x-show="open" @click.outside="open = false" x-transition
                                 class="fixed top-16 left-2 right-2 w-auto max-w-full sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white dark:bg-secondary rounded-lg shadow-lg border border-gray-100 dark:border-white/10 z-50 max-h-96 overflow-auto">
                                 <div
                                     class="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-white/10">
@@ -753,8 +761,9 @@ if ($needsProfileCompletion) {
                                             </a>
                                         </div>
                                         <button @click.stop="dismiss(note.target_id)"
-                                            class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition"><i
-                                                class="fas fa-times"></i></button>
+                                            class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
+                                            <i data-lucide="x" class="w-4 h-4"></i>
+                                        </button>
                                     </div>
                                 </template>
                                 <div x-show="notes.length === 0"
@@ -762,94 +771,88 @@ if ($needsProfileCompletion) {
                                 </div>
                             </div>
                         </div>
-                        <div class="relative hidden md:block" id="userDropdown">
-                            <button
+
+                        <div class="relative hidden md:block" x-data="{open:false}">
+                            <button @click="open=!open"
                                 class="flex items-center gap-3 rounded-lg px-3 py-2 theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
                                 title="Last login: <?= htmlspecialchars($formattedLastLogin) ?>">
                                 <div class="user-initials"><?= htmlspecialchars($userInitials) ?></div>
                                 <span class="text-sm font-medium"><?= htmlspecialchars($userName) ?></span>
-                                <i class="fas fa-chevron-down text-sm opacity-70"></i>
+                                <i data-lucide="chevron-down" class="w-4 h-4 opacity-70"></i>
                             </button>
-                            <div id="userDropdownMenu"
-                                class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
-                                <div class="px-4 py-3 bg-gray-50 dark:bg:white/5 dark:bg-white/5">
+                            <div x-show="open" @click.outside="open=false" x-transition
+                                class="absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
+                                <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        <?= htmlspecialchars($userName) ?>
-                                    </p>
+                                        <?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500 dark:text-white/70">
-                                        <?= htmlspecialchars($userEmail) ?>
-                                    </p>
-                                    <p class="text-xs text-gray-500 dark:text:white/70 dark:text-white/70 mt-1">Last
-                                        login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?>
-                                    </p>
+                                        <?= htmlspecialchars($userEmail) ?></p>
+                                    <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
+                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
                                 </div>
                                 <a href="<?= BASE_URL ?>account/profile"
-                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
-                                        class="fas fa-user w-5 h-5 text-gray-400 dark:text-white/60"></i>My Profile</a>
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10">
+                                    <i data-lucide="user" class="w-5 h-5 text-gray-400 dark:text-white/60"></i>My
+                                    Profile
+                                </a>
                                 <a href="<?= BASE_URL ?>account/order-history"
-                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
-                                        class="fas fa-shopping-bag w-5 h-5 text-gray-400 dark:text-white/60"></i>My
-                                    Orders</a>
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10">
+                                    <i data-lucide="shopping-bag"
+                                        class="w-5 h-5 text-gray-400 dark:text-white/60"></i>My Orders
+                                </a>
                                 <a href="<?= BASE_URL ?>account/settings"
-                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10"><i
-                                        class="fas fa-cog w-5 h-5 text-gray-400 dark:text-white/60"></i>Settings</a>
-                                <div class="my-2 border-t border-gray-100 dark:border:white/10 dark:border-white/10">
-                                </div>
-                                <a href="javascript:void(0);" onclick="logoutUser(); return false;"
-                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-user-primary hover:bg-gray-50 dark:hover:bg-white/10"><i
-                                        class="fas fa-sign-out-alt w-5 h-5"></i>Logout</a>
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10">
+                                    <i data-lucide="settings"
+                                        class="w-5 h-5 text-gray-400 dark:text-white/60"></i>Settings
+                                </a>
+                                <div class="my-2 border-t border-gray-100 dark:border-white/10"></div>
+                                <a href="javascript:void(0);"
+                                    @click.prevent="fetch(BASE_URL + 'auth/logout', {method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{ if(d.success) location.href = BASE_URL; else alert(d.message||'Failed to logout'); }).catch(()=>alert('Failed to connect to server.'))"
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-user-primary hover:bg-gray-50 dark:hover:bg-white/10">
+                                    <i data-lucide="log-out" class="w-5 h-5"></i>Logout
+                                </a>
                             </div>
                         </div>
-                        <button id="mobileNotifBtn"
-                            class="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg:white/10 dark:hover:bg-white/10">
-                            <i class="fas fa-bell text-lg"></i>
+
+                        <button
+                            class="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
+                            @click="$store.ui.openSheet('notif')">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
                             <span id="mobileNotifCount"
                                 class="hidden absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center">0</span>
                         </button>
-                        <button id="mobileAccountBtn"
-                            class="md:hidden w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
+                        <button
+                            class="md:hidden w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
+                            @click="$store.ui.openSheet('account')">
                             <span class="user-initials w-8 h-8"><?= htmlspecialchars($userInitials) ?></span>
                         </button>
                     </div>
                 </div>
             </header>
+
             <div class="flex flex-col min-h-[calc(100vh-64px)]">
                 <main
                     class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white main-fixed">
                     <?php if ($showOnboarding):
-                        $hideKey = 'zz_gs_hide_until_' . htmlspecialchars($_SESSION['user']['user_id']);
-                        ?>
-                        <div id="getting-started"
-                            class="gs-card-gradient border border-gray-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 mb-4 sm:mb-6"
-                            x-data="{
-                            hiddenUntil: parseInt(localStorage.getItem('<?= $hideKey ?>') || '0',10),
-                            now: Date.now(),
-                            dismissed() { return this.hiddenUntil > this.now; },
-                            percent: <?= (int) $progressPercent ?>,
-                            canDismiss: <?= $onlyOptionalRemain ? 'true' : 'false' ?>,
-                            hide30() {
-                                if(!this.canDismiss) return;
-                                const until = Date.now() + (30*60*1000);
-                                localStorage.setItem('<?= $hideKey ?>', String(until));
-                                this.hiddenUntil = until;
-                            }
-                         }" x-show="!dismissed()" x-transition>
+                        $hideKey = 'zz_gs_hide_until_' . htmlspecialchars($_SESSION['user']['user_id']); ?>
+                        <div class="gs-card-gradient border border-gray-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 mb-4 sm:mb-6"
+                            x-data="{hiddenUntil: parseInt(localStorage.getItem('<?= $hideKey ?>') || '0',10), now: Date.now(), percent: <?= (int) $progressPercent ?>, canDismiss: <?= $onlyOptionalRemain ? 'true' : 'false' ?>, dismissed() { return this.hiddenUntil > this.now }, close12(){ if(!this.canDismiss) return; const until = Date.now() + (12*60*60*1000); localStorage.setItem('<?= $hideKey ?>', String(until)); this.hiddenUntil = until; }}"
+                            x-show="!dismissed()" x-transition x-cloak>
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <h2 class="text-base sm:text-lg font-semibold text-secondary dark:text-white">Getting
                                         started</h2>
-                                    <p class="text-xs sm:text-sm text-gray-600 dark:text-white/70">
-                                        Finish these steps to unlock the best Zzimba experience.
-                                        <span
+                                    <p class="text-xs sm:text-sm text-gray-600 dark:text-white/70">Finish these steps to
+                                        unlock the best Zzimba experience. <span
                                             class="inline-block ml-1 text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-user-primary/10 text-user-primary font-medium">Profile
-                                            & Wallet are required</span>
-                                    </p>
+                                            & Wallet are required</span></p>
                                 </div>
                                 <template x-if="canDismiss">
-                                    <button
-                                        class="text-xs px-3 py-1.5 rounded-md border border-gray-300/70 dark:border-white/20 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
-                                        @click="hide30()">Hide 30 min</button>
+                                    <button @click="close12()"
+                                        class="p-2 rounded-md border border-gray-300/70 dark:border-white/20 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-white/10"
+                                        aria-label="Close">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
                                 </template>
                             </div>
                             <div class="mt-3 sm:mt-4">
@@ -873,31 +876,29 @@ if ($needsProfileCompletion) {
                                     $isLocked = (!$isDone && $firstIncompleteKey !== null && array_search($key, $orderedKeys, true) > array_search($firstIncompleteKey, $orderedKeys, true));
                                     $badge = $s['optional'] ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-gray-200/70 dark:bg-white/10 text-gray-700 dark:text-white/70">Optional</span>' : '';
                                     $wrapClasses = 'rounded-xl border gs-step transition-colors';
-                                    if ($isDone) {
+                                    if ($isDone)
                                         $wrapClasses .= ' border-green-200 dark:border-green-800/40 bg-green-50/60 dark:bg-green-900/10';
-                                    } elseif ($isCurrent) {
+                                    elseif ($isCurrent)
                                         $wrapClasses .= ' border-transparent bg-user-primary text-white';
-                                    } elseif ($isLocked) {
+                                    elseif ($isLocked)
                                         $wrapClasses .= ' border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 locked';
-                                    } else {
+                                    else
                                         $wrapClasses .= ' border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5';
-                                    }
                                     $iconClasses = 'inline-flex h-9 w-9 items-center justify-center rounded-lg';
-                                    if ($isDone) {
+                                    if ($isDone)
                                         $iconClasses .= ' bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
-                                    } elseif ($isCurrent) {
+                                    elseif ($isCurrent)
                                         $iconClasses .= ' bg-white/20 text-white';
-                                    } else {
+                                    else
                                         $iconClasses .= ' bg-gray-100 text-secondary dark:bg-white/10 dark:text-white';
-                                    }
                                     $canClick = $isCurrent;
                                     $startTag = $canClick ? '<a href="' . htmlspecialchars($s['url']) . '" class="block ' . $wrapClasses . '">' : '<div class="block ' . $wrapClasses . ' ' . ($isLocked ? 'cursor-not-allowed' : '') . '">';
                                     $endTag = $canClick ? '</a>' : '</div>';
                                     echo $startTag;
                                     ?>
                                     <div class="p-3.5 sm:p-4 flex items-center gap-3">
-                                        <span class="<?= $iconClasses ?>"><i
-                                                class="fa-solid <?= htmlspecialchars($s['icon']) ?>"></i></span>
+                                        <span class="<?= $iconClasses ?>"><i data-lucide="<?= htmlspecialchars($s['icon']) ?>"
+                                                class="w-5 h-5"></i></span>
                                         <div class="min-w-0 flex-1">
                                             <div
                                                 class="text-sm font-medium <?= $isCurrent ? 'text-white' : 'text-secondary dark:text-white' ?> truncate">
@@ -906,21 +907,21 @@ if ($needsProfileCompletion) {
                                             <div
                                                 class="text-[11px] mt-0.5 <?= $isDone ? 'text-green-700 dark:text-green-300' : ($isCurrent ? 'text-white/90' : 'text-gray-600 dark:text-white/70') ?>">
                                                 <?php if ($isDone): ?>
-                                                    <i class="fa-solid fa-circle-check mr-1"></i> Completed
+                                                    <i data-lucide="check-circle-2" class="inline w-4 h-4 mr-1"></i> Completed
                                                 <?php elseif ($isCurrent): ?>
-                                                    <i class="fa-solid fa-arrow-right mr-1"></i> Continue
+                                                    <i data-lucide="arrow-right" class="inline w-4 h-4 mr-1"></i> Continue
                                                 <?php else: ?>
-                                                    <i class="fa-solid fa-lock mr-1"></i> Locked
+                                                    <i data-lucide="lock" class="inline w-4 h-4 mr-1"></i> Locked
                                                 <?php endif; ?>
                                             </div>
                                         </div>
                                         <?php if ($isDone): ?>
-                                            <i class="fa-solid fa-check text-green-600 dark:text-green-400"></i>
+                                            <i data-lucide="check" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
                                         <?php elseif ($isCurrent): ?>
-                                            <i
-                                                class="fa-solid fa-chevron-right <?= $isCurrent ? 'text-white' : 'text-gray-400' ?>"></i>
+                                            <i data-lucide="chevron-right"
+                                                class="w-5 h-5 <?= $isCurrent ? 'text-white' : 'text-gray-400' ?>"></i>
                                         <?php else: ?>
-                                            <i class="fa-solid fa-ban text-gray-300 dark:text-white/40"></i>
+                                            <i data-lucide="ban" class="w-5 h-5 text-gray-300 dark:text-white/40"></i>
                                         <?php endif; ?>
                                     </div>
                                     <?= $endTag; endforeach; ?>
@@ -933,61 +934,58 @@ if ($needsProfileCompletion) {
         </div>
     </div>
 
-    <!-- MOBILE TABBAR: Home (BASE_URL), SMS, Credit, Stores, More -->
-    <div id="mobileTabbar"
+    <div
         class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-secondary border-t border-gray-200 dark:border-white/10 mobile-tabbar">
         <div class="grid grid-cols-5 h-full">
             <a href="<?= BASE_URL ?>"
                 class="flex flex-col items-center justify-center text-xs text-gray-500 dark:text-white/70">
-                <i class="fa-solid fa-house mb-0.5"></i><span class="leading-none">Home</span>
+                <i data-lucide="home" class="w-5 h-5 mb-0.5"></i><span class="leading-none">Home</span>
             </a>
             <a href="<?= BASE_URL ?>account/sms-center"
                 class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'sms-center' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
-                <i class="fa-solid fa-comment-dots mb-0.5"></i><span class="leading-none">SMS</span>
+                <i data-lucide="message-circle" class="w-5 h-5 mb-0.5"></i><span class="leading-none">SMS</span>
             </a>
             <a href="<?= BASE_URL ?>account/zzimba-credit"
                 class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'zzimba-credit' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
-                <i class="fa-solid fa-wallet mb-0.5"></i><span class="leading-none">Credit</span>
+                <i data-lucide="wallet" class="w-5 h-5 mb-0.5"></i><span class="leading-none">Credit</span>
             </a>
             <a href="<?= BASE_URL ?>account/zzimba-stores"
                 class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'zzimba-stores' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
-                <i class="fa-solid fa-shop mb-0.5"></i><span class="leading-none">Stores</span>
+                <i data-lucide="store" class="w-5 h-5 mb-0.5"></i><span class="leading-none">Stores</span>
             </a>
-            <button id="mobileMoreBtn"
+            <button @click="$store.ui.openSheet('more')"
                 class="flex flex-col items-center justify-center text-xs <?= in_array($activeNav, ['sms-center', 'zzimba-stores', 'zzimba-credit']) ? 'text-gray-500 dark:text-white/70' : 'text-secondary dark:text-white' ?>">
-                <i class="fa-solid fa-ellipsis mb-0.5"></i><span class="leading-none">More</span>
+                <i data-lucide="ellipsis" class="w-5 h-5 mb-0.5"></i><span class="leading-none">More</span>
             </button>
         </div>
     </div>
 
-    <div id="mobileMoreSheet"
-        class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
+    <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet"
+        x-bind:class="{'open': $store.ui.sheet==='more'}">
         <div class="px-4 pt-3 pb-4">
             <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-3"></div>
             <div class="grid grid-cols-2 gap-2">
-                <?php foreach ($menuItems as $category): ?>
-                    <?php foreach ($category['items'] as $key => $item): ?>
+                <?php foreach ($menuItems as $category):
+                    foreach ($category['items'] as $key => $item): ?>
                         <a href="<?= BASE_URL ?>account/<?= $key ?>"
                             class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                             <span
                                 class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                                    class="fas <?= $item['icon'] ?> text-secondary dark:text-white"></i></span>
+                                    data-lucide="<?= $item['icon'] ?>"
+                                    class="w-5 h-5 text-secondary dark:text-white"></i></span>
                             <div>
                                 <div class="text-sm font-medium text-secondary dark:text-white">
-                                    <?= htmlspecialchars($item['title']) ?>
-                                </div>
+                                    <?= htmlspecialchars($item['title']) ?></div>
                                 <div class="text-[11px] text-gray-500 dark:text-white/70">
-                                    <?= htmlspecialchars(ucfirst($category['title'])) ?>
-                                </div>
+                                    <?= htmlspecialchars(ucfirst($category['title'])) ?></div>
                             </div>
                         </a>
-                    <?php endforeach; ?>
-                <?php endforeach; ?>
+                    <?php endforeach; endforeach; ?>
                 <a href="<?= BASE_URL ?>account/settings"
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-cog text-secondary dark:text-white"></i></span>
+                            data-lucide="settings" class="w-5 h-5 text-secondary dark:text-white"></i></span>
                     <div>
                         <div class="text-sm font-medium text-secondary dark:text-white">Settings</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">Preferences</div>
@@ -997,27 +995,26 @@ if ($needsProfileCompletion) {
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-user text-secondary dark:text-white"></i></span>
+                            data-lucide="user" class="w-5 h-5 text-secondary dark:text-white"></i></span>
                     <div>
                         <div class="text-sm font-medium text-secondary dark:text-white">My Profile</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">Account</div>
                     </div>
                 </a>
             </div>
-            <button id="mobileMoreClose" class="mt-4 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
+            <button class="mt-4 w-full py-2.5 rounded-xl border text-sm" @click="$store.ui.closeSheet()">Close</button>
         </div>
     </div>
 
-    <div id="mobileAccountSheet"
-        class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
+    <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet"
+        x-bind:class="{'open': $store.ui.sheet==='account'}">
         <div class="px-4 pt-3 pb-4">
             <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-3"></div>
             <div class="flex items-center gap-3 mb-3">
                 <div class="user-initials w-10 h-10"><?= htmlspecialchars($userInitials) ?></div>
                 <div class="min-w-0">
                     <div class="text-sm font-medium text-secondary dark:text-white truncate">
-                        <?= htmlspecialchars($userName) ?>
-                    </div>
+                        <?= htmlspecialchars($userName) ?></div>
                     <div class="text-xs text-gray-500 dark:text-white/70 truncate"><?= htmlspecialchars($userEmail) ?>
                     </div>
                 </div>
@@ -1027,7 +1024,7 @@ if ($needsProfileCompletion) {
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-user text-secondary dark:text-white"></i></span>
+                            data-lucide="user" class="w-5 h-5 text-secondary dark:text-white"></i></span>
                     <div>
                         <div class="text-sm font-medium text-secondary dark:text-white">My Profile</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">Account</div>
@@ -1037,43 +1034,44 @@ if ($needsProfileCompletion) {
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-cog text-secondary dark:text-white"></i></span>
+                            data-lucide="settings" class="w-5 h-5 text-secondary dark:text-white"></i></span>
                     <div class="text-left">
                         <div class="text-sm font-medium text-secondary dark:text-white">Settings</div>
-                        <div id="mobileThemeLabel" class="text-[11px] text-gray-500 dark:text-white/70">Preferences
-                        </div>
+                        <div class="text-[11px] text-gray-500 dark:text-white/70"
+                            x-text="$store.ui.mode.charAt(0).toUpperCase()+$store.ui.mode.slice(1)"></div>
                     </div>
                 </a>
-                <button id="mobileThemeBtn"
+                <button
+                    @click="$store.ui.setTheme($store.ui.mode==='light'?'dark':$store.ui.mode==='dark'?'system':'light')"
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fa-solid fa-circle-half-stroke text-secondary dark:text-white"></i></span>
+                            data-lucide="monitor" class="w-5 h-5 text-secondary dark:text-white"></i></span>
                     <div class="text-left">
                         <div class="text-sm font-medium text-secondary dark:text-white">Theme</div>
-                        <div id="mobileThemeLabel2" class="text-[11px] text-gray-500 dark:text-white/70">System</div>
+                        <div class="text-[11px] text-gray-500 dark:text-white/70"
+                            x-text="$store.ui.mode.charAt(0).toUpperCase()+$store.ui.mode.slice(1)"></div>
                     </div>
                 </button>
                 <a href="<?= BASE_URL ?>account/order-history"
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            class="fas fa-shopping-bag text-secondary dark:text-white"></i></span>
+                            data-lucide="shopping-bag" class="w-5 h-5 text-secondary dark:text-white"></i></span>
                     <div>
                         <div class="text-sm font-medium text-secondary dark:text-white">My Orders</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">History</div>
                     </div>
                 </a>
             </div>
-            <button id="mobileLogout"
-                class="mt-4 w-full py-2.5 rounded-xl bg-user-primary text-white text-sm">Logout</button>
-            <button id="mobileAccountClose"
-                class="mt-2 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
+            <button class="mt-4 w-full py-2.5 rounded-xl bg-user-primary text-white text-sm"
+                @click="fetch(BASE_URL + 'auth/logout', {method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{ if(d.success) location.href = BASE_URL; else alert(d.message||'Failed to logout'); }).catch(()=>alert('Failed to connect to server.'))">Logout</button>
+            <button class="mt-2 w-full py-2.5 rounded-xl border text-sm" @click="$store.ui.closeSheet()">Close</button>
         </div>
     </div>
 
-    <div id="mobileNotifSheet"
-        class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet">
+    <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet"
+        x-bind:class="{'open': $store.ui.sheet==='notif'}">
         <div class="px-4 pt-3 pb-2">
             <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-3"></div>
             <div x-data="notifComponent()" x-init="init()">
@@ -1110,16 +1108,16 @@ if ($needsProfileCompletion) {
                                 </a>
                             </div>
                             <button @click.stop="dismiss(note.target_id)"
-                                class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition"><i
-                                    class="fas fa-times"></i></button>
+                                class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
                         </div>
                     </template>
                     <div x-show="notes.length === 0" class="p-4 text-sm text-center text-gray-500 dark:text-white/70">No
                         notifications</div>
                 </div>
             </div>
-            <button id="mobileNotifClose"
-                class="mt-3 w-full py-2.5 rounded-xl border text-sm sheet-close">Close</button>
+            <button class="mt-3 w-full py-2.5 rounded-xl border text-sm" @click="$store.ui.closeSheet()">Close</button>
         </div>
     </div>
 
@@ -1142,70 +1140,38 @@ if ($needsProfileCompletion) {
 
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
-        const userDropdown = document.getElementById('userDropdown');
-        const userDropdownMenu = document.getElementById('userDropdownMenu');
-        if (userDropdown) {
-            userDropdown.addEventListener('click', e => { e.stopPropagation(); userDropdownMenu.classList.toggle('hidden') });
-            document.addEventListener('click', () => userDropdownMenu.classList.add('hidden'));
-        }
-        function logoutUser() {
-            $.ajax({
-                url: BASE_URL + 'auth/logout', type: 'POST', contentType: 'application/json', dataType: 'json',
-                success(data) { data.success ? location.href = BASE_URL : alert(data.message || 'Failed to logout') },
-                error() { alert('Failed to connect to server.') }
-            });
-        }
         function notifComponent() {
             return {
-                open: false,
-                notes: [],
-                count: 0,
-                selected: [],
-                lastTs: null,
-                timer: null,
+                open: false, notes: [], count: 0, selected: [], lastTs: null, timer: null,
                 toggle() { this.open = !this.open },
                 init() {
                     this.fetchNow();
                     this.timer = setInterval(() => this.fetchNow(), 20000);
-                    document.addEventListener('visibilitychange', () => {
-                        if (document.visibilityState === 'visible') this.fetchNow();
-                    });
+                    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.fetchNow(); });
                 },
                 setBadge(c) {
                     this.count = c;
                     const badge = document.getElementById('mobileNotifCount');
-                    if (badge) {
-                        if (this.count > 0) { badge.textContent = this.count; badge.classList.remove('hidden'); }
-                        else { badge.classList.add('hidden'); }
-                    }
+                    if (badge) { if (this.count > 0) { badge.textContent = this.count; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } }
                 },
                 mergeIncoming(arr) {
                     if (!Array.isArray(arr) || !arr.length) return;
                     const existing = new Map(this.notes.map(n => [n.target_id, n]));
                     for (const n of arr) {
-                        if (!existing.has(n.target_id)) {
-                            this.notes.unshift(n);
-                            existing.set(n, n);
-                        } else {
-                            const idx = this.notes.findIndex(x => x.target_id === n.target_id);
-                            if (idx >= 0) this.notes[idx] = n;
-                        }
+                        if (!existing.has(n.target_id)) { this.notes.unshift(n); existing.set(n.target_id, n); }
+                        else { const idx = this.notes.findIndex(x => x.target_id === n.target_id); if (idx >= 0) this.notes[idx] = n; }
                     }
                     this.notes = this.notes.slice(0, 100);
                 },
                 fetchNow() {
-                    const url = new URL(BASE_URL + 'fetch/manageNotifications.php');
-                    url.searchParams.set('action', 'fetch');
-                    if (this.lastTs) url.searchParams.set('since', this.lastTs);
+                    const url = new URL(BASE_URL + 'fetch/manageNotifications.php'); url.searchParams.set('action', 'fetch'); if (this.lastTs) url.searchParams.set('since', this.lastTs);
                     fetch(url.toString(), { cache: 'no-store' })
                         .then(r => r.json())
                         .then(res => {
                             if (res && res.status === 'success') {
                                 const incoming = res.data || [];
-                                if (this.lastTs) this.mergeIncoming(incoming);
-                                else this.notes = incoming;
-                                const latest = res.latest_ts || (incoming[0]?.created_at ?? this.lastTs);
-                                if (latest) this.lastTs = latest;
+                                if (this.lastTs) this.mergeIncoming(incoming); else this.notes = incoming;
+                                const latest = res.latest_ts || (incoming[0]?.created_at ?? this.lastTs); if (latest) this.lastTs = latest;
                                 const nextCount = Number.isInteger(res.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                                 this.setBadge(nextCount);
                                 this.selected = this.selected.filter(id => this.notes.some(n => n.target_id === id));
@@ -1277,143 +1243,17 @@ if ($needsProfileCompletion) {
                 }
             };
         }
-        const overlay = document.getElementById('sheetOverlay');
-        const body = document.body;
-        const sheets = { account: document.getElementById('mobileAccountSheet'), more: document.getElementById('mobileMoreSheet'), notif: document.getElementById('mobileNotifSheet') };
-        function isAnyOpen() { return Object.values(sheets).some(el => el.classList.contains('open')) }
-        function openSheet(el) { el.classList.add('open'); overlay.classList.remove('hidden'); body.style.overflow = 'hidden' }
-        function closeSheet(el) { el.classList.remove('open'); if (!isAnyOpen()) { overlay.classList.add('hidden'); body.style.overflow = '' } }
-        function closeAllSheets() { Object.values(sheets).forEach(el => el.classList.remove('open')); overlay.classList.add('hidden'); body.style.overflow = '' }
-        overlay.addEventListener('click', closeAllSheets);
-        const mobileAccountBtn = document.getElementById('mobileAccountBtn');
-        const mobileAccountSheet = sheets.account;
-        const mobileAccountClose = document.getElementById('mobileAccountClose');
-        const mobileMoreBtn = document.getElementById('mobileMoreBtn');
-        const mobileMoreSheet = sheets.more;
-        const mobileMoreClose = document.getElementById('mobileMoreClose');
-        const mobileLogout = document.getElementById('mobileLogout');
-        const mobileNotifBtn = document.getElementById('mobileNotifBtn');
-        const mobileNotifSheet = sheets.notif;
-        const mobileNotifClose = document.getElementById('mobileNotifClose');
-        mobileAccountBtn.addEventListener('click', e => { e.stopPropagation(); openSheet(mobileAccountSheet) });
-        mobileAccountClose.addEventListener('click', () => closeSheet(mobileAccountSheet));
-        mobileMoreBtn.addEventListener('click', e => { e.stopPropagation(); openSheet(mobileMoreSheet) });
-        mobileMoreClose.addEventListener('click', () => closeSheet(mobileMoreSheet));
-        mobileNotifBtn.addEventListener('click', e => { e.stopPropagation(); openSheet(mobileNotifSheet) });
-        mobileNotifClose.addEventListener('click', () => closeSheet(mobileNotifSheet));
-        mobileLogout.addEventListener('click', () => logoutUser());
-        function themeRoot() {
-            return {
-                mode: 'system',
-                init() {
-                    const saved = localStorage.getItem('zzimba_theme') || 'system';
-                    this.setTheme(saved, false);
-                    const media = window.matchMedia('(prefers-color-scheme: dark)');
-                    media.addEventListener('change', () => { if (this.mode === 'system') this.applySystem() });
-                    const themeBtn = document.getElementById('mobileThemeBtn');
-                    if (themeBtn) { themeBtn.addEventListener('click', () => { const next = this.mode === 'light' ? 'dark' : this.mode === 'dark' ? 'system' : 'light'; this.setTheme(next); }); }
-                    this.syncMobileLabel();
-                    this.syncMetaThemeColor();
-                    this.skinSplash();
-                    initPWA();
-                    setupSplashNavigation();
-                },
-                setTheme(val, persist = true) {
-                    this.mode = val;
-                    if (persist) localStorage.setItem('zzimba_theme', val);
-                    if (val === 'dark') document.documentElement.classList.add('dark');
-                    else if (val === 'light') document.documentElement.classList.remove('dark');
-                    else this.applySystem();
-                    this.syncMobileLabel();
-                    this.syncMetaThemeColor();
-                    this.skinSplash();
-                },
-                applySystem() {
-                    if (window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
-                    else document.documentElement.classList.remove('dark');
-                },
-                syncMobileLabel() {
-                    const lbl = document.getElementById('mobileThemeLabel');
-                    const lbl2 = document.getElementById('mobileThemeLabel2');
-                    if (lbl) lbl.textContent = this.mode.charAt(0).toUpperCase() + this.mode.slice(1);
-                    if (lbl2) lbl2.textContent = this.mode.charAt(0).toUpperCase() + this.mode.slice(1);
-                },
-                syncMetaThemeColor() {
-                    const meta = document.getElementById('meta-theme-color');
-                    const isDark = document.documentElement.classList.contains('dark');
-                    meta.setAttribute('content', isDark ? '#1a1a1a' : '#ffffff');
-                },
-                skinSplash() {
-                    const splash = document.getElementById('zz-splash');
-                    if (!splash) return;
-                    const isDark = document.documentElement.classList.contains('dark');
-                    splash.classList.remove('splash--light', 'splash--dark');
-                    splash.classList.add(isDark ? 'splash--dark' : 'splash--light');
-                }
-            }
-        }
-        let _deferredPrompt = null;
-        function initPWA() {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('master.php?sw=1', { scope: APP_SCOPE }).catch(() => { });
-            }
-            const banner = document.getElementById('install-banner');
-            const laterBtn = document.getElementById('install-later');
-            const laterBtnM = document.getElementById('install-later-m');
-            const nowBtn = document.getElementById('install-now');
-            const nowBtnM = document.getElementById('install-now-m');
-            const canShow = () => { const until = parseInt(localStorage.getItem('zz_install_later_until') || '0', 10); return Date.now() > until; };
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                _deferredPrompt = e;
-                const installed = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-                if (!installed && canShow()) banner.classList.remove('hidden');
-            });
-            window.addEventListener('appinstalled', () => {
-                banner.classList.add('hidden');
-                _deferredPrompt = null;
-                localStorage.removeItem('zz_install_later_until');
-            });
-            function closeFor30Min() { localStorage.setItem('zz_install_later_until', String(Date.now() + 30 * 60 * 1000)); banner.classList.add('hidden'); }
-            function doInstall() {
-                if (!_deferredPrompt) { banner.classList.add('hidden'); return; }
-                _deferredPrompt.prompt();
-                _deferredPrompt.userChoice.finally(() => { _deferredPrompt = null; banner.classList.add('hidden'); });
-            }
-            if (laterBtn) laterBtn.addEventListener('click', closeFor30Min);
-            if (laterBtnM) laterBtnM.addEventListener('click', closeFor30Min);
-            if (nowBtn) nowBtn.addEventListener('click', doInstall);
-            if (nowBtnM) nowBtnM.addEventListener('click', doInstall);
-        }
-        function setupSplashNavigation() {
-            const splash = document.getElementById('zz-splash');
-            if (!splash) return;
-            window.addEventListener('load', () => { setTimeout(() => { splash.style.display = 'none'; }, 60); });
-            document.addEventListener('click', function (e) {
-                const a = e.target.closest('a'); if (!a) return;
-                if (a.hasAttribute('data-no-loader')) return;
-                const href = a.getAttribute('href') || ''; if (href.startsWith('#')) return;
-                if (a.target || a.hasAttribute('download')) return;
-                const url = new URL(a.href, location.href); if (url.origin !== location.origin) return;
-                document.getElementById('zz-splash').style.display = '';
-                e.preventDefault();
-                setTimeout(() => { window.location.href = a.href; }, 50);
-            });
-            window.addEventListener('beforeunload', () => { document.getElementById('zz-splash').style.display = ''; });
-        }
+
         window.addEventListener('load', function () {
-            const url = localStorage.getItem('return_url');
-            const title = localStorage.getItem('return_title');
+            const url = localStorage.getItem('return_url'); const title = localStorage.getItem('return_title');
             if (url && title && title !== PAGE_TITLE) {
                 function showReturnModal() {
                     document.getElementById('return-page-title').textContent = title;
-                    const modal = document.getElementById('return-modal');
-                    modal.classList.remove('hidden'); modal.classList.add('flex');
+                    const modal = document.getElementById('return-modal'); modal.classList.remove('hidden'); modal.classList.add('flex');
                 }
                 setTimeout(showReturnModal, 120000);
                 document.getElementById('return-later').addEventListener('click', function () {
-                    const modal = document.getElementById('return-modal');
-                    modal.classList.remove('flex'); modal.classList.add('hidden'); setTimeout(showReturnModal, 300000);
+                    const modal = document.getElementById('return-modal'); modal.classList.remove('flex'); modal.classList.add('hidden'); setTimeout(showReturnModal, 300000);
                 });
                 document.getElementById('return-continue').addEventListener('click', function () {
                     localStorage.removeItem('return_url'); localStorage.removeItem('return_title'); window.location.href = url;
@@ -1424,6 +1264,15 @@ if ($needsProfileCompletion) {
                 });
             }
         });
+
+        (function loadEventLogIfJQ() {
+            if (window.jQuery) {
+                var s = document.createElement('script');
+                s.src = BASE_URL + 'track/eventLog.js?v=<?= time() ?>';
+                s.defer = true;
+                document.head.appendChild(s);
+            }
+        })();
     </script>
 </body>
 

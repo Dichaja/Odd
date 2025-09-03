@@ -9,7 +9,6 @@ function formatCurrency($amount)
     return number_format($amount, 2);
 }
 ?>
-
 <div class="min-h-screen bg-user-content dark:bg-secondary/10">
     <div class="bg-white dark:bg-secondary border-b border-gray-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 py-5">
         <div class="max-w-6xl mx-auto">
@@ -17,7 +16,7 @@ function formatCurrency($amount)
                 <div class="flex-1">
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 bg-primary/10 rounded-xl grid place-items-center">
-                            <i class="fas fa-wallet text-primary text-xl"></i>
+                            <i data-lucide="wallet" class="w-6 h-6 text-primary"></i>
                         </div>
                         <div>
                             <h1 class="text-2xl lg:text-3xl font-bold text-secondary dark:text-white font-rubik">Zzimba
@@ -29,11 +28,11 @@ function formatCurrency($amount)
                 <div class="grid grid-cols-2 sm:flex gap-3">
                     <button id="add-money-btn" onclick="showPaymentMethodModal()"
                         class="px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-lg shadow-primary/25">
-                        <i class="fas fa-plus"></i><span>Top Up</span>
+                        <i data-lucide="plus" class="w-4 h-4"></i><span>Top Up</span>
                     </button>
                     <button id="send-credit-btn" onclick="showSendCreditModal()"
                         class="px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-lg shadow-primary/25">
-                        <i class="fas fa-paper-plane"></i><span>Send Credit</span>
+                        <i data-lucide="send" class="w-4 h-4"></i><span>Send Credit</span>
                     </button>
                 </div>
             </div>
@@ -49,7 +48,7 @@ function formatCurrency($amount)
                     <div class="lg:col-span-2">
                         <div class="flex items-start gap-4">
                             <div class="w-16 h-16 bg-primary/10 rounded-2xl grid place-items-center">
-                                <i class="fas fa-wallet text-primary text-2xl"></i>
+                                <i data-lucide="wallet" class="w-7 h-7 text-primary"></i>
                             </div>
                             <div class="flex-1">
                                 <div id="walletLoading" class="animate-pulse">
@@ -63,11 +62,10 @@ function formatCurrency($amount)
                                     <p class="text-gray-600 dark:text-white/70 mb-2" id="ownerName"></p>
                                     <div
                                         class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-500 dark:text-white/70">
-                                        <span class="flex items-center gap-1"><i
-                                                class="fas fa-id-card text-xs"></i><span id="walletId"></span></span>
-                                        <span class="flex items-center gap-1"><i
-                                                class="fas fa-calendar text-xs"></i><span
-                                                id="createdDate"></span></span>
+                                        <span class="flex items-center gap-1"><i data-lucide="id-card"
+                                                class="w-3.5 h-3.5"></i><span id="walletId"></span></span>
+                                        <span class="flex items-center gap-1"><i data-lucide="calendar"
+                                                class="w-3.5 h-3.5"></i><span id="createdDate"></span></span>
                                     </div>
                                 </div>
                             </div>
@@ -84,7 +82,7 @@ function formatCurrency($amount)
                             <p class="text-3xl lg:text-4xl font-bold text-primary mb-2" id="balanceText"></p>
                             <span id="statusBadge"
                                 class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium">
-                                <i class="mr-1"></i><span></span>
+                                <span id="statusBadgeIcon" class="mr-1 inline-flex"></span><span></span>
                             </span>
                         </div>
                     </div>
@@ -105,8 +103,8 @@ function formatCurrency($amount)
                     <div class="flex items-stretch sm:items-center w-full sm:w-auto gap-2 sm:gap-3">
                         <button id="viewColumnsBtn" onclick="toggleColumnSelector()"
                             class="hidden lg:inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-white/20 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-white/10 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-                            <i class="fas fa-eye text-xs"></i><span>View</span><i
-                                class="fas fa-chevron-down text-xs"></i>
+                            <i data-lucide="eye" class="w-4 h-4"></i><span>View</span><i data-lucide="chevron-down"
+                                class="w-4 h-4"></i>
                         </button>
                         <div class="relative">
                             <div id="columnSelector"
@@ -160,7 +158,7 @@ function formatCurrency($amount)
                             <button id="dateFilterBtn"
                                 class="w-full sm:w-auto inline-flex items-center justify-between gap-2 px-4 py-2 border border-gray-300 dark:border-white/20 rounded-lg text-sm bg-white dark:bg-secondary text-secondary dark:text-white">
                                 <span id="dateFilterLabel">All transactions</span>
-                                <i class="fas fa-chevron-down text-xs"></i>
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
                             </button>
                             <div id="dateFilterMenu"
                                 class="hidden absolute right-0 top-full mt-2 bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-lg shadow-lg z-[100] min-w-56">
@@ -223,7 +221,7 @@ function formatCurrency($amount)
 
             <div id="transactionsEmpty" class="hidden text-center py-16">
                 <div class="w-24 h-24 bg-gray-100 dark:bg-white/10 rounded-full grid place-items-center mx-auto mb-4">
-                    <i class="fas fa-receipt text-gray-400 dark:text-white/60 text-2xl"></i>
+                    <i data-lucide="receipt" class="w-8 h-8 text-gray-400 dark:text-white/60"></i>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No transactions found</h3>
                 <p class="text-gray-500 dark:text-white/70 mb-6">Start by adding money to your wallet</p>
@@ -240,12 +238,12 @@ function formatCurrency($amount)
                         <button
                             class="px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-600 dark:text-white/80 hover:bg-white dark:hover:bg-white/10 transition-colors disabled:opacity-50"
                             disabled>
-                            <i class="fas fa-chevron-left mr-1"></i>Previous
+                            <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i>Previous
                         </button>
                         <button
                             class="px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-600 dark:text-white/80 hover:bg-white dark:hover:bg-white/10 transition-colors disabled:opacity-50"
                             disabled>
-                            Next<i class="fas fa-chevron-right ml-1"></i>
+                            Next<i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
                         </button>
                     </div>
                 </div>
@@ -261,7 +259,7 @@ function formatCurrency($amount)
             <div class="flex items-start justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 rounded-xl bg-primary/10 grid place-items-center">
-                        <i class="fas fa-check text-primary text-xl"></i>
+                        <i data-lucide="check-circle" class="w-6 h-6 text-primary"></i>
                     </div>
                     <div>
                         <h3 class="text-xl font-bold text-secondary dark:text-white font-rubik">Account Activated</h3>
@@ -269,7 +267,7 @@ function formatCurrency($amount)
                     </div>
                 </div>
                 <button id="newAccCloseBtn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">
-                    <i class="fas fa-times text-gray-500"></i>
+                    <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
                 </button>
             </div>
             <div class="mt-5 space-y-4">
@@ -282,9 +280,8 @@ function formatCurrency($amount)
             </div>
             <div class="mt-6 flex items-center justify-end gap-3">
                 <button id="newAccOkBtn"
-                    class="px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all">
-                    Got it
-                </button>
+                    class="px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all">Got
+                    it</button>
             </div>
         </div>
     </div>
@@ -314,6 +311,18 @@ function formatCurrency($amount)
 </style>
 
 <script>
+    function renderIcons() {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    }
+    function setLucideIcon(container, name, classes) {
+        try {
+            if (!window.lucide || !window.lucide.icons || !window.lucide.icons[name]) return;
+            container.innerHTML = window.lucide.icons[name].toSvg({ class: classes || '' });
+        } catch (e) { }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const apiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageZzimbaCredit.php') ?>;
         const ownerName = <?= json_encode(trim(($_SESSION['user']['first_name'] ?? '') . ' ' . ($_SESSION['user']['last_name'] ?? ''))) ?>;
@@ -332,6 +341,7 @@ function formatCurrency($amount)
         loadWalletData();
         loadTransactions();
         displayTransactionsView();
+        renderIcons();
 
         window.addEventListener('resize', function () { adjustTableFontSize(); displayTransactionsView(); });
 
@@ -388,18 +398,11 @@ function formatCurrency($amount)
             const modal = document.getElementById('newAccountModal');
             modal.classList.remove('hidden');
             newAccountModalShown = true;
-
-            function closeAndReload() {
-                modal.classList.add('hidden');
-                window.location.reload();
-            }
-
+            function closeAndReload() { modal.classList.add('hidden'); window.location.reload(); }
             document.getElementById('newAccCloseBtn').onclick = closeAndReload;
             document.getElementById('newAccOkBtn').onclick = closeAndReload;
             modal.addEventListener('click', (e) => { if (e.target.id === 'newAccountModal') closeAndReload(); });
-            document.addEventListener('keydown', function escHandler(e) {
-                if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); closeAndReload(); }
-            });
+            document.addEventListener('keydown', function escHandler(e) { if (e.key === 'Escape') { document.removeEventListener('keydown', escHandler); closeAndReload(); } });
         }
 
         function loadWalletData() {
@@ -414,11 +417,13 @@ function formatCurrency($amount)
                         document.getElementById('walletId').textContent = w.wallet_number;
                         document.getElementById('createdDate').textContent = new Date(w.created_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
                         document.getElementById('balanceText').textContent = 'UGX ' + parseFloat(w.current_balance).toLocaleString(undefined, { minimumFractionDigits: 2 });
-                        const badge = document.getElementById('statusBadge'); const badgeText = badge.querySelector('span'); const badgeIcon = badge.querySelector('i');
+                        const badge = document.getElementById('statusBadge');
+                        const badgeText = badge.querySelector('span:last-child');
+                        const badgeIconWrap = document.getElementById('statusBadgeIcon');
                         badgeText.textContent = w.status.charAt(0).toUpperCase() + w.status.slice(1);
                         badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium';
-                        if (w.status === 'active') { badge.classList.add('bg-green-100', 'text-green-800'); badgeIcon.className = 'fas fa-check-circle mr-1'; }
-                        else { badge.classList.add('bg-gray-100', 'text-gray-600'); badgeIcon.className = 'fas fa-times-circle mr-1'; }
+                        if (w.status === 'active') { badge.classList.add('bg-green-100', 'text-green-800'); setLucideIcon(badgeIconWrap, 'check-circle', 'w-4 h-4'); }
+                        else { badge.classList.add('bg-gray-100', 'text-gray-600'); setLucideIcon(badgeIconWrap, 'x-circle', 'w-4 h-4'); }
                         document.getElementById('walletLoading').classList.add('hidden');
                         document.getElementById('balanceLoading').classList.add('hidden');
                         document.getElementById('walletInfo').classList.remove('hidden');
@@ -427,7 +432,9 @@ function formatCurrency($amount)
                         if (typeof data.newAccount !== 'undefined') {
                             maybeShowNewAccountModal(Boolean(data.newAccount), w.wallet_number, data.bonus_amount, w.wallet_id);
                         }
-                    } else { showWalletError('Failed to load wallet data'); }
+                    } else {
+                        showWalletError('Failed to load wallet data');
+                    }
                 })
                 .catch(() => { showWalletError('Network error loading wallet data'); });
         }
@@ -510,7 +517,8 @@ function formatCurrency($amount)
         function renderTransactions(entries) {
             const tbody = document.getElementById('transactionsTableBody');
             const mobile = document.getElementById('transactionsMobile');
-            tbody.innerHTML = ''; mobile.innerHTML = '';
+            tbody.innerHTML = '';
+            mobile.innerHTML = '';
 
             entries.forEach((entry, idx) => {
                 const tr = document.createElement('tr');
