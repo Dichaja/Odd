@@ -43,12 +43,12 @@ try {
 <style>
     .form-group {
         display: grid;
-        gap: .375rem;
+        gap: .375rem
     }
 
     .form-label {
         font-size: .875rem;
-        font-weight: 600;
+        font-weight: 600
     }
 
     .form-input,
@@ -59,14 +59,14 @@ try {
         font-size: .875rem;
         border: 1px solid rgb(209 213 219);
         border-radius: .5rem;
-        background: white;
+        background: #fff;
         color: rgb(17 24 39);
-        line-height: 1.25rem;
+        line-height: 1.25rem
     }
 
     .form-textarea {
         resize: vertical;
-        min-height: 2.75rem;
+        min-height: 2.75rem
     }
 
     .form-input:focus,
@@ -74,62 +74,62 @@ try {
     .form-select:focus {
         outline: none;
         box-shadow: 0 0 0 4px rgb(217 43 19 / .15);
-        border-color: rgb(217 43 19);
+        border-color: rgb(217 43 19)
     }
 
     .dark .form-input,
     .dark .form-textarea,
     .dark .form-select {
         background: transparent;
-        color: white;
-        border-color: rgba(255, 255, 255, .2);
+        color: #fff;
+        border-color: rgba(255, 255, 255, .2)
     }
 
     .dark .form-input::placeholder,
     .dark .form-textarea::placeholder {
-        color: rgba(255, 255, 255, .6);
+        color: rgba(255, 255, 255, .6)
     }
 
     .selector-item {
         border: 1px solid rgb(229 231 235);
         border-radius: .75rem;
         padding: .875rem 1rem;
-        background: white;
+        background: #fff;
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: .75rem;
         transition: border-color .2s, background-color .2s, transform .12s;
-        cursor: pointer;
+        cursor: pointer
     }
 
     .selector-item:hover {
         border-color: rgb(217 43 19 / .5);
-        background: rgb(217 43 19 / .04);
+        background: rgb(217 43 19 / .04)
     }
 
     .selector-item:active {
-        transform: scale(.995);
+        transform: scale(.995)
     }
 
     .selector-title {
-        font-weight: 600;
+        font-weight: 600
     }
 
     .selector-sub {
         font-size: .75rem;
         opacity: .7;
-        margin-top: .125rem;
+        margin-top: .125rem
     }
 
     .dark .selector-item {
         background: transparent;
-        border-color: rgba(255, 255, 255, .12);
+        border-color: rgba(255, 255, 255, .12)
     }
 
     .dark .selector-item:hover {
         background: rgba(255, 255, 255, .06);
-        border-color: rgba(255, 255, 255, .25);
+        border-color: rgba(255, 255, 255, .25)
     }
 </style>
 
@@ -285,29 +285,42 @@ try {
             </div>
 
             <form id="mobileMoneyForm" class="grid gap-4">
-                <div class="form-group">
+                <div class="form-group" x-data>
                     <label for="mmPhoneNumber" class="form-label text-secondary dark:text-white">Phone number used <span
                             class="text-red-500">*</span></label>
-                    <div class="flex">
+                    <div
+                        class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-white/20 bg-white dark:bg-transparent focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary">
                         <span
-                            class="inline-flex items-center px-3 rounded-l-lg border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/10 text-sm text-gray-600 dark:text-white/80">+256</span>
-                        <input type="tel" id="mmPhoneNumber" name="mmPhoneNumber" class="form-input rounded-l-none"
-                            placeholder="771234567" maxlength="9" pattern="[0-9]{9}" required>
+                            class="inline-flex items-center px-3 text-sm text-gray-600 dark:text-white/80 bg-gray-50 dark:bg-white/10">+256</span>
+                        <input type="tel" id="mmPhoneNumber" name="mmPhoneNumber"
+                            class="form-input border-0 rounded-none focus:ring-0 flex-1 min-w-0" placeholder="771234567"
+                            maxlength="9" pattern="[0-9]{9}" required>
                     </div>
+                    <p class="text-xs text-gray-500 dark:text-white/60">Enter 9 digits without the leading 0.</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="form-group">
-                        <label for="mmAmount" class="form-label text-secondary dark:text-white">Amount (UGX) <span
-                                class="text-red-500">*</span></label>
-                        <input type="number" id="mmAmount" name="mmAmount" min="500" step="100" class="form-input"
-                            placeholder="e.g. 100000" required>
+                <div class="form-group">
+                    <label for="mmAmount" class="form-label text-secondary dark:text-white">Amount (UGX) <span
+                            class="text-red-500">*</span></label>
+                    <input type="number" id="mmAmount" name="mmAmount" min="500" step="100" class="form-input"
+                        placeholder="e.g. 100000" required>
+                </div>
+
+                <div class="form-group" x-data
+                    x-init="$nextTick(()=>{ if(!document.getElementById('mmDateTime').value){ document.getElementById('mmDateTime').value = getKampalaDateTimeLocal(); } })">
+                    <label for="mmDateTime" class="form-label text-secondary dark:text-white">Date & Time <span
+                            class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input type="datetime-local" id="mmDateTime" name="mmDateTime" class="form-input pr-10" required
+                            x-ref="dt">
+                        <button type="button"
+                            class="absolute inset-y-0 right-0 px-3 grid place-items-center text-gray-500 dark:text-white/70"
+                            @click="$refs.dt.showPicker ? $refs.dt.showPicker() : $refs.dt.focus()">
+                            <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="mmDateTime" class="form-label text-secondary dark:text-white">Date & Time <span
-                                class="text-red-500">*</span></label>
-                        <input type="datetime-local" id="mmDateTime" name="mmDateTime" class="form-input" required>
-                    </div>
+                    <p class="text-xs text-gray-500 dark:text-white/60">Tap the calendar to pick the exact date & time.
+                    </p>
                 </div>
 
                 <div class="form-group">
@@ -369,18 +382,28 @@ try {
             </div>
 
             <form id="bankTransferForm" class="grid gap-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="form-group">
-                        <label for="btAmount" class="form-label text-secondary dark:text-white">Amount (UGX) <span
-                                class="text-red-500">*</span></label>
-                        <input type="number" id="btAmount" name="btAmount" min="500" step="100" class="form-input"
-                            placeholder="e.g. 250000" required>
+                <div class="form-group">
+                    <label for="btAmount" class="form-label text-secondary dark:text-white">Amount (UGX) <span
+                            class="text-red-500">*</span></label>
+                    <input type="number" id="btAmount" name="btAmount" min="500" step="100" class="form-input"
+                        placeholder="e.g. 250000" required>
+                </div>
+
+                <div class="form-group" x-data
+                    x-init="$nextTick(()=>{ if(!document.getElementById('btDateTime').value){ document.getElementById('btDateTime').value = getKampalaDateTimeLocal(); } })">
+                    <label for="btDateTime" class="form-label text-secondary dark:text-white">Date & Time <span
+                            class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <input type="datetime-local" id="btDateTime" name="btDateTime" class="form-input pr-10" required
+                            x-ref="dt">
+                        <button type="button"
+                            class="absolute inset-y-0 right-0 px-3 grid place-items-center text-gray-500 dark:text-white/70"
+                            @click="$refs.dt.showPicker ? $refs.dt.showPicker() : $refs.dt.focus()">
+                            <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="btDateTime" class="form-label text-secondary dark:text-white">Date & Time <span
-                                class="text-red-500">*</span></label>
-                        <input type="datetime-local" id="btDateTime" name="btDateTime" class="form-input" required>
-                    </div>
+                    <p class="text-xs text-gray-500 dark:text-white/60">Pick the exact date & time of the bank deposit.
+                    </p>
                 </div>
 
                 <div class="form-group">
@@ -445,15 +468,16 @@ try {
                 <div class="form-group">
                     <label for="gwPhoneNumber" class="form-label text-secondary dark:text-white">Phone Number <span
                             class="text-red-500">*</span></label>
-                    <div class="flex items-stretch">
+                    <div
+                        class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-white/20 bg-white dark:bg-transparent focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary">
                         <span
-                            class="inline-flex items-center px-3 rounded-l-lg border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/10 text-sm text-gray-600 dark:text-white/80">+256</span>
+                            class="inline-flex items-center px-3 text-sm text-gray-600 dark:text-white/80 bg-gray-50 dark:bg-white/10">+256</span>
                         <input type="tel" id="gwPhoneNumber" name="gwPhoneNumber"
-                            class="form-input rounded-l-none pr-10" placeholder="771234567" maxlength="9"
-                            pattern="[0-9]{9}" required>
+                            class="form-input border-0 rounded-none focus:ring-0 flex-1 min-w-0 pr-10"
+                            placeholder="771234567" maxlength="9" pattern="[0-9]{9}" required>
                     </div>
                     <div class="mt-1 text-xs text-gray-500 dark:text-white/60">Enter exactly 9 digits (without the
-                        leading 0)</div>
+                        leading 0).</div>
                     <div id="gwCustomerName" class="mt-2 text-sm text-green-600 hidden"></div>
                     <div id="gwPhoneError" class="mt-2 text-sm text-red-600 hidden"></div>
                 </div>
@@ -596,36 +620,34 @@ try {
 </div>
 
 <script>
+    function setLucideIcon(el, name, classes) {
+        try {
+            if (!window.lucide || !window.lucide.icons || !window.lucide.icons[name]) return;
+            el.innerHTML = window.lucide.icons[name].toSvg({ class: classes || '' });
+        } catch (e) { }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+
         const topupUrl = <?= json_encode(BASE_URL . 'account/fetch/manageTopup.php') ?>;
         const gatewayApiUrl = <?= json_encode(BASE_URL . 'account/fetch/manageZzimbaCredit.php') ?>;
-        const baseUrl = <?= json_encode(BASE_URL) ?>;
         const groupedAccounts = <?= json_encode($groupedAccounts) ?>;
         const walletId = <?= json_encode($walletId) ?>;
 
         let selectedAccount = null, selectedCategory = null, selectedGatewayMethod = null, validatedMsisdn = null, customerName = null, currentPaymentReference = null, statusCheckInterval = null, validationTimeout = null, pendingPaymentData = null;
 
-        function getKampalaDateTimeLocal() { const parts = new Date().toLocaleString('sv', { timeZone: 'Africa/Kampala', hour12: false }).split(' '); return `${parts[0]}T${parts[1].slice(0, 5)}`; }
-        function showModal(id) { const m = document.getElementById(id); m.classList.remove('hidden'); setTimeout(() => { m.classList.remove('opacity-0'); m.querySelector('.transform').classList.remove('scale-95'); m.querySelector('.transform').classList.add('scale-100'); if (window.lucide?.createIcons) window.lucide.createIcons(); }, 10); }
+        window.getKampalaDateTimeLocal = function () { const parts = new Date().toLocaleString('sv', { timeZone: 'Africa/Kampala', hour12: false }).split(' '); return `${parts[0]}T${parts[1].slice(0, 5)}`; };
+        function showModal(id) { const m = document.getElementById(id); m.classList.remove('hidden'); setTimeout(() => { m.classList.remove('opacity-0'); m.querySelector('.transform').classList.remove('scale-95'); m.querySelector('.transform').classList.add('scale-100'); }, 10); }
         function hideModal(id) { const m = document.getElementById(id); m.classList.add('opacity-0'); m.querySelector('.transform').classList.remove('scale-100'); m.querySelector('.transform').classList.add('scale-95'); setTimeout(() => { m.classList.add('hidden'); }, 300); }
 
-        function validateForm(id) {
-            const f = document.getElementById(id);
-            const req = f.querySelectorAll('[required]');
-            let ok = true, first = null;
-            req.forEach(el => { if (!el.value.trim()) { el.classList.add('ring-2', 'ring-red-300'); if (!first) first = el; ok = false; } else { el.classList.remove('ring-2', 'ring-red-300'); } });
-            if (!ok && first) { first.focus(); first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-            return ok;
-        }
+        function validateForm(id) { const f = document.getElementById(id); const req = f.querySelectorAll('[required]'); let ok = true, first = null; req.forEach(el => { if (!el.value.trim()) { el.classList.add('ring-2', 'ring-red-300'); if (!first) first = el; ok = false; } else { el.classList.remove('ring-2', 'ring-red-300'); } }); if (!ok && first) { first.focus(); first.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return ok; }
 
         window.showPaymentCategoryModal = function () { showModal('paymentCategoryModal'); };
         window.showPaymentMethodModal = function () { showModal('paymentCategoryModal'); };
         window.hidePaymentCategoryModal = function () { hideModal('paymentCategoryModal'); };
 
-        window.selectPaymentCategory = function (category) {
-            selectedCategory = category; hideModal('paymentCategoryModal');
-            setTimeout(() => { if (category === 'gateway') { showGatewayMethodModal(); } else { showAccountSelectionModal(category); } }, 300);
-        };
+        window.selectPaymentCategory = function (category) { selectedCategory = category; hideModal('paymentCategoryModal'); setTimeout(() => { if (category === 'gateway') { showGatewayMethodModal(); } else { showAccountSelectionModal(category); } }, 300); };
 
         function showAccountSelectionModal(category) {
             const accounts = groupedAccounts[category] || [];
@@ -642,14 +664,11 @@ try {
                 const el = document.createElement('div');
                 el.className = 'selector-item';
                 el.onclick = () => selectAccount(a);
-                el.innerHTML = `<div>
-                    <div class="selector-title text-secondary dark:text-white">${a.name}</div>
-                    <div class="selector-sub text-gray-text dark:text-white/70">${a.account_number} • ${a.type.replace('_', ' ')}</div>
-                </div>
-                <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>`;
+                el.innerHTML = `<div><div class="selector-title text-secondary dark:text-white">${a.name}</div><div class="selector-sub text-gray-text dark:text-white/70">${a.account_number} • ${a.type.replace('_', ' ')}</div></div><i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>`;
                 cards.appendChild(el);
             });
             showModal('accountSelectionModal');
+            if (window.lucide && window.lucide.createIcons) window.lucide.createIcons({ attrs: {} });
         }
 
         window.hideAccountSelectionModal = function () { hideModal('accountSelectionModal'); };
@@ -665,7 +684,7 @@ try {
             setTimeout(() => { if (method === 'mobile_money') { const g = groupedAccounts['gateway'] || []; if (g.length > 0) { selectedAccount = g[0]; showGatewayPaymentModal(); } } else if (method === 'card') { showCardPaymentModal(); } }, 300);
         };
 
-        window.showMobileMoneyModal = function () { document.getElementById('mobileMoneyAccountName').textContent = `${selectedAccount.name} • ${selectedAccount.account_number}`; document.getElementById('mmDateTime').value = getKampalaDateTimeLocal(); showModal('mobileMoneyModal'); };
+        window.showMobileMoneyModal = function () { document.getElementById('mobileMoneyAccountName').textContent = `${selectedAccount.name} • ${selectedAccount.account_number}`; document.getElementById('mmDateTime').value = getKampalaDateTimeLocal(); showModal('mobileMoneyModal'); if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); };
         window.hideMobileMoneyModal = function () { hideModal('mobileMoneyModal'); setTimeout(() => { document.getElementById('mobileMoneyForm').reset(); }, 300); };
         window.mobileMoneyBack = function () { hideModal('mobileMoneyModal'); setTimeout(() => showAccountSelectionModal(selectedCategory), 300); };
 
@@ -673,54 +692,22 @@ try {
             if (!validateForm('mobileMoneyForm')) return;
             const fd = new FormData(document.getElementById('mobileMoneyForm'));
             const rawPhone = fd.get('mmPhoneNumber'); const formatted = rawPhone ? '+256' + rawPhone : '';
-            pendingPaymentData = {
-                type: 'mobile_money',
-                payload: {
-                    action: 'logTopup',
-                    wallet_id: walletId,
-                    cash_account_id: selectedAccount.id,
-                    payment_method: 'MOBILE_MONEY',
-                    amount_total: fd.get('mmAmount'),
-                    external_reference: fd.get('mmTransactionId'),
-                    note: fd.get('mmNote'),
-                    mmPhoneNumber: formatted,
-                    mmDateTime: fd.get('mmDateTime')
-                }
-            };
-            showConfirmationModal(
-                'You have initiated the following mobile money topup to your Zzimba Credit Account.',
-                `Amount: UGX ${new Intl.NumberFormat().format(fd.get('mmAmount'))}<br>Phone: ${formatted}<br>Transaction ID: ${fd.get('mmTransactionId')}<br>Account: ${selectedAccount.name}`
-            );
+            pendingPaymentData = { type: 'mobile_money', payload: { action: 'logTopup', wallet_id: walletId, cash_account_id: selectedAccount.id, payment_method: 'MOBILE_MONEY', amount_total: fd.get('mmAmount'), external_reference: fd.get('mmTransactionId'), note: fd.get('mmNote'), mmPhoneNumber: formatted, mmDateTime: fd.get('mmDateTime') } };
+            showConfirmationModal('You have initiated the following mobile money topup to your Zzimba Credit Account.', `Amount: UGX ${new Intl.NumberFormat().format(fd.get('mmAmount'))}<br>Phone: ${formatted}<br>Transaction ID: ${fd.get('mmTransactionId')}<br>Account: ${selectedAccount.name}`);
         };
 
-        window.showBankTransferModal = function () { document.getElementById('bankAccountName').textContent = `${selectedAccount.name} • ${selectedAccount.account_number}`; document.getElementById('btDateTime').value = getKampalaDateTimeLocal(); showModal('bankTransferModal'); };
+        window.showBankTransferModal = function () { document.getElementById('bankAccountName').textContent = `${selectedAccount.name} • ${selectedAccount.account_number}`; document.getElementById('btDateTime').value = getKampalaDateTimeLocal(); showModal('bankTransferModal'); if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); };
         window.hideBankTransferModal = function () { hideModal('bankTransferModal'); setTimeout(() => { document.getElementById('bankTransferForm').reset(); }, 300); };
         window.bankTransferBack = function () { hideModal('bankTransferModal'); setTimeout(() => showAccountSelectionModal(selectedCategory), 300); };
 
         window.confirmBankTransferPayment = function () {
             if (!validateForm('bankTransferForm')) return;
             const fd = new FormData(document.getElementById('bankTransferForm'));
-            pendingPaymentData = {
-                type: 'bank_transfer',
-                payload: {
-                    action: 'logTopup',
-                    wallet_id: walletId,
-                    cash_account_id: selectedAccount.id,
-                    payment_method: 'BANK',
-                    amount_total: fd.get('btAmount'),
-                    external_reference: fd.get('btReference'),
-                    note: fd.get('btNote'),
-                    btDepositorName: fd.get('btDepositorName'),
-                    btDateTime: fd.get('btDateTime')
-                }
-            };
-            showConfirmationModal(
-                'You have initiated the following Bank topup to your Zzimba Credit Account.',
-                `Amount: UGX ${new Intl.NumberFormat().format(fd.get('btAmount'))}<br>Reference: ${fd.get('btReference')}<br>Depositor: ${fd.get('btDepositorName')}<br>Account: ${selectedAccount.name}`
-            );
+            pendingPaymentData = { type: 'bank_transfer', payload: { action: 'logTopup', wallet_id: walletId, cash_account_id: selectedAccount.id, payment_method: 'BANK', amount_total: fd.get('btAmount'), external_reference: fd.get('btReference'), note: fd.get('btNote'), btDepositorName: fd.get('btDepositorName'), btDateTime: fd.get('btDateTime') } };
+            showConfirmationModal('You have initiated the following Bank topup to your Zzimba Credit Account.', `Amount: UGX ${new Intl.NumberFormat().format(fd.get('btAmount'))}<br>Reference: ${fd.get('btReference')}<br>Depositor: ${fd.get('btDepositorName')}<br>Account: ${selectedAccount.name}`);
         };
 
-        window.showGatewayPaymentModal = function () { document.getElementById('gatewayAccountName').textContent = selectedAccount.name; showModal('gatewayPaymentModal'); resetGatewayForm(); };
+        window.showGatewayPaymentModal = function () { document.getElementById('gatewayAccountName').textContent = selectedAccount.name; showModal('gatewayPaymentModal'); resetGatewayForm(); if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); };
         window.hideGatewayPaymentModal = function () { hideModal('gatewayPaymentModal'); setTimeout(() => resetGatewayForm(), 300); if (statusCheckInterval) { clearInterval(statusCheckInterval); statusCheckInterval = null; } };
         window.gatewayPaymentBack = function () { hideModal('gatewayPaymentModal'); setTimeout(() => showGatewayMethodModal(), 300); };
 
@@ -732,7 +719,7 @@ try {
             if (!validateForm('cardPaymentForm')) return;
             const amount = parseFloat(document.getElementById('cardAmount').value);
             if (!amount || amount < 500) { showCardAmountError('Please enter a valid amount (minimum 500 UGX)'); return; }
-            const paymentUrl = `${baseUrl}payment/card?amount=${amount}&description=Zzimba+wallet+top-up`;
+            const paymentUrl = `<?= BASE_URL ?>payment/card?amount=${amount}&description=Zzimba+wallet+top-up`;
             window.open(paymentUrl, '_blank');
             hideCardPaymentModal();
             showTransactionResultModal('success', { title: 'Redirected to Payment', message: 'You have been redirected to our secure payment page. Complete the payment to add money to your wallet.', amount: amount, currency: 'UGX' });
@@ -769,8 +756,12 @@ try {
                 if (data.success) {
                     showTransactionResultModal('success', { title: 'Payment Submitted Successfully!', message: 'Your Zzimba credit account will be updated upon confirmation of funds within the hour.', transactionId: data.transaction_id, amount: pendingPaymentData.payload.amount_total, currency: 'UGX' });
                     hideMobileMoneyModal(); if (window.loadWalletData) window.loadWalletData(); if (window.loadTransactions) window.loadTransactions();
-                } else { showTransactionResultModal('failed', { title: 'Payment Failed', message: data.message || 'Failed to process your payment.', reason: data.message }); }
-            } catch (e) { showTransactionResultModal('failed', { title: 'Network Error', message: 'Please check your connection and try again.', reason: 'Network connection failed' }); }
+                } else {
+                    showTransactionResultModal('failed', { title: 'Payment Failed', message: data.message || 'Failed to process your payment.', reason: data.message });
+                }
+            } catch (e) {
+                showTransactionResultModal('failed', { title: 'Network Error', message: 'Please check your connection and try again.', reason: 'Network connection failed' });
+            }
         };
 
         window.submitBankTransferPayment = async function () {
@@ -780,8 +771,12 @@ try {
                 if (data.success) {
                     showTransactionResultModal('success', { title: 'Payment Submitted Successfully!', message: 'Your Zzimba credit account will be updated upon confirmation of funds within the hour.', transactionId: data.transaction_id, amount: pendingPaymentData.payload.amount_total, currency: 'UGX' });
                     hideBankTransferModal(); if (window.loadWalletData) window.loadWalletData(); if (window.loadTransactions) window.loadTransactions();
-                } else { showTransactionResultModal('failed', { title: 'Payment Failed', message: data.message || 'Failed to process your payment.', reason: data.message }); }
-            } catch (e) { showTransactionResultModal('failed', { title: 'Network Error', message: 'Please check your connection and try again.', reason: 'Network connection failed' }); }
+                } else {
+                    showTransactionResultModal('failed', { title: 'Payment Failed', message: data.message || 'Failed to process your payment.', reason: data.message });
+                }
+            } catch (e) {
+                showTransactionResultModal('failed', { title: 'Network Error', message: 'Please check your connection and try again.', reason: 'Network connection failed' });
+            }
         };
 
         window.submitGatewayPayment = async function () {
@@ -795,10 +790,6 @@ try {
             } catch (_) { showGatewayPaymentStatus('error', 'Network Error', 'Please check your connection and try again.'); btn.disabled = false; btn.textContent = 'Add Money'; }
         };
 
-        function lucideSvg(name, extraClass) {
-            try { return window.lucide?.icons?.[name]?.toSvg({ class: extraClass || '' }) || ''; } catch (_) { return ''; }
-        }
-
         function showTransactionResultModal(type, data) {
             const modal = document.getElementById('transactionResultModal');
             const icon = document.getElementById('resultIcon');
@@ -809,19 +800,19 @@ try {
             const cont = modal.querySelector('.modal-content');
             cont.className = 'bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden modal-content transform transition-all duration-300 scale-95';
             icon.className = 'w-16 h-16 rounded-full grid place-items-center mx-auto mb-4';
-            function fmt(a) { return new Intl.NumberFormat('en-UG', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a || 0); }
+            function fmt(a) { return new Intl.NumberFormat('en-UG', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a); }
             if (type === 'success') {
-                cont.classList.add('border-t-4', 'border-green-500'); icon.classList.add('bg-green-100'); icon.innerHTML = lucideSvg('check', 'w-7 h-7 text-green-600');
+                cont.classList.add('border-t-4', 'border-green-500'); icon.classList.add('bg-green-100'); setLucideIcon(icon, 'check', 'w-8 h-8 text-green-600');
                 det.innerHTML = `<div class="space-y-3 text-sm">
                     <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Amount:</span><span class="font-semibold">${data.currency || 'UGX'} ${fmt(data.amount)}</span></div>
                     ${data.charge ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Transaction Fee:</span><span class="font-semibold">${data.currency || 'UGX'} ${fmt(data.charge)}</span></div>` : ''}
-                    <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Provider:</span><span class="font-semibold">${(data.provider || 'N/A').replace('_', ' ')}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Provider:</span><span class="font-semibold">${data.provider?.replace('_', ' ') || 'N/A'}</span></div>
                     <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Transaction ID:</span><span class="font-mono text-xs">${data.transactionId || 'N/A'}</span></div>
                     <div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Reference:</span><span class="font-mono text-xs">${data.reference || 'N/A'}</span></div>
                     ${data.completedAt && data.completedAt !== 'N/A' ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Completed:</span><span class="text-xs">${new Date(data.completedAt).toLocaleString()}</span></div>` : ''}
                 </div>`;
             } else {
-                cont.classList.add('border-t-4', 'border-red-500'); icon.classList.add('bg-red-100'); icon.innerHTML = lucideSvg('x', 'w-7 h-7 text-red-600');
+                cont.classList.add('border-t-4', 'border-red-500'); icon.classList.add('bg-red-100'); setLucideIcon(icon, 'x', 'w-8 h-8 text-red-600');
                 det.innerHTML = `<div class="space-y-3 text-sm">
                     ${data.amount ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Amount:</span><span class="font-semibold">${data.currency || 'UGX'} ${fmt(data.amount)}</span></div>` : ''}
                     ${data.provider ? `<div class="flex justify-between"><span class="text-gray-600 dark:text-white/70">Provider:</span><span class="font-semibold">${data.provider.replace('_', ' ')}</span></div>` : ''}
@@ -830,6 +821,7 @@ try {
                 </div>`;
             }
             showModal('transactionResultModal');
+            if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
         }
         window.hideTransactionResultModal = function () { hideModal('transactionResultModal'); };
 
@@ -864,10 +856,10 @@ try {
         function showGatewayPaymentStatus(type, title, message) {
             const div = document.getElementById('gwPaymentStatus'); const icon = document.getElementById('gwStatusIcon'); const t = document.getElementById('gwStatusTitle'); const m = document.getElementById('gwStatusMessage');
             t.textContent = title; m.textContent = message; div.className = 'p-3 rounded-lg'; icon.className = 'w-7 h-7 rounded-full grid place-items-center';
-            if (type === 'processing') { div.classList.add('bg-blue-50', 'border', 'border-blue-200'); icon.classList.add('bg-blue-100'); icon.innerHTML = lucideSvg('loader-2', 'w-4 h-4 text-blue-600 animate-spin'); }
-            else if (type === 'pending') { div.classList.add('bg-yellow-50', 'border', 'border-yellow-200'); icon.classList.add('bg-yellow-100'); icon.innerHTML = lucideSvg('clock', 'w-4 h-4 text-yellow-600'); }
-            else if (type === 'success') { div.classList.add('bg-green-50', 'border', 'border-green-200'); icon.classList.add('bg-green-100'); icon.innerHTML = lucideSvg('check', 'w-4 h-4 text-green-600'); }
-            else if (type === 'error') { div.classList.add('bg-red-50', 'border', 'border-red-200'); icon.classList.add('bg-red-100'); icon.innerHTML = lucideSvg('x', 'w-4 h-4 text-red-600'); }
+            if (type === 'processing') { div.classList.add('bg-blue-50', 'border', 'border-blue-200'); icon.classList.add('bg-blue-100'); setLucideIcon(icon, 'loader-2', 'w-4 h-4 text-blue-600 animate-spin'); }
+            else if (type === 'pending') { div.classList.add('bg-yellow-50', 'border', 'border-yellow-200'); icon.classList.add('bg-yellow-100'); setLucideIcon(icon, 'clock', 'w-4 h-4 text-yellow-600'); }
+            else if (type === 'success') { div.classList.add('bg-green-50', 'border', 'border-green-200'); icon.classList.add('bg-green-100'); setLucideIcon(icon, 'check', 'w-4 h-4 text-green-600'); }
+            else { div.classList.add('bg-red-50', 'border', 'border-red-200'); icon.classList.add('bg-red-100'); setLucideIcon(icon, 'x', 'w-4 h-4 text-red-600'); }
             div.classList.remove('hidden');
         }
 
