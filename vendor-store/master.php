@@ -74,38 +74,36 @@ $menuItems = [
     'main' => [
         'title' => 'Main',
         'items' => [
-            'dashboard' => ['title' => 'Dashboard', 'icon' => 'fa-home', 'notifications' => 0],
-            // 'orders' => ['title' => 'Orders', 'icon' => 'fa-shopping-bag', 'notifications' => 0],
-            // 'order-history' => ['title' => 'Order History', 'icon' => 'fa-history', 'notifications' => 0],
+            'dashboard' => ['title' => 'Dashboard', 'icon' => 'home', 'notifications' => 0],
         ]
     ],
     'finance' => [
         'title' => 'Finance',
         'items' => [
-            'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'fa-credit-card', 'notifications' => 0],
+            'zzimba-credit' => ['title' => 'Zzimba Credit', 'icon' => 'credit-card', 'notifications' => 0],
         ]
     ],
     'communication' => [
         'title' => 'Communication',
         'items' => [
-            'sms-center' => ['title' => 'SMS Center', 'icon' => 'fa-comment-dots', 'notifications' => 0],
-            'email-center' => ['title' => 'Email Center', 'icon' => 'fa-envelope', 'notifications' => 0],
+            'sms-center' => ['title' => 'SMS Center', 'icon' => 'message-square', 'notifications' => 0],
+            'email-center' => ['title' => 'Email Center', 'icon' => 'mail', 'notifications' => 0],
         ],
     ],
     'store' => [
         'title' => 'Store Management',
         'items' => [
-            'buy-in-store' => ['title' => 'Buy in Store', 'icon' => 'fa-calendar-check', 'notifications' => 0],
-            'products' => ['title' => 'Products', 'icon' => 'fa-box-open', 'notifications' => 0],
-            'categories' => ['title' => 'Categories', 'icon' => 'fa-tags', 'notifications' => 0],
-            'managers' => ['title' => 'Managers', 'icon' => 'fa-users', 'notifications' => 0],
+            'buy-in-store' => ['title' => 'Buy in Store', 'icon' => 'calendar-check-2', 'notifications' => 0],
+            'products' => ['title' => 'Products', 'icon' => 'box', 'notifications' => 0],
+            'categories' => ['title' => 'Categories', 'icon' => 'tags', 'notifications' => 0],
+            'managers' => ['title' => 'Managers', 'icon' => 'users', 'notifications' => 0],
         ]
     ],
     'settings' => [
         'title' => 'Settings',
         'items' => [
-            'store-profile' => ['title' => 'Store Profile', 'icon' => 'fa-store', 'notifications' => 0],
-            'settings' => ['title' => 'Settings', 'icon' => 'fa-cog', 'notifications' => 0],
+            'store-profile' => ['title' => 'Store Profile', 'icon' => 'store', 'notifications' => 0],
+            'settings' => ['title' => 'Settings', 'icon' => 'cog', 'notifications' => 0],
         ]
     ]
 ];
@@ -120,11 +118,9 @@ $sessionUlid = generateUlid();
     <title><?= htmlspecialchars($title) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="<?= BASE_URL ?>/img/favicon.png">
-    <script src="https://cdn.jsdelivr.net/npm/bowser@2.11.0/es5.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
@@ -218,10 +214,11 @@ $sessionUlid = generateUlid();
     </style>
 </head>
 
-<body class="bg-user-content font-rubik">
+<body class="bg-user-content font-rubik" x-data="appShell()" x-init="init()">
     <div class="flex min-h-screen">
         <aside id="sidebar"
-            class="user-sidebar fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+            class="user-sidebar fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out"
+            :class="{'-translate-x-full': !mobileOpen && window.innerWidth < 1024}">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
                     <a href="<?= BASE_URL ?>" target="_blank" class="flex items-center space-x-3">
@@ -233,11 +230,10 @@ $sessionUlid = generateUlid();
                         <div class="nav-category"><?= htmlspecialchars($category['title']) ?></div>
                         <div class="space-y-1 mb-2">
                             <?php foreach ($category['items'] as $key => $item): ?>
-                                <a href="<?= BASE_URL ?>vendor-store/<?=
-                                      $key ?>"
+                                <a href="<?= BASE_URL ?>vendor-store/<?= $key ?>"
                                     class="user-nav-item group flex items-center justify-between px-4 py-2.5 text-sm rounded-lg transition duration-200 <?= $activeNav === $key ? 'active' : 'text-gray-text hover:bg-gray-50 hover:text-user-primary' ?>">
                                     <div class="flex items-center gap-3">
-                                        <i class="fas <?= $item['icon'] ?> w-5 h-5"></i>
+                                        <i data-lucide="<?= htmlspecialchars($item['icon']) ?>" class="w-5 h-5"></i>
                                         <span><?= htmlspecialchars($item['title']) ?></span>
                                     </div>
                                     <?php if ($item['notifications'] > 0): ?>
@@ -252,12 +248,15 @@ $sessionUlid = generateUlid();
             </div>
         </aside>
         <div class="flex-1 lg:ml-64 flex flex-col justify-between">
+            <div x-show="mobileOpen" x-transition.opacity class="fixed inset-0 bg-black/20 z-40 lg:hidden"
+                @click="toggleSidebar()"></div>
             <header class="user-header sticky top-0 z-40 border-b border-gray-100">
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
-                        <button id="sidebarToggle"
-                            class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-500 hover:text-user-primary rounded-lg hover:bg-gray-50">
-                            <i class="fas fa-bars text-xl"></i>
+                        <button
+                            class="lg:hidden w-10 h-10 flex items-center justify-center text-gray-500 hover:text-user-primary rounded-lg hover:bg-gray-50"
+                            @click="toggleSidebar()">
+                            <i data-lucide="menu" class="w-6 h-6"></i>
                         </button>
                         <h1 class="text-xl font-semibold text-secondary truncate whitespace-nowrap overflow-hidden max-w-[8rem] sm:max-w-none"
                             title="<?= htmlspecialchars($storeName) ?>">
@@ -268,11 +267,11 @@ $sessionUlid = generateUlid();
                         <div x-data="notifComponent()" x-init="init()" class="relative mr-2">
                             <button @click="open = !open"
                                 class="relative w-10 h-10 flex items-center justify-center text-gray-500 hover:text-user-primary rounded-lg hover:bg-gray-50">
-                                <i class="fas fa-bell text-xl"></i>
+                                <i data-lucide="bell" class="w-6 h-6"></i>
                                 <span x-show="count > 0" x-text="count"
                                     class="absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center"></span>
                             </button>
-                            <div x-show="open" @click.away="open = false" x-transition
+                            <div x-show="open" @click.outside="open = false" x-transition
                                 class="fixed top-14 left-2 right-2 w-auto max-w-full sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white rounded-lg shadow-lg border border-gray-100 z-50 max-h-96 overflow-auto">
                                 <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                                     <div class="flex items-center gap-2">
@@ -300,7 +299,7 @@ $sessionUlid = generateUlid();
                                                 @click.prevent="handleClick(note)">
                                                 <p class="text-sm font-medium" x-text="note.title"></p>
                                                 <p class="text-xs mt-1"
-                                                    :class="note.is_seen == 0 ? 'text-secondary' : 'text-gray-500'"
+                                                    :class="note.is_seen == 0 ? 'text-user-primary' : 'text-gray-500'"
                                                     x-text="note.message"></p>
                                                 <span class="text-[10px] text-gray-400"
                                                     x-text="formatDate(note.created_at)"></span>
@@ -308,7 +307,7 @@ $sessionUlid = generateUlid();
                                         </div>
                                         <button @click.stop="dismiss(note.target_id)"
                                             class="absolute top-2 right-2 text-gray-300 hover:text-user-primary opacity-0 group-hover:opacity-100 transition">
-                                            <i class="fas fa-times"></i>
+                                            <i data-lucide="x" class="w-4 h-4"></i>
                                         </button>
                                     </div>
                                 </template>
@@ -316,16 +315,16 @@ $sessionUlid = generateUlid();
                                     notifications</div>
                             </div>
                         </div>
-                        <div class="relative" id="userDropdown">
+                        <div class="relative" x-data="{open:false}">
                             <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2"
-                                title="<?= htmlspecialchars($storeName) ?> (<?= $userRole ?>)">
+                                title="<?= htmlspecialchars($storeName) ?> (<?= $userRole ?>)" @click="open=!open">
                                 <div class="user-initials"><?= htmlspecialchars($storeInitials) ?></div>
                                 <span
                                     class="hidden md:block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
-                                <i class="fas fa-chevron-down text-sm text-gray-400"></i>
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
                             </button>
-                            <div id="userDropdownMenu"
-                                class="hidden absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
+                            <div x-show="open" @click.outside="open=false" x-transition
+                                class="absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
                                 <div class="px-4 py-3 bg-gray-50">
                                     <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500"><?= htmlspecialchars($storeName) ?></p>
@@ -333,24 +332,24 @@ $sessionUlid = generateUlid();
                                 </div>
                                 <a href="<?= BASE_URL ?>account/dashboard"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                                    <i class="fas fa-user-circle w-5 h-5 text-gray-400"></i>User Dashboard
+                                    <i data-lucide="user" class="w-5 h-5 text-gray-400"></i>User Dashboard
                                 </a>
                                 <a href="<?= BASE_URL ?>vendor-store/store-profile"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                                    <i class="fas fa-store w-5 h-5 text-gray-400"></i>Store Profile
+                                    <i data-lucide="store" class="w-5 h-5 text-gray-400"></i>Store Profile
                                 </a>
                                 <a href="<?= BASE_URL ?>vendor-store/orders"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                                    <i class="fas fa-shopping-bag w-5 h-5 text-gray-400"></i>Orders
+                                    <i data-lucide="shopping-bag" class="w-5 h-5 text-gray-400"></i>Orders
                                 </a>
                                 <a href="<?= BASE_URL ?>vendor-store/settings"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
-                                    <i class="fas fa-cog w-5 h-5 text-gray-400"></i>Settings
+                                    <i data-lucide="cog" class="w-5 h-5 text-gray-400"></i>Settings
                                 </a>
                                 <div class="my-2 border-t border-gray-100"></div>
-                                <a href="javascript:void(0);" onclick="logoutUser();"
+                                <a href="#" @click.prevent="logoutUser()"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-user-primary hover:bg-gray-50">
-                                    <i class="fas fa-sign-out-alt w-5 h-5"></i>Logout
+                                    <i data-lucide="log-out" class="w-5 h-5"></i>Logout
                                 </a>
                             </div>
                         </div>
@@ -367,42 +366,24 @@ $sessionUlid = generateUlid();
     </div>
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const overlay = Object.assign(document.createElement('div'), { className: 'fixed inset-0 bg-black/20 z-40 lg:hidden hidden' });
-        document.body.appendChild(overlay);
-        sidebarToggle.addEventListener('click', toggleSidebar);
-        overlay.addEventListener('click', toggleSidebar);
-        function toggleSidebar() {
-            const open = !sidebar.classList.contains('-translate-x-full');
-            sidebar.classList.toggle('-translate-x-full', open);
-            overlay.classList.toggle('hidden', open);
-            document.body.classList.toggle('overflow-hidden', !open);
-            if (!open) {
-                sidebar.classList.add('animate-slide-in');
-                setTimeout(() => sidebar.classList.remove('animate-slide-in'), 300);
+        function appShell() {
+            return {
+                mobileOpen: false,
+                init() {
+                    window.addEventListener('resize', () => { if (window.innerWidth >= 1024) { this.mobileOpen = false } });
+                    if (window.lucide && lucide.createIcons) lucide.createIcons();
+                    document.addEventListener('alpine:init', () => { if (window.lucide && lucide.createIcons) lucide.createIcons(); });
+                    document.addEventListener('DOMContentLoaded', () => { if (window.lucide && lucide.createIcons) lucide.createIcons(); });
+                },
+                toggleSidebar() { this.mobileOpen = !this.mobileOpen },
+                async logoutUser() {
+                    try {
+                        const res = await fetch(BASE_URL + 'auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                        const d = await res.json();
+                        if (d.success) location.href = BASE_URL; else alert(d.message || 'Logout failed');
+                    } catch (e) { alert('Server error') }
+                }
             }
-        }
-        const userDropdown = document.getElementById('userDropdown');
-        const userDropdownMenu = document.getElementById('userDropdownMenu');
-        userDropdown.addEventListener('click', e => { e.stopPropagation(); userDropdownMenu.classList.toggle('hidden'); });
-        document.addEventListener('click', () => userDropdownMenu.classList.add('hidden'));
-        window.addEventListener('resize', () => {
-            if (innerWidth >= 1024) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-            }
-        });
-        function logoutUser() {
-            $.ajax({
-                url: BASE_URL + 'auth/logout',
-                type: 'POST',
-                contentType: 'application/json',
-                dataType: 'json',
-                success(d) { if (d.success) location.href = BASE_URL; else alert(d.message || 'Logout failed') },
-                error() { alert('Server error') }
-            });
         }
         function notifComponent() {
             return {
@@ -416,6 +397,7 @@ $sessionUlid = generateUlid();
                     this.fetchNow();
                     this.timer = setInterval(() => this.fetchNow(), 20000);
                     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.fetchNow(); });
+                    if (window.lucide && lucide.createIcons) lucide.createIcons();
                 },
                 fetchNow() {
                     const url = new URL(BASE_URL + 'fetch/manageNotifications.php');
@@ -426,18 +408,14 @@ $sessionUlid = generateUlid();
                         .then(res => {
                             if (res && res.status === 'success') {
                                 const incoming = res.data || [];
-                                if (this.lastTs) this.mergeIncoming(incoming);
-                                else this.notes = incoming;
+                                if (this.lastTs) this.mergeIncoming(incoming); else this.notes = incoming;
                                 const latest = res.latest_ts || (incoming[0]?.created_at ?? this.lastTs);
                                 if (latest) this.lastTs = latest;
                                 const nextCount = Number.isInteger(res.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                                 this.count = nextCount;
                                 this.selected = this.selected.filter(id => this.notes.some(n => n.target_id === id));
-                                const selAll = document.getElementById('selectAll');
-                                if (selAll) selAll.checked = (this.selected.length && this.selected.length === this.notes.length);
                             }
-                        })
-                        .catch(() => { });
+                        }).catch(() => { });
                 },
                 mergeIncoming(arr) {
                     if (!Array.isArray(arr) || !arr.length) return;
@@ -474,7 +452,6 @@ $sessionUlid = generateUlid();
                         .then(res => {
                             this.notes.forEach(n => { if (ids.includes(n.target_id)) n.is_seen = 1; });
                             this.selected = [];
-                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
                             const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                             this.count = c;
                         }).catch(() => { });
@@ -487,7 +464,6 @@ $sessionUlid = generateUlid();
                         .then(res => {
                             this.notes = this.notes.filter(n => n.target_id !== id);
                             this.selected = this.selected.filter(sid => sid !== id);
-                            const b = document.getElementById('selectAll'); if (b) b.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
                             const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                             this.count = c;
                         }).catch(() => { });
@@ -501,13 +477,12 @@ $sessionUlid = generateUlid();
                         .then(res => {
                             this.notes = this.notes.filter(n => !ids.includes(n.target_id));
                             this.selected = [];
-                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
                             const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                             this.count = c;
                         }).catch(() => { });
                 },
                 formatDate(ts) {
-                    const d = new Date(ts.replace(' ', 'T')); const now = new Date(); const diff = (now - d) / 1000;
+                    const d = new Date((ts || '').replace(' ', 'T')); const now = new Date(); const diff = (now - d) / 1000;
                     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
                     const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -516,8 +491,9 @@ $sessionUlid = generateUlid();
                     if (d >= yesterday && d < today) return 'Yesterday ' + time;
                     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                 }
-            };
+            }
         }
+        if (window.lucide && lucide.createIcons) lucide.createIcons();
     </script>
 </body>
 

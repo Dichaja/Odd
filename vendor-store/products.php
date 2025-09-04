@@ -1,916 +1,728 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-$pageTitle = 'Manage Store Products';
+$pageTitle = 'Products';
 $activeNav = 'products';
-
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 if (!isset($_SESSION['user']) || empty($_SESSION['user']['logged_in'])) {
     session_unset();
     session_destroy();
     header('Location: ' . BASE_URL);
     exit;
 }
-
 $storeId = $_SESSION['active_store'] ?? null;
 if (!$storeId) {
     header('Location: ' . BASE_URL . 'account/dashboard');
     exit;
 }
-
+$storeStmt = $pdo->prepare("SELECT id, name, owner_id FROM vendor_stores WHERE id = :sid AND status IN ('active','pending','inactive','suspended')");
+$storeStmt->execute([':sid' => $storeId]);
+$store = $storeStmt->fetch(PDO::FETCH_ASSOC);
+if (!$store) {
+    header('Location: ' . BASE_URL . 'account/dashboard');
+    exit;
+}
+$storeName = $store['name'];
+$isAdmin = !empty($_SESSION['user']['is_admin']);
+$isOwner = $store['owner_id'] === $_SESSION['user']['user_id'];
+$isManager = false;
+if (!$isAdmin && !$isOwner) {
+    $mgr = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = :sid AND user_id = :uid AND status = 'active' AND approved = 1 LIMIT 1");
+    $mgr->execute([':sid' => $storeId, ':uid' => $_SESSION['user']['user_id']]);
+    $isManager = (bool) $mgr->fetchColumn();
+}
+if (!$isAdmin && !$isOwner && !$isManager) {
+    header('Location: ' . BASE_URL . 'account/dashboard');
+    exit;
+}
+$title = isset($pageTitle) ? "{$pageTitle} - {$storeName} | Store Dashboard" : "{$storeName} Store Dashboard";
+$activeNav = $activeNav ?? 'products';
+$userName = $_SESSION['user']['username'];
+$storeInitials = '';
+$parts = array_filter(explode(' ', $storeName));
+$limitedParts = array_slice($parts, 0, 2);
+foreach ($limitedParts as $part) {
+    $storeInitials .= strtoupper($part[0]);
+}
+$sessionUlid = generateUlid();
 ob_start();
 ?>
-<script>
-    const vendorId = '<?= $storeId ?>';
-    let productsCache = [];
-    let isEditMode = false;
-</script>
-
-<div class="space-y-6">
-    <div id="alertContainer"></div>
-
-    <div
-        class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-            <h2 class="text-xl font-semibold text-gray-900">Store Products</h2>
-            <p class="text-sm text-gray-600 mt-1">Manage your store's product catalog</p>
-        </div>
-        <button onclick="openProductModal(false)"
-            class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center justify-center">
-            <i class="fas fa-plus mr-2"></i>Add Product
-        </button>
-    </div>
-
-    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-        <div class="flex flex-col sm:flex-row gap-4 mb-6">
-            <input type="text" id="searchInput" placeholder="Search products..."
-                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
-            <div class="flex gap-2">
-                <button id="filterBtn"
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200">
-                    <i class="fas fa-search mr-2"></i>Search
-                </button>
-                <button id="clearBtn"
-                    class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200">
-                    <i class="fas fa-times mr-2"></i>Clear
+<div x-data="productsPage()" x-init="init()" class="space-y-6">
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <form @submit.prevent="applySearch()" class="flex flex-col sm:flex-row gap-3 mb-6">
+            <div class="relative flex-1">
+                <input x-model="search" type="text" placeholder="Search by name or category"
+                    class="w-full pl-3 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary focus:border-transparent">
+                <button type="submit"
+                    class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-8 rounded-md grid place-items-center bg-gray-900 hover:bg-black text-white">
+                    <i data-lucide="search" class="w-4 h-4"></i>
                 </button>
             </div>
-        </div>
-
-        <div id="loadingIndicator" class="hidden text-center py-12">
-            <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-4"></i>
+            <div class="flex gap-2">
+                <button type="button" @click="clearSearch()"
+                    class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center gap-2">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                    Clear
+                </button>
+                <button type="button" @click="openAddProduct()"
+                    class="px-4 py-2 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition flex items-center gap-2">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    Add Product
+                </button>
+            </div>
+        </form>
+        <div x-show="loading" class="text-center py-12">
+            <i data-lucide="loader-2" class="w-10 h-10 text-gray-400 mx-auto mb-4 animate-spin"></i>
             <p class="text-gray-600">Loading products...</p>
         </div>
-
-        <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
-        <div id="paginationContainer" class="mt-6"></div>
-    </div>
-</div>
-
-<div id="productModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] flex flex-col">
-        <div class="flex justify-between items-center p-6 border-b border-gray-200">
-            <h3 id="productModalTitle" class="text-lg font-semibold text-gray-900"></h3>
-            <button onclick="closeProductModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                <i class="fas fa-times text-xl"></i>
-            </button>
+        <div x-show="!loading && filteredProducts().length===0" class="text-center py-12">
+            <i data-lucide="package-open" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-600 mb-2">No products found</h3>
+            <p class="text-gray-500">Try adjusting your search or add a product.</p>
         </div>
-
-        <div class="overflow-y-auto p-6 min-h-[40vh]">
-            <form id="productForm" class="space-y-6">
-                <input type="hidden" id="storeProductId" name="store_product_id">
-
-                <div id="productSelectionSection">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Product *</label>
+        <div x-show="!loading && filteredProducts().length>0" id="productsGrid"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <template x-for="p in pagedProducts()" :key="p.store_product_id ?? p.id">
+                <div
+                    class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col h-full">
                     <div class="relative">
-                        <input type="text" id="productSearchInput"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                            placeholder="Type to search for products..." autocomplete="off">
-                        <input type="hidden" id="selectedProductId" name="product_id">
-                        <input type="hidden" id="selectedCategoryId" name="category_id">
-                        <div id="productDropdown"
-                            class="absolute top-full left-0 right-0 max-h-72 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden z-50">
+                        <img :src="p._image || placeholderImg" @error="$event.target.src=placeholderImg" :alt="p.name"
+                            class="w-full h-44 object-cover rounded-t-xl bg-gray-100">
+                        <button @click="openPricingList(p)"
+                            class="absolute top-2 right-2 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition text-gray-700">
+                            <i data-lucide="pen-line" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="p-4 flex flex-col gap-3 flex-1">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900 leading-tight" x-text="p.name"></h3>
+                            <p class="text-sm text-gray-600" x-text="p.category_name"></p>
+                        </div>
+                        <div class="mt-auto">
+                            <div class="flex flex-wrap gap-1.5 mb-3">
+                                <template x-if="!p.pricing || p.pricing.length===0">
+                                    <span class="text-xs text-gray-500">No pricing</span>
+                                </template>
+                                <template x-for="pr in (p.pricing||[])"
+                                    :key="pr.id || pr.package_mapping_id + '-' + pr.price_category">
+                                    <span
+                                        class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium"
+                                        :class="chipColor(pr.price_category)">
+                                        <i data-lucide="tags" class="w-3 h-3"></i>
+                                        <span x-text="formatChip(pr)"></span>
+                                    </span>
+                                </template>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                                <span class="text-xs text-gray-500"
+                                    x-text="(p.pricing?.length || 0)+' pricing option'+((p.pricing?.length||0)===1?'':'s')"></span>
+                                <button @click="confirmDelete(p)"
+                                    class="p-2 rounded-full text-red-600 hover:bg-red-50 transition">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Choose from existing products on the platform</p>
                 </div>
-
-                <div id="pricingSection">
-                    <h4 class="text-sm font-semibold text-gray-900 mb-4">Pricing Configuration</h4>
-                    <div id="lineItemsWrapper" class="space-y-4"></div>
-                    <button type="button" id="addLineItemBtn"
-                        class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200">
-                        <i class="fas fa-plus mr-2"></i>Add Pricing Entry
-                    </button>
-                </div>
-            </form>
+            </template>
         </div>
-
-        <div class="flex justify-end p-6 border-t border-gray-200 gap-3">
-            <button onclick="closeProductModal()"
-                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200">
-                Cancel
-            </button>
-            <button id="saveProductBtn"
-                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200">
-                <i class="fas fa-save mr-2"></i><span id="saveButtonText">Save</span>
-            </button>
-        </div>
-    </div>
-</div>
-
-<div id="deleteConfirmModal"
-    class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div class="p-6">
-            <div class="flex items-center mb-4">
-                <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4">
-                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900">Confirm Delete</h3>
+        <div x-show="!loading && totalPages>1"
+            class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="text-sm text-gray-700">
+                <span
+                    x-text="'Showing '+(offset()+1)+' to '+Math.min(offset()+limit, filteredProducts().length)+' of '+filteredProducts().length"></span>
             </div>
-            <p class="text-gray-600 mb-4">Are you sure you want to delete this product from your store? This action
-                cannot be undone.</p>
-            <p id="deleteProductName" class="font-medium text-gray-900"></p>
-        </div>
-        <div class="flex justify-end p-6 border-t border-gray-200 gap-3">
-            <button onclick="closeDeleteModal()"
-                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200">
-                Cancel
-            </button>
-            <button id="confirmDeleteBtn"
-                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200">
-                <i class="fas fa-trash mr-2"></i>Delete
-            </button>
+            <div class="flex items-center gap-1">
+                <button @click="goto(page-1)" x-bind:disabled="page===1"
+                    class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:pointer-events-none">Previous</button>
+                <template x-for="n in pageNumbers()" :key="n">
+                    <button @click="goto(n)" class="px-3 py-2 text-sm border rounded-lg transition"
+                        :class="n===page ? 'bg-user-primary text-white border-user-primary' : 'border-gray-300 hover:bg-gray-50'">
+                        <span x-text="n"></span>
+                    </button>
+                </template>
+                <button @click="goto(page+1)" x-bind:disabled="page===totalPages"
+                    class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:pointer-events-none">Next</button>
+            </div>
         </div>
     </div>
+
+    <template x-teleport="body">
+        <div id="alertContainer" class="fixed top-4 right-4 z-[1100] space-y-2 pointer-events-none"></div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-show="modals.selectProduct" x-transition.opacity class="fixed inset-0 z-[1000] m-0 p-0">
+            <div class="fixed inset-0 bg-black/40" @click="modals.selectProduct=false"></div>
+            <div class="fixed inset-0 flex items-center justify-center">
+                <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+                    <div class="flex items-center justify-between p-5 border-b">
+                        <h3 class="text-lg font-semibold text-secondary">Select Product</h3>
+                        <button @click="modals.selectProduct=false" class="p-2 rounded hover:bg-gray-50">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div class="relative">
+                            <i data-lucide="search"
+                                class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                            <input x-model="selectSearch" type="text" placeholder="Search products to add"
+                                class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary focus:border-transparent">
+                        </div>
+                        <div class="max-h-[55vh] overflow-y-auto divide-y">
+                            <template x-if="selectLoading">
+                                <div class="py-10 text-center text-gray-500">
+                                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2"></i>
+                                    Loading...
+                                </div>
+                            </template>
+                            <template x-for="p in selectableProducts()" :key="p.id">
+                                <div class="flex items-center justify-between py-3">
+                                    <div>
+                                        <div class="font-medium text-gray-900" x-text="p.name"></div>
+                                        <div class="text-xs text-gray-500" x-text="p.category_name"></div>
+                                    </div>
+                                    <button @click="beginAddPricing(p)"
+                                        class="px-3 py-1.5 text-sm bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition flex items-center gap-1">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
+                                        Add
+                                    </button>
+                                </div>
+                            </template>
+                            <template x-if="!selectLoading && selectableProducts().length===0">
+                                <div class="py-8 text-center text-gray-500">No products available</div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-show="modals.pricingList" x-transition.opacity class="fixed inset-0 z-[1000] m-0 p-0">
+            <div class="fixed inset-0 bg-black/40" @click="closePricingList()"></div>
+            <div class="fixed inset-0 flex items-center justify-center">
+                <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+                    <div class="flex items-center justify-between p-5 border-b">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="tags" class="w-5 h-5 text-user-primary"></i>
+                            <h3 class="text-lg font-semibold text-secondary"
+                                x-text="pricingProduct?.name ? 'Manage Pricing — '+pricingProduct.name : 'Manage Pricing'">
+                            </h3>
+                        </div>
+                        <button @click="closePricingList()" class="p-2 rounded hover:bg-gray-50">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-600" x-text="pricingProduct?.category_name"></div>
+                            <button @click="openStepper('new')"
+                                class="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Add Pricing
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <div class="sm:w-[750px] md:w-[900px] lg:w-auto border rounded-lg overflow-hidden">
+                                <div
+                                    class="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-600">
+                                    <div class="col-span-3">Package</div>
+                                    <div class="col-span-3">Unit & Size</div>
+                                    <div class="col-span-2">Category</div>
+                                    <div class="col-span-2">Price</div>
+                                    <div class="col-span-1 text-center">Capacity</div>
+                                    <div class="col-span-1 text-right">Edit</div>
+                                </div>
+                                <template x-if="pricingList.length===0">
+                                    <div class="px-4 py-6 text-center text-gray-500">No pricing entries</div>
+                                </template>
+                                <template x-for="(pr,idx) in pricingList" :key="idx">
+                                    <div class="grid grid-cols-12 gap-2 px-4 py-3 border-t items-center bg-white">
+                                        <div class="col-span-3">
+                                            <div class="text-sm font-medium"
+                                                x-text="pr.package_name || labelForPackage(pr.package_mapping_id)">
+                                            </div>
+                                        </div>
+                                        <div class="col-span-3">
+                                            <div class="text-sm"
+                                                x-text="(pr.package_size||'-')+' '+(pr.si_unit||labelForUnit(pr.si_unit_id)||'')">
+                                            </div>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <span
+                                                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                                                :class="chipColor(pr.price_category)"
+                                                x-text="(pr.price_category||'').toUpperCase()"></span>
+                                        </div>
+                                        <div class="col-span-2">
+                                            <div class="text-sm font-semibold" x-text="'UGX '+formatNumber(pr.price)">
+                                            </div>
+                                        </div>
+                                        <div class="col-span-1 text-center">
+                                            <div class="text-xs text-gray-600"
+                                                x-text="pr.delivery_capacity ? pr.delivery_capacity : '—'"></div>
+                                        </div>
+                                        <div class="col-span-1 text-right">
+                                            <button @click="openStepper('edit', idx)"
+                                                class="p-2 rounded hover:bg-gray-50">
+                                                <i data-lucide="pen-line" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <button @click="closePricingList()"
+                                class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Close</button>
+                            <button @click="savePricingChanges()"
+                                class="px-4 py-2 rounded-lg bg-user-primary text-white hover:bg-user-primary/90"
+                                x-text="pricingProduct?.store_product_id ? 'Save Changes' : 'Add To Store'"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-show="modals.stepper" x-transition.opacity class="fixed inset-0 z-[1000] m-0 p-0">
+            <div class="fixed inset-0 bg-black/50" @click="closeStepper()"></div>
+            <div class="fixed inset-0 flex items-center justify-center">
+                <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden">
+                    <div class="flex items-center justify-between p-5 border-b">
+                        <h3 class="text-lg font-semibold text-secondary"
+                            x-text="stepper.mode==='new' ? 'Add Pricing' : 'Edit Pricing'"></h3>
+                        <button @click="closeStepper()" class="p-2 rounded hover:bg-gray-50">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="px-5 pt-5">
+                        <div class="flex items-center justify-between text-xs text-gray-600 mb-3">
+                            <template x-for="n in 4" :key="'s'+n">
+                                <div class="flex-1 flex items-center">
+                                    <div class="w-8 h-8 rounded-full grid place-items-center font-semibold"
+                                        :class="n<=stepper.step ? 'bg-user-primary text-white' : 'bg-gray-100 text-gray-500'">
+                                        <span x-text="n"></span>
+                                    </div>
+                                    <div class="h-[2px] flex-1"
+                                        :class="n<4 ? (n<stepper.step?'bg-user-primary':'bg-gray-200') : ''"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div x-show="stepper.step===1" class="space-y-2">
+                            <label class="text-sm font-medium text-gray-700">Package</label>
+                            <div class="relative">
+                                <input x-model="stepper.packageQuery" @focus="openPkg=true" @input="openPkg=true"
+                                    @keydown.escape.stop="openPkg=false" type="text" placeholder="Search package"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                    :class="errors.package ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                <div x-show="openPkg" @click.outside="openPkg=false"
+                                    class="absolute z-10 mt-1 left-0 right-0 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow"
+                                    tabindex="-1">
+                                    <template x-if="availablePackages.length===0">
+                                        <div class="p-3 text-center text-gray-500">No packages</div>
+                                    </template>
+                                    <template
+                                        x-for="m in availablePackages.filter(x=>x.package_name.toLowerCase().includes((stepper.packageQuery||'').toLowerCase()))"
+                                        :key="m.id">
+                                        <div @mousedown.prevent="selectPackage(m)"
+                                            class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
+                                            <span x-text="m.package_name"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500"
+                                x-text="stepper.package_mapping_id ? 'Selected: '+stepper.package_name : ''"></p>
+                        </div>
+                        <div x-show="stepper.step===2" class="space-y-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Unit of Measure</label>
+                                <div class="relative">
+                                    <input x-model="stepper.unitQuery" @focus="openUnit=true" @input="openUnit=true"
+                                        @keydown.escape.stop="openUnit=false" type="text" placeholder="Search unit"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                        :class="errors.unit ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                    <div x-show="openUnit" @click.outside="openUnit=false"
+                                        class="absolute z-10 mt-1 left-0 right-0 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow"
+                                        tabindex="-1">
+                                        <template
+                                            x-for="u in availableUnits.filter(x=>x.si_unit.toLowerCase().includes((stepper.unitQuery||'').toLowerCase()))"
+                                            :key="u.id">
+                                            <div @mousedown.prevent="selectUnit(u)"
+                                                class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
+                                                <span x-text="u.si_unit"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500"
+                                    x-text="stepper.si_unit_id ? 'Selected: '+stepper.si_unit : ''"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Unit Size</label>
+                                <input x-model="stepper.package_size" type="number" min="0" step="any"
+                                    placeholder="Enter size"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                    :class="errors.size ? 'border-red-500 ring-2 ring-red-300' : ''" required>
+                            </div>
+                        </div>
+                        <div x-show="stepper.step===3" class="space-y-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Price Category</label>
+                                <select x-model="stepper.price_category"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                    :class="errors.category ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                    <option value="">Select category</option>
+                                    <option value="retail">Retail</option>
+                                    <option value="wholesale">Wholesale</option>
+                                    <option value="factory">Factory</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Price (UGX)</label>
+                                <input x-model="stepper.price" type="number" min="0" step="any"
+                                    placeholder="Enter price"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                    :class="errors.price ? 'border-red-500 ring-2 ring-red-300' : ''">
+                            </div>
+                        </div>
+                        <div x-show="stepper.step===4" class="space-y-2">
+                            <label class="text-sm font-medium text-gray-700"
+                                x-text="stepper.price_category==='retail' ? 'Max Capacity' : (stepper.price_category ? 'Min Capacity' : 'Capacity')"></label>
+                            <input x-model="stepper.delivery_capacity" type="number" min="0" step="1"
+                                placeholder="Enter capacity"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                :class="errors.capacity ? 'border-red-500 ring-2 ring-red-300' : ''">
+                        </div>
+                    </div>
+                    <div class="p-5 border-t flex items-center justify-between">
+                        <button @click="prevStep()"
+                            class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center gap-2"
+                            :disabled="stepper.step===1">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            Back
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <button x-show="stepper.step<4" @click="nextStep()"
+                                class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black flex items-center gap-2">
+                                Next
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </button>
+                            <button x-show="stepper.step===4" @click="commitStepper()"
+                                class="px-4 py-2 rounded-lg bg-user-primary text-white hover:bg-user-primary/90 flex items-center gap-2">
+                                <i data-lucide="save" class="w-4 h-4"></i>
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template x-teleport="body">
+        <div x-show="modals.deleteConfirm" x-transition.opacity class="fixed inset-0 z-[1000] m-0 p-0">
+            <div class="fixed inset-0 bg-black/40" @click="modals.deleteConfirm=false"></div>
+            <div class="fixed inset-0 flex items-center justify-center">
+                <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-12 h-12 rounded-full bg-red-100 grid place-items-center">
+                                <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-secondary">Confirm Delete</h3>
+                        </div>
+                        <p class="text-gray-600 mb-2">Remove this product from your store?</p>
+                        <p class="text-sm font-medium text-gray-900" x-text="deleteContext?.name"></p>
+                    </div>
+                    <div class="p-6 border-t flex justify-end gap-2">
+                        <button @click="modals.deleteConfirm=false"
+                            class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</button>
+                        <button @click="performDelete()"
+                            class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center gap-2">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 </div>
 
 <script>
-    let currentPage = 1;
-    let currentSearch = '';
-    let availablePackageMappings = [];
-    let availableSIUnits = [];
-    let allProducts = [];
-    let lineItemCount = 0;
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function formatNumber(num) {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    }
-
-    function showAlert(type, message) {
-        const alertClass = type === 'success'
-            ? 'bg-green-50 border-green-200 text-green-800'
-            : 'bg-red-50 border-red-200 text-red-800';
-        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-        document.getElementById('alertContainer').innerHTML = `
-            <div class="${alertClass} border px-4 py-3 rounded-lg mb-4">
-                <i class="fas ${iconClass} mr-2"></i>${message}
-            </div>`;
-        setTimeout(() => { document.getElementById('alertContainer').innerHTML = ''; }, 5000);
-    }
-
-    async function getProductImage(productId) {
-        try {
-            const response = await fetch(`${BASE_URL}img/products/${productId}/images.json`);
-            const data = await response.json();
-            if (data.images && data.images.length > 0) {
-                const randomImage = data.images[Math.floor(Math.random() * data.images.length)];
-                return `${BASE_URL}img/products/${productId}/${randomImage}`;
-            }
-        } catch (error) {
-            console.log('No images found for product:', productId);
-        }
-        return 'https://placehold.co/400x300/f3f4f6/9ca3af?text=No+Image';
-    }
-
-    async function loadCurrentProducts(page = 1, limit = 12) {
-        const grid = document.getElementById('productsGrid');
-        const loading = document.getElementById('loadingIndicator');
-
-        loading.classList.remove('hidden');
-        grid.innerHTML = '';
-
-        try {
-            const response = await fetch(`${BASE_URL}vendor-store/fetch/manageProducts.php?action=getStoreProducts&id=${vendorId}&page=${page}&limit=${limit}`);
-            const data = await response.json();
-
-            loading.classList.add('hidden');
-
-            if (data.success && data.products) {
-                productsCache = data.products;
-                await renderProducts();
-                createPagination(data.pagination);
-            } else {
-                grid.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <i class="fas fa-exclamation-triangle text-6xl text-red-300 mb-4"></i>
-                        <h3 class="text-xl font-medium text-red-500 mb-2">Failed to load products</h3>
-                        <p class="text-red-400">Please try refreshing the page.</p>
-                    </div>`;
-            }
-        } catch (error) {
-            loading.classList.add('hidden');
-            grid.innerHTML = `
-                <div class="col-span-full text-center py-12">
-                    <i class="fas fa-wifi text-6xl text-red-300 mb-4"></i>
-                    <h3 class="text-xl font-medium text-red-500 mb-2">Connection Error</h3>
-                    <p class="text-red-400">Unable to load products. Please check your connection.</p>
-                </div>`;
-        }
-    }
-
-    async function renderProducts() {
-        const grid = document.getElementById('productsGrid');
-        grid.innerHTML = '';
-
-        const filtered = productsCache.filter(product =>
-            product.name.toLowerCase().includes(currentSearch.toLowerCase()) ||
-            product.category_name.toLowerCase().includes(currentSearch.toLowerCase())
-        );
-
-        if (!filtered.length) {
-            grid.innerHTML = `
-                <div class="col-span-full text-center py-12">
-                    <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
-                    <h3 class="text-xl font-medium text-gray-500 mb-2">No products found</h3>
-                    <p class="text-gray-400 mb-6">${currentSearch ? 'Try adjusting your search terms.' : 'Start building your catalog by adding products to your store.'}</p>
-                    ${!currentSearch ? '<button onclick="openProductModal(false)" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"><i class="fas fa-plus mr-2"></i>Add Your First Product</button>' : ''}
-                </div>`;
-            return;
-        }
-
-        for (const product of filtered) {
-            const imageUrl = await getProductImage(product.id);
-            const card = createProductCard(product, imageUrl);
-            grid.appendChild(card);
-        }
-    }
-
-    function createProductCard(product, imageUrl) {
-        const card = document.createElement('div');
-        card.className = 'bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200 flex flex-col h-full';
-
-        const pricingBadges = product.pricing?.map(price => {
-            const colorClass = price.price_category === 'retail' ? 'bg-blue-100 text-blue-800' :
-                price.price_category === 'wholesale' ? 'bg-green-100 text-green-800' :
-                    'bg-orange-100 text-orange-800';
-            return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colorClass}">UGX ${formatNumber(price.price)}</span>`;
-        }).join('') || '<span class="text-sm text-gray-500">No pricing</span>';
-
-        card.innerHTML = `
-            <div class="relative">
-                <img src="${imageUrl}" 
-                     alt="${escapeHtml(product.name)}"
-                     class="w-full h-48 object-cover rounded-t-xl bg-gray-100"
-                     onerror="this.src='https://placehold.co/400x300/f3f4f6/9ca3af?text=No+Image'">
-                <button onclick="openProductModal(true, '${product.store_product_id}')"
-                    class="absolute top-2 right-2 bg-white p-2 rounded-full shadow-md text-blue-600 hover:bg-blue-50 transition-colors">
-                    <i class="fas fa-edit text-sm"></i>
-                </button>
-            </div>
-            <div class="p-4 flex flex-col flex-grow">
-                <div class="flex-grow">
-                    <h3 class="font-semibold text-lg text-gray-900 mb-1">${escapeHtml(product.name)}</h3>
-                    <p class="text-sm text-gray-600 mb-3">${escapeHtml(product.category_name)}</p>
-                    <div class="flex flex-wrap gap-1 mb-4">${pricingBadges}</div>
-                </div>
-                <div class="flex justify-between items-center mt-auto pt-2 border-t border-gray-100">
-                    <span class="text-sm text-gray-500">${product.pricing ? product.pricing.length : 0} pricing option${product.pricing && product.pricing.length !== 1 ? 's' : ''}</span>
-                    <button onclick="openDeleteModal('${product.store_product_id}', '${escapeHtml(product.name)}')"
-                        class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-full transition-colors">
-                        <i class="fas fa-trash text-sm"></i>
-                    </button>
-                </div>
-            </div>`;
-
-        return card;
-    }
-
-    function createPagination(pagination) {
-        const container = document.getElementById('paginationContainer');
-
-        if (pagination.pages <= 1) {
-            container.innerHTML = '';
-            return;
-        }
-
-        let html = `
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="text-sm text-gray-700">
-                    Showing ${pagination.offset + 1} to ${Math.min(pagination.offset + pagination.limit, pagination.total_products)} of ${pagination.total_products} products
-                </div>
-                <div class="flex gap-1">`;
-
-        if (pagination.page > 1) {
-            html += `<button onclick="changePage(${pagination.page - 1})" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Previous</button>`;
-        }
-
-        const startPage = Math.max(1, pagination.page - 2);
-        const endPage = Math.min(pagination.pages, pagination.page + 2);
-
-        for (let i = startPage; i <= endPage; i++) {
-            const isActive = i === pagination.page;
-            html += `<button onclick="changePage(${i})" class="px-3 py-2 text-sm border rounded-lg transition-colors ${isActive ? 'bg-red-600 text-white border-red-600' : 'border-gray-300 hover:bg-gray-50'}">${i}</button>`;
-        }
-
-        if (pagination.page < pagination.pages) {
-            html += `<button onclick="changePage(${pagination.page + 1})" class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Next</button>`;
-        }
-
-        html += '</div></div>';
-        container.innerHTML = html;
-    }
-
-    function changePage(page) {
-        currentPage = page;
-        loadCurrentProducts(page);
-    }
-
-    async function openProductModal(edit = false, storeProductId = '') {
-        isEditMode = edit;
-        document.getElementById('productModalTitle').textContent = edit ? 'Edit Product Pricing' : 'Add New Product';
-        document.getElementById('saveButtonText').textContent = edit ? 'Update' : 'Save';
-        document.getElementById('productForm').reset();
-        document.getElementById('lineItemsWrapper').innerHTML = '';
-
-        const productSelectionSection = document.getElementById('productSelectionSection');
-
-        if (edit) {
-            productSelectionSection.style.display = 'none';
-            const product = productsCache.find(p => p.store_product_id === storeProductId);
-
-            if (product) {
-                document.getElementById('storeProductId').value = storeProductId;
-                document.getElementById('selectedProductId').value = product.id;
-                document.getElementById('selectedCategoryId').value = product.category_id;
-
+    function productsPage() {
+        return {
+            vendorId: '<?= $storeId ?>',
+            page: 1,
+            limit: 12,
+            products: [],
+            loading: false,
+            search: '',
+            selectSearch: '',
+            selectLoading: false,
+            addableAll: [],
+            modals: { selectProduct: false, pricingList: false, stepper: false, deleteConfirm: false },
+            pricingProduct: null,
+            pricingList: [],
+            availablePackages: [],
+            availableUnits: [],
+            openPkg: false,
+            openUnit: false,
+            errors: { package: false, unit: false, size: false, category: false, price: false, capacity: false },
+            stepper: { mode: 'new', step: 1, package_mapping_id: null, package_name: '', packageQuery: '', si_unit_id: null, si_unit: '', unitQuery: '', package_size: '', price_category: '', price: '', delivery_capacity: '' },
+            deleteContext: null,
+            placeholderImg: 'https://placehold.co/600x400/f3f4f6/9ca3af?text=No+Image',
+            async init() { await this.fetchProducts(); this.refreshIcons(); },
+            refreshIcons() { if (window.lucide && lucide.createIcons) lucide.createIcons(); },
+            offset() { return (this.page - 1) * this.limit },
+            filteredProducts() {
+                const q = (this.search || '').toLowerCase();
+                return this.products.filter(p => (p.name || '').toLowerCase().includes(q) || (p.category_name || '').toLowerCase().includes(q));
+            },
+            totalPages() { return Math.max(1, Math.ceil(this.filteredProducts().length / this.limit)); },
+            pageNumbers() {
+                const total = this.totalPages(); const cur = this.page; const out = [];
+                const start = Math.max(1, cur - 2); const end = Math.min(total, cur + 2);
+                for (let i = start; i <= end; i++) out.push(i);
+                return out;
+            },
+            pagedProducts() { return this.filteredProducts().slice(this.offset(), this.offset() + this.limit); },
+            goto(n) { if (n < 1 || n > this.totalPages()) return; this.page = n; this.$nextTick(() => this.refreshIcons()); },
+            applySearch() { this.page = 1; this.$nextTick(() => this.refreshIcons()); },
+            clearSearch() { this.search = ''; this.page = 1; this.$nextTick(() => this.refreshIcons()); },
+            chipColor(cat) {
+                if (cat === 'retail') return 'bg-blue-100 text-blue-700';
+                if (cat === 'wholesale') return 'bg-green-100 text-green-700';
+                if (cat === 'factory') return 'bg-orange-100 text-orange-700';
+                return 'bg-gray-100 text-gray-700';
+            },
+            formatNumber(v) { if (!v && v !== 0) return '0'; return new Intl.NumberFormat('en-UG', { maximumFractionDigits: 0 }).format(v); },
+            formatChip(pr) {
+                const pkg = pr.package_name || this.labelForPackage(pr.package_mapping_id) || '';
+                const unit = pr.si_unit || this.labelForUnit(pr.si_unit_id) || '';
+                const size = pr.package_size ? pr.package_size : '';
+                return `${pkg}${size ? (' • ' + size) : ''}${unit ? (' ' + unit) : ''} • UGX ${this.formatNumber(pr.price)}`;
+            },
+            labelForPackage(id) { const m = this.availablePackages.find(x => String(x.id) === String(id)); return m ? m.package_name : ''; },
+            labelForUnit(id) { const u = this.availableUnits.find(x => String(x.id) === String(id)); return u ? u.si_unit : ''; },
+            async getImage(productId) {
                 try {
-                    const [pkgResponse, siResponse] = await Promise.all([
-                        fetch(`${BASE_URL}vendor-store/fetch/manageProducts.php?action=getPackageNamesForProduct&product_id=${product.id}`),
-                        fetch(`${BASE_URL}vendor-store/fetch/manageProducts.php?action=getSIUnits`)
-                    ]);
-
-                    const [pkgData, siData] = await Promise.all([
-                        pkgResponse.json(),
-                        siResponse.json()
-                    ]);
-
-                    if (pkgData.success) availablePackageMappings = pkgData.mappings;
-                    if (siData.success) availableSIUnits = siData.siUnits;
-
-                    if (product.pricing && product.pricing.length > 0) {
-                        product.pricing.forEach(pricing => addLineItemRow(pricing));
+                    const r = await fetch(`<?= BASE_URL ?>img/products/${productId}/images.json`, { cache: 'no-store' });
+                    const j = await r.json();
+                    if (j.images && j.images.length) { const rnd = j.images[Math.floor(Math.random() * j.images.length)]; return `<?= BASE_URL ?>img/products/${productId}/${rnd}`; }
+                } catch (e) { }
+                return this.placeholderImg;
+            },
+            async fetchProducts() {
+                this.loading = true;
+                try {
+                    const r = await fetch(`<?= BASE_URL ?>vendor-store/fetch/manageProducts.php?action=getStoreProducts&id=${encodeURIComponent(this.vendorId)}&page=1&limit=500`, { cache: 'no-store' });
+                    const j = await r.json();
+                    if (j.success && j.products) {
+                        this.products = await Promise.all(j.products.map(async p => { p._image = await this.getImage(p.id); return p; }));
                     } else {
-                        addLineItemRow();
+                        this.products = [];
                     }
-                } catch (error) {
-                    showAlert('error', 'Failed to load product data');
-                    return;
+                } catch (e) {
+                    this.products = [];
+                } finally {
+                    this.loading = false;
+                    this.$nextTick(() => this.refreshIcons());
                 }
-            }
-        } else {
-            productSelectionSection.style.display = 'block';
-            document.getElementById('storeProductId').value = '';
-            await loadProductsForStore();
-            await ensureSIUnits();
-            addLineItemRow();
-        }
-
-        document.getElementById('productModal').classList.remove('hidden');
-    }
-
-    function closeProductModal() {
-        document.getElementById('productModal').classList.add('hidden');
-    }
-
-    function openDeleteModal(storeProductId, productName) {
-        document.getElementById('deleteProductName').textContent = productName;
-        document.getElementById('confirmDeleteBtn').dataset.id = storeProductId;
-        document.getElementById('deleteConfirmModal').classList.remove('hidden');
-    }
-
-    function closeDeleteModal() {
-        document.getElementById('deleteConfirmModal').classList.add('hidden');
-    }
-
-    async function loadProductsForStore() {
-        const dropdown = document.getElementById('productDropdown');
-        dropdown.innerHTML = '<div class="p-3 text-center text-gray-500">Loading products...</div>';
-
-        try {
-            const response = await fetch(`${BASE_URL}vendor-store/fetch/manageProducts.php?action=getProductsNotInStore&store_id=${vendorId}`);
-            const data = await response.json();
-
-            if (data.success && data.products.length) {
-                allProducts = data.products;
-                const byCat = {};
-                data.products.forEach(p => {
-                    byCat[p.category_name] = byCat[p.category_name] || [];
-                    byCat[p.category_name].push(p);
-                });
-                populateProductDropdown(byCat);
-            } else {
-                dropdown.innerHTML = '<div class="p-3 text-center text-gray-500">No products available to add</div>';
-            }
-        } catch (error) {
-            dropdown.innerHTML = '<div class="p-3 text-center text-red-500">Error loading products</div>';
-        }
-    }
-
-    function populateProductDropdown(byCat, filter = '') {
-        const dropdown = document.getElementById('productDropdown');
-        dropdown.innerHTML = '';
-        let found = false;
-
-        Object.keys(byCat).sort().forEach(cat => {
-            const list = byCat[cat].filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
-            if (list.length) {
-                found = true;
-                const header = document.createElement('div');
-                header.className = 'px-4 py-2 text-xs font-semibold text-gray-500 uppercase bg-gray-50 border-b';
-                header.textContent = cat;
-                dropdown.appendChild(header);
-
-                list.forEach(p => {
-                    const option = document.createElement('div');
-                    option.className = 'px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0';
-                    option.textContent = p.name;
-                    option.addEventListener('click', () => selectProduct(p.id, p.category_id, p.name));
-                    dropdown.appendChild(option);
-                });
-            }
-        });
-
-        if (!found) {
-            dropdown.innerHTML = '<div class="p-3 text-center text-gray-500 italic">No matching products found</div>';
-        }
-    }
-
-    function selectProduct(productId, categoryId, productName) {
-        document.getElementById('selectedProductId').value = productId;
-        document.getElementById('selectedCategoryId').value = categoryId;
-        document.getElementById('productSearchInput').value = productName;
-        document.getElementById('productDropdown').classList.add('hidden');
-        loadPackageMappingsForProduct(productId);
-    }
-
-    async function loadPackageMappingsForProduct(productId) {
-        try {
-            const response = await fetch(`${BASE_URL}vendor-store/fetch/manageProducts.php?action=getPackageNamesForProduct&product_id=${productId}`);
-            const data = await response.json();
-
-            if (data.success) {
-                availablePackageMappings = data.mappings;
-                await ensureSIUnits();
-
-                const wrapper = document.getElementById('lineItemsWrapper');
-                if (wrapper.children.length === 0) {
-                    addLineItemRow();
+            },
+            showAlert(type, message) {
+                const c = type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800';
+                const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+                const el = document.getElementById('alertContainer');
+                el.innerHTML = `<div class="${c} pointer-events-auto border px-4 py-3 rounded-lg shadow flex items-center gap-2"><i data-lucide="${icon}" class="w-4 h-4"></i><span>${message}</span></div>`;
+                this.refreshIcons();
+                setTimeout(() => { el.innerHTML = ''; }, 4000);
+            },
+            async openAddProduct() {
+                this.modals.selectProduct = true;
+                this.selectSearch = '';
+                this.selectLoading = true;
+                try {
+                    const r = await fetch(`<?= BASE_URL ?>vendor-store/fetch/manageProducts.php?action=getProductsNotInStore&store_id=${encodeURIComponent(this.vendorId)}`, { cache: 'no-store' });
+                    const j = await r.json();
+                    this.addableAll = j.success ? (j.products || []) : [];
+                } catch (e) { this.addableAll = []; }
+                finally {
+                    this.selectLoading = false;
+                    this.$nextTick(() => this.refreshIcons());
                 }
-            } else {
-                showAlert('error', 'Failed to load package mappings');
-            }
-        } catch (error) {
-            showAlert('error', 'Error loading package mappings');
-        }
-    }
-
-    async function ensureSIUnits() {
-        if (!availableSIUnits || !availableSIUnits.length) {
-            try {
-                const response = await fetch(`${BASE_URL}vendor-store/fetch/manageProducts.php?action=getSIUnits`);
-                const data = await response.json();
-                if (data.success) availableSIUnits = data.siUnits;
-            } catch (error) {
-                console.error('Failed to load SI units');
-            }
-        }
-    }
-
-    function addLineItemRow(existingData = null) {
-        lineItemCount++;
-        const wrapper = document.getElementById('lineItemsWrapper');
-        const row = document.createElement('div');
-        row.className = 'bg-gray-50 border border-gray-200 rounded-lg p-4 relative';
-
-        row.innerHTML = `
-            <button type="button" class="absolute top-2 right-2 text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded transition-colors" onclick="removeLineItem(this)">
-                <i class="fas fa-times text-sm"></i>
-            </button>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Package</label>
-                    <div class="relative">
-                        <input type="text" class="pkg-search-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Search package..." autocomplete="off"/>
-                        <input type="hidden" name="package_mapping_id" class="pkg-mapping-id"/>
-                        <div class="pkg-dropdown absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden z-40"></div>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Unit of Measure</label>
-                    <div class="relative">
-                        <input type="text" class="si-search-input w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Search SI unit..." autocomplete="off"/>
-                        <input type="hidden" name="si_unit_id" class="si-unit-id"/>
-                        <div class="si-dropdown absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden z-40"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Unit Size</label>
-                    <input type="text" name="package_size" value="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Price Category</label>
-                    <select name="price_category" class="price-category-select w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                        <option value="">-- Select Category --</option>
-                        <option value="retail">Retail</option>
-                        <option value="wholesale">Wholesale</option>
-                        <option value="factory">Factory</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Price (UGX)</label>
-                    <input type="number" step="any" name="price" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                </div>
-                <div class="delivery-capacity-container">
-                    <label class="block text-sm font-medium text-gray-700 mb-2 delivery-capacity-label">Capacity</label>
-                    <input type="number" name="delivery_capacity" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
-                </div>
-            </div>
-        `;
-
-        wrapper.appendChild(row);
-        initPackageDropdown(row);
-        initSiDropdown(row);
-
-        const priceSelect = row.querySelector('.price-category-select');
-        priceSelect.addEventListener('change', function () {
-            const capacityLabel = row.querySelector('.delivery-capacity-label');
-            capacityLabel.textContent = this.value === 'retail' ? 'Max. Capacity' :
-                (this.value === 'wholesale' || this.value === 'factory' ? 'Min. Capacity' : 'Capacity');
-        });
-
-        if (existingData) {
-            populateExistingData(row, existingData);
-        }
-    }
-
-    function removeLineItem(button) {
-        const wrapper = document.getElementById('lineItemsWrapper');
-        const rows = wrapper.querySelectorAll('.bg-gray-50');
-
-        if (rows.length <= 1) {
-            showAlert('error', 'A product must have at least one packaging definition');
-            return;
-        }
-
-        button.closest('.bg-gray-50').remove();
-    }
-
-    function populateExistingData(row, existingData) {
-        const pkgInput = row.querySelector('.pkg-search-input');
-        const pkgId = row.querySelector('.pkg-mapping-id');
-        const siInput = row.querySelector('.si-search-input');
-        const siId = row.querySelector('.si-unit-id');
-        const pkgSize = row.querySelector('input[name="package_size"]');
-        const priceCategory = row.querySelector('select[name="price_category"]');
-        const price = row.querySelector('input[name="price"]');
-        const capacity = row.querySelector('input[name="delivery_capacity"]');
-        const capacityLabel = row.querySelector('.delivery-capacity-label');
-
-        if (existingData.package_mapping_id && availablePackageMappings) {
-            const pkg = availablePackageMappings.find(p => p.id == existingData.package_mapping_id);
-            if (pkg) {
-                pkgInput.value = pkg.package_name;
-                pkgId.value = pkg.id;
-            }
-        }
-
-        if (existingData.si_unit_id && availableSIUnits) {
-            const si = availableSIUnits.find(s => s.id == existingData.si_unit_id);
-            if (si) {
-                siInput.value = si.si_unit;
-                siId.value = si.id;
-            }
-        }
-
-        pkgSize.value = existingData.package_size || '1';
-        priceCategory.value = existingData.price_category || '';
-        price.value = existingData.price || '';
-
-        if (existingData.delivery_capacity !== null && existingData.delivery_capacity !== undefined) {
-            capacity.value = existingData.delivery_capacity;
-        }
-
-        if (existingData.price_category === 'retail') {
-            capacityLabel.textContent = 'Max. Capacity';
-        } else if (existingData.price_category === 'wholesale' || existingData.price_category === 'factory') {
-            capacityLabel.textContent = 'Min. Capacity';
-        }
-    }
-
-    function initPackageDropdown(row) {
-        const input = row.querySelector('.pkg-search-input');
-        const hiddenInput = row.querySelector('.pkg-mapping-id');
-        const dropdown = row.querySelector('.pkg-dropdown');
-
-        function showList(filter = '') {
-            dropdown.innerHTML = '';
-            let found = false;
-
-            availablePackageMappings.forEach(mapping => {
-                if (mapping.package_name.toLowerCase().includes(filter.toLowerCase())) {
-                    found = true;
-                    const option = document.createElement('div');
-                    option.className = 'px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0';
-                    option.textContent = mapping.package_name;
-                    option.addEventListener('click', () => {
-                        hiddenInput.value = mapping.id;
-                        input.value = mapping.package_name;
-                        dropdown.classList.add('hidden');
-                    });
-                    dropdown.appendChild(option);
+            },
+            selectableProducts() {
+                const q = (this.selectSearch || '').toLowerCase();
+                return this.addableAll.filter(p => (p.name || '').toLowerCase().includes(q) || (p.category_name || '').toLowerCase().includes(q));
+            },
+            async beginAddPricing(p) {
+                this.modals.selectProduct = false;
+                this.pricingProduct = { id: p.id, name: p.name, category_id: p.category_id, category_name: p.category_name, store_product_id: null, pricing: [] };
+                await this.loadMetaForProduct(p.id);
+                this.pricingList = [];
+                this.modals.pricingList = true;
+                this.$nextTick(() => this.refreshIcons());
+            },
+            async openPricingList(p) {
+                this.pricingProduct = p;
+                await this.loadMetaForProduct(p.id);
+                this.pricingList = JSON.parse(JSON.stringify(p.pricing || []));
+                this.modals.pricingList = true;
+                this.$nextTick(() => this.refreshIcons());
+            },
+            closePricingList() { this.modals.pricingList = false; },
+            async loadMetaForProduct(productId) {
+                try {
+                    const [pkgR, siR] = await Promise.all([
+                        fetch(`<?= BASE_URL ?>vendor-store/fetch/manageProducts.php?action=getPackageNamesForProduct&product_id=${encodeURIComponent(productId)}`),
+                        fetch(`<?= BASE_URL ?>vendor-store/fetch/manageProducts.php?action=getSIUnits`)
+                    ]);
+                    const [pkgJ, siJ] = await Promise.all([pkgR.json(), siR.json()]);
+                    this.availablePackages = pkgJ.success ? (pkgJ.mappings || []) : [];
+                    this.availableUnits = siJ.success ? (siJ.siUnits || []) : [];
+                } catch (e) {
+                    this.availablePackages = [];
+                    this.availableUnits = [];
                 }
-            });
-
-            if (!found) {
-                dropdown.innerHTML = '<div class="p-3 text-center text-gray-500">No matching packages</div>';
-            }
-        }
-
-        input.addEventListener('focus', () => {
-            dropdown.classList.remove('hidden');
-            showList(input.value);
-        });
-
-        input.addEventListener('input', () => {
-            dropdown.classList.remove('hidden');
-            showList(input.value);
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!row.contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-    }
-
-    function initSiDropdown(row) {
-        const input = row.querySelector('.si-search-input');
-        const hiddenInput = row.querySelector('.si-unit-id');
-        const dropdown = row.querySelector('.si-dropdown');
-
-        function showList(filter = '') {
-            dropdown.innerHTML = '';
-            let found = false;
-
-            availableSIUnits.forEach(unit => {
-                if (unit.si_unit.toLowerCase().includes(filter.toLowerCase())) {
-                    found = true;
-                    const option = document.createElement('div');
-                    option.className = 'px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0';
-                    option.textContent = unit.si_unit;
-                    option.addEventListener('click', () => {
-                        hiddenInput.value = unit.id;
-                        input.value = unit.si_unit;
-                        dropdown.classList.add('hidden');
-                    });
-                    dropdown.appendChild(option);
+            },
+            openStepper(mode, idx = null) {
+                this.errors = { package: false, unit: false, size: false, category: false, price: false, capacity: false };
+                this.stepper = { mode, index: idx, step: 1, package_mapping_id: null, package_name: '', packageQuery: '', si_unit_id: null, si_unit: '', unitQuery: '', package_size: '', price_category: '', price: '', delivery_capacity: '' };
+                if (mode === 'edit' && idx !== null) {
+                    const pr = this.pricingList[idx];
+                    this.stepper.package_mapping_id = pr.package_mapping_id || null;
+                    this.stepper.package_name = pr.package_name || this.labelForPackage(pr.package_mapping_id) || '';
+                    this.stepper.si_unit_id = pr.si_unit_id || null;
+                    this.stepper.si_unit = pr.si_unit || this.labelForUnit(pr.si_unit_id) || '';
+                    this.stepper.package_size = pr.package_size ?? '';
+                    this.stepper.price_category = pr.price_category || '';
+                    this.stepper.price = pr.price ?? '';
+                    this.stepper.delivery_capacity = pr.delivery_capacity ?? '';
+                    this.stepper.packageQuery = this.stepper.package_name;
+                    this.stepper.unitQuery = this.stepper.si_unit;
                 }
-            });
-
-            if (!found) {
-                dropdown.innerHTML = '<div class="p-3 text-center text-gray-500">No matching SI units found</div>';
-            }
-        }
-
-        input.addEventListener('focus', () => {
-            dropdown.classList.remove('hidden');
-            showList(input.value);
-        });
-
-        input.addEventListener('input', () => {
-            dropdown.classList.remove('hidden');
-            showList(input.value);
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!row.contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-    }
-
-    function initProductSearch() {
-        const input = document.getElementById('productSearchInput');
-        const dropdown = document.getElementById('productDropdown');
-
-        function groupAndFilter(val) {
-            const byCat = {};
-            allProducts.forEach(p => {
-                byCat[p.category_name] = byCat[p.category_name] || [];
-                byCat[p.category_name].push(p);
-            });
-            populateProductDropdown(byCat, val);
-        }
-
-        input.addEventListener('focus', function () {
-            if (allProducts && allProducts.length) {
-                dropdown.classList.remove('hidden');
-                groupAndFilter(this.value);
-            }
-        });
-
-        input.addEventListener('input', function () {
-            if (allProducts && allProducts.length) {
-                dropdown.classList.remove('hidden');
-                groupAndFilter(this.value);
-            }
-        });
-
-        document.addEventListener('click', e => {
-            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-    }
-
-    async function handleSaveProduct() {
-        const productId = document.getElementById('selectedProductId').value;
-        const categoryId = document.getElementById('selectedCategoryId').value;
-
-        if (!isEditMode && (!productId || !categoryId)) {
-            showAlert('error', 'Please select a product first');
-            return;
-        }
-
-        const rows = document.querySelectorAll('#lineItemsWrapper .bg-gray-50');
-        if (rows.length === 0) {
-            showAlert('error', 'Please add at least one pricing entry');
-            return;
-        }
-
-        const lineItems = [];
-        let hasError = false;
-
-        rows.forEach(row => {
-            const pmId = row.querySelector('input[name="package_mapping_id"]').value;
-            const siId = row.querySelector('input[name="si_unit_id"]').value;
-            const pkgSize = row.querySelector('input[name="package_size"]').value;
-            const priceCat = row.querySelector('select[name="price_category"]').value;
-            const price = row.querySelector('input[name="price"]').value;
-            const cap = row.querySelector('input[name="delivery_capacity"]').value;
-
-            if (!pmId || !siId || !price || !priceCat) {
-                hasError = true;
-                return;
-            }
-
-            lineItems.push({
-                package_mapping_id: pmId,
-                si_unit_id: siId,
-                package_size: pkgSize,
-                price_category: priceCat,
-                price: price,
-                delivery_capacity: cap || null
-            });
-        });
-
-        if (hasError || lineItems.length === 0) {
-            showAlert('error', 'Please complete all required fields in pricing entries');
-            return;
-        }
-
-        const btn = document.getElementById('saveProductBtn');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
-
-        try {
-            const formData = new FormData();
-
-            if (isEditMode) {
-                const storeProductId = document.getElementById('storeProductId').value;
-                formData.append('store_product_id', storeProductId);
-                formData.append('line_items', JSON.stringify(lineItems));
-
-                const response = await fetch(`${BASE_URL}vendor-store/fetch/manageProducts.php?action=updateStoreProduct`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showAlert('success', 'Product updated successfully');
-                    closeProductModal();
-                    await loadCurrentProducts(currentPage);
+                this.openPkg = true;
+                this.openUnit = false;
+                this.modals.stepper = true;
+                this.$nextTick(() => this.refreshIcons());
+            },
+            closeStepper() { this.modals.stepper = false; },
+            selectPackage(m) {
+                this.stepper.package_mapping_id = m.id;
+                this.stepper.package_name = m.package_name;
+                this.stepper.packageQuery = m.package_name;
+                this.openPkg = false;
+                this.errors.package = false;
+            },
+            selectUnit(u) {
+                this.stepper.si_unit_id = u.id;
+                this.stepper.si_unit = u.si_unit;
+                this.stepper.unitQuery = u.si_unit;
+                this.openUnit = false;
+                this.errors.unit = false;
+            },
+            nextStep() {
+                if (this.stepper.step === 1) {
+                    this.errors.package = !this.stepper.package_mapping_id;
+                    if (this.errors.package) return;
+                    this.openUnit = true;
+                } else if (this.stepper.step === 2) {
+                    this.errors.unit = !this.stepper.si_unit_id;
+                    this.errors.size = this.stepper.package_size === '' || Number(this.stepper.package_size) <= 0;
+                    if (this.errors.unit || this.errors.size) return;
+                } else if (this.stepper.step === 3) {
+                    this.errors.category = !this.stepper.price_category;
+                    this.errors.price = this.stepper.price === '' || Number(this.stepper.price) < 0;
+                    if (this.errors.category || this.errors.price) return;
+                }
+                if (this.stepper.step < 4) this.stepper.step++;
+                this.$nextTick(() => this.refreshIcons());
+            },
+            prevStep() { if (this.stepper.step > 1) this.stepper.step--; this.$nextTick(() => this.refreshIcons()); },
+            commitStepper() {
+                this.errors.capacity = this.stepper.delivery_capacity === '' || Number(this.stepper.delivery_capacity) < 0;
+                if (this.errors.capacity) return;
+                const entry = {
+                    package_mapping_id: this.stepper.package_mapping_id,
+                    package_name: this.stepper.package_name,
+                    si_unit_id: this.stepper.si_unit_id,
+                    si_unit: this.stepper.si_unit,
+                    package_size: this.stepper.package_size,
+                    price_category: this.stepper.price_category,
+                    price: this.stepper.price,
+                    delivery_capacity: this.stepper.delivery_capacity || null
+                };
+                if (this.stepper.mode === 'edit' && this.stepper.index !== null) {
+                    this.pricingList.splice(this.stepper.index, 1, entry);
                 } else {
-                    showAlert('error', data.error || 'Failed to update product');
+                    this.pricingList.push(entry);
                 }
-            } else {
-                formData.append('store_id', vendorId);
-                formData.append('product_id', productId);
-                formData.append('line_items', JSON.stringify(lineItems));
-
-                const response = await fetch(`${BASE_URL}vendor-store/fetch/manageProducts.php?action=addStoreProduct`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showAlert('success', 'Product added successfully');
-                    closeProductModal();
-                    await loadCurrentProducts(1);
+                this.modals.stepper = false;
+                this.$nextTick(() => this.refreshIcons());
+            },
+            async savePricingChanges() {
+                if (this.pricingList.length === 0) { this.showAlert('error', 'Add at least one pricing entry'); return; }
+                const payload = new FormData();
+                let url = '';
+                if (this.pricingProduct.store_product_id) {
+                    payload.append('store_product_id', this.pricingProduct.store_product_id);
+                    payload.append('line_items', JSON.stringify(this.normalizeLineItems()));
+                    url = `<?= BASE_URL ?>vendor-store/fetch/manageProducts.php?action=updateStoreProduct`;
                 } else {
-                    showAlert('error', data.error || 'Failed to add product');
+                    payload.append('store_id', this.vendorId);
+                    payload.append('product_id', this.pricingProduct.id);
+                    payload.append('line_items', JSON.stringify(this.normalizeLineItems()));
+                    url = `<?= BASE_URL ?>vendor-store/fetch/manageProducts.php?action=addStoreProduct`;
                 }
+                try {
+                    const r = await fetch(url, { method: 'POST', body: payload });
+                    const j = await r.json();
+                    if (j.success) {
+                        this.showAlert('success', this.pricingProduct.store_product_id ? 'Updated successfully' : 'Added to store');
+                        this.modals.pricingList = false;
+                        await this.fetchProducts();
+                    } else {
+                        this.showAlert('error', j.error || 'Operation failed');
+                    }
+                } catch (e) { this.showAlert('error', 'Server error'); }
+            },
+            normalizeLineItems() {
+                return this.pricingList.map(pr => ({
+                    package_mapping_id: pr.package_mapping_id,
+                    si_unit_id: pr.si_unit_id,
+                    package_size: pr.package_size,
+                    price_category: pr.price_category,
+                    price: pr.price,
+                    delivery_capacity: pr.delivery_capacity
+                }));
+            },
+            confirmDelete(p) { this.deleteContext = p; this.modals.deleteConfirm = true; this.$nextTick(() => this.refreshIcons()); },
+            async performDelete() {
+                if (!this.deleteContext?.store_product_id) { this.modals.deleteConfirm = false; return; }
+                try {
+                    const fd = new FormData(); fd.append('id', this.deleteContext.store_product_id);
+                    const r = await fetch(`<?= BASE_URL ?>vendor-store/fetch/manageProducts.php?action=deleteProduct`, { method: 'POST', body: fd });
+                    const j = await r.json();
+                    if (j.success) {
+                        this.showAlert('success', 'Product removed');
+                        this.modals.deleteConfirm = false;
+                        await this.fetchProducts();
+                    } else {
+                        this.showAlert('error', j.error || 'Failed to delete');
+                    }
+                } catch (e) { this.showAlert('error', 'Server error'); }
             }
-        } catch (error) {
-            showAlert('error', 'Error saving product');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
         }
     }
-
-    async function handleDeleteProduct() {
-        const productId = document.getElementById('confirmDeleteBtn').dataset.id;
-        const btn = document.getElementById('confirmDeleteBtn');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
-
-        try {
-            const formData = new FormData();
-            formData.append('id', productId);
-
-            const response = await fetch(`${BASE_URL}vendor-store/fetch/manageProducts.php?action=deleteProduct`, {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showAlert('success', 'Product deleted successfully');
-                closeDeleteModal();
-                await loadCurrentProducts(currentPage);
-            } else {
-                showAlert('error', data.error || 'Failed to delete product');
-            }
-        } catch (error) {
-            showAlert('error', 'Error deleting product');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        loadCurrentProducts(1);
-        initProductSearch();
-
-        document.getElementById('filterBtn').addEventListener('click', function () {
-            currentSearch = document.getElementById('searchInput').value.trim();
-            renderProducts();
-        });
-
-        document.getElementById('clearBtn').addEventListener('click', function () {
-            document.getElementById('searchInput').value = '';
-            currentSearch = '';
-            renderProducts();
-        });
-
-        document.getElementById('searchInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                document.getElementById('filterBtn').click();
-            }
-        });
-
-        document.getElementById('addLineItemBtn').addEventListener('click', () => addLineItemRow());
-        document.getElementById('saveProductBtn').addEventListener('click', handleSaveProduct);
-        document.getElementById('confirmDeleteBtn').addEventListener('click', handleDeleteProduct);
-
-        document.querySelectorAll('#productModal, #deleteConfirmModal').forEach(modal => {
-            modal.addEventListener('click', function (event) {
-                if (event.target === this) {
-                    this.classList.add('hidden');
-                }
-            });
-        });
-    });
 </script>
 
 <?php
