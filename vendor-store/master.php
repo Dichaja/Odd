@@ -14,6 +14,7 @@ if (!$storeId) {
     header('Location: ' . BASE_URL . 'account/dashboard');
     exit;
 }
+
 $storeStmt = $pdo->prepare("
     SELECT id, name, owner_id 
     FROM vendor_stores
@@ -26,10 +27,12 @@ if (!$store) {
     header('Location: ' . BASE_URL . 'account/dashboard');
     exit;
 }
+
 $storeName = $store['name'];
 $isAdmin = !empty($_SESSION['user']['is_admin']);
 $isOwner = $store['owner_id'] === $_SESSION['user']['user_id'];
 $isManager = false;
+
 if (!$isAdmin && !$isOwner) {
     $mgr = $pdo->prepare("
         SELECT 1 
@@ -40,17 +43,16 @@ if (!$isAdmin && !$isOwner) {
           AND approved = 1 
         LIMIT 1
     ");
-    $mgr->execute([
-        ':sid' => $storeId,
-        ':uid' => $_SESSION['user']['user_id']
-    ]);
+    $mgr->execute([':sid' => $storeId, ':uid' => $_SESSION['user']['user_id']]);
     $isManager = (bool) $mgr->fetchColumn();
 }
 if (!$isAdmin && !$isOwner && !$isManager) {
     header('Location: ' . BASE_URL . 'account/dashboard');
     exit;
 }
+
 $userRole = $isAdmin ? 'Admin' : ($isOwner ? 'Owner' : 'Manager');
+
 if (isset($_SESSION['last_activity']) && time() - $_SESSION['last_activity'] > 7200) {
     session_unset();
     session_destroy();
@@ -61,15 +63,18 @@ $_SESSION['last_activity'] = time();
 if (!isset($_SESSION['store_session_id']) || $_SESSION['store_session_id'] !== $storeId) {
     $_SESSION['store_session_id'] = $storeId;
 }
+
 $title = isset($pageTitle) ? "{$pageTitle} - {$storeName} | Store Dashboard" : "{$storeName} Store Dashboard";
 $activeNav = $activeNav ?? 'dashboard';
 $userName = $_SESSION['user']['username'];
+
 $storeInitials = '';
 $parts = array_filter(explode(' ', $storeName));
 $limitedParts = array_slice($parts, 0, 2);
 foreach ($limitedParts as $part) {
     $storeInitials .= strtoupper($part[0]);
 }
+
 $menuItems = [
     'main' => [
         'title' => 'Main',
@@ -107,6 +112,7 @@ $menuItems = [
         ]
     ]
 ];
+
 $sessionUlid = generateUlid();
 ?>
 <!DOCTYPE html>
@@ -116,12 +122,50 @@ $sessionUlid = generateUlid();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title><?= htmlspecialchars($title) ?></title>
+
+    <!-- Prevent Alpine-controlled elements from flashing -->
+    <style>
+        [x-cloak] {
+            display: none !important
+        }
+    </style>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="<?= BASE_URL ?>/img/favicon.png">
+
+    <!-- Alpine (defer) -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <script src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
+    <!-- Lucide (defer to reduce FOUC) -->
+    <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <!-- Lightweight jQuery shim to avoid "$ is not defined" from eventLog.js on pages without jQuery -->
+    <script>
+        if (!window.$ && !window.jQuery) {
+            (function () {
+                function $shim(sel) {
+                    if (typeof sel === 'function') {
+                        if (document.readyState !== 'loading') { sel(); }
+                        else { document.addEventListener('DOMContentLoaded', sel); }
+                        return;
+                    }
+                    const list = typeof sel === 'string' ? document.querySelectorAll(sel) : (sel ? [sel] : []);
+                    list.on = function (ev, cb) { list.forEach(el => el.addEventListener(ev, cb)); return list; };
+                    return list;
+                }
+                $shim.ajax = $shim.get = $shim.post = function () { return Promise.resolve(); };
+                window.$ = window.jQuery = $shim;
+            })();
+        }
+        // Quiet console noise if some old script still throws on missing $
+        window.addEventListener('error', function (e) {
+            if (e && /(\$ is not defined|jQuery is not defined)/.test(e.message || '')) { e.preventDefault(); }
+        }, true);
+    </script>
+
+    <!-- Load after shim -->
+    <script defer src="<?= BASE_URL ?>track/eventLog.js?v=<?= time() ?>"></script>
+
     <script>
         const BASE_URL = "<?= BASE_URL ?>";
         const SESSION_ULID = "<?= $sessionUlid; ?>";
@@ -134,6 +178,7 @@ $sessionUlid = generateUlid();
             }
         };
     </script>
+
     <style>
         body {
             font-family: 'Rubik', sans-serif
@@ -216,6 +261,7 @@ $sessionUlid = generateUlid();
 
 <body class="bg-user-content font-rubik" x-data="appShell()" x-init="init()">
     <div class="flex min-h-screen">
+        <!-- Sidebar -->
         <aside id="sidebar"
             class="user-sidebar fixed inset-y-0 left-0 z-50 w-64 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out"
             :class="{'-translate-x-full': !mobileOpen && window.innerWidth < 1024}">
@@ -247,9 +293,13 @@ $sessionUlid = generateUlid();
                 </nav>
             </div>
         </aside>
+
         <div class="flex-1 lg:ml-64 flex flex-col justify-between">
-            <div x-show="mobileOpen" x-transition.opacity class="fixed inset-0 bg-black/20 z-40 lg:hidden"
+            <!-- Mobile overlay -->
+            <div x-show="mobileOpen" x-cloak x-transition.opacity class="fixed inset-0 bg-black/20 z-40 lg:hidden"
                 @click="toggleSidebar()"></div>
+
+            <!-- Header -->
             <header class="user-header sticky top-0 z-40 border-b border-gray-100">
                 <div class="flex h-16 items-center justify-between px-6">
                     <div class="flex items-center gap-4">
@@ -263,15 +313,19 @@ $sessionUlid = generateUlid();
                             <?= htmlspecialchars($storeName) ?>
                         </h1>
                     </div>
+
                     <div class="flex items-center gap-2">
+                        <!-- Notifications -->
                         <div x-data="notifComponent()" x-init="init()" class="relative mr-2">
                             <button @click="open = !open"
                                 class="relative w-10 h-10 flex items-center justify-center text-gray-500 hover:text-user-primary rounded-lg hover:bg-gray-50">
                                 <i data-lucide="bell" class="w-6 h-6"></i>
-                                <span x-show="count > 0" x-text="count"
+                                <span x-show="count > 0" x-cloak x-text="count"
                                     class="absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center"></span>
                             </button>
-                            <div x-show="open" @click.outside="open = false" x-transition
+
+                            <!-- Dropdown -->
+                            <div x-show="open" x-cloak @click.outside="open = false" x-transition
                                 class="fixed top-14 left-2 right-2 w-auto max-w-full sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white rounded-lg shadow-lg border border-gray-100 z-50 max-h-96 overflow-auto">
                                 <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
                                     <div class="flex items-center gap-2">
@@ -287,6 +341,7 @@ $sessionUlid = generateUlid();
                                             class="text-xs px-2 py-1 bg-red-500 text-white rounded hover:bg-opacity-90 transition">Dismiss</button>
                                     </div>
                                 </div>
+
                                 <template x-for="note in notes" :key="note.target_id">
                                     <div :class="note.is_seen == 0 ? 'bg-user-secondary/20' : 'bg-white'"
                                         class="relative group border-b last:border-none flex items-start">
@@ -311,10 +366,13 @@ $sessionUlid = generateUlid();
                                         </button>
                                     </div>
                                 </template>
-                                <div x-show="notes.length === 0" class="p-4 text-sm text-center text-gray-500">No
-                                    notifications</div>
+
+                                <div x-show="notes.length === 0" x-cloak class="p-4 text-sm text-center text-gray-500">
+                                    No notifications</div>
                             </div>
                         </div>
+
+                        <!-- User menu -->
                         <div class="relative" x-data="{open:false}">
                             <button class="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2"
                                 title="<?= htmlspecialchars($storeName) ?> (<?= $userRole ?>)" @click="open=!open">
@@ -323,7 +381,8 @@ $sessionUlid = generateUlid();
                                     class="hidden md:block text-sm font-medium text-gray-700"><?= htmlspecialchars($userName) ?></span>
                                 <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
                             </button>
-                            <div x-show="open" @click.outside="open=false" x-transition
+
+                            <div x-show="open" x-cloak @click.outside="open=false" x-transition
                                 class="absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg border border-gray-100 py-2 z-50">
                                 <div class="px-4 py-3 bg-gray-50">
                                     <p class="text-sm font-medium text-gray-900"><?= htmlspecialchars($userName) ?></p>
@@ -356,16 +415,20 @@ $sessionUlid = generateUlid();
                     </div>
                 </div>
             </header>
+
             <main class="main-content-area p-6 h-[100%]">
                 <?= $mainContent ?? '' ?>
             </main>
+
             <footer class="bg-white border-t border-gray-100 py-4 px-6 text-center text-sm text-gray-500">
                 &copy; <?= date('Y') ?> Zzimba Online. All rights reserved.
             </footer>
         </div>
     </div>
+
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
+
         function appShell() {
             return {
                 mobileOpen: false,
@@ -375,24 +438,20 @@ $sessionUlid = generateUlid();
                     document.addEventListener('alpine:init', () => { if (window.lucide && lucide.createIcons) lucide.createIcons(); });
                     document.addEventListener('DOMContentLoaded', () => { if (window.lucide && lucide.createIcons) lucide.createIcons(); });
                 },
-                toggleSidebar() { this.mobileOpen = !this.mobileOpen },
+                toggleSidebar() { this.mobileOpen = !this.mobileOpen; },
                 async logoutUser() {
                     try {
                         const res = await fetch(BASE_URL + 'auth/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
                         const d = await res.json();
                         if (d.success) location.href = BASE_URL; else alert(d.message || 'Logout failed');
-                    } catch (e) { alert('Server error') }
+                    } catch (e) { alert('Server error'); }
                 }
             }
         }
+
         function notifComponent() {
             return {
-                open: false,
-                notes: [],
-                count: 0,
-                selected: [],
-                lastTs: null,
-                timer: null,
+                open: false, notes: [], count: 0, selected: [], lastTs: null, timer: null,
                 init() {
                     this.fetchNow();
                     this.timer = setInterval(() => this.fetchNow(), 20000);
@@ -421,24 +480,18 @@ $sessionUlid = generateUlid();
                     if (!Array.isArray(arr) || !arr.length) return;
                     const byId = new Map(this.notes.map(n => [n.target_id, n]));
                     for (const n of arr) {
-                        if (!byId.has(n.target_id)) {
-                            this.notes.unshift(n);
-                            byId.set(n.target_id, n);
-                        } else {
-                            const idx = this.notes.findIndex(x => x.target_id === n.target_id);
-                            if (idx >= 0) this.notes[idx] = n;
-                        }
+                        if (!byId.has(n.target_id)) { this.notes.unshift(n); byId.set(n.target_id, n); }
+                        else { const idx = this.notes.findIndex(x => x.target_id === n.target_id); if (idx >= 0) this.notes[idx] = n; }
                     }
                     this.notes = this.notes.slice(0, 100);
                 },
-                selectAll(e) { this.selected = e.target.checked ? this.notes.map(n => n.target_id) : [] },
+                selectAll(e) { this.selected = e.target.checked ? this.notes.map(n => n.target_id) : []; },
                 markSeen(id) {
                     const p = new URLSearchParams(); p.append('action', 'markSeen'); p.append('target_id', id);
                     fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
                         .then(r => r.json())
                         .then(res => {
-                            const note = this.notes.find(n => n.target_id === id);
-                            if (note) note.is_seen = 1;
+                            const note = this.notes.find(n => n.target_id === id); if (note) note.is_seen = 1;
                             const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                             this.count = c;
                         }).catch(() => { });
@@ -456,7 +509,7 @@ $sessionUlid = generateUlid();
                             this.count = c;
                         }).catch(() => { });
                 },
-                handleClick(note) { if (note.is_seen == 0) this.markSeen(note.target_id); if (note.link_url) location.href = note.link_url },
+                handleClick(note) { if (note.is_seen == 0) this.markSeen(note.target_id); if (note.link_url) location.href = note.link_url; },
                 dismiss(id) {
                     const p = new URLSearchParams(); p.append('action', 'dismiss'); p.append('target_id', id);
                     fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
@@ -493,6 +546,7 @@ $sessionUlid = generateUlid();
                 }
             }
         }
+
         if (window.lucide && lucide.createIcons) lucide.createIcons();
     </script>
 </body>
