@@ -1,5 +1,5 @@
-<div x-data="vendorSell()" x-init="init()" x-cloak>
-    <div x-show="isOpen" id="vendorSellModal" class="fixed inset-0 z-50" x-transition.opacity>
+<div x-data="vendorSell()" x-init="init()">
+    <div x-show="isOpen" x-cloak id="vendorSellModal" class="fixed inset-0 z-50 hidden" x-transition.opacity>
         <div class="absolute inset-0 bg-black/50" @click="close()"></div>
         <div class="fixed inset-0 flex items-center justify-center p-4">
             <div class="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -242,7 +242,7 @@
         </div>
     </div>
 
-    <div x-show="isPricingOpen" id="pricingEntryModal" class="fixed inset-0 z-[60]" x-transition.opacity>
+    <div x-show="isPricingOpen" x-cloak id="pricingEntryModal" class="fixed inset-0 z-[60] hidden" x-transition.opacity>
         <div class="absolute inset-0 bg-black/50" @click="closePricingEntryModal()"></div>
         <div class="fixed inset-0 flex items-center justify-center p-4">
             <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -269,8 +269,8 @@
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                                         placeholder="Search package..." autocomplete="off">
                                     <input type="hidden" x-model="form.package_mapping_id">
-                                    <div x-show="pkgOpen"
-                                        class="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
+                                    <div x-show="pkgOpen" x-cloak
+                                        class="hidden absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
                                         <template x-if="filteredPackages().length===0">
                                             <div class="p-3 text-center text-gray-500 text-sm">No matching packages
                                             </div>
@@ -290,8 +290,8 @@
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                                         placeholder="Search SI unit..." autocomplete="off">
                                     <input type="hidden" x-model="form.si_unit_id">
-                                    <div x-show="siOpen"
-                                        class="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
+                                    <div x-show="siOpen" x-cloak
+                                        class="hidden absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
                                         <template x-if="filteredSiUnits().length===0">
                                             <div class="p-3 text-center text-gray-500 text-sm">No matching SI units
                                                 found</div>
@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <div x-show="isConfirmOpen" id="confirmationModal" class="fixed inset-0 z-[70]" x-transition.opacity>
+    <div x-show="isConfirmOpen" x-cloak id="confirmationModal" class="fixed inset-0 z-[70] hidden" x-transition.opacity>
         <div class="absolute inset-0 bg-black/50" @click="closeConfirmationModal()"></div>
         <div class="fixed inset-0 flex items-center justify-center p-4">
             <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl">
