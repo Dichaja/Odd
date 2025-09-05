@@ -20,39 +20,31 @@ try {
         case 'getStoreDetails':
             getStoreDetails($pdo, $_GET['id'] ?? null, $currentUser);
             break;
-
         case 'getStoreProducts':
             getStoreProducts($pdo, $_GET['id'] ?? null, $_GET['page'] ?? 1, $_GET['limit'] ?? 12);
             break;
-
         case 'getPackageNamesForProduct':
             getPackageNamesForProduct($pdo);
             break;
-
         case 'getSIUnits':
             getSIUnits($pdo);
             break;
-
         case 'createSIUnit':
             requireLogin();
             createSIUnit($pdo);
             break;
-
         case 'addStoreProduct':
             requireLogin();
             addStoreProduct($pdo, $currentUser);
             break;
-
         case 'updateStoreProduct':
             requireLogin();
             updateStoreProduct($pdo, $currentUser);
             break;
-
         case 'deleteProduct':
             requireLogin();
             deleteProduct($pdo, $_POST['id'] ?? '', $currentUser);
             break;
-
         case 'getProductsNotInStore':
             if (empty($_GET['store_id'])) {
                 http_response_code(400);
@@ -61,7 +53,6 @@ try {
             }
             getAllProductsNotInStore($pdo, $_GET['store_id']);
             break;
-
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Invalid action: ' . $action]);
@@ -88,6 +79,8 @@ function ensureProductPricingTable(PDO $pdo)
             `price` DECIMAL(10,2) NOT NULL,
             `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail',
             `delivery_capacity` INT DEFAULT NULL,
+            `commission_type` ENUM('flat','percentage') NOT NULL DEFAULT 'percentage',
+            `commission_value` DECIMAL(10,2) NOT NULL DEFAULT '1.00',
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
@@ -97,6 +90,16 @@ function ensureProductPricingTable(PDO $pdo)
             FOREIGN KEY (`created_by`) REFERENCES `zzimba_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
     ");
+    $existsType = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_pricing' AND COLUMN_NAME = 'commission_type'");
+    $existsType->execute();
+    if (!$existsType->fetchColumn()) {
+        $pdo->exec("ALTER TABLE `product_pricing` ADD COLUMN `commission_type` ENUM('flat','percentage') NOT NULL DEFAULT 'percentage' AFTER `delivery_capacity`");
+    }
+    $existsValue = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_pricing' AND COLUMN_NAME = 'commission_value'");
+    $existsValue->execute();
+    if (!$existsValue->fetchColumn()) {
+        $pdo->exec("ALTER TABLE `product_pricing` ADD COLUMN `commission_value` DECIMAL(10,2) NOT NULL DEFAULT '1.00' AFTER `commission_type`");
+    }
 }
 
 function requireLogin()
@@ -126,9 +129,8 @@ function canManageStore(PDO $pdo, string $storeId, ?string $userId): bool
 {
     if (!$userId)
         return false;
-    if (isStoreOwner($pdo, $storeId, $userId)) {
+    if (isStoreOwner($pdo, $storeId, $userId))
         return true;
-    }
     $stmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active' LIMIT 1");
     $stmt->execute([$storeId, $userId]);
     return (bool) $stmt->fetchColumn();
@@ -156,9 +158,7 @@ function getPackageNamesForProduct(PDO $pdo)
 function getSIUnits(PDO $pdo)
 {
     try {
-        $stmt = $pdo->query("
-            SELECT id, si_unit FROM product_si_units ORDER BY si_unit
-        ");
+        $stmt = $pdo->query("SELECT id, si_unit FROM product_si_units ORDER BY si_unit");
         $units = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode(['success' => true, 'siUnits' => $units]);
     } catch (Exception $e) {
@@ -186,10 +186,7 @@ function createSIUnit(PDO $pdo)
         }
         $id = (string) Ulid::generate();
         $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-        $ins = $pdo->prepare("
-            INSERT INTO product_si_units (id, si_unit, created_at, updated_at)
-            VALUES (?, ?, ?, ?)
-        ");
+        $ins = $pdo->prepare("INSERT INTO product_si_units (id, si_unit, created_at, updated_at) VALUES (?, ?, ?, ?)");
         $ins->execute([$id, $name, $now, $now]);
         echo json_encode(['success' => true, 'message' => 'Created', 'id' => $id]);
     } catch (Exception $e) {
@@ -282,6 +279,8 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                 pp.price_category,
                 pp.delivery_capacity,
                 pp.package_size,
+                pp.commission_type,
+                pp.commission_value,
                 ppm.id             AS package_mapping_id,
                 ppn.package_name,
                 psu.id             AS si_unit_id,
@@ -328,7 +327,9 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                     'delivery_capacity' => $r['delivery_capacity'] !== null ? (int) $r['delivery_capacity'] : null,
                     'package_size' => $r['package_size'] ?? '1',
                     'package_mapping_id' => $r['package_mapping_id'] ?? null,
-                    'si_unit_id' => $r['si_unit_id'] ?? null
+                    'si_unit_id' => $r['si_unit_id'] ?? null,
+                    'commission_type' => $r['commission_type'] ?? 'percentage',
+                    'commission_value' => isset($r['commission_value']) ? (float) $r['commission_value'] : 1.00
                 ];
             }
         }
@@ -350,6 +351,30 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
     }
 }
 
+function validateCommission($typeRaw, $valueRaw, $price)
+{
+    $type = in_array(strtolower((string) $typeRaw), ['flat', 'percentage'], true) ? strtolower((string) $typeRaw) : 'percentage';
+    if ($type === 'percentage') {
+        $value = is_null($valueRaw) || $valueRaw === '' ? 1.00 : floatval($valueRaw);
+        if ($value < 1 || $value > 3) {
+            throw new Exception('Commission percentage must be between 1 and 3');
+        }
+        return ['percentage', round($value, 2)];
+    } else {
+        $price = floatval($price);
+        if ($price <= 0) {
+            throw new Exception('Price must be greater than 0 for flat commission');
+        }
+        $min = round($price * 0.01, 2);
+        $max = round($price * 0.03, 2);
+        $value = is_null($valueRaw) || $valueRaw === '' ? $min : round(floatval($valueRaw), 2);
+        if ($value < $min || $value > $max) {
+            throw new Exception('Flat commission must be between ' . number_format($min, 2, '.', '') . ' and ' . number_format($max, 2, '.', ''));
+        }
+        return ['flat', $value];
+    }
+}
+
 function addStoreProduct(PDO $pdo, string $currentUser)
 {
     $storeId = $_POST['store_id'] ?? '';
@@ -367,66 +392,38 @@ function addStoreProduct(PDO $pdo, string $currentUser)
     }
     try {
         $pdo->beginTransaction();
-        $prodCatStmt = $pdo->prepare("
-            SELECT category_id
-            FROM products
-            WHERE id = ?
-        ");
+        $prodCatStmt = $pdo->prepare("SELECT category_id FROM products WHERE id = ?");
         $prodCatStmt->execute([$productId]);
         $categoryId = $prodCatStmt->fetchColumn();
         if (!$categoryId) {
             throw new Exception('Product category not found');
         }
-        $scStmt = $pdo->prepare("
-            SELECT id
-            FROM store_categories
-            WHERE store_id = ? AND category_id = ? AND status != 'deleted'
-        ");
+        $scStmt = $pdo->prepare("SELECT id FROM store_categories WHERE store_id = ? AND category_id = ? AND status != 'deleted'");
         $scStmt->execute([$storeId, $categoryId]);
         $scId = $scStmt->fetchColumn();
         if (!$scId) {
             $scId = Ulid::generate();
-            $pdo->prepare("
-                INSERT INTO store_categories
-                    (id, store_id, category_id, status, created_at, updated_at)
-                VALUES (?, ?, ?, 'active', NOW(), NOW())
-            ")->execute([$scId, $storeId, $categoryId]);
+            $pdo->prepare("INSERT INTO store_categories (id, store_id, category_id, status, created_at, updated_at) VALUES (?, ?, ?, 'active', NOW(), NOW())")->execute([$scId, $storeId, $categoryId]);
         } else {
-            $pdo->prepare("
-                UPDATE store_categories
-                SET status = 'active', updated_at = NOW()
-                WHERE id = ? AND status != 'active'
-            ")->execute([$scId]);
+            $pdo->prepare("UPDATE store_categories SET status = 'active', updated_at = NOW() WHERE id = ? AND status != 'active'")->execute([$scId]);
         }
-        $check = $pdo->prepare("
-            SELECT id, status
-            FROM store_products
-            WHERE store_category_id = ? AND product_id = ?
-        ");
+        $check = $pdo->prepare("SELECT id, status FROM store_products WHERE store_category_id = ? AND product_id = ?");
         $check->execute([$scId, $productId]);
         $ex = $check->fetch(PDO::FETCH_ASSOC);
         if ($ex) {
             $spId = $ex['id'];
             if ($ex['status'] !== 'active') {
-                $pdo->prepare("
-                    UPDATE store_products
-                    SET status = 'active', updated_at = NOW()
-                    WHERE id = ?
-                ")->execute([$spId]);
+                $pdo->prepare("UPDATE store_products SET status = 'active', updated_at = NOW() WHERE id = ?")->execute([$spId]);
             }
         } else {
             $spId = Ulid::generate();
-            $pdo->prepare("
-                INSERT INTO store_products
-                    (id, store_category_id, product_id, status, created_at, updated_at)
-                VALUES (?, ?, ?, 'active', NOW(), NOW())
-            ")->execute([$spId, $scId, $productId]);
+            $pdo->prepare("INSERT INTO store_products (id, store_category_id, product_id, status, created_at, updated_at) VALUES (?, ?, ?, 'active', NOW(), NOW())")->execute([$spId, $scId, $productId]);
         }
         if (is_array($lineItems) && count($lineItems) > 0) {
             $pi = $pdo->prepare("
                 INSERT INTO product_pricing
-                    (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                    (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, commission_type, commission_value, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             foreach ($lineItems as $item) {
                 $pmId = $item['package_mapping_id'] ?? '';
@@ -438,6 +435,9 @@ function addStoreProduct(PDO $pdo, string $currentUser)
                 if (!isValidUlid($pmId) || !isValidUlid($siId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
                     throw new Exception('Invalid line item data');
                 }
+                $ctRaw = $item['commission_type'] ?? 'percentage';
+                $cvRaw = $item['commission_value'] ?? null;
+                [$ctype, $cvalue] = validateCommission($ctRaw, $cvRaw, $price);
                 $ppId = Ulid::generate();
                 $pi->execute([
                     $ppId,
@@ -448,7 +448,9 @@ function addStoreProduct(PDO $pdo, string $currentUser)
                     $currentUser,
                     $price,
                     $cat,
-                    $cap
+                    $cap,
+                    $ctype,
+                    $cvalue
                 ]);
             }
         }
@@ -469,53 +471,35 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
 {
     $storeProductId = $_POST['store_product_id'] ?? '';
     $lineItems = isset($_POST['line_items']) ? json_decode($_POST['line_items'], true) : [];
-
     if (!isValidUlid($storeProductId)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid ID format']);
         return;
     }
-
     try {
-        $storeIdStmt = $pdo->prepare("
-            SELECT sc.store_id
-            FROM store_products sp
-            JOIN store_categories sc ON sp.store_category_id = sc.id
-            WHERE sp.id = ?
-        ");
+        $storeIdStmt = $pdo->prepare("SELECT sc.store_id FROM store_products sp JOIN store_categories sc ON sp.store_category_id = sc.id WHERE sp.id = ?");
         $storeIdStmt->execute([$storeProductId]);
         $storeId = $storeIdStmt->fetchColumn();
-
         if (!$storeId || !canManageStore($pdo, $storeId, $currentUser)) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'Permission denied']);
             return;
         }
-
         $pdo->beginTransaction();
-
-        // Get existing pricing
-        $existingStmt = $pdo->prepare("
-            SELECT id
-            FROM product_pricing
-            WHERE store_products_id = ?
-        ");
+        $existingStmt = $pdo->prepare("SELECT id FROM product_pricing WHERE store_products_id = ?");
         $existingStmt->execute([$storeProductId]);
         $existingPricingIds = $existingStmt->fetchAll(PDO::FETCH_COLUMN);
-
         $updateStmt = $pdo->prepare("
             UPDATE product_pricing
             SET package_mapping_id = ?, si_unit_id = ?, package_size = ?, price = ?, 
-                price_category = ?, delivery_capacity = ?, updated_at = NOW()
+                price_category = ?, delivery_capacity = ?, commission_type = ?, commission_value = ?, updated_at = NOW()
             WHERE id = ?
         ");
-
         $insertStmt = $pdo->prepare("
             INSERT INTO product_pricing
-                (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, commission_type, commission_value, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         ");
-
         $postedIds = [];
         foreach ($lineItems as $item) {
             $pricingId = $item['pricing_id'] ?? '';
@@ -525,13 +509,13 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
             $price = floatval($item['price'] ?? 0);
             $cat = $item['price_category'] ?? 'retail';
             $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
-
             if (!isValidUlid($pmId) || !isValidUlid($siId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
                 throw new Exception('Invalid line item data');
             }
-
+            $ctRaw = $item['commission_type'] ?? 'percentage';
+            $cvRaw = $item['commission_value'] ?? null;
+            [$ctype, $cvalue] = validateCommission($ctRaw, $cvRaw, $price);
             if ($pricingId && in_array($pricingId, $existingPricingIds)) {
-                // Update existing
                 $updateStmt->execute([
                     $pmId,
                     $siId,
@@ -539,11 +523,12 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                     $price,
                     $cat,
                     $cap,
+                    $ctype,
+                    $cvalue,
                     $pricingId
                 ]);
                 $postedIds[] = $pricingId;
             } else {
-                // Insert new
                 $ppId = Ulid::generate();
                 $insertStmt->execute([
                     $ppId,
@@ -554,13 +539,13 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                     $currentUser,
                     $price,
                     $cat,
-                    $cap
+                    $cap,
+                    $ctype,
+                    $cvalue
                 ]);
                 $postedIds[] = $ppId;
             }
         }
-
-        // Delete only if not posted
         if (!empty($existingPricingIds)) {
             $toDelete = array_diff($existingPricingIds, $postedIds);
             if (!empty($toDelete)) {
@@ -569,10 +554,8 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
                 $deleteStmt->execute($toDelete);
             }
         }
-
         updateEmptyCategories($pdo);
         $pdo->commit();
-
         echo json_encode(['success' => true, 'message' => 'Product pricing updated']);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
@@ -611,11 +594,7 @@ function deleteProduct(PDO $pdo, string $storeProductId, ?string $currentUser)
             echo json_encode(['success' => false, 'error' => 'Permission denied']);
             return;
         }
-        $pdo->prepare("
-            UPDATE store_products
-            SET status = 'deleted', updated_at = NOW()
-            WHERE id = ?
-        ")->execute([$storeProductId]);
+        $pdo->prepare("UPDATE store_products SET status = 'deleted', updated_at = NOW() WHERE id = ?")->execute([$storeProductId]);
         echo json_encode(['success' => true, 'message' => 'Product deleted']);
     } catch (Exception $e) {
         error_log('Error deleting product: ' . $e->getMessage());

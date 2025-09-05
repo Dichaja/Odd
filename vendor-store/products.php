@@ -65,7 +65,8 @@ ob_start();
                     <i data-lucide="x" class="w-4 h-4"></i>
                     Clear
                 </button>
-                <button type="button" @click="openAddProduct()"
+                <button type="button" @click="openAddProduct()
+                    "
                     class="px-4 py-2 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition flex items-center gap-2">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                     Add Product
@@ -260,6 +261,8 @@ ob_start();
                                         <div class="col-span-2">
                                             <div class="text-sm font-semibold" x-text="'UGX '+formatNumber(pr.price)">
                                             </div>
+                                            <div class="text-[11px] text-gray-500" x-text="formatCommissionMini(pr)">
+                                            </div>
                                         </div>
                                         <div class="col-span-1 text-center">
                                             <div class="text-xs text-gray-600"
@@ -302,14 +305,14 @@ ob_start();
                     </div>
                     <div class="px-5 pt-5">
                         <div class="flex items-center justify-between text-xs text-gray-600 mb-3">
-                            <template x-for="n in 4" :key="'s'+n">
+                            <template x-for="n in 5" :key="'s'+n">
                                 <div class="flex-1 flex items-center">
                                     <div class="w-8 h-8 rounded-full grid place-items-center font-semibold"
                                         :class="n<=stepper.step ? 'bg-user-primary text-white' : 'bg-gray-100 text-gray-500'">
                                         <span x-text="n"></span>
                                     </div>
                                     <div class="h-[2px] flex-1"
-                                        :class="n<4 ? (n<stepper.step?'bg-user-primary':'bg-gray-200') : ''"></div>
+                                        :class="n<5 ? (n<stepper.step?'bg-user-primary':'bg-gray-200') : ''"></div>
                                 </div>
                             </template>
                         </div>
@@ -401,6 +404,27 @@ ob_start();
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
                                 :class="errors.capacity ? 'border-red-500 ring-2 ring-red-300' : ''">
                         </div>
+                        <div x-show="stepper.step===5" class="space-y-4">
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Commission Type</label>
+                                <select x-model="stepper.commission_type" @change="onCommissionTypeChange()"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                    :class="errors.commissionType ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                    <option value="percentage">Percentage</option>
+                                    <option value="flat">Flat</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-gray-700" x-text="commissionLabel()"></label>
+                                <input x-model="stepper.commission_value" type="number" min="0" step="any"
+                                    placeholder="Enter commission"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                    :class="errors.commissionValue ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                <p class="text-xs mt-1"
+                                    :class="errors.commissionValue ? 'text-red-600' : 'text-gray-500'"
+                                    x-text="commissionHint()"></p>
+                            </div>
+                        </div>
                     </div>
                     <div class="p-5 border-t flex items-center justify-between">
                         <button @click="prevStep()"
@@ -410,12 +434,12 @@ ob_start();
                             Back
                         </button>
                         <div class="flex items-center gap-2">
-                            <button x-show="stepper.step<4" @click="nextStep()"
+                            <button x-show="stepper.step<5" @click="nextStep()"
                                 class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black flex items-center gap-2">
                                 Next
                                 <i data-lucide="chevron-right" class="w-4 h-4"></i>
                             </button>
-                            <button x-show="stepper.step===4" @click="commitStepper()"
+                            <button x-show="stepper.step===5" @click="commitStepper()"
                                 class="px-4 py-2 rounded-lg bg-user-primary text-white hover:bg-user-primary/90 flex items-center gap-2">
                                 <i data-lucide="save" class="w-4 h-4"></i>
                                 Save
@@ -476,8 +500,8 @@ ob_start();
             availableUnits: [],
             openPkg: false,
             openUnit: false,
-            errors: { package: false, unit: false, size: false, category: false, price: false, capacity: false },
-            stepper: { mode: 'new', step: 1, package_mapping_id: null, package_name: '', packageQuery: '', si_unit_id: null, si_unit: '', unitQuery: '', package_size: '', price_category: '', price: '', delivery_capacity: '' },
+            errors: { package: false, unit: false, size: false, category: false, price: false, capacity: false, commissionType: false, commissionValue: false },
+            stepper: { mode: 'new', step: 1, package_mapping_id: null, package_name: '', packageQuery: '', si_unit_id: null, si_unit: '', unitQuery: '', package_size: '', price_category: '', price: '', delivery_capacity: '', commission_type: 'percentage', commission_value: 1 },
             deleteContext: null,
             placeholderImg: 'https://placehold.co/600x400/f3f4f6/9ca3af?text=No+Image',
             async init() { await this.fetchProducts(); this.refreshIcons(); },
@@ -510,6 +534,13 @@ ob_start();
                 const unit = pr.si_unit || this.labelForUnit(pr.si_unit_id) || '';
                 const size = pr.package_size ? pr.package_size : '';
                 return `${pkg}${size ? (' • ' + size) : ''}${unit ? (' ' + unit) : ''} • UGX ${this.formatNumber(pr.price)}`;
+            },
+            formatCommissionMini(pr) {
+                if (!pr) return '';
+                const t = (pr.commission_type || 'percentage');
+                const v = (typeof pr.commission_value === 'number' ? pr.commission_value : parseFloat(pr.commission_value || 1));
+                if (t === 'percentage') return `Comm: ${v}%`;
+                return `Comm: UGX ${this.formatNumber(v)}`;
             },
             labelForPackage(id) { const m = this.availablePackages.find(x => String(x.id) === String(id)); return m ? m.package_name : ''; },
             labelForUnit(id) { const u = this.availableUnits.find(x => String(x.id) === String(id)); return u ? u.si_unit : ''; },
@@ -595,8 +626,8 @@ ob_start();
                 }
             },
             openStepper(mode, idx = null) {
-                this.errors = { package: false, unit: false, size: false, category: false, price: false, capacity: false };
-                this.stepper = { mode, index: idx, step: 1, package_mapping_id: null, package_name: '', packageQuery: '', si_unit_id: null, si_unit: '', unitQuery: '', package_size: '', price_category: '', price: '', delivery_capacity: '' };
+                this.errors = { package: false, unit: false, size: false, category: false, price: false, capacity: false, commissionType: false, commissionValue: false };
+                this.stepper = { mode, index: idx, step: 1, package_mapping_id: null, package_name: '', packageQuery: '', si_unit_id: null, si_unit: '', unitQuery: '', package_size: '', price_category: '', price: '', delivery_capacity: '', commission_type: 'percentage', commission_value: 1 };
                 if (mode === 'edit' && idx !== null) {
                     const pr = this.pricingList[idx];
                     this.stepper.package_mapping_id = pr.package_mapping_id || null;
@@ -607,6 +638,8 @@ ob_start();
                     this.stepper.price_category = pr.price_category || '';
                     this.stepper.price = pr.price ?? '';
                     this.stepper.delivery_capacity = pr.delivery_capacity ?? '';
+                    this.stepper.commission_type = pr.commission_type || 'percentage';
+                    this.stepper.commission_value = pr.commission_value != null ? pr.commission_value : 1;
                     this.stepper.packageQuery = this.stepper.package_name;
                     this.stepper.unitQuery = this.stepper.si_unit;
                 }
@@ -643,14 +676,48 @@ ob_start();
                     this.errors.category = !this.stepper.price_category;
                     this.errors.price = this.stepper.price === '' || Number(this.stepper.price) < 0;
                     if (this.errors.category || this.errors.price) return;
+                } else if (this.stepper.step === 4) {
+                    this.errors.capacity = this.stepper.delivery_capacity === '' || Number(this.stepper.delivery_capacity) < 0;
+                    if (this.errors.capacity) return;
                 }
-                if (this.stepper.step < 4) this.stepper.step++;
+                if (this.stepper.step < 5) this.stepper.step++;
                 this.$nextTick(() => this.refreshIcons());
             },
             prevStep() { if (this.stepper.step > 1) this.stepper.step--; this.$nextTick(() => this.refreshIcons()); },
+            commissionLabel() {
+                return this.stepper.commission_type === 'flat' ? 'Commission (UGX)' : 'Commission (%)';
+            },
+            commissionHint() {
+                if (this.stepper.commission_type === 'percentage') return 'Allowed: 1% to 3%';
+                const p = Number(this.stepper.price || 0);
+                const min = Math.max(0, Math.round(p * 0.01 * 100) / 100);
+                const max = Math.max(0, Math.round(p * 0.03 * 100) / 100);
+                return p > 0 ? `Allowed: UGX ${this.formatNumber(min)} to UGX ${this.formatNumber(max)}` : 'Enter a price to compute allowed range';
+            },
+            onCommissionTypeChange() {
+                if (this.stepper.commission_type === 'percentage') {
+                    if (this.stepper.commission_value === '' || this.stepper.commission_value == null) this.stepper.commission_value = 1;
+                } else {
+                    const p = Number(this.stepper.price || 0);
+                    const min = Math.round(p * 0.01 * 100) / 100;
+                    if (p > 0 && (this.stepper.commission_value === '' || this.stepper.commission_value == null)) this.stepper.commission_value = min;
+                }
+            },
             commitStepper() {
-                this.errors.capacity = this.stepper.delivery_capacity === '' || Number(this.stepper.delivery_capacity) < 0;
-                if (this.errors.capacity) return;
+                this.errors.commissionType = false;
+                const ct = this.stepper.commission_type || 'percentage';
+                let cv = this.stepper.commission_value;
+                if (ct === 'percentage') {
+                    cv = (cv === '' || cv == null) ? 1 : Number(cv);
+                    this.errors.commissionValue = !(cv >= 1 && cv <= 3);
+                } else {
+                    const p = Number(this.stepper.price || 0);
+                    const min = Math.round(p * 0.01 * 100) / 100;
+                    const max = Math.round(p * 0.03 * 100) / 100;
+                    cv = (cv === '' || cv == null) ? min : Number(cv);
+                    this.errors.commissionValue = !(p > 0 && cv >= min && cv <= max);
+                }
+                if (this.errors.commissionValue) return;
                 const entry = {
                     package_mapping_id: this.stepper.package_mapping_id,
                     package_name: this.stepper.package_name,
@@ -659,7 +726,9 @@ ob_start();
                     package_size: this.stepper.package_size,
                     price_category: this.stepper.price_category,
                     price: this.stepper.price,
-                    delivery_capacity: this.stepper.delivery_capacity || null
+                    delivery_capacity: this.stepper.delivery_capacity || null,
+                    commission_type: ct,
+                    commission_value: cv
                 };
                 if (this.stepper.mode === 'edit' && this.stepper.index !== null) {
                     this.pricingList.splice(this.stepper.index, 1, entry);
@@ -702,7 +771,9 @@ ob_start();
                     package_size: pr.package_size,
                     price_category: pr.price_category,
                     price: pr.price,
-                    delivery_capacity: pr.delivery_capacity
+                    delivery_capacity: pr.delivery_capacity,
+                    commission_type: pr.commission_type || 'percentage',
+                    commission_value: pr.commission_value == null || pr.commission_value === '' ? 1 : pr.commission_value
                 }));
             },
             confirmDelete(p) { this.deleteContext = p; this.modals.deleteConfirm = true; this.$nextTick(() => this.refreshIcons()); },
