@@ -356,8 +356,8 @@ function validateCommission($typeRaw, $valueRaw, $price)
     $type = in_array(strtolower((string) $typeRaw), ['flat', 'percentage'], true) ? strtolower((string) $typeRaw) : 'percentage';
     if ($type === 'percentage') {
         $value = is_null($valueRaw) || $valueRaw === '' ? 1.00 : floatval($valueRaw);
-        if ($value < 1 || $value > 3) {
-            throw new Exception('Commission percentage must be between 1 and 3');
+        if ($value < 1 || $value > 5) {
+            throw new Exception('Commission percentage must be between 1 and 5');
         }
         return ['percentage', round($value, 2)];
     } else {
@@ -366,7 +366,7 @@ function validateCommission($typeRaw, $valueRaw, $price)
             throw new Exception('Price must be greater than 0 for flat commission');
         }
         $min = round($price * 0.01, 2);
-        $max = round($price * 0.03, 2);
+        $max = round($price * 0.05, 2);
         $value = is_null($valueRaw) || $valueRaw === '' ? $min : round(floatval($valueRaw), 2);
         if ($value < $min || $value > $max) {
             throw new Exception('Flat commission must be between ' . number_format($min, 2, '.', '') . ' and ' . number_format($max, 2, '.', ''));
