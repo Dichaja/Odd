@@ -1,5 +1,5 @@
 <div x-data="vendorSell()" x-init="init()">
-    <div x-show="isOpen" x-cloak id="vendorSellModal" class="fixed inset-0 z-50 hidden" x-transition.opacity>
+    <div x-show="isOpen" x-cloak id="vendorSellModal" class="fixed inset-0 z-50" x-transition.opacity>
         <div class="absolute inset-0 bg-black/50" @click="close()"></div>
         <div class="fixed inset-0 flex items-center justify-center p-4">
             <div class="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -242,7 +242,7 @@
         </div>
     </div>
 
-    <div x-show="isPricingOpen" x-cloak id="pricingEntryModal" class="fixed inset-0 z-[60] hidden" x-transition.opacity>
+    <div x-show="isPricingOpen" x-cloak id="pricingEntryModal" class="fixed inset-0 z-[60]" x-transition.opacity>
         <div class="absolute inset-0 bg-black/50" @click="closePricingEntryModal()"></div>
         <div class="fixed inset-0 flex items-center justify-center p-4">
             <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -265,19 +265,19 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Package *</label>
                                 <div class="relative">
                                     <input type="text" x-model="form.package_search" @focus="pkgOpen=true"
-                                        @input="pkgOpen=true"
+                                        @input="pkgOpen=true" @keydown.escape.stop="pkgOpen=false"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                                         placeholder="Search package..." autocomplete="off">
                                     <input type="hidden" x-model="form.package_mapping_id">
-                                    <div x-show="pkgOpen" x-cloak
-                                        class="hidden absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
+                                    <div x-show="pkgOpen" x-cloak @click.outside="pkgOpen=false"
+                                        class="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
                                         <template x-if="filteredPackages().length===0">
                                             <div class="p-3 text-center text-gray-500 text-sm">No matching packages
                                             </div>
                                         </template>
                                         <template x-for="m in filteredPackages()" :key="m.id">
                                             <div class="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-sm"
-                                                @click="choosePackage(m)" x-text="m.package_name"></div>
+                                                @mousedown.prevent="choosePackage(m)" x-text="m.package_name"></div>
                                         </template>
                                     </div>
                                 </div>
@@ -286,19 +286,19 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Unit of Measure *</label>
                                 <div class="relative">
                                     <input type="text" x-model="form.si_search" @focus="siOpen=true"
-                                        @input="siOpen=true"
+                                        @input="siOpen=true" @keydown.escape.stop="siOpen=false"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                                         placeholder="Search SI unit..." autocomplete="off">
                                     <input type="hidden" x-model="form.si_unit_id">
-                                    <div x-show="siOpen" x-cloak
-                                        class="hidden absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
+                                    <div x-show="siOpen" x-cloak @click.outside="siOpen=false"
+                                        class="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-40">
                                         <template x-if="filteredSiUnits().length===0">
                                             <div class="p-3 text-center text-gray-500 text-sm">No matching SI units
                                                 found</div>
                                         </template>
                                         <template x-for="u in filteredSiUnits()" :key="u.id">
                                             <div class="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 text-sm"
-                                                @click="chooseSi(u)" x-text="u.si_unit"></div>
+                                                @mousedown.prevent="chooseSi(u)" x-text="u.si_unit"></div>
                                         </template>
                                     </div>
                                 </div>
@@ -348,7 +348,7 @@
         </div>
     </div>
 
-    <div x-show="isConfirmOpen" x-cloak id="confirmationModal" class="fixed inset-0 z-[70] hidden" x-transition.opacity>
+    <div x-show="isConfirmOpen" x-cloak id="confirmationModal" class="fixed inset-0 z-[70]" x-transition.opacity>
         <div class="absolute inset-0 bg-black/50" @click="closeConfirmationModal()"></div>
         <div class="fixed inset-0 flex items-center justify-center p-4">
             <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl">
@@ -373,6 +373,7 @@
 </div>
 
 <script>
+    if (!window.BASE_URL) { window.BASE_URL = '<?= BASE_URL ?>'; }
     function vendorSell() {
         return {
             isOpen: false, isPricingOpen: false, isConfirmOpen: false, headerTitle: 'Sell Product', pricingEntryTitle: 'Add Pricing Entry', confirmTitle: '', confirmMessage: '', confirmText: 'Delete', confirmCb: null,
@@ -383,7 +384,6 @@
             init() {
                 window.openVendorSellModal = (id, name) => { this.open(id, name) };
                 window.closeVendorSellModal = () => { this.close() };
-                document.addEventListener('click', (e) => { const inside = e.target && e.target.closest ? e.target.closest('#pricingEntryModal') : null; if (!inside) { this.pkgOpen = false; this.siOpen = false } });
                 if (window.lucide && lucide.createIcons) lucide.createIcons();
             },
             refreshIcons() { try { if (window.lucide && lucide.createIcons) lucide.createIcons(); } catch (e) { } },
@@ -506,17 +506,6 @@
 <style>
     [x-cloak] {
         display: none !important
-    }
-
-    #pricingPkgSearchInput:focus,
-    #pricingSiSearchInput:focus,
-    #pricingPackageSize:focus,
-    #pricingPrice:focus,
-    #pricingDeliveryCapacity:focus,
-    #pricingPriceCategory:focus {
-        outline: none;
-        border-color: #16a34a;
-        box-shadow: 0 0 0 3px rgba(22, 163, 74, .1)
     }
 
     @media (max-width:640px) {
