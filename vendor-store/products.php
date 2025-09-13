@@ -65,8 +65,7 @@ ob_start();
                     <i data-lucide="x" class="w-4 h-4"></i>
                     Clear
                 </button>
-                <button type="button" @click="openAddProduct()
-                    "
+                <button type="button" @click="openAddProduct()"
                     class="px-4 py-2 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition flex items-center gap-2">
                     <i data-lucide="plus" class="w-5 h-5"></i>
                     Add Product
@@ -208,18 +207,21 @@ ob_start();
                 <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
                     <div class="flex items-center justify-between p-5 border-b">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="tags" class="w-5 h-5 text-user-primary"></i>
-                            <h3 class="text-lg font-semibold text-secondary"
-                                x-text="pricingProduct?.name ? 'Manage Pricing — '+pricingProduct.name : 'Manage Pricing'">
-                            </h3>
+                            <img :src="pricingProduct?._image || placeholderImg"
+                                class="w-10 h-10 rounded-md object-cover bg-gray-100" alt="">
+                            <div>
+                                <h3 class="text-lg font-semibold text-secondary"
+                                    x-text="pricingProduct?.name ? 'Manage Pricing — '+pricingProduct.name : 'Manage Pricing'">
+                                </h3>
+                                <p class="text-xs text-gray-500" x-text="pricingProduct?.category_name || ''"></p>
+                            </div>
                         </div>
                         <button @click="closePricingList()" class="p-2 rounded hover:bg-gray-50">
                             <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
                     <div class="p-5 space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div class="text-sm text-gray-600" x-text="pricingProduct?.category_name"></div>
+                        <div class="flex items-center justify-end">
                             <button @click="openStepper('new')"
                                 class="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition flex items-center gap-2">
                                 <i data-lucide="plus" class="w-4 h-4"></i>
@@ -230,8 +232,8 @@ ob_start();
                             <div class="sm:w-[750px] md:w-[900px] lg:w-auto border rounded-lg overflow-hidden">
                                 <div
                                     class="grid grid-cols-12 gap-2 px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-600">
-                                    <div class="col-span-3">Package</div>
                                     <div class="col-span-3">Unit & Size</div>
+                                    <div class="col-span-3">Package</div>
                                     <div class="col-span-2">Category</div>
                                     <div class="col-span-2">Price</div>
                                     <div class="col-span-1 text-center">Capacity</div>
@@ -243,13 +245,13 @@ ob_start();
                                 <template x-for="(pr,idx) in pricingList" :key="idx">
                                     <div class="grid grid-cols-12 gap-2 px-4 py-3 border-t items-center bg-white">
                                         <div class="col-span-3">
-                                            <div class="text-sm font-medium"
-                                                x-text="pr.package_name || labelForPackage(pr.package_mapping_id)">
+                                            <div class="text-sm"
+                                                x-text="(pr.package_size||'-')+' '+(pr.si_unit||labelForUnit(pr.si_unit_id)||'')">
                                             </div>
                                         </div>
                                         <div class="col-span-3">
-                                            <div class="text-sm"
-                                                x-text="(pr.package_size||'-')+' '+(pr.si_unit||labelForUnit(pr.si_unit_id)||'')">
+                                            <div class="text-sm font-medium"
+                                                x-text="pr.package_name || labelForPackage(pr.package_mapping_id)">
                                             </div>
                                         </div>
                                         <div class="col-span-2">
@@ -295,155 +297,205 @@ ob_start();
         <div x-show="modals.stepper" x-transition.opacity class="fixed inset-0 z-[1000] m-0 p-0">
             <div class="fixed inset-0 bg-black/50" @click="closeStepper()"></div>
             <div class="fixed inset-0 flex items-center justify-center">
-                <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden">
+                <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
                     <div class="flex items-center justify-between p-5 border-b">
-                        <h3 class="text-lg font-semibold text-secondary"
-                            x-text="stepper.mode==='new' ? 'Add Pricing' : 'Edit Pricing'"></h3>
+                        <div class="flex items-center gap-3">
+                            <img :src="stepperProductImage || pricingProduct?._image || placeholderImg"
+                                class="w-10 h-10 rounded-md object-cover bg-gray-100" alt="">
+                            <div>
+                                <h3 class="text-lg font-semibold text-secondary"
+                                    x-text="stepper.mode==='new' ? 'Add Pricing' : 'Edit Pricing'"></h3>
+                                <p class="text-xs text-gray-500" x-text="pricingProduct?.name || ''"></p>
+                                <p class="text-xs text-gray-500" x-text="pricingProduct?.category_name || ''"></p>
+                            </div>
+                        </div>
                         <button @click="closeStepper()" class="p-2 rounded hover:bg-gray-50">
                             <i data-lucide="x" class="w-5 h-5"></i>
                         </button>
                     </div>
-                    <div class="px-5 pt-5">
-                        <div class="flex items-center justify-between text-xs text-gray-600 mb-3">
-                            <template x-for="n in 5" :key="'s'+n">
-                                <div class="flex-1 flex items-center">
-                                    <div class="w-8 h-8 rounded-full grid place-items-center font-semibold"
-                                        :class="n<=stepper.step ? 'bg-user-primary text-white' : 'bg-gray-100 text-gray-500'">
-                                        <span x-text="n"></span>
-                                    </div>
-                                    <div class="h-[2px] flex-1"
-                                        :class="n<5 ? (n<stepper.step?'bg-user-primary':'bg-gray-200') : ''"></div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                    <div class="p-5 space-y-4">
-                        <div x-show="stepper.step===1" class="space-y-2">
-                            <label class="text-sm font-medium text-gray-700">Package</label>
-                            <div class="relative">
-                                <input x-model="stepper.packageQuery" @focus="openPkg=true" @input="openPkg=true"
-                                    @keydown.escape.stop="openPkg=false" type="text" placeholder="Search package"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
-                                    :class="errors.package ? 'border-red-500 ring-2 ring-red-300' : ''">
-                                <div x-show="openPkg" @click.outside="openPkg=false"
-                                    class="absolute z-10 mt-1 left-0 right-0 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow"
-                                    tabindex="-1">
-                                    <template x-if="availablePackages.length===0">
-                                        <div class="p-3 text-center text-gray-500">No packages</div>
-                                    </template>
-                                    <template
-                                        x-for="m in availablePackages.filter(x=>x.package_name.toLowerCase().includes((stepper.packageQuery||'').toLowerCase()))"
-                                        :key="m.id">
-                                        <div @mousedown.prevent="selectPackage(m)"
-                                            class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
-                                            <span x-text="m.package_name"></span>
+                    <div class="p-5">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div x-show="stepper.step===1" class="space-y-2">
+                                    <label class="text-sm font-medium text-gray-700">Package</label>
+                                    <div class="relative">
+                                        <input x-model="stepper.packageQuery" @focus="openPkg=true"
+                                            @input="openPkg=true" @keydown.escape.stop="openPkg=false" type="text"
+                                            placeholder="Search package"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                            :class="errors.package ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                        <div x-show="openPkg" @click.outside="openPkg=false"
+                                            class="absolute z-10 mt-1 left-0 right-0 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow"
+                                            tabindex="-1">
+                                            <template x-if="availablePackages.length===0">
+                                                <div class="p-3 text-center text-gray-500">No packages</div>
+                                            </template>
+                                            <template
+                                                x-for="m in availablePackages.filter(x=>x.package_name.toLowerCase().includes((stepper.packageQuery||'').toLowerCase()))"
+                                                :key="m.id">
+                                                <div @mousedown.prevent="selectPackage(m)"
+                                                    class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
+                                                    <span x-text="m.package_name"></span>
+                                                </div>
+                                            </template>
                                         </div>
-                                    </template>
+                                    </div>
+                                    <p class="text-xs text-gray-500"
+                                        x-text="stepper.package_mapping_id ? 'Selected: '+stepper.package_name : ''">
+                                    </p>
                                 </div>
-                            </div>
-                            <p class="text-xs text-gray-500"
-                                x-text="stepper.package_mapping_id ? 'Selected: '+stepper.package_name : ''"></p>
-                        </div>
-                        <div x-show="stepper.step===2" class="space-y-4">
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">Unit of Measure</label>
-                                <div class="relative">
-                                    <input x-model="stepper.unitQuery" @focus="openUnit=true" @input="openUnit=true"
-                                        @keydown.escape.stop="openUnit=false" type="text" placeholder="Search unit"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
-                                        :class="errors.unit ? 'border-red-500 ring-2 ring-red-300' : ''">
-                                    <div x-show="openUnit" @click.outside="openUnit=false"
-                                        class="absolute z-10 mt-1 left-0 right-0 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow"
-                                        tabindex="-1">
-                                        <template
-                                            x-for="u in availableUnits.filter(x=>x.si_unit.toLowerCase().includes((stepper.unitQuery||'').toLowerCase()))"
-                                            :key="u.id">
-                                            <div @mousedown.prevent="selectUnit(u)"
-                                                class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
-                                                <span x-text="u.si_unit"></span>
+                                <div x-show="stepper.step===2" class="space-y-4">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Unit of Measure</label>
+                                        <div class="relative">
+                                            <input x-model="stepper.unitQuery" @focus="openUnit=true"
+                                                @input="openUnit=true" @keydown.escape.stop="openUnit=false" type="text"
+                                                placeholder="Search unit"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                                :class="errors.unit ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                            <div x-show="openUnit" @click.outside="openUnit=false"
+                                                class="absolute z-10 mt-1 left-0 right-0 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow"
+                                                tabindex="-1">
+                                                <template
+                                                    x-for="u in availableUnits.filter(x=>x.si_unit.toLowerCase().includes((stepper.unitQuery||'').toLowerCase()))"
+                                                    :key="u.id">
+                                                    <div @mousedown.prevent="selectUnit(u)"
+                                                        class="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm">
+                                                        <span x-text="u.si_unit"></span>
+                                                    </div>
+                                                </template>
                                             </div>
-                                        </template>
+                                        </div>
+                                        <p class="text-xs text-gray-500"
+                                            x-text="stepper.si_unit_id ? 'Selected: '+stepper.si_unit : ''"></p>
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Unit Size</label>
+                                        <input x-model="stepper.package_size" type="number" min="0" step="any"
+                                            placeholder="Enter size"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                            :class="errors.size ? 'border-red-500 ring-2 ring-red-300' : ''" required>
                                     </div>
                                 </div>
-                                <p class="text-xs text-gray-500"
-                                    x-text="stepper.si_unit_id ? 'Selected: '+stepper.si_unit : ''"></p>
+                                <div x-show="stepper.step===3" class="space-y-4">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Price Category</label>
+                                        <select x-model="stepper.price_category"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                            :class="errors.category ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                            <option value="">Select category</option>
+                                            <option value="retail">Retail</option>
+                                            <option value="wholesale">Wholesale</option>
+                                            <option value="factory">Factory</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Price (UGX)</label>
+                                        <input x-model="stepper.price" type="number" min="0" step="any"
+                                            placeholder="Enter price"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                            :class="errors.price ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                    </div>
+                                </div>
+                                <div x-show="stepper.step===4" class="space-y-2">
+                                    <label class="text-sm font-medium text-gray-700"
+                                        x-text="stepper.price_category==='retail' ? 'Max Capacity' : (stepper.price_category ? 'Min Capacity' : 'Capacity')"></label>
+                                    <input x-model="stepper.delivery_capacity" type="number" min="0" step="1"
+                                        placeholder="Enter capacity"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                        :class="errors.capacity ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                </div>
+                                <div x-show="stepper.step===5" class="space-y-4">
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700">Commission Type</label>
+                                        <select x-model="stepper.commission_type" @change="onCommissionTypeChange()"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                            :class="errors.commissionType ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                            <option value="percentage">Percentage</option>
+                                            <option value="flat">Flat</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium text-gray-700"
+                                            x-text="commissionLabel()"></label>
+                                        <input x-model="stepper.commission_value" type="number" min="0" step="any"
+                                            placeholder="Enter commission"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
+                                            :class="errors.commissionValue ? 'border-red-500 ring-2 ring-red-300' : ''">
+                                        <p class="text-xs mt-1"
+                                            :class="errors.commissionValue ? 'text-red-600' : 'text-gray-500'"
+                                            x-text="commissionHint()"></p>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">Unit Size</label>
-                                <input x-model="stepper.package_size" type="number" min="0" step="any"
-                                    placeholder="Enter size"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
-                                    :class="errors.size ? 'border-red-500 ring-2 ring-red-300' : ''" required>
+                            <div class="hidden md:block">
+                                <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                    <div class="relative">
+                                        <img :src="stepperProductImage || pricingProduct?._image || placeholderImg"
+                                            class="w-full h-40 object-cover bg-gray-100" alt="">
+                                        <div class="absolute top-2 right-2">
+                                            <span
+                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium"
+                                                :class="chipColor(stepper.price_category || 'retail')">
+                                                <i data-lucide="tags" class="w-3 h-3"></i>
+                                                <span
+                                                    x-text="(stepper.package_size?stepper.package_size:'')+(stepper.si_unit?' '+stepper.si_unit:'') + (stepper.package_name?(' • '+stepper.package_name):'')"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="p-4 space-y-2">
+                                        <h4 class="font-semibold text-gray-900"
+                                            x-text="pricingProduct?.name || 'Product'"></h4>
+                                        <p class="text-sm text-gray-600" x-text="pricingProduct?.category_name || ''">
+                                        </p>
+                                        <div class="mt-2 flex flex-wrap gap-1.5">
+                                            <span
+                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium"
+                                                :class="chipColor(stepper.price_category || '')">
+                                                <i data-lucide="tag" class="w-3 h-3"></i>
+                                                <span
+                                                    x-text="(stepper.price_category||'').toUpperCase() || 'CATEGORY'"></span>
+                                            </span>
+                                        </div>
+                                        <div class="flex items-baseline justify-between mt-2">
+                                            <div class="text-sm text-gray-500">Price</div>
+                                            <div class="text-lg font-bold"
+                                                x-text="'UGX '+formatNumber(stepper.price || 0)"></div>
+                                        </div>
+                                        <div class="flex items-baseline justify-between">
+                                            <div class="text-sm text-gray-500">Commission</div>
+                                            <div class="text-sm font-medium"
+                                                x-text="stepper.commission_type==='flat' ? ('UGX '+formatNumber(stepper.commission_value||0)) : ((stepper.commission_value||0)+'%')">
+                                            </div>
+                                        </div>
+                                        <div class="flex items-baseline justify-between">
+                                            <div class="text-sm text-gray-500">Capacity</div>
+                                            <div class="text-sm font-medium" x-text="stepper.delivery_capacity || '—'">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div x-show="stepper.step===3" class="space-y-4">
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">Price Category</label>
-                                <select x-model="stepper.price_category"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
-                                    :class="errors.category ? 'border-red-500 ring-2 ring-red-300' : ''">
-                                    <option value="">Select category</option>
-                                    <option value="retail">Retail</option>
-                                    <option value="wholesale">Wholesale</option>
-                                    <option value="factory">Factory</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">Price (UGX)</label>
-                                <input x-model="stepper.price" type="number" min="0" step="any"
-                                    placeholder="Enter price"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
-                                    :class="errors.price ? 'border-red-500 ring-2 ring-red-300' : ''">
-                            </div>
-                        </div>
-                        <div x-show="stepper.step===4" class="space-y-2">
-                            <label class="text-sm font-medium text-gray-700"
-                                x-text="stepper.price_category==='retail' ? 'Max Capacity' : (stepper.price_category ? 'Min Capacity' : 'Capacity')"></label>
-                            <input x-model="stepper.delivery_capacity" type="number" min="0" step="1"
-                                placeholder="Enter capacity"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
-                                :class="errors.capacity ? 'border-red-500 ring-2 ring-red-300' : ''">
-                        </div>
-                        <div x-show="stepper.step===5" class="space-y-4">
-                            <div>
-                                <label class="text-sm font-medium text-gray-700">Commission Type</label>
-                                <select x-model="stepper.commission_type" @change="onCommissionTypeChange()"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
-                                    :class="errors.commissionType ? 'border-red-500 ring-2 ring-red-300' : ''">
-                                    <option value="percentage">Percentage</option>
-                                    <option value="flat">Flat</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="text-sm font-medium text-gray-700" x-text="commissionLabel()"></label>
-                                <input x-model="stepper.commission_value" type="number" min="0" step="any"
-                                    placeholder="Enter commission"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
-                                    :class="errors.commissionValue ? 'border-red-500 ring-2 ring-red-300' : ''">
-                                <p class="text-xs mt-1"
-                                    :class="errors.commissionValue ? 'text-red-600' : 'text-gray-500'"
-                                    x-text="commissionHint()"></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-5 border-t flex items-center justify-between">
-                        <button @click="prevStep()"
-                            class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center gap-2"
-                            :disabled="stepper.step===1">
-                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                            Back
-                        </button>
-                        <div class="flex items-center gap-2">
-                            <button x-show="stepper.step<5" @click="nextStep()"
-                                class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black flex items-center gap-2">
-                                Next
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        <div class="mt-5 border-t pt-5 flex items-center justify-between">
+                            <button @click="prevStep()"
+                                class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center gap-2"
+                                :disabled="stepper.step===1">
+                                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                                Back
                             </button>
-                            <button x-show="stepper.step===5" @click="commitStepper()"
-                                class="px-4 py-2 rounded-lg bg-user-primary text-white hover:bg-user-primary/90 flex items-center gap-2">
-                                <i data-lucide="save" class="w-4 h-4"></i>
-                                Save
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <button x-show="stepper.step<5" @click="nextStep()"
+                                    class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black flex items-center gap-2">
+                                    Next
+                                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                                </button>
+                                <button x-show="stepper.step===5" @click="commitStepper()"
+                                    class="px-4 py-2 rounded-lg bg-user-primary text-white hover:bg-user-primary/90 flex items-center gap-2">
+                                    <i data-lucide="save" class="w-4 h-4"></i>
+                                    Save
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -504,6 +556,7 @@ ob_start();
             stepper: { mode: 'new', step: 1, package_mapping_id: null, package_name: '', packageQuery: '', si_unit_id: null, si_unit: '', unitQuery: '', package_size: '', price_category: '', price: '', delivery_capacity: '', commission_type: 'percentage', commission_value: 1 },
             deleteContext: null,
             placeholderImg: 'https://placehold.co/600x400/f3f4f6/9ca3af?text=No+Image',
+            stepperProductImage: null,
             async init() { await this.fetchProducts(); this.refreshIcons(); },
             refreshIcons() { if (window.lucide && lucide.createIcons) lucide.createIcons(); },
             offset() { return (this.page - 1) * this.limit },
@@ -533,7 +586,7 @@ ob_start();
                 const pkg = pr.package_name || this.labelForPackage(pr.package_mapping_id) || '';
                 const unit = pr.si_unit || this.labelForUnit(pr.si_unit_id) || '';
                 const size = pr.package_size ? pr.package_size : '';
-                return `${pkg}${size ? (' • ' + size) : ''}${unit ? (' ' + unit) : ''} • UGX ${this.formatNumber(pr.price)}`;
+                return `${size ? size : ''}${unit ? (' ' + unit) : ''}${pkg ? (' • ' + pkg) : ''} • UGX ${this.formatNumber(pr.price)}`;
             },
             formatCommissionMini(pr) {
                 if (!pr) return '';
@@ -597,7 +650,7 @@ ob_start();
             },
             async beginAddPricing(p) {
                 this.modals.selectProduct = false;
-                this.pricingProduct = { id: p.id, name: p.name, category_id: p.category_id, category_name: p.category_name, store_product_id: null, pricing: [] };
+                this.pricingProduct = { id: p.id, name: p.name, category_id: p.category_id, category_name: p.category_name, store_product_id: null, pricing: [], _image: await this.getImage(p.id) };
                 await this.loadMetaForProduct(p.id);
                 this.pricingList = [];
                 this.modals.pricingList = true;
@@ -605,6 +658,7 @@ ob_start();
             },
             async openPricingList(p) {
                 this.pricingProduct = p;
+                if (!this.pricingProduct._image) this.pricingProduct._image = await this.getImage(p.id);
                 await this.loadMetaForProduct(p.id);
                 this.pricingList = JSON.parse(JSON.stringify(p.pricing || []));
                 this.modals.pricingList = true;
@@ -625,9 +679,11 @@ ob_start();
                     this.availableUnits = [];
                 }
             },
-            openStepper(mode, idx = null) {
+            async openStepper(mode, idx = null) {
                 this.errors = { package: false, unit: false, size: false, category: false, price: false, capacity: false, commissionType: false, commissionValue: false };
                 this.stepper = { mode, index: idx, step: 1, package_mapping_id: null, package_name: '', packageQuery: '', si_unit_id: null, si_unit: '', unitQuery: '', package_size: '', price_category: '', price: '', delivery_capacity: '', commission_type: 'percentage', commission_value: 1 };
+                if (!this.pricingProduct?._image) this.pricingProduct._image = await this.getImage(this.pricingProduct.id);
+                this.stepperProductImage = this.pricingProduct._image;
                 if (mode === 'edit' && idx !== null) {
                     const pr = this.pricingList[idx];
                     this.stepper.package_mapping_id = pr.package_mapping_id || null;
@@ -688,10 +744,10 @@ ob_start();
                 return this.stepper.commission_type === 'flat' ? 'Commission (UGX)' : 'Commission (%)';
             },
             commissionHint() {
-                if (this.stepper.commission_type === 'percentage') return 'Allowed: 1% to 3%';
+                if (this.stepper.commission_type === 'percentage') return 'Allowed: 1% to 5%';
                 const p = Number(this.stepper.price || 0);
                 const min = Math.max(0, Math.round(p * 0.01 * 100) / 100);
-                const max = Math.max(0, Math.round(p * 0.03 * 100) / 100);
+                const max = Math.max(0, Math.round(p * 0.05 * 100) / 100);
                 return p > 0 ? `Allowed: UGX ${this.formatNumber(min)} to UGX ${this.formatNumber(max)}` : 'Enter a price to compute allowed range';
             },
             onCommissionTypeChange() {
@@ -709,11 +765,11 @@ ob_start();
                 let cv = this.stepper.commission_value;
                 if (ct === 'percentage') {
                     cv = (cv === '' || cv == null) ? 1 : Number(cv);
-                    this.errors.commissionValue = !(cv >= 1 && cv <= 3);
+                    this.errors.commissionValue = !(cv >= 1 && cv <= 5);
                 } else {
                     const p = Number(this.stepper.price || 0);
                     const min = Math.round(p * 0.01 * 100) / 100;
-                    const max = Math.round(p * 0.03 * 100) / 100;
+                    const max = Math.round(p * 0.05 * 100) / 100;
                     cv = (cv === '' || cv == null) ? min : Number(cv);
                     this.errors.commissionValue = !(p > 0 && cv >= min && cv <= max);
                 }
