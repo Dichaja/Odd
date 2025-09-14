@@ -1,3 +1,9 @@
+<style>
+    [x-cloak] {
+        display: none !important
+    }
+</style>
+
 <div x-data="vendorSell()" x-init="init()">
     <div x-show="isOpen" x-cloak id="vendorSellModal" class="fixed inset-0 z-50" x-transition.opacity>
         <div class="absolute inset-0 bg-black/50" @click="close()"></div>
@@ -504,10 +510,6 @@
 </script>
 
 <style>
-    [x-cloak] {
-        display: none !important
-    }
-
     @media (max-width:640px) {
         .space-y-4>*+* {
             margin-top: 1rem
