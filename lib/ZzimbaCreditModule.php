@@ -1177,17 +1177,29 @@ final class CreditService
             ];
         }
 
-        $ftStmt = match ($wallet['owner_type']) {
-            'USER' => self::$pdo->prepare("SELECT transaction_id FROM zzimba_financial_transactions WHERE user_id = :uid"),
-            'VENDOR' => self::$pdo->prepare("SELECT transaction_id FROM zzimba_financial_transactions WHERE vendor_id = :vid"),
-            default => self::$pdo->prepare("
-                SELECT DISTINCT ft.transaction_id
-                  FROM zzimba_financial_transactions ft
-                  JOIN zzimba_transaction_entries e
-                    ON ft.transaction_id = e.transaction_id
-                 WHERE e.wallet_id = :wid
-            "),
-        };
+        switch ($wallet['owner_type']) {
+            case 'USER':
+                $ftStmt = self::$pdo->prepare(
+                    "SELECT transaction_id FROM zzimba_financial_transactions WHERE user_id = :uid"
+                );
+                break;
+
+            case 'VENDOR':
+                $ftStmt = self::$pdo->prepare(
+                    "SELECT transaction_id FROM zzimba_financial_transactions WHERE vendor_id = :vid"
+                );
+                break;
+
+            default:
+                $ftStmt = self::$pdo->prepare("
+            SELECT DISTINCT ft.transaction_id
+            FROM zzimba_financial_transactions ft
+            JOIN zzimba_transaction_entries e
+              ON ft.transaction_id = e.transaction_id
+            WHERE e.wallet_id = :wid
+            ");
+                break;
+        }
         $param = $wallet['owner_type'] === 'USER' ? [':uid' => $wallet['user_id']] :
             ($wallet['owner_type'] === 'VENDOR' ? [':vid' => $wallet['vendor_id']] : [':wid' => $walletId]);
         $ftStmt->execute($param);
