@@ -13,12 +13,9 @@ use ZzimbaOnline\Mail\Mailer;
 
 header('Content-Type: application/json');
 
-// Get action before checking session
 $action = $_GET['action'] ?? '';
-
-// Only check session for actions that require authentication
 $publicActions = ['getStoreDetails'];
-$requiresAuth = !in_array($action, $publicActions);
+$requiresAuth = !in_array($action, $publicActions, true);
 
 if ($requiresAuth) {
     if (empty($_SESSION['user']['logged_in'])) {
@@ -34,7 +31,6 @@ if ($requiresAuth) {
         exit;
     }
 } else {
-    // For public actions, set currentUserId to null
     $currentUserId = null;
 }
 
@@ -42,67 +38,51 @@ initializeTables($pdo);
 
 try {
     switch ($action) {
-
         case 'getOwnedStores':
             getOwnedStores($pdo, $currentUserId);
             break;
-
         case 'getManagedStores':
             getManagedStores($pdo, $currentUserId);
             break;
-
         case 'getPendingInvitations':
             getPendingInvitations($pdo, $currentUserId);
             break;
-
         case 'getStoreDetails':
             getStoreDetails($pdo, $_GET['id'] ?? '', $currentUserId);
             break;
-
         case 'createStore':
             createStore($pdo, $currentUserId);
             break;
-
         case 'updateStore':
             updateStore($pdo, $currentUserId);
             break;
-
         case 'deleteStore':
             deleteStore($pdo, $_POST['id'] ?? '', $currentUserId);
             break;
-
         case 'uploadLogo':
             uploadLogo();
             break;
-
         case 'uploadVendorCover':
             uploadVendorCover();
             break;
-
         case 'getStoreCategories':
             getStoreCategories($pdo, $_GET['storeId'] ?? '');
             break;
-
         case 'getStoreManagers':
             getStoreManagers($pdo, $_GET['storeId'] ?? '', $currentUserId);
             break;
-
         case 'approveManagerInvitation':
             approveManagerInvitation($pdo, $_POST['managerId'] ?? '', $currentUserId);
             break;
-
         case 'denyManagerInvitation':
             denyManagerInvitation($pdo, $_POST['managerId'] ?? '', $currentUserId);
             break;
-
         case 'getRegions':
             getRegions();
             break;
-
         case 'getNatureOfBusiness':
             getNatureOfBusiness($pdo);
             break;
-
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Invalid action']);
@@ -130,8 +110,9 @@ function deleteDirectory(string $dir): bool
         return unlink($dir);
     }
     foreach (scandir($dir) as $item) {
-        if ($item === '.' || $item === '..')
+        if ($item === '.' || $item === '..') {
             continue;
+        }
         if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) {
             return false;
         }
@@ -152,11 +133,9 @@ function isOwner(PDO $pdo, string $storeId, ?string $userId): bool
 
 function canAccessStore(PDO $pdo, string $storeId, ?string $userId): bool
 {
-    // If no userId (public access), only allow read access
     if (!$userId) {
         return true;
     }
-
     if (isOwner($pdo, $storeId, $userId)) {
         return true;
     }
@@ -284,19 +263,15 @@ function sendManagerApprovalNotification(string $email, string $firstName, strin
             <h2>Store Manager Invitation Approved</h2>
             <p>Hello ' . htmlspecialchars($firstName . ' ' . $lastName) . ',</p>
             <p>You have approved the invitation to manage the store <strong>' . htmlspecialchars($storeName) . '</strong> on Zzimba Online.</p>
-            
             <div style="margin:20px 0;padding:15px;background-color:#f5f5f5;border-radius:5px;text-align:center;">
                 <h3 style="margin-top:0;color:#10B981;">You now have access to manage this store</h3>
             </div>
-            
             <p>You can now access the store management features according to your assigned role.</p>
-            
             <div style="margin:20px 0;text-align:center;">
                 <a href="https://zzimbaonline.com/account/zzimba-stores" style="display:inline-block;padding:12px 24px;background-color:#D92B13;color:#ffffff;text-decoration:none;font-weight:500;border-radius:4px;">
                     Go to My Zzimba Stores
                 </a>
             </div>
-            
             <p>If you have any questions about your role or responsibilities, please contact the store owner or our support team.</p>
         </div>';
 
@@ -312,13 +287,10 @@ function sendManagerDenialNotification(string $ownerEmail, string $ownerName, st
             <h2>Store Manager Invitation Declined</h2>
             <p>Hello ' . htmlspecialchars($ownerName) . ',</p>
             <p>This email is to inform you that <strong>' . htmlspecialchars($managerName) . '</strong> has declined your invitation to manage the store <strong>' . htmlspecialchars($storeName) . '</strong> on Zzimba Online.</p>
-            
             <div style="margin:20px 0;padding:15px;background-color:#f5f5f5;border-radius:5px;text-align:center;">
                 <p style="font-size:18px;color:#F59E0B;">The invitation has been declined</p>
             </div>
-            
             <p>If you believe this was done in error or would like to invite someone else, you can do so from your store management dashboard.</p>
-            
             <div style="margin:20px 0;text-align:center;">
                 <a href="https://zzimbaonline.com/account/zzimba-stores" style="display:inline-block;padding:12px 24px;background-color:#D92B13;color:#ffffff;text-decoration:none;font-weight:500;border-radius:4px;">
                     Manage Your Stores
@@ -370,9 +342,7 @@ function getOwnedStores(PDO $pdo, string $userId): void
     foreach ($stores as &$s) {
         $s['uuid_id'] = $s['id'];
         $s['location'] = $s['district'] . ', ' . $s['address'];
-        $s['subscription'] = $s['status'] === 'pending'
-            ? 'Awaiting approval'
-            : 'Active store';
+        $s['subscription'] = $s['status'] === 'pending' ? 'Awaiting approval' : 'Active store';
 
         $catStmt = $pdo->prepare("
             SELECT pc.name
@@ -528,7 +498,6 @@ function getStoreDetails(PDO $pdo, string $storeId, ?string $userId): void
     }
     $store['categories'] = $categories;
 
-    // Only include managers information if the user is authenticated and has access
     if ($userId && canAccessStore($pdo, $storeId, $userId)) {
         $mgrStmt = $pdo->prepare("
             SELECT sm.id, sm.user_id, sm.role, sm.created_at, u.username, u.email, u.phone
@@ -545,7 +514,6 @@ function getStoreDetails(PDO $pdo, string $storeId, ?string $userId): void
         }
         $store['managers'] = $managers;
     } else {
-        // For public access, don't include sensitive manager information
         $store['managers'] = [];
     }
 
@@ -566,7 +534,6 @@ function createStore(PDO $pdo, string $userId): void
         }
     }
 
-    // Validate contact person name field
     if (empty($data['contact_person_name'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => "Field 'contact_person_name' is required"]);
@@ -579,8 +546,6 @@ function createStore(PDO $pdo, string $userId): void
             echo json_encode(['success' => false, 'error' => 'Name in use']);
             return;
         }
-
-        // No longer checking for uniqueness of email and phone
 
         $storeId = generateUlid();
         $now = date('Y-m-d H:i:s');
@@ -618,38 +583,24 @@ function createStore(PDO $pdo, string $userId): void
             $now
         ]);
 
-        if (
-            !empty($data['temp_logo_path'])
-            && file_exists(__DIR__ . '/../../' . $data['temp_logo_path'])
-        ) {
+        if (!empty($data['temp_logo_path']) && file_exists(__DIR__ . '/../../' . $data['temp_logo_path'])) {
             $ext = pathinfo($data['temp_logo_path'], PATHINFO_EXTENSION);
             $dir = __DIR__ . '/../../img/stores/' . $storeId . '/logo';
             mkdir($dir, 0755, true);
             $name = 'logo_' . time() . '.' . $ext;
-            rename(
-                __DIR__ . '/../../' . $data['temp_logo_path'],
-                "$dir/$name"
-            );
+            rename(__DIR__ . '/../../' . $data['temp_logo_path'], "$dir/$name");
             $url = 'img/stores/' . $storeId . '/logo/' . $name;
-            $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?")
-                ->execute([$url, $storeId]);
+            $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?")->execute([$url, $storeId]);
         }
 
-        if (
-            !empty($data['temp_cover_path'])
-            && file_exists(__DIR__ . '/../../' . $data['temp_cover_path'])
-        ) {
+        if (!empty($data['temp_cover_path']) && file_exists(__DIR__ . '/../../' . $data['temp_cover_path'])) {
             $ext = pathinfo($data['temp_cover_path'], PATHINFO_EXTENSION);
             $dir = __DIR__ . '/../../img/stores/' . $storeId . '/cover';
             mkdir($dir, 0755, true);
             $name = 'cover_' . time() . '.' . $ext;
-            rename(
-                __DIR__ . '/../../' . $data['temp_cover_path'],
-                "$dir/$name"
-            );
+            rename(__DIR__ . '/../../' . $data['temp_cover_path'], "$dir/$name");
             $url = 'img/stores/' . $storeId . '/cover/' . $name;
-            $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = ? WHERE id = ?")
-                ->execute([$url, $storeId]);
+            $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = ? WHERE id = ?")->execute([$url, $storeId]);
         }
 
         echo json_encode([
@@ -729,10 +680,7 @@ function updateStore(PDO $pdo, string $userId): void
         $stmt->execute($params);
     }
 
-    if (
-        !empty($data['temp_logo_path'])
-        && file_exists(__DIR__ . '/../../' . $data['temp_logo_path'])
-    ) {
+    if (!empty($data['temp_logo_path']) && file_exists(__DIR__ . '/../../' . $data['temp_logo_path'])) {
         $ext = pathinfo($data['temp_logo_path'], PATHINFO_EXTENSION);
         $dir = __DIR__ . '/../../img/stores/' . $storeId . '/logo';
         $files = glob("$dir/*");
@@ -743,19 +691,14 @@ function updateStore(PDO $pdo, string $userId): void
         $name = 'logo_' . time() . '.' . $ext;
         rename(__DIR__ . '/../../' . $data['temp_logo_path'], "$dir/$name");
         $url = 'img/stores/' . $storeId . '/logo/' . $name;
-        $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?")
-            ->execute([$url, $storeId]);
+        $pdo->prepare("UPDATE vendor_stores SET logo_url = ? WHERE id = ?")->execute([$url, $storeId]);
     } elseif (!empty($data['remove_logo'])) {
         $dir = __DIR__ . '/../../img/stores/' . $storeId . '/logo';
         deleteDirectory($dir);
-        $pdo->prepare("UPDATE vendor_stores SET logo_url = NULL WHERE id = ?")
-            ->execute([$storeId]);
+        $pdo->prepare("UPDATE vendor_stores SET logo_url = NULL WHERE id = ?")->execute([$storeId]);
     }
 
-    if (
-        !empty($data['temp_cover_path'])
-        && file_exists(__DIR__ . '/../../' . $data['temp_cover_path'])
-    ) {
+    if (!empty($data['temp_cover_path']) && file_exists(__DIR__ . '/../../' . $data['temp_cover_path'])) {
         $ext = pathinfo($data['temp_cover_path'], PATHINFO_EXTENSION);
         $dir = __DIR__ . '/../../img/stores/' . $storeId . '/cover';
         $files = glob("$dir/*");
@@ -766,13 +709,11 @@ function updateStore(PDO $pdo, string $userId): void
         $name = 'cover_' . time() . '.' . $ext;
         rename(__DIR__ . '/../../' . $data['temp_cover_path'], "$dir/$name");
         $url = 'img/stores/' . $storeId . '/cover/' . $name;
-        $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = ? WHERE id = ?")
-            ->execute([$url, $storeId]);
+        $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = ? WHERE id = ?")->execute([$url, $storeId]);
     } elseif (!empty($data['remove_cover'])) {
         $dir = __DIR__ . '/../../img/stores/' . $storeId . '/cover';
         deleteDirectory($dir);
-        $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = NULL WHERE id = ?")
-            ->execute([$storeId]);
+        $pdo->prepare("UPDATE vendor_stores SET vendor_cover_url = NULL WHERE id = ?")->execute([$storeId]);
     }
 
     echo json_encode(['success' => true, 'message' => 'Store updated']);
@@ -791,9 +732,7 @@ function deleteStore(PDO $pdo, string $storeId, string $userId): void
         return;
     }
 
-    $pdo->prepare("DELETE FROM vendor_stores WHERE id = ?")
-        ->execute([$storeId]);
-
+    $pdo->prepare("DELETE FROM vendor_stores WHERE id = ?")->execute([$storeId]);
     deleteDirectory(__DIR__ . '/../../img/stores/' . $storeId);
 
     echo json_encode(['success' => true, 'message' => 'Store deleted']);
@@ -810,7 +749,7 @@ function uploadLogo(): void
     $file = $_FILES['logo'];
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    if (!in_array($ext, $allowed) || $file['size'] > 2_000_000) {
+    if (!in_array($ext, $allowed) || $file['size'] > 2000000) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid file']);
         return;
@@ -822,13 +761,23 @@ function uploadLogo(): void
     $path = $tmpDir . $name;
 
     $imgInfo = getimagesize($file['tmp_name']);
-    $src = match ($ext) {
-        'jpg', 'jpeg' => imagecreatefromjpeg($file['tmp_name']),
-        'png' => imagecreatefrompng($file['tmp_name']),
-        'webp' => imagecreatefromwebp($file['tmp_name']),
-        'gif' => imagecreatefromgif($file['tmp_name']),
-        default => null
-    };
+    switch ($ext) {
+        case 'jpg':
+        case 'jpeg':
+            $src = imagecreatefromjpeg($file['tmp_name']);
+            break;
+        case 'png':
+            $src = imagecreatefrompng($file['tmp_name']);
+            break;
+        case 'webp':
+            $src = imagecreatefromwebp($file['tmp_name']);
+            break;
+        case 'gif':
+            $src = imagecreatefromgif($file['tmp_name']);
+            break;
+        default:
+            $src = null;
+    }
     if (!$src) {
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Image processing error']);
@@ -837,7 +786,7 @@ function uploadLogo(): void
 
     $size = 512;
     $dst = imagecreatetruecolor($size, $size);
-    if (in_array($ext, ['png', 'gif'])) {
+    if (in_array($ext, ['png', 'gif'], true)) {
         imagealphablending($dst, false);
         imagesavealpha($dst, true);
         $bg = imagecolorallocatealpha($dst, 255, 255, 255, 127);
@@ -859,12 +808,21 @@ function uploadLogo(): void
 
     imagecopyresampled($dst, $src, 0, 0, $srcX, $srcY, $size, $size, $srcS, $srcS);
 
-    match ($ext) {
-        'jpg', 'jpeg' => imagejpeg($dst, $path, 90),
-        'png' => imagepng($dst, $path, 9),
-        'webp' => imagewebp($dst, $path, 90),
-        'gif' => imagegif($dst, $path),
-    };
+    switch ($ext) {
+        case 'jpg':
+        case 'jpeg':
+            imagejpeg($dst, $path, 90);
+            break;
+        case 'png':
+            imagepng($dst, $path, 9);
+            break;
+        case 'webp':
+            imagewebp($dst, $path, 90);
+            break;
+        case 'gif':
+            imagegif($dst, $path);
+            break;
+    }
 
     imagedestroy($src);
     imagedestroy($dst);
@@ -887,7 +845,7 @@ function uploadVendorCover(): void
     $file = $_FILES['cover'];
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    if (!in_array($ext, $allowed) || $file['size'] > 2_000_000) {
+    if (!in_array($ext, $allowed) || $file['size'] > 2000000) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid file']);
         return;
@@ -899,24 +857,33 @@ function uploadVendorCover(): void
     $path = $tmpDir . $name;
 
     $imgInfo = getimagesize($file['tmp_name']);
-    $src = match ($ext) {
-        'jpg', 'jpeg' => imagecreatefromjpeg($file['tmp_name']),
-        'png' => imagecreatefrompng($file['tmp_name']),
-        'webp' => imagecreatefromwebp($file['tmp_name']),
-        'gif' => imagecreatefromgif($file['tmp_name']),
-        default => null
-    };
+    switch ($ext) {
+        case 'jpg':
+        case 'jpeg':
+            $src = imagecreatefromjpeg($file['tmp_name']);
+            break;
+        case 'png':
+            $src = imagecreatefrompng($file['tmp_name']);
+            break;
+        case 'webp':
+            $src = imagecreatefromwebp($file['tmp_name']);
+            break;
+        case 'gif':
+            $src = imagecreatefromgif($file['tmp_name']);
+            break;
+        default:
+            $src = null;
+    }
     if (!$src) {
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Image processing error']);
         return;
     }
 
-    // For cover image, we'll use a different aspect ratio (e.g., 1200x400 for a banner)
     $width = 1200;
     $height = 400;
     $dst = imagecreatetruecolor($width, $height);
-    if (in_array($ext, ['png', 'gif'])) {
+    if (in_array($ext, ['png', 'gif'], true)) {
         imagealphablending($dst, false);
         imagesavealpha($dst, true);
         $bg = imagecolorallocatealpha($dst, 255, 255, 255, 127);
@@ -930,13 +897,11 @@ function uploadVendorCover(): void
     $dstRatio = $width / $height;
 
     if ($srcRatio > $dstRatio) {
-        // Source is wider than destination
         $srcH = $h;
         $srcW = $h * $dstRatio;
         $srcX = ($w - $srcW) / 2;
         $srcY = 0;
     } else {
-        // Source is taller than destination
         $srcW = $w;
         $srcH = $w / $dstRatio;
         $srcX = 0;
@@ -945,12 +910,21 @@ function uploadVendorCover(): void
 
     imagecopyresampled($dst, $src, 0, 0, $srcX, $srcY, $width, $height, $srcW, $srcH);
 
-    match ($ext) {
-        'jpg', 'jpeg' => imagejpeg($dst, $path, 90),
-        'png' => imagepng($dst, $path, 9),
-        'webp' => imagewebp($dst, $path, 90),
-        'gif' => imagegif($dst, $path),
-    };
+    switch ($ext) {
+        case 'jpg':
+        case 'jpeg':
+            imagejpeg($dst, $path, 90);
+            break;
+        case 'png':
+            imagepng($dst, $path, 9);
+            break;
+        case 'webp':
+            imagewebp($dst, $path, 90);
+            break;
+        case 'gif':
+            imagegif($dst, $path);
+            break;
+    }
 
     imagedestroy($src);
     imagedestroy($dst);
@@ -970,7 +944,6 @@ function getStoreCategories(PDO $pdo, string $storeId): void
         return;
     }
 
-    // Check if store exists and is active
     $storeStmt = $pdo->prepare("SELECT 1 FROM vendor_stores WHERE id = ? AND status = 'active'");
     $storeStmt->execute([$storeId]);
     if ($storeStmt->rowCount() === 0) {
@@ -1143,8 +1116,9 @@ function getRegions(): void
     $options = [];
     foreach ($data['features'] as $f) {
         $name = $f['properties']['NAME_1'] ?? null;
-        if ($name)
+        if ($name) {
             $options[] = $name;
+        }
     }
     sort($options);
     echo json_encode(['success' => true, 'regions' => $options]);
