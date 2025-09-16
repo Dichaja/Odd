@@ -301,20 +301,6 @@ ob_start();
         gap: .5rem
     }
 
-    .share-button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.5rem;
-        height: 1.5rem;
-        border-radius: 9999px;
-        color: #fff;
-        border: 1.5px solid #fff;
-        background-color: transparent;
-        transition: all .2s ease;
-        position: relative
-    }
-
     .share-button:hover {
         background-color: rgba(217, 43, 19, .1);
         transform: translateY(-2px)
@@ -415,6 +401,31 @@ ob_start();
     [x-cloak] {
         display: none !important
     }
+
+    .share-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        min-width: 2rem;
+        min-height: 2rem;
+        aspect-ratio: 1/1;
+        border-radius: 9999px;
+        color: #fff;
+        border: 1px solid #fff;
+        background-color: transparent;
+        transition: all .2s ease;
+        position: relative;
+        line-height: 0;
+        box-sizing: border-box
+    }
+
+    .share-button svg {
+        display: block;
+        width: 16px;
+        height: 16px
+    }
 </style>
 
 <div x-data="productDetails()" x-init="init()" x-cloak>
@@ -438,27 +449,54 @@ ob_start();
                             class="text-white font-medium truncate max-w-[40%]"><?= htmlspecialchars($product['title']) ?></span>
                     </nav>
                 </div>
-                <div class="share-container mt-4 md:mt-0 hidden md:flex">
+                <div class="share-container mt-4 md:mt-0 flex">
                     <span class="share-label">SHARE</span>
                     <div class="share-buttons">
-                        <button @click="copyLink" class="share-button">
-                            <i data-lucide="link" class="w-3 h-3"></i>
+                        <button @click="copyLink" class="share-button" aria-label="Copy link">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10 13a5 5 0 0 0 7.07 0l3.54-3.54a5 5 0 0 0-7.07-7.07L12 3" />
+                                <path d="M14 11a5 5 0 0 0-7.07 0L3.39 14.54a5 5 0 1 0 7.07 7.07L12 21" />
+                            </svg>
                             <span class="tooltip">Copy link to clipboard</span>
                         </button>
-                        <button @click="shareOnWhatsApp" class="share-button">
-                            <i data-lucide="message-circle" class="w-3 h-3"></i>
+
+                        <button @click="shareOnWhatsApp" class="share-button" aria-label="Share on WhatsApp">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 11.5a8.38 8.38 0 1 1-3.46-6.86L21 3" />
+                                <path d="M22 2l-1 6-6-1" />
+                            </svg>
                             <span class="tooltip">Share on WhatsApp</span>
                         </button>
-                        <button @click="shareOnFacebook" class="share-button">
-                            <i data-lucide="share-2" class="w-3 h-3"></i>
+
+                        <button @click="shareOnFacebook" class="share-button" aria-label="Share on Facebook">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 8a6 6 0 1 0-6 6h6" />
+                                <path d="M18 12v10" />
+                                <path d="M22 12h-4" />
+                            </svg>
                             <span class="tooltip">Share on Facebook</span>
                         </button>
-                        <button @click="shareOnTwitter" class="share-button">
-                            <i data-lucide="send" class="w-3 h-3"></i>
+
+                        <button @click="shareOnTwitter" class="share-button" aria-label="Post on X">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 2L11 13" />
+                                <path d="M22 2l-6 20-5-9-9-5 20-6z" />
+                            </svg>
                             <span class="tooltip">Post on X</span>
                         </button>
-                        <button @click="shareOnLinkedIn" class="share-button">
-                            <i data-lucide="share" class="w-3 h-3"></i>
+
+                        <button @click="shareOnLinkedIn" class="share-button" aria-label="Share on LinkedIn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="9" width="7" height="13" />
+                                <circle cx="5.5" cy="5.5" r="2.5" />
+                                <path d="M15 9h7v13h-7z" />
+                                <path d="M15 13c0-2 2-3 4-3" />
+                            </svg>
                             <span class="tooltip">Share on LinkedIn</span>
                         </button>
                     </div>
