@@ -179,13 +179,19 @@ $stmt = $pdo->prepare("
         EXISTS(
             SELECT 1 
             FROM store_products sp
+            JOIN store_categories sc ON sc.id = sp.store_category_id
+            JOIN vendor_stores vs ON vs.id = sc.store_id
             JOIN product_pricing pp ON pp.store_products_id = sp.id
             WHERE sp.product_id = p.id
+              AND vs.status = 'active'
         ) AS has_pricing,
         (SELECT MIN(pp.price)
          FROM store_products sp
+         JOIN store_categories sc ON sc.id = sp.store_category_id
+         JOIN vendor_stores vs ON vs.id = sc.store_id
          JOIN product_pricing pp ON pp.store_products_id = sp.id
          WHERE sp.product_id = p.id
+           AND vs.status = 'active'
         ) AS min_price,
         (SELECT COUNT(*) FROM product_views WHERE product_id = p.id) AS unique_views,
         (SELECT COALESCE(SUM(view_count),0) FROM product_views WHERE product_id = p.id) AS total_views
@@ -218,13 +224,19 @@ $relatedStmt = $pdo->prepare("
         EXISTS(
             SELECT 1 
             FROM store_products sp
+            JOIN store_categories sc ON sc.id = sp.store_category_id
+            JOIN vendor_stores vs ON vs.id = sc.store_id
             JOIN product_pricing pp ON pp.store_products_id = sp.id
             WHERE sp.product_id = p.id
+              AND vs.status = 'active'
         ) AS has_pricing,
         (SELECT MIN(pp.price)
          FROM store_products sp
+         JOIN store_categories sc ON sc.id = sp.store_category_id
+         JOIN vendor_stores vs ON vs.id = sc.store_id
          JOIN product_pricing pp ON pp.store_products_id = sp.id
          WHERE sp.product_id = p.id
+           AND vs.status = 'active'
         ) AS lowest_price,
         (SELECT COUNT(*) FROM product_views WHERE product_id = p.id) AS unique_views,
         (SELECT COALESCE(SUM(view_count),0) FROM product_views WHERE product_id = p.id) AS total_views
@@ -512,7 +524,8 @@ ob_start();
 
                     <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                         <p class="text-gray-700 leading-relaxed mb-6 line-clamp-2">
-                            <?= htmlspecialchars($shortDescription) ?></p>
+                            <?= htmlspecialchars($shortDescription) ?>
+                        </p>
 
                         <div class="flex items-center mb-6">
                             <span class="text-sm font-medium text-gray-500 mr-2">Brand:</span>
@@ -788,10 +801,12 @@ ob_start();
                             </div>
                             <div class="p-3 md:p-5 flex flex-col flex-1">
                                 <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
-                                    <?= htmlspecialchars($relatedProduct['title']) ?></h3>
+                                    <?= htmlspecialchars($relatedProduct['title']) ?>
+                                </h3>
                                 <div class="flex-1 flex flex-col justify-end">
                                     <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
-                                        <?= htmlspecialchars(getShortDescription($relatedProduct['description'], 100)) ?></p>
+                                        <?= htmlspecialchars(getShortDescription($relatedProduct['description'], 100)) ?>
+                                    </p>
                                     <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
                                         <i data-lucide="eye" class="w-4 h-4 mr-1" style="color:#D92B13;"></i>
                                         <span><?= number_format($relatedProduct['unique_views']) ?> views</span>

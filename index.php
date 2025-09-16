@@ -14,7 +14,7 @@ function loadHomepageData()
 }
 function getFeaturedProducts($pdo, $limit = 8)
 {
-    $stmt = $pdo->prepare("SELECT p.id, p.title, p.description, p.category_id, c.name AS category_name,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) AS views, EXISTS(SELECT 1 FROM store_products sp JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id) AS has_pricing,(SELECT MIN(pp.price) FROM store_products sp JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id) AS lowest_price FROM products p LEFT JOIN product_categories c ON p.category_id = c.id WHERE p.featured = 1 AND p.status = 'published' ORDER BY has_pricing DESC, p.created_at DESC LIMIT :limit");
+    $stmt = $pdo->prepare("SELECT p.id, p.title, p.description, p.category_id, c.name AS category_name,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) AS views, EXISTS(SELECT 1 FROM store_products sp JOIN store_categories sc ON sc.id = sp.store_category_id JOIN vendor_stores vs ON vs.id = sc.store_id JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id AND vs.status = 'active') AS has_pricing,(SELECT MIN(pp.price) FROM store_products sp JOIN store_categories sc ON sc.id = sp.store_category_id JOIN vendor_stores vs ON vs.id = sc.store_id JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id AND vs.status = 'active') AS lowest_price FROM products p LEFT JOIN product_categories c ON p.category_id = c.id WHERE p.featured = 1 AND p.status = 'published' ORDER BY has_pricing DESC, p.created_at DESC LIMIT :limit");
     $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
     $stmt->execute();
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -440,7 +440,8 @@ ob_start();
                                                         alt="<?= $partner['name'] ?>" class="h-12 md:h-16 object-contain mb-2 md:mb-4">
                                                 <?php endif; ?>
                                                 <p class="text-center font-medium text-gray-800 text-sm md:text-base">
-                                                    <?= $partner['name'] ?></p>
+                                                    <?= $partner['name'] ?>
+                                                </p>
                                             </a>
                                         <?php endforeach; ?>
                                     </div>

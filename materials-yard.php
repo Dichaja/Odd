@@ -36,13 +36,19 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                 EXISTS(
                     SELECT 1 
                     FROM store_products sp
+                    JOIN store_categories sc ON sc.id = sp.store_category_id
+                    JOIN vendor_stores vs ON vs.id = sc.store_id
                     JOIN product_pricing pp ON pp.store_products_id = sp.id
                     WHERE sp.product_id = p.id
+                      AND vs.status = 'active'
                 ) AS has_pricing,
                 (SELECT MIN(pp.price)
                  FROM store_products sp
+                 JOIN store_categories sc ON sc.id = sp.store_category_id
+                 JOIN vendor_stores vs ON vs.id = sc.store_id
                  JOIN product_pricing pp ON pp.store_products_id = sp.id
                  WHERE sp.product_id = p.id
+                   AND vs.status = 'active'
                 ) AS lowest_price
             FROM products p
             JOIN product_categories c ON c.id = p.category_id
@@ -107,13 +113,19 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                     EXISTS(
                         SELECT 1 
                         FROM store_products sp
+                        JOIN store_categories sc ON sc.id = sp.store_category_id
+                        JOIN vendor_stores vs ON vs.id = sc.store_id
                         JOIN product_pricing pp ON pp.store_products_id = sp.id
                         WHERE sp.product_id = p.id
+                          AND vs.status = 'active'
                     ) AS has_pricing,
                     (SELECT MIN(pp.price)
                      FROM store_products sp
+                     JOIN store_categories sc ON sc.id = sp.store_category_id
+                     JOIN vendor_stores vs ON vs.id = sc.store_id
                      JOIN product_pricing pp ON pp.store_products_id = sp.id
                      WHERE sp.product_id = p.id
+                       AND vs.status = 'active'
                     ) AS lowest_price
                 FROM products p
                 JOIN product_categories c ON c.id = p.category_id
@@ -150,13 +162,19 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                     EXISTS(
                         SELECT 1 
                         FROM store_products sp
+                        JOIN store_categories sc ON sc.id = sp.store_category_id
+                        JOIN vendor_stores vs ON vs.id = sc.store_id
                         JOIN product_pricing pp ON pp.store_products_id = sp.id
                         WHERE sp.product_id = p.id
+                          AND vs.status = 'active'
                     ) AS has_pricing,
                     (SELECT MIN(pp.price)
                      FROM store_products sp
+                     JOIN store_categories sc ON sc.id = sp.store_category_id
+                     JOIN vendor_stores vs ON vs.id = sc.store_id
                      JOIN product_pricing pp ON pp.store_products_id = sp.id
                      WHERE sp.product_id = p.id
+                       AND vs.status = 'active'
                     ) AS lowest_price
                 FROM products p
                 JOIN product_categories c ON c.id = p.category_id
@@ -467,13 +485,19 @@ if (empty($searchQuery)) {
                 EXISTS(
                     SELECT 1 
                     FROM store_products sp
+                    JOIN store_categories sc ON sc.id = sp.store_category_id
+                    JOIN vendor_stores vs ON vs.id = sc.store_id
                     JOIN product_pricing pp ON pp.store_products_id = sp.id
                     WHERE sp.product_id = p.id
+                      AND vs.status = 'active'
                 ) AS has_pricing,
                 (SELECT MIN(pp.price)
                  FROM store_products sp
+                 JOIN store_categories sc ON sc.id = sp.store_category_id
+                 JOIN vendor_stores vs ON vs.id = sc.store_id
                  JOIN product_pricing pp ON pp.store_products_id = sp.id
                  WHERE sp.product_id = p.id
+                   AND vs.status = 'active'
                 ) AS lowest_price
             FROM products p
             WHERE p.category_id = ? 
@@ -499,13 +523,19 @@ if (empty($searchQuery)) {
                 EXISTS(
                     SELECT 1 
                     FROM store_products sp
+                    JOIN store_categories sc ON sc.id = sp.store_category_id
+                    JOIN vendor_stores vs ON vs.id = sc.store_id
                     JOIN product_pricing pp ON pp.store_products_id = sp.id
                     WHERE sp.product_id = p.id
+                      AND vs.status = 'active'
                 ) AS has_pricing,
                 (SELECT MIN(pp.price)
                  FROM store_products sp
+                 JOIN store_categories sc ON sc.id = sp.store_category_id
+                 JOIN vendor_stores vs ON vs.id = sc.store_id
                  JOIN product_pricing pp ON pp.store_products_id = sp.id
                  WHERE sp.product_id = p.id
+                   AND vs.status = 'active'
                 ) AS lowest_price
             FROM products p
             WHERE p.status = 'published'
@@ -698,7 +728,8 @@ ob_start();
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 class="text-xl md:text-3xl font-bold text-white mb-4 drop-shadow-lg">
-                        <?= htmlspecialchars($pageTitle) ?></h1>
+                        <?= htmlspecialchars($pageTitle) ?>
+                    </h1>
                     <nav class="flex text-xs md:text-sm text-gray-200 overflow-hidden whitespace-nowrap drop-shadow-md">
                         <a href="<?= BASE_URL ?>" class="hover:text-white transition-colors truncate max-w-[30%]">Zzimba
                             Online</a>
@@ -720,7 +751,8 @@ ob_start();
                             products.</p>
                     <?php elseif (!empty($categoryId) && isset($category) && !empty($category['description'])): ?>
                         <p class="text-gray-100 mt-2 line-clamp-2 max-w-2xl hidden md:block drop-shadow-md">
-                            <?= htmlspecialchars($category['description']) ?></p>
+                            <?= htmlspecialchars($category['description']) ?>
+                        </p>
                     <?php elseif (empty($categoryId)): ?>
                         <p class="text-gray-100 mt-2 line-clamp-2 max-w-2xl hidden md:block drop-shadow-md">Discover a wide
                             range of genuine building materials and supplies for all your construction needs.</p>
@@ -905,11 +937,13 @@ ob_start();
 
                                         <div class="p-3 md:p-5 flex flex-col flex-1">
                                             <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
-                                                <?= htmlspecialchars($product['title']) ?></h3>
+                                                <?= htmlspecialchars($product['title']) ?>
+                                            </h3>
 
                                             <div class="flex-1 flex flex-col justify-end">
                                                 <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
-                                                    <?= htmlspecialchars($product['description']) ?></p>
+                                                    <?= htmlspecialchars($product['description']) ?>
+                                                </p>
 
                                                 <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
                                                     <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
