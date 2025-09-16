@@ -16,7 +16,6 @@ date_default_timezone_set('Africa/Kampala');
 function sendSMSDynamic(string $phone, string $message, ?string $provider = null): bool
 {
     $provider = $provider ?: (defined('SMS_PROVIDER') ? SMS_PROVIDER : 'speedamobile');
-
     if ($provider === 'collecto') {
         try {
             $manager = new CollectoSMSManager();
@@ -26,7 +25,6 @@ function sendSMSDynamic(string $phone, string $message, ?string $provider = null
             return false;
         }
     }
-
     $res = SMS::send($phone, $message, true);
     return isset($res['success']) && $res['success'] === true;
 }
@@ -114,6 +112,21 @@ function isStrongPassword(string $password): bool
         && preg_match('/[^A-Za-z0-9]/', $password);
 }
 
+function validateUsername(string $raw, ?string &$clean = null, ?string &$error = null): bool
+{
+    $clean = trim($raw);
+    if (preg_match('/\s/', $clean)) {
+        $error = 'Username must be one word with no spaces';
+        return false;
+    }
+    $len = strlen($clean);
+    if ($len < 3 || $len > 15) {
+        $error = 'Username must be between 3 and 15 characters';
+        return false;
+    }
+    return true;
+}
+
 function sendEmailOTP(string $email, string $otp): bool
 {
     $subject = 'Your Verification Code - Zzimba Online';
@@ -163,13 +176,11 @@ function sendWelcomeEmail(string $username, ?string $email, ?string $phone = nul
     if (!$email) {
         return true;
     }
-
     $subject = 'Welcome to Zzimba Online!';
     $phoneInfo = $phone
         ? '<p><strong>Phone:</strong> ' . htmlspecialchars($phone) . '</p>'
         : '<p><strong>Phone:</strong> Not provided (you can add this in your profile settings)</p>';
     $emailInfo = '<p><strong>Email:</strong> ' . htmlspecialchars($email) . '</p>';
-
     $content = '
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
         <h2 style="color:#d32f2f;text-align:center;">Welcome to Zzimba Online!</h2>
@@ -197,7 +208,7 @@ function sendPasswordResetOTP(string $email, string $otp): bool
 {
     $subject = 'Password Reset Code - Zzimba Online';
     $content = '
-    <div style="text-align:center;padding:20px 0;">
+    <div style="text-align:center;padding:20px 0%;">
         <h2>Password Reset</h2>
         <p>You have requested to reset your password. Please use the verification code below to continue:</p>
         <div style="margin:30px auto;padding:10px;background-color:#f5f5f5;border-radius:5px;width:200px;text-align:center;">
@@ -259,7 +270,6 @@ function createOTP(string $type, string $account, PDO $pdo): string
         );
         $stmt->execute([':account' => $account]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if ($row && !empty($row['created_at'])) {
             $last = new DateTime($row['created_at'], new DateTimeZone('+03:00'));
             $nowDT = new DateTime('now', new DateTimeZone('+03:00'));
@@ -331,11 +341,9 @@ function maskEmail($email)
     if (empty($email)) {
         return null;
     }
-
     $parts = explode("@", $email);
     $name = $parts[0];
     $domain = $parts[1];
-
     $maskedName = substr($name, 0, 1) . str_repeat('*', max(strlen($name) - 2, 1)) . substr($name, -1);
     return $maskedName . '@' . $domain;
 }
@@ -345,14 +353,11 @@ function maskPhone($phone)
     if (empty($phone)) {
         return null;
     }
-
     $digits = preg_replace('/\D/', '', $phone);
     $len = strlen($digits);
-
     if ($len < 6) {
         return str_repeat('*', $len);
     }
-
     return substr($digits, 0, 4) . str_repeat('*', $len - 6) . substr($digits, -2);
 }
 
@@ -538,10 +543,11 @@ try {
                 die(json_encode(['success' => false, 'message' => 'Missing username']));
             }
 
-            $username = $data['username'];
-            if (strlen($username) < 3) {
+            $rawUsername = $data['username'];
+            $errorMsg = null;
+            if (!validateUsername($rawUsername, $username, $errorMsg)) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Username must be at least 3 characters long']);
+                echo json_encode(['success' => false, 'message' => $errorMsg]);
                 break;
             }
 
@@ -733,7 +739,7 @@ try {
                 http_response_code(400);
                 die(json_encode(['success' => false, 'message' => 'Missing username or phone number']));
             }
-            $username = $data['username'];
+            $username = trim($data['username']);
             $phone = $data['phone'];
             if (!isValidPhone($phone)) {
                 http_response_code(400);
@@ -801,17 +807,19 @@ try {
                 http_response_code(400);
                 die(json_encode(['success' => false, 'message' => 'Missing required fields']));
             }
-            $username = $data['username'];
+            $rawUsername = $data['username'];
             $password = $data['password'];
             $verificationMethod = $data['verificationMethod'];
             $email = $data['email'] ?? null;
             $phone = $data['phone'] ?? null;
 
-            if (strlen($username) < 3) {
+            $errorMsg = null;
+            if (!validateUsername($rawUsername, $username, $errorMsg)) {
                 http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Username must be at least 3 characters long']);
+                echo json_encode(['success' => false, 'message' => $errorMsg]);
                 break;
             }
+
             if ($verificationMethod === 'email') {
                 if (!$email || !isValidEmail($email)) {
                     http_response_code(400);
@@ -829,16 +837,19 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Invalid verification method']);
                 break;
             }
+
             if (!isStrongPassword($password)) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Password must be at least 8 chars with uppercase, lowercase, number, special char']);
                 break;
             }
+
             $checkFields = ['username' => $username];
             if ($email)
                 $checkFields['email'] = $email;
             if ($phone)
                 $checkFields['phone'] = $phone;
+
             foreach ($checkFields as $field => $value) {
                 $stmt = $pdo->prepare("SELECT id FROM zzimba_users WHERE $field=:value");
                 $stmt->execute([':value' => $value]);
@@ -855,6 +866,7 @@ try {
                     break 2;
                 }
             }
+
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $userId = generateUlid();
             $now = (new DateTime('now', new DateTimeZone('+03:00')))->format('Y-m-d H:i:s');
@@ -871,6 +883,7 @@ try {
                 ':created_at' => $now,
                 ':updated_at' => $now
             ]);
+
             if ($email) {
                 sendWelcomeEmail($username, $email, $phone);
             }
@@ -893,7 +906,7 @@ try {
                 http_response_code(400);
                 die(json_encode(['success' => false, 'message' => 'Missing username or email']));
             }
-            $username = $data['username'];
+            $username = trim($data['username']);
             $email = $data['email'];
             if (!isValidEmail($email)) {
                 http_response_code(400);
@@ -996,7 +1009,7 @@ try {
                 http_response_code(400);
                 die(json_encode(['success' => false, 'message' => 'Missing required fields']));
             }
-            $usernameInput = $data['username'];
+            $usernameInput = trim($data['username']);
             $contact = $data['contact'];
             $contactType = $data['contactType'];
             $password = $data['password'];
