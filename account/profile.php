@@ -6,6 +6,11 @@ ob_start();
 ?>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/css/intlTelInput.css">
+<style>
+    [x-cloak] {
+        display: none !important
+    }
+</style>
 
 <div class="min-h-screen text-gray-900 dark:text-white" id="app-container" x-data="profileApp()" x-init="init()">
     <div class="bg-white dark:bg-secondary border-b border-gray-100 dark:border-white/10 px-4 sm:px-6 lg:px-8 py-6">
@@ -307,7 +312,7 @@ ob_start();
         </div>
     </div>
 
-    <div id="incompleteProfileModal" class="fixed inset-0 z-50 items-center justify-center p-4"
+    <div id="incompleteProfileModal" class="fixed inset-0 z-50 p-4 flex items-center justify-center"
         x-show="modals.incomplete" x-transition x-cloak>
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="modals.incomplete=false"></div>
         <div
@@ -340,7 +345,7 @@ ob_start();
         </div>
     </div>
 
-    <div id="editNamesModal" class="fixed inset-0 z-50 items-center justify-center p-4" x-show="modals.editNames"
+    <div id="editNamesModal" class="fixed inset-0 z-50 p-4 flex items-center justify-center" x-show="modals.editNames"
         x-transition x-cloak>
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="modals.editNames=false"></div>
         <div
@@ -386,7 +391,7 @@ ob_start();
         </div>
     </div>
 
-    <div id="editEmailModal" class="fixed inset-0 z-50 items-center justify-center p-4" x-show="modals.editEmail"
+    <div id="editEmailModal" class="fixed inset-0 z-50 p-4 flex items-center justify-center" x-show="modals.editEmail"
         x-transition x-cloak>
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="modals.editEmail=false"></div>
         <div
@@ -499,7 +504,7 @@ ob_start();
         </div>
     </div>
 
-    <div id="editPhoneModal" class="fixed inset-0 z-50 items-center justify-center p-4" x-show="modals.editPhone"
+    <div id="editPhoneModal" class="fixed inset-0 z-50 p-4 flex items-center justify-center" x-show="modals.editPhone"
         x-transition x-cloak>
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="modals.editPhone=false"></div>
         <div
@@ -615,7 +620,7 @@ ob_start();
         </div>
     </div>
 
-    <div id="changePasswordModal" class="fixed inset-0 z-50 items-center justify-center p-4"
+    <div id="changePasswordModal" class="fixed inset-0 z-50 p-4 flex items-center justify-center"
         x-show="modals.changePassword" x-transition x-cloak>
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="modals.changePassword=false"></div>
         <div
@@ -723,7 +728,7 @@ ob_start();
         </div>
     </div>
 
-    <div id="deleteAccountModal" class="fixed inset-0 z-50 items-center justify-center p-4"
+    <div id="deleteAccountModal" class="fixed inset-0 z-50 p-4 flex items-center justify-center"
         x-show="modals.deleteAccount" x-transition x-cloak>
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="modals.deleteAccount=false"></div>
         <div
@@ -765,8 +770,8 @@ ob_start();
         </div>
     </div>
 
-    <div id="contactAdminModal" class="fixed inset-0 z-50 items-center justify-center p-4" x-show="modals.contactAdmin"
-        x-transition x-cloak>
+    <div id="contactAdminModal" class="fixed inset-0 z-50 p-4 flex items-center justify-center"
+        x-show="modals.contactAdmin" x-transition x-cloak>
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="modals.contactAdmin=false"></div>
         <div
             class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 border border-gray-100 dark:border-white/10">
