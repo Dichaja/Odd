@@ -1,0 +1,58 @@
+[
+    {
+        "sessionID": "01k5dhe5cfrw9cqnpr29yt5974",
+        "timestamp": "2025-09-18T04:51:24.662Z",
+        "ipAddress": "41.84.203.159",
+        "country": "Uganda",
+        "shortName": "ug",
+        "phoneCode": "256",
+        "browser": "Firefox",
+        "device": "desktop",
+        "coords": {
+            "latitude": 0.3475964,
+            "longitude": 32.5825197
+        },
+        "loggedUser": null,
+        "logs": [
+            {
+                "event": "page_load",
+                "timestamp": "2025-09-18T04:49:34.497Z",
+                "referrer": "",
+                "url": "http:\/\/localhost\/New-Zzimba\/",
+                "activeNavigation": "home",
+                "pageTitle": "Zzimba Online Uganda"
+            },
+            {
+                "event": "page_refresh",
+                "timestamp": "2025-09-18T04:50:09.342Z",
+                "url": "http:\/\/localhost\/New-Zzimba\/",
+                "activeNavigation": "home",
+                "pageTitle": "Zzimba Online Uganda"
+            },
+            {
+                "event": "login_identifier_submit",
+                "timestamp": "2025-09-18T04:50:20.490Z",
+                "identifier": "Newe",
+                "identifierType": "username"
+            },
+            {
+                "event": "login_identifier_success",
+                "timestamp": "2025-09-18T04:50:48.196Z",
+                "identifier": "Newe",
+                "identifierType": "username"
+            },
+            {
+                "event": "login_password_submit",
+                "timestamp": "2025-09-18T04:51:05.471Z"
+            },
+            {
+                "event": "login_password_success",
+                "timestamp": "2025-09-18T04:51:24.660Z"
+            },
+            {
+                "event": "login_success",
+                "timestamp": "2025-09-18T04:51:24.662Z"
+            }
+        ]
+    }
+]

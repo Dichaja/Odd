@@ -1,0 +1,266 @@
+{
+    "heroSlides": [
+        {
+            "id": "1747407129816",
+            "title": "Buy Online<br>Deliver On-site",
+            "subtitle": "Quality building materials delivered to your location",
+            "buttonText": "Sign up",
+            "buttonUrl": "#",
+            "active": true,
+            "order": 1,
+            "image": "/page-data/homepage/hero/hero_1747407129816.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1747407422145",
+            "title": "Building Procurement <br>Made Easy",
+            "subtitle": "Discover our wide range of genuine products",
+            "buttonText": "Shop Now",
+            "buttonUrl": "#",
+            "active": true,
+            "order": 2,
+            "image": "/page-data/homepage/hero/hero_1747407422145.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1747407455483",
+            "title": "100s of Vendors<br>1000s of Supplies",
+            "subtitle": "It's more than just online shopping, it's the future!",
+            "buttonText": "Join Now",
+            "buttonUrl": "#",
+            "active": true,
+            "order": 3,
+            "image": "/page-data/homepage/hero/hero_1747407455483.jpg",
+            "removeImage": false
+        }
+    ],
+    "requestQuoteSection": {
+        "buttonText": "Request a Quote Now",
+        "buttonUrl": "request-for-quote",
+        "description": "Get personalized quotes for your building supplies",
+        "active": true
+    },
+    "keyFeatures": [
+        {
+            "id": "1747407745304",
+            "icon": "🏗️",
+            "title": "Quality Materials",
+            "description": "Genuine building supplies from trusted vendors and  manufacturers",
+            "active": true,
+            "order": 1
+        },
+        {
+            "id": "1747407769751",
+            "icon": "🚚",
+            "title": "Fast Delivery",
+            "description": "Same-day delivery available on orders before noon",
+            "active": true,
+            "order": 2
+        },
+        {
+            "id": "1747407796317",
+            "icon": "💪",
+            "title": "Expert Support",
+            "description": "Professional advice from industry experts",
+            "active": true,
+            "order": 3
+        }
+    ],
+    "featuredProductsSection": {
+        "title": "Featured Products",
+        "linkText": "View All →",
+        "linkUrl": "materials-yard",
+        "loadMoreButtonText": "Load More",
+        "defaultRows": 1,
+        "productsPerRow": 3,
+        "active": true
+    },
+    "categoriesSection": {
+        "title": "Shop by Category",
+        "linkText": "View All →",
+        "linkUrl": "materials-yard",
+        "loadMoreButtonText": "Load More",
+        "defaultRows": 1,
+        "categoriesPerRow": 3,
+        "active": true
+    },
+    "partnersSection": {
+        "title": "Some Clients and Partners",
+        "ctaButtonText": "Become a Partner",
+        "ctaButtonUrl": "become-a-partner",
+        "description": "We collaborate with leading suppliers and vendors in the industry to bring you the best products and services.",
+        "active": true
+    },
+    "partners": [
+        {
+            "id": "1747408031866",
+            "name": "Rutungu Investments",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": true,
+            "order": 1,
+            "logo": "/page-data/homepage/partner/rutunguinvestments_1753273627.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1747408031867",
+            "name": "Jonik Hardware Supplies",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": true,
+            "order": 2,
+            "logo": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747408031868",
+            "name": "Picaso Hardware",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": false,
+            "order": 3,
+            "logo": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747408031869",
+            "name": "Ug Martyrs Construction",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": true,
+            "order": 4,
+            "logo": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747408031870",
+            "name": "Shule Electricals",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": false,
+            "order": 5,
+            "logo": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747408031871",
+            "name": "Cheap General Hardware",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": false,
+            "order": 6,
+            "logo": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747408031872",
+            "name": "A&C Concrete",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": false,
+            "order": 7,
+            "logo": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747408031873",
+            "name": "SEMU Hardware",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": false,
+            "order": 8,
+            "logo": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747408031874",
+            "name": "God's Mercy Hardware",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": true,
+            "order": 9,
+            "logo": null,
+            "removeImage": false
+        },
+        {
+            "id": "1747408031875",
+            "name": "Rehoboth Plumbing",
+            "hasLink": true,
+            "redirectLink": "https://newzzimba.zzimbaonline.com/view/profile/vendor/01JSJNSASC9BH4Q9Y9FD39RJSR",
+            "active": true,
+            "order": 10,
+            "logo": "/page-data/homepage/partner/rehobothplumbing.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1747408031876",
+            "name": "Mirage Tiles",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": false,
+            "order": 11,
+            "logo": "/page-data/homepage/partner/miragetiles.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1747408031878",
+            "name": "Kiwa Paints Uganda Ltd",
+            "hasLink": true,
+            "redirectLink": "https://newzzimba.zzimbaonline.com/view/profile/vendor/01JSJNS8Y9ACQDA4JE614CPTQY",
+            "active": true,
+            "order": 13,
+            "logo": "/page-data/homepage/partner/kiwapaintsugandaltd.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1747408031879",
+            "name": "STOTA Africa",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": true,
+            "order": 14,
+            "logo": "/page-data/homepage/partner/stotaafrica.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1747408031880",
+            "name": "Utopia",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": true,
+            "order": 15,
+            "logo": "/page-data/homepage/partner/utopia.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1747408827851",
+            "name": "KelzNet Tech Solutions",
+            "hasLink": true,
+            "redirectLink": "https://kelznet.com/",
+            "active": true,
+            "order": 16,
+            "logo": "/page-data/homepage/partner/kelznettechsolutions.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1748617888942",
+            "name": "Mbale Tile Center",
+            "hasLink": true,
+            "redirectLink": "https://newzzimba.zzimbaonline.com/view/profile/vendor/01JX2QFCEFDXNARKYWBSWZFVFY",
+            "active": true,
+            "order": 17,
+            "logo": "/page-data/homepage/partner/mbaletilecenter.jpg",
+            "removeImage": false
+        },
+        {
+            "id": "1752729512592",
+            "name": "Jotitech Construction ltd",
+            "hasLink": false,
+            "redirectLink": "",
+            "active": true,
+            "order": 18,
+            "logo": "/page-data/homepage/partner/jotitechconstructionltd.jpg",
+            "removeImage": false
+        }
+    ]
+}

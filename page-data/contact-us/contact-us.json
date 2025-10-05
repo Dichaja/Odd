@@ -1,0 +1,124 @@
+{
+    "contactInfo": {
+        "phones": [
+            {
+                "id": "1747546297693",
+                "number": "+256 392 003-406",
+                "active": true,
+                "order": 2
+            }
+        ],
+        "emails": [
+            {
+                "id": "1747546310923",
+                "address": "halo@zzimbaonline.com",
+                "active": true,
+                "order": 2
+            }
+        ],
+        "location": [
+            {
+                "id": "1",
+                "line": "Plaza Building Luzira",
+                "active": true,
+                "order": 1
+            },
+            {
+                "id": "2",
+                "line": "The Engineering Marksmen Ltd.",
+                "active": true,
+                "order": 2
+            },
+            {
+                "id": "3",
+                "line": "P.O Box 129572 Kampala - Uganda",
+                "active": true,
+                "order": 3
+            }
+        ],
+        "social": [
+            {
+                "id": "facebook",
+                "platform": "facebook",
+                "url": "#",
+                "active": true,
+                "order": 1
+            },
+            {
+                "id": "instagram",
+                "platform": "instagram",
+                "url": "#",
+                "active": true,
+                "order": 2
+            },
+            {
+                "id": "linkedin",
+                "platform": "linkedin",
+                "url": "#",
+                "active": true,
+                "order": 3
+            },
+            {
+                "id": "twitter",
+                "platform": "twitter",
+                "url": "https://x.com/Zzimba_online",
+                "active": true,
+                "order": 4
+            },
+            {
+                "id": "whatsapp",
+                "platform": "whatsapp",
+                "url": "https://wa.me/256392003406",
+                "active": true,
+                "order": 5
+            }
+        ]
+    },
+    "formSettings": {
+        "title": "Get in Touch",
+        "description": "Be a part of something special.\nWhether you're a buyer looking to buy building supplies or a vendor aiming to expand your business, Zzimba Online is the place for you!",
+        "buttonText": "Send Message",
+        "fields": [
+            {
+                "id": "name",
+                "label": "Name",
+                "placeholder": "Name",
+                "required": true,
+                "order": 6
+            },
+            {
+                "id": "phone",
+                "label": "Phone",
+                "placeholder": "Phone",
+                "required": false,
+                "order": 6
+            },
+            {
+                "id": "email",
+                "label": "Email",
+                "placeholder": "Email",
+                "required": true,
+                "order": 6
+            },
+            {
+                "id": "subject",
+                "label": "Subject",
+                "placeholder": "Subject",
+                "required": true,
+                "order": 6
+            },
+            {
+                "id": "message",
+                "label": "Message",
+                "placeholder": "Message",
+                "required": true,
+                "order": 6
+            }
+        ],
+        "mapCoordinates": {
+            "latitude": "0.31654191425996444",
+            "longitude": "32.629696775378866",
+            "zoom": 15
+        }
+    }
+}
