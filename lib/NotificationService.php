@@ -5,7 +5,7 @@ require_once __DIR__ . '/../config/config.php';
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS notifications (
         id VARCHAR(26) PRIMARY KEY,
-        type ENUM('signup','login','password_reset','store_update','visit_request','system','info') NOT NULL,
+        type ENUM('signup','login','password_reset','store_update','visit_request','system','info','product_added') NOT NULL,
         title VARCHAR(255) NOT NULL,
         link_url VARCHAR(512) DEFAULT NULL,
         priority ENUM('low','normal','high') NOT NULL DEFAULT 'normal',

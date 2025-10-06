@@ -10,11 +10,7 @@ require_once __DIR__ . '/../../config/config.php';
 
 header('Content-Type: application/json');
 
-if (
-    !isset($_SESSION['user']) ||
-    !$_SESSION['user']['logged_in'] ||
-    !$_SESSION['user']['is_admin']
-) {
+if ( !isset($_SESSION['user']) || !$_SESSION['user']['logged_in'] ) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit;

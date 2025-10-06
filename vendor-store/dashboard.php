@@ -75,7 +75,7 @@ ob_start();
                         <i data-lucide="calendar-check-2"
                             class="w-6 h-6 text-yellow-600 group-hover:text-user-primary"></i>
                     </div>
-                    <span class="text-sm font-medium text-gray-900 text-center">Buy in Store</span>
+                    <span class="text-sm font-medium text-gray-900 text-center">Buy in Store Received</span>
                 </a>
                 <a href="<?= BASE_URL ?>vendor-store/products"
                     class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-user-primary/50 hover:bg-user-primary/5 transition-all duration-200 group">

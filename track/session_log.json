@@ -1,57 +1,66 @@
 [
     {
-        "sessionID": "01k5dhe5cfrw9cqnpr29yt5974",
-        "timestamp": "2025-09-18T04:51:24.662Z",
+        "sessionID": "01k6vm90dv4yxqbz88gn870ahk",
+        "timestamp": "2025-10-06T02:11:08.275Z",
         "ipAddress": "41.84.203.159",
         "country": "Uganda",
         "shortName": "ug",
         "phoneCode": "256",
-        "browser": "Firefox",
-        "device": "desktop",
+        "browser": "Unknown",
+        "device": "Unknown",
         "coords": {
             "latitude": 0.3475964,
             "longitude": 32.5825197
         },
-        "loggedUser": null,
+        "loggedUser": {
+            "logged_in": true,
+            "user_id": "01JS427X3N4BJ2HPPYVD11B5G5",
+            "username": "Vadii",
+            "email": "obacheisaac@gmail.com",
+            "phone": "+256773089254",
+            "is_admin": false,
+            "last_login": "2025-10-05 04:34:34"
+        },
         "logs": [
             {
-                "event": "page_load",
-                "timestamp": "2025-09-18T04:49:34.497Z",
-                "referrer": "",
-                "url": "http:\/\/localhost\/New-Zzimba\/",
-                "activeNavigation": "home",
-                "pageTitle": "Zzimba Online Uganda"
-            },
-            {
-                "event": "page_refresh",
-                "timestamp": "2025-09-18T04:50:09.342Z",
-                "url": "http:\/\/localhost\/New-Zzimba\/",
-                "activeNavigation": "home",
-                "pageTitle": "Zzimba Online Uganda"
-            },
-            {
                 "event": "login_identifier_submit",
-                "timestamp": "2025-09-18T04:50:20.490Z",
-                "identifier": "Newe",
+                "timestamp": "2025-10-06T02:07:59.875Z",
+                "identifier": "Vadii",
                 "identifierType": "username"
             },
             {
                 "event": "login_identifier_success",
-                "timestamp": "2025-09-18T04:50:48.196Z",
-                "identifier": "Newe",
+                "timestamp": "2025-10-06T02:08:01.544Z",
+                "identifier": "Vadii",
                 "identifierType": "username"
             },
             {
                 "event": "login_password_submit",
-                "timestamp": "2025-09-18T04:51:05.471Z"
+                "timestamp": "2025-10-06T02:08:12.523Z"
             },
             {
                 "event": "login_password_success",
-                "timestamp": "2025-09-18T04:51:24.660Z"
+                "timestamp": "2025-10-06T02:08:15.248Z"
             },
             {
                 "event": "login_success",
-                "timestamp": "2025-09-18T04:51:24.662Z"
+                "timestamp": "2025-10-06T02:08:15.258Z"
+            },
+            {
+                "event": "page_load",
+                "timestamp": "2025-10-06T02:08:20.355Z",
+                "referrer": "http:\/\/localhost\/New\/vendor-store\/dashboard",
+                "url": "http:\/\/localhost\/New\/",
+                "activeNavigation": "home",
+                "pageTitle": "Zzimba Online Uganda"
+            },
+            {
+                "event": "page_load",
+                "timestamp": "2025-10-06T02:11:08.275Z",
+                "referrer": "http:\/\/localhost\/New\/vendor-store\/dashboard",
+                "url": "http:\/\/localhost\/New\/vendor-store\/products",
+                "activeNavigation": "\/New\/vendor-store\/products",
+                "pageTitle": "Products - Vaddii Sons and Stores | Store Dashboard"
             }
         ]
     }

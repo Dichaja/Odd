@@ -98,7 +98,7 @@ $menuItems = [
     'store' => [
         'title' => 'Store Management',
         'items' => [
-            'buy-in-store' => ['title' => 'Buy in Store', 'icon' => 'calendar-check-2', 'notifications' => 0],
+            'buy-in-store' => ['title' => 'Buy in Store Receive', 'icon' => 'calendar-check-2', 'notifications' => 0],
             'products' => ['title' => 'Products', 'icon' => 'box', 'notifications' => 0],
             'managers' => ['title' => 'Managers', 'icon' => 'users', 'notifications' => 0],
         ]

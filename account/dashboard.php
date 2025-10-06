@@ -103,6 +103,7 @@ ob_start();
                 class="absolute bottom-3 right-3 w-10 h-10 text-orange-600/20 dark:text-white/20"></i>
         </div>
     </div>
+
     <div class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10">
         <div class="p-4 sm:p-6">
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
@@ -123,6 +124,15 @@ ob_start();
                             class="w-6 h-6 text-green-600 dark:text-white group-hover:text-user-primary"></i>
                     </div>
                     <span class="text-sm font-medium text-gray-900 dark:text-white text-center">My RFQs</span>
+                </a>
+                <a href="buy-in-store"
+                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-user-primary/60 hover:bg-user-primary/5 dark:hover:bg-white/5 transition-all group">
+                    <div
+                        class="w-12 h-12 rounded-xl grid place-items-center mb-3 bg-teal-100 dark:bg-white/10 group-hover:bg-user-primary/10">
+                        <i data-lucide="shopping-cart"
+                            class="w-6 h-6 text-teal-600 dark:text-white group-hover:text-user-primary"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white text-center">Buy in Store Sent</span>
                 </a>
                 <a href="zzimba-credit"
                     class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-user-primary/60 hover:bg-user-primary/5 dark:hover:bg-white/5 transition-all group">
@@ -151,18 +161,10 @@ ob_start();
                     </div>
                     <span class="text-sm font-medium text-gray-900 dark:text-white text-center">Profile</span>
                 </a>
-                <a href="order-history"
-                    class="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-user-primary/60 hover:bg-user-primary/5 dark:hover:bg-white/5 transition-all group">
-                    <div
-                        class="w-12 h-12 rounded-xl grid place-items-center mb-3 bg-yellow-100 dark:bg-white/10 group-hover:bg-user-primary/10">
-                        <i data-lucide="history"
-                            class="w-6 h-6 text-yellow-600 dark:text-white group-hover:text-user-primary"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900 dark:text-white text-center">Orders</span>
-                </a>
             </div>
         </div>
     </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <div class="bg-white dark:bg-secondary rounded-2xl shadow-sm border border-gray-100 dark:border-white/10">
             <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-white/10">
@@ -254,6 +256,7 @@ ob_start();
             </div>
         </div>
     </div>
+
     <div x-show="loading" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div class="bg-white dark:bg-secondary p-6 rounded-lg shadow-lg flex flex-col items-center">
             <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin mb-4">
@@ -262,6 +265,7 @@ ob_start();
         </div>
     </div>
 </div>
+
 <script>
     function dashboard() {
         return {
@@ -271,12 +275,9 @@ ob_start();
             loading: false,
             loadingActivity: true,
             refreshing: false,
-            timer: null,
             init() {
                 this.fetchStats();
                 this.fetchActivities();
-                this.timer = setInterval(() => this.fetchStats(), 300000);
-                document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { this.fetchStats(); this.fetchActivities(); } });
                 this.$nextTick(() => this.renderIcons());
             },
             async fetchStats() {

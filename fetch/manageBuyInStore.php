@@ -284,7 +284,7 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
         $storePhone = $storeData['business_phone'] ?? '';
         $smsResult = null;
         if ($storePhone !== '') {
-            $smsText = "Zzimba: $userName requested in-store visit for $productLabel, qty $quantity, on $visitDatePretty.";
+            $smsText = rtrim(BASE_URL, '/') . ': You have a buy-in-store request for "' . $productLabel . ' (' . (int) $quantity . ' units)" log in to confirm pick-up order';
             $send = SMS::send($storePhone, $smsText, true);
             $smsResult = [
                 'success' => !empty($send['success']),

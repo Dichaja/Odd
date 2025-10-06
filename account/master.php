@@ -170,6 +170,7 @@ $menuItems = [
         'items' => [
             'zzimba-stores' => ['title' => 'Zzimba Store', 'icon' => 'store', 'notifications' => 0],
             'quotations' => ['title' => 'My RFQs', 'icon' => 'file-text', 'notifications' => 0],
+            'buy-in-store' => ['title' => 'Buy in Store Sent', 'icon' => 'shopping-cart', 'notifications' => 0],
         ]
     ],
 ];
@@ -784,11 +785,14 @@ if ($needsProfileCompletion) {
                                 class="absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
                                 <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        <?= htmlspecialchars($userName) ?></p>
+                                        <?= htmlspecialchars($userName) ?>
+                                    </p>
                                     <p class="text-xs text-gray-500 dark:text-white/70">
-                                        <?= htmlspecialchars($userEmail) ?></p>
+                                        <?= htmlspecialchars($userEmail) ?>
+                                    </p>
                                     <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
+                                        <?= htmlspecialchars($formattedLastLogin) ?>
+                                    </p>
                                 </div>
                                 <a href="<?= BASE_URL ?>account/profile"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10">
@@ -975,9 +979,11 @@ if ($needsProfileCompletion) {
                                     class="w-5 h-5 text-secondary dark:text-white"></i></span>
                             <div>
                                 <div class="text-sm font-medium text-secondary dark:text-white">
-                                    <?= htmlspecialchars($item['title']) ?></div>
+                                    <?= htmlspecialchars($item['title']) ?>
+                                </div>
                                 <div class="text-[11px] text-gray-500 dark:text-white/70">
-                                    <?= htmlspecialchars(ucfirst($category['title'])) ?></div>
+                                    <?= htmlspecialchars(ucfirst($category['title'])) ?>
+                                </div>
                             </div>
                         </a>
                     <?php endforeach; endforeach; ?>
@@ -1014,7 +1020,8 @@ if ($needsProfileCompletion) {
                 <div class="user-initials w-10 h-10"><?= htmlspecialchars($userInitials) ?></div>
                 <div class="min-w-0">
                     <div class="text-sm font-medium text-secondary dark:text-white truncate">
-                        <?= htmlspecialchars($userName) ?></div>
+                        <?= htmlspecialchars($userName) ?>
+                    </div>
                     <div class="text-xs text-gray-500 dark:text-white/70 truncate"><?= htmlspecialchars($userEmail) ?>
                     </div>
                 </div>

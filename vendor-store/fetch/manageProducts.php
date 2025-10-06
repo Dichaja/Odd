@@ -5,11 +5,13 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../../logs/php-errors.log');
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/NotificationService.php';
 use Ulid\Ulid;
 header('Content-Type: application/json');
 
 $isLoggedIn = isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
 $currentUser = $isLoggedIn ? $_SESSION['user']['user_id'] : null;
+$activeStoreId = $_SESSION['active_store'] ?? ($_SESSION['store_session_id'] ?? null);
 
 ensureProductPricingTable($pdo);
 
@@ -21,10 +23,17 @@ try {
             getStoreDetails($pdo, $_GET['id'] ?? null, $currentUser);
             break;
         case 'getStoreProducts':
-            getStoreProducts($pdo, $_GET['id'] ?? null, $_GET['page'] ?? 1, $_GET['limit'] ?? 12);
+            getStoreProducts($pdo, $_GET['id'] ?? null, (int) ($_GET['page'] ?? 1), (int) ($_GET['limit'] ?? 12));
             break;
         case 'getPackageNamesForProduct':
             getPackageNamesForProduct($pdo);
+            break;
+        case 'getPackageNames':
+            getPackageNames($pdo);
+            break;
+        case 'createPackageName':
+            requireLogin();
+            createPackageName($pdo);
             break;
         case 'getSIUnits':
             getSIUnits($pdo);
@@ -32,6 +41,14 @@ try {
         case 'createSIUnit':
             requireLogin();
             createSIUnit($pdo);
+            break;
+        case 'uploadImage':
+            requireLogin();
+            uploadTempImage();
+            break;
+        case 'createProductMinimal':
+            requireLogin();
+            createProductMinimal($pdo, $activeStoreId);
             break;
         case 'addStoreProduct':
             requireLogin();
@@ -53,13 +70,40 @@ try {
             }
             getAllProductsNotInStore($pdo, $_GET['store_id']);
             break;
+        case 'getMyProducts':
+            requireLogin();
+            if (!$activeStoreId || !isValidUlid($activeStoreId)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'No active store']);
+                break;
+            }
+            getVendorProductsDistinct($pdo, $activeStoreId, (int) ($_GET['page'] ?? 1), (int) ($_GET['limit'] ?? 20), trim($_GET['q'] ?? ''));
+            break;
+        case 'updateMyProduct':
+            requireLogin();
+            if (!$activeStoreId || !isValidUlid($activeStoreId)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'No active store']);
+                break;
+            }
+            updateVendorProduct($pdo, $activeStoreId);
+            break;
+        case 'deleteMyProduct':
+            requireLogin();
+            if (!$activeStoreId || !isValidUlid($activeStoreId)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'No active store']);
+                break;
+            }
+            deleteVendorDraftProduct($pdo, $activeStoreId, $_POST['id'] ?? '');
+            break;
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Invalid action: ' . $action]);
             break;
     }
 } catch (Exception $e) {
-    error_log('Error in manageProfile.php: ' . $e->getMessage());
+    error_log('Error in manageProducts.php: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
 }
@@ -115,6 +159,12 @@ function isValidUlid(string $id): bool
 {
     return (bool) preg_match('/^[0-9A-Z]{26}$/i', $id);
 }
+function dbHasColumn(PDO $pdo, string $table, string $column): bool
+{
+    $q = $pdo->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
+    $q->execute([$table, $column]);
+    return (bool) $q->fetchColumn();
+}
 
 function isStoreOwner(PDO $pdo, string $storeId, ?string $userId): bool
 {
@@ -131,7 +181,7 @@ function canManageStore(PDO $pdo, string $storeId, ?string $userId): bool
         return false;
     if (isStoreOwner($pdo, $storeId, $userId))
         return true;
-    $stmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active' LIMIT 1");
+    $stmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active' AND approved = 1 LIMIT 1");
     $stmt->execute([$storeId, $userId]);
     return (bool) $stmt->fetchColumn();
 }
@@ -149,10 +199,52 @@ function getPackageNamesForProduct(PDO $pdo)
         FROM product_package_name_mappings ppm
         JOIN product_package_name ppn ON ppm.product_package_name_id = ppn.id
         WHERE ppm.product_id = ?
+        ORDER BY ppn.package_name
     ");
     $stmt->execute([$pid]);
     $mappings = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode(['success' => true, 'mappings' => $mappings]);
+}
+
+function getPackageNames(PDO $pdo)
+{
+    try {
+        $stmt = $pdo->query("SELECT id, package_name FROM product_package_name ORDER BY package_name");
+        $names = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'packageNames' => $names]);
+    } catch (Exception $e) {
+        error_log('Error getPackageNames: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error retrieving package names']);
+    }
+}
+
+function createPackageName(PDO $pdo)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $name = trim($data['package_name'] ?? '');
+    if ($name === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Package name required']);
+        return;
+    }
+    try {
+        $chk = $pdo->prepare("SELECT id FROM product_package_name WHERE package_name = ? LIMIT 1");
+        $chk->execute([$name]);
+        if ($row = $chk->fetch(PDO::FETCH_ASSOC)) {
+            echo json_encode(['success' => true, 'id' => $row['id'], 'message' => 'Already exists']);
+            return;
+        }
+        $id = (string) Ulid::generate();
+        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+        $ins = $pdo->prepare("INSERT INTO product_package_name (id, package_name, created_at, updated_at) VALUES (?, ?, ?, ?)");
+        $ins->execute([$id, $name, $now, $now]);
+        echo json_encode(['success' => true, 'id' => $id, 'message' => 'Created']);
+    } catch (Exception $e) {
+        error_log('Error createPackageName: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Error creating package name']);
+    }
 }
 
 function getSIUnits(PDO $pdo)
@@ -259,11 +351,11 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
             JOIN products p          ON sp.product_id        = p.id
             WHERE sc.store_id = ?
               AND sp.status  = 'active'
-              AND p.status   = 'published'
+              AND (p.status = 'published' OR (p.status = 'draft' AND p.user_id = ?))
               AND sc.status  = 'active'
         ");
-        $countStmt->execute([$storeId]);
-        $total = (int) $countStmt->fetchColumn();
+        $countStmt->execute([$storeId, $storeId]);
+        $storeTotal = (int) $countStmt->fetchColumn();
 
         $stmt = $pdo->prepare("
             SELECT
@@ -295,12 +387,12 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
             LEFT JOIN product_si_units psu ON pp.si_unit_id = psu.id
             WHERE sc.store_id = ?
               AND sp.status   = 'active'
-              AND p.status    = 'published'
+              AND (p.status = 'published' OR (p.status = 'draft' AND p.user_id = ?))
               AND sc.status   = 'active'
             ORDER BY p.featured DESC, p.created_at DESC
             LIMIT ? OFFSET ?
         ");
-        $stmt->execute([$storeId, $limit, $offset]);
+        $stmt->execute([$storeId, $storeId, $limit, $offset]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $products = [];
@@ -334,6 +426,50 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
             }
         }
 
+        $draftParams = [$storeId];
+        $userTypeFilter = '';
+        if (dbHasColumn($pdo, 'products', 'user_type')) {
+            $userTypeFilter = "AND p.user_type = 'vendor'";
+        }
+        $draftSql = "
+            SELECT
+                p.id AS product_id,
+                p.title AS name,
+                p.description,
+                p.featured,
+                pc.name AS category_name,
+                p.category_id,
+                p.status
+            FROM products p
+            LEFT JOIN product_categories pc ON p.category_id = pc.id
+            WHERE p.status = 'draft'
+              AND p.user_id = ?
+              $userTypeFilter
+            ORDER BY p.created_at DESC
+        ";
+        $draftStmt = $pdo->prepare($draftSql);
+        $draftStmt->execute($draftParams);
+        $draftRows = $draftStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($draftRows as $r) {
+            $pid = $r['product_id'];
+            if (!isset($products[$pid])) {
+                $products[$pid] = [
+                    'id' => $pid,
+                    'name' => $r['name'],
+                    'description' => $r['description'],
+                    'featured' => (bool) $r['featured'],
+                    'category_name' => $r['category_name'] ?? '',
+                    'store_category_id' => null,
+                    'store_product_id' => null,
+                    'pricing' => [],
+                    'status' => $r['status']
+                ];
+            }
+        }
+
+        $total = $storeTotal + count($draftRows);
+
         echo json_encode([
             'success' => true,
             'products' => array_values($products),
@@ -341,7 +477,7 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                 'total' => $total,
                 'page' => $page,
                 'limit' => $limit,
-                'pages' => (int) ceil($total / $limit)
+                'pages' => (int) ceil(max(1, $total) / $limit)
             ]
         ]);
     } catch (Exception $e) {
@@ -392,9 +528,24 @@ function addStoreProduct(PDO $pdo, string $currentUser)
     }
     try {
         $pdo->beginTransaction();
+        
+        
+        $productStmt = $pdo->prepare("SELECT title, category_id, user_id FROM products WHERE id = ?");
+        $productStmt->execute([$productId]);
+        $productData = $productStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $storeStmt = $pdo->prepare("SELECT name, owner_id FROM vendor_stores WHERE id = ?");
+        $storeStmt->execute([$storeId]);
+        $storeData = $storeStmt->fetch(PDO::FETCH_ASSOC);
+        
+        $userStmt = $pdo->prepare("SELECT username FROM zzimba_users WHERE id = ?");
+        $userStmt->execute([$currentUser]);
+        $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+        
         $prodCatStmt = $pdo->prepare("SELECT category_id FROM products WHERE id = ?");
         $prodCatStmt->execute([$productId]);
-        $categoryId = $prodCatStmt->fetchColumn();
+        $prodRow = $prodCatStmt->fetch(PDO::FETCH_ASSOC);
+        $categoryId = $prodRow['category_id'] ?? null;
         if (!$categoryId) {
             throw new Exception('Product category not found');
         }
@@ -455,8 +606,42 @@ function addStoreProduct(PDO $pdo, string $currentUser)
             }
         }
         updateEmptyCategories($pdo);
+
+        if ($productData && $storeData && $userData) {
+            $notificationService = new NotificationService($pdo);
+
+            $adminMessage = "New product added to store: \"{$productData['title']}\" has been added to \"{$storeData['name']}\" by {$userData['username']}. The product is now available with pricing options.";
+            
+            
+            $ownerMessage = "Product added to your store: \"{$productData['title']}\" has been successfully added to \"{$storeData['name']}\" with pricing options.";
+            
+            $recipients = [];
+
+            $recipients[] = [
+                'type' => 'admin',
+                'id' => 'admin',
+                'message' => $adminMessage
+            ];
+
+            if ($storeData['owner_id'] !== $currentUser) {
+                $recipients[] = [
+                    'type' => 'user',
+                    'id' => $storeData['owner_id'],
+                    'message' => $ownerMessage
+                ];
+            }
+            $notificationService->create(
+                'system',
+                'Product Added to Store',
+                $recipients,
+                null, 
+                'normal',
+                $currentUser
+            );
+        }
+        
         $pdo->commit();
-        echo json_encode(['success' => true, 'message' => 'Product & pricing added']);
+        echo json_encode(['success' => true, 'message' => 'Product & pricing added. Submitted for approval.', 'submitted_for_approval' => true]);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
@@ -660,4 +845,326 @@ function updateEmptyCategories(PDO $pdo)
     } catch (Exception $e) {
         error_log('Error in updateEmptyCategories: ' . $e->getMessage());
     }
+}
+
+function uploadTempImage()
+{
+    try {
+        if (empty($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'No image uploaded']);
+            return;
+        }
+        $tmp = $_FILES['image']['tmp_name'];
+        $name = $_FILES['image']['name'];
+        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Unsupported image type']);
+            return;
+        }
+        $id = (string) Ulid::generate();
+        $base = __DIR__ . '/../../img/tmp';
+        if (!is_dir($base))
+            @mkdir($base, 0775, true);
+        $dest = $base . '/' . $id . '.' . $ext;
+        if (!move_uploaded_file($tmp, $dest)) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to save image']);
+            return;
+        }
+        $publicPath = 'img/tmp/' . $id . '.' . $ext;
+        echo json_encode(['success' => true, 'temp_path' => $publicPath]);
+    } catch (Exception $e) {
+        error_log('uploadTempImage error: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Upload error']);
+    }
+}
+
+function createProductMinimal(PDO $pdo, ?string $storeId)
+{
+    if (!$storeId || !isValidUlid($storeId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'No active store']);
+        return;
+    }
+    $data = json_decode(file_get_contents('php://input'), true);
+    $title = trim($data['title'] ?? '');
+    $description = trim($data['description'] ?? '');
+    $packages = is_array($data['package_names'] ?? null) ? $data['package_names'] : [];
+    $tempImage = trim($data['temp_image'] ?? '');
+    if ($title === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Title is required']);
+        return;
+    }
+    if ($tempImage === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Image is required']);
+        return;
+    }
+    try {
+        $pdo->beginTransaction();
+        $id = (string) Ulid::generate();
+        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
+        $hasUserType = dbHasColumn($pdo, 'products', 'user_type');
+        if ($hasUserType) {
+            $stmt = $pdo->prepare("INSERT INTO products (id, title, description, status, user_id, user_type, created_at, updated_at) VALUES (?, ?, ?, 'draft', ?, 'vendor', ?, ?)");
+            $stmt->execute([$id, $title, $description, $storeId, $now, $now]);
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO products (id, title, description, status, user_id, created_at, updated_at) VALUES (?, ?, ?, 'draft', ?, ?, ?)");
+            $stmt->execute([$id, $title, $description, $storeId, $now, $now]);
+        }
+        if (!empty($packages)) {
+            $insMap = $pdo->prepare("INSERT INTO product_package_name_mappings (id, product_id, product_package_name_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)");
+            foreach ($packages as $pkgId) {
+                if (isValidUlid((string) $pkgId)) {
+                    $insMap->execute([(string) Ulid::generate(), $id, $pkgId, $now, $now]);
+                }
+            }
+        }
+        if ($tempImage !== '') {
+            $tmpAbs = __DIR__ . '/../../' . ltrim($tempImage, '/');
+            if (is_file($tmpAbs)) {
+                $destDir = __DIR__ . '/../../img/products/' . $id;
+                if (!is_dir($destDir))
+                    @mkdir($destDir, 0775, true);
+                $ext = pathinfo($tmpAbs, PATHINFO_EXTENSION);
+                $finalName = (string) Ulid::generate() . '.' . strtolower($ext ?: 'jpg');
+                $finalAbs = $destDir . '/' . $finalName;
+                if (@rename($tmpAbs, $finalAbs)) {
+                    $imagesJson = $destDir . '/images.json';
+                    $images = [];
+                    if (is_file($imagesJson)) {
+                        $cur = json_decode(file_get_contents($imagesJson), true);
+                        if (is_array($cur['images'] ?? null))
+                            $images = $cur['images'];
+                    }
+                    $images[] = $finalName;
+                    file_put_contents($imagesJson, json_encode(['images' => array_values(array_unique($images))], JSON_PRETTY_PRINT));
+                }
+            }
+        }
+        $pdo->commit();
+        echo json_encode(['success' => true, 'id' => $id]);
+    } catch (Exception $e) {
+        if ($pdo->inTransaction())
+            $pdo->rollBack();
+        error_log('createProductMinimal error: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to create product']);
+    }
+}
+
+function getVendorProductsDistinct(PDO $pdo, string $storeId, int $page = 1, int $limit = 20, string $q = '')
+{
+    $page = max(1, $page);
+    $limit = max(1, min(100, $limit));
+    $offset = ($page - 1) * $limit;
+    try {
+        $hasUserType = dbHasColumn($pdo, 'products', 'user_type');
+        $where = "p.user_id = ?";
+        $params = [$storeId];
+        if ($hasUserType) {
+            $where .= " AND p.user_type = 'vendor'";
+        }
+        if ($q !== '') {
+            $where .= " AND (p.title LIKE ? OR p.description LIKE ?)";
+            $params[] = "%$q%";
+            $params[] = "%$q%";
+        }
+        $count = $pdo->prepare("SELECT COUNT(*) FROM products p WHERE $where");
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
+        $sql = "
+            SELECT p.id, p.title, p.description, p.status, p.created_at, p.updated_at
+            FROM products p
+            WHERE $where
+            ORDER BY p.created_at DESC
+            LIMIT ? OFFSET ?
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array_merge($params, [$limit, $offset]));
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $withImages = [];
+        foreach ($rows as $r) {
+            $r['images'] = getProductImagesList($r['id']);
+            $r['editable'] = $r['status'] === 'draft';
+            $withImages[] = $r;
+        }
+        echo json_encode([
+            'success' => true,
+            'products' => $withImages,
+            'pagination' => [
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit,
+                'pages' => (int) ceil(max(1, $total) / $limit)
+            ]
+        ]);
+    } catch (Exception $e) {
+        error_log('getVendorProductsDistinct error: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error retrieving your products']);
+    }
+}
+
+function updateVendorProduct(PDO $pdo, string $storeId)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $productId = trim($data['id'] ?? '');
+    $title = isset($data['title']) ? trim($data['title']) : null;
+    $description = isset($data['description']) ? trim($data['description']) : null;
+    $tempImage = isset($data['temp_image']) ? trim($data['temp_image']) : '';
+    if (!isValidUlid($productId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid product id']);
+        return;
+    }
+    try {
+        $stmt = $pdo->prepare("SELECT id, status FROM products WHERE id = ? AND user_id = ? LIMIT 1");
+        $stmt->execute([$productId, $storeId]);
+        $prod = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$prod) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Not allowed']);
+            return;
+        }
+        if ($prod['status'] !== 'draft') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Only draft products can be edited']);
+            return;
+        }
+        $sets = [];
+        $vals = [];
+        if (!is_null($title)) {
+            if ($title === '') {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Title cannot be empty']);
+                return;
+            }
+            $sets[] = "title = ?";
+            $vals[] = $title;
+        }
+        if (!is_null($description)) {
+            $sets[] = "description = ?";
+            $vals[] = $description;
+        }
+        if (!empty($sets)) {
+            $sets[] = "updated_at = NOW()";
+            $sql = "UPDATE products SET " . implode(", ", $sets) . " WHERE id = ? AND user_id = ?";
+            $vals[] = $productId;
+            $vals[] = $storeId;
+            $up = $pdo->prepare($sql);
+            $up->execute($vals);
+        }
+        $newImageName = null;
+        if ($tempImage !== '') {
+            $tmpAbs = __DIR__ . '/../../' . ltrim($tempImage, '/');
+            if (is_file($tmpAbs)) {
+                $destDir = __DIR__ . '/../../img/products/' . $productId;
+                if (!is_dir($destDir))
+                    @mkdir($destDir, 0775, true);
+                $ext = pathinfo($tmpAbs, PATHINFO_EXTENSION);
+                $newImageName = (string) Ulid::generate() . '.' . strtolower($ext ?: 'jpg');
+                $finalAbs = $destDir . '/' . $newImageName;
+                if (@rename($tmpAbs, $finalAbs)) {
+                    $imagesJson = $destDir . '/images.json';
+                    $images = [];
+                    if (is_file($imagesJson)) {
+                        $cur = json_decode(file_get_contents($imagesJson), true);
+                        if (is_array($cur['images'] ?? null))
+                            $images = array_values($cur['images']);
+                    }
+                    if (!empty($images)) {
+                        $images[0] = $newImageName;
+                    } else {
+                        $images[] = $newImageName;
+                    }
+                    file_put_contents($imagesJson, json_encode(['images' => array_values(array_unique($images))], JSON_PRETTY_PRINT));
+                } else {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'message' => 'Failed to save image']);
+                    return;
+                }
+            } else {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Temp image not found']);
+                return;
+            }
+        }
+        $out = [
+            'id' => $productId,
+            'title' => $title ?? null,
+            'description' => $description ?? null,
+            'updated_image' => $newImageName ? ('img/products/' . $productId . '/' . $newImageName) : null,
+            'editable' => true
+        ];
+        echo json_encode(['success' => true, 'product' => $out]);
+    } catch (Exception $e) {
+        error_log('updateVendorProduct error: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to update product']);
+    }
+}
+
+function deleteVendorDraftProduct(PDO $pdo, string $storeId, string $productId)
+{
+    if (!isValidUlid($productId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid product ID']);
+        return;
+    }
+    try {
+        $stmt = $pdo->prepare("SELECT id, status FROM products WHERE id = ? AND user_id = ? LIMIT 1");
+        $stmt->execute([$productId, $storeId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Product not found']);
+            return;
+        }
+        if (strtolower($row['status']) !== 'draft') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Only draft products can be deleted']);
+            return;
+        }
+        $pdo->beginTransaction();
+        $pdo->prepare("DELETE FROM product_package_name_mappings WHERE product_id = ?")->execute([$productId]);
+        $pdo->prepare("DELETE FROM products WHERE id = ? AND user_id = ?")->execute([$productId, $storeId]);
+        $pdo->commit();
+        $dir = __DIR__ . '/../../img/products/' . $productId;
+        if (is_dir($dir)) {
+            $files = glob($dir . '/*');
+            if ($files) {
+                foreach ($files as $f) {
+                    @unlink($f);
+                }
+            }
+            @rmdir($dir);
+        }
+        echo json_encode(['success' => true, 'message' => 'Draft deleted']);
+    } catch (Exception $e) {
+        if ($pdo->inTransaction())
+            $pdo->rollBack();
+        error_log('deleteVendorDraftProduct error: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error deleting draft']);
+    }
+}
+
+function getProductImagesList(string $productId): array
+{
+    $dir = __DIR__ . '/../../img/products/' . $productId;
+    $imagesJson = $dir . '/images.json';
+    if (is_file($imagesJson)) {
+        $cur = json_decode(file_get_contents($imagesJson), true);
+        if (is_array($cur['images'] ?? null)) {
+            return array_map(function ($n) use ($productId) {
+                return 'img/products/' . $productId . '/' . $n;
+            }, $cur['images']);
+        }
+    }
+    return [];
 }
