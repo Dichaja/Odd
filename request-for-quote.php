@@ -895,6 +895,23 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
 </div>
 
 <script defer src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+
+<script>
+    window.__pendingRFQAction = null;
+    window.setPendingRFQAction = (a) => { window.__pendingRFQAction = a || null };
+    (function () {
+        const wrap = () => {
+            const orig = window.updateUIAfterLogin;
+            window.updateUIAfterLogin = function (user) {
+                try { typeof orig === 'function' && orig(user) } catch (e) { }
+                try { window.dispatchEvent(new CustomEvent('zz:session-login', { detail: user || {} })) } catch (e) { }
+                try { typeof window.handleRFQPostLogin === 'function' && window.handleRFQPostLogin(user || {}) } catch (e) { }
+            };
+        };
+        if (document.readyState === 'complete' || document.readyState === 'interactive') { wrap() } else { document.addEventListener('DOMContentLoaded', wrap) }
+    })();
+</script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const API_BASE = "<?php echo BASE_URL; ?>fetch/manageRFQ";
@@ -1093,6 +1110,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             return checkSession().then(sessionData => {
                 if (!sessionData.logged_in) {
                     saveFormData();
+                    window.setPendingRFQAction({ type: 'submit-rfq' });
                     if (typeof openAuthModal === 'function') {
                         openAuthModal();
                     } else {
@@ -1107,6 +1125,27 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 return true;
             });
         }
+
+        window.handleRFQPostLogin = function (user) {
+            checkSession().then(sessionData => {
+                if (!sessionData.logged_in) return;
+                IS_LOGGED_IN = true;
+                const isAdmin = !!(sessionData.user && sessionData.user.is_admin);
+                if (window.__pendingRFQAction && window.__pendingRFQAction.type === 'submit-rfq') {
+                    if (isAdmin) {
+                        alert('Admin users cannot submit quote requests.');
+                        window.setPendingRFQAction(null);
+                        return;
+                    }
+                    checkWalletBalance().then(() => {
+                        continueSubmitFlowAfterAuth();
+                        window.setPendingRFQAction(null);
+                    });
+                } else {
+                    checkWalletBalance();
+                }
+            });
+        };
 
         function initializeMap() {
             map = L.map('map').setView([0.3476, 32.5825], 7);
@@ -1549,6 +1588,19 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
                 });
         }
 
+        function continueSubmitFlowAfterAuth() {
+            if (!selectedLocation || items.length === 0 || items.length > MAX_ITEMS) return;
+            if (walletInfo.noWallet) {
+                showNoWalletModal();
+                return;
+            }
+            if (walletInfo.fee > 0) {
+                showConfirmationModal();
+            } else {
+                submitRFQ();
+            }
+        }
+
         function showSuccessModal(message) {
             const html = `
                 <div id="success-modal" class="modal active">
@@ -1684,17 +1736,22 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             e.preventDefault();
             checkAuthenticationBeforeSubmit().then(auth => {
                 if (!auth) return;
-                if (walletInfo.noWallet) {
-                    showNoWalletModal();
-                    return;
-                }
-                checkWalletBalance();
-                let err = false;
-                if (!selectedLocation) err = true;
-                if (items.length === 0) err = true;
-                if (items.length > MAX_ITEMS) err = true;
-                if (err) return;
-                if (walletInfo.fee > 0) showConfirmationModal();
+                checkWalletBalance().then(() => {
+                    let err = false;
+                    if (!selectedLocation) err = true;
+                    if (items.length === 0) err = true;
+                    if (items.length > MAX_ITEMS) err = true;
+                    if (err) return;
+                    if (walletInfo.noWallet) {
+                        showNoWalletModal();
+                        return;
+                    }
+                    if (walletInfo.fee > 0) {
+                        showConfirmationModal();
+                    } else {
+                        submitRFQ();
+                    }
+                });
             });
         });
 

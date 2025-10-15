@@ -6,9 +6,15 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../../logs/php-errors.log');
 
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/NotificationService.php';
+require_once __DIR__ . '/../../lib/ZzimbaCreditModule.php';
 
 header('Content-Type: application/json');
 date_default_timezone_set('Africa/Kampala');
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $action = $_REQUEST['action'] ?? '';
 $storeId = $_SESSION['active_store'] ?? null;
@@ -32,12 +38,10 @@ try {
             ";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':store_id' => $storeId]);
-
             $stats = ['pending' => 0, 'confirmed' => 0, 'completed' => 0, 'cancelled' => 0];
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $stats[$row['status']] = (int) $row['cnt'];
             }
-
             echo json_encode(['success' => true, 'stats' => $stats]);
             break;
 
@@ -45,33 +49,26 @@ try {
             $page = max(1, intval($_GET['page'] ?? 1));
             $limit = 20;
             $offset = ($page - 1) * $limit;
-
             $startDate = $_GET['start_date'] ?? date('Y-m-d');
             $endDate = $_GET['end_date'] ?? date('Y-m-d');
             $searchTerm = trim($_GET['search_term'] ?? '');
             $statusFilter = $_GET['status_filter'] ?? '';
-
             $where = ["sc.store_id = :store_id"];
             $params = [':store_id' => $storeId];
-
             if ($startDate && $endDate) {
                 $where[] = "DATE(bisr.created_at) BETWEEN :start_date AND :end_date";
                 $params[':start_date'] = $startDate;
                 $params[':end_date'] = $endDate;
             }
-
             if ($searchTerm) {
                 $where[] = "(zu.first_name LIKE :search OR zu.last_name LIKE :search OR zu.email LIKE :search OR zu.phone LIKE :search OR p.title LIKE :search)";
                 $params[':search'] = "%$searchTerm%";
             }
-
             if ($statusFilter && $statusFilter !== 'all') {
                 $where[] = "bisr.status = :status";
                 $params[':status'] = $statusFilter;
             }
-
             $whereSql = 'WHERE ' . implode(' AND ', $where);
-
             $countSql = "
                 SELECT COUNT(*) AS total
                 FROM buy_in_store_requests bisr
@@ -87,11 +84,18 @@ try {
             }
             $countStmt->execute();
             $total = (int) $countStmt->fetchColumn();
-
             $dataSql = "
-                SELECT bisr.*, zu.first_name, zu.last_name, zu.email, zu.phone,
-                       p.title AS product_title, pp.price, pp.price_category,
-                       (pp.price * bisr.quantity) AS total_value
+                SELECT
+                    bisr.*,
+                    zu.first_name,
+                    zu.last_name,
+                    zu.email,
+                    zu.phone,
+                    p.id AS product_id,
+                    p.title AS product_title,
+                    pp.price,
+                    pp.price_category,
+                    (pp.price * bisr.quantity) AS total_value
                 FROM buy_in_store_requests bisr
                 JOIN zzimba_users zu ON bisr.user_id = zu.id
                 JOIN store_products sp ON bisr.store_product_id = sp.id
@@ -110,7 +114,6 @@ try {
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
             $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
             echo json_encode([
                 'success' => true,
                 'requestData' => [
@@ -127,12 +130,26 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Missing request ID']);
                 break;
             }
-
             $sql = "
-                SELECT bisr.*, zu.first_name, zu.last_name, zu.email, zu.phone,
-                       p.title AS product_title, p.description AS product_description,
-                       pp.price, pp.price_category, pp.package_size,
-                       psu.si_unit, ppn.package_name, vs.name AS store_name
+                SELECT
+                    bisr.*,
+                    zu.first_name,
+                    zu.last_name,
+                    zu.email,
+                    zu.phone,
+                    p.id AS product_id,
+                    p.title AS product_title,
+                    p.description AS product_description,
+                    pp.price,
+                    pp.price_category,
+                    pp.package_size,
+                    psu.si_unit,
+                    ppn.package_name,
+                    pp.commission_type,
+                    pp.commission_value,
+                    vs.name AS store_name,
+                    vs.business_email,
+                    vs.business_phone
                 FROM buy_in_store_requests bisr
                 JOIN zzimba_users zu ON bisr.user_id = zu.id
                 JOIN store_products sp ON bisr.store_product_id = sp.id
@@ -144,25 +161,159 @@ try {
                 JOIN store_categories sc ON sp.store_category_id = sc.id
                 JOIN vendor_stores vs ON sc.store_id = vs.id
                 WHERE bisr.id = :request_id AND sc.store_id = :store_id
+                LIMIT 1
             ";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':request_id' => $requestId, ':store_id' => $storeId]);
             $request = $stmt->fetch(PDO::FETCH_ASSOC);
-
             if ($request) {
-                $request['total_value'] = $request['price'] * $request['quantity'];
+                $qty = (int) $request['quantity'];
+                $unitPrice = (float) $request['price'];
+                $subtotal = $unitPrice * $qty;
+                $ctype = $request['commission_type'];
+                $cval = (float) $request['commission_value'];
+                $commission = $ctype === 'flat' ? ($cval * $qty) : (($cval / 100.0) * $subtotal);
+                $w = \ZzimbaCreditModule\CreditService::getWallet('VENDOR', $storeId);
+                $balance = (float) ($w['wallet']['current_balance'] ?? 0.0);
+                $projected = $balance - $commission;
+                $request['total_value'] = $subtotal;
+                $request['commission'] = $commission;
+                $request['commission_type'] = $ctype;
+                $request['commission_value'] = $cval;
+                $request['wallet_balance'] = $balance;
+                $request['projected_balance'] = $projected;
                 echo json_encode(['success' => true, 'request' => $request]);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Request not found']);
             }
             break;
 
+        case 'commissionSummary':
+            $requestId = $_GET['id'] ?? null;
+            if (!$requestId) {
+                echo json_encode(['success' => false, 'message' => 'Missing request ID']);
+                break;
+            }
+            $sql = "
+                SELECT
+                    bisr.id,
+                    bisr.quantity,
+                    pp.price,
+                    pp.commission_type,
+                    pp.commission_value
+                FROM buy_in_store_requests bisr
+                JOIN store_products sp ON bisr.store_product_id = sp.id
+                JOIN product_pricing pp ON bisr.pricing_id = pp.id
+                JOIN store_categories sc ON sp.store_category_id = sc.id
+                WHERE bisr.id = :request_id AND sc.store_id = :store_id
+                LIMIT 1
+            ";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':request_id' => $requestId, ':store_id' => $storeId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$row) {
+                echo json_encode(['success' => false, 'message' => 'Request not found']);
+                break;
+            }
+            $qty = (int) $row['quantity'];
+            $unitPrice = (float) $row['price'];
+            $subtotal = $unitPrice * $qty;
+            $ctype = $row['commission_type'];
+            $cval = (float) $row['commission_value'];
+            $commission = $ctype === 'flat' ? ($cval * $qty) : (($cval / 100.0) * $subtotal);
+            $w = \ZzimbaCreditModule\CreditService::getWallet('VENDOR', $storeId);
+            $balance = (float) ($w['wallet']['current_balance'] ?? 0.0);
+            $projected = $balance - $commission;
+            echo json_encode([
+                'success' => true,
+                'summary' => [
+                    'quantity' => $qty,
+                    'unit_price' => $unitPrice,
+                    'subtotal' => $subtotal,
+                    'commission_type' => $ctype,
+                    'commission_value' => $cval,
+                    'commission_amount' => $commission,
+                    'wallet_balance' => $balance,
+                    'projected_balance' => $projected
+                ]
+            ]);
+            break;
+
+        case 'completeRequest':
+            $requestId = $_POST['request_id'] ?? null;
+            if (!$requestId) {
+                echo json_encode(['success' => false, 'message' => 'Missing request ID']);
+                break;
+            }
+            $fetchSql = "
+                SELECT
+                    bisr.id,
+                    bisr.user_id,
+                    bisr.quantity,
+                    p.title AS product_title,
+                    pp.price,
+                    pp.commission_type,
+                    pp.commission_value
+                FROM buy_in_store_requests bisr
+                JOIN store_products sp ON bisr.store_product_id = sp.id
+                JOIN products p ON sp.product_id = p.id
+                JOIN product_pricing pp ON bisr.pricing_id = pp.id
+                JOIN store_categories sc ON sp.store_category_id = sc.id
+                WHERE bisr.id = :request_id AND sc.store_id = :store_id AND bisr.status <> 'completed'
+                LIMIT 1
+            ";
+            $stmt = $pdo->prepare($fetchSql);
+            $stmt->execute([':request_id' => $requestId, ':store_id' => $storeId]);
+            $req = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$req) {
+                echo json_encode(['success' => false, 'message' => 'Request not found or already completed']);
+                break;
+            }
+            $qty = (int) $req['quantity'];
+            $unitPrice = (float) $req['price'];
+            $subtotal = $unitPrice * $qty;
+            $ctype = $req['commission_type'];
+            $cval = (float) $req['commission_value'];
+            $commission = $ctype === 'flat' ? ($cval * $qty) : (($cval / 100.0) * $subtotal);
+            $charge = \ZzimbaCreditModule\CreditService::chargeVendorCommission([
+                'vendor_id' => $storeId,
+                'amount' => $commission,
+                'context' => [
+                    'request_id' => $requestId,
+                    'product_title' => $req['product_title'],
+                    'quantity' => $qty
+                ]
+            ]);
+            if (empty($charge['success'])) {
+                echo json_encode(['success' => false, 'message' => $charge['message'] ?? 'Commission charge failed']);
+                break;
+            }
+            $upd = $pdo->prepare("UPDATE buy_in_store_requests bisr JOIN store_products sp ON bisr.store_product_id=sp.id JOIN store_categories sc ON sp.store_category_id=sc.id SET bisr.status='completed', bisr.updated_at=NOW() WHERE bisr.id=:id AND sc.store_id=:store_id");
+            $upd->execute([':id' => $requestId, ':store_id' => $storeId]);
+            $ns = new \NotificationService($pdo);
+            $link = defined('BASE_URL') ? rtrim(\BASE_URL, '/') . "/vendor-store/requests?id={$storeId}" : null;
+            $vendorRec = ['type' => 'store', 'id' => $storeId, 'message' => "Buy In Store request {$requestId} marked as completed. Commission of {$commission} UGX charged."];
+            $adminRec = ['type' => 'admin', 'id' => 'admin-global', 'message' => "Store {$storeId} completed BIS request {$requestId}. Commission of {$commission} UGX collected."];
+            $userRec = ['type' => 'user', 'id' => $req['user_id'], 'message' => "Your Buy In Store request {$requestId} has been completed by the store."];
+            $ns->create('bis_completed', 'Buy In Store Completed', [$vendorRec, $adminRec, $userRec], $link, 'normal', $req['user_id']);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Request completed and commission charged',
+                'transaction_id' => $charge['transaction_id'],
+                'commission' => $commission,
+                'new_balance' => $charge['balance']
+            ]);
+            break;
+
         case 'updateRequestStatus':
             $requestId = $_POST['request_id'] ?? null;
             $status = $_POST['status'] ?? null;
             $allowed = ['pending', 'confirmed', 'completed', 'cancelled'];
-
             if ($requestId && in_array($status, $allowed, true)) {
+                if ($status === 'completed') {
+                    echo json_encode(['success' => false, 'message' => 'Use completeRequest to finalize and charge commission']);
+                    break;
+                }
                 $sql = "
                     UPDATE buy_in_store_requests bisr
                     JOIN store_products sp ON bisr.store_product_id = sp.id
@@ -185,15 +336,12 @@ try {
         case 'updateVisitDate':
             $requestId = $_POST['request_id'] ?? null;
             $visitDate = $_POST['visit_date'] ?? null;
-
             if ($requestId && $visitDate) {
-                // Validate that the date is not in the past
                 $today = date('Y-m-d');
                 if ($visitDate < $today) {
                     echo json_encode(['success' => false, 'message' => 'Visit date cannot be in the past']);
                     break;
                 }
-
                 $sql = "
                     UPDATE buy_in_store_requests bisr
                     JOIN store_products sp ON bisr.store_product_id = sp.id
@@ -218,19 +366,16 @@ try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':store_id' => $storeId]);
             $balance = $stmt->fetchColumn();
-
             echo json_encode(['success' => true, 'balance' => (int) ($balance ?? 0)]);
             break;
 
         case 'sendSMS':
             $requestId = $_POST['request_id'] ?? null;
             $message = trim($_POST['message'] ?? '');
-
             if (!$requestId || !$message) {
                 echo json_encode(['success' => false, 'message' => 'Missing request ID or message']);
                 break;
             }
-
             $requestSql = "
                 SELECT bisr.*, zu.phone, zu.first_name, zu.last_name
                 FROM buy_in_store_requests bisr
@@ -242,36 +387,29 @@ try {
             $stmt = $pdo->prepare($requestSql);
             $stmt->execute([':request_id' => $requestId, ':store_id' => $storeId]);
             $request = $stmt->fetch(PDO::FETCH_ASSOC);
-
             if (!$request) {
                 echo json_encode(['success' => false, 'message' => 'Request not found']);
                 break;
             }
-
             if (!$request['phone']) {
                 echo json_encode(['success' => false, 'message' => 'Customer phone number not available']);
                 break;
             }
-
             $balanceSql = "SELECT current_balance FROM zzimba_sms_wallet WHERE vendor_id = :store_id AND status = 'active'";
             $balanceStmt = $pdo->prepare($balanceSql);
             $balanceStmt->execute([':store_id' => $storeId]);
             $balance = (int) ($balanceStmt->fetchColumn() ?? 0);
-
             if ($balance < 1) {
                 echo json_encode(['success' => false, 'message' => 'Insufficient SMS credits. Please purchase credits to send SMS.']);
                 break;
             }
-
             $smsData = [
                 'vendor_id' => $storeId,
                 'message' => $message,
                 'recipients' => [$request['phone']],
                 'type' => 'single'
             ];
-
             $smsResponse = sendSmsViaCenter($smsData);
-
             if ($smsResponse['success']) {
                 echo json_encode(['success' => true, 'message' => 'SMS sent successfully', 'new_balance' => $smsResponse['new_balance']]);
             } else {
@@ -283,10 +421,7 @@ try {
             $requestId = $_POST['request_id'] ?? null;
             $subject = trim($_POST['subject'] ?? '');
             $message = trim($_POST['message'] ?? '');
-
             if ($requestId && $subject && $message) {
-                // Simulate email sending
-                sleep(1);
                 echo json_encode(['success' => true, 'message' => 'Email sent successfully']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Missing required fields']);
@@ -307,38 +442,30 @@ try {
 function sendSmsViaCenter($data)
 {
     global $pdo;
-
     try {
         $vendorId = $data['vendor_id'];
         $message = $data['message'];
         $recipients = $data['recipients'];
         $type = $data['type'] ?? 'single';
-
         $smsWalletSql = "SELECT id, current_balance FROM zzimba_sms_wallet WHERE vendor_id = :vendor_id AND status = 'active'";
         $stmt = $pdo->prepare($smsWalletSql);
         $stmt->execute([':vendor_id' => $vendorId]);
         $wallet = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$wallet || $wallet['current_balance'] < count($recipients)) {
             return ['success' => false, 'message' => 'Insufficient SMS credits'];
         }
-
         $smsRate = 50.00;
         $smsParts = ceil(strlen($message) / 160);
         $creditsNeeded = count($recipients) * $smsParts;
         $totalCost = $creditsNeeded * $smsRate;
-
         if ($wallet['current_balance'] < $creditsNeeded) {
             return ['success' => false, 'message' => 'Insufficient SMS credits'];
         }
-
         $pdo->beginTransaction();
-
         $newBalance = $wallet['current_balance'] - $creditsNeeded;
         $updateWalletSql = "UPDATE zzimba_sms_wallet SET current_balance = :new_balance, updated_at = NOW() WHERE id = :wallet_id";
         $stmt = $pdo->prepare($updateWalletSql);
         $stmt->execute([':new_balance' => $newBalance, ':wallet_id' => $wallet['id']]);
-
         $historyId = generateUlid();
         $historySql = "
             INSERT INTO zzimba_sms_history 
@@ -362,11 +489,8 @@ function sendSmsViaCenter($data)
             ':balance_before' => $wallet['current_balance'],
             ':balance_after' => $newBalance
         ]);
-
         $pdo->commit();
-
         return ['success' => true, 'message' => 'SMS sent successfully', 'credits_used' => $creditsNeeded, 'new_balance' => $newBalance];
-
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollback();

@@ -230,14 +230,11 @@ class CollectoSMSManager
         $input = preg_replace('/[^\d+]/', '', $input);
         if (strpos($input, '+') === 0)
             $input = substr($input, 1);
-        if (preg_match('/^2567\d{8}$/', $input))
+        if (preg_match('/^256\d{9}$/', $input))
             return $input;
-        if (preg_match('/^0?7\d{8}$/', $input)) {
-            if ($input[0] === '0')
-                $input = substr($input, 1);
-            return '256' . $input;
-        }
-        if (preg_match('/^7\d{8}$/', $input))
+        if (preg_match('/^0\d{9}$/', $input))
+            return '256' . substr($input, 1);
+        if (preg_match('/^\d{9}$/', $input))
             return '256' . $input;
         return null;
     }

@@ -22,7 +22,7 @@ if (isset($_GET['manifest'])) {
 }
 if (isset($_GET['sw'])) {
     header('Content-Type: application/javascript');
-    $scope = rtrim(BASE_URL, '/') . '/';
+    $scope = rtrim(BASE_URL, '/') . '/account/';
     $cache = 'zzimba-user-v3';
     $core = json_encode([
         $scope,
@@ -215,12 +215,19 @@ if ($needsProfileCompletion) {
         const BASE_URL = "<?= BASE_URL ?>";
         const SESSION_ULID = "<?= $sessionUlid ?>";
         const PAGE_TITLE = "<?= addslashes($pageTitle ?? '') ?>";
-        const APP_SCOPE = (new URL('account/', BASE_URL)).toString();
+        const LOGGED_NAME = "<?= addslashes($userName) ?>";
+        function setGreeting() {
+            var h = new Date().getHours();
+            var part = h < 12 ? 'Good Morning' : (h < 17 ? 'Good Afternoon' : 'Good Evening');
+            var el = document.getElementById('greeting');
+            if (el) el.textContent = 'Hello ' + LOGGED_NAME + ', ' + part;
+        }
         tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: '#D92B13', secondary: '#1a1a1a', 'gray-text': '#4B5563', 'user-primary': '#D92B13', 'user-secondary': '#F8C2BC', 'user-accent': '#E6F2FF', 'user-content': '#F5F9FF' }, fontFamily: { rubik: ['Rubik', 'sans-serif'] } } } }
         document.addEventListener('alpine:init', () => {
             Alpine.store('ui', {
                 mode: 'system',
                 sheet: null,
+                _pwaBound: false,
                 init() {
                     const saved = localStorage.getItem('zzimba_theme') || 'system';
                     this.setTheme(saved, false);
@@ -228,7 +235,6 @@ if ($needsProfileCompletion) {
                     media.addEventListener('change', () => { if (this.mode === 'system') this.applySystem(); });
                     this.syncMeta();
                     this.initPWA();
-                    window.addEventListener('load', () => { const splash = document.getElementById('zz-splash'); if (splash) setTimeout(() => splash.style.display = 'none', 60); });
                 },
                 setTheme(val, persist = true) {
                     this.mode = val;
@@ -249,23 +255,40 @@ if ($needsProfileCompletion) {
                 openSheet(name) { this.sheet = name; document.body.style.overflow = 'hidden'; },
                 closeSheet() { this.sheet = null; document.body.style.overflow = ''; },
                 initPWA() {
-                    if ('serviceWorker' in navigator) navigator.serviceWorker.register('master.php?sw=1', { scope: APP_SCOPE }).catch(() => { });
+                    if ('serviceWorker' in navigator) navigator.serviceWorker.register('master.php?sw=1').catch(() => { });
+                    if (this._pwaBound) return;
+                    this._pwaBound = true;
                     const banner = document.getElementById('install-banner');
-                    let _deferred = null;
-                    const canShow = () => { const until = parseInt(localStorage.getItem('zz_install_later_until') || '0', 10); return Date.now() > until; };
-                    window.addEventListener('beforeinstallprompt', (e) => {
-                        e.preventDefault(); _deferred = e;
+                    let deferredEvt = null;
+                    const canShow = () => {
+                        const until = parseInt(localStorage.getItem('zz_install_later_until') || '0', 10);
+                        return Date.now() > until;
+                    };
+                    const showBannerIfEligible = () => {
                         const installed = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
                         if (!installed && canShow()) banner?.classList.remove('hidden');
+                    };
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault();
+                        deferredEvt = e;
+                        showBannerIfEligible();
                     });
-                    window.addEventListener('appinstalled', () => { banner?.classList.add('hidden'); _deferred = null; localStorage.removeItem('zz_install_later_until'); });
-                    function postponeInstall() { localStorage.setItem('zz_install_later_until', String(Date.now() + 12 * 60 * 60 * 1000)); banner?.classList.add('hidden'); }
+                    window.addEventListener('appinstalled', () => {
+                        banner?.classList.add('hidden');
+                        deferredEvt = null;
+                        localStorage.removeItem('zz_install_later_until');
+                    });
+                    function postponeInstall() {
+                        localStorage.setItem('zz_install_later_until', String(Date.now() + 12 * 60 * 60 * 1000));
+                        banner?.classList.add('hidden');
+                    }
                     function doInstall() {
-                        if (!_deferred) { postponeInstall(); return; }
-                        _deferred.prompt();
-                        _deferred.userChoice.then(choice => {
-                            if (choice.outcome !== 'accepted') postponeInstall(); else { banner?.classList.add('hidden'); localStorage.removeItem('zz_install_later_until'); }
-                        }).finally(() => { _deferred = null; });
+                        if (!deferredEvt) { postponeInstall(); return; }
+                        deferredEvt.prompt();
+                        deferredEvt.userChoice.then(choice => {
+                            if (!choice || choice.outcome !== 'accepted') postponeInstall();
+                            else { banner?.classList.add('hidden'); localStorage.removeItem('zz_install_later_until'); }
+                        }).finally(() => { deferredEvt = null; });
                     }
                     document.getElementById('install-later')?.addEventListener('click', postponeInstall);
                     document.getElementById('install-later-m')?.addEventListener('click', postponeInstall);
@@ -273,8 +296,122 @@ if ($needsProfileCompletion) {
                     document.getElementById('install-now-m')?.addEventListener('click', doInstall);
                 }
             });
+            Alpine.store('notif', {
+                open: false,
+                notes: [],
+                count: 0,
+                selected: [],
+                lastTs: null,
+                timer: null,
+                fetching: false,
+                init() {
+                    if (this.timer) return;
+                    this.fetchNow();
+                    this.timer = setInterval(() => this.fetchNow(), 20000);
+                    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.fetchNow(); });
+                },
+                toggle() { this.open = !this.open },
+                setBadge(c) {
+                    this.count = c;
+                    const badge = document.getElementById('mobileNotifCount');
+                    if (badge) { if (this.count > 0) { badge.textContent = this.count; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } }
+                },
+                mergeIncoming(arr) {
+                    if (!Array.isArray(arr) || !arr.length) return;
+                    const existing = new Map(this.notes.map(n => [n.target_id, n]));
+                    for (const n of arr) {
+                        if (!existing.has(n.target_id)) { this.notes.unshift(n); existing.set(n.target_id, n); }
+                        else { const idx = this.notes.findIndex(x => x.target_id === n.target_id); if (idx >= 0) this.notes[idx] = n; }
+                    }
+                    this.notes = this.notes.slice(0, 100);
+                },
+                fetchNow() {
+                    if (this.fetching) return;
+                    this.fetching = true;
+                    const url = new URL(BASE_URL + 'fetch/manageNotifications.php');
+                    url.searchParams.set('action', 'fetch');
+                    if (this.lastTs) url.searchParams.set('since', this.lastTs);
+                    fetch(url.toString(), { cache: 'no-store' })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res && res.status === 'success') {
+                                const incoming = res.data || [];
+                                if (this.lastTs) this.mergeIncoming(incoming); else this.notes = incoming;
+                                const latest = res.latest_ts || (incoming[0]?.created_at ?? this.lastTs); if (latest) this.lastTs = latest;
+                                const nextCount = Number.isInteger(res.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                                this.setBadge(nextCount);
+                                this.selected = this.selected.filter(id => this.notes.some(n => n.target_id === id));
+                                const selAll = document.getElementById('selectAll'); if (selAll) selAll.checked = (this.selected.length && this.selected.length === this.notes.length);
+                                const selAllM = document.getElementById('selectAllM'); if (selAllM) selAllM.checked = (this.selected.length && this.selected.length === this.notes.length);
+                            }
+                        })
+                        .catch(() => { })
+                        .finally(() => { this.fetching = false; });
+                },
+                selectAll(event) { this.selected = event.target.checked ? this.notes.map(n => n.target_id) : [] },
+                markSeen(id) {
+                    const p = new URLSearchParams(); p.append('action', 'markSeen'); p.append('target_id', id);
+                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
+                        .then(r => r.json()).then(res => {
+                            const n = this.notes.find(n => n.target_id === id); if (n) n.is_seen = 1;
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.setBadge(c);
+                        }).catch(() => { });
+                },
+                markBulkSeen() {
+                    if (!this.selected.length) return;
+                    const ids = this.selected.slice();
+                    const p = new URLSearchParams(); p.append('action', 'markSeen'); ids.forEach(id => p.append('target_id[]', id));
+                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
+                        .then(r => r.json()).then(res => {
+                            this.notes.forEach(n => { if (ids.includes(n.target_id)) n.is_seen = 1 });
+                            this.selected = [];
+                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
+                            const b2 = document.getElementById('selectAllM'); if (b2) b.checked = false;
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.setBadge(c);
+                        }).catch(() => { });
+                },
+                handleClick(note) { if (note.is_seen == 0) this.markSeen(note.target_id); if (note.link_url) location.href = note.link_url },
+                dismiss(id) {
+                    const p = new URLSearchParams(); p.append('action', 'dismiss'); p.append('target_id', id);
+                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
+                        .then(r => r.json()).then(res => {
+                            this.notes = this.notes.filter(n => n.target_id !== id);
+                            this.selected = this.selected.filter(sid => sid !== id);
+                            const b = document.getElementById('selectAll'); if (b) b.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.setBadge(c);
+                        }).catch(() => { });
+                },
+                dismissBulk() {
+                    if (!this.selected.length) return;
+                    const ids = this.selected.slice();
+                    const p = new URLSearchParams(); p.append('action', 'dismiss'); ids.forEach(id => p.append('target_id[]', id));
+                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
+                        .then(r => r.json()).then(res => {
+                            this.notes = this.notes.filter(n => !ids.includes(n.target_id));
+                            this.selected = [];
+                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
+                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false;
+                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
+                            this.setBadge(c);
+                        }).catch(() => { });
+                },
+                formatDate(ts) {
+                    const d = new Date(ts.replace(' ', 'T')), now = new Date(), diff = (now - d) / 1000;
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+                    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                    if (diff < 60) return 'Now';
+                    if (d >= today) return 'Today ' + time;
+                    if (d >= yesterday && d < today) return 'Yesterday ' + time;
+                    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                }
+            });
         });
-        document.addEventListener('alpine:initialized', () => { try { lucide.createIcons(); } catch (e) { } Alpine.store('ui')?.init?.(); });
+        document.addEventListener('alpine:initialized', () => { try { lucide.createIcons(); } catch (e) { } Alpine.store('ui')?.init?.(); Alpine.store('notif')?.init?.(); setGreeting(); });
         document.addEventListener('alpine:updated', () => { try { lucide.createIcons(); } catch (e) { } });
     </script>
     <style>
@@ -422,78 +559,44 @@ if ($needsProfileCompletion) {
             border-top-color: rgba(255, 255, 255, .12)
         }
 
-        .splash {
+        .sheet-overlay {
             position: fixed;
             inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 90
+            background: rgba(0, 0, 0, .4)
         }
 
-        .splash--light {
-            background: radial-gradient(1200px 600px at 10% -10%, rgba(217, 43, 19, .10), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(217, 43, 19, .12), transparent 60%), linear-gradient(135deg, #fff7ed 0%, #f7efe9 100%)
+        .main-fixed {
+            height: calc(100vh - 64px);
+            overflow: auto
         }
 
-        .splash--dark {
-            background: radial-gradient(1200px 600px at 10% -10%, rgba(217, 43, 19, .08), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(217, 43, 19, .10), transparent 60%), linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)
+        input[type="checkbox"] {
+            accent-color: #D92B13
         }
 
-        .logo-pulse {
-            animation: logoPulse 1.6s ease-in-out infinite
+        .gs-card-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #fff3f1 100%)
         }
 
-        @keyframes logoPulse {
-            0% {
-                transform: scale(1);
-                filter: drop-shadow(0 0 0 rgba(0, 0, 0, .25))
-            }
-
-            50% {
-                transform: scale(1.05);
-                filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .25))
-            }
-
-            100% {
-                transform: scale(1);
-                filter: drop-shadow(0 0 0 rgba(0, 0, 0, .25))
-            }
+        .dark .gs-card-gradient {
+            background: linear-gradient(135deg, #161616 0%, #1f1b1a 100%)
         }
 
-        .bar {
-            height: 4px;
-            width: 180px;
-            border-radius: 9999px;
-            overflow: hidden;
-            background: rgba(0, 0, 0, .12)
+        .gs-progress {
+            height: 10px
         }
 
-        .dark .bar {
-            background: rgba(255, 255, 255, .15)
+        .gs-step {
+            transition: transform .15s ease
         }
 
-        .bar::after {
-            content: '';
-            display: block;
-            height: 100%;
-            width: 40%;
-            border-radius: 9999px;
-            background: linear-gradient(90deg, #ffb4a8, #D92B13, #8f1406);
-            animation: slide 1.2s ease-in-out infinite
+        .gs-step:hover {
+            transform: translateY(-1px)
         }
 
-        @keyframes slide {
-            0% {
-                transform: translateX(-40%)
-            }
-
-            50% {
-                transform: translateX(80%)
-            }
-
-            100% {
-                transform: translateX(180%)
-            }
+        .locked {
+            filter: grayscale(1);
+            opacity: .6
         }
 
         .install-banner {
@@ -552,67 +655,17 @@ if ($needsProfileCompletion) {
             color: #ffffff;
             background: transparent
         }
-
-        .sheet-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .4)
-        }
-
-        .main-fixed {
-            height: calc(100vh - 64px);
-            overflow: auto
-        }
-
-        input[type="checkbox"] {
-            accent-color: #D92B13
-        }
-
-        .gs-card-gradient {
-            background: linear-gradient(135deg, #ffffff 0%, #fff3f1 100%)
-        }
-
-        .dark .gs-card-gradient {
-            background: linear-gradient(135deg, #161616 0%, #1f1b1a 100%)
-        }
-
-        .gs-progress {
-            height: 10px
-        }
-
-        .gs-step {
-            transition: transform .15s ease
-        }
-
-        .gs-step:hover {
-            transform: translateY(-1px)
-        }
-
-        .locked {
-            filter: grayscale(1);
-            opacity: .6
-        }
     </style>
 </head>
 
 <body class="bg-user-content dark:bg-secondary font-rubik min-h-screen" x-data>
-    <div id="zz-splash" class="splash splash--light dark:splash--dark">
-        <div class="flex flex-col items-center gap-5">
-            <div class="relative">
-                <img src="<?= BASE_URL ?>img/favicon.png" alt="Zzimba Online"
-                    class="relative h-16 w-16 rounded logo-pulse">
-            </div>
-            <div class="bar"></div>
-        </div>
-    </div>
-
     <div id="install-banner" class="install-banner hidden">
         <div class="install-card">
             <div class="flex items-center gap-3 p-3 sm:p-4">
                 <img src="<?= BASE_URL ?>img/favicon.png" alt="Zzimba Online" class="h-9 w-9 rounded">
                 <div class="flex-1">
                     <div class="font-medium text-[15px] title">Zzimba Online</div>
-                    <div class="text-xs sub">Install for quicker access & a full-screen experience.</div>
+                    <div class="text-xs sub">Install for quicker access and a full screen experience.</div>
                 </div>
                 <button id="install-later"
                     class="text-[13px] px-3 py-1.5 rounded-md later hidden sm:block">Later</button>
@@ -679,7 +732,7 @@ if ($needsProfileCompletion) {
                 class="user-header sticky top-0 z-40 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary">
                 <div class="flex h-16 items-center justify-end sm:justify-between px-4 sm:px-6">
                     <h1 class="hidden md:block text-xl font-semibold text-secondary dark:text-white">
-                        <?= htmlspecialchars($pageTitle ?? 'My Dashboard') ?>
+                        <span id="greeting"></span>
                     </h1>
                     <div class="flex items-center gap-1 sm:gap-2">
                         <div class="relative" x-data="{open:false}">
@@ -719,55 +772,56 @@ if ($needsProfileCompletion) {
                             </div>
                         </div>
 
-                        <div x-data="notifComponent()" x-init="init()" class="relative hidden md:block">
-                            <button @click="toggle"
+                        <div class="relative hidden md:block">
+                            <button @click="$store.notif.toggle()"
                                 class="relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
                                 <i data-lucide="bell" class="w-5 h-5"></i>
-                                <span x-show="count > 0" x-text="count"
+                                <span x-show="$store.notif.count > 0" x-text="$store.notif.count"
                                     class="absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center"></span>
                             </button>
-                            <div x-show="open" @click.outside="open = false" x-transition
-                                class="fixed top-16 left-2 right-2 w-auto max-w-full sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white dark:bg-secondary rounded-lg shadow-lg border border-gray-100 dark:border-white/10 z-50 max-h-96 overflow-auto">
+                            <div x-show="$store.notif.open" @click.outside="$store.notif.open=false" x-transition
+                                class="fixed top-16 left-2 right-2 w-auto max-w-full sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white dark:bg-secondary rounded-lg shadow-lg border border-gray-100 dark:border-white/10 py-1 z-50 max-h-96 overflow-auto">
                                 <div
                                     class="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-white/10">
                                     <div class="flex items-center gap-2">
-                                        <input type="checkbox" id="selectAll" @change="selectAll($event)"
+                                        <input type="checkbox" id="selectAll" @change="$store.notif.selectAll($event)"
                                             class="h-4 w-4 text-user-primary rounded">
                                         <label for="selectAll" class="text-xs text-gray-600 dark:text-white/80">Select
                                             All</label>
                                     </div>
                                     <div class="flex gap-2">
-                                        <button @click="markBulkSeen"
+                                        <button @click="$store.notif.markBulkSeen()"
                                             class="text-xs px-2 py-1 bg-user-primary text-white rounded">Mark
                                             Read</button>
-                                        <button @click="dismissBulk"
+                                        <button @click="$store.notif.dismissBulk()"
                                             class="text-xs px-2 py-1 bg-red-500 text-white rounded">Dismiss</button>
                                     </div>
                                 </div>
-                                <template x-for="note in notes" :key="note.target_id">
-                                    <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
+                                <template x-for="note in $store.notif.notes" :key="note.target_id">
+                                    <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg:white/5' : 'bg-white dark:bg-secondary'"
                                         class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
                                         <div class="px-3 py-3"><input type="checkbox" :value="note.target_id"
-                                                x-model="selected" class="h-4 w-4 text-user-primary rounded"></div>
+                                                x-model="$store.notif.selected"
+                                                class="h-4 w-4 text-user-primary rounded"></div>
                                         <div class="flex-1">
                                             <a :href="note.link_url || '#'" class="block px-0 py-3"
-                                                @click.prevent="handleClick(note)">
+                                                @click.prevent="$store.notif.handleClick(note)">
                                                 <p class="text-sm font-medium text-secondary dark:text-white"
                                                     x-text="note.title"></p>
                                                 <p class="text-xs mt-1"
                                                     :class="note.is_seen == 0 ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70'"
                                                     x-text="note.message"></p>
                                                 <span class="text-[10px] text-gray-400 dark:text-white/60"
-                                                    x-text="formatDate(note.created_at)"></span>
+                                                    x-text="$store.notif.formatDate(note.created_at)"></span>
                                             </a>
                                         </div>
-                                        <button @click.stop="dismiss(note.target_id)"
+                                        <button @click.stop="$store.notif.dismiss(note.target_id)"
                                             class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
                                             <i data-lucide="x" class="w-4 h-4"></i>
                                         </button>
                                     </div>
                                 </template>
-                                <div x-show="notes.length === 0"
+                                <div x-show="$store.notif.notes.length === 0"
                                     class="p-4 text-sm text-center text-gray-500 dark:text-white/70">No notifications
                                 </div>
                             </div>
@@ -849,7 +903,7 @@ if ($needsProfileCompletion) {
                                     <p class="text-xs sm:text-sm text-gray-600 dark:text-white/70">Finish these steps to
                                         unlock the best Zzimba experience. <span
                                             class="inline-block ml-1 text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-user-primary/10 text-user-primary font-medium">Profile
-                                            & Wallet are required</span></p>
+                                            and Wallet are required</span></p>
                                 </div>
                                 <template x-if="canDismiss">
                                     <button @click="close12()"
@@ -894,7 +948,7 @@ if ($needsProfileCompletion) {
                                     elseif ($isCurrent)
                                         $iconClasses .= ' bg-white/20 text-white';
                                     else
-                                        $iconClasses .= ' bg-gray-100 text-secondary dark:bg-white/10 dark:text-white';
+                                        $iconClasses .= ' bg-gray-100 text-secondary dark:bg:white/10 dark:text:white';
                                     $canClick = $isCurrent;
                                     $startTag = $canClick ? '<a href="' . htmlspecialchars($s['url']) . '" class="block ' . $wrapClasses . '">' : '<div class="block ' . $wrapClasses . ' ' . ($isLocked ? 'cursor-not-allowed' : '') . '">';
                                     $endTag = $canClick ? '</a>' : '</div>';
@@ -991,7 +1045,7 @@ if ($needsProfileCompletion) {
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
                     <span
                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-white/10"><i
-                            data-lucide="settings" class="w-5 h-5 text-secondary dark:text-white"></i></span>
+                            class="w-5 h-5 text-secondary dark:text-white" data-lucide="settings"></i></span>
                     <div>
                         <div class="text-sm font-medium text-secondary dark:text-white">Settings</div>
                         <div class="text-[11px] text-gray-500 dark:text-white/70">Preferences</div>
@@ -1081,47 +1135,47 @@ if ($needsProfileCompletion) {
         x-bind:class="{'open': $store.ui.sheet==='notif'}">
         <div class="px-4 pt-3 pb-2">
             <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-3"></div>
-            <div x-data="notifComponent()" x-init="init()">
+            <div>
                 <div class="flex items-center justify-between px-1 pb-2">
                     <div class="text-sm font-medium text-secondary dark:text-white">Notifications</div>
                     <div class="flex items-center gap-2">
-                        <button @click="markBulkSeen" class="text-xs px-2 py-1 bg-user-primary text-white rounded">Mark
-                            Read</button>
-                        <button @click="dismissBulk"
+                        <button @click="$store.notif.markBulkSeen()"
+                            class="text-xs px-2 py-1 bg-user-primary text-white rounded">Mark Read</button>
+                        <button @click="$store.notif.dismissBulk()"
                             class="text-xs px-2 py-1 bg-red-500 text-white rounded">Dismiss</button>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 px-1 pb-2">
-                    <input type="checkbox" id="selectAllM" @change="selectAll($event)"
+                    <input type="checkbox" id="selectAllM" @change="$store.notif.selectAll($event)"
                         class="h-4 w-4 text-user-primary rounded">
                     <label for="selectAllM" class="text-xs text-gray-600 dark:text-white/80">Select All</label>
                 </div>
-                <div class="max-h-[60vh] overflow-auto border-t border-gray-100 dark:border-white/10">
-                    <template x-for="note in notes" :key="note.target_id">
-                        <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
-                            class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
-                            <div class="px-3 py-3"><input type="checkbox" :value="note.target_id" x-model="selected"
-                                    class="h-4 w-4 text-user-primary rounded"></div>
+                <div class="max-h:[60vh] overflow-auto border-t border-gray-100 dark:border-white/10">
+                    <template x-for="note in $store.notif.notes" :key="note.target_id">
+                        <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg:white/5' : 'bg-white dark:bg-secondary'"
+                            class="relative group border-b border-gray-100 dark:border:white/10 last:border-none flex items-start">
+                            <div class="px-3 py-3"><input type="checkbox" :value="note.target_id"
+                                    x-model="$store.notif.selected" class="h-4 w-4 text-user-primary rounded"></div>
                             <div class="flex-1">
                                 <a :href="note.link_url || '#'" class="block px-0 py-3"
-                                    @click.prevent="handleClick(note)">
-                                    <p class="text-sm font-medium text-secondary dark:text-white" x-text="note.title">
+                                    @click.prevent="$store.notif.handleClick(note)">
+                                    <p class="text-sm font-medium text-secondary dark:text:white" x-text="note.title">
                                     </p>
                                     <p class="text-xs mt-1"
-                                        :class="note.is_seen == 0 ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70'"
+                                        :class="note.is_seen == 0 ? 'text-secondary dark:text:white' : 'text-gray-500 dark:text:white/70'"
                                         x-text="note.message"></p>
-                                    <span class="text-[10px] text-gray-400 dark:text-white/60"
-                                        x-text="formatDate(note.created_at)"></span>
+                                    <span class="text-[10px] text-gray-400 dark:text:white/60"
+                                        x-text="$store.notif.formatDate(note.created_at)"></span>
                                 </a>
                             </div>
-                            <button @click.stop="dismiss(note.target_id)"
-                                class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
+                            <button @click.stop="$store.notif.dismiss(note.target_id)"
+                                class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text:white/60 dark:hover:text-white transition">
                                 <i data-lucide="x" class="w-4 h-4"></i>
                             </button>
                         </div>
                     </template>
-                    <div x-show="notes.length === 0" class="p-4 text-sm text-center text-gray-500 dark:text-white/70">No
-                        notifications</div>
+                    <div x-show="$store.notif.notes.length === 0"
+                        class="p-4 text-sm text-center text-gray-500 dark:text-white/70">No notifications</div>
                 </div>
             </div>
             <button class="mt-3 w-full py-2.5 rounded-xl border text-sm" @click="$store.ui.closeSheet()">Close</button>
@@ -1147,111 +1201,8 @@ if ($needsProfileCompletion) {
 
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
-        function notifComponent() {
-            return {
-                open: false, notes: [], count: 0, selected: [], lastTs: null, timer: null,
-                toggle() { this.open = !this.open },
-                init() {
-                    this.fetchNow();
-                    this.timer = setInterval(() => this.fetchNow(), 20000);
-                    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.fetchNow(); });
-                },
-                setBadge(c) {
-                    this.count = c;
-                    const badge = document.getElementById('mobileNotifCount');
-                    if (badge) { if (this.count > 0) { badge.textContent = this.count; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); } }
-                },
-                mergeIncoming(arr) {
-                    if (!Array.isArray(arr) || !arr.length) return;
-                    const existing = new Map(this.notes.map(n => [n.target_id, n]));
-                    for (const n of arr) {
-                        if (!existing.has(n.target_id)) { this.notes.unshift(n); existing.set(n.target_id, n); }
-                        else { const idx = this.notes.findIndex(x => x.target_id === n.target_id); if (idx >= 0) this.notes[idx] = n; }
-                    }
-                    this.notes = this.notes.slice(0, 100);
-                },
-                fetchNow() {
-                    const url = new URL(BASE_URL + 'fetch/manageNotifications.php'); url.searchParams.set('action', 'fetch'); if (this.lastTs) url.searchParams.set('since', this.lastTs);
-                    fetch(url.toString(), { cache: 'no-store' })
-                        .then(r => r.json())
-                        .then(res => {
-                            if (res && res.status === 'success') {
-                                const incoming = res.data || [];
-                                if (this.lastTs) this.mergeIncoming(incoming); else this.notes = incoming;
-                                const latest = res.latest_ts || (incoming[0]?.created_at ?? this.lastTs); if (latest) this.lastTs = latest;
-                                const nextCount = Number.isInteger(res.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
-                                this.setBadge(nextCount);
-                                this.selected = this.selected.filter(id => this.notes.some(n => n.target_id === id));
-                                const selAll = document.getElementById('selectAll'); if (selAll) selAll.checked = (this.selected.length && this.selected.length === this.notes.length);
-                                const selAllM = document.getElementById('selectAllM'); if (selAllM) selAllM.checked = (this.selected.length && this.selected.length === this.notes.length);
-                            }
-                        }).catch(() => { });
-                },
-                selectAll(event) { this.selected = event.target.checked ? this.notes.map(n => n.target_id) : [] },
-                markSeen(id) {
-                    const p = new URLSearchParams(); p.append('action', 'markSeen'); p.append('target_id', id);
-                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
-                        .then(r => r.json()).then(res => {
-                            const n = this.notes.find(n => n.target_id === id); if (n) n.is_seen = 1;
-                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
-                            this.setBadge(c);
-                        }).catch(() => { });
-                },
-                markBulkSeen() {
-                    if (!this.selected.length) return;
-                    const ids = this.selected.slice();
-                    const p = new URLSearchParams(); p.append('action', 'markSeen'); ids.forEach(id => p.append('target_id[]', id));
-                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
-                        .then(r => r.json()).then(res => {
-                            this.notes.forEach(n => { if (ids.includes(n.target_id)) n.is_seen = 1 });
-                            this.selected = [];
-                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
-                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false;
-                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
-                            this.setBadge(c);
-                        }).catch(() => { });
-                },
-                handleClick(note) { if (note.is_seen == 0) this.markSeen(note.target_id); if (note.link_url) location.href = note.link_url },
-                dismiss(id) {
-                    const p = new URLSearchParams(); p.append('action', 'dismiss'); p.append('target_id', id);
-                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
-                        .then(r => r.json()).then(res => {
-                            this.notes = this.notes.filter(n => n.target_id !== id);
-                            this.selected = this.selected.filter(sid => sid !== id);
-                            const b = document.getElementById('selectAll'); if (b) b.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
-                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
-                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
-                            this.setBadge(c);
-                        }).catch(() => { });
-                },
-                dismissBulk() {
-                    if (!this.selected.length) return;
-                    const ids = this.selected.slice();
-                    const p = new URLSearchParams(); p.append('action', 'dismiss'); ids.forEach(id => p.append('target_id[]', id));
-                    fetch(BASE_URL + 'fetch/manageNotifications.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p })
-                        .then(r => r.json()).then(res => {
-                            this.notes = this.notes.filter(n => !ids.includes(n.target_id));
-                            this.selected = [];
-                            const b = document.getElementById('selectAll'); if (b) b.checked = false;
-                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false;
-                            const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
-                            this.setBadge(c);
-                        }).catch(() => { });
-                },
-                formatDate(ts) {
-                    const d = new Date(ts.replace(' ', 'T')), now = new Date(), diff = (now - d) / 1000;
-                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-                    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-                    if (diff < 60) return 'Now';
-                    if (d >= today) return 'Today ' + time;
-                    if (d >= yesterday && d < today) return 'Yesterday ' + time;
-                    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                }
-            };
-        }
-
         window.addEventListener('load', function () {
+            setGreeting();
             const url = localStorage.getItem('return_url'); const title = localStorage.getItem('return_title');
             if (url && title && title !== PAGE_TITLE) {
                 function showReturnModal() {

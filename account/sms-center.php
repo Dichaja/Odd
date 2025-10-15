@@ -115,7 +115,7 @@ ob_start();
                     <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
                         <input type="tel" x-model.trim="bulkInput" @keyup.enter.prevent="addBulk()"
                             class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white px-4 py-3 text-sm"
-                            placeholder="700123456 or 0700123456">
+                            placeholder="700123456, 0700123456, +256700123456">
                         <button type="button" @click="addBulk()"
                             class="inline-flex items-center gap-2 rounded-xl bg-primary text-white px-4 py-2.5"><i
                                 data-lucide="plus" class="w-4 h-4"></i>Add</button>
@@ -203,7 +203,8 @@ ob_start();
                 class="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-secondary p-5 grid gap-4 lg:grid-cols-[1fr_auto_auto_auto]">
                 <div class="relative">
                     <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" x-model.debounce.300ms="filters.search" @input="loadHistory()"
+                    <input type="text" x-model.debounce.300ms="filters.search" @input="loadHistory()
+                        "
                         class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white pl-9 pr-3 py-3 text-sm"
                         placeholder="Search SMS history...">
                 </div>
@@ -704,12 +705,26 @@ ob_start();
             },
             getTextarea() { return document.querySelector('textarea[x-model="message"]'); },
 
-            validatePhone(n) { const x = (n || '').replace(/\s+/g, ''); return /^0[7]\d{8}$/.test(x) || /^[7]\d{8}$/.test(x); },
-            normalizePhone(n) { const x = (n || '').replace(/\s+/g, ''); return /^[7]\d{8}$/.test(x) ? ('0' + x) : x; },
+            cleanPhone(n) {
+                return (n || '').toString().trim().replace(/[^\d+]/g, '').replace(/^\+/, '+');
+            },
+            validatePhone(n) {
+                const x = this.cleanPhone(n);
+                if (/^0\d{9}$/.test(x)) return true;
+                if (/^\d{9}$/.test(x)) return true;
+                if (/^\+?256\d{9}$/.test(x)) return true;
+                return false;
+            },
+            normalizePhone(n) {
+                let x = this.cleanPhone(n);
+                if (/^\+?256\d{9}$/.test(x)) x = x.replace(/^\+?256/, '0');
+                else if (/^\d{9}$/.test(x)) x = '0' + x;
+                return x;
+            },
             addBulk() {
                 const num = this.bulkInput.trim();
                 if (!num) return;
-                if (!this.validatePhone(num)) return this.toast('Invalid Number', 'Enter a valid 10-digit phone number', 'error');
+                if (!this.validatePhone(num)) return this.toast('Invalid Number', 'Enter a valid phone number', 'error');
                 const norm = this.normalizePhone(num);
                 if (this.bulkRecipients.includes(norm)) return this.toast('Duplicate', 'This number is already added', 'warning');
                 this.bulkRecipients.push(norm);
@@ -719,7 +734,7 @@ ob_start();
             removeRecipient(n) { this.bulkRecipients = this.bulkRecipients.filter(x => x !== n); },
 
             pasteCsv() {
-                const s = prompt('Paste phone numbers separated by commas or new lines:', '700123456, 701234567');
+                const s = prompt('Paste phone numbers separated by commas or new lines:', '700123456, 701234567, +256700123456');
                 if (!s) return;
                 const arr = s.split(/[\n,]+/).map(x => x.trim()).filter(Boolean);
                 this.processNumbers(arr);
@@ -740,10 +755,10 @@ ob_start();
             processNumbers(arr) {
                 const r = { valid: [], invalid: [], duplicates: [], total: arr.length };
                 arr.forEach(n => {
-                    const clean = n.replace(/\s+/g, ''); const norm = this.normalizePhone(clean);
+                    const norm = this.normalizePhone(n);
                     if (this.bulkRecipients.includes(norm) || r.valid.includes(norm)) r.duplicates.push(norm);
-                    else if (this.validatePhone(clean)) r.valid.push(norm);
-                    else r.invalid.push(clean);
+                    else if (this.validatePhone(n)) r.valid.push(norm);
+                    else r.invalid.push(this.cleanPhone(n));
                 });
                 this.bulkRecipients = [...this.bulkRecipients, ...r.valid];
                 this.bulkReport = r;
@@ -756,7 +771,7 @@ ob_start();
                 let recipients = [];
                 if (this.sendType === 'single') {
                     if (!this.recipient.trim()) return this.toast('Missing Recipient', 'Please enter a recipient phone number', 'error');
-                    if (!this.validatePhone(this.recipient)) return this.toast('Invalid Number', 'Please enter a valid 10-digit phone number', 'error');
+                    if (!this.validatePhone(this.recipient)) return this.toast('Invalid Number', 'Please enter a valid phone number', 'error');
                     recipients = [this.normalizePhone(this.recipient)];
                 } else {
                     if (!this.bulkRecipients.length) return this.toast('No Recipients', 'Add at least one recipient', 'error');

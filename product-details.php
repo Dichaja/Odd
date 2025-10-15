@@ -428,6 +428,23 @@ ob_start();
     }
 </style>
 
+<script>
+    window.__pendingVendorAction = null;
+    window.setPendingVendorAction = (a) => { window.__pendingVendorAction = a || null };
+    (function () {
+        const wrap = () => {
+            const orig = window.updateUIAfterLogin;
+            window.updateUIAfterLogin = function (user) {
+                try { typeof orig === 'function' && orig(user) } catch (e) { }
+                try { window.dispatchEvent(new CustomEvent('zz:session-login', { detail: user || {} })) } catch (e) { }
+                const el = document.querySelector('[x-data="productDetails()"]');
+                if (el && el.__x) { try { el.__x.$data.handlePostLogin(user || {}) } catch (e) { } }
+            }
+        };
+        if (document.readyState === 'complete' || document.readyState === 'interactive') { wrap() } else { document.addEventListener('DOMContentLoaded', wrap) }
+    })();
+</script>
+
 <div x-data="productDetails()" x-init="init()" x-cloak>
     <div class="relative h-50 md:h-64 w-full bg-gray-100 overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-gray-900/90 via-gray-800/70 to-gray-900/90 z-10"></div>
@@ -453,50 +470,67 @@ ob_start();
                     <span class="share-label">SHARE</span>
                     <div class="share-buttons">
                         <button @click="copyLink" class="share-button" aria-label="Copy link">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M10 13a5 5 0 0 0 7.07 0l3.54-3.54a5 5 0 0 0-7.07-7.07L12 3" />
-                                <path d="M14 11a5 5 0 0 0-7.07 0L3.39 14.54a5 5 0 1 0 7.07 7.07L12 21" />
-                            </svg>
+                            <span class="hidden md:block">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M10 13a5 5 0 0 0 7.07 0l3.54-3.54a5 5 0 0 0-7.07-7.07L12 3" />
+                                    <path d="M14 11a5 5 0 0 0-7.07 0L3.39 14.54a5 5 0 1 0 7.07 7.07L12 21" />
+                                </svg>
+                            </span>
+                            <span class="md:hidden"><i class="fa-solid fa-link" style="color:#ffffff;"></i></span>
                             <span class="tooltip">Copy link to clipboard</span>
                         </button>
 
                         <button @click="shareOnWhatsApp" class="share-button" aria-label="Share on WhatsApp">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 11.5a8.38 8.38 0 1 1-3.46-6.86L21 3" />
-                                <path d="M22 2l-1 6-6-1" />
-                            </svg>
+                            <span class="hidden md:block">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 11.5a8.38 8.38 0 1 1-3.46-6.86L21 3" />
+                                    <path d="M22 2l-1 6-6-1" />
+                                </svg>
+                            </span>
+                            <span class="md:hidden"><i class="fa-brands fa-whatsapp" style="color:#ffffff;"></i></span>
                             <span class="tooltip">Share on WhatsApp</span>
                         </button>
 
                         <button @click="shareOnFacebook" class="share-button" aria-label="Share on Facebook">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M16 8a6 6 0 1 0-6 6h6" />
-                                <path d="M18 12v10" />
-                                <path d="M22 12h-4" />
-                            </svg>
+                            <span class="hidden md:block">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M16 8a6 6 0 1 0-6 6h6" />
+                                    <path d="M18 12v10" />
+                                    <path d="M22 12h-4" />
+                                </svg>
+                            </span>
+                            <span class="md:hidden"><i class="fa-brands fa-facebook-f"
+                                    style="color:#ffffff;"></i></span>
                             <span class="tooltip">Share on Facebook</span>
                         </button>
 
                         <button @click="shareOnTwitter" class="share-button" aria-label="Post on X">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 2L11 13" />
-                                <path d="M22 2l-6 20-5-9-9-5 20-6z" />
-                            </svg>
+                            <span class="hidden md:block">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 2L11 13" />
+                                    <path d="M22 2l-6 20-5-9-9-5 20-6z" />
+                                </svg>
+                            </span>
+                            <span class="md:hidden"><i class="fa-brands fa-x-twitter" style="color:#ffffff;"></i></span>
                             <span class="tooltip">Post on X</span>
                         </button>
 
                         <button @click="shareOnLinkedIn" class="share-button" aria-label="Share on LinkedIn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="9" width="7" height="13" />
-                                <circle cx="5.5" cy="5.5" r="2.5" />
-                                <path d="M15 9h7v13h-7z" />
-                                <path d="M15 13c0-2 2-3 4-3" />
-                            </svg>
+                            <span class="hidden md:block">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="9" width="7" height="13" />
+                                    <circle cx="5.5" cy="5.5" r="2.5" />
+                                    <path d="M15 9h7v13h-7z" />
+                                    <path d="M15 13c0-2 2-3 4-3" />
+                                </svg>
+                            </span>
+                            <span class="md:hidden"><i class="fa-brands fa-linkedin-in"
+                                    style="color:#ffffff;"></i></span>
                             <span class="tooltip">Share on LinkedIn</span>
                         </button>
                     </div>
@@ -601,15 +635,15 @@ ob_start();
     <div class="container mx-auto px-4 py-8">
         <div class="border-b border-gray-200 mb-6">
             <nav class="-mb-px flex space-x-8 overflow-x-auto">
-                <button @click="activeTab='description'"
-                    :class="activeTab==='description' ? 'border-[#D92B13] text-[#D92B13]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                    class="font-medium py-4 px-1 border-b-2 whitespace-nowrap tab-button">
-                    <i data-lucide="info" class="w-4 h-4 mr-2 inline"></i> Description
-                </button>
                 <button @click="activeTab='store'"
                     :class="activeTab==='store' ? 'border-[#D92B13] text-[#D92B13]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                     class="font-medium py-4 px-1 border-b-2 whitespace-nowrap tab-button">
                     <i data-lucide="store" class="w-4 h-4 mr-2 inline"></i> Find Supplier
+                </button>
+                <button @click="activeTab='description'"
+                    :class="activeTab==='description' ? 'border-[#D92B13] text-[#D92B13]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="font-medium py-4 px-1 border-b-2 whitespace-nowrap tab-button">
+                    <i data-lucide="info" class="w-4 h-4 mr-2 inline"></i> Description
                 </button>
                 <button @click="activeTab='reviews'"
                     :class="activeTab==='reviews' ? 'border-[#D92B13] text-[#D92B13]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
@@ -694,7 +728,7 @@ ob_start();
                                 class="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full"><?= count($reviews) ?>
                                 Reviews</span>
                         </div>
-                        <div class="mb-6 max-h-[500px] overflow-y-auto pr-2 space-y-6">
+                        <div class="mb-6 max-h=[500px] overflow-y-auto pr-2 space-y-6">
                             <?php foreach ($reviews as $review): ?>
                                 <div class="border-b border-gray-200 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in">
                                     <div class="flex items-center mb-1">
@@ -881,11 +915,12 @@ ob_start();
 <script>
     function productDetails() {
         return {
+            BASE_URL: window.BASE_URL || '<?= BASE_URL ?>',
             productId: '<?= $productId ?>',
             productTitle: '<?= htmlspecialchars($product['title'], ENT_QUOTES) ?>',
             images: <?= $imagesJson ?>,
             selectedImage: 0,
-            activeTab: 'description',
+            activeTab: 'store',
             vendorModalOpen: false,
             vendorModalLoading: false,
             vendorRegion: '',
@@ -899,6 +934,19 @@ ob_start();
                     this.logProductView();
                     this.refreshIcons();
                 });
+                window.addEventListener('zz:session-login', e => this.handlePostLogin(e.detail || {}));
+                const pending = window.__pendingVendorAction;
+                if (pending && pending.type === 'view-suppliers' && pending.region) {
+                    this.resumeViewSuppliers(pending.region);
+                    window.setPendingVendorAction(null);
+                }
+            },
+            handlePostLogin() {
+                const a = window.__pendingVendorAction;
+                if (a && a.type === 'view-suppliers' && a.region) {
+                    this.resumeViewSuppliers(a.region);
+                    window.setPendingVendorAction(null);
+                }
             },
             refreshIcons() { try { if (window.lucide && lucide.createIcons) lucide.createIcons(); } catch (e) { } },
             sellProduct(id, title) { if (typeof openVendorSellModal === 'function') { openVendorSellModal(id, title); } },
@@ -930,32 +978,42 @@ ob_start();
                 alert('Thank you for your review! (This is a demo - review not actually saved)');
                 this.reviewName = ''; this.reviewComment = ''; this.reviewRating = 0; this.hoverRating = 0; this.refreshIcons();
             },
-            showVendorsInRegion(region) {
-                this.checkSession().then(s => {
-                    if (!s.logged_in) {
-                        if (typeof openAuthModal === 'function') openAuthModal(); else alert('Please log in to view suppliers.');
-                        return;
-                    }
-                    this.vendorRegion = region;
-                    this.vendorModalOpen = true;
-                    this.vendorModalLoading = true;
-                    fetch('<?= BASE_URL ?>fetch/getVendors.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product_id: this.productId, region }) })
-                        .then(r => r.json())
-                        .then(d => {
-                            this.vendorModalLoading = false;
-                            this.vendors = (d.success && Array.isArray(d.vendors)) ? d.vendors : [];
-                            this.$nextTick(() => this.refreshIcons());
-                        })
-                        .catch(() => {
-                            this.vendorModalLoading = false;
-                            this.vendors = [];
-                        });
-                });
+            async showVendorsInRegion(region) {
+                const ok = await this.ensureSession({ type: 'view-suppliers', region });
+                if (!ok) return;
+                this.resumeViewSuppliers(region);
+            },
+            resumeViewSuppliers(region) {
+                this.vendorRegion = region;
+                this.vendorModalOpen = true;
+                this.vendorModalLoading = true;
+                fetch((this.BASE_URL) + 'fetch/getVendors.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product_id: this.productId, region }) })
+                    .then(r => r.json())
+                    .then(d => {
+                        this.vendorModalLoading = false;
+                        this.vendors = (d.success && Array.isArray(d.vendors)) ? d.vendors : [];
+                        this.$nextTick(() => this.refreshIcons());
+                    })
+                    .catch(() => {
+                        this.vendorModalLoading = false;
+                        this.vendors = [];
+                    });
             },
             closeVendorModal() { this.vendorModalOpen = false; },
-            gotoVendor(id) { window.location.href = '<?= BASE_URL ?>view/profile/vendor/' + id; },
+            gotoVendor(id) { try { localStorage.setItem('zz_last_product_id', String(this.productId)); } catch (e) { } window.location.href = (this.BASE_URL) + 'view/profile/vendor/' + id; },
             checkSession() {
-                return fetch(`${BASE_URL}fetch/check-session.php`).then(res => res.json()).then(d => d.success ? d : { logged_in: false }).catch(() => ({ logged_in: false }));
+                return fetch((this.BASE_URL) + 'fetch/check-session.php').then(res => res.json()).then(d => d.success ? d : { logged_in: false }).catch(() => ({ logged_in: false }));
+            },
+            async ensureSession(pending) {
+                try {
+                    const s = await this.checkSession();
+                    if (!s.logged_in) {
+                        if (pending) window.setPendingVendorAction(pending);
+                        if (typeof openAuthModal === 'function') openAuthModal(); else alert('Please log in to continue.');
+                        return false;
+                    }
+                    return true;
+                } catch (e) { return false }
             },
             logProductView() {
                 if (navigator.webdriver) return;

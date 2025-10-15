@@ -266,7 +266,7 @@ $sessionUlid = generateUlid();
             :class="{'-translate-x-full': !mobileOpen && window.innerWidth < 1024}">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
-                    <a href="<?= BASE_URL ?>" target="_blank" class="flex items-center space-x-3">
+                    <a href="<?= BASE_URL ?>" class="flex items-center space-x-3">
                         <img src="<?= BASE_URL ?>img/logo_alt.png" alt="Logo" class="h-8 w-auto">
                     </a>
                 </div>

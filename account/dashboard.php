@@ -199,7 +199,7 @@ ob_start();
                             <p class="text-gray-500 dark:text-white/70">No recent activity</p>
                         </div>
                     </template>
-                    <template x-for="a in activities" :key="a.id || (a.type + a.created_at)">
+                    <template x-for="(a,i) in activities" :key="a._key">
                         <div
                             class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-white/5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
                             <div class="w-10 h-10 rounded-lg grid place-items-center"
@@ -256,14 +256,6 @@ ob_start();
             </div>
         </div>
     </div>
-
-    <div x-show="loading" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-secondary p-6 rounded-lg shadow-lg flex flex-col items-center">
-            <div class="w-12 h-12 border-4 border-user-primary border-t-transparent rounded-full animate-spin mb-4">
-            </div>
-            <p class="text-gray-700 dark:text-white/80">Loading dashboard data...</p>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -272,30 +264,64 @@ ob_start();
             api: '<?= BASE_URL ?>account/fetch/manageDashboard.php',
             stats: { quotations: { total: 0, processed: 0, processing: 0, new: 0 }, wallet: { main_balance: 0, sms_balance: 0 }, stores: { total_stores: 0, total_products: 0 }, transactions: { this_month_amount: 0, total_amount: 0 } },
             activities: [],
-            loading: false,
             loadingActivity: true,
             refreshing: false,
+            heartbeatMs: 2000,
+            _gate: {},
+            _initialized: false,
             init() {
+                if (this._initialized) return;
+                this._initialized = true;
                 this.fetchStats();
                 this.fetchActivities();
                 this.$nextTick(() => this.renderIcons());
             },
-            async fetchStats() {
+            async gatedFetch(action, url) {
+                const now = Date.now();
+                const g = this._gate[action] || { last: 0, inFlight: false };
+                if (g.inFlight) return;
+                if (now - g.last < this.heartbeatMs) return;
+                g.inFlight = true;
+                this._gate[action] = g;
                 try {
-                    this.loading = true;
-                    const r = await fetch(`${this.api}?action=getDashboardStats`, { cache: 'no-store' });
+                    const r = await fetch(url, { cache: 'no-store' });
                     const d = await r.json();
-                    if (d && d.success) this.stats = d.stats || this.stats;
-                } catch (e) { } finally { this.loading = false; this.$nextTick(() => this.renderIcons()); }
+                    g.last = Date.now();
+                    return d;
+                } catch (e) {
+                    return null;
+                } finally {
+                    g.inFlight = false;
+                }
+            },
+            async fetchStats() {
+                const d = await this.gatedFetch('getDashboardStats', `${this.api}?action=getDashboardStats`);
+                if (d && d.success) this.stats = d.stats || this.stats;
+                this.$nextTick(() => this.renderIcons());
+            },
+            normalizeActivities(list) {
+                const seen = new Set();
+                const out = [];
+                for (let i = 0; i < list.length; i++) {
+                    const a = list[i] || {};
+                    const baseKey = String(a.target_id || a.id || ((a.type || 'activity') + '-' + (a.created_at || i)));
+                    const key = seen.has(baseKey) ? `${baseKey}-${i}` : baseKey;
+                    seen.add(key);
+                    out.push(Object.assign({ _key: key, type: a.type || 'activity', status: a.status || '', description: a.description || '', created_at: a.created_at || '' }, a));
+                }
+                return out;
             },
             async fetchActivities() {
-                try {
-                    this.loadingActivity = true;
-                    const r = await fetch(`${this.api}?action=getRecentActivity`, { cache: 'no-store' });
-                    const d = await r.json();
-                    if (d && d.success) this.activities = Array.isArray(d.activities) ? d.activities : [];
-                } catch (e) { this.activities = []; }
-                finally { this.loadingActivity = false; this.$nextTick(() => this.renderIcons()); }
+                this.loadingActivity = true;
+                const d = await this.gatedFetch('getRecentActivity', `${this.api}?action=getRecentActivity`);
+                if (d && d.success) {
+                    const arr = Array.isArray(d.activities) ? d.activities : [];
+                    this.activities = this.normalizeActivities(arr);
+                } else if (!Array.isArray(this.activities)) {
+                    this.activities = [];
+                }
+                this.loadingActivity = false;
+                this.$nextTick(() => this.renderIcons());
             },
             refreshActivity() {
                 this.refreshing = true;

@@ -170,7 +170,8 @@ ob_start();
                 </button>
             </div>
             <div class="flex gap-2">
-                <button type="button" @click="clearSearch()"
+                <button type="button" @click="clearSearch()
+                    "
                     class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition flex items-center gap-2">
                     <i data-lucide="x" class="w-4 h-4"></i>
                     Clear
@@ -211,7 +212,7 @@ ob_start();
         <div x-show="!loading && filteredActiveList().length===0" class="text-center py-12">
             <i data-lucide="package-open" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
             <h3 class="text-lg font-medium text-gray-600 mb-2">No products found</h3>
-            <p class="text-gray-500">Try adjusting your search or add a product.</p>
+            <p class="text-sm text-gray-500">Try adjusting your search or add a product.</p>
         </div>
         <div x-show="!loading && filteredActiveList().length>0" id="productsGrid"
             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -464,8 +465,8 @@ ob_start();
                         </div>
                     </div>
                     <div class="p-5 border-t flex justify-end gap-2">
-                        <button @click="closeNewProduct()"
-                            class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</button>
+                        <button @click="closeNewProduct()
+                            " class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</button>
                         <button @click="submitNewProduct()"
                             class="px-4 py-2 rounded-lg bg-user-primary text-white hover:bg-user-primary/90">Create</button>
                     </div>
@@ -526,8 +527,8 @@ ob_start();
                         </div>
                     </div>
                     <div class="p-5 border-t flex justify-end gap-2">
-                        <button @click="closeEditMyProduct()"
-                            class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</button>
+                        <button @click="closeEditMyProduct()
+                            " class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Cancel</button>
                         <button @click="submitEditMyProduct()"
                             class="px-4 py-2 rounded-lg bg-user-primary text-white hover:bg-user-primary/90"
                             :disabled="!editProduct.editable">Save</button>
@@ -578,7 +579,7 @@ ob_start();
                                 class="w-10 h-10 rounded-md object-cover bg-gray-100" alt="">
                             <div>
                                 <h3 class="text-lg font-semibold text-secondary"
-                                    x-text="pricingProduct?.name ? 'Manage Pricing — '+pricingProduct.name : 'Manage Pricing'">
+                                    x-text="pricingProduct?.name ? 'Manage Pricing - '+pricingProduct.name : 'Manage Pricing'">
                                 </h3>
                                 <p class="text-xs text-gray-500" x-text="pricingProduct?.category_name || ''"></p>
                             </div>
@@ -639,7 +640,7 @@ ob_start();
                                         </div>
                                         <div class="col-span-1 text-center">
                                             <div class="text-xs text-gray-600"
-                                                x-text="pr.delivery_capacity ? pr.delivery_capacity : '—'"></div>
+                                                x-text="pr.delivery_capacity ? pr.delivery_capacity : '-'"></div>
                                         </div>
                                         <div class="col-span-1 text-right">
                                             <button @click="openStepper('edit', idx)"
@@ -653,8 +654,8 @@ ob_start();
                         </div>
                     </div>
                     <div class="p-5 border-t flex justify-end gap-2">
-                        <button @click="closePricingList()"
-                            class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Close</button>
+                        <button @click="closePricingList()
+                            " class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50">Close</button>
                         <button @click="savePricingChanges()"
                             class="px-4 py-2 rounded-lg bg-user-primary text-white hover:bg-user-primary/90"
                             x-text="pricingProduct?.store_product_id ? 'Save Changes' : 'Add To Store'"></button>
@@ -745,7 +746,7 @@ ob_start();
                                     </div>
                                     <div>
                                         <label class="text-sm font-medium text-gray-700">Unit Size</label>
-                                        <input x-model="stepper.package_size" type="number" min="0" step="any"
+                                        <input x-model="stepper.package_size" type="text" inputmode="text"
                                             placeholder="Enter size"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-user-primary"
                                             :class="errors.size ? 'border-red-500 ring-2 ring-red-300' : ''" required>
@@ -865,7 +866,7 @@ ob_start();
                                         </div>
                                         <div class="flex items-baseline justify-between">
                                             <div class="text-sm text-gray-500">Capacity</div>
-                                            <div class="text-sm font-medium" x-text="stepper.delivery_capacity || '—'">
+                                            <div class="text-sm font-medium" x-text="stepper.delivery_capacity || '-'">
                                             </div>
                                         </div>
                                     </div>
@@ -874,7 +875,8 @@ ob_start();
                         </div>
                     </div>
                     <div class="p-5 border-t flex items-center justify-between">
-                        <button @click="prevStep()"
+                        <button @click="prevStep()
+                            "
                             class="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center gap-2"
                             :disabled="stepper.step===1">
                             <i data-lucide="chevron-left" class="w-4 h-4"></i>
@@ -994,6 +996,7 @@ ob_start();
             editProduct: { id: '', title: '', description: '', preview: '', temp_path: '', uploading: false, editable: false },
             cropperState: { target: '', src: '', context: '' },
             cropperInstance: null,
+            lastValidPackageSize: '',
 
             async init() { await this.reloadAll(); await this.fetchAllPackages(); this.refreshIcons(); },
             async reloadAll() { this.loading = true; await Promise.all([this.fetchStoreProducts(), this.fetchMyProducts()]); this.loading = false; this.$nextTick(() => this.refreshIcons()); },
@@ -1253,7 +1256,6 @@ ob_start();
                         this.$nextTick(() => this.refreshIcons());
                     } else {
                         this.showAlert('error', j.message || 'Failed to create');
-                        console.log(j);
                     }
                 } catch (e) { this.showAlert('error', 'Server error'); }
             },
@@ -1296,6 +1298,7 @@ ob_start();
                     this.stepper.packageQuery = this.stepper.package_name;
                     this.stepper.unitQuery = this.stepper.si_unit;
                 }
+                this.lastValidPackageSize = this.stepper.package_size || '';
                 this.openPkg = false;
                 this.openUnit = false;
                 this.modals.stepper = true;
@@ -1347,7 +1350,14 @@ ob_start();
                 }
                 if (this.errors.commissionValue) return;
                 const entry = { package_mapping_id: this.stepper.package_mapping_id, package_name: this.stepper.package_name, si_unit_id: this.stepper.si_unit_id, si_unit: this.stepper.si_unit, package_size: this.stepper.package_size, price_category: this.stepper.price_category, price: this.stepper.price, delivery_capacity: this.stepper.delivery_capacity || null, commission_type: ct, commission_value: cv };
-                if (this.stepper.mode === 'edit' && this.stepper.index !== null) { this.pricingList.splice(this.stepper.index, 1, entry); } else { this.pricingList.push(entry); }
+                if (this.stepper.mode === 'edit' && this.stepper.index !== null) {
+                    const existingId = this.pricingList[this.stepper.index] && this.pricingList[this.stepper.index].pricing_id ? this.pricingList[this.stepper.index].pricing_id : null;
+                    entry.pricing_id = existingId;
+                    this.pricingList.splice(this.stepper.index, 1, entry);
+                } else {
+                    entry.pricing_id = null;
+                    this.pricingList.push(entry);
+                }
                 this.modals.stepper = false;
                 this.$nextTick(() => this.refreshIcons());
             },
@@ -1386,7 +1396,17 @@ ob_start();
             },
 
             normalizeLineItems() {
-                return this.pricingList.map(pr => ({ package_mapping_id: pr.package_mapping_id, si_unit_id: pr.si_unit_id, package_size: pr.package_size, price_category: pr.price_category, price: pr.price, delivery_capacity: pr.delivery_capacity, commission_type: pr.commission_type || 'percentage', commission_value: pr.commission_value == null || pr.commission_value === '' ? 1 : pr.commission_value }));
+                return this.pricingList.map(pr => ({
+                    pricing_id: pr.pricing_id || null,
+                    package_mapping_id: pr.package_mapping_id,
+                    si_unit_id: pr.si_unit_id,
+                    package_size: pr.package_size,
+                    price_category: pr.price_category,
+                    price: pr.price,
+                    delivery_capacity: pr.delivery_capacity,
+                    commission_type: pr.commission_type || 'percentage',
+                    commission_value: pr.commission_value == null || pr.commission_value === '' ? 1 : pr.commission_value
+                }));
             },
 
             confirmDeleteFromStore(p) { this.deleteContext = p; this.deleteContextType = 'store'; this.modals.deleteConfirm = true; this.$nextTick(() => this.refreshIcons()); },
@@ -1418,6 +1438,39 @@ ob_start();
                             this.activeTab = 'myProducts';
                         } else { this.showAlert('error', 'Failed to delete draft'); }
                     } catch (e) { this.showAlert('error', 'Server error'); }
+                }
+            },
+
+            isValidFractionInput(v) { return /^[0-9./]*$/.test(v); },
+            handlePackageSizeKeydown(e) {
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+                const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Home', 'End', 'Enter'];
+                if (allowed.includes(e.key)) return;
+                if (e.key.length === 1) {
+                    if (!/[0-9./]/.test(e.key)) {
+                        e.preventDefault();
+                        this.showAlert('error', 'Only numbers, / and . are allowed');
+                    }
+                }
+            },
+            onPackageSizeInput(e) {
+                const v = e.target.value;
+                if (this.isValidFractionInput(v)) {
+                    this.stepper.package_size = v;
+                    this.lastValidPackageSize = v;
+                    this.errors.size = (v.trim() === '');
+                } else {
+                    this.showAlert('error', 'Only numbers, / and . are allowed');
+                    e.target.value = this.lastValidPackageSize || '';
+                    this.stepper.package_size = e.target.value;
+                    this.errors.size = this.stepper.package_size.trim() === '';
+                }
+            },
+            handlePackageSizePaste(e) {
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                if (!this.isValidFractionInput(text)) {
+                    e.preventDefault();
+                    this.showAlert('error', 'Only numbers, / and . are allowed');
                 }
             }
         }

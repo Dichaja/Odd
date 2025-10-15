@@ -5,6 +5,8 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../../logs/php-errors.log');
 require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/NotificationService.php';
+use Ulid\Ulid;
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in'] || !$_SESSION['user']['is_admin']) {
@@ -264,9 +266,16 @@ function updateProduct(PDO $pdo)
     }
     $id = $data['id'];
 
-    $chk = $pdo->prepare("SELECT id FROM products WHERE id = :id");
-    $chk->execute([':id' => $id]);
-    if ($chk->rowCount() === 0) {
+    // Get current product details BEFORE update to check status change
+    $currentProductStmt = $pdo->prepare("SELECT p.*, u.username as vendor_username, vs.name as store_name, vs.owner_id 
+                                        FROM products p 
+                                        LEFT JOIN zzimba_users u ON p.user_id = u.id 
+                                        LEFT JOIN vendor_stores vs ON p.user_id = vs.id 
+                                        WHERE p.id = :id");
+    $currentProductStmt->execute([':id' => $id]);
+    $currentProduct = $currentProductStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$currentProduct) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Product not found']);
         return;
@@ -299,6 +308,8 @@ function updateProduct(PDO $pdo)
     }
 
     $status = $categoryId === null ? 'draft' : $statusInput;
+    
+    $currentUser = $_SESSION['user']['user_id'] ?? null;
 
     $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
     $pdo->beginTransaction();
@@ -367,7 +378,59 @@ function updateProduct(PDO $pdo)
         }
 
         $pdo->commit();
+
+        if ($currentProduct['status'] === 'draft') {
+            try {
+                $notificationService = new NotificationService($pdo);
+                
+                $vendorMessage = "\"{$title}\" Registration Has Been Successfully Approved.";
+                $adminMessage = "Product Published: \"{$title}\" Has Been Successfully Approved And is Now Available To Stores.";
+                $storeOwnerMessage = "Product Approval: \"{$title}\" Registered By {$currentProduct['vendor_username']} Has Been Successfully Approved.";
+
+                $recipients = [
+                    [
+                        'type' => 'user',
+                        'id' => $currentProduct['user_id'],
+                        'message' => $vendorMessage,
+                        'link' => BASE_URL . "vendor-store/products.php?action=getMyProducts&highlight=$id"
+                    ],
+                    [
+                        'type' => 'admin',
+                        'id' => 'admin', 
+                        'message' => $adminMessage,
+                        'link' => BASE_URL . "admin/products.php"
+                    ]
+                ];
+                  
+                /*if ($currentProduct['owner_id'] && $currentProduct['owner_id'] !== $currentProduct['user_id']) {
+                    $recipients[] = [
+                        'type' => 'user',
+                        'id' => $currentProduct['owner_id'],
+                        'message' => $storeOwnerMessage,
+                        'link' => BASE_URL . "vendor-store/store-products.php"
+                    ];
+                }*/
+
+                foreach ($recipients as $recipient) {
+                  $notificationService->create(
+                  'store_update',
+                  'Product Approved',
+                  [$recipient], 
+                  $recipient['link'] ?? null,
+                  'normal',
+                  $currentUser
+                 );
+             }
+                
+                error_log("Product published notifications sent for: {$title}");
+                
+            } catch (Exception $notificationError) {
+                error_log("Notification error in updateProduct (non-fatal): " . $notificationError->getMessage());
+            }
+        }
+
         echo json_encode(['success' => true, 'message' => 'Product updated successfully']);
+        
     } catch (Exception $e) {
         $pdo->rollBack();
         error_log('Error updating product: ' . $e->getMessage());

@@ -627,12 +627,6 @@ function updateStore(PDO $pdo, string $userId): void
 
     $storeId = $data['id'];
 
-    if (!isOwner($pdo, $storeId, $userId)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Permission denied']);
-        return;
-    }
-
     $stmt = $pdo->prepare("SELECT name FROM vendor_stores WHERE id = ?");
     $stmt->execute([$storeId]);
     $current = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -724,11 +718,6 @@ function deleteStore(PDO $pdo, string $storeId, string $userId): void
     if (!isValidUlid($storeId)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
-        return;
-    }
-    if (!isOwner($pdo, $storeId, $userId)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Permission denied']);
         return;
     }
 
@@ -977,13 +966,7 @@ function getStoreManagers(PDO $pdo, string $storeId, ?string $userId): void
         echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
         return;
     }
-
-    if (!$userId || !canAccessStore($pdo, $storeId, $userId)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'Access denied']);
-        return;
-    }
-
+    
     $stmt = $pdo->prepare("
         SELECT sm.id, sm.user_id, sm.role, sm.created_at,
                u.username, u.email, u.phone

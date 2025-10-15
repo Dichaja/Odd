@@ -97,6 +97,15 @@ function formatCurrency($amount)
                                 <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
                             </div>
                         </button>
+                        <button id="buy_in_store-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchSettingsTab('buy_in_store')">
+                            <i class="fas fa-store"></i>
+                            <span>Buy In Store</span>
+                            <div id="buy_in_store-warning" class="ml-auto hidden">
+                                <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
+                            </div>
+                        </button>
                     </nav>
                 </div>
             </div>
@@ -190,6 +199,15 @@ function formatCurrency($amount)
                                         <i class="fas fa-file-invoice text-teal-600"></i>
                                         <span>Request for Quote</span>
                                         <div id="mobile-quote-warning" class="ml-auto hidden">
+                                            <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
+                                        </div>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="buy_in_store">
+                                        <i class="fas fa-store text-amber-600"></i>
+                                        <span>Buy In Store</span>
+                                        <div id="mobile-buy_in_store-warning" class="ml-auto hidden">
                                             <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
                                         </div>
                                     </button>
@@ -308,6 +326,7 @@ function formatCurrency($amount)
                         <option value="withdrawal">Withdrawal</option>
                         <option value="subscription">Subscription</option>
                         <option value="quote">Request for Quote</option>
+                        <option value="buy_in_store">Buy In Store</option>
                     </select>
                 </div>
 
@@ -383,11 +402,14 @@ function formatCurrency($amount)
         <div class="flex-1 overflow-y-auto p-6">
             <form id="editSettingForm" class="space-y-6">
                 <input type="hidden" id="editSettingId">
+                <input type="hidden" id="editSettingCategory">
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Setting Name</label>
-                    <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700"
-                        id="editSettingNameDisplay"></div>
+                    <label for="editSettingName" class="block text-sm font-semibold text-gray-700 mb-2">Setting
+                        Name</label>
+                    <input type="text" id="editSettingName"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                        placeholder="Enter setting name" required>
                 </div>
 
                 <div>
@@ -397,9 +419,11 @@ function formatCurrency($amount)
                 </div>
 
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                    <div class="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700"
-                        id="editSettingDescriptionDisplay"></div>
+                    <label for="editSettingDescription"
+                        class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                    <textarea id="editSettingDescription" rows="3"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                        placeholder="Enter setting description"></textarea>
                 </div>
 
                 <div>
@@ -555,7 +579,6 @@ function formatCurrency($amount)
                 showMessage('error', 'Error', data.message || 'Failed to load settings');
             }
         } catch (error) {
-            console.error('Error loading settings:', error);
             showMessage('error', 'Error', 'Failed to load settings');
         }
     }
@@ -611,7 +634,7 @@ function formatCurrency($amount)
     }
 
     function checkAllCategoriesConfiguration() {
-        const categories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription', 'quote'];
+        const categories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription', 'quote', 'buy_in_store'];
         categories.forEach(category => {
             checkCategoryConfiguration(category);
         });
@@ -654,7 +677,8 @@ function formatCurrency($amount)
             'transfer': { label: 'Transfer', icon: 'fas fa-exchange-alt' },
             'withdrawal': { label: 'Withdrawal', icon: 'fas fa-money-bill-wave' },
             'subscription': { label: 'Subscription', icon: 'fas fa-calendar-alt' },
-            'quote': { label: 'Request for Quote', icon: 'fas fa-file-invoice' }
+            'quote': { label: 'Request for Quote', icon: 'fas fa-file-invoice' },
+            'buy_in_store': { label: 'Buy In Store', icon: 'fas fa-store' }
         };
         const tabInfo = tabLabels[tabName] || tabLabels['sms'];
         updateMobileTabLabel(tabInfo.label, tabInfo.icon);
@@ -768,6 +792,7 @@ function formatCurrency($amount)
 
         document.getElementById('settingCategory').value = currentSettingsTab;
         document.getElementById('settingKeyPreview').textContent = 'setting_key_will_appear_here';
+        enforceTypeRulesForCreate();
 
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -780,14 +805,14 @@ function formatCurrency($amount)
 
     function showEditSettingForm(setting) {
         document.getElementById('editSettingId').value = setting.id;
-        document.getElementById('editSettingNameDisplay').textContent = setting.setting_name;
+        document.getElementById('editSettingCategory').value = setting.category;
+        document.getElementById('editSettingName').value = setting.setting_name;
         document.getElementById('editSettingKeyDisplay').textContent = setting.setting_key;
-        document.getElementById('editSettingDescriptionDisplay').textContent = setting.description;
+        document.getElementById('editSettingDescription').value = setting.description || '';
         document.getElementById('editSettingType').value = setting.setting_type;
         document.getElementById('editSettingValue').value = setting.setting_value;
         document.getElementById('editApplicableTo').value = setting.applicable_to;
-
-        toggleEditValueInput();
+        enforceTypeRulesForEdit(setting.category);
 
         const modal = document.getElementById('editSettingModal');
         modal.classList.remove('hidden');
@@ -857,13 +882,46 @@ function formatCurrency($amount)
         }
     }
 
+    function enforceTypeRulesForCreate() {
+        const category = document.getElementById('settingCategory').value;
+        const typeSelect = document.getElementById('settingType');
+        const percentageOption = typeSelect.querySelector('option[value="percentage"]');
+        if (category === 'buy_in_store') {
+            typeSelect.value = 'flat';
+            typeSelect.setAttribute('disabled', 'disabled');
+            if (percentageOption) percentageOption.setAttribute('disabled', 'disabled');
+        } else {
+            typeSelect.removeAttribute('disabled');
+            if (percentageOption) percentageOption.removeAttribute('disabled');
+        }
+        toggleValueInput();
+    }
+
+    function enforceTypeRulesForEdit(category) {
+        const typeSelect = document.getElementById('editSettingType');
+        const percentageOption = typeSelect.querySelector('option[value="percentage"]');
+        if (category === 'buy_in_store') {
+            typeSelect.value = 'flat';
+            typeSelect.setAttribute('disabled', 'disabled');
+            if (percentageOption) percentageOption.setAttribute('disabled', 'disabled');
+        } else {
+            typeSelect.removeAttribute('disabled');
+            if (percentageOption) percentageOption.removeAttribute('disabled');
+        }
+        toggleEditValueInput();
+    }
+
     async function createSetting() {
         const name = document.getElementById('settingName').value.trim();
         const description = document.getElementById('settingDescription').value.trim();
         const category = document.getElementById('settingCategory').value;
-        const type = document.getElementById('settingType').value;
+        let type = document.getElementById('settingType').value;
         const value = parseFloat(document.getElementById('settingValue').value);
         const applicableTo = document.getElementById('applicableTo').value;
+
+        if (category === 'buy_in_store') {
+            type = 'flat';
+        }
 
         if (!name || !category || !type || !value || !applicableTo) {
             showMessage('error', 'Validation Error', 'Please fill in all required fields');
@@ -896,7 +954,6 @@ function formatCurrency($amount)
                 showMessage('error', 'Error', data.message);
             }
         } catch (error) {
-            console.error('Error creating setting:', error);
             showMessage('error', 'Error', 'Failed to create setting');
         }
     }
@@ -904,17 +961,23 @@ function formatCurrency($amount)
     function editSetting(id) {
         const setting = settings.find(s => s.id === id);
         if (!setting) return;
-
         showEditSettingForm(setting);
     }
 
     async function updateSetting() {
         const id = document.getElementById('editSettingId').value;
-        const type = document.getElementById('editSettingType').value;
+        const category = document.getElementById('editSettingCategory').value;
+        let type = document.getElementById('editSettingType').value;
         const value = parseFloat(document.getElementById('editSettingValue').value);
         const applicableTo = document.getElementById('editApplicableTo').value;
+        const name = document.getElementById('editSettingName').value.trim();
+        const description = document.getElementById('editSettingDescription').value.trim();
 
-        if (!type || !value || !applicableTo) {
+        if (category === 'buy_in_store') {
+            type = 'flat';
+        }
+
+        if (!name || !type || !value || !applicableTo) {
             showMessage('error', 'Validation Error', 'Please fill in all required fields');
             return;
         }
@@ -929,7 +992,9 @@ function formatCurrency($amount)
                     id: id,
                     setting_type: type,
                     setting_value: value,
-                    applicable_to: applicableTo
+                    applicable_to: applicableTo,
+                    setting_name: name,
+                    description: description
                 })
             });
 
@@ -943,7 +1008,6 @@ function formatCurrency($amount)
                 showMessage('error', 'Error', data.message);
             }
         } catch (error) {
-            console.error('Error updating setting:', error);
             showMessage('error', 'Error', 'Failed to update setting');
         }
     }
@@ -975,7 +1039,6 @@ function formatCurrency($amount)
                 showMessage('error', 'Error', data.message);
             }
         } catch (error) {
-            console.error('Error updating setting status:', error);
             showMessage('error', 'Error', 'Failed to update setting status');
         }
     }
@@ -1011,6 +1074,9 @@ function formatCurrency($amount)
                 toggleMobileTabDropdown();
             });
         });
+
+        const catSelect = document.getElementById('settingCategory');
+        if (catSelect) catSelect.addEventListener('change', enforceTypeRulesForCreate);
 
         window.addEventListener('resize', updateTabHeights);
         setTimeout(updateTabHeights, 500);

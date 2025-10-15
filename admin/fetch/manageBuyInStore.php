@@ -12,6 +12,33 @@ date_default_timezone_set('Africa/Kampala');
 
 $action = $_REQUEST['action'] ?? '';
 
+function product_image_url($productId, $productTitle = 'Product')
+{
+    $baseUrl = rtrim(BASE_URL, '/');
+    $publicUrlBase = $baseUrl . '/img/products/' . $productId . '/';
+    $dir = __DIR__ . '/../../img/products/' . $productId . '/';
+    $exts = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'JPG', 'JPEG', 'PNG', 'WEBP', 'GIF'];
+    if (is_dir($dir)) {
+        $files = @scandir($dir);
+        if ($files) {
+            foreach ($files as $f) {
+                $parts = pathinfo($f);
+                if (!empty($parts['extension']) && in_array($parts['extension'], $exts, true)) {
+                    return $publicUrlBase . $f;
+                }
+            }
+        }
+        foreach (['1', 'main', 'cover', 'image', 'product', 'thumb', '0'] as $n) {
+            foreach ($exts as $e) {
+                $candidate = $dir . $n . '.' . $e;
+                if (file_exists($candidate))
+                    return $publicUrlBase . $n . '.' . $e;
+            }
+        }
+    }
+    return 'https://placehold.co/600x400/e2e8f0/1e293b?text=' . urlencode($productTitle ?: 'Product');
+}
+
 try {
     switch ($action) {
         case 'getStats':
@@ -26,12 +53,10 @@ try {
             ";
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
-
             $stats = ['pending' => 0, 'confirmed' => 0, 'completed' => 0, 'cancelled' => 0];
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $stats[$row['status']] = (int) $row['cnt'];
             }
-
             echo json_encode(['success' => true, 'stats' => $stats]);
             break;
 
@@ -39,39 +64,31 @@ try {
             $page = max(1, intval($_GET['page'] ?? 1));
             $limit = 20;
             $offset = ($page - 1) * $limit;
-
             $startDate = $_GET['start_date'] ?? date('Y-m-d');
             $endDate = $_GET['end_date'] ?? date('Y-m-d');
             $searchTerm = trim($_GET['search_term'] ?? '');
             $statusFilter = $_GET['status_filter'] ?? '';
             $storeFilter = $_GET['store_filter'] ?? '';
-
             $where = ["vs.status = 'active'"];
             $params = [];
-
             if ($startDate && $endDate) {
                 $where[] = "DATE(bisr.created_at) BETWEEN :start_date AND :end_date";
                 $params[':start_date'] = $startDate;
                 $params[':end_date'] = $endDate;
             }
-
             if ($searchTerm) {
                 $where[] = "(zu.first_name LIKE :search OR zu.last_name LIKE :search OR zu.email LIKE :search OR zu.phone LIKE :search OR p.title LIKE :search OR vs.name LIKE :search)";
                 $params[':search'] = "%$searchTerm%";
             }
-
             if ($statusFilter && $statusFilter !== 'all') {
                 $where[] = "bisr.status = :status";
                 $params[':status'] = $statusFilter;
             }
-
             if ($storeFilter && $storeFilter !== 'all') {
                 $where[] = "vs.id = :store_id";
                 $params[':store_id'] = $storeFilter;
             }
-
             $whereSql = 'WHERE ' . implode(' AND ', $where);
-
             $countSql = "
                 SELECT COUNT(*) AS total
                 FROM buy_in_store_requests bisr
@@ -83,15 +100,13 @@ try {
                 $whereSql
             ";
             $countStmt = $pdo->prepare($countSql);
-            foreach ($params as $k => $v) {
+            foreach ($params as $k => $v)
                 $countStmt->bindValue($k, $v);
-            }
             $countStmt->execute();
             $total = (int) $countStmt->fetchColumn();
-
             $dataSql = "
                 SELECT bisr.*, zu.first_name, zu.last_name, zu.email, zu.phone,
-                       p.title AS product_title, pp.price, pp.price_category,
+                       p.id AS product_id, p.title AS product_title, pp.price, pp.price_category,
                        (pp.price * bisr.quantity) AS total_value,
                        vs.name AS store_name, vs.id AS store_id, vs.business_phone AS store_phone,
                        vs.business_email AS store_email, vs.region AS store_region,
@@ -108,14 +123,20 @@ try {
                 LIMIT :limit OFFSET :offset
             ";
             $stmt = $pdo->prepare($dataSql);
-            foreach ($params as $k => $v) {
+            foreach ($params as $k => $v)
                 $stmt->bindValue($k, $v);
-            }
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
             $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+            if ($requests) {
+                foreach ($requests as &$r) {
+                    $pid = $r['product_id'] ?? null;
+                    $r['product_link'] = $pid ? rtrim(BASE_URL, '/') . '/view/product/' . $pid : null;
+                    $r['product_image'] = $pid ? product_image_url($pid, $r['product_title'] ?? 'Product') : product_image_url('unknown', $r['product_title'] ?? 'Product');
+                }
+                unset($r);
+            }
             echo json_encode([
                 'success' => true,
                 'requestData' => [
@@ -140,7 +161,6 @@ try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
             $stores = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
             echo json_encode(['success' => true, 'stores' => $stores]);
             break;
 
@@ -150,10 +170,9 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Missing request ID']);
                 break;
             }
-
             $sql = "
                 SELECT bisr.*, zu.first_name, zu.last_name, zu.email, zu.phone,
-                       p.title AS product_title, p.description AS product_description,
+                       p.id AS product_id, p.title AS product_title, p.description AS product_description,
                        pp.price, pp.price_category, pp.package_size,
                        psu.si_unit, ppn.package_name,
                        vs.name AS store_name, vs.id AS store_id, vs.business_phone AS store_phone,
@@ -178,9 +197,11 @@ try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':request_id' => $requestId]);
             $request = $stmt->fetch(PDO::FETCH_ASSOC);
-
             if ($request) {
                 $request['total_value'] = $request['price'] * $request['quantity'];
+                $pid = $request['product_id'] ?? null;
+                $request['product_link'] = $pid ? rtrim(BASE_URL, '/') . '/view/product/' . $pid : null;
+                $request['product_image'] = $pid ? product_image_url($pid, $request['product_title'] ?? 'Product') : product_image_url('unknown', $request['product_title'] ?? 'Product');
                 echo json_encode(['success' => true, 'request' => $request]);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Request not found']);
@@ -191,7 +212,6 @@ try {
             $requestId = $_POST['request_id'] ?? null;
             $status = $_POST['status'] ?? null;
             $allowed = ['pending', 'confirmed', 'completed', 'cancelled'];
-
             if ($requestId && in_array($status, $allowed, true)) {
                 $sql = "
                     UPDATE buy_in_store_requests bisr
@@ -215,7 +235,6 @@ try {
         case 'updateVisitDate':
             $requestId = $_POST['request_id'] ?? null;
             $visitDate = $_POST['visit_date'] ?? null;
-
             if ($requestId && $visitDate) {
                 $sql = "
                     UPDATE buy_in_store_requests bisr
@@ -242,12 +261,10 @@ try {
                 echo json_encode(['success' => false, 'message' => 'Store ID required']);
                 break;
             }
-
             $sql = "SELECT current_balance FROM zzimba_sms_wallet WHERE vendor_id = :store_id AND status = 'active'";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':store_id' => $storeId]);
             $balance = $stmt->fetchColumn();
-
             echo json_encode(['success' => true, 'balance' => (int) ($balance ?? 0)]);
             break;
 
@@ -255,7 +272,6 @@ try {
             $requestId = $_POST['request_id'] ?? null;
             $subject = trim($_POST['subject'] ?? '');
             $message = trim($_POST['message'] ?? '');
-
             if ($requestId && $subject && $message) {
                 sleep(1);
                 echo json_encode(['success' => true, 'message' => 'Email sent successfully']);

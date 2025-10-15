@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../config/config.php';
 $pageTitle = 'Store Visit Requests - Admin';
 $activeNav = 'buy-in-store';
-
 ob_start();
 ?>
 <div class="min-h-screen bg-gray-50" id="app-container">
@@ -101,9 +100,7 @@ ob_start();
                         <span class="text-gray-500 text-center sm:text-left">to</span>
                         <input type="date" id="endDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
                         <button id="applyCustomRange"
-                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">
-                            Apply
-                        </button>
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">Apply</button>
                     </div>
                 </div>
             </div>
@@ -129,9 +126,8 @@ ob_start();
                             <option value="cancelled">Cancelled</option>
                         </select>
                         <button id="clearFilters"
-                            class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">
-                            Clear Filters
-                        </button>
+                            class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50">Clear
+                            Filters</button>
                     </div>
                 </div>
             </div>
@@ -181,15 +177,11 @@ ob_start();
                 <div class="flex items-center gap-2">
                     <button id="prevPage"
                         class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                        disabled>
-                        Previous
-                    </button>
+                        disabled>Previous</button>
                     <span id="pageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
                     <button id="nextPage"
                         class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                        disabled>
-                        Next
-                    </button>
+                        disabled>Next</button>
                 </div>
             </div>
 
@@ -208,15 +200,11 @@ ob_start();
                 <div class="flex items-center gap-2">
                     <button id="mobilePrevPage"
                         class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                        disabled>
-                        Previous
-                    </button>
+                        disabled>Previous</button>
                     <span id="mobilePageInfo" class="px-3 py-1 text-sm text-gray-600">Page 1 of 1</span>
                     <button id="mobileNextPage"
                         class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-                        disabled>
-                        Next
-                    </button>
+                        disabled>Next</button>
                 </div>
             </div>
         </div>
@@ -317,13 +305,10 @@ ob_start();
             </div>
             <div class="flex justify-end gap-3">
                 <button type="button" onclick="closeDatePickerModal()"
-                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                    Cancel
-                </button>
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
                 <button type="button" onclick="confirmDateChange()"
-                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                    <i class="fas fa-calendar-check mr-2"></i>Update Date
-                </button>
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"><i
+                        class="fas fa-calendar-check mr-2"></i>Update Date</button>
             </div>
         </div>
     </div>
@@ -369,9 +354,7 @@ ob_start();
             </div>
             <div class="flex justify-end gap-3">
                 <button type="button" onclick="closeSmsModal()"
-                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                    Cancel
-                </button>
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
                 <button type="submit" id="sendSmsBtn"
                     class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
                     <i class="fas fa-sms mr-2"></i>Send SMS
@@ -411,9 +394,7 @@ ob_start();
             </div>
             <div class="flex justify-end gap-3">
                 <button type="button" onclick="closeEmailModal()"
-                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                    Cancel
-                </button>
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
                 <button type="submit"
                     class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
                     <i class="fas fa-paper-plane mr-2"></i>Send Email
@@ -438,9 +419,7 @@ ob_start();
             </div>
             <div class="flex justify-end">
                 <button onclick="closeSuccessModal()"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                    OK
-                </button>
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">OK</button>
             </div>
         </div>
     </div>
@@ -460,9 +439,8 @@ ob_start();
                 </div>
             </div>
             <div class="flex justify-end">
-                <button onclick="closeErrorModal()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                    OK
-                </button>
+                <button onclick="closeErrorModal()"
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">OK</button>
             </div>
         </div>
     </div>
@@ -485,9 +463,7 @@ ob_start();
         loadStats();
         setInterval(() => {
             loadStats();
-            if (!currentRequestId) {
-                loadRequests();
-            }
+            if (!currentRequestId) loadRequests();
         }, 30000);
     });
 
@@ -498,10 +474,8 @@ ob_start();
                     b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
                     b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
                 });
-
                 this.classList.add('active', 'bg-primary', 'text-white', 'border-primary');
                 this.classList.remove('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
-
                 const period = this.dataset.period;
                 setDateRangeForPeriod(period);
             });
@@ -510,33 +484,20 @@ ob_start();
         document.getElementById('applyCustomRange').addEventListener('click', function () {
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
-
             if (startDate && endDate) {
                 document.querySelectorAll('.date-filter-btn').forEach(b => {
                     b.classList.remove('active', 'bg-primary', 'text-white', 'border-primary');
                     b.classList.add('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
                 });
-
                 currentPeriod = 'custom';
                 currentPage = 1;
                 loadRequests();
             }
         });
 
-        document.getElementById('searchFilter').addEventListener('input', debounce(() => {
-            currentPage = 1;
-            loadRequests();
-        }, 500));
-
-        document.getElementById('statusFilter').addEventListener('change', () => {
-            currentPage = 1;
-            loadRequests();
-        });
-
-        document.getElementById('storeFilter').addEventListener('change', () => {
-            currentPage = 1;
-            loadRequests();
-        });
+        document.getElementById('searchFilter').addEventListener('input', debounce(() => { currentPage = 1; loadRequests(); }, 500));
+        document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; loadRequests(); });
+        document.getElementById('storeFilter').addEventListener('change', () => { currentPage = 1; loadRequests(); });
 
         document.getElementById('clearFilters').addEventListener('click', function () {
             document.getElementById('searchFilter').value = '';
@@ -546,80 +507,33 @@ ob_start();
             loadRequests();
         });
 
-        document.getElementById('prevPage').addEventListener('click', function () {
-            if (currentPage > 1) {
-                currentPage--;
-                loadRequests();
-            }
-        });
-
-        document.getElementById('nextPage').addEventListener('click', function () {
-            currentPage++;
-            loadRequests();
-        });
-
-        document.getElementById('mobilePrevPage').addEventListener('click', function () {
-            if (currentPage > 1) {
-                currentPage--;
-                loadRequests();
-            }
-        });
-
-        document.getElementById('mobileNextPage').addEventListener('click', function () {
-            currentPage++;
-            loadRequests();
-        });
-
+        document.getElementById('prevPage').addEventListener('click', function () { if (currentPage > 1) { currentPage--; loadRequests(); } });
+        document.getElementById('nextPage').addEventListener('click', function () { currentPage++; loadRequests(); });
+        document.getElementById('mobilePrevPage').addEventListener('click', function () { if (currentPage > 1) { currentPage--; loadRequests(); } });
+        document.getElementById('mobileNextPage').addEventListener('click', function () { currentPage++; loadRequests(); });
         document.getElementById('refreshBtn').addEventListener('click', refreshData);
 
-        document.getElementById('emailForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            sendEmail();
-        });
-
-        document.getElementById('smsForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            sendSms();
-        });
-
+        document.getElementById('emailForm').addEventListener('submit', function (e) { e.preventDefault(); sendEmail(); });
+        document.getElementById('smsForm').addEventListener('submit', function (e) { e.preventDefault(); sendSms(); });
         document.getElementById('smsMessage').addEventListener('input', updateSmsCharCount);
 
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('newVisitDate').setAttribute('min', today);
     }
 
-    function initializeDateFilters() {
-        setDateRangeForPeriod('weekly');
-    }
+    function initializeDateFilters() { setDateRangeForPeriod('weekly'); }
 
     function setDateRangeForPeriod(period) {
         const today = new Date();
         let startDate, endDate;
-
         switch (period) {
-            case 'daily':
-                startDate = new Date(today);
-                endDate = new Date(today);
-                break;
-            case 'weekly':
-                const dayOfWeek = today.getDay();
-                startDate = new Date(today);
-                startDate.setDate(today.getDate() - dayOfWeek);
-                endDate = new Date(startDate);
-                endDate.setDate(startDate.getDate() + 6);
-                break;
-            case 'monthly':
-                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                endDate = new Date(today);
-                break;
-            default:
-                startDate = new Date(today);
-                endDate = new Date(today);
+            case 'daily': startDate = new Date(today); endDate = new Date(today); break;
+            case 'weekly': const d = today.getDay(); startDate = new Date(today); startDate.setDate(today.getDate() - d); endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6); break;
+            case 'monthly': startDate = new Date(today.getFullYear(), today.getMonth(), 1); endDate = new Date(today); break;
+            default: startDate = new Date(today); endDate = new Date(today);
         }
-
         document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
         document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
-
         currentPeriod = period;
         currentPage = 1;
         loadRequests();
@@ -628,7 +542,7 @@ ob_start();
 
     function loadStores() {
         fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getStores`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     const storeFilter = document.getElementById('storeFilter');
@@ -640,19 +554,13 @@ ob_start();
                         storeFilter.appendChild(option);
                     });
                 }
-            })
-            .catch(error => console.error('Error loading stores:', error));
+            });
     }
 
     function loadStats() {
         fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getStats`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    updateStatistics(data.stats);
-                }
-            })
-            .catch(error => console.error('Error loading stats:', error));
+            .then(r => r.json())
+            .then(data => { if (data.success) updateStatistics(data.stats); });
     }
 
     function updateStatistics(stats) {
@@ -672,44 +580,28 @@ ob_start();
             store_filter: document.getElementById('storeFilter').value,
             page: currentPage
         });
-
         fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?${params}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     renderRequestsTable(data.requestData.data);
                     renderRequestsCards(data.requestData.data);
                     updatePagination(data.requestData.total, data.requestData.page);
-                } else {
-                    showError('Failed to load requests');
-                }
+                } else showError('Failed to load requests');
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showError('An error occurred while loading requests');
-            });
+            .catch(() => showError('An error occurred while loading requests'));
     }
 
     function renderRequestsTable(requests) {
         const tbody = document.getElementById('requestsBody');
-
         if (requests.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
-                        <i class="fas fa-inbox text-2xl mb-2"></i>
-                        <div>No requests found</div>
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500"><i class="fas fa-inbox text-2xl mb-2"></i><div>No requests found</div></td></tr>`;
             return;
         }
-
         tbody.innerHTML = requests.map(request => {
             const statusBadge = getStatusBadge(request.status);
             const visitDate = new Date(request.visit_date);
             const visitInfo = getVisitDateInfo(visitDate, request.status);
-
             return `
             <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewRequestDetails('${request.id}')">
                 <td class="px-4 py-3 whitespace-nowrap">
@@ -729,39 +621,26 @@ ob_start();
                     <div class="text-xs ${visitInfo.color}">${visitInfo.text}</div>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        ${request.quantity}
-                    </span>
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">${request.quantity}</span>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
                     <span class="text-sm font-bold text-green-600">UGX ${formatCurrency(request.total_value)}</span>
                 </td>
-                <td class="px-4 py-3 text-center whitespace-nowrap">
-                    ${statusBadge}
-                </td>
-            </tr>
-        `;
+                <td class="px-4 py-3 text-center whitespace-nowrap">${statusBadge}</td>
+            </tr>`;
         }).join('');
     }
 
     function renderRequestsCards(requests) {
         const container = document.getElementById('requestsCards');
-
         if (requests.length === 0) {
-            container.innerHTML = `
-                <div class="p-4 text-center text-gray-500">
-                    <i class="fas fa-inbox text-2xl mb-2"></i>
-                    <div>No requests found</div>
-                </div>
-            `;
+            container.innerHTML = `<div class="p-4 text-center text-gray-500"><i class="fas fa-inbox text-2xl mb-2"></i><div>No requests found</div></div>`;
             return;
         }
-
         container.innerHTML = requests.map(request => {
             const statusBadge = getStatusBadge(request.status);
             const visitDate = new Date(request.visit_date);
             const visitInfo = getVisitDateInfo(visitDate, request.status);
-
             return `
             <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewRequestDetails('${request.id}')">
                 <div class="flex items-start gap-3">
@@ -785,49 +664,60 @@ ob_start();
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
         }).join('');
     }
 
     function getVisitDateInfo(visitDate, status) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        visitDate.setHours(0, 0, 0, 0);
-
-        const diffTime = visitDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (status === 'completed') {
-            return { text: 'Completed', color: 'text-green-600' };
-        }
-
-        if (diffDays > 0) {
-            return { text: `In ${diffDays} day${diffDays > 1 ? 's' : ''}`, color: 'text-blue-600' };
-        } else if (diffDays === 0) {
-            return { text: 'Today', color: 'text-orange-600' };
-        } else {
-            return { text: `${Math.abs(diffDays)} day${Math.abs(diffDays) > 1 ? 's' : ''} overdue`, color: 'text-red-600' };
-        }
+        const today = new Date(); today.setHours(0, 0, 0, 0); visitDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.ceil((visitDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (status === 'completed') return { text: 'Completed', color: 'text-green-600' };
+        if (diffDays > 0) return { text: `In ${diffDays} day${diffDays > 1 ? 's' : ''}`, color: 'text-blue-600' };
+        if (diffDays === 0) return { text: 'Today', color: 'text-orange-600' };
+        return { text: `${Math.abs(diffDays)} day${Math.abs(diffDays) > 1 ? 's' : ''} overdue`, color: 'text-red-600' };
     }
 
     function getStatusBadge(status) {
-        const statusLower = status.toLowerCase();
-        if (statusLower === 'pending') {
-            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>';
-        } else if (statusLower === 'confirmed') {
-            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Confirmed</span>';
-        } else if (statusLower === 'cancelled') {
-            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Cancelled</span>';
-        } else if (statusLower === 'completed') {
-            return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>';
-        }
+        const s = (status || '').toLowerCase();
+        if (s === 'pending') return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>';
+        if (s === 'confirmed') return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Confirmed</span>';
+        if (s === 'cancelled') return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Cancelled</span>';
+        if (s === 'completed') return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>';
         return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
+    }
+
+    function productIdFromRequest(r) { return r.product_id || r.productId || r.pid || null; }
+    function productDetailsUrl(id) { return `${BASE_URL}view/product/${id}`; }
+    async function resolveProductImage(prodId, title) {
+        const base = `${BASE_URL}img/products/${prodId}/`;
+        const placeholder = `https://placehold.co/600x400/e2e8f0/1e293b?text=${encodeURIComponent(title || 'Product')}`;
+        try {
+            const resp = await fetch(base);
+            if (resp.ok) {
+                const html = await resp.text();
+                const matches = [...html.matchAll(/href="([^"]+\.(?:jpe?g|png|webp|gif))"/gi)];
+                if (matches.length) {
+                    const rel = matches[0][1];
+                    return rel.startsWith('http') ? rel : base + rel.replace(/^\.?\//, '');
+                }
+            }
+        } catch (e) { }
+        const names = ['1', 'main', 'cover', 'image', 'product', 'thumb', '0'];
+        const exts = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        for (const n of names) {
+            for (const ext of exts) {
+                const url = `${base}${n}.${ext}`;
+                try {
+                    const r = await fetch(url, { method: 'HEAD' });
+                    if (r.ok) return url;
+                } catch (e) { }
+            }
+        }
+        return placeholder;
     }
 
     function viewRequestDetails(requestId) {
         currentRequestId = requestId;
-
         if (window.innerWidth < 1024) {
             document.getElementById('mobileRequestModal').classList.remove('hidden');
             loadMobileRequestDetails(requestId);
@@ -835,171 +725,72 @@ ob_start();
             document.getElementById('requestModal').classList.remove('hidden');
             loadRequestDetails(requestId);
         }
-
         document.body.style.overflow = 'hidden';
     }
 
     function loadRequestDetails(requestId) {
-        document.getElementById('requestInfo').innerHTML = `
-            <div class="text-center py-4">
-                <i class="fas fa-spinner fa-spin text-xl text-gray-400 mb-2"></i>
-                <p class="text-gray-500 text-sm">Loading...</p>
-            </div>
-        `;
-
-        document.getElementById('requestDetails').innerHTML = `
-            <div class="text-center py-8">
-                <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
-                <p class="text-gray-500">Loading request details...</p>
-            </div>
-        `;
-
+        document.getElementById('requestInfo').innerHTML = `<div class="text-center py-4"><i class="fas fa-spinner fa-spin text-xl text-gray-400 mb-2"></i><p class="text-gray-500 text-sm">Loading...</p></div>`;
+        document.getElementById('requestDetails').innerHTML = `<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i><p class="text-gray-500">Loading request details...</p></div>`;
         fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getRequestDetails&id=${requestId}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    currentRequestData = data.request;
-                    currentStoreId = data.request.store_id;
-                    renderRequestDetails(data.request);
-                } else {
-                    showErrorModal('Failed to load request details');
-                }
+                if (data.success) { currentRequestData = data.request; currentStoreId = data.request.store_id; renderRequestDetails(data.request); }
+                else { showErrorModal('Failed to load request details'); }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showErrorModal('An error occurred while loading details');
-            });
+            .catch(() => showErrorModal('An error occurred while loading details'));
     }
 
     function loadMobileRequestDetails(requestId) {
-        document.getElementById('mobileRequestDetails').innerHTML = `
-            <div class="text-center py-8">
-                <i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i>
-                <p class="text-gray-500">Loading request details...</p>
-            </div>
-        `;
-
+        document.getElementById('mobileRequestDetails').innerHTML = `<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-gray-400 mb-2"></i><p class="text-gray-500">Loading request details...</p></div>`;
         fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getRequestDetails&id=${requestId}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    currentRequestData = data.request;
-                    currentStoreId = data.request.store_id;
-                    renderMobileRequestDetails(data.request);
-                } else {
-                    showErrorModal('Failed to load request details');
-                }
+                if (data.success) { currentRequestData = data.request; currentStoreId = data.request.store_id; renderMobileRequestDetails(data.request); }
+                else { showErrorModal('Failed to load request details'); }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showErrorModal('An error occurred while loading details');
-            });
+            .catch(() => showErrorModal('An error occurred while loading details'));
     }
 
     function renderRequestDetails(request) {
         const visitDate = new Date(request.visit_date);
         const visitInfo = getVisitDateInfo(visitDate, request.status);
-
         document.getElementById('modalTitle').textContent = `${request.first_name} ${request.last_name}`;
         document.getElementById('modalSubtitle').textContent = `Visit Request - ${request.product_title}`;
-
         const statusIndicator = document.getElementById('modalStatusIndicator');
-        const statusColors = {
-            'pending': { bg: 'bg-yellow-100 border-yellow-200', text: 'text-yellow-700', dot: 'bg-yellow-500' },
-            'confirmed': { bg: 'bg-blue-100 border-blue-200', text: 'text-blue-700', dot: 'bg-blue-500' },
-            'completed': { bg: 'bg-green-100 border-green-200', text: 'text-green-700', dot: 'bg-green-500' },
-            'cancelled': { bg: 'bg-red-100 border-red-200', text: 'text-red-700', dot: 'bg-red-500' }
-        };
+        const statusColors = { 'pending': { bg: 'bg-yellow-100 border-yellow-200', text: 'text-yellow-700', dot: 'bg-yellow-500' }, 'confirmed': { bg: 'bg-blue-100 border-blue-200', text: 'text-blue-700', dot: 'bg-blue-500' }, 'completed': { bg: 'bg-green-100 border-green-200', text: 'text-green-700', dot: 'bg-green-500' }, 'cancelled': { bg: 'bg-red-100 border-red-200', text: 'text-red-700', dot: 'bg-red-500' } };
         const statusColor = statusColors[request.status] || statusColors['pending'];
-
-        statusIndicator.innerHTML = `
-            <div class="w-2 h-2 ${statusColor.dot} rounded-full animate-pulse"></div>
-            <span class="text-xs font-medium ${statusColor.text}">${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</span>
-        `;
+        statusIndicator.innerHTML = `<div class="w-2 h-2 ${statusColor.dot} rounded-full animate-pulse"></div><span class="text-xs font-medium ${statusColor.text}">${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</span>`;
         statusIndicator.className = `flex items-center gap-2 px-3 py-1 ${statusColor.bg} border rounded-full`;
 
         document.getElementById('requestInfo').innerHTML = `
             <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
                 <h4 class="font-semibold text-gray-900 mb-3 text-sm">Customer Details</h4>
                 <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Name:</span>
-                        <span class="font-medium">${request.first_name} ${request.last_name}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Email:</span>
-                        <span class="font-medium">${request.email}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Phone:</span>
-                        <span class="font-medium">${request.phone}</span>
-                    </div>
-                    ${request.alt_contact ? `
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Alt Contact:</span>
-                            <span class="font-medium">${request.alt_contact}</span>
-                        </div>
-                    ` : ''}
-                    ${request.alt_email ? `
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Alt Email:</span>
-                            <span class="font-medium">${request.alt_email}</span>
-                        </div>
-                    ` : ''}
+                    <div class="flex justify-between"><span class="text-gray-600">Name:</span><span class="font-medium">${request.first_name} ${request.last_name}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Email:</span><span class="font-medium">${request.email}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Phone:</span><span class="font-medium">${request.phone}</span></div>
+                    ${request.alt_contact ? `<div class="flex justify-between"><span class="text-gray-600">Alt Contact:</span><span class="font-medium">${request.alt_contact}</span></div>` : ''}
+                    ${request.alt_email ? `<div class="flex justify-between"><span class="text-gray-600">Alt Email:</span><span class="font-medium">${request.alt_email}</span></div>` : ''}
                 </div>
             </div>
 
             <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
                 <h4 class="font-semibold text-gray-900 mb-3 text-sm">Store Details</h4>
                 <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Store:</span>
-                        <span class="font-medium">${request.store_name}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Location:</span>
-                        <span class="font-medium">${request.store_region}, ${request.store_district}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Owner:</span>
-                        <span class="font-medium">${request.owner_first_name} ${request.owner_last_name}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Contact:</span>
-                        <span class="font-medium">${request.store_phone}</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
-                <h4 class="font-semibold text-gray-900 mb-3 text-sm">Visit Information</h4>
-                <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Visit Date:</span>
-                        <span class="font-medium">${formatDate(request.visit_date)}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Status:</span>
-                        <span class="${visitInfo.color} font-medium">${visitInfo.text}</span>
-                    </div>
+                    <div class="flex justify-between"><span class="text-gray-600">Store:</span><span class="font-medium">${request.store_name}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Location:</span><span class="font-medium">${request.store_region}, ${request.store_district}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Owner:</span><span class="font-medium">${request.owner_first_name} ${request.owner_last_name}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Contact:</span><span class="font-medium">${request.store_phone}</span></div>
                 </div>
             </div>
 
             <div class="bg-white rounded-lg p-4 border border-gray-200">
                 <h4 class="font-semibold text-gray-900 mb-3 text-sm">Product Details</h4>
                 <div class="space-y-2 text-sm">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Quantity:</span>
-                        <span class="font-medium">${request.quantity}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Unit Price:</span>
-                        <span class="font-medium">UGX ${formatCurrency(request.price)}</span>
-                    </div>
-                    <div class="flex justify-between border-t pt-2">
-                        <span class="text-gray-900 font-medium">Total Value:</span>
-                        <span class="font-bold text-green-600">UGX ${formatCurrency(request.total_value)}</span>
-                    </div>
+                    <div class="flex justify-between"><span class="text-gray-600">Quantity:</span><span class="font-medium">${request.quantity}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Unit Price:</span><span class="font-medium">UGX ${formatCurrency(request.price)}</span></div>
+                    <div class="flex justify-between border-t pt-2"><span class="text-gray-900 font-medium">Total Value:</span><span class="font-bold text-green-600">UGX ${formatCurrency(request.total_value)}</span></div>
+                    <div class="pt-2"><a id="productTinyLinkLeft" href="#" target="_blank" class="text-blue-600 hover:text-blue-800 text-xs underline">Open product page</a></div>
                 </div>
             </div>
         `;
@@ -1007,63 +798,48 @@ ob_start();
         document.getElementById('requestDetails').innerHTML = `
             <div class="space-y-6">
                 <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-store mr-3 text-blue-600"></i>Store Information
-                    </h4>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-store mr-3 text-blue-600"></i>Store Information</h4>
                     <div class="space-y-3">
                         <div>
                             <h5 class="font-semibold text-gray-900 text-lg">${request.store_name}</h5>
                             <p class="text-gray-600 text-sm mt-1">${request.store_address}</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-sm font-medium text-gray-600">Owner</label>
-                                <p class="font-medium">${request.owner_first_name} ${request.owner_last_name}</p>
-                            </div>
-                            <div>
-                                <label class="text-sm font-medium text-gray-600">Location</label>
-                                <p class="font-medium">${request.store_region}, ${request.store_district}</p>
-                            </div>
+                            <div><label class="text-sm font-medium text-gray-600">Owner</label><p class="font-medium">${request.owner_first_name} ${request.owner_last_name}</p></div>
+                            <div><label class="text-sm font-medium text-gray-600">Location</label><p class="font-medium">${request.store_region}, ${request.store_district}</p></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-box mr-3 text-blue-600"></i>Product Information
-                    </h4>
-                    <div class="space-y-3">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-box mr-3 text-blue-600"></i>Product Information</h4>
+                    <div class="space-y-4">
+                        <div class="relative">
+                            <img id="productImage" src="https://placehold.co/600x300/e2e8f0/1e293b?text=Loading" alt="Product Image" class="w-full h-48 object-cover rounded-lg border">
+                            <a id="productLink" href="#" target="_blank" class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition text-white font-medium rounded-lg">View Details</a>
+                        </div>
                         <div>
-                            <h5 class="font-semibold text-gray-900 text-lg">${request.product_title}</h5>
+                            <h5 class="font-semibold text-gray-900 text-lg flex items-center gap-2">${request.product_title}
+                                <a id="productTinyLink" href="#" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm underline">Product page</a>
+                            </h5>
                             ${request.product_description ? `<p class="text-gray-600 text-sm mt-1">${request.product_description}</p>` : ''}
                         </div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-sm font-medium text-gray-600">Package</label>
-                                <p class="font-medium">${request.package_size} ${request.si_unit} ${request.package_name}</p>
-                            </div>
-                            <div>
-                                <label class="text-sm font-medium text-gray-600">Category</label>
-                                <p class="font-medium">${request.price_category.charAt(0).toUpperCase() + request.price_category.slice(1)}</p>
-                            </div>
+                            <div><label class="text-sm font-medium text-gray-600">Package</label><p class="font-medium">${request.package_size} ${request.si_unit} ${request.package_name}</p></div>
+                            <div><label class="text-sm font-medium text-gray-600">Category</label><p class="font-medium">${request.price_category.charAt(0).toUpperCase() + request.price_category.slice(1)}</p></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-calendar-check mr-3 text-green-600"></i>Visit Details
-                    </h4>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-calendar-check mr-3 text-green-600"></i>Visit Details</h4>
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-sm font-medium text-gray-600">Requested Date</label>
                                 <div class="flex items-center gap-2">
                                     <p class="font-medium">${formatDate(request.visit_date)}</p>
-                                    <button onclick="openDatePicker('${request.id}', '${request.visit_date}')" 
-                                        class="text-blue-600 hover:text-blue-800 text-sm p-1 rounded hover:bg-blue-50">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
+                                    <button onclick="openDatePicker('${request.id}', '${request.visit_date}')" class="text-blue-600 hover:text-blue-800 text-sm p-1 rounded hover:bg-blue-50"><i class="fas fa-edit"></i></button>
                                 </div>
                                 <p class="text-sm ${visitInfo.color}">${visitInfo.text}</p>
                             </div>
@@ -1073,102 +849,58 @@ ob_start();
                                 <p class="text-sm text-gray-500">${formatTime(request.created_at)}</p>
                             </div>
                         </div>
-                        ${request.notes ? `
-                            <div class="border-t pt-4">
-                                <label class="text-sm font-medium text-gray-600">Customer Notes</label>
-                                <p class="mt-1 text-gray-900 bg-gray-50 p-3 rounded border">${request.notes}</p>
-                            </div>
-                        ` : ''}
+                        ${request.notes ? `<div class="border-t pt-4"><label class="text-sm font-medium text-gray-600">Customer Notes</label><p class="mt-1 text-gray-900 bg-gray-50 p-3 rounded border">${request.notes}</p></div>` : ''}
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-phone mr-3 text-purple-600"></i>Communication
-                        </h4>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-phone mr-3 text-purple-600"></i>Communication</h4>
                         <div class="grid grid-cols-1 gap-3">
                             <div class="flex items-center p-3 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition-colors cursor-pointer" onclick="callCustomer('${request.phone}')">
-                                <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mr-3">
-                                    <i class="fas fa-phone text-white text-sm"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-medium text-green-900">Call Customer</p>
-                                    <p class="text-sm text-green-700">${request.phone}</p>
-                                </div>
+                                <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center mr-3"><i class="fas fa-phone text-white text-sm"></i></div>
+                                <div class="flex-1"><p class="font-medium text-green-900">Call Customer</p><p class="text-sm text-green-700">${request.phone}</p></div>
                                 <i class="fas fa-chevron-right text-green-600"></i>
                             </div>
-                            
                             <div class="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer" onclick="openEmailModal('${request.email}','${request.first_name} ${request.last_name}','${request.product_title}')">
-                                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                                    <i class="fas fa-envelope text-white text-sm"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-medium text-blue-900">Send Email</p>
-                                    <p class="text-sm text-blue-700">${request.email}</p>
-                                </div>
+                                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3"><i class="fas fa-envelope text-white text-sm"></i></div>
+                                <div class="flex-1"><p class="font-medium text-blue-900">Send Email</p><p class="text-sm text-blue-700">${request.email}</p></div>
                                 <i class="fas fa-chevron-right text-blue-600"></i>
                             </div>
-                            
                             <div class="flex items-center p-3 bg-purple-50 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors cursor-pointer" onclick="openSmsModal('${request.phone}','${request.first_name}')">
-                                <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
-                                    <i class="fas fa-sms text-white text-sm"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-medium text-purple-900">Send SMS</p>
-                                    <p class="text-sm text-purple-700">Text message</p>
-                                </div>
+                                <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mr-3"><i class="fas fa-sms text-white text-sm"></i></div>
+                                <div class="flex-1"><p class="font-medium text-purple-900">Send SMS</p><p class="text-sm text-purple-700">Text message</p></div>
                                 <i class="fas fa-chevron-right text-purple-600"></i>
                             </div>
-                            
-                            ${request.alt_contact ? `
-                                <div class="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer" onclick="callCustomer('${request.alt_contact}')">
-                                    <div class="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center mr-3">
-                                        <i class="fas fa-phone text-white text-sm"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="font-medium text-gray-900">Call Alt. Number</p>
-                                        <p class="text-sm text-gray-700">${request.alt_contact}</p>
-                                    </div>
-                                    <i class="fas fa-chevron-right text-gray-600"></i>
-                                </div>
-                            ` : ''}
+                            ${request.alt_contact ? `<div class="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer" onclick="callCustomer('${request.alt_contact}')"><div class="w-10 h-10 bg-gray-600 rounded-lg flex items-center justify-center mr-3"><i class="fas fa-phone text-white text-sm"></i></div><div class="flex-1"><p class="font-medium text-gray-900">Call Alt. Number</p><p class="text-sm text-gray-700">${request.alt_contact}</p></div><i class="fas fa-chevron-right text-gray-600"></i></div>` : ''}
                         </div>
                     </div>
-                    
                     <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-edit mr-3 text-orange-600"></i>Status Management
-                        </h4>
-                        <div class="grid grid-cols-1 gap-3">
-                            ${getStatusCards(request.id, request.status)}
-                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center"><i class="fas fa-edit mr-3 text-orange-600"></i>Status Management</h4>
+                        <div class="grid grid-cols-1 gap-3">${getStatusCards(request.id, request.status)}</div>
                     </div>
                 </div>
             </div>
         `;
+
+        const pid = productIdFromRequest(request);
+        const title = request.product_title || 'Product';
+        const pUrl = pid ? productDetailsUrl(pid) : '#';
+        const tinyL = document.getElementById('productTinyLinkLeft'); if (tinyL) tinyL.href = pUrl;
+        const tiny = document.getElementById('productTinyLink'); if (tiny) tiny.href = pUrl;
+        const link = document.getElementById('productLink'); if (link) link.href = pUrl;
+        if (pid) resolveProductImage(pid, title).then(url => { const img = document.getElementById('productImage'); if (img) img.src = url; });
     }
 
     function renderMobileRequestDetails(request) {
         const visitDate = new Date(request.visit_date);
         const visitInfo = getVisitDateInfo(visitDate, request.status);
-
         document.getElementById('mobileModalTitle').textContent = `${request.first_name} ${request.last_name}`;
         document.getElementById('mobileModalSubtitle').textContent = request.product_title;
-
         const mobileStatusIndicator = document.getElementById('mobileModalStatusIndicator');
-        const statusColors = {
-            'pending': 'bg-yellow-500',
-            'confirmed': 'bg-blue-500',
-            'completed': 'bg-green-500',
-            'cancelled': 'bg-red-500'
-        };
+        const statusColors = { 'pending': 'bg-yellow-500', 'confirmed': 'bg-blue-500', 'completed': 'bg-green-500', 'cancelled': 'bg-red-500' };
         const statusColor = statusColors[request.status] || statusColors['pending'];
-
-        mobileStatusIndicator.innerHTML = `
-            <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <span class="text-xs font-medium">${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</span>
-        `;
+        mobileStatusIndicator.innerHTML = `<div class="w-2 h-2 bg-white rounded-full animate-pulse"></div><span class="text-xs font-medium">${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</span>`;
         mobileStatusIndicator.className = `flex items-center gap-2 px-2 py-1 ${statusColor} rounded-full`;
 
         document.getElementById('mobileRequestDetails').innerHTML = `
@@ -1176,38 +908,18 @@ ob_start();
                 <div class="bg-white rounded-lg p-4 border border-gray-200">
                     <h4 class="font-semibold text-gray-900 mb-3">Customer Information</h4>
                     <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Email:</span>
-                            <span class="font-medium">${request.email}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Phone:</span>
-                            <span class="font-medium">${request.phone}</span>
-                        </div>
-                        ${request.alt_contact ? `
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Alt Contact:</span>
-                                <span class="font-medium">${request.alt_contact}</span>
-                            </div>
-                        ` : ''}
+                        <div class="flex justify-between"><span class="text-gray-600">Email:</span><span class="font-medium">${request.email}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Phone:</span><span class="font-medium">${request.phone}</span></div>
+                        ${request.alt_contact ? `<div class="flex justify-between"><span class="text-gray-600">Alt Contact:</span><span class="font-medium">${request.alt_contact}</span></div>` : ''}
                     </div>
                 </div>
 
                 <div class="bg-white rounded-lg p-4 border border-gray-200">
                     <h4 class="font-semibold text-gray-900 mb-3">Store Information</h4>
                     <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Store:</span>
-                            <span class="font-medium">${request.store_name}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Location:</span>
-                            <span class="font-medium">${request.store_region}, ${request.store_district}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Owner:</span>
-                            <span class="font-medium">${request.owner_first_name} ${request.owner_last_name}</span>
-                        </div>
+                        <div class="flex justify-between"><span class="text-gray-600">Store:</span><span class="font-medium">${request.store_name}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Location:</span><span class="font-medium">${request.store_region}, ${request.store_district}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Owner:</span><span class="font-medium">${request.owner_first_name} ${request.owner_last_name}</span></div>
                     </div>
                 </div>
 
@@ -1219,21 +931,11 @@ ob_start();
                             <p class="text-sm text-gray-600">${request.package_size} ${request.si_unit} ${request.package_name}</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span class="text-gray-600">Quantity:</span>
-                                <span class="font-medium ml-1">${request.quantity}</span>
-                            </div>
-                            <div class="col-span-2">
-                                <span class="text-gray-600">Unit Price:</span>
-                                <span class="font-medium ml-1">UGX ${formatCurrency(request.price)}</span>
-                            </div>
+                            <div><span class="text-gray-600">Quantity:</span><span class="font-medium ml-1">${request.quantity}</span></div>
+                            <div class="col-span-2"><span class="text-gray-600">Unit Price:</span><span class="font-medium ml-1">UGX ${formatCurrency(request.price)}</span></div>
                         </div>
-                        <div class="border-t pt-3">
-                            <div class="flex justify-between items-center">
-                                <span class="font-medium text-gray-900">Total Value:</span>
-                                <span class="font-bold text-green-600">UGX ${formatCurrency(request.total_value)}</span>
-                            </div>
-                        </div>
+                        <div class="border-t pt-3"><div class="flex justify-between items-center"><span class="font-medium text-gray-900">Total Value:</span><span class="font-bold text-green-600">UGX ${formatCurrency(request.total_value)}</span></div></div>
+                        <a id="productLinkMobile" class="text-blue-600 underline text-sm" target="_blank">Open product page</a>
                     </div>
                 </div>
 
@@ -1244,51 +946,37 @@ ob_start();
                             <span class="text-gray-600">Visit Date:</span>
                             <div class="flex items-center gap-2">
                                 <span class="font-medium">${formatDate(request.visit_date)}</span>
-                                <button onclick="openDatePicker('${request.id}', '${request.visit_date}')" 
-                                    class="text-blue-600 hover:text-blue-800 text-sm p-1 rounded hover:bg-blue-50">
-                                    <i class="fas fa-edit"></i>
-                                </button>
+                                <button onclick="openDatePicker('${request.id}', '${request.visit_date}')" class="text-blue-600 hover:text-blue-800 text-sm p-1 rounded hover:bg-blue-50"><i class="fas fa-edit"></i></button>
                             </div>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Status:</span>
-                            <span class="${visitInfo.color} font-medium">${visitInfo.text}</span>
-                        </div>
+                        <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="${visitInfo.color} font-medium">${visitInfo.text}</span></div>
                     </div>
-                    ${request.notes ? `
-                        <div class="mt-4 pt-4 border-t">
-                            <label class="text-sm font-medium text-gray-600">Customer Notes</label>
-                            <p class="mt-1 text-gray-900 bg-gray-50 p-3 rounded text-sm">${request.notes}</p>
-                        </div>
-                    ` : ''}
+                    ${request.notes ? `<div class="mt-4 pt-4 border-t"><label class="text-sm font-medium text-gray-600">Customer Notes</label><p class="mt-1 text-gray-900 bg-gray-50 p-3 rounded text-sm">${request.notes}</p></div>` : ''}
                 </div>
 
                 <div class="bg-white rounded-lg p-4 border border-gray-200">
                     <h4 class="font-semibold text-gray-900 mb-3">Quick Actions</h4>
                     <div class="grid grid-cols-2 gap-3">
-                        <button onclick="callCustomer('${request.phone}')" 
-                            class="flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
-                            <i class="fas fa-phone mr-2"></i>Call
-                        </button>
-                        <button onclick="openSmsModal('${request.phone}','${request.first_name}')" 
-                            class="flex items-center justify-center px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
-                            <i class="fas fa-sms mr-2"></i>SMS
-                        </button>
-                        <button onclick="openEmailModal('${request.email}','${request.first_name} ${request.last_name}','${request.product_title}')" 
-                            class="col-span-2 flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                            <i class="fas fa-envelope mr-2"></i>Send Email
-                        </button>
+                        <button onclick="callCustomer('${request.phone}')" class="flex items-center justify-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"><i class="fas fa-phone mr-2"></i>Call</button>
+                        <button onclick="openSmsModal('${request.phone}','${request.first_name}')" class="flex items-center justify-center px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"><i class="fas fa-sms mr-2"></i>SMS</button>
+                        <button onclick="openEmailModal('${request.email}','${request.first_name} ${request.last_name}','${request.product_title}')" class="col-span-2 flex items-center justify-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"><i class="fas fa-envelope mr-2"></i>Send Email</button>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-lg p-4 border border-gray-200">
                     <h4 class="font-semibold text-gray-900 mb-3">Update Status</h4>
-                    <div class="grid grid-cols-2 gap-2">
-                        ${getStatusCards(request.id, request.status, true)}
-                    </div>
+                    <div class="grid grid-cols-2 gap-2">${getStatusCards(request.id, request.status, true)}</div>
                 </div>
             </div>
         `;
+
+        const pid = productIdFromRequest(request);
+        const title = request.product_title || 'Product';
+        const pUrl = pid ? productDetailsUrl(pid) : '#';
+        const linkM = document.getElementById('productLinkMobile'); if (linkM) linkM.href = pUrl;
+        if (pid) resolveProductImage(pid, title).then(url => {
+            const im = document.getElementById('productImageMobile'); if (im) im.src = url;
+        });
     }
 
     function getStatusCards(requestId, currentStatus, isMobile = false) {
@@ -1298,122 +986,61 @@ ob_start();
             { key: 'completed', label: 'Completed', color: 'bg-green-50 border-green-200 hover:bg-green-100', textColor: 'text-green-900', iconColor: 'bg-green-500', icon: 'fa-check-double' },
             { key: 'cancelled', label: 'Cancelled', color: 'bg-red-50 border-red-200 hover:bg-red-100', textColor: 'text-red-900', iconColor: 'bg-red-500', icon: 'fa-times-circle' }
         ];
-
-        return statuses
-            .filter(status => status.key !== currentStatus.toLowerCase())
-            .map(status => {
-                if (isMobile) {
-                    return `
-                        <button onclick="updateRequestStatus('${requestId}','${status.key}')" 
-                            class="flex items-center justify-center px-3 py-2 ${status.color} border rounded-lg transition-colors text-sm ${status.textColor}">
-                            <i class="fas ${status.icon} mr-2"></i>${status.label.substring(0, 4)}
-                        </button>
-                    `;
-                } else {
-                    return `
-                        <div class="flex items-center p-3 ${status.color} border rounded-lg hover:shadow-sm transition-all cursor-pointer" onclick="updateRequestStatus('${requestId}','${status.key}')">
-                            <div class="w-10 h-10 ${status.iconColor} rounded-lg flex items-center justify-center mr-3">
-                                <i class="fas ${status.icon} text-white text-sm"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium ${status.textColor}">Mark as ${status.label}</p>
-                                <p class="text-sm ${status.textColor} opacity-75">Update request status</p>
-                            </div>
-                            <i class="fas fa-chevron-right ${status.textColor}"></i>
-                        </div>
-                    `;
-                }
-            }).join('');
+        return statuses.filter(s => s.key !== (currentStatus || '').toLowerCase()).map(status => {
+            if (isMobile) {
+                return `<button onclick="updateRequestStatus('${requestId}','${status.key}')" class="flex items-center justify-center px-3 py-2 ${status.color} border rounded-lg transition-colors text-sm ${status.textColor}"><i class="fas ${status.icon} mr-2"></i>${status.label.substring(0, 4)}</button>`;
+            } else {
+                return `<div class="flex items-center p-3 ${status.color} border rounded-lg hover:shadow-sm transition-all cursor-pointer" onclick="updateRequestStatus('${requestId}','${status.key}')"><div class="w-10 h-10 ${status.iconColor} rounded-lg flex items-center justify-center mr-3"><i class="fas ${status.icon} text-white text-sm"></i></div><div class="flex-1"><p class="font-medium ${status.textColor}">Mark as ${status.label}</p><p class="text-sm ${status.textColor} opacity-75">Update request status</p></div><i class="fas fa-chevron-right ${status.textColor}"></i></div>`;
+            }
+        }).join('');
     }
 
-    function openDatePicker(requestId, currentDate) {
-        currentRequestId = requestId;
-        document.getElementById('newVisitDate').value = currentDate;
-        document.getElementById('datePickerModal').classList.remove('hidden');
-    }
+    function openDatePicker(requestId, currentDate) { currentRequestId = requestId; document.getElementById('newVisitDate').value = currentDate; document.getElementById('datePickerModal').classList.remove('hidden'); }
 
     function confirmDateChange() {
         const newDate = document.getElementById('newVisitDate').value;
         const today = new Date().toISOString().split('T')[0];
-
-        if (!newDate) {
-            showErrorModal('Please select a date');
-            return;
-        }
-
-        if (newDate < today) {
-            showErrorModal('Visit date cannot be in the past');
-            return;
-        }
-
+        if (!newDate) { showErrorModal('Please select a date'); return; }
+        if (newDate < today) { showErrorModal('Visit date cannot be in the past'); return; }
         const formData = new FormData();
         formData.append('request_id', currentRequestId);
         formData.append('visit_date', newDate);
-
-        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=updateVisitDate`, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=updateVisitDate`, { method: 'POST', body: formData })
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     closeDatePickerModal();
                     showSuccessModal('Visit date updated successfully');
                     setTimeout(() => {
                         closeSuccessModal();
-                        if (window.innerWidth < 1024) {
-                            loadMobileRequestDetails(currentRequestId);
-                        } else {
-                            loadRequestDetails(currentRequestId);
-                        }
+                        if (window.innerWidth < 1024) loadMobileRequestDetails(currentRequestId); else loadRequestDetails(currentRequestId);
                         loadRequests();
                     }, 1500);
-                } else {
-                    showErrorModal(data.message || 'Failed to update visit date');
-                }
+                } else showErrorModal(data.message || 'Failed to update visit date');
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showErrorModal('An error occurred while updating visit date');
-            });
+            .catch(() => showErrorModal('An error occurred while updating visit date'));
     }
 
     function updateRequestStatus(requestId, newStatus) {
         const formData = new FormData();
         formData.append('request_id', requestId);
         formData.append('status', newStatus);
-
-        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=updateRequestStatus`, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=updateRequestStatus`, { method: 'POST', body: formData })
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     showSuccessModal('Status updated successfully');
                     setTimeout(() => {
                         closeSuccessModal();
-                        if (window.innerWidth < 1024) {
-                            loadMobileRequestDetails(requestId);
-                        } else {
-                            loadRequestDetails(requestId);
-                        }
-                        loadRequests();
-                        loadStats();
+                        if (window.innerWidth < 1024) loadMobileRequestDetails(requestId); else loadRequestDetails(requestId);
+                        loadRequests(); loadStats();
                     }, 1500);
-                } else {
-                    showErrorModal(data.message || 'Failed to update status');
-                }
+                } else showErrorModal(data.message || 'Failed to update status');
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showErrorModal('An error occurred while updating status');
-            });
+            .catch(() => showErrorModal('An error occurred while updating status'));
     }
 
-    function callCustomer(phone) {
-        window.location.href = `tel:${phone}`;
-    }
+    function callCustomer(phone) { window.location.href = `tel:${phone}`; }
 
     function openEmailModal(email, customerName, productTitle) {
         document.getElementById('emailTo').value = email;
@@ -1426,15 +1053,13 @@ ob_start();
         document.getElementById('smsTo').value = phone;
         document.getElementById('smsMessage').value = `Hello ${customerName}, regarding your store visit request. Please contact us for more details.`;
         updateSmsCharCount();
-
         if (currentStoreId) {
             fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getSmsBalance&store_id=${currentStoreId}`)
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
                     if (data.success) {
                         smsBalance = data.balance;
                         document.getElementById('smsBalance').textContent = smsBalance;
-
                         if (smsBalance < 1) {
                             document.getElementById('sendSmsBtn').disabled = true;
                             document.getElementById('sendSmsBtn').innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Insufficient Credits';
@@ -1445,10 +1070,8 @@ ob_start();
                             document.getElementById('sendSmsBtn').className = 'px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors';
                         }
                     }
-                })
-                .catch(error => console.error('Error loading SMS balance:', error));
+                });
         }
-
         document.getElementById('smsModal').classList.remove('hidden');
     }
 
@@ -1462,50 +1085,22 @@ ob_start();
         formData.append('request_id', currentRequestId);
         formData.append('subject', document.getElementById('emailSubject').value);
         formData.append('message', document.getElementById('emailMessage').value);
-
-        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=sendEmail`, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showSuccessModal('Email sent successfully');
-                    closeEmailModal();
-                } else {
-                    showErrorModal(data.message || 'Failed to send email');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showErrorModal('An error occurred while sending email');
-            });
+        fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=sendEmail`, { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => { if (data.success) { showSuccessModal('Email sent successfully'); closeEmailModal(); } else showErrorModal(data.message || 'Failed to send email'); })
+            .catch(() => showErrorModal('An error occurred while sending email'));
     }
 
     function sendSms() {
-        if (smsBalance < 1) {
-            showErrorModal('Insufficient SMS credits. Please purchase credits to send SMS.');
-            return;
-        }
-
+        if (smsBalance < 1) { showErrorModal('Insufficient SMS credits. Please purchase credits to send SMS.'); return; }
         const message = document.getElementById('smsMessage').value.trim();
         const phone = document.getElementById('smsTo').value;
         const sendBtn = document.getElementById('sendSmsBtn');
-
-        if (!message) {
-            showErrorModal('Please enter an SMS message.');
-            return;
-        }
-
-        if (!phone) {
-            showErrorModal('Recipient phone number is missing.');
-            return;
-        }
-
+        if (!message) { showErrorModal('Please enter an SMS message.'); return; }
+        if (!phone) { showErrorModal('Recipient phone number is missing.'); return; }
         sendBtn.disabled = true;
         sendBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Sending...`;
         sendBtn.classList.add('cursor-not-allowed', 'opacity-75');
-
         const recipients = JSON.stringify([phone]);
         const formData = new FormData();
         formData.append('action', 'sendSms');
@@ -1513,26 +1108,17 @@ ob_start();
         formData.append('recipients', recipients);
         formData.append('send_type', 'single');
         formData.append('send_option', 'now');
-
-        fetch(`${BASE_URL}vendor-store/fetch/manageSmsCenter.php`, {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
+        fetch(`${BASE_URL}vendor-store/fetch/manageSmsCenter.php`, { method: 'POST', body: formData })
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     smsBalance = data.data?.new_balance ?? (smsBalance - 1);
                     document.getElementById('smsBalance').textContent = smsBalance;
                     showSuccessModal('SMS sent successfully');
                     closeSmsModal();
-                } else {
-                    showErrorModal(data.message || 'Failed to send SMS');
-                }
+                } else showErrorModal(data.message || 'Failed to send SMS');
             })
-            .catch(error => {
-                console.error('Error sending SMS:', error);
-                showErrorModal('An error occurred while sending SMS');
-            })
+            .catch(() => showErrorModal('An error occurred while sending SMS'))
             .finally(() => {
                 sendBtn.disabled = false;
                 sendBtn.innerHTML = `<i class="fas fa-sms mr-2"></i>Send SMS`;
@@ -1540,66 +1126,19 @@ ob_start();
             });
     }
 
-    function closeRequestModal() {
-        document.getElementById('requestModal').classList.add('hidden');
-        document.body.style.overflow = '';
-        currentRequestId = null;
-        currentRequestData = null;
-        currentStoreId = null;
-    }
-
-    function closeMobileRequestModal() {
-        document.getElementById('mobileRequestModal').classList.add('hidden');
-        document.body.style.overflow = '';
-        currentRequestId = null;
-        currentRequestData = null;
-        currentStoreId = null;
-    }
-
-    function closeDatePickerModal() {
-        document.getElementById('datePickerModal').classList.add('hidden');
-    }
-
-    function closeEmailModal() {
-        document.getElementById('emailModal').classList.add('hidden');
-        document.getElementById('emailMessage').value = '';
-    }
-
-    function closeSmsModal() {
-        document.getElementById('smsModal').classList.add('hidden');
-        document.getElementById('smsMessage').value = '';
-        document.getElementById('smsCharCount').textContent = '0';
-    }
-
-    function showSuccessModal(message) {
-        document.getElementById('successMessage').textContent = message;
-        document.getElementById('successModal').classList.remove('hidden');
-    }
-
-    function closeSuccessModal() {
-        document.getElementById('successModal').classList.add('hidden');
-    }
-
-    function showErrorModal(message) {
-        document.getElementById('errorMessage').textContent = message;
-        document.getElementById('errorModal').classList.remove('hidden');
-    }
-
-    function closeErrorModal() {
-        document.getElementById('errorModal').classList.add('hidden');
-    }
-
+    function closeRequestModal() { document.getElementById('requestModal').classList.add('hidden'); document.body.style.overflow = ''; currentRequestId = null; currentRequestData = null; currentStoreId = null; }
+    function closeMobileRequestModal() { document.getElementById('mobileRequestModal').classList.add('hidden'); document.body.style.overflow = ''; currentRequestId = null; currentRequestData = null; currentStoreId = null; }
+    function closeDatePickerModal() { document.getElementById('datePickerModal').classList.add('hidden'); }
+    function closeEmailModal() { document.getElementById('emailModal').classList.add('hidden'); document.getElementById('emailMessage').value = ''; }
+    function closeSmsModal() { document.getElementById('smsModal').classList.add('hidden'); document.getElementById('smsMessage').value = ''; document.getElementById('smsCharCount').textContent = '0'; }
+    function showSuccessModal(message) { document.getElementById('successMessage').textContent = message; document.getElementById('successModal').classList.remove('hidden'); }
+    function closeSuccessModal() { document.getElementById('successModal').classList.add('hidden'); }
+    function showErrorModal(message) { document.getElementById('errorMessage').textContent = message; document.getElementById('errorModal').classList.remove('hidden'); }
+    function closeErrorModal() { document.getElementById('errorModal').classList.add('hidden'); }
     function showError(message) {
         const tbody = document.getElementById('requestsBody');
         const cards = document.getElementById('requestsCards');
-
-        const errorContent = `
-            <div class="px-4 py-8 text-center text-red-500">
-                <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
-                <div>${message}</div>
-            </div>
-        `;
-
+        const errorContent = `<div class="px-4 py-8 text-center text-red-500"><i class="fas fa-exclamation-triangle text-2xl mb-2"></i><div>${message}</div></div>`;
         tbody.innerHTML = `<tr><td colspan="7">${errorContent}</td></tr>`;
         cards.innerHTML = errorContent;
     }
@@ -1608,80 +1147,41 @@ ob_start();
         const totalPages = Math.ceil(total / itemsPerPage);
         const startIndex = (page - 1) * itemsPerPage;
         const endIndex = Math.min(startIndex + itemsPerPage, total);
-
         document.getElementById('showingCount').textContent = `${startIndex + 1}-${endIndex}`;
         document.getElementById('totalCount').textContent = total;
         document.getElementById('pageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
-
         document.getElementById('prevPage').disabled = page === 1;
         document.getElementById('nextPage').disabled = page === totalPages || totalPages === 0;
-
         document.getElementById('mobileShowingCount').textContent = `${startIndex + 1}-${endIndex}`;
         document.getElementById('mobileTotalCount').textContent = total;
         document.getElementById('mobilePageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
-
         document.getElementById('mobilePrevPage').disabled = page === 1;
         document.getElementById('mobileNextPage').disabled = page === totalPages || totalPages === 0;
     }
 
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-UG', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(amount || 0);
-    }
-
+    function formatCurrency(amount) { return new Intl.NumberFormat('en-UG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount || 0); }
     function formatDate(dateString) {
         const date = new Date(dateString);
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const day = date.getDate();
-        const suffix = day === 1 || day === 21 || day === 31 ? 'st' :
-            day === 2 || day === 22 ? 'nd' :
-                day === 3 || day === 23 ? 'rd' : 'th';
-        const month = months[date.getMonth()];
-        const year = date.getFullYear();
-        return `${month} ${day}${suffix}, ${year}`;
+        const suffix = day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
+        return `${months[date.getMonth()]} ${day}${suffix}, ${date.getFullYear()}`;
     }
-
     function formatTime(dateString) {
         const date = new Date(dateString);
-        let hours = date.getHours();
-        const minutes = date.getMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-        return `${hours}:${minutesStr}${ampm}`;
+        let h = date.getHours(); const m = date.getMinutes(); const ampm = h >= 12 ? 'PM' : 'AM'; h = h % 12; h = h ? h : 12; const ms = m < 10 ? '0' + m : m;
+        return `${h}:${ms}${ampm}`;
     }
 
     function refreshData() {
         const refreshBtn = document.getElementById('refreshBtn');
         const icon = refreshBtn.querySelector('i');
-
-        icon.classList.add('fa-spin');
-        refreshBtn.disabled = true;
-
-        loadRequests();
-        loadStats();
-        loadStores();
-
-        setTimeout(() => {
-            icon.classList.remove('fa-spin');
-            refreshBtn.disabled = false;
-        }, 1000);
+        icon.classList.add('fa-spin'); refreshBtn.disabled = true;
+        loadRequests(); loadStats(); loadStores();
+        setTimeout(() => { icon.classList.remove('fa-spin'); refreshBtn.disabled = false; }, 1000);
     }
 
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+    function debounce(func, wait) { let timeout; return function (...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
 
     window.viewRequestDetails = viewRequestDetails;
     window.closeRequestModal = closeRequestModal;
@@ -1701,59 +1201,59 @@ ob_start();
 
 <style>
     .animate-pulse {
-        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite
     }
 
     @keyframes pulse {
 
         0%,
         100% {
-            opacity: 1;
+            opacity: 1
         }
 
         50% {
-            opacity: .5;
+            opacity: .5
         }
     }
 
     .date-filter-btn {
         border-color: #d1d5db;
         color: #374151;
-        transition: all 0.2s ease;
+        transition: all .2s ease
     }
 
     .date-filter-btn:hover:not(.active) {
-        background-color: #f9fafb;
+        background-color: #f9fafb
     }
 
     .date-filter-btn.active {
         background-color: #D92B13;
         color: white;
-        border-color: #D92B13;
+        border-color: #D92B13
     }
 
     .overflow-x-auto {
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
-        scrollbar-color: #cbd5e0 #f7fafc;
+        scrollbar-color: #cbd5e0 #f7fafc
     }
 
     .overflow-x-auto::-webkit-scrollbar {
-        height: 6px;
+        height: 6px
     }
 
     .overflow-x-auto::-webkit-scrollbar-track {
         background: #f7fafc;
-        border-radius: 3px;
+        border-radius: 3px
     }
 
     .overflow-x-auto::-webkit-scrollbar-thumb {
         background: #cbd5e0;
-        border-radius: 3px;
+        border-radius: 3px
     }
 
     .overflow-x-auto::-webkit-scrollbar-thumb:hover {
-        background: #a0aec0;
+        background: #a0aec0
     }
 
     .line-clamp-1 {
@@ -1761,21 +1261,21 @@ ob_start();
         -webkit-line-clamp: 1;
         line-clamp: 1;
         -webkit-box-orient: vertical;
-        overflow: hidden;
+        overflow: hidden
     }
 
     #requestsTable {
-        min-width: 800px;
+        min-width: 800px
     }
 
-    @media (max-width: 768px) {
+    @media (max-width:768px) {
         #requestsTable {
-            font-size: 0.875rem;
+            font-size: .875rem
         }
 
         #requestsTable th,
         #requestsTable td {
-            padding: 0.5rem 0.75rem;
+            padding: .5rem .75rem
         }
     }
 </style>

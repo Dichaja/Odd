@@ -1492,10 +1492,10 @@ function getStepTitle($mode, $step)
     function handleRegisterPhoneSubmit() {
         const pi = document.querySelector('#phone');
         const iti = window.intlTelInputGlobals.getInstance(pi);
-        if (!iti.isValidNumber()) {
+        /*if (!iti.isValidNumber()) {
             showError('register-phone-error', 'Please enter a valid phone number');
             return;
-        }
+        }*/
         const pn = iti.getNumber();
         hideError('register-phone-error');
         const button = document.getElementById('register-phone-submit-btn');
@@ -1745,10 +1745,10 @@ function getStepTitle($mode, $step)
     function handleForgotPhoneSubmit() {
         const pi = document.querySelector('#forgot-phone');
         const iti = window.intlTelInputGlobals.getInstance(pi);
-        if (!iti.isValidNumber()) {
+        /*if (!iti.isValidNumber()) {
             showError('forgot-phone-error', 'Please enter a valid phone number');
             return;
-        }
+        }*/
         const pn = iti.getNumber();
         hideError('forgot-phone-error');
         const button = document.getElementById('forgot-phone-submit-btn');

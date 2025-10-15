@@ -11,36 +11,6 @@ ob_start();
         }
     </style>
 
-    <div class="bg-white dark:bg-secondary border-b border-gray-200 dark:border-white/10 px-4 sm:px-6 lg:px-8 py-5">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex items-start justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 bg-primary/10 rounded-xl grid place-items-center">
-                        <i data-lucide="store" class="w-6 h-6 text-primary"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl lg:text-3xl font-bold text-secondary dark:text-white font-rubik">My Zzimba
-                            Stores</h1>
-                        <p class="text-sm text-gray-text dark:text-white/70">Manage your vendor profiles and store
-                            listings</p>
-                    </div>
-                </div>
-                <button
-                    class="hidden sm:inline-flex px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 items-center gap-2 font-medium shadow-lg shadow-primary/25"
-                    @click="openStoreModal('create')">
-                    <i data-lucide="plus" class="w-4 h-4"></i><span>Create New Store</span>
-                </button>
-            </div>
-            <div class="mt-4 sm:hidden">
-                <button
-                    class="w-full px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 font-medium flex items-center justify-center gap-2 shadow-lg shadow-primary/25"
-                    @click="openStoreModal('create')">
-                    <i data-lucide="plus" class="w-4 h-4"></i><span>Create New Store</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         <div x-show="pendingInvitations.length" x-transition
             class="bg-white dark:bg-secondary rounded-2xl border border-gray-200 dark:border-white/10 overflow-hidden">
@@ -58,10 +28,11 @@ ob_start();
                                 <div
                                     class="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/10 grid place-items-center flex-shrink-0">
                                     <img :src="inv.logo_url ? (BASE_URL + inv.logo_url) : `https://placehold.co/100x100/f0f0f0/808080?text=${escapeText(inv.store_name).slice(0,2)}`"
-                                        :alt="inv.store_name" class="w-12 h-12 object-cover rounded">
+                                        :alt="inv.store_name" class="w-12 h-12 object-cover rounded"
+                                        :onerror="`this.onerror=null;this.src='https://placehold.co/100x100/f0f0f0/808080?text=${escapeText(inv.store_name).slice(0,2)}';`">
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h3 class="font-medium text-secondary dark:text-white truncate"
+                                    <h3 class="font-medium text-secondary dark:text-white break-words"
                                         x-text="inv.store_name"></h3>
                                     <p class="text-sm text-gray-600 dark:text-white/70"><span
                                             class="font-medium">Role:</span> <span x-text="inv.role_display"></span></p>
@@ -92,13 +63,21 @@ ob_start();
 
         <div class="bg-white dark:bg-secondary rounded-2xl border border-gray-200 dark:border-white/10 overflow-hidden">
             <div class="p-5 sm:p-6 border-b border-gray-100 dark:border-white/10">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg grid place-items-center bg-user-primary/10">
-                        <i data-lucide="grid-2x2" class="w-4 h-4 text-user-primary"></i>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg grid place-items-center bg-user-primary/10">
+                            <i data-lucide="grid-2x2" class="w-4 h-4 text-user-primary"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-secondary dark:text-white">Profiles</h2>
                     </div>
-                    <h2 class="text-xl font-semibold text-secondary dark:text-white">All Store Profiles</h2>
+                    <button
+                        class="px-4 sm:px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 items-center gap-2 font-medium shadow-lg shadow-primary/25 inline-flex"
+                        @click="openStoreModal('create')">
+                        <i data-lucide="plus" class="w-4 h-4"></i><span>Create New</span>
+                    </button>
                 </div>
             </div>
+
             <div class="p-4 sm:p-6">
                 <template x-if="!stores.length">
                     <div class="text-center py-14">
@@ -115,6 +94,7 @@ ob_start();
                         </button>
                     </div>
                 </template>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6" x-show="stores.length">
                     <template x-for="store in stores" :key="store.uuid_id">
                         <div
@@ -122,31 +102,32 @@ ob_start();
                             <span class="absolute top-0 right-0 px-2 py-1 text-[11px] rounded-bl-md rounded-tr-md"
                                 :class="store.type==='owned'?'bg-red-100 text-red-700':'bg-blue-100 text-blue-700'"
                                 x-text="store.type==='owned'?'Owned':'Managed'"></span>
-                            <div class="flex">
+                            <div class="flex flex-col sm:flex-row">
                                 <div
-                                    class="w-28 sm:w-32 h-28 sm:h-32 bg-gray-50 dark:bg-white/10 grid place-items-center flex-shrink-0">
-                                    <img :src="store.logo_url ? (BASE_URL + store.logo_url) : `https://placehold.co/100x100/f0f0f0/808080?text=${escapeText(store.name).slice(0,2)}`"
-                                        :alt="store.name" class="w-16 h-16 object-cover rounded-lg">
+                                    class="relative w-full sm:w-32 h-40 sm:h-32 bg-gray-50 dark:bg-white/10 grid place-items-center flex-shrink-0">
+                                    <img :src="store.logo_url ? (BASE_URL + store.logo_url) : `https://placehold.co/256x256/f0f0f0/808080?text=${escapeText(store.name).slice(0,2)}`"
+                                        :alt="store.name" class="w-24 h-24 sm:w-16 sm:h-16 object-cover rounded-lg"
+                                        :onerror="`this.onerror=null;this.src='https://placehold.co/256x256/f0f0f0/808080?text=${escapeText(store.name).slice(0,2)}';`">
+                                    <div class="absolute bottom-2 left-2">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                            :class="statusBadge(store.status).bg">
+                                            <span class="w-1.5 h-1.5 mr-1.5 rounded-full"
+                                                :class="statusBadge(store.status).dot"></span>
+                                            <span x-text="statusBadge(store.status).label"></span>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="p-4 sm:p-6 flex-1 min-w-0">
-                                    <div class="flex items-start justify-between gap-2 mb-2">
-                                        <h3 class="font-semibold text-secondary dark:text-white truncate"
+                                    <div class="mb-2">
+                                        <h3 class="font-semibold text-secondary dark:text-white break-words"
                                             x-text="store.name" :title="store.name"></h3>
-                                        <div class="shrink-0">
-                                            <span
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                                                :class="statusBadge(store.status).bg">
-                                                <span class="w-1.5 h-1.5 mr-1.5 rounded-full"
-                                                    :class="statusBadge(store.status).dot"></span>
-                                                <span x-text="statusBadge(store.status).label"></span>
-                                            </span>
-                                        </div>
                                     </div>
-                                    <p class="text-sm text-gray-text dark:text-white/70 mb-3 line-clamp-2"
-                                        :title="store.location">
-                                        <span class="inline-flex items-center gap-1"><i data-lucide="map-pin"
-                                                class="w-4 h-4 text-user-primary"></i><span
-                                                x-text="store.location || ''"></span></span>
+                                    <p class="text-sm text-gray-text dark:text-white/70 mb-3" :title="store.location">
+                                        <span class="inline-flex items-center gap-1">
+                                            <i data-lucide="map-pin" class="w-4 h-4 text-user-primary"></i>
+                                            <span x-text="store.location || ''"></span>
+                                        </span>
                                     </p>
                                     <div class="grid grid-cols-2 gap-4 mb-4">
                                         <div>
@@ -180,7 +161,7 @@ ob_start();
     </div>
 
     <div x-show="modals.store" class="fixed inset-0 z-50 p-4">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeStoreModal()"></div>
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeStoreModal"></div>
         <div
             class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] relative z-10 overflow-hidden mx-auto transform transition-all">
             <div class="p-5 border-b border-gray-100 dark:border-white/10">
@@ -195,7 +176,7 @@ ob_start();
                             <p class="text-sm text-gray-text dark:text-white/70">Fill in the details below</p>
                         </div>
                     </div>
-                    <button @click="closeStoreModal()"
+                    <button @click="closeStoreModal"
                         class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:text-white">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
@@ -250,7 +231,8 @@ ob_start();
                                 <div class="flex items-stretch gap-2">
                                     <div
                                         class="shrink-0 px-3 flex items-center rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 text-secondary dark:bg-white/10 dark:text-white">
-                                        <span class="text-sm font-medium">+256</span></div>
+                                        <span class="text-sm font-medium">+256</span>
+                                    </div>
                                     <input type="tel" x-model.trim="storeForm.phone_local" placeholder="7XX XXX XXX"
                                         inputmode="numeric"
                                         class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white px-3 py-2.5 text-sm">
@@ -277,7 +259,7 @@ ob_start();
                                     class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white px-3 py-2.5 text-sm">
                             </div>
                             <div class="sm:col-span-2">
-                                <button type="button" @click="goStep2()"
+                                <button type="button" @click="goStep2"
                                     class="w-full px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90">Next</button>
                             </div>
                         </div>
@@ -292,18 +274,60 @@ ob_start();
                                 <div id="storeMapContainer"
                                     class="w-full h-64 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 mb-3">
                                 </div>
-                                <div class="flex items-center gap-2">
+                                <div class="flex flex-wrap items-center gap-2">
                                     <button type="button"
                                         class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 inline-flex items-center gap-2"
-                                        @click="locateMe()">
-                                        <i data-lucide="crosshair" class="w-4 h-4"></i>Find My Location
+                                        @click="locateMe">
+                                        <i data-lucide="crosshair" class="w-4 h-4"></i>My Location
                                     </button>
-                                    <select x-model="storeForm.mapStyle" @change="applyMapStyle()"
-                                        class="w-40 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white px-3 py-2.5 text-sm">
-                                        <option value="osm">OpenStreetMap</option>
-                                        <option value="satellite">Satellite</option>
-                                        <option value="terrain">Terrain</option>
-                                    </select>
+                                    <div
+                                        class="inline-flex rounded-lg border border-gray-200 dark:border-white/10 overflow-hidden">
+                                        <button type="button" @click="storeForm.mapStyle='osm'; applyMapStyle()"
+                                            :class="storeForm.mapStyle==='osm'?'bg-gray-900 text-white dark:bg-white/10':'bg-white dark:bg-transparent text-gray-700 dark:text-white'"
+                                            class="px-3 py-2 text-sm">OpenStreetMap</button>
+                                        <button type="button" @click="storeForm.mapStyle='satellite'; applyMapStyle()"
+                                            :class="storeForm.mapStyle==='satellite'?'bg-gray-900 text-white dark:bg-white/10':'bg-white dark:bg-transparent text-gray-700 dark:text-white'"
+                                            class="px-3 py-2 text-sm">Satellite</button>
+                                    </div>
+                                    <div class="relative" @click.outside="mapSearchOpen=false">
+                                        <div class="flex items-stretch gap-2">
+                                            <div class="relative w-72">
+                                                <input type="text" x-model.trim="mapSearchQuery" @input="onSearchInput"
+                                                    placeholder="Search place or address in Uganda"
+                                                    class="w-72 rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white pl-9 pr-3 py-2.5 text-sm">
+                                                <i data-lucide="search"
+                                                    class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                            </div>
+                                            <button type="button"
+                                                class="px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
+                                                @click="clearSearch">Clear</button>
+                                        </div>
+                                        <div x-show="mapSearchOpen"
+                                            class="absolute mt-2 w-96 max-w-[22rem] bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-xl shadow-lg overflow-hidden z-10">
+                                            <template x-if="mapSearchLoading">
+                                                <div class="p-3 text-sm text-gray-600 dark:text-white/80">Searching...
+                                                </div>
+                                            </template>
+                                            <template
+                                                x-if="!mapSearchLoading && mapSearchResults.length===0 && mapSearchQuery.length>=3">
+                                                <div class="p-3 text-sm text-gray-600 dark:text-white/80">No results
+                                                </div>
+                                            </template>
+                                            <ul>
+                                                <template x-for="res in mapSearchResults" :key="res.key">
+                                                    <li>
+                                                        <button type="button"
+                                                            class="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/10 text-sm text-gray-800 dark:text-white flex items-start gap-2"
+                                                            @click="selectSearchResult(res)">
+                                                            <i data-lucide="map-pin"
+                                                                class="w-4 h-4 mt-0.5 text-user-primary"></i>
+                                                            <span x-text="res.name"></span>
+                                                        </button>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3 mt-3">
                                     <div class="grid gap-1">
@@ -324,7 +348,7 @@ ob_start();
                                 <div class="grid gap-1">
                                     <label class="text-sm font-semibold text-secondary dark:text-white">Region/Province
                                         <span class="text-red-500">*</span></label>
-                                    <select x-model="storeForm.region" @change="onRegionChange()"
+                                    <select x-model="storeForm.region" @change="onRegionChange"
                                         class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white px-3 py-2.5 text-sm">
                                         <option value="">Select Region/Province</option>
                                         <template x-for="opt in regions" :key="opt">
@@ -335,7 +359,7 @@ ob_start();
                                 <div class="grid gap-1">
                                     <label class="text-sm font-semibold text-secondary dark:text-white">District <span
                                             class="text-red-500">*</span></label>
-                                    <select x-model="storeForm.district" @change="onDistrictChange()"
+                                    <select x-model="storeForm.district" @change="onDistrictChange"
                                         :disabled="!districts.length"
                                         class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white px-3 py-2.5 text-sm">
                                         <option value="">Select District</option>
@@ -347,7 +371,7 @@ ob_start();
                                 <div class="grid gap-1">
                                     <label
                                         class="text-sm font-semibold text-secondary dark:text-white">Sub-county</label>
-                                    <select x-model="storeForm.subcounty" @change="onSubcountyChange()"
+                                    <select x-model="storeForm.subcounty" @change="onSubcountyChange"
                                         :disabled="!subcounties.length"
                                         class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white px-3 py-2.5 text-sm">
                                         <option value="">Select Sub-county</option>
@@ -359,7 +383,7 @@ ob_start();
                                 <div class="grid gap-1">
                                     <label
                                         class="text-sm font-semibold text-secondary dark:text-white">Parish/Ward</label>
-                                    <select x-model="storeForm.parish" @change="onParishChange()"
+                                    <select x-model="storeForm.parish" @change="onParishChange"
                                         :disabled="!parishes.length"
                                         class="w-full rounded-xl border border-gray-300 dark:border-white/10 bg-white dark:bg-transparent text-gray-900 dark:text-white px-3 py-2.5 text-sm">
                                         <option value="">Select Parish/Ward</option>
@@ -378,9 +402,9 @@ ob_start();
                             </div>
                         </div>
                         <div class="flex justify-between">
-                            <button type="button" @click="backStep1()"
+                            <button type="button" @click="backStep1"
                                 class="px-4 py-2.5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">Back</button>
-                            <button type="button" @click="goStep3()"
+                            <button type="button" @click="goStep3"
                                 class="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90">Next</button>
                         </div>
                     </div>
@@ -412,7 +436,7 @@ ob_start();
                                         Upload Logo
                                     </label>
                                 </div>
-                                <p class="text-xs text-gray-500 dark:text-white/60">Recommended size: 512×512 pixels.
+                                <p class="text-xs text-gray-500 dark:text-white/60">Recommended size: 512x512 pixels.
                                     Max 2MB.</p>
                             </div>
                             <div class="grid gap-1">
@@ -430,9 +454,9 @@ ob_start();
                             </div>
                         </div>
                         <div class="flex justify-between">
-                            <button type="button" @click="backStep2()"
+                            <button type="button" @click="backStep2"
                                 class="px-4 py-2.5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">Back</button>
-                            <button type="button" @click="saveStore()"
+                            <button type="button" @click="saveStore"
                                 class="px-4 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90">Save</button>
                         </div>
                     </div>
@@ -442,24 +466,81 @@ ob_start();
     </div>
 
     <div x-show="modals.invite" class="fixed inset-0 z-50 p-4">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeInviteModal()"></div>
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeInviteModal"></div>
         <div
             class="bg-white dark:bg-secondary rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden mx-auto">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-lg font-semibold text-secondary dark:text-white" x-text="inviteModal.title"></h3>
-                    <button @click="closeInviteModal()"
-                        class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:text-white">
+                    <button @click="closeInviteModal"
+                        class="text-gray-400 hover:text-gray-600 dark:text-white/70 dark:hover:bg-transparent">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
                 <div class="text-sm text-gray-700 dark:text-white/80 py-2" x-html="inviteModal.content"></div>
                 <div class="flex justify-end gap-3 mt-5">
-                    <button type="button" @click="closeInviteModal()"
+                    <button type="button" @click="closeInviteModal"
                         class="px-4 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10">Cancel</button>
-                    <button type="button" @click="confirmInvite()"
+                    <button type="button" @click="confirmInvite"
                         :class="inviteModal.action==='approve'?'bg-green-600 hover:bg-green-700':'bg-red-600 hover:bg-red-700'"
                         class="px-4 py-2 text-white rounded-xl">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="modals.location" class="fixed inset-0 z-[60] p-4">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="modals.location=false"></div>
+        <div class="relative z-10 max-w-lg w-full mx-auto bg-white dark:bg-secondary rounded-2xl shadow-xl">
+            <div class="p-5 border-b border-gray-100 dark:border-white/10">
+                <h3 class="text-lg font-semibold text-secondary dark:text-white">Enable location to use My Location</h3>
+                <p class="text-sm text-gray-600 dark:text-white/70 mt-1" x-text="locationHelp.subtitle"></p>
+            </div>
+            <div class="p-5 grid gap-3">
+                <template x-if="locationHelp.type==='browser'">
+                    <ol class="list-decimal list-inside text-sm text-gray-800 dark:text-white/80 space-y-1">
+                        <li><span class="font-medium">Click My Location again</span> to trigger the permission prompt.
+                        </li>
+                        <li>When your browser shows the location prompt, choose <span class="font-medium">Allow</span>.
+                        </li>
+                        <li>If you previously blocked it, open <span class="font-medium"
+                                x-text="locationHelp.siteSettingsLabel"></span> and set Location to Allow.</li>
+                    </ol>
+                </template>
+                <template x-if="locationHelp.type==='ios'">
+                    <ol class="list-decimal list-inside text-sm text-gray-800 dark:text-white/80 space-y-1">
+                        <li>Open Settings.</li>
+                        <li>Privacy and Security.</li>
+                        <li>Location Services.</li>
+                        <li>Safari Websites or your browser app.</li>
+                        <li>Set Allow Location Access to While Using the App.</li>
+                    </ol>
+                </template>
+                <template x-if="locationHelp.type==='android'">
+                    <ol class="list-decimal list-inside text-sm text-gray-800 dark:text-white/80 space-y-1">
+                        <li>Open Settings.</li>
+                        <li>Apps.</li>
+                        <li>Your browser app.</li>
+                        <li>Permissions.</li>
+                        <li>Location and set to Allow only while using.</li>
+                    </ol>
+                </template>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <button type="button"
+                        class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 inline-flex items-center gap-2"
+                        @click="retryLocation">
+                        <i data-lucide="crosshair" class="w-4 h-4"></i>Try Again Now
+                    </button>
+                    <button type="button"
+                        class="px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
+                        @click="openSiteSettings">
+                        Open site settings
+                    </button>
+                    <button type="button"
+                        class="px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10"
+                        @click="modals.location=false">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
@@ -492,45 +573,21 @@ ob_start();
             pendingInvitations: [],
             natureOfBusiness: [],
             loading: false,
-            modals: { store: false, invite: false, toast: false },
+            modals: { store: false, invite: false, toast: false, location: false },
             toast: { msg: '', style: 'bg-blue-100 text-blue-700 border border-blue-200', icon: 'info' },
             inviteModal: { action: null, managerId: null, title: '', content: '' },
+            locationHelp: { type: 'browser', subtitle: 'Your browser will ask for access when you press Try Again', siteSettingsLabel: 'Site settings' },
             storeForm: {
-                mode: 'create',
-                step: 1,
-                id: '',
-                name: '',
-                business_email: '',
-                phone_local: '',
-                contact_person_name: '',
-                nature_of_business: '',
-                mapStyle: 'osm',
-                latitude: '',
-                longitude: '',
-                address: '',
-                region: '',
-                district: '',
-                subcounty: '',
-                parish: '',
-                description: '',
-                website_url: '',
-                social_media: '',
-                logo_file: null,
-                logo_preview: ''
+                mode: 'create', step: 1, id: '', name: '', business_email: '', phone_local: '', contact_person_name: '',
+                nature_of_business: '', mapStyle: 'osm', latitude: '', longitude: '', address: '', region: '', district: '',
+                subcounty: '', parish: '', description: '', website_url: '', social_media: '', logo_file: null, logo_preview: ''
             },
-            map: null,
-            marker: null,
-            mapLayers: {},
-            ugGeo: null,
-            regions: [],
-            districts: [],
-            subcounties: [],
-            parishes: [],
+            map: null, marker: null, mapLayers: {}, ugGeo: null, ugGeoSel: null, _geoLayer: null, _allGeoLayer: null, _markerIcon: null,
+            regions: [], districts: [], subcounties: [], parishes: [],
+            mapSearchQuery: '', mapSearchResults: [], mapSearchLoading: false, mapSearchOpen: false, _searchDebounce: null, _searchAbort: null,
+            _prevMarkerLatLng: null, _geoPermStatus: null,
 
-            init() {
-                this.loadAll();
-                this.$nextTick(() => this.renderIcons());
-            },
+            init() { this.loadAll(); this.$nextTick(() => this.renderIcons()); },
             renderIcons() { if (window.lucide) { window.lucide.createIcons(); } },
 
             async loadAll() {
@@ -568,10 +625,17 @@ ob_start();
                 this.$nextTick(() => { this.renderIcons(); this.initMap(); this.loadRegionData(); if (mode === 'edit' && id) { this.fetchStore(id); } });
             },
             closeStoreModal() { this.modals.store = false; this.destroyMap(); },
+            closeInviteModal() { this.modals.invite = false; this.inviteModal = { action: null, managerId: null, title: '', content: '' }; },
 
             resetForm() {
-                Object.assign(this.storeForm, { mode: 'create', step: 1, id: '', name: '', business_email: '', phone_local: '', contact_person_name: '', nature_of_business: '', mapStyle: 'osm', latitude: '', longitude: '', address: '', region: '', district: '', subcounty: '', parish: '', description: '', website_url: '', social_media: '', logo_file: null, logo_preview: '' });
+                Object.assign(this.storeForm, {
+                    mode: 'create', step: 1, id: '', name: '', business_email: '', phone_local: '', contact_person_name: '',
+                    nature_of_business: '', mapStyle: 'osm', latitude: '', longitude: '', address: '', region: '', district: '', subcounty: '', parish: '',
+                    description: '', website_url: '', social_media: '', logo_file: null, logo_preview: ''
+                });
                 this.districts = []; this.subcounties = []; this.parishes = [];
+                this.mapSearchQuery = ''; this.mapSearchResults = []; this.mapSearchOpen = false; this.mapSearchLoading = false;
+                this._prevMarkerLatLng = null;
             },
 
             async fetchStore(id) {
@@ -594,7 +658,13 @@ ob_start();
                         this.storeForm.social_media = s.social_media || '';
                         if (s.logo_url) { this.storeForm.logo_preview = BASE_URL + s.logo_url; }
                         await this.loadRegionData(s.region, s.district, s.subcounty, s.parish);
-                        if (s.latitude && s.longitude) { this.dropMarker(L.latLng(parseFloat(s.latitude), parseFloat(s.longitude))); this.map.setView([parseFloat(s.latitude), parseFloat(s.longitude)], 12); }
+                        if (s.latitude && s.longitude) {
+                            const ll = L.latLng(parseFloat(s.latitude), parseFloat(s.longitude));
+                            if (this.isInsideUganda(ll)) {
+                                this.dropMarker(ll);
+                                this.map.setView([ll.lat, ll.lng], 12);
+                            }
+                        }
                     } else {
                         this.toastMsg('Error', resp?.error || 'Failed to load store details', 'error');
                     }
@@ -653,7 +723,8 @@ ob_start();
                         const fd = new FormData(); fd.append('logo', this.storeForm.logo_file);
                         this.loading = true;
                         const up = await fetch(BASE_URL + 'account/fetch/manageZzimbaStores.php?action=uploadLogo', { method: 'POST', body: fd }).then(r => r.json());
-                        if (up?.success) { formData.temp_logo_path = up.temp_path; } else { this.loading = false; this.toastMsg('Error', up?.message || 'Failed to upload logo', 'error'); return; }
+                        if (up?.success) { formData.temp_logo_path = up.temp_path; }
+                        else { this.loading = false; this.toastMsg('Error', up?.message || 'Failed to upload logo', 'error'); return; }
                     } catch { this.loading = false; this.toastMsg('Error', 'Failed to upload logo', 'error'); return; }
                 }
                 try {
@@ -661,23 +732,16 @@ ob_start();
                     const url = BASE_URL + 'account/fetch/manageZzimbaStores.php?action=' + (mode === 'create' ? 'createStore' : 'updateStore');
                     const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) }).then(r => r.json());
                     this.loading = false;
-                    if (resp?.success) {
-                        this.modals.store = false;
-                        this.toastMsg('Success', resp.message || 'Store saved', 'success');
-                        await this.loadStores();
-                    } else {
-                        this.toastMsg('Error', resp?.error || 'Failed to save store', 'error');
-                    }
-                } catch {
-                    this.loading = false;
-                    this.toastMsg('Error', 'Failed to save store', 'error');
-                }
+                    if (resp?.success) { this.modals.store = false; this.toastMsg('Success', resp.message || 'Store saved', 'success'); await this.loadStores(); }
+                    else { this.toastMsg('Error', resp?.error || 'Failed to save store', 'error'); }
+                } catch { this.loading = false; this.toastMsg('Error', 'Failed to save store', 'error'); }
             },
 
             manageStore(uuid) {
                 this.loading = true;
                 fetch(BASE_URL + 'account/fetch/initVendorSession.php', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ store_uuid: uuid }) })
-                    .then(r => r.json()).then(resp => { this.loading = false; if (resp?.success && resp.redirect_url) { window.location.href = resp.redirect_url; } else { this.toastMsg('Error', resp?.message || 'Failed to initiate store session', 'error'); } })
+                    .then(r => r.json())
+                    .then(resp => { this.loading = false; if (resp?.success && resp.redirect_url) { window.location.href = resp.redirect_url; } else { this.toastMsg('Error', resp?.message || 'Failed to initiate store session', 'error'); } })
                     .catch(() => { this.loading = false; this.toastMsg('Error', 'Server error occurred', 'error'); });
             },
 
@@ -691,43 +755,39 @@ ob_start();
                 this.modals.invite = true;
                 this.$nextTick(() => this.renderIcons());
             },
-            closeInviteModal() { this.modals.invite = false; this.inviteModal = { action: null, managerId: null, title: '', content: '' }; },
-            async confirmInvite() {
-                if (!this.inviteModal.action || !this.inviteModal.managerId) return;
-                const endpoint = this.inviteModal.action === 'approve' ? 'approveManagerInvitation' : 'declineManagerInvitation';
-                try {
-                    this.loading = true;
-                    const resp = await fetch(BASE_URL + 'account/fetch/manageZzimbaStores.php?action=' + endpoint, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ managerId: this.inviteModal.managerId }) }).then(r => r.json());
-                    this.loading = false;
-                    if (resp?.success) {
-                        this.closeInviteModal();
-                        this.toastMsg('Success', resp.message || 'Done', 'success');
-                        await this.loadInvites();
-                        if (this.inviteModal.action === 'approve') { await this.loadStores(); }
-                    } else {
-                        this.toastMsg('Error', resp?.error || 'Failed to process invitation', 'error');
-                    }
-                } catch {
-                    this.loading = false;
-                    this.toastMsg('Error', 'Failed to process invitation', 'error');
-                }
-            },
 
             initMap(lat = 1.3733, lng = 32.2903) {
                 if (this.map) return;
                 this.map = L.map('storeMapContainer').setView([lat, lng], 7);
                 this.mapLayers = {
                     osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }),
-                    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' }),
-                    terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenTopoMap' })
+                    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' })
                 };
                 this.mapLayers.osm.addTo(this.map);
+                this._markerIcon = L.icon({
+                    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    tooltipAnchor: [16, -28],
+                    shadowSize: [41, 41]
+                });
                 this.map.on('click', e => {
-                    if (!this.ugGeo) { this.toastMsg('Select Region', 'Please select a region first', 'warning'); return; }
-                    if (this.isInsideSelected(e.latlng)) { this.dropMarker(e.latlng); } else { this.toastMsg('Out of bounds', 'Place the pin within the highlighted region', 'error'); }
+                    if (!this.ugGeo) { this.toastMsg('Please wait', 'Loading Uganda map data', 'warning'); return; }
+                    const ll = e.latlng;
+                    if (!this.isInsideUganda(ll)) { this.toastMsg('Restricted', 'Select a location inside Uganda', 'error'); return; }
+                    this.dropMarker(ll);
+                    this.setAdminFromPoint(ll);
                 });
             },
-            destroyMap() { if (this.map) { this.map.remove(); this.map = null; } this.marker = null; if (this._geoLayer) { this._geoLayer.remove(); this._geoLayer = null; } },
+            destroyMap() {
+                if (this.map) { this.map.remove(); this.map = null; }
+                this.marker = null;
+                if (this._geoLayer) { this._geoLayer.remove(); this._geoLayer = null; }
+                this._allGeoLayer = null;
+            },
             applyMapStyle() {
                 if (!this.map) return;
                 Object.values(this.mapLayers).forEach(l => { if (this.map.hasLayer(l)) this.map.removeLayer(l); });
@@ -735,30 +795,149 @@ ob_start();
             },
             dropMarker(latlng) {
                 if (this.marker) this.map.removeLayer(this.marker);
-                const icon = L.divIcon({ className: 'location-icon', html: '', iconSize: [16, 16] });
-                this.marker = L.marker(latlng, { draggable: true, icon }).addTo(this.map);
+                this.marker = L.marker(latlng, { draggable: true, icon: this._markerIcon, zIndexOffset: 1000 }).addTo(this.map);
+                this._prevMarkerLatLng = L.latLng(latlng.lat, latlng.lng);
                 this.storeForm.latitude = latlng.lat.toFixed(6);
                 this.storeForm.longitude = latlng.lng.toFixed(6);
                 this.reverseGeocode(latlng.lat, latlng.lng);
                 this.marker.on('dragend', () => {
                     const p = this.marker.getLatLng();
-                    if (this.isInsideSelected(p) || !this.ugGeoSel) { this.storeForm.latitude = p.lat.toFixed(6); this.storeForm.longitude = p.lng.toFixed(6); this.reverseGeocode(p.lat, p.lng); }
-                    else { this.marker.setLatLng(latlng); this.toastMsg('Out of bounds', 'Keep the pin within the highlighted region', 'error'); }
+                    if (!this.isInsideUganda(p)) {
+                        this.marker.setLatLng(this._prevMarkerLatLng);
+                        this.toastMsg('Restricted', 'Select a location inside Uganda', 'error');
+                        return;
+                    }
+                    this._prevMarkerLatLng = L.latLng(p.lat, p.lng);
+                    this.storeForm.latitude = p.lat.toFixed(6);
+                    this.storeForm.longitude = p.lng.toFixed(6);
+                    this.reverseGeocode(p.lat, p.lng);
+                    this.setAdminFromPoint(p);
                 });
             },
             async locateMe() {
+                const info = this.browserInfo();
+                this.prepareLocationHelp(info);
+                const request = () => {
+                    navigator.geolocation.getCurrentPosition(pos => {
+                        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                        const ll = L.latLng(lat, lng);
+                        if (!this.isInsideUganda(ll)) { this.toastMsg('Restricted', 'Your location is outside Uganda. Select a location inside Uganda', 'error'); return; }
+                        this.map.setView([lat, lng], 15);
+                        this.dropMarker(ll);
+                        this.setAdminFromPoint(ll);
+                        this.modals.location = false;
+                    }, err => {
+                        if (err.code === 1) {
+                            this.toastMsg('Location required', 'Allow location access to use My Location, then press Try Again', 'warning');
+                            this.modals.location = true;
+                        } else if (err.code === 3) {
+                            this.toastMsg('Timeout', 'Could not get your location in time. Try again', 'error');
+                        } else {
+                            this.toastMsg('Error', 'Unable to get your location', 'error');
+                        }
+                    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+                };
                 if (!navigator.geolocation) { this.toastMsg('Geolocation', 'Not supported by your browser', 'warning'); return; }
-                navigator.geolocation.getCurrentPosition(pos => {
-                    const lat = pos.coords.latitude, lng = pos.coords.longitude;
-                    this.map.setView([lat, lng], 15);
-                    const ll = L.latLng(lat, lng);
-                    if (this.ugGeo && !this.isInsideSelected(ll)) { this.toastMsg('Notice', 'Your location is outside the selected region; pick manually.', 'warning'); }
-                    else { this.dropMarker(ll); }
-                }, () => { this.toastMsg('Error', 'Unable to get your location', 'error'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+                if (navigator.permissions && navigator.permissions.query) {
+                    try {
+                        const status = await navigator.permissions.query({ name: 'geolocation' });
+                        this._geoPermStatus = status;
+                        status.onchange = () => {
+                            if (status.state === 'granted' || status.state === 'prompt') request();
+                        };
+                        if (status.state === 'granted' || status.state === 'prompt') {
+                            request();
+                        } else {
+                            this.modals.location = true;
+                            request();
+                        }
+                    } catch {
+                        this.modals.location = false;
+                        request();
+                    }
+                } else {
+                    request();
+                }
+            },
+            retryLocation() {
+                this.modals.location = false;
+                this.locateMe();
+            },
+            openSiteSettings() {
+                const info = this.browserInfo();
+                const host = window.location.host;
+                if (info.browser === 'Chrome') {
+                    try { window.open('chrome://settings/content/location', '_blank'); } catch { }
+                } else if (info.browser === 'Edge') {
+                    try { window.open('edge://settings/content/location', '_blank'); } catch { }
+                } else if (info.browser === 'Opera') {
+                    try { window.open('opera://settings/content/location', '_blank'); } catch { }
+                } else if (info.browser === 'Firefox') {
+                    try { window.open('about:preferences#privacy', '_blank'); } catch { }
+                }
+                this.toastMsg('Tip', `Click the padlock near ${host} and allow Location, then press Try Again`, 'info');
+            },
+            prepareLocationHelp(info) {
+                if (info.platform === 'iOS') this.locationHelp = { type: 'ios', subtitle: 'Enable location for your browser in Settings', siteSettingsLabel: 'Site settings' };
+                else if (info.platform === 'Android') this.locationHelp = { type: 'android', subtitle: 'Enable location permission for your browser app', siteSettingsLabel: 'App settings' };
+                else this.locationHelp = { type: 'browser', subtitle: 'Your browser will ask for access when you press Try Again', siteSettingsLabel: info.browser === 'Firefox' ? 'Preferences' : 'Site settings' };
+            },
+            browserInfo() {
+                const ua = navigator.userAgent || '';
+                const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                const isAndroid = /Android/.test(ua);
+                const platform = isIOS ? 'iOS' : (isAndroid ? 'Android' : 'Desktop');
+                let browser = 'Other';
+                if (/Edg\//.test(ua)) browser = 'Edge';
+                else if (/OPR\//.test(ua)) browser = 'Opera';
+                else if (/Chrome\//.test(ua) && !/Edg\//.test(ua) && !/OPR\//.test(ua)) browser = 'Chrome';
+                else if (/Firefox\//.test(ua)) browser = 'Firefox';
+                else if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) browser = 'Safari';
+                return { platform, browser };
             },
             reverseGeocode(lat, lng) {
                 const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-                fetch(url, { headers: { 'User-Agent': 'Zzimba Store Locator' } }).then(r => r.json()).then(d => { if (d?.display_name) { this.storeForm.address = d.display_name; } }).catch(() => { });
+                fetch(url, { headers: { 'User-Agent': 'Zzimba Store Locator' } })
+                    .then(r => r.json())
+                    .then(d => { if (d?.display_name) { this.storeForm.address = d.display_name; } })
+                    .catch(() => { });
+            },
+
+            onSearchInput() {
+                this.mapSearchOpen = true;
+                if (this._searchDebounce) clearTimeout(this._searchDebounce);
+                this._searchDebounce = setTimeout(() => { this.searchMap(); }, 350);
+            },
+            clearSearch() {
+                this.mapSearchQuery = '';
+                this.mapSearchResults = [];
+                this.mapSearchOpen = false;
+                this.mapSearchLoading = false;
+                if (this._searchAbort) this._searchAbort.abort();
+            },
+            async searchMap() {
+                const q = this.mapSearchQuery.trim();
+                if (q.length < 3) { this.mapSearchResults = []; this.mapSearchLoading = false; return; }
+                if (this._searchAbort) this._searchAbort.abort();
+                const ctl = new AbortController(); this._searchAbort = ctl;
+                this.mapSearchLoading = true;
+                try {
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&countrycodes=ug&limit=8`;
+                    const resp = await fetch(url, { headers: { 'User-Agent': 'Zzimba Store Locator' }, signal: ctl.signal });
+                    const data = await resp.json();
+                    this.mapSearchResults = (data || []).map((d, i) => ({ key: `${d.place_id}-${i}`, lat: parseFloat(d.lat), lon: parseFloat(d.lon), name: d.display_name }));
+                } catch { }
+                this.mapSearchLoading = false;
+            },
+            selectSearchResult(res) {
+                this.mapSearchOpen = false;
+                if (!this.map) return;
+                const ll = L.latLng(res.lat, res.lon);
+                if (!this.isInsideUganda(ll)) { this.toastMsg('Restricted', 'Select a location inside Uganda', 'error'); return; }
+                this.map.setView(ll, 16);
+                this.dropMarker(ll);
+                this.storeForm.address = res.name || this.storeForm.address;
+                this.setAdminFromPoint(ll);
             },
 
             async loadRegionData(selReg = null, selDist = null, selSub = null, selParish = null) {
@@ -823,21 +1002,36 @@ ob_start();
                 this.ugGeoSel = gj;
                 this._geoLayer = L.geoJSON(gj, { style: { color: '#C00000', weight: 2, opacity: 1, fillColor: '#C00000', fillOpacity: .2 } }).addTo(this.map);
                 this.map.fitBounds(this._geoLayer.getBounds(), { padding: [20, 20], maxZoom: 12, animate: true });
-                if (this.marker) {
-                    const pos = this.marker.getLatLng();
-                    if (!this.isInsideSelected(pos)) {
-                        this.map.removeLayer(this.marker); this.marker = null;
-                        this.storeForm.latitude = ''; this.storeForm.longitude = ''; this.storeForm.address = '';
-                        this.toastMsg('Marker removed', 'Marker was outside the new region', 'warning');
+            },
+            isInsideUganda(latlng) {
+                if (!this.ugGeo) return false;
+                if (!this._allGeoLayer) this._allGeoLayer = L.geoJSON(this.ugGeo);
+                return leafletPip.pointInLayer([latlng.lng, latlng.lat], this._allGeoLayer, true).length > 0;
+            },
+            setAdminFromPoint(latlng) {
+                if (!this.ugGeo) return;
+                if (!this._allGeoLayer) this._allGeoLayer = L.geoJSON(this.ugGeo);
+                const hits = leafletPip.pointInLayer([latlng.lng, latlng.lat], this._allGeoLayer, true);
+                if (hits.length) {
+                    const props = hits[0].feature.properties || {};
+                    const r = props.NAME_1 || '';
+                    const d = props.NAME_2 || '';
+                    const s = props.NAME_3 || '';
+                    const p = props.NAME_4 || '';
+                    if (r && r !== this.storeForm.region) {
+                        this.storeForm.region = r;
+                        this.onRegionChange(d, s, p);
+                    } else if (d && d !== this.storeForm.district) {
+                        this.storeForm.district = d;
+                        this.onDistrictChange(s, p);
+                    } else if (s && s !== this.storeForm.subcounty) {
+                        this.storeForm.subcounty = s;
+                        this.onSubcountyChange(p);
+                    } else if (p) {
+                        this.storeForm.parish = p;
+                        this.onParishChange();
                     }
                 }
-            },
-            isInsideSelected(latlng) {
-                if (!this.ugGeoSel) return true;
-                for (const f of this.ugGeoSel.features) {
-                    if (leafletPip.pointInLayer([latlng.lng, latlng.lat], L.geoJSON(f), true).length > 0) return true;
-                }
-                return false;
             },
 
             statusBadge(s) {
@@ -851,11 +1045,10 @@ ob_start();
             toastMsg(title, html, type = 'info') {
                 const map = { success: ['bg-green-100 text-green-700 border border-green-200', 'check'], error: ['bg-red-100 text-red-700 border border-red-200', 'x'], warning: ['bg-amber-100 text-amber-700 border border-amber-200', 'alert-triangle'], info: ['bg-blue-100 text-blue-700 border border-blue-200', 'info'] };
                 const [style, icon] = map[type] || map.info;
-                this.toast = { msg: `<strong>${this.escapeText(title)}</strong> — ${html}`, style, icon };
+                this.toast = { msg: `<strong>${this.escapeText(title)}</strong> - ${html}`, style, icon };
                 this.modals.toast = true; this.$nextTick(() => this.renderIcons());
                 setTimeout(() => { this.modals.toast = false; }, 3000);
             },
-
             timeAgo(dt) {
                 const date = new Date(dt); const s = Math.floor((new Date() - date) / 1000);
                 if (s < 60) return 'just now'; const m = Math.floor(s / 60); if (m < 60) return m + ' minute' + (m === 1 ? '' : 's') + ' ago';
@@ -864,7 +1057,7 @@ ob_start();
                 const mo = Math.floor(d / 30); if (mo < 12) return mo + ' month' + (mo === 1 ? '' : 's') + ' ago';
                 const y = Math.floor(mo / 12); return y + ' year' + (y === 1 ? '' : 's') + ' ago';
             },
-            escapeText(s) { return String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m])); }
+            escapeText(s) { return String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
         }
     }
 </script>

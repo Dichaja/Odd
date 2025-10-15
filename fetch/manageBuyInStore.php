@@ -8,13 +8,16 @@ ini_set('error_log', __DIR__ . '/../logs/php-errors.log');
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../lib/NotificationService.php';
 require_once __DIR__ . '/../sms/SMS.php';
+require_once __DIR__ . '/../lib/ZzimbaCreditModule.php';
 
 use Ulid\Ulid;
 
 header('Content-Type: application/json');
 
+date_default_timezone_set('Africa/Kampala');
+
 $isLoggedIn = isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
-$currentUser = $isLoggedIn ? $_SESSION['user']['user_id'] : null;
+$currentUser = $isLoggedIn ? ($_SESSION['user']['user_id'] ?? $_SESSION['user']['id'] ?? null) : null;
 
 ensureBuyInStoreTable($pdo);
 
@@ -27,6 +30,22 @@ try {
             break;
         case 'getProductPackages':
             getProductPackages($pdo);
+            break;
+        case 'getWalletBalance':
+            requireLogin();
+            getWalletBalance($currentUser);
+            break;
+        case 'getBuyInStoreCharge':
+            requireLogin();
+            getBuyInStoreCharge();
+            break;
+        case 'checkWalletBalance':
+            requireLogin();
+            checkWalletBalanceCombined($currentUser);
+            break;
+        case 'previewBuyInStore':
+            requireLogin();
+            previewBuyInStore($pdo, $currentUser);
             break;
         case 'submitBuyInStore':
             requireLogin();
@@ -87,6 +106,26 @@ function isValidUlid(string $id): bool
     return (bool) preg_match('/^[0-9A-Z]{26}$/i', $id);
 }
 
+function jsonInput(): array
+{
+    static $cache;
+    if ($cache !== null)
+        return $cache;
+    $raw = file_get_contents('php://input');
+    $cache = $raw ? (json_decode($raw, true) ?: []) : [];
+    return $cache;
+}
+
+function param(string $key, $default = null)
+{
+    $j = jsonInput();
+    if (array_key_exists($key, $_GET))
+        return $_GET[$key];
+    if (array_key_exists($key, $j))
+        return $j[$key];
+    return $default;
+}
+
 function getUserInfo()
 {
     if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in']) {
@@ -94,7 +133,6 @@ function getUserInfo()
         echo json_encode(['success' => false, 'error' => 'User not logged in', 'session_expired' => true]);
         return;
     }
-
     $user = [
         'username' => $_SESSION['user']['username'] ?? null,
         'email' => $_SESSION['user']['email'] ?? null,
@@ -105,20 +143,17 @@ function getUserInfo()
             ? $_SESSION['user']['first_name'] . ' ' . $_SESSION['user']['last_name']
             : ($_SESSION['user']['username'] ?? null)
     ];
-
     echo json_encode(['success' => true, 'user' => $user]);
 }
 
 function getProductPackages(PDO $pdo)
 {
-    $productId = $_GET['productId'] ?? '';
-
+    $productId = param('productId', '');
     if (empty($productId) || !isValidUlid($productId)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid product ID']);
         return;
     }
-
     try {
         $stmt = $pdo->prepare("
             SELECT 
@@ -148,16 +183,136 @@ function getProductPackages(PDO $pdo)
     }
 }
 
+function getWalletBalance(string $userId)
+{
+    $res = \ZzimbaCreditModule\CreditService::getWallet('USER', $userId);
+    if (empty($res['success'])) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'No Zzimba Wallet found']);
+        return;
+    }
+    $wallet = $res['wallet'];
+    echo json_encode([
+        'success' => true,
+        'wallet' => [
+            'wallet_id' => $wallet['wallet_id'],
+            'wallet_number' => $wallet['wallet_number'],
+            'balance' => isset($wallet['current_balance']) ? (float) $wallet['current_balance'] : 0.0
+        ]
+    ]);
+}
+
+function getBuyInStoreCharge()
+{
+    $info = \ZzimbaCreditModule\CreditService::buyInStoreChargeInfo();
+    echo json_encode([
+        'success' => true,
+        'fee' => (float) ($info['fee'] ?? 0.0),
+        'setting_id' => $info['setting_id'] ?? null
+    ]);
+}
+
+function checkWalletBalanceCombined(string $userId)
+{
+    $w = \ZzimbaCreditModule\CreditService::getWallet('USER', $userId);
+    if (empty($w['success'])) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'No Zzimba Wallet found']);
+        return;
+    }
+    $feeInfo = \ZzimbaCreditModule\CreditService::buyInStoreChargeInfo();
+    $fee = (float) ($feeInfo['fee'] ?? 0.0);
+    $balance = (float) ($w['wallet']['current_balance'] ?? 0.0);
+    $canSubmit = $balance >= $fee;
+    echo json_encode([
+        'success' => true,
+        'balance' => $balance,
+        'fee' => $fee,
+        'canSubmit' => $canSubmit
+    ]);
+}
+
+function previewBuyInStore(PDO $pdo, string $currentUser)
+{
+    if (($_SESSION['user']['is_admin'] ?? false) || ($_SESSION['user']['is_manager'] ?? false) || ($_SESSION['user']['is_owner'] ?? false)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Owners, managers and admins cannot submit buy-in-store requests']);
+        return;
+    }
+    $productId = param('productId', '');
+    $packageId = param('packageId', '');
+    if (!isValidUlid($productId) || !isValidUlid($packageId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid ID format']);
+        return;
+    }
+    try {
+        $stmt = $pdo->prepare("
+            SELECT 
+                vs.id   AS store_id,
+                vs.name AS store_name,
+                p.title AS product_name
+            FROM   product_pricing pp
+            JOIN   store_products  sp  ON pp.store_products_id = sp.id
+            JOIN   products        p   ON sp.product_id        = p.id
+            JOIN   store_categories sc  ON sp.store_category_id = sc.id
+            JOIN   vendor_stores   vs  ON sc.store_id = vs.id
+            WHERE  pp.id = :pricingId AND sp.id = :productId
+            LIMIT 1
+        ");
+        $stmt->execute([':pricingId' => $packageId, ':productId' => $productId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid product or package']);
+            return;
+        }
+        $w = \ZzimbaCreditModule\CreditService::getWallet('USER', $currentUser);
+        if (empty($w['success'])) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'No Zzimba Wallet found']);
+            return;
+        }
+        $feeInfo = \ZzimbaCreditModule\CreditService::buyInStoreChargeInfo();
+        $fee = (float) ($feeInfo['fee'] ?? 0.0);
+        $balance = (float) ($w['wallet']['current_balance'] ?? 0.0);
+        $canSubmit = $balance >= $fee;
+        $shortfall = $canSubmit ? 0.0 : max(0.0, $fee - $balance);
+        echo json_encode([
+            'success' => true,
+            'fee' => $fee,
+            'balance' => $balance,
+            'can_submit' => $canSubmit,
+            'shortfall' => $shortfall,
+            'product' => [
+                'id' => $productId,
+                'pricing_id' => $packageId,
+                'name' => $row['product_name'],
+                'store_id' => $row['store_id'],
+                'store_name' => $row['store_name']
+            ]
+        ]);
+    } catch (Exception $e) {
+        error_log('Error in previewBuyInStore: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Error preparing preview']);
+    }
+}
+
 function submitBuyInStore(PDO $pdo, string $currentUser)
 {
-    $data = json_decode(file_get_contents('php://input'), true);
+    if (($_SESSION['user']['is_admin'] ?? false) || ($_SESSION['user']['is_manager'] ?? false) || ($_SESSION['user']['is_owner'] ?? false)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Owners, managers and admins cannot submit buy-in-store requests']);
+        return;
+    }
+    $data = jsonInput();
     if (!$data) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid data submitted']);
         return;
     }
-
-    $requiredFields = ['packageId', 'visitDate', 'quantity'];
+    $requiredFields = ['productId', 'packageId', 'visitDate', 'quantity'];
     foreach ($requiredFields as $field) {
         if (empty($data[$field])) {
             http_response_code(400);
@@ -165,56 +320,26 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
             return;
         }
     }
-
-    if (!isValidUlid($data['packageId'])) {
+    if (!isValidUlid($data['productId']) || !isValidUlid($data['packageId'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid ID format']);
         return;
     }
-
-    $visitDate = new DateTime($data['visitDate']);
-    $today = new DateTime('today', new DateTimeZone('Africa/Kampala'));
-    if ($visitDate < $today) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Visit date must be today or later']);
-        return;
-    }
-
-    $quantity = intval($data['quantity']);
-    if ($quantity < 1) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Quantity must be at least 1']);
-        return;
-    }
-
     try {
-        $requestId = (string) Ulid::generate();
-        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-
-        $stmt = $pdo->prepare("
-            INSERT INTO buy_in_store_requests (
-                id, user_id, store_product_id, pricing_id, visit_date, quantity,
-                alt_contact, alt_email, notes, status, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
-        ");
-
-        $stmt->execute([
-            $requestId,
-            $currentUser,
-            $data['productId'],
-            $data['packageId'],
-            $data['visitDate'],
-            $quantity,
-            $data['altContact'] ?? null,
-            $data['altEmail'] ?? null,
-            $data['notes'] ?? null,
-            $now,
-            $now
-        ]);
-
-        logAction($pdo, "User {$currentUser} submitted a buy-in-store request for pricing ID {$data['packageId']}");
-
-        $storeStmt = $pdo->prepare("
+        $visitDate = new DateTime($data['visitDate'], new DateTimeZone('Africa/Kampala'));
+        $today = new DateTime('today', new DateTimeZone('Africa/Kampala'));
+        if ($visitDate < $today) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Visit date must be today or later']);
+            return;
+        }
+        $quantity = intval($data['quantity']);
+        if ($quantity < 1) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Quantity must be at least 1']);
+            return;
+        }
+        $pricingStmt = $pdo->prepare("
             SELECT 
                 vs.id   AS store_id,
                 vs.name AS store_name,
@@ -222,7 +347,8 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
                 p.title AS product_name,
                 ppn.package_name,
                 pp.package_size,
-                psu.si_unit
+                psu.si_unit,
+                sp.id   AS store_product_id
             FROM   product_pricing pp
             JOIN   store_products  sp  ON pp.store_products_id = sp.id
             JOIN   products        p   ON sp.product_id        = p.id
@@ -231,26 +357,44 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
             JOIN   product_si_units         psu ON pp.si_unit_id = psu.id
             JOIN   store_categories         sc  ON sp.store_category_id = sc.id
             JOIN   vendor_stores            vs  ON sc.store_id = vs.id
-            WHERE  pp.id = ?
+            WHERE  pp.id = :pricingId AND sp.id = :productId
             LIMIT 1
         ");
-        $storeStmt->execute([$data['packageId']]);
-        $storeData = $storeStmt->fetch(PDO::FETCH_ASSOC);
-
+        $pricingStmt->execute([':pricingId' => $data['packageId'], ':productId' => $data['productId']]);
+        $storeData = $pricingStmt->fetch(PDO::FETCH_ASSOC);
         if (!$storeData) {
-            throw new Exception('Linked store not found for pricing ID ' . $data['packageId']);
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid product or package']);
+            return;
         }
-
-        $ns = new NotificationService($pdo);
-
-        $userName = trim(
-            ($_SESSION['user']['first_name'] ?? '') . ' ' . ($_SESSION['user']['last_name'] ?? '')
-        ) ?: ($_SESSION['user']['username'] ?? 'User');
-
-        $userPhone = $_SESSION['user']['phone'] ?? ($data['altContact'] ?? null);
-
+        $charge = \ZzimbaCreditModule\CreditService::chargeBuyInStoreFee($currentUser);
+        if (empty($charge['success'])) {
+            http_response_code(400);
+            echo json_encode($charge);
+            return;
+        }
+        $requestId = (string) Ulid::generate();
+        $visitDateStr = $visitDate->format('Y-m-d');
+        $insReq = $pdo->prepare("
+            INSERT INTO buy_in_store_requests (
+                id, user_id, store_product_id, pricing_id, visit_date, quantity,
+                alt_contact, alt_email, notes, status, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())
+        ");
+        $insReq->execute([
+            $requestId,
+            $currentUser,
+            $storeData['store_product_id'],
+            $data['packageId'],
+            $visitDateStr,
+            $quantity,
+            $data['altContact'] ?? null,
+            $data['altEmail'] ?? null,
+            $data['notes'] ?? null
+        ]);
+        $ns = new \NotificationService($pdo);
+        $userName = trim(($_SESSION['user']['first_name'] ?? '') . ' ' . ($_SESSION['user']['last_name'] ?? '')) ?: ($_SESSION['user']['username'] ?? 'User');
         $visitDatePretty = $visitDate->format('j M Y');
-
         $recipients = [
             [
                 'type' => 'store',
@@ -261,46 +405,42 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
                 'type' => 'admin',
                 'id' => 'admin-global',
                 'message' => "$userName submitted a visit request to \"{$storeData['store_name']}\" on $visitDatePretty."
+            ],
+            [
+                'type' => 'user',
+                'id' => $currentUser,
+                'message' => "Your Buy In Store request to \"{$storeData['store_name']}\" on $visitDatePretty has been submitted."
             ]
         ];
-
-        $ns->create(
-            'visit_request',
-            'New Visit Request',
-            $recipients,
-            BASE_URL . "/vendor-store/requests?id={$storeData['store_id']}",
-            'high',
-            $currentUser
-        );
-
+        $link = defined('BASE_URL') ? rtrim(\BASE_URL, '/') . "/vendor-store/requests?id={$storeData['store_id']}" : null;
+        $ns->create('visit_request', 'New Visit Request', $recipients, $link, 'high', $currentUser);
         $productLabelParts = [];
         if (!empty($storeData['product_name']))
             $productLabelParts[] = $storeData['product_name'];
         $pkg = trim(($storeData['package_name'] ?? '') . ' ' . ($storeData['package_size'] ?? '') . ($storeData['si_unit'] ? ' ' . $storeData['si_unit'] : ''));
-        $pkg = trim($pkg);
         if ($pkg !== '')
             $productLabelParts[] = "($pkg)";
         $productLabel = trim(implode(' ', $productLabelParts));
         $storePhone = $storeData['business_phone'] ?? '';
         $smsResult = null;
         if ($storePhone !== '') {
-            $smsText = rtrim(BASE_URL, '/') . ': You have a buy-in-store request for "' . $productLabel . ' (' . (int) $quantity . ' units)" log in to confirm pick-up order';
-            $send = SMS::send($storePhone, $smsText, true);
-            $smsResult = [
-                'success' => !empty($send['success']),
-                'error' => $send['error'] ?? null
-            ];
+            $base = defined('BASE_URL') ? rtrim(\BASE_URL, '/') : '';
+            $smsText = $base . ': You have a buy-in-store request for "' . $productLabel . ' (' . (int) $quantity . ' units)" log in to confirm pick-up order';
+            $send = \SMS::send($storePhone, $smsText, true);
+            $smsResult = ['success' => !empty($send['success']), 'error' => $send['error'] ?? null];
         }
-
-        echo json_encode([
+        logAction($pdo, "User {$currentUser} submitted a buy-in-store request for pricing ID {$data['packageId']}");
+        $response = [
             'success' => true,
             'message' => 'Your in-store purchase request has been submitted successfully!',
             'requestId' => $requestId,
+            'fee_charged' => (float) ($charge['fee_charged'] ?? 0.0),
+            'remaining_balance' => (float) ($charge['remaining_balance'] ?? 0.0),
+            'transaction_id' => $charge['transaction_id'] ?? null,
             'sms' => $smsResult
-        ]);
+        ];
+        echo json_encode($response);
     } catch (Exception $e) {
-        if ($pdo->inTransaction())
-            $pdo->rollBack();
         error_log('Error submitting buy-in-store request: ' . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Error submitting request']);

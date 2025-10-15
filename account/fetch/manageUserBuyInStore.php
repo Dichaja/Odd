@@ -24,6 +24,42 @@ if (!$userLogged || !$userId) {
     exit;
 }
 
+function product_url($id)
+{
+    return rtrim(BASE_URL, '/') . '/view/product/' . urlencode((string) $id);
+}
+
+function first_image_in_folder_url($productId)
+{
+    $root = realpath(__DIR__ . '/../../');
+    if ($root === false)
+        return null;
+    $dir = $root . '/img/products/' . $productId . '/';
+    if (!is_dir($dir))
+        return null;
+    $list = @scandir($dir);
+    if ($list === false)
+        return null;
+    $exts = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'JPG', 'JPEG', 'PNG', 'WEBP', 'GIF'];
+    $images = [];
+    foreach ($list as $f) {
+        if ($f === '.' || $f === '..')
+            continue;
+        $path = $dir . $f;
+        if (is_file($path)) {
+            $pi = pathinfo($f);
+            $ext = $pi['extension'] ?? '';
+            if (in_array($ext, $exts, true))
+                $images[] = $f;
+        }
+    }
+    if (empty($images))
+        return null;
+    natsort($images);
+    $first = array_values($images)[0];
+    return rtrim(BASE_URL, '/') . '/img/products/' . $productId . '/' . rawurlencode($first);
+}
+
 try {
     switch ($action) {
         case 'getStats':
@@ -94,6 +130,7 @@ try {
             $dataSql = "
                 SELECT 
                     bisr.id, bisr.user_id, bisr.store_product_id, bisr.pricing_id, bisr.visit_date, bisr.quantity, bisr.alt_contact, bisr.alt_email, bisr.notes, bisr.status, bisr.created_at, bisr.updated_at,
+                    p.id AS product_id,
                     p.title AS product_title,
                     pp.price, pp.price_category, pp.package_size, psu.si_unit, ppn.package_name,
                     vs.name AS store_name, vs.region, vs.district, vs.subcounty, vs.parish, vs.address, vs.latitude, vs.longitude, vs.business_email, vs.business_phone
@@ -117,8 +154,12 @@ try {
             $s->bindValue(':offset', $offset, PDO::PARAM_INT);
             $s->execute();
             $rows = $s->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($rows as &$r)
+            foreach ($rows as &$r) {
                 $r['total_value'] = (float) $r['price'] * (int) $r['quantity'];
+                $pid = (int) $r['product_id'];
+                $r['product_url'] = product_url($pid);
+                $r['product_image'] = first_image_in_folder_url($pid);
+            }
 
             echo json_encode([
                 'success' => true,
@@ -139,6 +180,7 @@ try {
             $sql = "
                 SELECT 
                     bisr.*, 
+                    p.id AS product_id,
                     p.title AS product_title, p.description AS product_description,
                     pp.price, pp.price_category, pp.package_size,
                     psu.si_unit, ppn.package_name,
@@ -164,6 +206,9 @@ try {
                 break;
             }
             $req['total_value'] = (float) $req['price'] * (int) $req['quantity'];
+            $pid = (int) $req['product_id'];
+            $req['product_url'] = product_url($pid);
+            $req['product_image'] = first_image_in_folder_url($pid);
             echo json_encode(['success' => true, 'request' => $req]);
             break;
 
