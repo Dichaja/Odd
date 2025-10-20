@@ -9,8 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
         switch ($_POST['action']) {
             case 'load_vendors':
-                $page = intval($_POST['page'] ?? 1);
-                $limit = intval($_POST['limit'] ?? 20);
+                $page = max(1, intval($_POST['page'] ?? 1));
+                $limit = max(1, intval($_POST['limit'] ?? 20));
                 $search = trim($_POST['search'] ?? '');
                 $category = trim($_POST['category'] ?? '');
                 $status = trim($_POST['status'] ?? '');
@@ -20,52 +20,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $whereConditions = [];
                 $params = [];
 
-                if (!empty($search)) {
+                if ($search !== '') {
                     $whereConditions[] = "(vs.name LIKE ? OR vs.business_email LIKE ? OR vs.business_phone LIKE ? OR vs.contact_person_name LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ?)";
                     $searchTerm = "%$search%";
                     $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
                 }
 
-                if (!empty($category)) {
+                if ($category !== '') {
                     $whereConditions[] = "nob.name = ?";
                     $params[] = $category;
                 }
 
-                if (!empty($status)) {
+                if ($status !== '') {
                     $whereConditions[] = "vs.status = ?";
                     $params[] = $status;
                 }
 
                 $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
 
-                $countQuery = "SELECT COUNT(*) as total FROM vendor_stores vs 
-                              LEFT JOIN zzimba_users u ON vs.owner_id = u.id 
-                              LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id 
-                              $whereClause";
-
+                $countQuery = "SELECT COUNT(*) as total
+                               FROM vendor_stores vs
+                               LEFT JOIN zzimba_users u ON vs.owner_id = u.id
+                               LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id
+                               $whereClause";
                 $stmt = $pdo->prepare($countQuery);
                 $stmt->execute($params);
-                $totalCount = $stmt->fetch()['total'];
+                $totalCountRow = $stmt->fetch(PDO::FETCH_ASSOC);
+                $totalCount = intval($totalCountRow['total'] ?? 0);
 
-                $query = "SELECT vs.*, 
+                $query = "SELECT vs.*,
                                 CONCAT(u.first_name, ' ', u.last_name) as owner_name,
                                 nob.name as nature_of_business,
                                 CONCAT(vs.region, ', ', vs.district, ', ', vs.subcounty) as full_address,
-                                (SELECT COUNT(*) FROM store_products sp 
-                                 JOIN store_categories sc ON sp.store_category_id = sc.id 
-                                 WHERE sc.store_id = vs.id AND sp.status = 'active') as product_count
-                         FROM vendor_stores vs 
-                         LEFT JOIN zzimba_users u ON vs.owner_id = u.id 
-                         LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id 
-                         $whereClause 
-                         ORDER BY vs.created_at DESC 
-                         LIMIT ? OFFSET ?";
-
-                $params[] = $limit;
-                $params[] = $offset;
-
+                                (SELECT COUNT(*)
+                                   FROM store_products sp
+                                   JOIN store_categories sc ON sp.store_category_id = sc.id
+                                  WHERE sc.store_id = vs.id AND sp.status = 'active') as product_count
+                          FROM vendor_stores vs
+                          LEFT JOIN zzimba_users u ON vs.owner_id = u.id
+                          LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id
+                          $whereClause
+                          ORDER BY vs.created_at DESC
+                          LIMIT ? OFFSET ?";
+                $pageParams = array_merge($params, [$limit, $offset]);
                 $stmt = $pdo->prepare($query);
-                $stmt->execute($params);
+                $stmt->execute($pageParams);
                 $vendors = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 $categoriesQuery = "SELECT DISTINCT name FROM nature_of_business WHERE status = 'active' ORDER BY name";
@@ -73,20 +72,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $categoriesStmt->execute();
                 $categories = $categoriesStmt->fetchAll(PDO::FETCH_ASSOC);
 
-                $totalPages = ceil($totalCount / $limit);
-                $start = $offset + 1;
+                $statsStmt = $pdo->query("SELECT
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
+                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                    SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended
+                FROM vendor_stores");
+                $statsOverall = $statsStmt->fetch(PDO::FETCH_ASSOC);
+
+                $totalPages = ($limit > 0) ? (int) ceil($totalCount / $limit) : 1;
+                $start = $totalCount > 0 ? $offset + 1 : 0;
                 $end = min($offset + $limit, $totalCount);
 
                 echo json_encode([
                     'success' => true,
                     'vendors' => $vendors,
                     'categories' => $categories,
+                    'stats_overall' => [
+                        'total' => intval($statsOverall['total'] ?? 0),
+                        'active' => intval($statsOverall['active'] ?? 0),
+                        'pending' => intval($statsOverall['pending'] ?? 0),
+                        'suspended' => intval($statsOverall['suspended'] ?? 0)
+                    ],
                     'pagination' => [
                         'current_page' => $page,
-                        'total_pages' => $totalPages,
+                        'total_pages' => max(1, $totalPages),
                         'total' => $totalCount,
                         'start' => $start,
-                        'end' => $end
+                        'end' => $end,
+                        'limit' => $limit
                     ]
                 ]);
                 exit;
@@ -95,13 +109,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $storeId = $_POST['store_id'] ?? '';
                 $newStatus = $_POST['status'] ?? '';
 
-                if (empty($storeId) || empty($newStatus)) {
+                if ($storeId === '' || $newStatus === '') {
                     echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
                     exit;
                 }
 
                 $allowedStatuses = ['active', 'pending', 'inactive', 'suspended'];
-                if (!in_array($newStatus, $allowedStatuses)) {
+                if (!in_array($newStatus, $allowedStatuses, true)) {
                     echo json_encode(['success' => false, 'message' => 'Invalid status']);
                     exit;
                 }
@@ -373,8 +387,7 @@ ob_start();
             </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-160px)]" id="vendorDetails">
-        </div>
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 max-h-[calc(90vh-160px)]" id="vendorDetails"></div>
 
         <div class="p-2 border-t border-gray-100 flex justify-between">
             <button type="button" id="updateStatusBtn"
@@ -465,71 +478,57 @@ ob_start();
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+    window.BASE_URL = window.BASE_URL || '<?= BASE_URL ?>';
     let vendorsData = [];
     let currentPage = 1;
     let itemsPerPage = 20;
     let totalPages = 1;
+    let totalItems = 0;
     let currentStoreId = null;
-    let filterData = {
-        category: '',
-        status: '',
-        search: ''
-    };
+    let filterData = { category: '', status: '', search: '' };
 
     document.addEventListener('DOMContentLoaded', () => {
-        loadVendors();
+        loadVendors(1);
 
         let searchTimeout;
         document.getElementById('searchVendors').addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                filterData.search = e.target.value;
-                applyFilters();
-            }, 500);
+                filterData.search = e.target.value || '';
+                loadVendors(1);
+            }, 400);
         });
 
         document.getElementById('filterCategory').addEventListener('change', (e) => {
-            filterData.category = e.target.value;
+            filterData.category = e.target.value || '';
         });
 
         document.getElementById('filterStatus').addEventListener('change', (e) => {
-            filterData.status = e.target.value;
+            filterData.status = e.target.value || '';
         });
 
-        document.getElementById('applyFilters').addEventListener('click', applyFilters);
-        document.getElementById('resetFilters').addEventListener('click', resetFilters);
+        document.getElementById('applyFilters').addEventListener('click', () => loadVendors(1));
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            document.getElementById('filterCategory').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('searchVendors').value = '';
+            filterData = { category: '', status: '', search: '' };
+            loadVendors(1);
+        });
 
         document.getElementById('prev-page').addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderPagination();
-                renderVendors(vendorsData);
-            }
+            if (currentPage > 1) loadVendors(currentPage - 1);
         });
 
         document.getElementById('next-page').addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderPagination();
-                renderVendors(vendorsData);
-            }
+            if (currentPage < totalPages) loadVendors(currentPage + 1);
         });
 
-        ['mobilePrevPage', 'mobileNextPage'].forEach(id => {
-            document.getElementById(id).addEventListener('click', function () {
-                const filteredList = filterVendors(vendorsData);
-                const newTotalPages = Math.ceil(filteredList.length / itemsPerPage);
-
-                if (id.includes('prev') && currentPage > 1) {
-                    currentPage--;
-                } else if (id.includes('next') && currentPage < newTotalPages) {
-                    currentPage++;
-                }
-
-                totalPages = newTotalPages;
-                renderPagination();
-                renderVendors(vendorsData);
-            });
+        document.getElementById('mobilePrevPage').addEventListener('click', () => {
+            if (currentPage > 1) loadVendors(currentPage - 1);
+        });
+        document.getElementById('mobileNextPage').addEventListener('click', () => {
+            if (currentPage < totalPages) loadVendors(currentPage + 1);
         });
 
         document.getElementById('confirmUpdateStatus').addEventListener('click', updateStoreStatus);
@@ -544,67 +543,71 @@ ob_start();
         document.getElementById('loadingOverlay').classList.add('hidden');
     }
 
-    function loadVendors() {
+    function loadVendors(page = 1) {
         showLoading('Loading vendors...');
+        currentPage = page;
 
         const formData = new FormData();
         formData.append('action', 'load_vendors');
-        formData.append('page', 1);
-        formData.append('limit', 1000);
-        formData.append('search', '');
-        formData.append('category', '');
-        formData.append('status', '');
+        formData.append('page', currentPage);
+        formData.append('limit', itemsPerPage);
+        formData.append('search', filterData.search);
+        formData.append('category', filterData.category);
+        formData.append('status', filterData.status);
 
-        fetch(window.location.href, {
-            method: 'POST',
-            body: formData
-        })
+        fetch(window.location.href, { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
                 hideLoading();
-                if (data.success) {
-                    vendorsData = data.vendors || [];
-                    loadCategories(data.categories);
-                    updateStatistics();
-                    totalPages = Math.ceil(vendorsData.length / itemsPerPage);
-                    currentPage = 1;
-                    renderPagination();
-                    renderVendors(vendorsData);
-                } else {
+                if (!data.success) {
                     showErrorNotification(data.message || 'Failed to load vendors');
+                    return;
                 }
+                vendorsData = data.vendors || [];
+                totalPages = Math.max(1, parseInt(data.pagination?.total_pages || 1, 10));
+                totalItems = parseInt(data.pagination?.total || 0, 10);
+
+                document.getElementById('vendorCount').textContent = totalItems;
+                document.getElementById('showingStart').textContent = data.pagination?.start || 0;
+                document.getElementById('showingEnd').textContent = data.pagination?.end || 0;
+                document.getElementById('totalVendorsCount').textContent = totalItems;
+
+                document.getElementById('mobileShowingStart').textContent = data.pagination?.start || 0;
+                document.getElementById('mobileShowingEnd').textContent = data.pagination?.end || 0;
+                document.getElementById('mobileTotalVendors').textContent = totalItems;
+                document.getElementById('mobilePageInfo').textContent = `Page ${data.pagination?.current_page || 1} of ${totalPages}`;
+
+                loadCategories(data.categories || []);
+                updateStatistics(data.stats_overall || { total: 0, active: 0, pending: 0, suspended: 0 });
+                renderVendorsTable(vendorsData);
+                renderVendorsCards(vendorsData);
+                renderPagination();
             })
-            .catch(err => {
+            .catch(() => {
                 hideLoading();
-                console.error('Error loading vendors:', err);
                 showErrorNotification('Failed to load vendors.');
             });
     }
 
     function loadCategories(categories) {
         const select = document.getElementById('filterCategory');
+        const prev = select.value;
         select.innerHTML = '<option value="">All Categories</option>';
-
-        if (categories && categories.length > 0) {
-            categories.forEach(category => {
-                const option = document.createElement('option');
-                option.value = category.name;
-                option.textContent = category.name;
-                select.appendChild(option);
-            });
-        }
+        categories.forEach(category => {
+            const name = category.name || '';
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        });
+        if (prev && Array.from(select.options).some(o => o.value === prev)) select.value = prev;
     }
 
-    function updateStatistics() {
-        const total = vendorsData.length;
-        const active = vendorsData.filter(v => v.status === 'active').length;
-        const pending = vendorsData.filter(v => v.status === 'pending').length;
-        const suspended = vendorsData.filter(v => v.status === 'suspended').length;
-
-        document.getElementById('totalVendors').textContent = total.toLocaleString();
-        document.getElementById('activeVendors').textContent = active.toLocaleString();
-        document.getElementById('pendingVendors').textContent = pending.toLocaleString();
-        document.getElementById('suspendedVendors').textContent = suspended.toLocaleString();
+    function updateStatistics(statsOverall) {
+        document.getElementById('totalVendors').textContent = Number(statsOverall.total || 0).toLocaleString();
+        document.getElementById('activeVendors').textContent = Number(statsOverall.active || 0).toLocaleString();
+        document.getElementById('pendingVendors').textContent = Number(statsOverall.pending || 0).toLocaleString();
+        document.getElementById('suspendedVendors').textContent = Number(statsOverall.suspended || 0).toLocaleString();
     }
 
     function renderPagination() {
@@ -616,70 +619,37 @@ ob_start();
         const pagNums = document.getElementById('pagination-numbers');
         pagNums.innerHTML = '';
         if (totalPages <= 5) {
-            for (let i = 1; i <= totalPages; i++) {
-                pagNums.appendChild(createPagButton(i));
-            }
+            for (let i = 1; i <= totalPages; i++) pagNums.appendChild(createPagButton(i));
         } else {
             pagNums.appendChild(createPagButton(1));
-            if (currentPage > 3) {
-                const ellipsis = document.createElement('span');
-                ellipsis.textContent = '...';
-                ellipsis.classList.add('px-2');
-                pagNums.appendChild(ellipsis);
-            }
+            if (currentPage > 3) pagNums.appendChild(createEllipsis());
             for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
                 pagNums.appendChild(createPagButton(i));
             }
-            if (currentPage < totalPages - 2) {
-                const ellipsis = document.createElement('span');
-                ellipsis.textContent = '...';
-                ellipsis.classList.add('px-2');
-                pagNums.appendChild(ellipsis);
-            }
+            if (currentPage < totalPages - 2) pagNums.appendChild(createEllipsis());
             pagNums.appendChild(createPagButton(totalPages));
         }
     }
 
     function createPagButton(page) {
         const btn = document.createElement('button');
-        btn.className = (page === currentPage) ?
-            'px-3 py-2 rounded-lg bg-primary text-white' :
-            'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
+        btn.className = (page === currentPage) ? 'px-3 py-2 rounded-lg bg-primary text-white' : 'px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-50';
         btn.textContent = page;
-        btn.addEventListener('click', () => {
-            currentPage = page;
-            renderPagination();
-            renderVendors(vendorsData);
-        });
+        btn.addEventListener('click', () => loadVendors(page));
         return btn;
     }
 
-    function renderVendors(list) {
-        const filteredList = filterVendors(list);
-        totalPages = Math.ceil(filteredList.length / itemsPerPage);
-
-        if (currentPage > totalPages && totalPages > 0) {
-            currentPage = totalPages;
-        }
-
-        const start = (currentPage - 1) * itemsPerPage;
-        const end = Math.min(start + itemsPerPage, filteredList.length);
-
-        document.getElementById('vendorCount').textContent = filteredList.length;
-        document.getElementById('showingStart').textContent = filteredList.length > 0 ? start + 1 : 0;
-        document.getElementById('showingEnd').textContent = end;
-        document.getElementById('totalVendorsCount').textContent = filteredList.length;
-
-        renderVendorsTable(filteredList.slice(start, end));
-        renderVendorsCards(filteredList.slice(start, end));
-        updateMobilePagination(filteredList.length, currentPage);
-        renderPagination();
+    function createEllipsis() {
+        const span = document.createElement('span');
+        span.textContent = '...';
+        span.className = 'px-2';
+        return span;
     }
 
     function renderVendorsTable(vendors) {
         const tbody = document.getElementById('vendorsBody');
 
-        if (vendors.length === 0) {
+        if (!vendors || vendors.length === 0) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="5" class="px-4 py-8 text-center text-gray-500">
@@ -693,7 +663,6 @@ ob_start();
 
         tbody.innerHTML = vendors.map(vendor => {
             const statusBadge = getStatusBadge(vendor.status);
-
             return `
                 <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="showVendorModal('${vendor.id}')">
                     <td class="px-4 py-3 whitespace-nowrap">
@@ -703,8 +672,8 @@ ob_start();
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-secondary max-w-xs hover:text-primary">
-                                    <span class="hidden sm:block truncate">${escapeHtml(vendor.name)}</span>
-                                    <span class="sm:hidden break-words">${escapeHtml(vendor.name)}</span>
+                                    <span class="hidden sm:block truncate">${escapeHtml(vendor.name || '')}</span>
+                                    <span class="sm:hidden break-words">${escapeHtml(vendor.name || '')}</span>
                                 </div>
                                 <div class="text-xs text-gray-500 hidden sm:block">${escapeHtml(vendor.owner_name || 'No owner')}</div>
                             </div>
@@ -731,7 +700,7 @@ ob_start();
     function renderVendorsCards(vendors) {
         const container = document.getElementById('vendorsCards');
 
-        if (vendors.length === 0) {
+        if (!vendors || vendors.length === 0) {
             container.innerHTML = `
                 <div class="p-4 text-center text-gray-500">
                     <i class="fas fa-store text-2xl mb-2"></i>
@@ -743,7 +712,6 @@ ob_start();
 
         container.innerHTML = vendors.map(vendor => {
             const statusBadge = getStatusBadge(vendor.status);
-
             return `
                 <div class="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer" onclick="showVendorModal('${vendor.id}')">
                     <div class="flex items-start gap-3">
@@ -754,14 +722,10 @@ ob_start();
                             <div class="mb-1">
                                 <div class="flex items-center gap-1 mb-1">
                                     ${statusBadge}
-                                    ${vendor.nature_of_business ? `
-                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            ${escapeHtml(vendor.nature_of_business)}
-                                        </span>
-                                    ` : ''}
+                                    ${vendor.nature_of_business ? `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">${escapeHtml(vendor.nature_of_business || '')}</span>` : ''}
                                 </div>
                                 <h4 class="text-sm font-medium text-secondary hover:text-primary pr-2 break-words">
-                                    ${escapeHtml(vendor.name)}
+                                    ${escapeHtml(vendor.name || '')}
                                 </h4>
                             </div>
                             <div class="text-xs text-gray-500 mb-2">Owner: ${escapeHtml(vendor.owner_name || 'No owner')}</div>
@@ -779,74 +743,16 @@ ob_start();
 
     function getStatusBadge(status) {
         switch (status) {
-            case 'active':
-                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>';
-            case 'pending':
-                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Pending</span>';
-            case 'inactive':
-                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
-            case 'suspended':
-                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Suspended</span>';
-            default:
-                return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
+            case 'active': return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>';
+            case 'pending': return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Pending</span>';
+            case 'inactive': return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>';
+            case 'suspended': return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Suspended</span>';
+            default: return '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Unknown</span>';
         }
     }
 
-    function updateMobilePagination(total, page) {
-        const totalPages = Math.ceil(total / itemsPerPage);
-        const startIndex = (page - 1) * itemsPerPage;
-        const endIndex = Math.min(startIndex + itemsPerPage, total);
-
-        document.getElementById('mobileShowingStart').textContent = `${startIndex + 1}`;
-        document.getElementById('mobileShowingEnd').textContent = `${endIndex}`;
-        document.getElementById('mobileTotalVendors').textContent = total;
-        document.getElementById('mobilePageInfo').textContent = `Page ${page} of ${Math.max(1, totalPages)}`;
-
-        document.getElementById('mobilePrevPage').disabled = page === 1;
-        document.getElementById('mobileNextPage').disabled = page === totalPages || totalPages === 0;
-    }
-
-    function filterVendors(vendors) {
-        return vendors.filter(vendor => {
-            if (filterData.search &&
-                !vendor.name.toLowerCase().includes(filterData.search.toLowerCase()) &&
-                !vendor.business_email.toLowerCase().includes(filterData.search.toLowerCase()) &&
-                !vendor.contact_person_name.toLowerCase().includes(filterData.search.toLowerCase()) &&
-                !vendor.owner_name.toLowerCase().includes(filterData.search.toLowerCase())) {
-                return false;
-            }
-            if (filterData.category && vendor.nature_of_business !== filterData.category) {
-                return false;
-            }
-            if (filterData.status && vendor.status !== filterData.status) {
-                return false;
-            }
-            return true;
-        });
-    }
-
-    function applyFilters() {
-        currentPage = 1;
-        renderPagination();
-        renderVendors(vendorsData);
-    }
-
-    function resetFilters() {
-        document.getElementById('filterCategory').value = '';
-        document.getElementById('filterStatus').value = '';
-        document.getElementById('searchVendors').value = '';
-
-        filterData = {
-            category: '',
-            status: '',
-            search: ''
-        };
-
-        applyFilters();
-    }
-
     function showVendorModal(vendorId) {
-        const vendor = vendorsData.find(v => v.id === vendorId);
+        const vendor = vendorsData.find(v => String(v.id) === String(vendorId));
         if (!vendor) return;
 
         currentStoreId = vendorId;
@@ -856,7 +762,7 @@ ob_start();
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
-                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${escapeHtml(vendor.name)}</div>
+                        <div class="text-sm text-gray-900 p-2 bg-gray-50 rounded">${escapeHtml(vendor.name || '')}</div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
@@ -913,16 +819,12 @@ ob_start();
     function showStatusModal(storeId, storeName, currentStatus) {
         document.getElementById('status-store-info').innerHTML = `
             <div class="bg-gray-50 p-3 rounded-lg">
-                <h4 class="font-medium text-gray-800">${escapeHtml(storeName)}</h4>
-                <p class="text-sm text-gray-600">Current Status: ${getStatusBadge(currentStatus)}</p>
+                <h4 class="font-medium text-gray-800">${escapeHtml(storeName || '')}</h4>
+                <p class="text-sm text-gray-600">Current Status: ${getStatusBadge(currentStatus || '')}</p>
             </div>
         `;
-
         const statusRadios = document.querySelectorAll('input[name="new-status"]');
-        statusRadios.forEach(radio => {
-            radio.checked = radio.value === currentStatus;
-        });
-
+        statusRadios.forEach(radio => { radio.checked = radio.value === currentStatus; });
         document.getElementById('statusModal').classList.remove('hidden');
     }
 
@@ -932,12 +834,8 @@ ob_start();
 
     function updateStoreStatus() {
         if (!currentStoreId) return;
-
         const selectedStatus = document.querySelector('input[name="new-status"]:checked');
-        if (!selectedStatus) {
-            showErrorNotification('Please select a status');
-            return;
-        }
+        if (!selectedStatus) { showErrorNotification('Please select a status'); return; }
 
         showLoading('Updating status...');
 
@@ -946,10 +844,7 @@ ob_start();
         formData.append('store_id', currentStoreId);
         formData.append('status', selectedStatus.value);
 
-        fetch(window.location.href, {
-            method: 'POST',
-            body: formData
-        })
+        fetch(window.location.href, { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
                 hideLoading();
@@ -957,14 +852,13 @@ ob_start();
                     hideStatusModal();
                     hideVendorModal();
                     showSuccessNotification(data.message || 'Status updated successfully');
-                    loadVendors();
+                    loadVendors(currentPage);
                 } else {
                     showErrorNotification(data.message || 'Failed to update status');
                 }
             })
-            .catch(err => {
+            .catch(() => {
                 hideLoading();
-                console.error('Error updating status:', err);
                 showErrorNotification('Failed to update status');
             });
     }
@@ -972,7 +866,7 @@ ob_start();
     function redirectToManageStore(storeUuid) {
         showLoading('Initiating store session...');
         $.ajax({
-            url: BASE_URL + 'account/fetch/initVendorSession.php',
+            url: window.BASE_URL + 'account/fetch/initVendorSession.php',
             type: 'POST',
             data: { store_uuid: storeUuid },
             dataType: 'json',
@@ -994,31 +888,26 @@ ob_start();
     function formatDate(dateString) {
         if (!dateString) return 'Not available';
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: '2-digit'
-        });
+        if (isNaN(date.getTime())) return 'Not available';
+        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
     }
 
     function escapeHtml(text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text == null ? '' : String(text);
         return div.innerHTML;
     }
 
     function showSuccessNotification(message) {
         const notif = document.getElementById('successNotification');
-        const msgEl = document.getElementById('successMessage');
-        msgEl.textContent = message;
+        document.getElementById('successMessage').textContent = message || '';
         notif.classList.remove('hidden');
         setTimeout(() => notif.classList.add('hidden'), 3000);
     }
 
     function showErrorNotification(message) {
         const notif = document.getElementById('errorNotification');
-        const msgEl = document.getElementById('errorMessage');
-        msgEl.textContent = message;
+        document.getElementById('errorMessage').textContent = message || '';
         notif.classList.remove('hidden');
         setTimeout(() => notif.classList.add('hidden'), 5000);
     }

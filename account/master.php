@@ -367,7 +367,7 @@ if ($needsProfileCompletion) {
                             this.notes.forEach(n => { if (ids.includes(n.target_id)) n.is_seen = 1 });
                             this.selected = [];
                             const b = document.getElementById('selectAll'); if (b) b.checked = false;
-                            const b2 = document.getElementById('selectAllM'); if (b2) b.checked = false;
+                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false;
                             const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                             this.setBadge(c);
                         }).catch(() => { });
@@ -507,11 +507,19 @@ if ($needsProfileCompletion) {
 
         .sheet {
             transform: translateY(100%);
-            transition: transform .25s ease
+            transition: transform .25s ease;
+            max-height: 92vh;
+            overflow: hidden
         }
 
         .sheet.open {
             transform: translateY(0)
+        }
+
+        .sheet-inner {
+            max-height: 80vh;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch
         }
 
         .theme-pill {
@@ -568,10 +576,6 @@ if ($needsProfileCompletion) {
         .main-fixed {
             height: calc(100vh - 64px);
             overflow: auto
-        }
-
-        input[type="checkbox"] {
-            accent-color: #D92B13
         }
 
         .gs-card-gradient {
@@ -655,6 +659,43 @@ if ($needsProfileCompletion) {
             color: #ffffff;
             background: transparent
         }
+
+        .zz-checkbox {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid #D1D5DB;
+            background: #ffffff;
+            display: inline-grid;
+            place-content: center;
+            vertical-align: middle
+        }
+
+        .zz-checkbox:checked {
+            background: #D92B13;
+            border-color: #D92B13
+        }
+
+        .zz-checkbox:checked::after {
+            content: "";
+            width: 10px;
+            height: 10px;
+            background: #ffffff;
+            mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="white" d="M16.707 5.293a1 1 0 0 1 0 1.414l-7.25 7.25a1 1 0 0 1-1.414 0l-3-3a1 1 0 1 1 1.414-1.414l2.293 2.293 6.543-6.543a1 1 0 0 1 1.414 0z"/></svg>') no-repeat center;
+            -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="white" d="M16.707 5.293a1 1 0 0 1 0 1.414l-7.25 7.25a1 1 0 0 1-1.414 0l-3-3a1 1 0 1 1 1.414-1.414l2.293 2.293 6.543-6.543a1 1 0 0 1 1.414 0z"/></svg>') no-repeat center
+        }
+
+        .dark .zz-checkbox {
+            background: transparent;
+            border-color: rgba(255, 255, 255, .4)
+        }
+
+        .dark .zz-checkbox:checked {
+            background: #D92B13;
+            border-color: #D92B13
+        }
     </style>
 </head>
 
@@ -730,7 +771,9 @@ if ($needsProfileCompletion) {
         <div class="flex-1 lg:ml-64">
             <header
                 class="user-header sticky top-0 z-40 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary">
-                <div class="flex h-16 items-center justify-end sm:justify-between px-4 sm:px-6">
+                <div class="flex h-16 items-center justify-between px-4 sm:px-6">
+                    <div class="md:hidden text-sm font-medium text-secondary dark:text-white truncate">Hello
+                        <?= htmlspecialchars($userName) ?></div>
                     <h1 class="hidden md:block text-xl font-semibold text-secondary dark:text-white">
                         <span id="greeting"></span>
                     </h1>
@@ -785,7 +828,7 @@ if ($needsProfileCompletion) {
                                     class="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-white/10">
                                     <div class="flex items-center gap-2">
                                         <input type="checkbox" id="selectAll" @change="$store.notif.selectAll($event)"
-                                            class="h-4 w-4 text-user-primary rounded">
+                                            class="zz-checkbox">
                                         <label for="selectAll" class="text-xs text-gray-600 dark:text-white/80">Select
                                             All</label>
                                     </div>
@@ -798,11 +841,10 @@ if ($needsProfileCompletion) {
                                     </div>
                                 </div>
                                 <template x-for="note in $store.notif.notes" :key="note.target_id">
-                                    <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg:white/5' : 'bg-white dark:bg-secondary'"
+                                    <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
                                         class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
                                         <div class="px-3 py-3"><input type="checkbox" :value="note.target_id"
-                                                x-model="$store.notif.selected"
-                                                class="h-4 w-4 text-user-primary rounded"></div>
+                                                x-model="$store.notif.selected" class="zz-checkbox"></div>
                                         <div class="flex-1">
                                             <a :href="note.link_url || '#'" class="block px-0 py-3"
                                                 @click.prevent="$store.notif.handleClick(note)">
@@ -839,14 +881,11 @@ if ($needsProfileCompletion) {
                                 class="absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
                                 <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        <?= htmlspecialchars($userName) ?>
-                                    </p>
+                                        <?= htmlspecialchars($userName) ?></p>
                                     <p class="text-xs text-gray-500 dark:text-white/70">
-                                        <?= htmlspecialchars($userEmail) ?>
-                                    </p>
+                                        <?= htmlspecialchars($userEmail) ?></p>
                                     <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?>
-                                    </p>
+                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
                                 </div>
                                 <a href="<?= BASE_URL ?>account/profile"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10">
@@ -893,7 +932,7 @@ if ($needsProfileCompletion) {
                     class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white main-fixed">
                     <?php if ($showOnboarding):
                         $hideKey = 'zz_gs_hide_until_' . htmlspecialchars($_SESSION['user']['user_id']); ?>
-                        <div class="gs-card-gradient border border-gray-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 mb-4 sm:mb-6"
+                        <div class="gs-card-gradient border border-gray-200 dark:border-white/10 rounded-2xl p-4 sm:p-5 mb-4 sm:mb-6 overflow-hidden"
                             x-data="{hiddenUntil: parseInt(localStorage.getItem('<?= $hideKey ?>') || '0',10), now: Date.now(), percent: <?= (int) $progressPercent ?>, canDismiss: <?= $onlyOptionalRemain ? 'true' : 'false' ?>, dismissed() { return this.hiddenUntil > this.now }, close12(){ if(!this.canDismiss) return; const until = Date.now() + (12*60*60*1000); localStorage.setItem('<?= $hideKey ?>', String(until)); this.hiddenUntil = until; }}"
                             x-show="!dismissed()" x-transition x-cloak>
                             <div class="flex items-start justify-between gap-3">
@@ -926,17 +965,25 @@ if ($needsProfileCompletion) {
                                         :style="{ width: percent + '%' }"></div>
                                 </div>
                             </div>
-                            <div class="mt-4 grid gap-2 sm:grid-cols-4">
+                            <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-4">
                                 <?php foreach ($orderedKeys as $key):
                                     $s = $steps[$key];
                                     $isDone = $s['done'];
                                     $isCurrent = (!$isDone && $key === $firstIncompleteKey);
-                                    $isLocked = (!$isDone && $firstIncompleteKey !== null && array_search($key, $orderedKeys, true) > array_search($firstIncompleteKey, $orderedKeys, true));
-                                    $badge = $s['optional'] ? '<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-gray-200/70 dark:bg-white/10 text-gray-700 dark:text-white/70">Optional</span>' : '';
+                                    $unlockOptional = $requiredDone && $s['optional'] && !$isDone;
+                                    $isLocked = false;
+                                    if (!$isDone) {
+                                        if (!$requiredDone) {
+                                            $isLocked = !$isCurrent;
+                                        } else {
+                                            $isLocked = false;
+                                        }
+                                    }
+                                    $badge = $s['optional'] ? '<span class="ml-2 shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-gray-200/70 dark:bg-white/10 text-gray-700 dark:text-white/70">Optional</span>' : '';
                                     $wrapClasses = 'rounded-xl border gs-step transition-colors';
                                     if ($isDone)
                                         $wrapClasses .= ' border-green-200 dark:border-green-800/40 bg-green-50/60 dark:bg-green-900/10';
-                                    elseif ($isCurrent)
+                                    elseif ($isCurrent || $unlockOptional)
                                         $wrapClasses .= ' border-transparent bg-user-primary text-white';
                                     elseif ($isLocked)
                                         $wrapClasses .= ' border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 locked';
@@ -945,11 +992,11 @@ if ($needsProfileCompletion) {
                                     $iconClasses = 'inline-flex h-9 w-9 items-center justify-center rounded-lg';
                                     if ($isDone)
                                         $iconClasses .= ' bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
-                                    elseif ($isCurrent)
+                                    elseif ($isCurrent || $unlockOptional)
                                         $iconClasses .= ' bg-white/20 text-white';
                                     else
-                                        $iconClasses .= ' bg-gray-100 text-secondary dark:bg:white/10 dark:text:white';
-                                    $canClick = $isCurrent;
+                                        $iconClasses .= ' bg-gray-100 text-secondary dark:bg-white/10 dark:text-white';
+                                    $canClick = $isCurrent || $unlockOptional;
                                     $startTag = $canClick ? '<a href="' . htmlspecialchars($s['url']) . '" class="block ' . $wrapClasses . '">' : '<div class="block ' . $wrapClasses . ' ' . ($isLocked ? 'cursor-not-allowed' : '') . '">';
                                     $endTag = $canClick ? '</a>' : '</div>';
                                     echo $startTag;
@@ -958,15 +1005,16 @@ if ($needsProfileCompletion) {
                                         <span class="<?= $iconClasses ?>"><i data-lucide="<?= htmlspecialchars($s['icon']) ?>"
                                                 class="w-5 h-5"></i></span>
                                         <div class="min-w-0 flex-1">
-                                            <div
-                                                class="text-sm font-medium <?= $isCurrent ? 'text-white' : 'text-secondary dark:text-white' ?> truncate">
-                                                <?= htmlspecialchars($s['label']) ?>         <?= $badge ?>
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="text-sm font-medium <?= ($isCurrent || $unlockOptional) ? 'text-white' : 'text-secondary dark:text-white' ?> truncate"><?= htmlspecialchars($s['label']) ?></span>
+                                                <?= $badge ?>
                                             </div>
                                             <div
-                                                class="text-[11px] mt-0.5 <?= $isDone ? 'text-green-700 dark:text-green-300' : ($isCurrent ? 'text-white/90' : 'text-gray-600 dark:text-white/70') ?>">
+                                                class="text-[11px] mt-0.5 <?= $isDone ? 'text-green-700 dark:text-green-300' : (($isCurrent || $unlockOptional) ? 'text-white/90' : 'text-gray-600 dark:text-white/70') ?>">
                                                 <?php if ($isDone): ?>
                                                     <i data-lucide="check-circle-2" class="inline w-4 h-4 mr-1"></i> Completed
-                                                <?php elseif ($isCurrent): ?>
+                                                <?php elseif ($isCurrent || $unlockOptional): ?>
                                                     <i data-lucide="arrow-right" class="inline w-4 h-4 mr-1"></i> Continue
                                                 <?php else: ?>
                                                     <i data-lucide="lock" class="inline w-4 h-4 mr-1"></i> Locked
@@ -975,9 +1023,8 @@ if ($needsProfileCompletion) {
                                         </div>
                                         <?php if ($isDone): ?>
                                             <i data-lucide="check" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
-                                        <?php elseif ($isCurrent): ?>
-                                            <i data-lucide="chevron-right"
-                                                class="w-5 h-5 <?= $isCurrent ? 'text-white' : 'text-gray-400' ?>"></i>
+                                        <?php elseif ($isCurrent || $unlockOptional): ?>
+                                            <i data-lucide="chevron-right" class="w-5 h-5 text-white"></i>
                                         <?php else: ?>
                                             <i data-lucide="ban" class="w-5 h-5 text-gray-300 dark:text-white/40"></i>
                                         <?php endif; ?>
@@ -1020,8 +1067,10 @@ if ($needsProfileCompletion) {
 
     <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet"
         x-bind:class="{'open': $store.ui.sheet==='more'}">
-        <div class="px-4 pt-3 pb-4">
-            <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-3"></div>
+        <div class="px-4 pt-3 pb-2 border-b border-gray-100 dark:border-white/10">
+            <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-2"></div>
+        </div>
+        <div class="px-4 pt-2 pb-2 sheet-inner">
             <div class="grid grid-cols-2 gap-2">
                 <?php foreach ($menuItems as $category):
                     foreach ($category['items'] as $key => $item): ?>
@@ -1033,11 +1082,9 @@ if ($needsProfileCompletion) {
                                     class="w-5 h-5 text-secondary dark:text-white"></i></span>
                             <div>
                                 <div class="text-sm font-medium text-secondary dark:text-white">
-                                    <?= htmlspecialchars($item['title']) ?>
-                                </div>
+                                    <?= htmlspecialchars($item['title']) ?></div>
                                 <div class="text-[11px] text-gray-500 dark:text-white/70">
-                                    <?= htmlspecialchars(ucfirst($category['title'])) ?>
-                                </div>
+                                    <?= htmlspecialchars(ucfirst($category['title'])) ?></div>
                             </div>
                         </a>
                     <?php endforeach; endforeach; ?>
@@ -1062,24 +1109,28 @@ if ($needsProfileCompletion) {
                     </div>
                 </a>
             </div>
-            <button class="mt-4 w-full py-2.5 rounded-xl border text-sm" @click="$store.ui.closeSheet()">Close</button>
+        </div>
+        <div class="px-4 pb-4 pt-2 bg-white dark:bg-secondary border-t border-gray-100 dark:border-white/10">
+            <button
+                class="w-full py-2.5 rounded-xl border text-sm font-medium text-secondary dark:text-white">Close</button>
         </div>
     </div>
 
     <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet"
         x-bind:class="{'open': $store.ui.sheet==='account'}">
-        <div class="px-4 pt-3 pb-4">
+        <div class="px-4 pt-3 pb-2 border-b border-gray-100 dark:border-white/10">
             <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-3"></div>
-            <div class="flex items-center gap-3 mb-3">
+            <div class="flex items-center gap-3">
                 <div class="user-initials w-10 h-10"><?= htmlspecialchars($userInitials) ?></div>
                 <div class="min-w-0">
                     <div class="text-sm font-medium text-secondary dark:text-white truncate">
-                        <?= htmlspecialchars($userName) ?>
-                    </div>
+                        <?= htmlspecialchars($userName) ?></div>
                     <div class="text-xs text-gray-500 dark:text-white/70 truncate"><?= htmlspecialchars($userEmail) ?>
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="px-4 pt-3 pb-2 sheet-inner">
             <div class="grid grid-cols-2 gap-2">
                 <a href="<?= BASE_URL ?>account/profile"
                     class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">
@@ -1125,60 +1176,64 @@ if ($needsProfileCompletion) {
                     </div>
                 </a>
             </div>
-            <button class="mt-4 w-full py-2.5 rounded-xl bg-user-primary text-white text-sm"
+        </div>
+        <div class="px-4 pb-4 pt-2 bg-white dark:bg-secondary border-t border-gray-100 dark:border-white/10">
+            <button class="w-full py-2.5 rounded-xl bg-user-primary text-white text-sm font-medium"
                 @click="fetch(BASE_URL + 'auth/logout', {method:'POST',headers:{'Content-Type':'application/json'}}).then(r=>r.json()).then(d=>{ if(d.success) location.href = BASE_URL; else alert(d.message||'Failed to logout'); }).catch(()=>alert('Failed to connect to server.'))">Logout</button>
-            <button class="mt-2 w-full py-2.5 rounded-xl border text-sm" @click="$store.ui.closeSheet()">Close</button>
+            <button
+                class="mt-2 w-full py-2.5 rounded-xl border text-sm font-medium text-secondary dark:text-white">Close</button>
         </div>
     </div>
 
     <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet"
         x-bind:class="{'open': $store.ui.sheet==='notif'}">
-        <div class="px-4 pt-3 pb-2">
+        <div class="px-4 pt-3 pb-2 border-b border-gray-100 dark:border-white/10">
             <div class="mx-auto h-1 w-10 rounded-full bg-gray-300 dark:bg-white/20 mb-3"></div>
-            <div>
-                <div class="flex items-center justify-between px-1 pb-2">
-                    <div class="text-sm font-medium text-secondary dark:text-white">Notifications</div>
-                    <div class="flex items-center gap-2">
-                        <button @click="$store.notif.markBulkSeen()"
-                            class="text-xs px-2 py-1 bg-user-primary text-white rounded">Mark Read</button>
-                        <button @click="$store.notif.dismissBulk()"
-                            class="text-xs px-2 py-1 bg-red-500 text-white rounded">Dismiss</button>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 px-1 pb-2">
-                    <input type="checkbox" id="selectAllM" @change="$store.notif.selectAll($event)"
-                        class="h-4 w-4 text-user-primary rounded">
-                    <label for="selectAllM" class="text-xs text-gray-600 dark:text-white/80">Select All</label>
-                </div>
-                <div class="max-h:[60vh] overflow-auto border-t border-gray-100 dark:border-white/10">
-                    <template x-for="note in $store.notif.notes" :key="note.target_id">
-                        <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg:white/5' : 'bg-white dark:bg-secondary'"
-                            class="relative group border-b border-gray-100 dark:border:white/10 last:border-none flex items-start">
-                            <div class="px-3 py-3"><input type="checkbox" :value="note.target_id"
-                                    x-model="$store.notif.selected" class="h-4 w-4 text-user-primary rounded"></div>
-                            <div class="flex-1">
-                                <a :href="note.link_url || '#'" class="block px-0 py-3"
-                                    @click.prevent="$store.notif.handleClick(note)">
-                                    <p class="text-sm font-medium text-secondary dark:text:white" x-text="note.title">
-                                    </p>
-                                    <p class="text-xs mt-1"
-                                        :class="note.is_seen == 0 ? 'text-secondary dark:text:white' : 'text-gray-500 dark:text:white/70'"
-                                        x-text="note.message"></p>
-                                    <span class="text-[10px] text-gray-400 dark:text:white/60"
-                                        x-text="$store.notif.formatDate(note.created_at)"></span>
-                                </a>
-                            </div>
-                            <button @click.stop="$store.notif.dismiss(note.target_id)"
-                                class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text:white/60 dark:hover:text-white transition">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </template>
-                    <div x-show="$store.notif.notes.length === 0"
-                        class="p-4 text-sm text-center text-gray-500 dark:text-white/70">No notifications</div>
+            <div class="flex items-center justify-between px-1 pb-2">
+                <div class="text-sm font-medium text-secondary dark:text-white">Notifications</div>
+                <div class="flex items-center gap-2">
+                    <button @click="$store.notif.markBulkSeen()"
+                        class="text-xs px-2 py-1 bg-user-primary text-white rounded">Mark Read</button>
+                    <button @click="$store.notif.dismissBulk()"
+                        class="text-xs px-2 py-1 bg-red-500 text-white rounded">Dismiss</button>
                 </div>
             </div>
-            <button class="mt-3 w-full py-2.5 rounded-xl border text-sm" @click="$store.ui.closeSheet()">Close</button>
+            <div class="flex items-center gap-2 px-1 pb-2">
+                <input type="checkbox" id="selectAllM" @change="$store.notif.selectAll($event)" class="zz-checkbox">
+                <label for="selectAllM" class="text-xs text-gray-600 dark:text-white/80">Select All</label>
+            </div>
+        </div>
+        <div class="sheet-inner px-4 pt-2 pb-2">
+            <div class="max-h-[60vh] overflow-auto border-t border-gray-100 dark:border-white/10">
+                <template x-for="note in $store.notif.notes" :key="note.target_id">
+                    <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
+                        class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
+                        <div class="px-3 py-3"><input type="checkbox" :value="note.target_id"
+                                x-model="$store.notif.selected" class="zz-checkbox"></div>
+                        <div class="flex-1">
+                            <a :href="note.link_url || '#'" class="block px-0 py-3"
+                                @click.prevent="$store.notif.handleClick(note)">
+                                <p class="text-sm font-medium text-secondary dark:text-white" x-text="note.title"></p>
+                                <p class="text-xs mt-1"
+                                    :class="note.is_seen == 0 ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70'"
+                                    x-text="note.message"></p>
+                                <span class="text-[10px] text-gray-400 dark:text-white/60"
+                                    x-text="$store.notif.formatDate(note.created_at)"></span>
+                            </a>
+                        </div>
+                        <button @click.stop="$store.notif.dismiss(note.target_id)"
+                            class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </template>
+                <div x-show="$store.notif.notes.length === 0"
+                    class="p-4 text-sm text-center text-gray-500 dark:text-white/70">No notifications</div>
+            </div>
+        </div>
+        <div class="px-4 pb-4 pt-2 bg-white dark:bg-secondary border-t border-gray-100 dark:border-white/10">
+            <button class="w-full py-2.5 rounded-xl border text-sm font-medium text-secondary dark:text-white"
+                @click="$store.ui.closeSheet()">Close</button>
         </div>
     </div>
 
@@ -1222,7 +1277,6 @@ if ($needsProfileCompletion) {
                 });
             }
         });
-
         (function loadEventLogIfJQ() {
             if (window.jQuery) {
                 var s = document.createElement('script');

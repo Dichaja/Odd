@@ -965,8 +965,7 @@ function createProductMinimal(PDO $pdo, ?string $storeId)
                 $ownerMessage = "New product added: \"{$title}\" has been added to your store \"{$storeData['name']}\" by {$userData['username']}.";
                 $adminMessage = "New product added to store: \"{$title}\" has been added to \"{$storeData['name']}\" by {$userData['username']}.";
                 
-                $link = BASE_URL . "admin/products.php?action=getMyProducts";
-                
+                 
                 $recipients = [
                     [
                         'type' => 'user',

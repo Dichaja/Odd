@@ -68,12 +68,12 @@ ob_start();
                         <div class="w-8 h-8 rounded-lg grid place-items-center bg-user-primary/10">
                             <i data-lucide="grid-2x2" class="w-4 h-4 text-user-primary"></i>
                         </div>
-                        <h2 class="text-xl font-semibold text-secondary dark:text-white">Profiles</h2>
+                        <h2 class="text-xl font-semibold text-secondary dark:text-white">My Zzimba Stores</h2>
                     </div>
                     <button
                         class="px-4 sm:px-5 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 items-center gap-2 font-medium shadow-lg shadow-primary/25 inline-flex"
                         @click="openStoreModal('create')">
-                        <i data-lucide="plus" class="w-4 h-4"></i><span>Create New</span>
+                        <i data-lucide="plus" class="w-4 h-4"></i><span>Create New Store</span>
                     </button>
                 </div>
             </div>
@@ -148,7 +148,7 @@ ob_start();
                                         </button>
                                         <button @click="manageStore(store.uuid_id)"
                                             class="px-3 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 inline-flex items-center gap-1">
-                                            <i data-lucide="settings" class="w-4 h-4"></i><span>Manage</span>
+                                            <i data-lucide="settings" class="w-4 h-4"></i><span>Manage Store</span>
                                         </button>
                                     </div>
                                 </div>

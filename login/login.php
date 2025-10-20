@@ -30,36 +30,40 @@ function getStepTitle($mode, $step)
 ?>
 <div x-data="authUI()" x-init="init()" class="relative">
     <div x-show="step==='start'" :class="step==='start'?'active':''" class="auth-form">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary">Welcome</h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Welcome</h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
             <div class="space-y-4">
-                <div class="rounded-xl border border-gray-200 p-4">
+                <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4 bg-white dark:bg-gray-800">
                     <div class="flex items-center gap-3">
                         <i data-lucide="user-plus" class="w-6 h-6 text-primary"></i>
                         <div>
-                            <p class="font-semibold">New user?</p>
-                            <p class="text-sm text-gray-600">Create an account to get started.</p>
+                            <p class="font-semibold text-gray-900 dark:text-white">New user?</p>
+                            <p class="text-sm text-gray-600 dark:text-white/70">Create an account to get started.</p>
                         </div>
                     </div>
                     <button @click="go('register-username')"
-                        class="mt-4 w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Create
-                        Account</button>
+                        class="mt-4 w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">
+                        Create Account
+                    </button>
                 </div>
-                <div class="rounded-xl border border-gray-200 p-4">
+                <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4 bg-white dark:bg-gray-800">
                     <div class="flex items-center gap-3">
                         <i data-lucide="log-in" class="w-6 h-6 text-secondary"></i>
                         <div>
-                            <p class="font-semibold">Already have an account?</p>
-                            <p class="text-sm text-gray-600">Log in to continue.</p>
+                            <p class="font-semibold text-gray-900 dark:text-white">Already have an account?</p>
+                            <p class="text-sm text-gray-600 dark:text-white/70">Log in to continue.</p>
                         </div>
                     </div>
                     <button @click="go('login-identifier')"
-                        class="mt-4 w-full bg-secondary text-white py-2 rounded-lg hover:bg-gray-800 transition-colors">Login</button>
+                        class="mt-4 w-full bg-secondary dark:bg-black text-white py-2.5 rounded-lg hover:bg-gray-800 hover:dark:bg-gray-900 transition-colors">
+                        Login
+                    </button>
                 </div>
             </div>
         </div>
@@ -67,14 +71,16 @@ function getStepTitle($mode, $step)
 
     <div id="login-step-identifier" x-show="step==='login-identifier'" :class="step==='login-identifier'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'identifier') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><?= getStepTitle('login', 'identifier') ?>
+                </h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 Don't have an account?
                 <a href="javascript:void(0)" @click="go('register-username')"
                     class="text-primary hover:text-red-700 font-medium">Create Account</a>
@@ -83,70 +89,71 @@ function getStepTitle($mode, $step)
             <form id="login-identifier-form" class="space-y-4" autocomplete="on" data-mode="login"
                 data-step="identifier" x-data="{ method: 'username' }">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-3">How would you like to login?</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-3">How would you like to
+                        login?</label>
 
                     <div class="grid grid-cols-3 gap-2 md:gap-3 mb-4">
-                        <label class="flex items-center justify-center cursor-pointer p-2 rounded-lg border text-sm"
+                        <label
+                            class="flex items-center justify-center cursor-pointer p-2 rounded-lg border text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10 text-gray-900 dark:text-white"
                             :class="{'border-primary ring-1 ring-primary': method==='username'}">
                             <input type="radio" name="login_method" value="username" class="sr-only" x-model="method">
                             <div class="flex items-center gap-2">
-                                <i data-lucide="user" class="w-4 h-4 text-gray-500"></i>
+                                <i data-lucide="user" class="w-4 h-4 text-gray-500 dark:text-white/70"></i>
                                 <span class="font-medium">Username</span>
                             </div>
                         </label>
 
-                        <label class="flex items-center justify-center cursor-pointer p-2 rounded-lg border text-sm"
+                        <label
+                            class="flex items-center justify-center cursor-pointer p-2 rounded-lg border text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10 text-gray-900 dark:text-white"
                             :class="{'border-primary ring-1 ring-primary': method==='email'}">
                             <input type="radio" name="login_method" value="email" class="sr-only" x-model="method">
                             <div class="flex items-center gap-2">
-                                <i data-lucide="mail" class="w-4 h-4 text-gray-500"></i>
+                                <i data-lucide="mail" class="w-4 h-4 text-gray-500 dark:text-white/70"></i>
                                 <span class="font-medium">Email</span>
                             </div>
                         </label>
 
-                        <label class="flex items-center justify-center cursor-pointer p-2 rounded-lg border text-sm"
+                        <label
+                            class="flex items-center justify-center cursor-pointer p-2 rounded-lg border text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10 text-gray-900 dark:text-white"
                             :class="{'border-primary ring-1 ring-primary': method==='phone'}">
                             <input type="radio" name="login_method" value="phone" class="sr-only" x-model="method">
                             <div class="flex items-center gap-2">
-                                <i data-lucide="phone" class="w-4 h-4 text-gray-500"></i>
+                                <i data-lucide="phone" class="w-4 h-4 text-gray-500 dark:text-white/70"></i>
                                 <span class="font-medium">Phone</span>
                             </div>
                         </label>
                     </div>
 
                     <div id="username-input" class="login-input-group" x-show="method==='username'">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Username</label>
                         <div class="relative">
-                            <i data-lucide="user"
-                                class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             <input type="text" id="login-username" name="username" required
-                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                class="w-full pl-10 pr-4 !p-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                                 placeholder="Enter your username" autofocus autocomplete="username"
                                 onkeyup="checkTripleSpace(this)">
                         </div>
                     </div>
 
                     <div id="email-input" class="login-input-group" x-show="method==='email'">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Email
+                            Address</label>
                         <div class="relative">
-                            <i data-lucide="mail"
-                                class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             <input type="email" id="login-email" name="email" required
-                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                class="w-full pl-10 pr-4 !p-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                                 placeholder="Enter your email address" autocomplete="username"
                                 onkeyup="checkTripleSpace(this)">
                         </div>
                     </div>
 
                     <div id="phone-input" class="login-input-group" x-show="method==='phone'">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Phone Number</label>
                         <div class="flex">
                             <div
-                                class="flex items-center px-3 py-2 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50">
-                                <span class="text-gray-700 font-medium">+256</span>
+                                class="flex items-center px-3 py-2 border border-r-0 border-gray-300 dark:border-white/10 rounded-l-lg bg-gray-50 dark:bg-gray-800">
+                                <span class="text-gray-700 dark:text-white font-medium">+256</span>
                             </div>
                             <input type="text" id="login-phone" name="tel" required maxlength="9" minlength="9"
-                                class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                class="flex-1 px-3 py-2 border border-gray-300 dark:border-white/10 rounded-r-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                                 placeholder="7XXXXXXXX" autocomplete="tel" oninput="validatePhoneInput(this)"
                                 onkeyup="checkTripleSpace(this)">
                         </div>
@@ -155,23 +162,26 @@ function getStepTitle($mode, $step)
                     <div id="login-identifier-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
 
-                <button type="button" @click="handleLoginIdentifierSubmit()
-                    "
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+                <button type="button" @click="handleLoginIdentifierSubmit()"
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">
+                    Continue
+                </button>
             </form>
         </div>
     </div>
 
     <div id="login-step-password" x-show="step==='login-password'" :class="step==='login-password'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('login', 'password') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><?= getStepTitle('login', 'password') ?>
+                </h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showLoginStep('identifier')"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
@@ -179,19 +189,19 @@ function getStepTitle($mode, $step)
             </p>
             <form id="login-password-form" class="space-y-4" autocomplete="on" data-mode="login" data-step="password">
                 <div class="relative">
-                    <p class="mb-4">Logging in as <strong id="login-identifier-display"></strong></p>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <p class="mb-4 text-gray-700 dark:text-white/80">Logging in as <strong id="login-identifier-display"
+                            class="text-gray-900 dark:text-white"></strong></p>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Password</label>
                     <div class="relative">
-                        <i data-lucide="lock"
-                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                         <input type="password" name="password" required
-                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            class="w-full pl-10 pr-12 !p-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                             placeholder="Enter your password" id="login-password" autofocus
                             autocomplete="current-password" onkeyup="checkTripleSpace(this)">
                         <button type="button"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            onclick="togglePasswordVisibility('login-password')"><i data-lucide="eye"
-                                class="w-5 h-5"></i></button>
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-white/60 dark:hover:text-white"
+                            onclick="togglePasswordVisibility('login-password')">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
                     </div>
                     <div id="login-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
@@ -200,21 +210,24 @@ function getStepTitle($mode, $step)
                         class="text-sm text-primary hover:text-red-700">Forgot Password?</a>
                 </div>
                 <button type="button" @click="handleLoginPasswordSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Login</button>
+                    class="w-full bg-primary dark:bg-black text-white py-2.5 rounded-lg hover:bg-red-600 hover:dark:bg-gray-900 transition-colors">
+                    Login
+                </button>
             </form>
         </div>
     </div>
 
     <div id="empty-password-options" x-show="step==='empty-options'" :class="step==='empty-options'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary">Verify Account</h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Verify Account</h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showLoginStep('password')"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
@@ -223,39 +236,40 @@ function getStepTitle($mode, $step)
             <form id="empty-password-options-form" class="space-y-4" autocomplete="off" data-mode="empty_password"
                 data-step="options">
                 <div>
-                    <p class="mb-4 text-sm text-gray-600">Logging in as <strong id="empty-username-display"></strong>
-                    </p>
-                    <p class="mb-4 text-sm text-gray-600">Please select how you would like to verify your account
-                        ownership:</p>
+                    <p class="mb-4 text-sm text-gray-600 dark:text-white/70">Logging in as <strong
+                            id="empty-username-display" class="text-gray-900 dark:text-white"></strong></p>
+                    <p class="mb-4 text-sm text-gray-600 dark:text-white/70">Please select how you would like to verify
+                        your account ownership:</p>
                     <div class="space-y-3">
                         <label id="empty-password-email-option"
-                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10">
                             <input id="empty-password-email" type="radio" name="verify_method" value="email"
                                 class="mr-3 text-primary focus:ring-primary" checked>
                             <div>
-                                <p class="font-medium">Email</p>
-                                <p class="text-sm text-gray-500">Receive a verification code via <span
-                                        id="empty-password-email-hint"></span></p>
+                                <p class="font-medium text-gray-900 dark:text-white">Email</p>
+                                <p class="text-sm text-gray-500 dark:text-white/60">Receive a verification code via
+                                    <span id="empty-password-email-hint"></span></p>
                             </div>
                         </label>
                         <label id="empty-password-phone-option"
-                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10">
                             <input id="empty-password-phone" type="radio" name="verify_method" value="phone"
                                 class="mr-3 text-primary focus:ring-primary">
                             <div>
-                                <p class="font-medium">Phone</p>
-                                <p class="text-sm text-gray-500">Receive a verification code via <span
-                                        id="empty-password-phone-hint"></span></p>
+                                <p class="font-medium text-gray-900 dark:text-white">Phone</p>
+                                <p class="text-sm text-gray-500 dark:text-white/60">Receive a verification code via
+                                    <span id="empty-password-phone-hint"></span></p>
                             </div>
                         </label>
                     </div>
                 </div>
                 <div id="empty-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <button id="empty-password-continue" type="button"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
-                <div id="empty-password-loading" class="text-sm text-gray-500 mt-2 hidden">Sending OTP...</div>
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+                <div id="empty-password-loading" class="text-sm text-gray-500 dark:text-white/60 mt-2 hidden">Sending
+                    OTP...</div>
             </form>
-            <p class="mt-4 text-center text-sm text-gray-600">Need assistance?
+            <p class="mt-4 text-center text-sm text-gray-600 dark:text-white/70">Need assistance?
                 <a href="javascript:void(0)" @click="showLoginStep('identifier')"
                     class="text-primary hover:text-red-700 font-medium">Contact Support</a>
             </p>
@@ -264,14 +278,16 @@ function getStepTitle($mode, $step)
 
     <div id="register-step-username" x-show="step==='register-username'" :class="step==='register-username'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'username') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><?= getStepTitle('register', 'username') ?>
+                </h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 Already have an account?
                 <a href="javascript:void(0)" @click="showLoginStep('identifier')"
                     class="text-primary hover:text-red-700 font-medium">Sign In</a>
@@ -279,143 +295,149 @@ function getStepTitle($mode, $step)
             <form id="register-username-form" class="space-y-4" autocomplete="off" data-mode="register"
                 data-step="username">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Username</label>
                     <div class="relative">
                         <i data-lucide="user"
-                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/50"></i>
                         <input type="text" id="register-username" required
-                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                             placeholder="Choose a username (letters and numbers only)" autofocus autocomplete="off"
                             minlength="3" onkeyup="checkTripleSpace(this)">
                     </div>
                     <div id="register-username-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                    <p class="text-xs text-gray-500 mt-1">Username must be at least 3 characters.</p>
+                    <p class="text-xs text-gray-500 dark:text-white/60 mt-1">Username must be at least 3 characters.</p>
                 </div>
                 <button type="button" @click="handleRegisterUsernameSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
             </form>
         </div>
     </div>
 
     <div id="register-step-verification-method" x-show="step==='register-verification-method'"
         :class="step==='register-verification-method'?'active':''" class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'verification-method') ?>
-                </h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <?= getStepTitle('register', 'verification-method') ?></h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showRegisterStep('username')"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-4 text-sm text-gray-600">Creating account for <strong
-                    id="register-username-display-method"></strong></p>
+            <p class="mb-4 text-sm text-gray-600 dark:text-white/70">Creating account for <strong
+                    id="register-username-display-method" class="text-gray-900 dark:text-white"></strong></p>
             <form id="register-verification-method-form" class="space-y-4" autocomplete="off" data-mode="register"
                 data-step="verification-method">
                 <div>
-                    <p class="mb-4 text-sm text-gray-600">How would you like to verify your identity?</p>
+                    <p class="mb-4 text-sm text-gray-600 dark:text-white/70">How would you like to verify your identity?
+                    </p>
                     <div class="space-y-3">
-                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <label
+                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10">
                             <input type="radio" name="verification_method" value="email"
                                 class="mr-3 text-primary focus:ring-primary" checked>
                             <div>
-                                <p class="font-medium">Email Address</p>
-                                <p class="text-sm text-gray-500">Verify using your email address</p>
+                                <p class="font-medium text-gray-900 dark:text-white">Email Address</p>
+                                <p class="text-sm text-gray-500 dark:text-white/60">Verify using your email address</p>
                             </div>
                         </label>
-                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <label
+                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10">
                             <input type="radio" name="verification_method" value="phone"
                                 class="mr-3 text-primary focus:ring-primary">
                             <div>
-                                <p class="font-medium">Phone Number</p>
-                                <p class="text-sm text-gray-500">Verify using your phone number</p>
+                                <p class="font-medium text-gray-900 dark:text-white">Phone Number</p>
+                                <p class="text-sm text-gray-500 dark:text-white/60">Verify using your phone number</p>
                             </div>
                         </label>
                     </div>
-                    <p class="text-xs text-gray-500 mt-3">You can add the other contact method later in your profile
-                        settings.</p>
+                    <p class="text-xs text-gray-500 dark:text-white/60 mt-3">You can add the other contact method later
+                        in your profile settings.</p>
                 </div>
                 <div id="register-verification-method-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <button type="button" @click="handleVerificationMethodSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
             </form>
         </div>
     </div>
 
     <div id="register-step-email" x-show="step==='register-email'" :class="step==='register-email'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'email') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><?= getStepTitle('register', 'email') ?>
+                </h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showRegisterStep('verification-method')"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-4 text-sm text-gray-600">Creating account for <strong id="register-username-display"></strong>
-            </p>
+            <p class="mb-4 text-sm text-gray-600 dark:text-white/70">Creating account for <strong
+                    id="register-username-display" class="text-gray-900 dark:text-white"></strong></p>
             <form id="register-email-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="email">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Email Address</label>
                     <div class="relative">
-                        <i data-lucide="mail"
-                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                         <input type="email" id="register-email" required
-                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            class="w-full pl-10 pr-4 !p-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                             placeholder="Enter your email" autofocus autocomplete="off"
                             onkeyup="checkTripleSpace(this)">
                     </div>
                     <div id="register-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
                 <button type="button" id="register-email-submit-btn" @click="handleRegisterEmailSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
             </form>
         </div>
     </div>
 
     <div id="register-step-email-verify" x-show="step==='register-email-verify'"
         :class="step==='register-email-verify'?'active':''" class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'email-verify') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <?= getStepTitle('register', 'email-verify') ?></h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showRegisterStep('email')"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-4 text-center text-sm text-gray-600">Verifying for <strong
-                    id="register-username-display-verify"></strong></p>
-            <p class="mb-4 text-center">We've sent a verification code to <strong id="register-email-display"></strong>
-            </p>
-            <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">Verifying for <strong
+                    id="register-username-display-verify" class="text-gray-900 dark:text-white"></strong></p>
+            <p class="mb-4 text-center text-gray-700 dark:text-white/80">We've sent a verification code to <strong
+                    id="register-email-display" class="text-gray-900 dark:text-white"></strong></p>
+            <p class="text-sm text-gray-500 dark:text-white/60 mt-1 text-center mb-4">Enter the 6-digit code below</p>
             <form id="register-email-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
                 data-step="email-verify">
                 <div id="email-otp-inputs"></div>
                 <input type="hidden" id="email-otp" value="">
                 <div id="email-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                <p class="mt-2 text-sm text-gray-500 text-center">
+                <p class="mt-2 text-sm text-gray-500 dark:text-white/60 text-center">
                     Didn't receive the code?
                     <button type="button" id="resend-email-otp"
                         class="text-primary hover:text-red-700 text-sm">Resend</button>
                     <span id="email-otp-timer" class="text-sm"></span>
                 </p>
                 <button type="button" id="email-otp-submit-btn" @click="handleEmailOTPSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Verify
                     Email</button>
             </form>
         </div>
@@ -423,67 +445,72 @@ function getStepTitle($mode, $step)
 
     <div id="register-step-phone" x-show="step==='register-phone'" :class="step==='register-phone'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'phone') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><?= getStepTitle('register', 'phone') ?>
+                </h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showRegisterStep('verification-method')"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-4 text-sm text-gray-600">Creating account for <strong
-                    id="register-username-display-phone"></strong></p>
+            <p class="mb-4 text-sm text-gray-600 dark:text-white/70">Creating account for <strong
+                    id="register-username-display-phone" class="text-gray-900 dark:text-white"></strong></p>
             <form id="register-phone-form" class="space-y-4" autocomplete="off" data-mode="register" data-step="phone">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Phone Number</label>
                     <input type="tel" id="phone" name="phone" required placeholder="Phone Number"
-                        class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
+                        class="w-full py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        autofocus autocomplete="off">
                     <div id="register-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
                 <button type="button" id="register-phone-submit-btn" @click="handleRegisterPhoneSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
             </form>
         </div>
     </div>
 
     <div id="register-step-phone-verify" x-show="step==='register-phone-verify'"
         :class="step==='register-phone-verify'?'active':''" class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'phone-verify') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <?= getStepTitle('register', 'phone-verify') ?></h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showRegisterStep('phone')"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-4 text-sm text-gray-600">Creating account for <strong
-                    id="register-username-display-phone-verify"></strong></p>
-            <p class="mb-4 text-center">We've sent a verification code to <strong id="register-phone-display"></strong>
-            </p>
-            <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
+            <p class="mb-4 text-sm text-gray-600 dark:text-white/70">Creating account for <strong
+                    id="register-username-display-phone-verify" class="text-gray-900 dark:text-white"></strong></p>
+            <p class="mb-4 text-center text-gray-700 dark:text-white/80">We've sent a verification code to <strong
+                    id="register-phone-display" class="text-gray-900 dark:text-white"></strong></p>
+            <p class="text-sm text-gray-500 dark:text-white/60 mt-1 text-center mb-4">Enter the 6-digit code below</p>
             <form id="register-phone-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
                 data-step="phone-verify">
                 <div id="phone-otp-inputs"></div>
                 <input type="hidden" id="phone-otp" value="">
                 <div id="phone-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                <p class="mt-2 text-sm text-gray-500 text-center">
+                <p class="mt-2 text-sm text-gray-500 dark:text-white/60 text-center">
                     Didn't receive the code?
                     <button type="button" id="resend-phone-otp"
                         class="text-primary hover:text-red-700 text-sm">Resend</button>
                     <span id="phone-otp-timer" class="text-sm"></span>
                 </p>
                 <button type="button" id="phone-otp-submit-btn" @click="handlePhoneOTPSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Verify
                     Phone</button>
             </form>
         </div>
@@ -491,68 +518,73 @@ function getStepTitle($mode, $step)
 
     <div id="register-step-password" x-show="step==='register-password'" :class="step==='register-password'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('register', 'password') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><?= getStepTitle('register', 'password') ?>
+                </h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="goBackFromPassword()"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-4 text-sm text-gray-600">Creating account for <strong
-                    id="register-username-display-password"></strong></p>
+            <p class="mb-4 text-sm text-gray-600 dark:text-white/70">Creating account for <strong
+                    id="register-username-display-password" class="text-gray-900 dark:text-white"></strong></p>
             <form id="register-password-form" class="space-y-4" autocomplete="off" data-mode="register"
                 data-step="password">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Password</label>
                     <div class="relative">
                         <i data-lucide="lock"
-                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/50"></i>
                         <input type="password" required
-                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            class="w-full pl-10 pr-12 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                             placeholder="Create a password" id="register-password" autofocus autocomplete="new-password"
                             oninput="checkPasswordStrength(this.value)" onkeyup="checkTripleSpace(this)">
                         <button type="button"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            onclick="togglePasswordVisibility('register-password')"><i data-lucide="eye"
-                                class="w-5 h-5"></i></button>
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-white/60 dark:hover:text-white"
+                            onclick="togglePasswordVisibility('register-password')">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
                     </div>
                     <div class="password-strength-meter mt-2">
                         <div class="password-strength-meter-fill"></div>
                     </div>
-                    <div class="password-strength-text text-xs text-gray-500"></div>
+                    <div class="password-strength-text text-xs text-gray-500 dark:text-white/60"></div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Confirm Password</label>
                     <div class="relative">
                         <i data-lucide="lock"
-                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/50"></i>
                         <input type="password" required
-                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            class="w-full pl-10 pr-12 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                             placeholder="Confirm your password" id="register-confirm-password"
                             autocomplete="new-password" onkeyup="checkTripleSpace(this)">
                         <button type="button"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            onclick="togglePasswordVisibility('register-confirm-password')"><i data-lucide="eye"
-                                class="w-5 h-5"></i></button>
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-white/60 dark:hover:text-white"
+                            onclick="togglePasswordVisibility('register-confirm-password')">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
                     </div>
                     <div id="register-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
                 <div class="flex items-start">
                     <input type="checkbox" id="terms-checkbox" required
                         class="mt-1 rounded border-gray-300 text-primary focus:ring-primary">
-                    <span class="ml-2 text-sm text-gray-600">I agree to the
+                    <span class="ml-2 text-sm text-gray-600 dark:text-white/70">
+                        I agree to the
                         <a href="terms-and-conditions" class="text-primary hover:text-red-700">Terms of Service</a> and
                         <a href="#" class="text-primary hover:text-red-700">Privacy Policy</a>
                     </span>
                 </div>
                 <button type="button" id="register-password-submit-btn" @click="handleRegisterPasswordSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Create
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Create
                     Account</button>
             </form>
         </div>
@@ -560,49 +592,55 @@ function getStepTitle($mode, $step)
 
     <div id="forgot-password-options" x-show="step==='forgot-options'" :class="step==='forgot-options'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'options') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <?= getStepTitle('forgot_password', 'options') ?></h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showLoginStep('password')"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong id="forgot-username-display"></strong>
-            </p>
+            <p class="mb-2 text-sm text-gray-600 dark:text-white/70">Resetting password for <strong
+                    id="forgot-username-display" class="text-gray-900 dark:text-white"></strong></p>
             <form id="forgot-password-options-form" class="space-y-4" autocomplete="off" data-mode="forgot_password"
                 data-step="options">
                 <div>
-                    <p class="mb-4 text-sm text-gray-600">Please select how you would like to receive your verification
-                        code:</p>
+                    <p class="mb-4 text-sm text-gray-600 dark:text-white/70">Please select how you would like to receive
+                        your verification code:</p>
                     <div class="space-y-3">
-                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <label
+                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10">
                             <input type="radio" name="reset_method" value="email"
                                 class="mr-3 text-primary focus:ring-primary" checked>
                             <div>
-                                <p class="font-medium">Email</p>
-                                <p class="text-sm text-gray-500">Receive a verification code via email</p>
+                                <p class="font-medium text-gray-900 dark:text-white">Email</p>
+                                <p class="text-sm text-gray-500 dark:text-white/60">Receive a verification code via
+                                    email</p>
                             </div>
                         </label>
-                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                        <label
+                            class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 bg-white dark:bg-gray-800 border-gray-300 dark:border-white/10">
                             <input type="radio" name="reset_method" value="phone"
                                 class="mr-3 text-primary focus:ring-primary">
                             <div>
-                                <p class="font-medium">Phone</p>
-                                <p class="text-sm text-gray-500">Receive a verification code via SMS</p>
+                                <p class="font-medium text-gray-900 dark:text-white">Phone</p>
+                                <p class="text-sm text-gray-500 dark:text-white/60">Receive a verification code via SMS
+                                </p>
                             </div>
                         </label>
                     </div>
                 </div>
                 <button type="button" @click="handleForgotPasswordMethodSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
             </form>
-            <p class="mt-4 text-center text-sm text-gray-600">Remember your password?
+            <p class="mt-4 text-center text-sm text-gray-600 dark:text-white/70">Remember your password?
                 <a href="javascript:void(0)" @click="showLoginStep('identifier')"
                     class="text-primary hover:text-red-700 font-medium">Back to Sign In</a>
             </p>
@@ -611,37 +649,37 @@ function getStepTitle($mode, $step)
 
     <div id="forgot-password-email-form" x-show="step==='forgot-email'" :class="step==='forgot-email'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'email-form') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <?= getStepTitle('forgot_password', 'email-form') ?></h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showForgotPasswordOptions()"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
-                    id="forgot-username-display-email"></strong></p>
+            <p class="mb-2 text-sm text-gray-600 dark:text-white/70">Resetting password for <strong
+                    id="forgot-username-display-email" class="text-gray-900 dark:text-white"></strong></p>
             <form id="forgot-password-email-form-element" class="space-y-4" autocomplete="off"
                 data-mode="forgot_password" data-step="email">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Email Address</label>
                     <div class="relative">
-                        <i data-lucide="mail"
-                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                         <input type="email" id="forgot-email" required
-                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            class="w-full pl-10 pr-4 !p-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                             placeholder="Enter your email" autofocus autocomplete="off"
                             onkeyup="checkTripleSpace(this)">
                     </div>
                     <div id="forgot-email-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
                 <button type="button" id="forgot-email-submit-btn" @click="handleForgotEmailSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Send Reset
                     Code</button>
             </form>
         </div>
@@ -649,31 +687,34 @@ function getStepTitle($mode, $step)
 
     <div id="forgot-password-phone-form" x-show="step==='forgot-phone'" :class="step==='forgot-phone'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('forgot_password', 'phone-form') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <?= getStepTitle('forgot_password', 'phone-form') ?></h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showForgotPasswordOptions()"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
-                    id="forgot-username-display-phone"></strong></p>
+            <p class="mb-2 text-sm text-gray-600 dark:text-white/70">Resetting password for <strong
+                    id="forgot-username-display-phone" class="text-gray-900 dark:text-white"></strong></p>
             <form id="forgot-password-phone-form-element" class="space-y-4" autocomplete="off"
                 data-mode="forgot_password" data-step="phone">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Phone Number</label>
                     <input type="tel" id="forgot-phone" name="forgot-phone" required placeholder="Phone Number"
-                        class="w-full py-2 border border-gray-300 rounded-lg" autofocus autocomplete="off">
+                        class="w-full py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        autofocus autocomplete="off">
                     <div id="forgot-phone-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
                 <button type="button" id="forgot-phone-submit-btn" @click="handleForgotPhoneSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Send Reset
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Send Reset
                     Code</button>
             </form>
         </div>
@@ -681,36 +722,38 @@ function getStepTitle($mode, $step)
 
     <div id="reset-password-verify" x-show="step==='reset-verify'" :class="step==='reset-verify'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('reset_password', 'verify') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <?= getStepTitle('reset_password', 'verify') ?></h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" id="reset-back-link" class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
-                    id="forgot-username-display-reset"></strong></p>
-            <p class="mb-4 text-center">We've sent a verification code to <strong id="reset-contact-display"></strong>
-            </p>
-            <p class="text-sm text-gray-500 mt-1 text-center mb-4">Enter the 6-digit code below</p>
+            <p class="mb-2 text-sm text-gray-600 dark:text-white/70">Resetting password for <strong
+                    id="forgot-username-display-reset" class="text-gray-900 dark:text-white"></strong></p>
+            <p class="mb-4 text-center text-gray-700 dark:text-white/80">We've sent a verification code to <strong
+                    id="reset-contact-display" class="text-gray-900 dark:text-white"></strong></p>
+            <p class="text-sm text-gray-500 dark:text-white/60 mt-1 text-center mb-4">Enter the 6-digit code below</p>
             <form id="reset-verify-form" class="space-y-4" autocomplete="off" data-mode="reset_password"
                 data-step="verify_otp">
                 <div id="reset-otp-inputs"></div>
                 <input type="hidden" id="reset-otp" value="">
                 <div id="reset-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                <p class="mt-2 text-sm text-gray-500 text-center">
+                <p class="mt-2 text-sm text-gray-500 dark:text-white/60 text-center">
                     Didn't receive the code?
                     <button type="button" id="resend-reset-otp"
                         class="text-primary hover:text-red-700 text-sm">Resend</button>
                     <span id="reset-otp-timer" class="text-sm"></span>
                 </p>
                 <button type="button" id="reset-otp-submit-btn" @click="handleResetOTPSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Verify
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Verify
                     Code</button>
             </form>
         </div>
@@ -718,60 +761,65 @@ function getStepTitle($mode, $step)
 
     <div id="reset-password-form" x-show="step==='reset-form'" :class="step==='reset-form'?'active':''"
         class="auth-form" style="display:none">
-        <div class="p-6 border-b">
+        <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-2xl font-bold text-secondary"><?= getStepTitle('reset_password', 'form') ?></h2>
-                <button @click="closeAuthModal()" class="text-gray-500 hover:text-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <?= getStepTitle('reset_password', 'form') ?></h2>
+                <button @click="closeAuthModal()"
+                    class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <p class="mb-4 text-center text-sm text-gray-600">
+            <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
                 <a href="javascript:void(0)" @click="showResetVerifyForm()"
                     class="text-primary hover:text-red-700 font-medium">
                     <i data-lucide="arrow-left" class="w-4 h-4 inline-block mr-1"></i>Back
                 </a>
             </p>
-            <p class="mb-2 text-sm text-gray-600">Resetting password for <strong
-                    id="forgot-username-display-reset-form"></strong></p>
+            <p class="mb-2 text-sm text-gray-600 dark:text-white/70">Resetting password for <strong
+                    id="forgot-username-display-reset-form" class="text-gray-900 dark:text-white"></strong></p>
             <form id="reset-password-form-element" class="space-y-4" autocomplete="off" data-mode="reset_password"
                 data-step="new_password">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">New Password</label>
                     <div class="relative">
                         <i data-lucide="lock"
-                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/50"></i>
                         <input type="password" required
-                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            class="w-full pl-10 pr-12 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                             placeholder="Enter new password" id="new-password" autofocus autocomplete="new-password"
                             oninput="checkPasswordStrength(this.value,'new-password')" onkeyup="checkTripleSpace(this)">
                         <button type="button"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            onclick="togglePasswordVisibility('new-password')"><i data-lucide="eye"
-                                class="w-5 h-5"></i></button>
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-white/60 dark:hover:text-white"
+                            onclick="togglePasswordVisibility('new-password')">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
                     </div>
                     <div class="password-strength-meter mt-2">
                         <div class="password-strength-meter-fill"></div>
                     </div>
-                    <div class="password-strength-text text-xs text-gray-500"></div>
+                    <div class="password-strength-text text-xs text-gray-500 dark:text-white/60"></div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Confirm New
+                        Password</label>
                     <div class="relative">
                         <i data-lucide="lock"
-                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/50"></i>
                         <input type="password" required
-                            class="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                            class="w-full pl-10 pr-12 py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400"
                             placeholder="Confirm new password" id="confirm-new-password" autocomplete="new-password"
                             onkeyup="checkTripleSpace(this)">
                         <button type="button"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            onclick="togglePasswordVisibility('confirm-new-password')"><i data-lucide="eye"
-                                class="w-5 h-5"></i></button>
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-white/60 dark:hover:text-white"
+                            onclick="togglePasswordVisibility('confirm-new-password')">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
                     </div>
                     <div id="reset-password-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 </div>
                 <button type="button" id="reset-password-submit-btn" @click="handleResetPasswordSubmit()"
-                    class="w-full bg-primary text-white py-2 rounded-lg hover:bg-red-600 transition-colors">Reset
+                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Reset
                     Password</button>
             </form>
         </div>
@@ -956,12 +1004,12 @@ function getStepTitle($mode, $step)
         if (!container) return;
         container.innerHTML = `
             <div class="flex justify-between gap-2 mb-2">
-                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}" autofocus>
-                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
-                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
-                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
-                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
-                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl" data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white" data-otp-target="${target}" autofocus>
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white" data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white" data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white" data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white" data-otp-target="${target}">
+                <input type="text" maxlength="1" class="otp-input w-full text-center py-2 border border-gray-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white" data-otp-target="${target}">
             </div>
         `;
     }
@@ -997,9 +1045,6 @@ function getStepTitle($mode, $step)
             if (phoneOTPTimer) clearInterval(phoneOTPTimer);
             phoneOTPTimer = iv;
         } else if (type === 'reset-otp') {
-            if (resetOTPTimer) clearInterval(resetOTPTimer);
-            resetOTPTimer = iv;
-        } {
             if (resetOTPTimer) clearInterval(resetOTPTimer);
             resetOTPTimer = iv;
         }
@@ -1145,7 +1190,7 @@ function getStepTitle($mode, $step)
             return;
         }
         hideError('login-password-error');
-        const button = document.querySelector('#login-password-form button');
+        const button = document.querySelector('#login-password-form button[type="button"]');
         const originalText = button.innerHTML;
         button.disabled = true;
         button.innerHTML = SPINNER + 'Logging in...';
@@ -1492,10 +1537,6 @@ function getStepTitle($mode, $step)
     function handleRegisterPhoneSubmit() {
         const pi = document.querySelector('#phone');
         const iti = window.intlTelInputGlobals.getInstance(pi);
-        /*if (!iti.isValidNumber()) {
-            showError('register-phone-error', 'Please enter a valid phone number');
-            return;
-        }*/
         const pn = iti.getNumber();
         hideError('register-phone-error');
         const button = document.getElementById('register-phone-submit-btn');
@@ -1745,10 +1786,6 @@ function getStepTitle($mode, $step)
     function handleForgotPhoneSubmit() {
         const pi = document.querySelector('#forgot-phone');
         const iti = window.intlTelInputGlobals.getInstance(pi);
-        /*if (!iti.isValidNumber()) {
-            showError('forgot-phone-error', 'Please enter a valid phone number');
-            return;
-        }*/
         const pn = iti.getNumber();
         hideError('forgot-phone-error');
         const button = document.getElementById('forgot-phone-submit-btn');

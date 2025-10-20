@@ -10,11 +10,96 @@ if (!isset($_SESSION['user']) || empty($_SESSION['user']['logged_in'])) {
 }
 ob_start();
 ?>
-<div class="min-h-screen bg-user-content dark:bg-secondary text-gray-900 dark:text-white" x-data="userVisitsPage()"
-    x-init="init()" x-on:keydown.escape="closeAnyModal()">
+<div class="min-h-screen overflow-x-hidden bg-user-content dark:bg-secondary text-gray-900 dark:text-white"
+    x-data="userVisitsPage()" x-init="init()" x-on:keydown.escape="closeAnyModal()">
     <style>
         [x-cloak] {
             display: none
+        }
+
+        html,
+        body {
+            max-width: 100%;
+            overflow-x: hidden
+        }
+
+        .line-clamp-1 {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .truncate-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
+            max-width: 100%
+        }
+
+        .break-anywhere {
+            overflow-wrap: anywhere;
+            word-break: break-word
+        }
+
+        .select-ellipsis {
+            max-width: 100%;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden
+        }
+
+        #userRequestsTable {
+            table-layout: fixed;
+            width: 100%;
+            min-width: 840px
+        }
+
+        #userRequestsTable th,
+        #userRequestsTable td {
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        #userRequestsTable th:nth-child(1),
+        #userRequestsTable td:nth-child(1) {
+            width: 200px
+        }
+
+        #userRequestsTable th:nth-child(2),
+        #userRequestsTable td:nth-child(2) {
+            width: 280px
+        }
+
+        #userRequestsTable th:nth-child(3),
+        #userRequestsTable td:nth-child(3) {
+            width: 150px
+        }
+
+        #userRequestsTable th:nth-child(4),
+        #userRequestsTable td:nth-child(4) {
+            width: 110px
+        }
+
+        #userRequestsTable th:nth-child(5),
+        #userRequestsTable td:nth-child(5) {
+            width: 150px
+        }
+
+        #userRequestsTable th:nth-child(6),
+        #userRequestsTable td:nth-child(6) {
+            width: 120px
+        }
+
+        @media (max-width:1024px) {
+            .mobile-ellipsis {
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap
+            }
         }
     </style>
     <script>
@@ -52,7 +137,7 @@ ob_start();
                     <div class="sm:hidden w-full">
                         <label class="sr-only">Period</label>
                         <select x-model="filters.period" @change="setPeriod(filters.period)"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm bg-white dark:bg-secondary text-gray-900 dark:text-white">
+                            class="select-ellipsis w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm bg-white dark:bg-secondary text-gray-900 dark:text-white">
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
                             <option value="monthly">Monthly</option>
@@ -139,15 +224,15 @@ ob_start();
                         <p class="text-sm text-gray-600 dark:text-white/70">Tap any request to see store details, status
                             timeline, and actions</p>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <div class="relative">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 min-w-0">
+                        <div class="relative min-w-0">
                             <input type="text" placeholder="Search by store, product..."
                                 x-model.debounce.400ms="filters.search" @input="page=1;loadRequests()"
-                                class="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white dark:bg-secondary text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/60">
+                                class="w-full sm:w-72 md:w-80 pl-10 pr-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white dark:bg-secondary text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/60">
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-gray-400"></i>
                         </div>
                         <select x-model="filters.status" @change="page=1;loadRequests()"
-                            class="px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm bg-white dark:bg-secondary text-gray-900 dark:text-white">
+                            class="select-ellipsis px-3 py-2 border border-gray-300 dark:border-white/10 rounded-lg text-sm bg-white dark:bg-secondary text-gray-900 dark:text-white w-full sm:w-44 md:w-56 overflow-hidden">
                             <option value="all">All Status</option>
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
@@ -162,7 +247,7 @@ ob_start();
             </div>
 
             <div class="hidden lg:block overflow-x-auto">
-                <table class="w-full min-w-[840px]">
+                <table id="userRequestsTable" class="w-full">
                     <thead class="bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10">
                         <tr>
                             <th
@@ -206,15 +291,15 @@ ob_start();
                             <tr class="hover:bg-gray-50 dark:hover:bg-white/10 transition-colors cursor-pointer"
                                 @click="openDetails(r.id)">
                                 <td class="px-4 py-3">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate"
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate-text"
                                         x-text="r.store_name"></div>
-                                    <div class="text-xs text-gray-500 dark:text-white/70 truncate"
+                                    <div class="text-xs text-gray-500 dark:text-white/70 truncate-text"
                                         x-text="r.region + ', ' + r.district"></div>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate"
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white truncate-text break-anywhere"
                                         x-text="r.product_title"></div>
-                                    <div class="text-xs text-gray-500 dark:text-white/70"
+                                    <div class="text-xs text-gray-500 dark:text-white/70 truncate-text"
                                         x-text="capitalize(r.price_category)+' • UGX '+formatCurrency(r.price)"></div>
                                 </td>
                                 <td class="px-4 py-3 text-center whitespace-nowrap">
@@ -259,9 +344,9 @@ ob_start();
                                         x-text="r.store_name"></h4>
                                     <span class="text-xs" :class="visitInfo(r).color" x-text="visitInfo(r).text"></span>
                                 </div>
-                                <div class="text-sm text-gray-600 dark:text-white/80 mb-1 truncate"
+                                <div class="text-sm text-gray-600 dark:text-white/80 mb-1 line-clamp-1 break-anywhere"
                                     x-text="r.product_title"></div>
-                                <div class="text-xs text-gray-500 dark:text-white/70 mb-2"
+                                <div class="text-xs text-gray-500 dark:text-white/70 mb-2 mobile-ellipsis"
                                     x-text="'UGX '+formatCurrency(r.price)+' per unit'"></div>
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
@@ -297,7 +382,8 @@ ob_start();
         <div class="absolute inset-0 bg-black/50" @click="closeCalendar()"></div>
         <div
             class="relative w-full max-w-lg mx-auto top-1/2 -translate-y-1/2 bg-white dark:bg-secondary rounded-2xl shadow-xl overflow-hidden">
-            <div class="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
+            <div
+                class="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10">
                 <div class="text-sm font-semibold text-gray-900 dark:text-white" x-text="calendarTitle"></div>
                 <button class="p-2 rounded hover:bg-gray-100 dark:hover:bg-white/10" @click="closeCalendar()"><i
                         data-lucide="x" class="w-5 h-5"></i></button>
@@ -419,7 +505,7 @@ ob_start();
                 <div>
                     <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-white" x-text="detailHeader.title">
                     </h3>
-                    <p class="text-xs sm:text-sm text-gray-600 dark:text-white/70 mt-0.5"
+                    <p class="text-xs sm:text-sm text-gray-600 dark:text-white/70 mt-0.5 mobile-ellipsis break-anywhere"
                         x-text="detailHeader.subtitle"></p>
                 </div>
                 <div class="flex items-center gap-3">
@@ -453,7 +539,7 @@ ob_start();
                                     <div class="space-y-2 text-sm">
                                         <div class="flex justify-between"><span
                                                 class="text-gray-600 dark:text-white/70">Name:</span><span
-                                                class="font-medium text-right"
+                                                class="font-medium text-right break-anywhere"
                                                 x-text="requestDetails.store_name"></span></div>
                                         <div class="flex justify-between"><span
                                                 class="text-gray-600 dark:text-white/70">Location:</span><span
@@ -464,11 +550,11 @@ ob_start();
                                             <div class="space-y-2 pt-2 border-t border-gray-200 dark:border-white/10">
                                                 <div class="flex justify-between"><span
                                                         class="text-gray-600 dark:text-white/70">Email:</span><span
-                                                        class="font-medium text-right break-all"
+                                                        class="font-medium text-right break-anywhere"
                                                         x-text="requestDetails.business_email"></span></div>
                                                 <div class="flex justify-between"><span
                                                         class="text-gray-600 dark:text-white/70">Phone:</span><span
-                                                        class="font-medium text-right"
+                                                        class="font-medium text-right break-anywhere"
                                                         x-text="requestDetails.business_phone"></span></div>
                                             </div>
                                         </template>
@@ -506,7 +592,7 @@ ob_start();
                                     <div class="space-y-2 text-sm">
                                         <div class="flex justify-between"><span
                                                 class="text-gray-600 dark:text-white/70">Item:</span><span
-                                                class="font-medium text-right"
+                                                class="font-medium text-right break-anywhere"
                                                 x-text="requestDetails.product_title"></span></div>
                                         <div class="flex justify-between"><span
                                                 class="text-gray-600 dark:text-white/70">Package:</span><span
@@ -557,14 +643,14 @@ ob_start();
                                         <img :src="detailProductImage" alt="Product Image"
                                             class="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-white/10">
                                         <a :href="detailProductUrl" target="_blank"
-                                            class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition text-white font-medium rounded-lg">
-                                            View product details
-                                        </a>
+                                            class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition text-white font-medium rounded-lg">View
+                                            product details</a>
                                     </div>
                                     <div>
                                         <a :href="detailProductUrl" target="_blank" aria-label="View product details"
-                                            class="inline-flex items-center gap-2 font-semibold text-blue-600 dark:text-blue-400 underline underline-offset-4 hover:underline hover:text-blue-800 dark:hover:text-blue-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 rounded-sm">
-                                            <span x-text="requestDetails.product_title"></span>
+                                            class="inline-flex items-center gap-2 font-semibold text-blue-600 dark:text-blue-400 underline underline-offset-4 hover:underline hover:text-blue-800 dark:hover:text-blue-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 rounded-sm break-anywhere">
+                                            <span class="mobile-ellipsis break-anywhere"
+                                                x-text="requestDetails.product_title"></span>
                                             <i data-lucide="external-link" class="w-4 h-4"></i>
                                         </a>
                                     </div>
@@ -588,8 +674,8 @@ ob_start();
                                                     class="font-medium"
                                                     x-text="formatTime(requestDetails.created_at)"></span></span>
                                         </div>
-                                        <div class="text-sm text-gray-600 dark:textWhite/70 dark:text-white/70">Visit
-                                            scheduled for <span class="font-medium"
+                                        <div class="text-sm text-gray-600 dark:text-white/70">Visit scheduled for <span
+                                                class="font-medium"
                                                 x-text="formatDate(requestDetails.visit_date)"></span> (<span
                                                 :class="visitInfo(requestDetails).color"
                                                 x-text="visitInfo(requestDetails).text"></span>)</div>
@@ -636,7 +722,7 @@ ob_start();
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <p class="text-sm font-medium text-gray-600 dark:text-white/70">Address</p>
-                                        <p class="font-medium"
+                                        <p class="font-medium break-anywhere"
                                             x-text="requestDetails.address || (requestDetails.region+', '+requestDetails.district)">
                                         </p>
                                     </div>
@@ -659,7 +745,7 @@ ob_start();
     <div x-cloak x-show="modals.email" x-transition.opacity class="fixed inset-0 z-[60]">
         <div class="absolute inset-0 bg-black/50" @click="closeEmail"></div>
         <div
-            class="relative w-full max-w-2xl mx-auto my-6 bg-white dark:bg-secondary rounded-xl shadow-lg max-h-[90vh] overflow-hidden">
+            class="relative w-full max-w-2xl mx-auto my-6 bg-white dark:bg-secondary rounded-xl shadow-lg max-h=[90vh] overflow-hidden">
             <div
                 class="p-4 sm:p-6 border-b border-gray-100 dark:border-white/10 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 flex items-center justify-between">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">Email Store</h3>

@@ -413,7 +413,7 @@ function submitBuyInStore(PDO $pdo, string $currentUser)
             ]
         ];
         $link = defined('BASE_URL') ? rtrim(\BASE_URL, '/') . "/vendor-store/requests?id={$storeData['store_id']}" : null;
-        $ns->create('visit_request', 'New Visit Request', $recipients, $link, 'high', $currentUser);
+        $ns->create('visit_request', 'New Buy in Store Request', $recipients, $link, 'high', $currentUser);
         $productLabelParts = [];
         if (!empty($storeData['product_name']))
             $productLabelParts[] = $storeData['product_name'];

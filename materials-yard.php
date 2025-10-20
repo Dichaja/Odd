@@ -3,215 +3,116 @@ require_once __DIR__ . '/config/config.php';
 
 if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'products')) {
     header('Content-Type: application/json');
-
     $searchQuery = isset($_GET['q']) ? trim($_GET['q']) : '';
     $categoryId = isset($_GET['categoryId']) ? $_GET['categoryId'] : '';
     $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
     $limit = isset($_GET['limit']) ? max(1, min(50, intval($_GET['limit']))) : 12;
     $offset = ($page - 1) * $limit;
-
     $response = ['products' => [], 'categories' => [], 'hasMore' => false, 'total' => 0];
 
     if (!empty($searchQuery)) {
         $searchStartTime = microtime(true);
-
         $allProductsStmt = $pdo->prepare("
-            SELECT 
-                p.id, 
-                p.title, 
-                p.description, 
-                p.meta_title,
-                p.meta_description,
-                p.meta_keywords,
-                (SELECT COUNT(DISTINCT session_id) 
-                 FROM product_views 
-                 WHERE product_id = p.id) AS views,
-                p.category_id,
-                c.name AS category_name,
-                (SELECT image_url 
-                 FROM product_images 
-                 WHERE product_id = p.id 
-                   AND is_primary = 1 
-                 LIMIT 1) AS primary_image,
-                EXISTS(
-                    SELECT 1 
-                    FROM store_products sp
-                    JOIN store_categories sc ON sc.id = sp.store_category_id
-                    JOIN vendor_stores vs ON vs.id = sc.store_id
-                    JOIN product_pricing pp ON pp.store_products_id = sp.id
-                    WHERE sp.product_id = p.id
-                      AND vs.status = 'active'
-                ) AS has_pricing,
-                (SELECT MIN(pp.price)
-                 FROM store_products sp
-                 JOIN store_categories sc ON sc.id = sp.store_category_id
-                 JOIN vendor_stores vs ON vs.id = sc.store_id
-                 JOIN product_pricing pp ON pp.store_products_id = sp.id
-                 WHERE sp.product_id = p.id
-                   AND vs.status = 'active'
-                ) AS lowest_price
-            FROM products p
-            JOIN product_categories c ON c.id = p.category_id
-            WHERE p.status = 'published'
+            SELECT p.id,p.title,p.description,p.meta_title,p.meta_description,p.meta_keywords,
+                   (SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) AS views,
+                   p.category_id,c.name AS category_name,
+                   (SELECT image_url FROM product_images WHERE product_id=p.id AND is_primary=1 LIMIT 1) AS primary_image,
+                   EXISTS(SELECT 1 FROM store_products sp
+                          JOIN store_categories sc ON sc.id=sp.store_category_id
+                          JOIN vendor_stores vs ON vs.id=sc.store_id
+                          JOIN product_pricing pp ON pp.store_products_id=sp.id
+                          WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                   (SELECT MIN(pp.price) FROM store_products sp
+                    JOIN store_categories sc ON sc.id=sp.store_category_id
+                    JOIN vendor_stores vs ON vs.id=sc.store_id
+                    JOIN product_pricing pp ON pp.store_products_id=sp.id
+                    WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+            FROM products p JOIN product_categories c ON c.id=p.category_id
+            WHERE p.status='published'
         ");
         $allProductsStmt->execute();
         $allProducts = $allProductsStmt->fetchAll(PDO::FETCH_ASSOC);
-
         $scoredProducts = advancedProductSearch($allProducts, $searchQuery);
-
         $resultsCount = count($scoredProducts);
-        $maxMatchScore = 0.00;
-        $minMatchScore = 0.00;
-        $averageMatchScore = 0.00;
-
-        if ($resultsCount > 0) {
-            $scores = array_column($scoredProducts, 'search_score');
-            $maxMatchScore = max($scores);
-            $minMatchScore = min($scores);
-            $averageMatchScore = array_sum($scores) / count($scores);
-        }
-
-        $searchEndTime = microtime(true);
-        $durationMs = round(($searchEndTime - $searchStartTime) * 1000);
-
-        if ($page === 1) {
+        $maxMatchScore = $resultsCount ? max(array_column($scoredProducts, 'search_score')) : 0.0;
+        $minMatchScore = $resultsCount ? min(array_column($scoredProducts, 'search_score')) : 0.0;
+        $averageMatchScore = $resultsCount ? array_sum(array_column($scoredProducts, 'search_score')) / $resultsCount : 0.0;
+        $durationMs = round((microtime(true) - $searchStartTime) * 1000);
+        if ($page === 1)
             logSearchActivity($pdo, $searchQuery, $resultsCount, $maxMatchScore, $minMatchScore, $averageMatchScore, $durationMs);
-        }
-
         $totalProducts = count($scoredProducts);
         $products = array_slice($scoredProducts, $offset, $limit);
-
         if ($page === 1) {
-            $allCategoriesStmt = $pdo->prepare("
-                SELECT id, name, description, meta_title, meta_description, meta_keywords
-                FROM product_categories 
-                WHERE status = 'active'
-            ");
+            $allCategoriesStmt = $pdo->prepare("SELECT id,name,description,meta_title,meta_description,meta_keywords FROM product_categories WHERE status='active'");
             $allCategoriesStmt->execute();
-            $allCategories = $allCategoriesStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            $scoredCategories = advancedCategorySearch($allCategories, $searchQuery);
+            $scoredCategories = advancedCategorySearch($allCategoriesStmt->fetchAll(PDO::FETCH_ASSOC), $searchQuery);
             $response['categories'] = array_slice($scoredCategories, 0, 10);
         }
     } else {
         if (!empty($categoryId)) {
             $productStmt = $pdo->prepare("
-                SELECT 
-                    p.id, 
-                    p.title, 
-                    p.description, 
-                    (SELECT COUNT(DISTINCT session_id) 
-                     FROM product_views 
-                     WHERE product_id = p.id) AS views,
-                    p.category_id,
-                    c.name AS category_name,
-                    (SELECT image_url 
-                     FROM product_images 
-                     WHERE product_id = p.id 
-                       AND is_primary = 1 
-                     LIMIT 1) AS primary_image,
-                    EXISTS(
-                        SELECT 1 
-                        FROM store_products sp
-                        JOIN store_categories sc ON sc.id = sp.store_category_id
-                        JOIN vendor_stores vs ON vs.id = sc.store_id
-                        JOIN product_pricing pp ON pp.store_products_id = sp.id
-                        WHERE sp.product_id = p.id
-                          AND vs.status = 'active'
-                    ) AS has_pricing,
-                    (SELECT MIN(pp.price)
-                     FROM store_products sp
-                     JOIN store_categories sc ON sc.id = sp.store_category_id
-                     JOIN vendor_stores vs ON vs.id = sc.store_id
-                     JOIN product_pricing pp ON pp.store_products_id = sp.id
-                     WHERE sp.product_id = p.id
-                       AND vs.status = 'active'
-                    ) AS lowest_price
-                FROM products p
-                JOIN product_categories c ON c.id = p.category_id
-                WHERE p.category_id = ? 
-                  AND p.status = 'published'
-                ORDER BY has_pricing DESC, p.featured DESC, (SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) DESC
+                SELECT p.id,p.title,p.description,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) AS views,
+                       p.category_id,c.name AS category_name,
+                       (SELECT image_url FROM product_images WHERE product_id=p.id AND is_primary=1 LIMIT 1) AS primary_image,
+                       EXISTS(SELECT 1 FROM store_products sp
+                              JOIN store_categories sc ON sc.id=sp.store_category_id
+                              JOIN vendor_stores vs ON vs.id=sc.store_id
+                              JOIN product_pricing pp ON pp.store_products_id=sp.id
+                              WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                       (SELECT MIN(pp.price) FROM store_products sp
+                        JOIN store_categories sc ON sc.id=sp.store_category_id
+                        JOIN vendor_stores vs ON vs.id=sc.store_id
+                        JOIN product_pricing pp ON pp.store_products_id=sp.id
+                        WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+                FROM products p JOIN product_categories c ON c.id=p.category_id
+                WHERE p.category_id=? AND p.status='published'
+                ORDER BY has_pricing DESC,p.featured DESC,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) DESC
                 LIMIT ? OFFSET ?
             ");
             $productStmt->execute([$categoryId, $limit, $offset]);
-
-            $countStmt = $pdo->prepare("
-                SELECT COUNT(*) as total
-                FROM products p
-                WHERE p.category_id = ? AND p.status = 'published'
-            ");
+            $countStmt = $pdo->prepare("SELECT COUNT(*) as total FROM products p WHERE p.category_id=? AND p.status='published'");
             $countStmt->execute([$categoryId]);
             $totalProducts = $countStmt->fetch()['total'];
         } else {
             $productStmt = $pdo->prepare("
-                SELECT 
-                    p.id, 
-                    p.title, 
-                    p.description, 
-                    (SELECT COUNT(DISTINCT session_id) 
-                     FROM product_views 
-                     WHERE product_id = p.id) AS views,
-                    p.category_id,
-                    c.name AS category_name,
-                    (SELECT image_url 
-                     FROM product_images 
-                     WHERE product_id = p.id 
-                       AND is_primary = 1 
-                     LIMIT 1) AS primary_image,
-                    EXISTS(
-                        SELECT 1 
-                        FROM store_products sp
-                        JOIN store_categories sc ON sc.id = sp.store_category_id
-                        JOIN vendor_stores vs ON vs.id = sc.store_id
-                        JOIN product_pricing pp ON pp.store_products_id = sp.id
-                        WHERE sp.product_id = p.id
-                          AND vs.status = 'active'
-                    ) AS has_pricing,
-                    (SELECT MIN(pp.price)
-                     FROM store_products sp
-                     JOIN store_categories sc ON sc.id = sp.store_category_id
-                     JOIN vendor_stores vs ON vs.id = sc.store_id
-                     JOIN product_pricing pp ON pp.store_products_id = sp.id
-                     WHERE sp.product_id = p.id
-                       AND vs.status = 'active'
-                    ) AS lowest_price
-                FROM products p
-                JOIN product_categories c ON c.id = p.category_id
-                WHERE p.status = 'published'
-                ORDER BY has_pricing DESC, p.featured DESC, (SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) DESC
+                SELECT p.id,p.title,p.description,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) AS views,
+                       p.category_id,c.name AS category_name,
+                       (SELECT image_url FROM product_images WHERE product_id=p.id AND is_primary=1 LIMIT 1) AS primary_image,
+                       EXISTS(SELECT 1 FROM store_products sp
+                              JOIN store_categories sc ON sc.id=sp.store_category_id
+                              JOIN vendor_stores vs ON vs.id=sc.store_id
+                              JOIN product_pricing pp ON pp.store_products_id=sp.id
+                              WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                       (SELECT MIN(pp.price) FROM store_products sp
+                        JOIN store_categories sc ON sc.id=sp.store_category_id
+                        JOIN vendor_stores vs ON vs.id=sc.store_id
+                        JOIN product_pricing pp ON pp.store_products_id=sp.id
+                        WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+                FROM products p JOIN product_categories c ON c.id=p.category_id
+                WHERE p.status='published'
+                ORDER BY has_pricing DESC,p.featured DESC,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) DESC
                 LIMIT ? OFFSET ?
             ");
             $productStmt->execute([$limit, $offset]);
-
-            $countStmt = $pdo->prepare("
-                SELECT COUNT(*) as total
-                FROM products p
-                WHERE p.status = 'published'
-            ");
+            $countStmt = $pdo->prepare("SELECT COUNT(*) as total FROM products p WHERE p.status='published'");
             $countStmt->execute();
             $totalProducts = $countStmt->fetch()['total'];
         }
-
         $products = $productStmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     foreach ($products as &$product) {
-        $productImageUrl = getProductImage($product['id']);
-
-        if ($productImageUrl) {
-            $product['primary_image'] = $productImageUrl;
-        } elseif (empty($product['primary_image'])) {
+        $img = getProductImage($product['id']);
+        if ($img)
+            $product['primary_image'] = $img;
+        elseif (empty($product['primary_image']))
             $product['primary_image'] = "https://placehold.co/600x400/e2e8f0/1e293b?text=" . urlencode($product['title']);
-        }
         $product['has_pricing'] = (bool) $product['has_pricing'];
         $product['lowest_price'] = $product['lowest_price'] ? (float) $product['lowest_price'] : null;
     }
-
     $response['products'] = $products;
     $response['hasMore'] = ($offset + $limit) < $totalProducts;
     $response['total'] = $totalProducts;
-
     echo json_encode($response);
     exit;
 }
@@ -220,42 +121,13 @@ function logSearchActivity($pdo, $searchQuery, $resultsCount, $maxMatchScore, $m
 {
     try {
         $logId = generateUlid();
-
         $timezone = new DateTimeZone('Africa/Kampala');
-        $currentDateTime = new DateTime('now', $timezone);
-        $createdAt = $currentDateTime->format('Y-m-d H:i:s');
-
-        $logStmt = $pdo->prepare("
-            INSERT INTO search_log (
-                id, 
-                session_id, 
-                search_query, 
-                results_count, 
-                max_match_score, 
-                min_match_score, 
-                average_match_score, 
-                duration_ms, 
-                created_at
-            ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?)
-        ");
-
-        $logStmt->execute([
-            $logId,
-            $searchQuery,
-            $resultsCount,
-            round($maxMatchScore, 2),
-            round($minMatchScore, 2),
-            round($averageMatchScore, 2),
-            $durationMs,
-            $createdAt
-        ]);
-
-        error_log("Search logged: Query='{$searchQuery}', Results={$resultsCount}, Duration={$durationMs}ms");
+        $createdAt = (new DateTime('now', $timezone))->format('Y-m-d H:i:s');
+        $logStmt = $pdo->prepare("INSERT INTO search_log (id,session_id,search_query,results_count,max_match_score,min_match_score,average_match_score,duration_ms,created_at) VALUES (?,?,?, ?,?,?, ?,?,?)");
+        $logStmt->execute([$logId, null, $searchQuery, $resultsCount, round($maxMatchScore, 2), round($minMatchScore, 2), round($averageMatchScore, 2), $durationMs, $createdAt]);
     } catch (Exception $e) {
-        error_log("Search logging failed: " . $e->getMessage());
     }
 }
-
 function levenshteinDistance($a, $b)
 {
     if ($a === $b)
@@ -274,7 +146,6 @@ function levenshteinDistance($a, $b)
     }
     return $v[strlen($b)];
 }
-
 function soundex_similarity($word1, $word2)
 {
     return soundex($word1) === soundex($word2);
@@ -283,140 +154,118 @@ function metaphone_similarity($word1, $word2)
 {
     return metaphone($word1) === metaphone($word2);
 }
-
 function tokenize($text)
 {
-    return array_filter(
-        array_map('trim', preg_split('/\W+/', strtolower($text))),
-        fn($word) => strlen($word) > 2
-    );
+    return array_filter(array_map('trim', preg_split('/\W+/', strtolower($text))), fn($w) => strlen($w) > 2);
 }
-
 function calculateFieldScore($fieldValue, $searchQuery, $weight = 1.0)
 {
     if (empty($fieldValue) || empty($searchQuery))
         return 0;
-    $fieldValue = strtolower($fieldValue);
-    $searchQuery = strtolower($searchQuery);
-    $score = 0;
-
-    if (strpos($fieldValue, $searchQuery) !== false) {
-        $score += 1.0;
-        if (
-            strpos($fieldValue, ' ' . $searchQuery . ' ') !== false ||
-            strpos($fieldValue, $searchQuery . ' ') === 0 ||
-            strpos($fieldValue, ' ' . $searchQuery) === strlen($fieldValue) - strlen($searchQuery) - 1
-        ) {
-            $score += 0.5;
+    $f = strtolower($fieldValue);
+    $q = strtolower($searchQuery);
+    $s = 0;
+    if (strpos($f, $q) !== false) {
+        $s += 1.0;
+        if (strpos($f, ' ' . $q . ' ') !== false || strpos($f, $q . ' ') === 0 || strpos($f, ' ' . $q) === strlen($f) - strlen($q) - 1) {
+            $s += 0.5;
         }
     }
-
-    $fieldTokens = tokenize($fieldValue);
-    $queryTokens = tokenize($searchQuery);
-
-    foreach ($queryTokens as $queryToken) {
-        $bestTokenScore = 0;
-        foreach ($fieldTokens as $fieldToken) {
-            $tokenScore = 0;
-            if ($fieldToken === $queryToken)
-                $tokenScore = 1.0;
-            elseif (strpos($fieldToken, $queryToken) !== false || strpos($queryToken, $fieldToken) !== false)
-                $tokenScore = 0.7;
-            elseif (soundex_similarity($fieldToken, $queryToken) || metaphone_similarity($fieldToken, $queryToken))
-                $tokenScore = 0.6;
+    $ft = tokenize($f);
+    $qt = tokenize($q);
+    foreach ($qt as $t) {
+        $best = 0;
+        foreach ($ft as $x) {
+            $z = 0;
+            if ($x === $t)
+                $z = 1;
+            elseif (strpos($x, $t) !== false || strpos($t, $x) !== false)
+                $z = .7;
+            elseif (soundex_similarity($x, $t) || metaphone_similarity($x, $t))
+                $z = .6;
             else {
-                $distance = levenshteinDistance($fieldToken, $queryToken);
-                $maxLen = max(strlen($fieldToken), strlen($queryToken));
-                if ($maxLen > 0 && $distance <= 2)
-                    $tokenScore = max(0, 1 - ($distance / $maxLen)) * 0.5;
+                $d = levenshteinDistance($x, $t);
+                $m = max(strlen($x), strlen($t));
+                if ($m > 0 && $d <= 2)
+                    $z = max(0, 1 - ($d / $m)) * .5;
             }
-            $bestTokenScore = max($bestTokenScore, $tokenScore);
+            $best = max($best, $z);
         }
-        $score += $bestTokenScore;
+        $s += $best;
     }
-
-    return $score * $weight;
+    return $s * $weight;
 }
-
 function advancedProductSearch($products, $searchQuery)
 {
-    $scoredProducts = [];
-    foreach ($products as $product) {
-        $totalScore = 0;
-        $totalScore += calculateFieldScore($product['title'], $searchQuery, 0.4);
-        $totalScore += calculateFieldScore($product['meta_title'], $searchQuery, 0.3);
-        $totalScore += calculateFieldScore($product['description'], $searchQuery, 0.2);
-        $totalScore += calculateFieldScore($product['meta_description'], $searchQuery, 0.2);
-        $totalScore += calculateFieldScore($product['meta_keywords'], $searchQuery, 0.2);
-        $totalScore += calculateFieldScore($product['category_name'], $searchQuery, 0.1);
-        if ($totalScore > 0.1) {
-            $product['search_score'] = min($totalScore, 1.0);
-            $scoredProducts[] = $product;
+    $out = [];
+    foreach ($products as $p) {
+        $t = 0;
+        $t += calculateFieldScore($p['title'], $searchQuery, .4);
+        $t += calculateFieldScore($p['meta_title'], $searchQuery, .3);
+        $t += calculateFieldScore($p['description'], $searchQuery, .2);
+        $t += calculateFieldScore($p['meta_description'], $searchQuery, .2);
+        $t += calculateFieldScore($p['meta_keywords'], $searchQuery, .2);
+        $t += calculateFieldScore($p['category_name'], $searchQuery, .1);
+        if ($t > 0.1) {
+            $p['search_score'] = min($t, 1.0);
+            $out[] = $p;
         }
     }
-    usort($scoredProducts, function ($a, $b) {
+    usort($out, function ($a, $b) {
         if ($a['search_score'] !== $b['search_score'])
             return $b['search_score'] <=> $a['search_score'];
         if ($a['has_pricing'] !== $b['has_pricing'])
             return $b['has_pricing'] <=> $a['has_pricing'];
         return $b['views'] <=> $a['views'];
     });
-    return $scoredProducts;
+    return $out;
 }
-
 function advancedCategorySearch($categories, $searchQuery)
 {
-    $scoredCategories = [];
-    foreach ($categories as $category) {
-        $totalScore = 0;
-        $totalScore += calculateFieldScore($category['name'], $searchQuery, 0.5);
-        $totalScore += calculateFieldScore($category['meta_title'], $searchQuery, 0.3);
-        $totalScore += calculateFieldScore($category['description'], $searchQuery, 0.2);
-        $totalScore += calculateFieldScore($category['meta_description'], $searchQuery, 0.2);
-        $totalScore += calculateFieldScore($category['meta_keywords'], $searchQuery, 0.2);
-        if ($totalScore > 0.1) {
-            $category['search_score'] = min($totalScore, 1.0);
-            $scoredCategories[] = $category;
+    $out = [];
+    foreach ($categories as $c) {
+        $t = 0;
+        $t += calculateFieldScore($c['name'], $searchQuery, .5);
+        $t += calculateFieldScore($c['meta_title'], $searchQuery, .3);
+        $t += calculateFieldScore($c['description'], $searchQuery, .2);
+        $t += calculateFieldScore($c['meta_description'], $searchQuery, .2);
+        $t += calculateFieldScore($c['meta_keywords'], $searchQuery, .2);
+        if ($t > 0.1) {
+            $c['search_score'] = min($t, 1.0);
+            $out[] = $c;
         }
     }
-    usort($scoredCategories, fn($a, $b) => $b['search_score'] <=> $a['search_score']);
-    return $scoredCategories;
+    usort($out, fn($a, $b) => $b['search_score'] <=> $a['search_score']);
+    return $out;
 }
-
 function getProductImage($productId)
 {
-    $productDir = __DIR__ . '/img/products/' . $productId . '/';
-    $jsonFile = $productDir . 'images.json';
-    if (file_exists($jsonFile)) {
-        $jsonContent = file_get_contents($jsonFile);
-        $imageData = json_decode($jsonContent, true);
-        if (isset($imageData['images']) && !empty($imageData['images'])) {
-            $firstImage = $imageData['images'][0];
-            $imagePath = $productDir . $firstImage;
-            if (file_exists($imagePath))
-                return BASE_URL . 'img/products/' . $productId . '/' . $firstImage;
+    $dir = __DIR__ . '/img/products/' . $productId . '/';
+    $json = $dir . 'images.json';
+    if (file_exists($json)) {
+        $data = json_decode(file_get_contents($json), true);
+        if (isset($data['images'][0])) {
+            $f = $data['images'][0];
+            if (file_exists($dir . $f))
+                return BASE_URL . 'img/products/' . $productId . '/' . $f;
         }
     }
     return null;
 }
-
 function getCategoryImage($categoryId)
 {
-    $categoryDir = __DIR__ . '/img/product-categories/' . $categoryId . '/';
-    if (is_dir($categoryDir)) {
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        $files = scandir($categoryDir);
-        foreach ($files as $file) {
-            if ($file !== '.' && $file !== '..') {
-                $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                if (in_array($extension, $allowedExtensions))
-                    return BASE_URL . 'img/product-categories/' . $categoryId . '/' . $file;
+    $dir = __DIR__ . '/img/product-categories/' . $categoryId . '/';
+    if (is_dir($dir)) {
+        foreach (scandir($dir) as $f) {
+            if ($f !== '.' && $f !== '..') {
+                $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
+                if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                    return BASE_URL . 'img/product-categories/' . $categoryId . '/' . $f;
             }
         }
     }
     return null;
 }
-
 function formatPrice($price)
 {
     if ($price === null || $price <= 0)
@@ -426,43 +275,25 @@ function formatPrice($price)
 
 $categoryId = isset($_GET['categoryId']) ? $_GET['categoryId'] : '';
 $searchQuery = isset($_GET['s']) ? trim($_GET['s']) : '';
-
-if (!empty($searchQuery)) {
-    $pageTitle = "Search: " . htmlspecialchars($searchQuery);
-} else {
-    $pageTitle = "Building Materials";
-}
-
+$pageTitle = !empty($searchQuery) ? "Search: " . htmlspecialchars($searchQuery) : "Building Materials";
 $activeNav = "materials";
-
 if (!empty($categoryId)) {
-    $stmt = $pdo->prepare("
-        SELECT id, name, description, meta_title, meta_description, featured
-        FROM product_categories 
-        WHERE id = ? AND status = 'active'
-    ");
+    $stmt = $pdo->prepare("SELECT id,name,description,meta_title,meta_description,featured FROM product_categories WHERE id=? AND status='active'");
     $stmt->execute([$categoryId]);
     $category = $stmt->fetch();
-    if ($category) {
+    if ($category)
         $pageTitle = $category['name'];
-    } else {
+    else
         $categoryId = '';
-    }
 }
-
 $categoryImageUrl = BASE_URL . 'img/materials-yard.jpg';
 if (!empty($categoryId) && isset($category)) {
-    $specificCategoryImage = getCategoryImage($categoryId);
-    if ($specificCategoryImage)
-        $categoryImageUrl = $specificCategoryImage;
+    $img = getCategoryImage($categoryId);
+    if ($img)
+        $categoryImageUrl = $img;
 }
 
-$allCategoriesStmt = $pdo->prepare("
-    SELECT id, name, description
-    FROM product_categories 
-    WHERE status = 'active'
-    ORDER BY CASE WHEN id = ? THEN 0 ELSE 1 END, name ASC
-");
+$allCategoriesStmt = $pdo->prepare("SELECT id,name,description FROM product_categories WHERE status='active' ORDER BY CASE WHEN id=? THEN 0 ELSE 1 END, name ASC");
 $allCategoriesStmt->execute([$categoryId]);
 $allCategories = $allCategoriesStmt->fetchAll();
 
@@ -470,85 +301,39 @@ $products = [];
 if (empty($searchQuery)) {
     if (!empty($categoryId)) {
         $productsStmt = $pdo->prepare("
-            SELECT 
-                p.id, 
-                p.title, 
-                p.description, 
-                (SELECT COUNT(DISTINCT session_id) 
-                 FROM product_views 
-                 WHERE product_id = p.id) AS views,
-                (SELECT image_url 
-                 FROM product_images 
-                 WHERE product_id = p.id 
-                   AND is_primary = 1 
-                 LIMIT 1) AS primary_image,
-                EXISTS(
-                    SELECT 1 
-                    FROM store_products sp
-                    JOIN store_categories sc ON sc.id = sp.store_category_id
-                    JOIN vendor_stores vs ON vs.id = sc.store_id
-                    JOIN product_pricing pp ON pp.store_products_id = sp.id
-                    WHERE sp.product_id = p.id
-                      AND vs.status = 'active'
-                ) AS has_pricing,
-                (SELECT MIN(pp.price)
-                 FROM store_products sp
-                 JOIN store_categories sc ON sc.id = sp.store_category_id
-                 JOIN vendor_stores vs ON vs.id = sc.store_id
-                 JOIN product_pricing pp ON pp.store_products_id = sp.id
-                 WHERE sp.product_id = p.id
-                   AND vs.status = 'active'
-                ) AS lowest_price
-            FROM products p
-            WHERE p.category_id = ? 
-              AND p.status = 'published'
-            ORDER BY has_pricing DESC, p.featured DESC, (SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) DESC
+            SELECT p.id,p.title,p.description,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) AS views,
+                   (SELECT image_url FROM product_images WHERE product_id=p.id AND is_primary=1 LIMIT 1) AS primary_image,
+                   EXISTS(SELECT 1 FROM store_products sp JOIN store_categories sc ON sc.id=sp.store_category_id
+                          JOIN vendor_stores vs ON vs.id=sc.store_id JOIN product_pricing pp ON pp.store_products_id=sp.id
+                          WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                   (SELECT MIN(pp.price) FROM store_products sp JOIN store_categories sc ON sc.id=sp.store_category_id
+                    JOIN vendor_stores vs ON vs.id=sc.store_id JOIN product_pricing pp ON pp.store_products_id=sp.id
+                    WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+            FROM products p WHERE p.category_id=? AND p.status='published'
+            ORDER BY has_pricing DESC,p.featured DESC,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) DESC
             LIMIT 12
         ");
         $productsStmt->execute([$categoryId]);
     } else {
         $productsStmt = $pdo->prepare("
-            SELECT 
-                p.id, 
-                p.title, 
-                p.description, 
-                (SELECT COUNT(DISTINCT session_id) 
-                 FROM product_views 
-                 WHERE product_id = p.id) AS views,
-                (SELECT image_url 
-                 FROM product_images 
-                 WHERE product_id = p.id 
-                   AND is_primary = 1 
-                 LIMIT 1) AS primary_image,
-                EXISTS(
-                    SELECT 1 
-                    FROM store_products sp
-                    JOIN store_categories sc ON sc.id = sp.store_category_id
-                    JOIN vendor_stores vs ON vs.id = sc.store_id
-                    JOIN product_pricing pp ON pp.store_products_id = sp.id
-                    WHERE sp.product_id = p.id
-                      AND vs.status = 'active'
-                ) AS has_pricing,
-                (SELECT MIN(pp.price)
-                 FROM store_products sp
-                 JOIN store_categories sc ON sc.id = sp.store_category_id
-                 JOIN vendor_stores vs ON vs.id = sc.store_id
-                 JOIN product_pricing pp ON pp.store_products_id = sp.id
-                 WHERE sp.product_id = p.id
-                   AND vs.status = 'active'
-                ) AS lowest_price
-            FROM products p
-            WHERE p.status = 'published'
-            ORDER BY has_pricing DESC, p.featured DESC, (SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) DESC
+            SELECT p.id,p.title,p.description,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) AS views,
+                   (SELECT image_url FROM product_images WHERE product_id=p.id AND is_primary=1 LIMIT 1) AS primary_image,
+                   EXISTS(SELECT 1 FROM store_products sp JOIN store_categories sc ON sc.id=sp.store_category_id
+                          JOIN vendor_stores vs ON vs.id=sc.store_id JOIN product_pricing pp ON pp.store_products_id=sp.id
+                          WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                   (SELECT MIN(pp.price) FROM store_products sp JOIN store_categories sc ON sc.id=sp.store_category_id
+                    JOIN vendor_stores vs ON vs.id=sc.store_id JOIN product_pricing pp ON pp.store_products_id=sp.id
+                    WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+            FROM products p WHERE p.status='published'
+            ORDER BY has_pricing DESC,p.featured DESC,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) DESC
             LIMIT 12
         ");
         $productsStmt->execute();
     }
-
     while ($row = $productsStmt->fetch()) {
-        $productImageUrl = getProductImage($row['id']);
-        if ($productImageUrl) {
-            $row['primary_image'] = $productImageUrl;
+        $img = getProductImage($row['id']);
+        if ($img) {
+            $row['primary_image'] = $img;
         } elseif (empty($row['primary_image'])) {
             $row['primary_image'] = "https://placehold.co/600x400/e2e8f0/1e293b?text=" . urlencode($row['title']);
         }
@@ -582,83 +367,21 @@ ob_start();
         line-clamp: 3
     }
 
-    .tooltip {
-        position: absolute;
-        bottom: -40px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #1F2937;
-        color: #fff;
-        padding: .5rem;
-        border-radius: .25rem;
-        font-size: .75rem;
-        white-space: nowrap;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity .2s, visibility .2s;
-        z-index: 10
-    }
-
-    .tooltip::before {
-        content: '';
-        position: absolute;
-        top: -4px;
-        left: 50%;
-        transform: translateX(-50%) rotate(45deg);
-        width: 8px;
-        height: 8px;
-        background-color: #1F2937
-    }
-
-    .share-button:hover .tooltip {
-        opacity: 1;
-        visibility: visible
-    }
-
     .product-details-btn {
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0, 0, 0, .6);
+        inset: 0;
+        background: rgba(0, 0, 0, .6);
         display: flex;
         align-items: center;
         justify-content: center;
         opacity: 0;
         visibility: hidden;
-        transition: all .3s ease;
-        z-index: 10
+        transition: all .3s
     }
 
     .product-card:hover .product-details-btn {
         opacity: 1;
         visibility: visible
-    }
-
-    .checkbox-custom {
-        width: 16px;
-        height: 16px;
-        border: 2px solid #D1D5DB;
-        border-radius: 3px;
-        position: relative;
-        transition: all .2s ease;
-        flex-shrink: 0
-    }
-
-    .checkbox-custom.checked {
-        background-color: #DC2626;
-        border-color: #DC2626
-    }
-
-    .checkbox-custom.checked::after {
-        content: '✓';
-        position: absolute;
-        top: -2px;
-        left: 1px;
-        color: #fff;
-        font-size: 12px;
-        font-weight: 700
     }
 
     .skeleton {
@@ -674,22 +397,6 @@ ob_start();
 
         100% {
             background-position: 200% 0
-        }
-    }
-
-    .fade-in {
-        animation: fadeIn .3s ease-in-out
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px)
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0)
         }
     }
 
@@ -717,114 +424,150 @@ ob_start();
             font-size: clamp(1.25rem, 3vw, 1.4rem)
         }
     }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none
+    }
+
+    .hide-scrollbar {
+        scrollbar-width: none;
+        -ms-overflow-style: none
+    }
 </style>
 
+<script>
+    window.__pendingVendorAction = null;
+    window.setPendingVendorAction = (a) => { window.__pendingVendorAction = a || null };
+    (function () { const wrap = () => { const o = window.updateUIAfterLogin; window.updateUIAfterLogin = function (u) { try { typeof o === 'function' && o(u) } catch (e) { } try { window.dispatchEvent(new CustomEvent('zz:session-login', { detail: u || {} })) } catch (e) { } const r = document.querySelector('[x-data="materialsYard()"]'); if (r && r.__x) { try { r.__x.$data.handlePostLogin(u || {}) } catch (e) { } } }; }; if (document.readyState === 'complete' || document.readyState === 'interactive') { wrap() } else { document.addEventListener('DOMContentLoaded', wrap) } })();
+</script>
+
 <div x-data="materialsYard()" x-init="init()">
-    <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/50 z-10"></div>
+    <div class="relative h-64 md:h-64 w-full overflow-hidden">
+        <div class="absolute inset-0 bg-black/70 z-10"></div>
         <img src="<?= $categoryImageUrl ?>" alt="<?= htmlspecialchars($pageTitle) ?> Banner"
-            class="w-full h-full object-cover opacity-60">
-        <div class="container max-w-6xl mx-auto px-4 absolute inset-0 flex flex-col justify-start pt-8 md:pt-12 z-20">
+            class="w-full h-full object-cover">
+        <div
+            class="container max-w-6xl mx-auto px-4 absolute inset-0 flex flex-col justify-start pt-8 md:pt-12 pb-6 z-20">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h1 class="text-xl md:text-3xl font-bold text-white mb-4 drop-shadow-lg">
-                        <?= htmlspecialchars($pageTitle) ?>
-                    </h1>
-                    <nav class="flex text-xs md:text-sm text-gray-200 overflow-hidden whitespace-nowrap drop-shadow-md">
-                        <a href="<?= BASE_URL ?>" class="hover:text-white transition-colors truncate max-w-[30%]">Zzimba
-                            Online</a>
-                        <span class="mx-2">/</span>
-                        <a href="<?= BASE_URL ?>materials-yard"
-                            class="hover:text-white transition-colors truncate max-w-[30%]">Building Materials</a>
-                        <?php if (!empty($searchQuery)): ?>
-                            <span class="mx-2">/</span>
-                            <span class="text-white font-medium truncate max-w-[40%]">Search Results</span>
-                        <?php elseif (!empty($categoryId) && isset($category)): ?>
-                            <span class="mx-2">/</span>
-                            <span
+                    <h1 class="text-xl md:text-3xl font-bold text-white mb-2"><?= htmlspecialchars($pageTitle) ?></h1>
+                    <nav class="flex text-xs md:text-sm text-gray-200 overflow-hidden whitespace-nowrap">
+                        <a href="<?= BASE_URL ?>" class="hover:text-white truncate max-w-[30%]">Zzimba Online</a><span
+                            class="mx-2">/</span>
+                        <a href="<?= BASE_URL ?>materials-yard" class="hover:text-white truncate max-w-[30%]">Building
+                            Materials</a>
+                        <?php if (!empty($searchQuery)): ?><span class="mx-2">/</span><span
+                                class="text-white font-medium truncate max-w-[40%]">Search Results</span>
+                        <?php elseif (!empty($categoryId) && isset($category)): ?><span class="mx-2">/</span><span
                                 class="text-white font-medium truncate max-w-[40%]"><?= htmlspecialchars($category['name']) ?></span>
                         <?php endif; ?>
                     </nav>
                     <?php if (!empty($searchQuery)): ?>
-                        <p class="text-gray-100 mt-2 line-clamp-2 max-w-2xl hidden md:block drop-shadow-md">Search results
-                            for "<?= htmlspecialchars($searchQuery) ?>" - Find the best building materials and construction
-                            products.</p>
+                        <p class="text-gray-100 mt-1 line-clamp-2 max-w-2xl hidden md:block">Search results for
+                            "<?= htmlspecialchars($searchQuery) ?>"</p>
                     <?php elseif (!empty($categoryId) && isset($category) && !empty($category['description'])): ?>
-                        <p class="text-gray-100 mt-2 line-clamp-2 max-w-2xl hidden md:block drop-shadow-md">
-                            <?= htmlspecialchars($category['description']) ?>
-                        </p>
-                    <?php elseif (empty($categoryId)): ?>
-                        <p class="text-gray-100 mt-2 line-clamp-2 max-w-2xl hidden md:block drop-shadow-md">Discover a wide
-                            range of genuine building materials and supplies for all your construction needs.</p>
+                        <p class="text-gray-100 mt-1 line-clamp-2 max-w-2xl hidden md:block">
+                            <?= htmlspecialchars($category['description']) ?></p>
+                    <?php else: ?>
+                        <p class="text-gray-100 mt-1 line-clamp-2 max-w-2xl hidden md:block">Discover genuine building
+                            materials and supplies.</p>
                     <?php endif; ?>
                 </div>
-                <div class="items-center gap-2 mt-4 md:mt-0 hidden md:flex">
-                    <span class="text-xs font-medium text-white drop-shadow-lg">SHARE</span>
+                <div class="items-center gap-2 mt-3 md:mt-0 hidden md:flex">
+                    <span class="text-xs font-medium text-white">SHARE</span>
                     <div class="flex gap-2">
                         <button @click="copyLink"
-                            class="share-button inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
-                            <i data-lucide="link" class="w-3 h-3"></i>
-                            <span class="tooltip">Copy link to clipboard</span>
-                        </button>
+                            class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white"><i
+                                data-lucide="link" class="w-3 h-3"></i></button>
                         <button @click="shareOnWhatsApp"
-                            class="share-button inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
-                            <i data-lucide="message-circle" class="w-3 h-3"></i>
-                            <span class="tooltip">Share on WhatsApp</span>
-                        </button>
+                            class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white"><i
+                                data-lucide="message-circle" class="w-3 h-3"></i></button>
                         <button @click="shareOnFacebook"
-                            class="share-button inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
-                            <i data-lucide="share-2" class="w-3 h-3"></i>
-                            <span class="tooltip">Share on Facebook</span>
-                        </button>
+                            class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white"><i
+                                data-lucide="share-2" class="w-3 h-3"></i></button>
                         <button @click="shareOnTwitter"
-                            class="share-button inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
-                            <i data-lucide="send" class="w-3 h-3"></i>
-                            <span class="tooltip">Post on X</span>
-                        </button>
+                            class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white"><i
+                                data-lucide="send" class="w-3 h-3"></i></button>
                         <button @click="shareOnLinkedIn"
-                            class="share-button inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white bg-transparent transition-all duration-200 hover:bg-red-600/10 hover:-translate-y-0.5 relative">
-                            <i data-lucide="share" class="w-3 h-3"></i>
-                            <span class="tooltip">Share on LinkedIn</span>
-                        </button>
+                            class="inline-flex items-center justify-center w-6 h-6 rounded-full text-white border-2 border-white"><i
+                                data-lucide="share" class="w-3 h-3"></i></button>
                     </div>
                 </div>
             </div>
+            <div class="flex items-center gap-3 mt-4 md:hidden">
+                <span class="text-xs font-medium text-white">SHARE</span>
+                <div class="flex gap-2">
+                    <button @click="copyLink"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white border-2 border-white"
+                        aria-label="Copy link"><i class="fa-solid fa-link" style="color:#ffffff;"></i></button>
+                    <button @click="shareOnWhatsApp"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white border-2 border-white"
+                        aria-label="Share on WhatsApp"><i class="fa-brands fa-whatsapp"
+                            style="color:#ffffff;"></i></button>
+                    <button @click="shareOnFacebook"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white border-2 border-white"
+                        aria-label="Share on Facebook"><i class="fa-brands fa-facebook-f"
+                            style="color:#ffffff;"></i></button>
+                    <button @click="shareOnTwitter"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white border-2 border-white"
+                        aria-label="Post on X"><i class="fa-brands fa-x-twitter" style="color:#ffffff;"></i></button>
+                    <button @click="shareOnLinkedIn"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white border-2 border-white"
+                        aria-label="Share on LinkedIn"><i class="fa-brands fa-linkedin-in"
+                            style="color:#ffffff;"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="md:hidden px-4 py-4 bg-white dark:bg-secondary">
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="openMobileSearch&&openMobileSearch()"
+                class="flex flex-col items-center justify-center rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-secondary p-3">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 dark:bg-white/10"><i
+                        data-lucide="search" class="w-5 h-5 text-secondary dark:text-white"></i></span>
+                <span class="mt-1 text-xs text-secondary dark:text-white">Search</span>
+            </button>
+            <a href="<?= BASE_URL ?>request-for-quote"
+                class="flex flex-col items-center justify-center rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-secondary p-3">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary"><i
+                        data-lucide="file-text" class="w-5 h-5"></i></span>
+                <span class="mt-1 text-xs text-secondary dark:text-white">Request a Quote Now</span>
+            </a>
         </div>
     </div>
 
     <div class="container max-w-6xl mx-auto px-4 py-8">
         <div class="flex flex-col lg:flex-row gap-8">
             <div class="w-full lg:w-1/4 order-2 lg:order-1 hidden lg:block">
-                <div class="bg-white rounded-xl shadow-lg border border-gray-200 sticky top-4">
-                    <div class="p-4 border-b border-gray-200">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4">Categories</h2>
-
+                <div
+                    class="bg-white dark:bg-secondary rounded-xl shadow-lg border border-gray-200 dark:border-white/10 sticky top-4">
+                    <div class="p-4 border-b border-gray-200 dark:border-white/10">
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Categories</h2>
                         <?php if (!empty($categoryId) || !empty($searchQuery)): ?>
                             <button @click="clearSelection"
-                                class="flex items-center justify-between px-3 py-2 rounded-md mb-4 bg-gray-50 hover:bg-gray-100 w-full text-left transition-all duration-300 cursor-pointer">
-                                <span class="font-medium text-gray-600">
-                                    <i data-lucide="x-circle" class="w-4 h-4 mr-2 inline"></i> Clear Selection
-                                </span>
+                                class="flex items-center justify-between px-3 py-2 rounded-md mb-4 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 w-full text-left">
+                                <span class="font-medium text-gray-600 dark:text-white/80"><i data-lucide="x-circle"
+                                        class="w-4 h-4 mr-2 inline"></i>Clear Selection</span>
                             </button>
                         <?php endif; ?>
-
                         <div class="relative mb-4">
                             <input type="text" x-ref="categorySearch" placeholder="Search categories..."
                                 @input="filterCategories($event.target.value)"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent">
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-white/10 rounded-md text-sm bg-white dark:bg-secondary dark:text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent">
                             <i data-lucide="search" class="w-4 h-4 absolute right-3 top-2.5 text-gray-400"></i>
                         </div>
                     </div>
-
                     <div class="p-4 max-h-[500px] overflow-y-auto">
                         <?php foreach ($allCategories as $cat): ?>
                             <a href="<?= BASE_URL ?>view/category/<?= $cat['id'] ?>"
-                                class="cat-item flex items-center justify-between px-3 py-2 rounded-md mb-1 transition-all duration-300 cursor-pointer hover:bg-gray-50 <?= ($cat['id'] === $categoryId) ? 'bg-red-50 text-red-600' : '' ?>"
+                                class="cat-item flex items-center justify-between px-3 py-2 rounded-md mb-1 transition-all hover:bg-gray-50 dark:hover:bg-white/5 <?= ($cat['id'] === $categoryId) ? 'bg-red-50 text-red-600 dark:bg-white/10' : '' ?>"
                                 data-category-name="<?= strtolower(htmlspecialchars($cat['name'])) ?>"
                                 title="<?= htmlspecialchars($cat['name']) ?>">
                                 <span
                                     class="font-medium flex-1 truncate pr-3 <?= ($cat['id'] === $categoryId) ? 'border-b-2 border-red-600 pb-0.5' : '' ?>"><?= htmlspecialchars($cat['name']) ?></span>
-                                <div class="checkbox-custom ml-2 <?= ($cat['id'] === $categoryId) ? 'checked' : '' ?>">
+                                <div
+                                    class="w-4 h-4 rounded-sm border <?= ($cat['id'] === $categoryId) ? 'bg-red-600 border-red-600' : 'border-gray-300 dark:border-white/20' ?>">
                                 </div>
                             </a>
                         <?php endforeach; ?>
@@ -838,61 +581,59 @@ ob_start();
                         <input type="text" x-model="mobileQuery" placeholder="Search categories..."
                             value="<?= $categoryNameForMobile ?>" @focus="mobileDropdownOpen=true"
                             @input="mobileDropdownOpen=true"
-                            class="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-transparent bg-white">
+                            class="w-full px-4 py-3 pr-10 border border-gray-300 dark:border-white/10 rounded-lg text-sm bg-white dark:bg-secondary dark:text-white focus:ring-2 focus:ring-rose-500 focus:border-transparent">
                         <?php if (!empty($categoryId) && isset($category)): ?>
                             <button @click="clearSelection"
-                                class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </button>
+                                class="absolute right-3 top-3 text-gray-400 hover:text-gray-600"><i data-lucide="x"
+                                    class="w-4 h-4"></i></button>
                         <?php else: ?>
                             <i data-lucide="search" class="w-4 h-4 absolute right-3 top-3 text-gray-400"></i>
                         <?php endif; ?>
-
                         <div x-show="mobileDropdownOpen" x-transition
-                            class="absolute top-full left-0 right-0 bg-white border border-gray-200 border-t-0 rounded-b-lg max-h-48 overflow-y-auto z-50">
+                            class="absolute top-full left-0 right-0 bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 border-t-0 rounded-b-lg max-h-48 overflow-y-auto z-50">
                             <template x-for="c in filteredMobileCategories()" :key="c.id">
-                                <div class="px-4 py-3 cursor-pointer transition-colors duration-200 border-b border-gray-100 hover:bg-gray-50 last:border-b-0"
+                                <div class="px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5"
                                     @click="gotoCategory(c.id)" x-text="c.name"></div>
                             </template>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-4 md:p-6">
+                <div
+                    class="bg-white dark:bg-secondary rounded-xl shadow-lg border border-gray-200 dark:border-white/10 p-4 md:p-6">
                     <div id="categoriesSection" class="mb-8 hidden">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-6">Categories</h2>
+                        <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-6">Categories</h2>
                         <div id="categoriesGrid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
                     </div>
 
                     <div class="flex items-center justify-between mb-6">
-                        <div class="text-sm text-gray-500">
+                        <div class="text-sm text-gray-500 dark:text-white/70">
                             <span id="productCount">
                                 <?php
                                 if (!empty($searchQuery)) {
                                     echo '0';
                                 } else {
                                     if (!empty($categoryId)) {
-                                        $totalStmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE category_id = ? AND status = 'published'");
+                                        $totalStmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE category_id=? AND status='published'");
                                         $totalStmt->execute([$categoryId]);
                                     } else {
-                                        $totalStmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE status = 'published'");
+                                        $totalStmt = $pdo->prepare("SELECT COUNT(*) as total FROM products WHERE status='published'");
                                         $totalStmt->execute();
                                     }
-                                    $totalCount = $totalStmt->fetch()['total'];
-                                    echo $totalCount;
+                                    echo $totalStmt->fetch()['total'];
                                 }
                                 ?>
                             </span> products found
-                            <?php if (!empty($searchQuery)): ?>
-                                for "<span class="font-medium"><?= htmlspecialchars($searchQuery) ?></span>"
-                            <?php endif; ?>
+                            <?php if (!empty($searchQuery)): ?> for "<span
+                                    class="font-medium"><?= htmlspecialchars($searchQuery) ?></span>"<?php endif; ?>
                         </div>
                     </div>
 
                     <div id="loadingSkeleton"
                         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 <?= !empty($searchQuery) ? '' : 'hidden' ?>">
                         <?php for ($i = 0; $i < 6; $i++): ?>
-                            <div class="relative border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                            <div
+                                class="relative border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary shadow-sm overflow-hidden">
                                 <div class="skeleton h-40 md:h-48"></div>
                                 <div class="p-3 md:p-5">
                                     <div class="skeleton h-4 w-3/4 mb-2"></div>
@@ -913,63 +654,54 @@ ob_start();
                         <?php if (empty($searchQuery)): ?>
                             <?php if (count($products) === 0): ?>
                                 <div class="col-span-full text-center py-12">
-                                    <div class="text-gray-400 mb-3">
-                                        <i data-lucide="box" class="w-10 h-10 mx-auto"></i>
-                                    </div>
-                                    <p class="text-gray-600 font-medium">No products found</p>
-                                    <p class="text-gray-500 text-sm mt-1">Try selecting a different category or check back later
-                                    </p>
+                                    <div class="text-gray-400 dark:text-white/40 mb-3"><i data-lucide="box"
+                                            class="w-10 h-10 mx-auto"></i></div>
+                                    <p class="text-gray-600 dark:text-white/80 font-medium">No products found</p>
+                                    <p class="text-gray-500 dark:text-white/60 text-sm mt-1">Try a different category</p>
                                 </div>
                             <?php else: ?>
                                 <?php foreach ($products as $product): ?>
                                     <div
-                                        class="product-card relative border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
+                                        class="product-card relative border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary shadow-sm overflow-hidden transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
                                         <div class="relative">
                                             <img src="<?= $product['primary_image'] ?>"
                                                 alt="<?= htmlspecialchars($product['title']) ?>"
                                                 class="w-full h-40 md:h-48 object-cover">
                                             <div class="product-details-btn">
                                                 <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>"
-                                                    class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm shadow-lg">View
+                                                    class="bg-white dark:bg-secondary text-gray-800 dark:text-white px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm shadow-lg">View
                                                     Details</a>
                                             </div>
                                         </div>
-
                                         <div class="p-3 md:p-5 flex flex-col flex-1">
-                                            <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">
-                                                <?= htmlspecialchars($product['title']) ?>
-                                            </h3>
-
-                                            <div class="flex-1 flex flex-col justify-end">
-                                                <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
-                                                    <?= htmlspecialchars($product['description']) ?>
-                                                </p>
-
-                                                <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
-                                                    <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
-                                                    <span><?= number_format($product['views']) ?> views</span>
-                                                </div>
-
-                                                <?php if ($product['has_pricing'] && $product['lowest_price']): ?>
-                                                    <div class="text-center mb-3">
-                                                        <span class="price-text font-bold"
-                                                            style="color:#D92B13;"><?= formatPrice($product['lowest_price']) ?></span>
+                                            <h3
+                                                class="font-bold text-gray-800 dark:text-white mb-2 line-clamp-2 text-sm md:text-base">
+                                                <?= htmlspecialchars($product['title']) ?></h3>
+                                            <div class="flex-1 flex flex-col">
+                                                <p
+                                                    class="text-gray-600 dark:text-white/70 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
+                                                    <?= htmlspecialchars($product['description']) ?></p>
+                                                <div
+                                                    class="text-gray-500 dark:text-white/70 text-xs md:text-sm mb-3 flex items-center">
+                                                    <i data-lucide="eye"
+                                                        class="w-4 h-4 mr-1"></i><span><?= number_format($product['views']) ?>
+                                                        views</span></div>
+                                                <div class="mt-auto flex flex-col items-center">
+                                                    <div
+                                                        class="text-sm font-bold text-[#D92B13] h-5 flex items-center <?= ($product['has_pricing'] && $product['lowest_price']) ? '' : 'invisible' ?>">
+                                                        <?= $product['has_pricing'] && $product['lowest_price'] ? formatPrice($product['lowest_price']) : '' ?>
                                                     </div>
-                                                <?php endif; ?>
-
-                                                <div class="flex gap-2">
-                                                    <?php if ($product['has_pricing']): ?>
-                                                        <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=buy"
-                                                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
-                                                            <i data-lucide="shopping-cart" class="w-4 h-4 mr-1"></i> Buy
-                                                        </a>
-                                                    <?php endif; ?>
-                                                    <button x-data data-pid="<?= $product['id'] ?>"
-                                                        data-ptitle="<?= htmlspecialchars($product['title'], ENT_QUOTES) ?>"
-                                                        @click="openVendorSellModal($el.dataset.pid, $el.dataset.ptitle)"
-                                                        class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
-                                                        <i data-lucide="tags" class="w-4 h-4 mr-1"></i> Sell
-                                                    </button>
+                                                    <div class="mt-2 flex gap-2 w-full">
+                                                        <?php if ($product['has_pricing']): ?>
+                                                            <a href="<?= BASE_URL ?>view/product/<?= $product['id'] ?>?action=buy"
+                                                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md flex items-center justify-center flex-1 text-xs md:text-sm font-medium"><i
+                                                                    data-lucide="shopping-cart" class="w-4 h-4 mr-1"></i>Buy</a>
+                                                        <?php endif; ?>
+                                                        <button
+                                                            @click="sellProduct('<?= $product['id'] ?>','<?= htmlspecialchars($product['title'], ENT_QUOTES) ?>')"
+                                                            class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md flex items-center justify-center flex-1 text-xs md:text-sm font-medium"><i
+                                                                data-lucide="tags" class="w-4 h-4 mr-1"></i>Sell</button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -980,32 +712,79 @@ ob_start();
                     </div>
 
                     <div id="loadingMore" class="text-center py-8 hidden">
-                        <div class="loader mx-auto w-8 h-8 border-4 border-gray-200 rounded-full"></div>
-                        <p class="mt-4 text-gray-500">Loading more products...</p>
+                        <div class="loader mx-auto w-8 h-8 border-4 border-gray-200 dark:border-white/10 rounded-full">
+                        </div>
+                        <p class="mt-4 text-gray-500 dark:text-white/70">Loading more products...</p>
                     </div>
 
                     <div id="noResults" class="text-center py-12 hidden">
-                        <div class="text-gray-400 mb-3">
-                            <i data-lucide="search" class="w-10 h-10 mx-auto"></i>
-                        </div>
-                        <p class="text-gray-600 font-medium">No results found</p>
-                        <p class="text-gray-500 text-sm mt-1">Try different keywords or browse our categories</p>
+                        <div class="text-gray-400 dark:text-white/40 mb-3"><i data-lucide="search"
+                                class="w-10 h-10 mx-auto"></i></div>
+                        <p class="text-gray-600 dark:text-white/80 font-medium">No results found</p>
+                        <p class="text-gray-500 dark:text-white/60 text-sm mt-1">Try different keywords</p>
                     </div>
 
                     <div id="quoteRequestSection"
-                        class="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-2xl p-8 text-center mt-12">
+                        class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-white/5 dark:to-white/10 border border-slate-200 dark:border-white/10 rounded-2xl p-8 text-center mt-12">
                         <div class="max-w-md mx-auto">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Not found what you're looking for?</h3>
-                            <p class="text-gray-600 text-sm mb-6">Get a custom quote for your specific building material
-                                needs</p>
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Not found what you're
+                                looking for?</h3>
+                            <p class="text-gray-600 dark:text-white/70 text-sm mb-6">Get a custom quote for your
+                                specific building material needs</p>
                             <a href="<?= BASE_URL ?>request-for-quote"
-                                class="inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-600/30">
-                                <i data-lucide="file-text" class="w-5 h-5 mr-2"></i>
-                                Request a Quote Now
+                                class="inline-flex items-center justify-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-all">
+                                <i data-lucide="file-text" class="w-5 h-5 mr-2"></i>Request a Quote Now
                             </a>
                         </div>
                     </div>
                 </div>
+
+                <div class="md:hidden mt-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-base font-semibold text-secondary dark:text-white">Materials</div>
+                        <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+                            class="text-xs text-primary inline-flex items-center">Top<i data-lucide="arrow-up"
+                                class="w-4 h-4 ml-1"></i></a>
+                    </div>
+                    <div class="flex gap-3 overflow-x-auto hide-scrollbar -mx-4 px-4 pb-2">
+                        <template x-for="p in miniProducts" :key="p.id">
+                            <div
+                                class="snap-start shrink-0 w-64 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-secondary overflow-hidden flex flex-col">
+                                <a :href="'<?= BASE_URL ?>view/product/' + p.id" class="block">
+                                    <div class="relative">
+                                        <img :src="p.primary_image" :alt="p.title" class="w-full h-40 object-cover">
+                                        <div
+                                            class="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded">
+                                            Featured</div>
+                                    </div>
+                                </a>
+                                <div class="p-3 flex-1 flex flex-col">
+                                    <a :href="'<?= BASE_URL ?>view/product/' + p.id" class="block">
+                                        <div class="text-sm font-medium text-secondary dark:text-white line-clamp-2"
+                                            x-text="p.title"></div>
+                                    </a>
+                                    <div class="mt-1 text-[11px] text-gray-500 dark:text-white/70 flex items-center"><i
+                                            data-lucide="eye" class="w-3.5 h-3.5 mr-1"></i><span
+                                            x-text="Number(p.views||0).toLocaleString()"></span></div>
+                                    <div class="mt-auto flex flex-col items-center">
+                                        <div class="text-sm font-bold text-primary h-5 flex items-center"
+                                            :class="(p.has_pricing&&p.lowest_price)?'':'invisible'"
+                                            x-text="formatPrice(p.lowest_price)"></div>
+                                        <div class="mt-2 flex items-center gap-2 w-full">
+                                            <template x-if="p.has_pricing">
+                                                <a :href="'<?= BASE_URL ?>view/product/' + p.id + '?action=buy'"
+                                                    class="flex-1 inline-flex items-center justify-center h-9 rounded-lg bg-emerald-600 text-white text-xs font-medium">Buy</a>
+                                            </template>
+                                            <button @click="sellProduct(p.id,p.title)"
+                                                class="flex-1 inline-flex items-center justify-center h-9 rounded-lg bg-sky-600 text-white text-xs font-medium">Sell</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -1014,255 +793,101 @@ ob_start();
 <script>
     function materialsYard() {
         return {
-            currentPage: 1,
-            isLoading: false,
-            hasMoreProducts: true,
+            BASE_URL: window.BASE_URL || '<?= BASE_URL ?>',
+            currentPage: 1, isLoading: false, hasMoreProducts: true,
             currentSearchQuery: '<?= addslashes($searchQuery) ?>',
             currentCategoryId: '<?= addslashes($categoryId) ?>',
-            totalProductsLoaded: 0,
-            mobileDropdownOpen: false,
+            totalProductsLoaded: 0, mobileDropdownOpen: false,
             mobileQuery: '<?= $categoryNameForMobile ?>',
             allCategories: <?= $categoriesJson ?>,
+            miniProducts: <?= json_encode(array_slice($products, 0, 12), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>,
             init() {
                 this.$nextTick(() => {
-                    if (this.currentSearchQuery) {
-                        this.performSearch(this.currentSearchQuery, 1);
-                        this.setupInfiniteScroll();
-                    } else if (!this.currentSearchQuery && !this.currentCategoryId) {
-                        this.setupInfiniteScroll();
-                        this.totalProductsLoaded = <?= count($products) ?>;
-                        this.currentPage = 2;
-                    } else if (this.currentCategoryId) {
-                        this.setupInfiniteScroll();
-                        this.totalProductsLoaded = <?= count($products) ?>;
-                        this.currentPage = 2;
-                    }
+                    if (this.currentSearchQuery) { this.performSearch(this.currentSearchQuery, 1); this.setupInfiniteScroll(); }
+                    else { this.setupInfiniteScroll(); this.totalProductsLoaded = <?= count($products) ?>; this.currentPage = 2; }
                     this.refreshIcons();
+                    window.addEventListener('zz:session-login', e => this.handlePostLogin(e.detail || {}));
+                    window.zzSellProduct = (id, title) => this.sellProduct(id, title);
+                    const p = window.__pendingVendorAction; if (p && p.type === 'sell' && p.product_id && p.title) { this.resumeSell(p.product_id, p.title); window.setPendingVendorAction(null); }
                 });
             },
-            refreshIcons() {
-                try { if (window.lucide && lucide.createIcons) lucide.createIcons(); } catch (e) { }
-            },
-            filterCategories(term) {
-                const t = (term || '').toLowerCase();
-                document.querySelectorAll('.cat-item').forEach(el => {
-                    const name = el.getAttribute('data-category-name') || '';
-                    el.style.display = name.includes(t) ? 'flex' : 'none';
-                });
-            },
-            filteredMobileCategories() {
-                const q = (this.mobileQuery || '').toLowerCase();
-                return this.allCategories.filter(c => (c.name || '').toLowerCase().includes(q));
-            },
-            gotoCategory(id) {
-                window.location.href = '<?= BASE_URL ?>view/category/' + id;
-            },
-            setupInfiniteScroll() {
-                window.addEventListener('scroll', () => {
-                    if (this.isLoading || !this.hasMoreProducts) return;
-                    const scrollPosition = window.innerHeight + window.scrollY;
-                    const bodyHeight = document.body.offsetHeight;
-                    if (scrollPosition >= bodyHeight * 0.8) {
-                        if (this.currentSearchQuery) {
-                            this.performSearch(this.currentSearchQuery, this.currentPage, true);
-                        } else {
-                            this.loadMoreProducts();
-                        }
-                    }
-                });
-            },
+            refreshIcons() { try { if (window.lucide && lucide.createIcons) lucide.createIcons() } catch (e) { } },
+            filterCategories(t) { const q = (t || '').toLowerCase(); document.querySelectorAll('.cat-item').forEach(el => { const n = el.getAttribute('data-category-name') || ''; el.style.display = n.includes(q) ? 'flex' : 'none'; }); },
+            filteredMobileCategories() { const q = (this.mobileQuery || '').toLowerCase(); return this.allCategories.filter(c => (c.name || '').toLowerCase().includes(q)); },
+            gotoCategory(id) { window.location.href = '<?= BASE_URL ?>view/category/' + id; },
+            setupInfiniteScroll() { window.addEventListener('scroll', () => { if (this.isLoading || !this.hasMoreProducts) return; const sp = window.innerHeight + window.scrollY; const h = document.body.offsetHeight; if (sp >= h * 0.8) { if (this.currentSearchQuery) { this.performSearch(this.currentSearchQuery, this.currentPage, true) } else { this.loadMoreProducts() } } }); },
             loadMoreProducts() {
                 if (this.isLoading || !this.hasMoreProducts) return;
                 this.isLoading = true;
-                const loadingMore = document.getElementById('loadingMore');
-                loadingMore.classList.remove('hidden');
+                const lm = document.getElementById('loadingMore'); lm.classList.remove('hidden');
                 const endpoint = this.currentSearchQuery ? 'search' : 'products';
-                const params = new URLSearchParams({ ajax: endpoint, page: this.currentPage, limit: 12 });
-                if (this.currentCategoryId) params.append('categoryId', this.currentCategoryId);
-                fetch(`?${params.toString()}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        setTimeout(() => {
-                            loadingMore.classList.add('hidden');
-                            if (data.products && data.products.length > 0) {
-                                this.renderProducts(data.products, true);
-                                this.currentPage++;
-                                this.totalProductsLoaded += data.products.length;
-                                this.hasMoreProducts = data.hasMore;
-                                const pc = document.getElementById('productCount');
-                                if (pc) pc.textContent = data.total || this.totalProductsLoaded;
-                            } else {
-                                this.hasMoreProducts = false;
-                            }
-                            this.isLoading = false;
-                        }, 800);
-                    })
-                    .catch(() => { this.isLoading = false; loadingMore.classList.add('hidden'); });
+                const params = new URLSearchParams({ ajax: endpoint, page: this.currentPage, limit: 12 }); if (this.currentCategoryId) params.append('categoryId', this.currentCategoryId);
+                fetch(`?${params.toString()}`).then(r => r.json()).then(d => {
+                    setTimeout(() => { lm.classList.add('hidden'); if (d.products && d.products.length > 0) { this.renderProducts(d.products, true); this.currentPage++; this.totalProductsLoaded += d.products.length; this.hasMoreProducts = d.hasMore; const pc = document.getElementById('productCount'); if (pc) pc.textContent = d.total || this.totalProductsLoaded; } else { this.hasMoreProducts = false; } this.isLoading = false; }, 800);
+                }).catch(() => { this.isLoading = false; lm.classList.add('hidden') });
             },
-            performSearch(query, page = 1, append = false) {
-                if (this.isLoading) return;
-                this.isLoading = true;
-                const loadingSkeleton = document.getElementById('loadingSkeleton');
-                const productsGrid = document.getElementById('productsGrid');
-                const loadingMore = document.getElementById('loadingMore');
-                const noResults = document.getElementById('noResults');
-                const categoriesSection = document.getElementById('categoriesSection');
-
-                if (!append) {
-                    loadingSkeleton.classList.remove('hidden');
-                    productsGrid.classList.add('hidden');
-                    noResults.classList.add('hidden');
-                    categoriesSection.classList.add('hidden');
-                    this.currentPage = 1;
-                    this.totalProductsLoaded = 0;
-                } else {
-                    loadingMore.classList.remove('hidden');
-                }
-
-                fetch(`?ajax=search&q=${encodeURIComponent(query)}&page=${page}&limit=12`)
-                    .then(r => r.json())
-                    .then(data => {
-                        setTimeout(() => {
-                            if (!append) {
-                                loadingSkeleton.classList.add('hidden');
-                                productsGrid.classList.remove('hidden');
-                                if (data.categories && data.categories.length > 0) {
-                                    this.renderCategories(data.categories);
-                                    categoriesSection.classList.remove('hidden');
-                                }
-                                productsGrid.innerHTML = '';
-                                this.totalProductsLoaded = 0;
-                            } else {
-                                loadingMore.classList.add('hidden');
-                            }
-
-                            if (data.products && data.products.length > 0) {
-                                this.renderProducts(data.products, append);
-                                this.currentPage = append ? page + 1 : 2;
-                                this.totalProductsLoaded += data.products.length;
-                                this.hasMoreProducts = data.hasMore;
-                            } else if (!append) {
-                                noResults.classList.remove('hidden');
-                                productsGrid.classList.add('hidden');
-                            }
-
-                            const pc = document.getElementById('productCount');
-                            if (pc) pc.textContent = data.total || this.totalProductsLoaded;
-
-                            this.isLoading = false;
-                        }, append ? 800 : 1200);
-                    })
-                    .catch(() => {
-                        this.isLoading = false;
-                        loadingSkeleton.classList.add('hidden');
-                        loadingMore.classList.add('hidden');
-                        if (!append) noResults.classList.remove('hidden');
-                    });
+            performSearch(q, page = 1, append = false) {
+                if (this.isLoading) return; this.isLoading = true;
+                const sk = document.getElementById('loadingSkeleton'), grid = document.getElementById('productsGrid'), lm = document.getElementById('loadingMore'), nr = document.getElementById('noResults'), cs = document.getElementById('categoriesSection');
+                if (!append) { sk.classList.remove('hidden'); grid.classList.add('hidden'); nr.classList.add('hidden'); cs.classList.add('hidden'); this.currentPage = 1; this.totalProductsLoaded = 0; } else { lm.classList.remove('hidden'); }
+                fetch(`?ajax=search&q=${encodeURIComponent(q)}&page=${page}&limit=12`).then(r => r.json()).then(d => {
+                    setTimeout(() => {
+                        if (!append) { sk.classList.add('hidden'); grid.classList.remove('hidden'); if (d.categories && d.categories.length > 0) { this.renderCategories(d.categories); cs.classList.remove('hidden'); } grid.innerHTML = ''; this.totalProductsLoaded = 0; } else { lm.classList.add('hidden'); }
+                        if (d.products && d.products.length > 0) { this.renderProducts(d.products, append); this.currentPage = append ? page + 1 : 2; this.totalProductsLoaded += d.products.length; this.hasMoreProducts = d.hasMore; } else if (!append) { nr.classList.remove('hidden'); grid.classList.add('hidden'); }
+                        const pc = document.getElementById('productCount'); if (pc) pc.textContent = d.total || this.totalProductsLoaded; this.isLoading = false;
+                    }, append ? 800 : 1200);
+                }).catch(() => { this.isLoading = false; sk.classList.add('hidden'); lm.classList.add('hidden'); if (!append) nr.classList.remove('hidden') });
             },
-            renderCategories(categories) {
+            renderCategories(cats) {
                 const el = document.getElementById('categoriesGrid');
-                const html = categories.map(category => `
-                <div class="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 border border-gray-200 cursor-pointer hover:-translate-y-0.5" onclick="window.location.href='<?= BASE_URL ?>view/category/${category.id}'">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4 flex-shrink-0">
-                            <i data-lucide="tag" class="w-6 h-6 text-red-600"></i>
-                        </div>
-                        <div><h3 class="font-medium text-gray-900">${this.escapeHtml(category.name)}</h3></div>
-                    </div>
-                </div>
-            `).join('');
-                el.innerHTML = html;
+                el.innerHTML = cats.map(c => `<div class="bg-white dark:bg-secondary rounded-xl shadow-sm p-4 hover:shadow-md border border-gray-200 dark:border-white/10 cursor-pointer" onclick="window.location.href='<?= BASE_URL ?>view/category/${c.id}'"><div class="flex items-center"><div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4 flex-shrink-0"><i data-lucide='tag' class='w-6 h-6 text-red-600'></i></div><div><h3 class="font-medium text-gray-900 dark:text-white">${this.escapeHtml(c.name)}</h3></div></div></div>`).join('');
                 this.refreshIcons();
             },
-            renderProducts(products, append = false) {
+            renderProducts(items, append = false) {
                 const grid = document.getElementById('productsGrid');
-                const html = products.map(product => `
-                <div class="product-card relative border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col fade-in">
+                const html = items.map(p => `
+                <div class="product-card relative border border-gray-200 dark:border-white/10 rounded-xl bg-white dark:bg-secondary shadow-sm overflow-hidden transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col">
                     <div class="relative">
-                        <img src="${product.primary_image}" alt="${this.escapeHtml(product.title)}" class="w-full h-40 md:h-48 object-cover">
-                        ${product.search_score ? `
-                            <div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                                ${Math.min(Math.round(product.search_score * 100), 100)}% match
-                            </div>
-                        ` : ''}
-                        <div class="product-details-btn">
-                            <a href="<?= BASE_URL ?>view/product/${product.id}" class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm shadow-lg">View Details</a>
-                        </div>
+                        <img src="${p.primary_image}" alt="${this.escapeHtml(p.title)}" class="w-full h-40 md:h-48 object-cover">
+                        ${p.search_score ? `<div class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">${Math.min(Math.round(p.search_score * 100), 100)}% match</div>` : ''}
+                        <div class="product-details-btn"><a href="<?= BASE_URL ?>view/product/${p.id}" class="bg-white dark:bg-secondary text-gray-800 dark:text-white px-4 py-2 rounded-lg font-medium hover:bg-[#D92B13] hover:text-white transition-colors text-sm shadow-lg">View Details</a></div>
                     </div>
                     <div class="p-3 md:p-5 flex flex-col flex-1">
-                        <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base">${this.escapeHtml(product.title)}</h3>
-                        <div class="flex-1 flex flex-col justify-end">
-                            <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">${this.escapeHtml(product.description || 'No description available')}</p>
-                            <div class="flex items-center text-gray-500 text-xs md:text-sm mb-3">
-                                <i data-lucide="eye" class="w-4 h-4 mr-1"></i>
-                                <span>${parseInt(product.views).toLocaleString()} views</span>
-                            </div>
-                            ${product.has_pricing && product.lowest_price ? `
-                                <div class="text-center mb-3">
-                                    <span class="price-text font-bold" style="color:#D92B13;">${this.formatPrice(product.lowest_price)}</span>
+                        <h3 class="font-bold text-gray-800 dark:text-white mb-2 line-clamp-2 text-sm md:text-base">${this.escapeHtml(p.title)}</h3>
+                        <div class="flex-1 flex flex-col">
+                            <p class="text-gray-600 dark:text-white/70 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">${this.escapeHtml(p.description || '')}</p>
+                            <div class="flex items-center text-gray-500 dark:text-white/70 text-xs md:text-sm mb-3"><i data-lucide="eye" class="w-4 h-4 mr-1"></i><span>${parseInt(p.views || 0).toLocaleString()} views</span></div>
+                            <div class="mt-auto flex flex-col items-center">
+                                <div class="text-sm font-bold text-[#D92B13] h-5 flex items-center ${p.has_pricing && p.lowest_price ? '' : 'invisible'}">${p.has_pricing && p.lowest_price ? this.formatPrice(p.lowest_price) : ''}</div>
+                                <div class="mt-2 flex gap-2 w-full">
+                                    ${p.has_pricing ? `<a href="<?= BASE_URL ?>view/product/${p.id}?action=buy" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md flex items-center justify-center flex-1 text-xs md:text-sm font-medium"><i data-lucide='shopping-cart' class='w-4 h-4 mr-1'></i>Buy</a>` : ''}
+                                    <button class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md flex items-center justify-center flex-1 text-xs md:text-sm font-medium" onclick="window.zzSellProduct('${p.id}','${this.escapeAttr(p.title)}')"><i data-lucide='tags' class='w-4 h-4 mr-1'></i>Sell</button>
                                 </div>
-                            ` : ''}
-                            <div class="flex gap-2">
-                                ${product.has_pricing ? `
-                                    <a href="<?= BASE_URL ?>view/product/${product.id}?action=buy" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium">
-                                        <i data-lucide="tags" class="w-4 h-4 mr-1"></i> Buy
-                                    </a>
-                                ` : ''}
-                                <button class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-md transition-colors flex items-center justify-center flex-1 text-xs md:text-sm font-medium" data-pid="${product.id}" data-ptitle="${this.escapeAttr(product.title)}" onclick="openVendorSellModal(this.dataset.pid, this.dataset.ptitle)">
-                                    <i data-lucide="tag" class="w-4 h-4 mr-1"></i> Sell
-                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
                 if (append) grid.insertAdjacentHTML('beforeend', html); else grid.innerHTML = html;
                 this.refreshIcons();
             },
-            formatPrice(price) { if (!price || price <= 0) return null; return 'UGX ' + parseInt(price).toLocaleString() + '/='; },
-            escapeHtml(text) { const div = document.createElement('div'); div.textContent = text || ''; return div.innerHTML; },
-            escapeAttr(text) { return (text || '').replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); },
+            formatPrice(price) { if (!price || price <= 0) return null; return 'UGX ' + parseInt(price).toLocaleString() + '/=' },
+            escapeHtml(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML },
+            escapeAttr(t) { return (t || '').replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])) },
             clearSelection() { window.location.href = '<?= BASE_URL ?>materials-yard'; },
-            copyLink() {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url).then(() => { if (typeof showToast === 'function') showToast('Link copied to clipboard!', 'success'); }).catch(() => { if (typeof showToast === 'function') showToast('Failed to copy link', 'error'); });
-            },
-            shareOnWhatsApp() {
-                const url = window.location.href;
-                const pageTitle = "<?= addslashes($pageTitle) ?>";
-                const message = `Check out *${pageTitle}* available on Zzimba Online:\n\n${url}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-            },
-            shareOnFacebook() {
-                const url = window.location.href;
-                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-            },
-            shareOnTwitter() {
-                const url = window.location.href;
-                const pageTitle = "<?= addslashes($pageTitle) ?>";
-                const message = `Check out ${pageTitle} on Zzimba Online:`;
-                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(url)}`, '_blank');
-            },
-            shareOnLinkedIn() {
-                const url = window.location.href;
-                const pageTitle = "<?= addslashes($pageTitle) ?>";
-                const message = `Check out ${pageTitle} on Zzimba Online.`;
-                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&title=${encodeURIComponent(pageTitle)}&summary=${encodeURIComponent(message)}`, '_blank');
-            }
+            copyLink() { const u = window.location.href; navigator.clipboard.writeText(u).then(() => { if (typeof showToast === 'function') showToast('Link copied', 'success') }).catch(() => { if (typeof showToast === 'function') showToast('Failed to copy', 'error') }); },
+            shareOnWhatsApp() { const url = window.location.href; const t = "<?= addslashes($pageTitle) ?>"; const m = `Check out *${t}* on Zzimba Online:\n\n${url}`; window.open(`https://wa.me/?text=${encodeURIComponent(m)}`, '_blank'); },
+            shareOnFacebook() { const u = window.location.href; window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}`, '_blank'); },
+            shareOnTwitter() { const u = window.location.href; const t = "<?= addslashes($pageTitle) ?>"; const m = `Check out ${t} on Zzimba Online:`; window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(m)}&url=${encodeURIComponent(u)}`, '_blank'); },
+            shareOnLinkedIn() { const u = window.location.href; const t = "<?= addslashes($pageTitle) ?>"; window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(u)}&title=${encodeURIComponent(t)}`, '_blank'); },
+            isAdminUser(p) { if (!p) return false; if (p.is_admin === true) return true; if (p.user && p.user.is_admin === true) return true; const r = (p.role_slug || p.role || '').toString().toLowerCase(); return r === 'admin' || r === 'super-admin'; },
+            async sellProduct(id, title) { const ok = await this.ensureSession({ type: 'sell', product_id: id, title: title }); if (!ok) return; const s = await this.checkSession().catch(() => ({})); const isAdmin = !!(s && (s.is_admin === true || (s.user && s.user.is_admin === true))); if (isAdmin) return; this.resumeSell(id, title); },
+            resumeSell(id, title) { if (typeof openVendorSellModal === 'function') { openVendorSellModal(id, title) } },
+            async handlePostLogin(user) { const a = window.__pendingVendorAction; if (!a) return; if (a.type === 'sell' && a.product_id && a.title) { let isAdmin = this.isAdminUser(user); if (!isAdmin) { try { const s = await this.checkSession(); if (typeof s.is_admin !== 'undefined') isAdmin = !!s.is_admin; else if (s.user && typeof s.user.is_admin !== 'undefined') isAdmin = !!s.user.is_admin; } catch (e) { } } if (!isAdmin) this.resumeSell(a.product_id, a.title); window.setPendingVendorAction(null); } },
+            checkSession() { return fetch((this.BASE_URL) + 'fetch/check-session.php', { credentials: 'include' }).then(r => r.json()).then(d => d.success ? d : { logged_in: false }).catch(() => ({ logged_in: false })) },
+            async ensureSession(p) { try { const s = await this.checkSession(); if (!s.logged_in) { if (p) window.setPendingVendorAction(p); if (typeof openAuthModal === 'function') openAuthModal(); else alert('Please log in to continue.'); return false; } return true; } catch (e) { return false } }
         }
     }
-
-    function showToast(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity duration-300`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.classList.add('opacity-100'), 10);
-        setTimeout(() => {
-            toast.classList.remove('opacity-100');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
+    function showToast(m, t = 'success') { const el = document.createElement('div'); el.className = `fixed top-4 left-1/2 -translate-x-1/2 ${t === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity`; el.textContent = m; document.body.appendChild(el); setTimeout(() => el.classList.add('opacity-100'), 10); setTimeout(() => { el.classList.remove('opacity-100'); setTimeout(() => el.remove(), 300) }, 3000); }
 </script>
 
 <?php

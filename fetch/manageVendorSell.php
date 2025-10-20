@@ -293,6 +293,7 @@ function addProductToStore(PDO $pdo, string $currentUser)
         $spStmt = $pdo->prepare("SELECT id, status FROM store_products WHERE store_category_id = ? AND product_id = ?");
         $spStmt->execute([$scId, $productId]);
         $spResult = $spStmt->fetch(PDO::FETCH_ASSOC);
+        $spId = null;
         if ($spResult) {
             $spId = $spResult['id'];
             if ($spResult['status'] !== 'active') {
@@ -307,6 +308,11 @@ function addProductToStore(PDO $pdo, string $currentUser)
                 (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, commission_type, commission_value, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
         ");
+        $updatePricing = $pdo->prepare("
+            UPDATE product_pricing
+            SET package_mapping_id = ?, si_unit_id = ?, package_size = ?, price = ?, price_category = ?, delivery_capacity = ?, commission_type = ?, commission_value = ?, updated_at = NOW()
+            WHERE id = ?
+        ");
         foreach ($lineItems as $item) {
             $pmId = $item['package_mapping_id'] ?? '';
             $siId = $item['si_unit_id'] ?? '';
@@ -320,31 +326,60 @@ function addProductToStore(PDO $pdo, string $currentUser)
             $ctRaw = $item['commission_type'] ?? 'percentage';
             $cvRaw = $item['commission_value'] ?? null;
             [$ctype, $cvalue] = validateCommission($ctRaw, $cvRaw, $price);
-            $ppId = Ulid::generate();
-            $insertPricing->execute([
-                $ppId,
-                $spId,
-                $pmId,
-                $siId,
-                $packageSize,
-                $currentUser,
-                $price,
-                $category,
-                $capacity,
-                $ctype,
-                $cvalue
-            ]);
+            $pricingId = $item['pricing_id'] ?? '';
+            if ($pricingId && isValidUlid($pricingId)) {
+                $ownStmt = $pdo->prepare("
+                    SELECT vs.id AS store_id
+                    FROM product_pricing pp
+                    JOIN store_products sp ON pp.store_products_id = sp.id
+                    JOIN store_categories sc ON sp.store_category_id = sc.id
+                    JOIN vendor_stores vs ON sc.store_id = vs.id
+                    WHERE pp.id = ?
+                    LIMIT 1
+                ");
+                $ownStmt->execute([$pricingId]);
+                $row = $ownStmt->fetch(PDO::FETCH_ASSOC);
+                if (!$row || $row['store_id'] !== $storeId) {
+                    throw new Exception('Cannot update pricing that does not belong to this store');
+                }
+                $updatePricing->execute([
+                    $pmId,
+                    $siId,
+                    $packageSize,
+                    $price,
+                    $category,
+                    $capacity,
+                    $ctype,
+                    $cvalue,
+                    $pricingId
+                ]);
+            } else {
+                $ppId = Ulid::generate();
+                $insertPricing->execute([
+                    $ppId,
+                    $spId,
+                    $pmId,
+                    $siId,
+                    $packageSize,
+                    $currentUser,
+                    $price,
+                    $category,
+                    $capacity,
+                    $ctype,
+                    $cvalue
+                ]);
+            }
         }
         updateEmptyCategories($pdo);
         $pdo->commit();
-        echo json_encode(['success' => true, 'message' => 'Product & pricing added. Submitted for approval.', 'submitted_for_approval' => true]);
+        echo json_encode(['success' => true, 'message' => 'Pricing saved successfully', 'submitted_for_approval' => true]);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
         error_log('Error in addProductToStore: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error adding product: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'error' => 'Error saving pricing: ' . $e->getMessage()]);
     }
 }
 

@@ -4,7 +4,7 @@ $pageTitle = 'Store Visit Requests - Admin';
 $activeNav = 'buy-in-store';
 ob_start();
 ?>
-<div class="min-h-screen bg-gray-50" id="app-container">
+<div class="min-h-screen bg-gray-50 overflow-x-hidden" id="app-container">
     <div class="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3 sm:py-6">
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
@@ -13,13 +13,7 @@ ob_start();
                     <p class="text-gray-600 mt-1 text-sm sm:text-base hidden sm:block">Monitor and manage all customer
                         store visit requests across vendors</p>
                 </div>
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="refreshBtn"
-                        class="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                        <i class="fas fa-sync-alt text-sm"></i>
-                        <span class="hidden sm:inline">Refresh</span>
-                    </button>
-                </div>
+                <div class="flex items-center gap-2 sm:gap-3"></div>
             </div>
         </div>
     </div>
@@ -77,7 +71,7 @@ ob_start();
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-8">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 min-w-0">
                     <div class="flex flex-wrap gap-2">
                         <button
                             class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
@@ -85,20 +79,22 @@ ob_start();
                             <i class="fas fa-calendar-day mr-2"></i>Daily
                         </button>
                         <button
-                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="weekly">
                             <i class="fas fa-calendar-week mr-2"></i>Weekly
                         </button>
                         <button
-                            class="date-filter-btn flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
+                            class="date-filter-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg border transition-colors text-sm"
                             data-period="monthly">
                             <i class="fas fa-calendar-alt mr-2"></i>Monthly
                         </button>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <input type="date" id="startDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 min-w-0">
+                        <input type="date" id="startDate"
+                            class="px-3 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto">
                         <span class="text-gray-500 text-center sm:text-left">to</span>
-                        <input type="date" id="endDate" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <input type="date" id="endDate"
+                            class="px-3 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto">
                         <button id="applyCustomRange"
                             class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm">Apply</button>
                     </div>
@@ -109,15 +105,18 @@ ob_start();
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-8">
             <div class="p-4 sm:p-6 border-b border-gray-100">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <div class="relative">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 min-w-0">
+                        <div class="relative min-w-0">
                             <input type="text" id="searchFilter" placeholder="Search requests..."
                                 class="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
                             <i class="fas fa-search absolute left-3 top-2.5 text-gray-400 text-sm"></i>
                         </div>
-                        <select id="storeFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                            <option value="all">All Stores</option>
-                        </select>
+                        <div class="min-w-0 max-w-full">
+                            <select id="storeFilter"
+                                class="px-3 py-2 border border-gray-300 rounded-lg text-sm block w-full sm:w-56 md:w-64 overflow-hidden">
+                                <option value="all">All Stores</option>
+                            </select>
+                        </div>
                         <select id="statusFilter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
                             <option value="all">All Status</option>
                             <option value="pending">Pending</option>
@@ -449,7 +448,7 @@ ob_start();
 <script>
     let currentPage = 1;
     let itemsPerPage = 20;
-    let currentPeriod = 'weekly';
+    let currentPeriod = 'monthly';
     let currentRequestId = null;
     let currentRequestData = null;
     let smsBalance = 0;
@@ -511,7 +510,6 @@ ob_start();
         document.getElementById('nextPage').addEventListener('click', function () { currentPage++; loadRequests(); });
         document.getElementById('mobilePrevPage').addEventListener('click', function () { if (currentPage > 1) { currentPage--; loadRequests(); } });
         document.getElementById('mobileNextPage').addEventListener('click', function () { currentPage++; loadRequests(); });
-        document.getElementById('refreshBtn').addEventListener('click', refreshData);
 
         document.getElementById('emailForm').addEventListener('submit', function (e) { e.preventDefault(); sendEmail(); });
         document.getElementById('smsForm').addEventListener('submit', function (e) { e.preventDefault(); sendSms(); });
@@ -521,7 +519,7 @@ ob_start();
         document.getElementById('newVisitDate').setAttribute('min', today);
     }
 
-    function initializeDateFilters() { setDateRangeForPeriod('weekly'); }
+    function initializeDateFilters() { setDateRangeForPeriod('monthly'); }
 
     function setDateRangeForPeriod(period) {
         const today = new Date();
@@ -529,7 +527,7 @@ ob_start();
         switch (period) {
             case 'daily': startDate = new Date(today); endDate = new Date(today); break;
             case 'weekly': const d = today.getDay(); startDate = new Date(today); startDate.setDate(today.getDate() - d); endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6); break;
-            case 'monthly': startDate = new Date(today.getFullYear(), today.getMonth(), 1); endDate = new Date(today); break;
+            case 'monthly': startDate = new Date(today.getFullYear(), today.getMonth(), 1); endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0); break;
             default: startDate = new Date(today); endDate = new Date(today);
         }
         document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
@@ -605,20 +603,20 @@ ob_start();
             return `
             <tr class="hover:bg-gray-50 transition-colors cursor-pointer" onclick="viewRequestDetails('${request.id}')">
                 <td class="px-4 py-3 whitespace-nowrap">
-                    <div class="font-medium text-gray-900 text-sm">${request.first_name} ${request.last_name}</div>
-                    <div class="text-xs text-gray-500">${request.email}</div>
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap">
-                    <div class="font-medium text-gray-900 text-sm">${request.store_name}</div>
-                    <div class="text-xs text-gray-500">${request.store_region}, ${request.store_district}</div>
+                    <div class="font-medium text-gray-900 text-sm truncate-text">${request.first_name} ${request.last_name}</div>
+                    <div class="text-xs text-gray-500 truncate-text">${request.email}</div>
                 </td>
                 <td class="px-4 py-3">
-                    <div class="text-sm font-medium text-gray-900 line-clamp-1">${request.product_title}</div>
-                    <div class="text-xs text-gray-500">${request.price_category.charAt(0).toUpperCase() + request.price_category.slice(1)} - UGX ${formatCurrency(request.price)}</div>
+                    <div class="font-medium text-gray-900 text-sm truncate-text">${request.store_name}</div>
+                    <div class="text-xs text-gray-500 truncate-text">${request.store_region}, ${request.store_district}</div>
+                </td>
+                <td class="px-4 py-3">
+                    <div class="text-sm font-medium text-gray-900 truncate-text break-anywhere">${request.product_title}</div>
+                    <div class="text-xs text-gray-500 truncate-text">${request.price_category.charAt(0).toUpperCase() + request.price_category.slice(1)} - UGX ${formatCurrency(request.price)}</div>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
-                    <div class="text-sm text-gray-900">${formatDate(request.visit_date)}</div>
-                    <div class="text-xs ${visitInfo.color}">${visitInfo.text}</div>
+                    <div class="text-sm text-gray-900 truncate-text">${formatDate(request.visit_date)}</div>
+                    <div class="text-xs ${visitInfo.color} truncate-text">${visitInfo.text}</div>
                 </td>
                 <td class="px-4 py-3 text-center whitespace-nowrap">
                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">${request.quantity}</span>
@@ -652,8 +650,8 @@ ob_start();
                             <h4 class="text-sm font-medium text-gray-900 truncate">${request.first_name} ${request.last_name}</h4>
                             <span class="text-xs ${visitInfo.color}">${visitInfo.text}</span>
                         </div>
-                        <div class="text-sm text-gray-600 mb-1 line-clamp-1">${request.product_title}</div>
-                        <div class="text-xs text-gray-500 mb-1">${request.store_name}</div>
+                        <div class="text-sm text-gray-600 mb-1 line-clamp-1 break-anywhere">${request.product_title}</div>
+                        <div class="text-xs text-gray-500 mb-1 truncate">${request.store_name}</div>
                         <div class="text-xs text-gray-500 mb-2">UGX ${formatCurrency(request.price)} per unit</div>
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
@@ -726,6 +724,7 @@ ob_start();
             loadRequestDetails(requestId);
         }
         document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflowX = 'hidden';
     }
 
     function loadRequestDetails(requestId) {
@@ -819,7 +818,7 @@ ob_start();
                             <a id="productLink" href="#" target="_blank" class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition text-white font-medium rounded-lg">View Details</a>
                         </div>
                         <div>
-                            <h5 class="font-semibold text-gray-900 text-lg flex items-center gap-2">${request.product_title}
+                            <h5 class="font-semibold text-gray-900 text-lg flex items-center gap-2"><span class="truncate-text break-anywhere">${request.product_title}</span>
                                 <a id="productTinyLink" href="#" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm underline">Product page</a>
                             </h5>
                             ${request.product_description ? `<p class="text-gray-600 text-sm mt-1">${request.product_description}</p>` : ''}
@@ -908,7 +907,7 @@ ob_start();
                 <div class="bg-white rounded-lg p-4 border border-gray-200">
                     <h4 class="font-semibold text-gray-900 mb-3">Customer Information</h4>
                     <div class="space-y-2 text-sm">
-                        <div class="flex justify-between"><span class="text-gray-600">Email:</span><span class="font-medium">${request.email}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Email:</span><span class="font-medium break-anywhere">${request.email}</span></div>
                         <div class="flex justify-between"><span class="text-gray-600">Phone:</span><span class="font-medium">${request.phone}</span></div>
                         ${request.alt_contact ? `<div class="flex justify-between"><span class="text-gray-600">Alt Contact:</span><span class="font-medium">${request.alt_contact}</span></div>` : ''}
                     </div>
@@ -917,7 +916,7 @@ ob_start();
                 <div class="bg-white rounded-lg p-4 border border-gray-200">
                     <h4 class="font-semibold text-gray-900 mb-3">Store Information</h4>
                     <div class="space-y-2 text-sm">
-                        <div class="flex justify-between"><span class="text-gray-600">Store:</span><span class="font-medium">${request.store_name}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-600">Store:</span><span class="font-medium break-anywhere">${request.store_name}</span></div>
                         <div class="flex justify-between"><span class="text-gray-600">Location:</span><span class="font-medium">${request.store_region}, ${request.store_district}</span></div>
                         <div class="flex justify-between"><span class="text-gray-600">Owner:</span><span class="font-medium">${request.owner_first_name} ${request.owner_last_name}</span></div>
                     </div>
@@ -926,8 +925,12 @@ ob_start();
                 <div class="bg-white rounded-lg p-4 border border-gray-200">
                     <h4 class="font-semibold text-gray-900 mb-3">Product Details</h4>
                     <div class="space-y-3">
+                        <div class="relative">
+                            <img id="productImageMobile" src="https://placehold.co/600x300/e2e8f0/1e293b?text=Loading" alt="Product Image" class="w-full h-40 object-cover rounded-lg border">
+                            <a id="productImageLinkMobile" href="#" target="_blank" class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition text-white font-medium rounded-lg">View Details</a>
+                        </div>
                         <div>
-                            <h5 class="font-medium text-gray-900">${request.product_title}</h5>
+                            <h5 class="font-medium text-gray-900 break-anywhere">${request.product_title}</h5>
                             <p class="text-sm text-gray-600">${request.package_size} ${request.si_unit} ${request.package_name}</p>
                         </div>
                         <div class="grid grid-cols-2 gap-4 text-sm">
@@ -974,6 +977,7 @@ ob_start();
         const title = request.product_title || 'Product';
         const pUrl = pid ? productDetailsUrl(pid) : '#';
         const linkM = document.getElementById('productLinkMobile'); if (linkM) linkM.href = pUrl;
+        const linkImgM = document.getElementById('productImageLinkMobile'); if (linkImgM) linkImgM.href = pUrl;
         if (pid) resolveProductImage(pid, title).then(url => {
             const im = document.getElementById('productImageMobile'); if (im) im.src = url;
         });
@@ -1045,13 +1049,13 @@ ob_start();
     function openEmailModal(email, customerName, productTitle) {
         document.getElementById('emailTo').value = email;
         document.getElementById('emailSubject').value = `Store Visit Request - ${productTitle}`;
-        document.getElementById('emailMessage').value = `Dear ${customerName},\n\nThank you for your store visit request regarding ${productTitle}.\n\nWe look forward to meeting with you.\n\nBest regards,\nZzimba Team`;
+        document.getElementById('emailMessage').value = `Dear ${customerName},\n\nThank you for your Buy in Store request regarding ${productTitle}.\n\nWe look forward to meeting with you.\n\nBest regards,\nZzimba Team`;
         document.getElementById('emailModal').classList.remove('hidden');
     }
 
     function openSmsModal(phone, customerName) {
         document.getElementById('smsTo').value = phone;
-        document.getElementById('smsMessage').value = `Hello ${customerName}, regarding your store visit request. Please contact us for more details.`;
+        document.getElementById('smsMessage').value = `Hello ${customerName}, regarding your Buy in Store request. Please contact us for more details.`;
         updateSmsCharCount();
         if (currentStoreId) {
             fetch(`${BASE_URL}admin/fetch/manageBuyInStore.php?action=getSmsBalance&store_id=${currentStoreId}`)
@@ -1126,8 +1130,8 @@ ob_start();
             });
     }
 
-    function closeRequestModal() { document.getElementById('requestModal').classList.add('hidden'); document.body.style.overflow = ''; currentRequestId = null; currentRequestData = null; currentStoreId = null; }
-    function closeMobileRequestModal() { document.getElementById('mobileRequestModal').classList.add('hidden'); document.body.style.overflow = ''; currentRequestId = null; currentRequestData = null; currentStoreId = null; }
+    function closeRequestModal() { document.getElementById('requestModal').classList.add('hidden'); document.body.style.overflow = ''; document.documentElement.style.overflowX = ''; currentRequestId = null; currentRequestData = null; currentStoreId = null; }
+    function closeMobileRequestModal() { document.getElementById('mobileRequestModal').classList.add('hidden'); document.body.style.overflow = ''; document.documentElement.style.overflowX = ''; currentRequestId = null; currentRequestData = null; currentStoreId = null; }
     function closeDatePickerModal() { document.getElementById('datePickerModal').classList.add('hidden'); }
     function closeEmailModal() { document.getElementById('emailModal').classList.add('hidden'); document.getElementById('emailMessage').value = ''; }
     function closeSmsModal() { document.getElementById('smsModal').classList.add('hidden'); document.getElementById('smsMessage').value = ''; document.getElementById('smsCharCount').textContent = '0'; }
@@ -1173,14 +1177,6 @@ ob_start();
         return `${h}:${ms}${ampm}`;
     }
 
-    function refreshData() {
-        const refreshBtn = document.getElementById('refreshBtn');
-        const icon = refreshBtn.querySelector('i');
-        icon.classList.add('fa-spin'); refreshBtn.disabled = true;
-        loadRequests(); loadStats(); loadStores();
-        setTimeout(() => { icon.classList.remove('fa-spin'); refreshBtn.disabled = false; }, 1000);
-    }
-
     function debounce(func, wait) { let timeout; return function (...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
 
     window.viewRequestDetails = viewRequestDetails;
@@ -1200,6 +1196,12 @@ ob_start();
 </script>
 
 <style>
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden
+    }
+
     .animate-pulse {
         animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite
     }
@@ -1228,7 +1230,7 @@ ob_start();
 
     .date-filter-btn.active {
         background-color: #D92B13;
-        color: white;
+        color: #fff;
         border-color: #D92B13
     }
 
@@ -1264,8 +1266,84 @@ ob_start();
         overflow: hidden
     }
 
+    .truncate-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+        max-width: 100%
+    }
+
+    .break-anywhere {
+        overflow-wrap: anywhere;
+        word-break: break-word
+    }
+
     #requestsTable {
-        min-width: 800px
+        min-width: 800px;
+        table-layout: fixed;
+        width: 100%
+    }
+
+    #requestsTable th,
+    #requestsTable td {
+        overflow: hidden;
+        text-overflow: ellipsis
+    }
+
+    #requestsTable th:nth-child(1),
+    #requestsTable td:nth-child(1) {
+        width: 160px
+    }
+
+    #requestsTable th:nth-child(2),
+    #requestsTable td:nth-child(2) {
+        width: 180px
+    }
+
+    #requestsTable th:nth-child(3),
+    #requestsTable td:nth-child(3) {
+        width: 260px
+    }
+
+    #requestsTable th:nth-child(4),
+    #requestsTable td:nth-child(4) {
+        width: 140px
+    }
+
+    #requestsTable th:nth-child(5),
+    #requestsTable td:nth-child(5) {
+        width: 100px
+    }
+
+    #requestsTable th:nth-child(6),
+    #requestsTable td:nth-child(6) {
+        width: 150px
+    }
+
+    #requestsTable th:nth-child(7),
+    #requestsTable td:nth-child(7) {
+        width: 120px
+    }
+
+    #storeFilter {
+        max-width: 100%;
+        width: 100%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden
+    }
+
+    @media (min-width:640px) {
+        #storeFilter {
+            width: 14rem
+        }
+    }
+
+    @media (min-width:768px) {
+        #storeFilter {
+            width: 16rem
+        }
     }
 
     @media (max-width:768px) {

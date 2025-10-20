@@ -65,19 +65,24 @@ class NotificationService
         string $priority = 'normal',
         ?string $createdBy = null
     ): string {
-        $now = (new DateTime())->format('Y-m-d H:i:s');
-        $this->db->beginTransaction();
-        $notificationId = generateUlid();
-        $this->db->prepare(
-            "INSERT INTO notifications (id,type,title,link_url,priority,created_by,created_at)
-             VALUES (?,?,?,?,?,?,?)"
-        )->execute([$notificationId, $type, $title, $linkUrl, $priority, $createdBy, $now]);
 
-        $insertTgt = $this->db->prepare(
-            "INSERT INTO notification_targets
-             (id,notification_id,recipient_type,recipient_id,message,is_seen,is_dismissed,created_at,updated_at)
-             VALUES (?,?,?,?,?,0,0,?,?)"
-        );
+        
+
+        $now = (new DateTime())->format('Y-m-d H:i:s');
+        $notificationId = generateUlid();
+        $startedTransaction = !$this->db->inTransaction();
+          if ($startedTransaction) {
+              $this->db->beginTransaction();
+          }
+
+        try {
+
+          $stmt = $this->db->prepare("INSERT INTO notifications (id,type,title,link_url,priority,created_by,created_at) VALUES (?,?,?,?,?,?,?)
+        ");
+        $stmt->execute([$notificationId, $type, $title, $linkUrl, $priority, $createdBy, $now]);
+
+        $insertTgt = $this->db->prepare("INSERT INTO notification_targets (id,notification_id,recipient_type,recipient_id,message,is_seen,is_dismissed,created_at,updated_at)
+            VALUES (?,?,?,?,?,0,0,?,?) ");
 
         foreach ($recipients as $r) {
             $insertTgt->execute([
@@ -91,9 +96,19 @@ class NotificationService
             ]);
         }
 
-        $this->db->commit();
+        if ($startedTransaction) {
+            $this->db->commit();
+        }
+
         return $notificationId;
+
+    } catch (Exception $e) {
+        if ($startedTransaction && $this->db->inTransaction()) {
+            $this->db->rollBack();
+          }
+        throw $e;
     }
+}
 
     public function fetchForCurrent(int $limit = 20, int $offset = 0, ?string $since = null): array
     {

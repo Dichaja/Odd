@@ -131,7 +131,7 @@ ob_start();
 ?>
 <style>
     [x-cloak] {
-        display: none
+        display: none !important
     }
 
     .container {
@@ -161,6 +161,16 @@ ob_start();
         display: none
     }
 
+    .line-clamp-1 {
+        display: -webkit-box;
+        display: box;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+        -webkit-box-orient: vertical;
+        box-orient: vertical;
+        overflow: hidden
+    }
+
     .line-clamp-2 {
         display: -webkit-box;
         display: box;
@@ -171,11 +181,11 @@ ob_start();
         overflow: hidden
     }
 
-    .line-clamp-1 {
+    .line-clamp-3 {
         display: -webkit-box;
         display: box;
-        -webkit-line-clamp: 1;
-        line-clamp: 1;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
         -webkit-box-orient: vertical;
         box-orient: vertical;
         overflow: hidden
@@ -282,41 +292,106 @@ ob_start();
         transform: translateY(-1px);
         box-shadow: 0 6px 14px -6px rgba(217, 43, 19, .35)
     }
+
+    .modal-panel {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100dvh - 2rem);
+        overscroll-behavior: contain;
+        border-radius: 1rem
+    }
+
+    @supports not (height:1dvh) {
+        .modal-panel {
+            max-height: calc(100vh - 2rem)
+        }
+    }
+
+    .modal-scroll {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch
+    }
+
+    @media (max-width:640px) {
+        .space-y-4>*+* {
+            margin-top: 1rem
+        }
+
+        button {
+            min-height: 44px;
+            padding: .75rem 1rem
+        }
+
+        input,
+        select {
+            min-height: 44px;
+            padding: .75rem
+        }
+    }
+
+    html.dark .datepicker {
+        background-color: #0f172a;
+        color: #e5e7eb;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, .35)
+    }
+
+    html.dark .datepicker-controls {
+        border-bottom-color: #1f2937
+    }
+
+    html.dark .datepicker-day-header {
+        color: #94a3b8
+    }
+
+    html.dark .datepicker-day {
+        color: #e5e7eb
+    }
+
+    html.dark .datepicker-day:hover:not(.disabled):not(.selected) {
+        background-color: #111827
+    }
+
+    html.dark .btn-ghost:hover {
+        box-shadow: 0 6px 14px -6px rgba(217, 43, 19, .6)
+    }
 </style>
 
 <div x-data="vendorProfile" x-init="init()" class="relative">
-    <div class="relative h-40 md:h-64 w-full bg-gray-100 overflow-hidden" id="vendor-cover-photo"
+    <div class="relative h-40 md:h-64 w-full bg-gray-100 dark:bg-slate-800 overflow-hidden" id="vendor-cover-photo"
         x-show="!loading && !error && !notFound" x-cloak>
         <div id="vendor-cover" class="w-full h-full bg-center bg-cover" :style="coverStyle"></div>
         <?php if ($canEdit): ?>
             <button @click="openCoverEditor"
-                class="absolute top-4 right-4 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md cursor-pointer text-primary border border-gray-200 hover:bg-gray-50 transition-colors">
+                class="absolute top-4 right-4 bg-white dark:bg-slate-900 rounded-full w-10 h-10 flex items-center justify-center shadow-md cursor-pointer text-primary border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors p-0 sm:p-2">
                 <i data-lucide="camera" class="w-5 h-5"></i>
             </button>
         <?php endif; ?>
     </div>
 
     <div x-show="loading" class="flex flex-col items-center justify-center py-16">
-        <div class="border-4 border-gray-200 border-l-primary rounded-full w-12 h-12 animate-spin mb-5"></div>
-        <p class="text-gray-600">Loading vendor profile...</p>
+        <div
+            class="border-4 border-gray-200 dark:border-slate-700 border-l-primary rounded-full w-12 h-12 animate-spin mb-5">
+        </div>
+        <p class="text-gray-600 dark:text-slate-300">Loading vendor profile...</p>
     </div>
 
     <div x-show="notFound" x-cloak class="max-w-3xl mx-auto my-14 px-6">
         <div
-            class="bg-gradient-to-br from-red-50 to-rose-50 border border-red-200 text-red-800 rounded-2xl p-8 md:p-10 shadow-sm fade-in-up">
+            class="bg-gradient-to-br from-red-50 to-rose-50 dark:from-slate-800 dark:to-slate-900 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-2xl p-8 md:p-10 shadow-sm fade-in-up">
             <div class="flex flex-col items-center text-center">
-                <div class="h-14 w-14 rounded-full bg-red-100 flex items-center justify-center soft-bounce mb-4">
-                    <i data-lucide="circle-alert" class="w-7 h-7 text-red-600"></i>
+                <div
+                    class="h-14 w-14 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center soft-bounce mb-4">
+                    <i data-lucide="circle-alert" class="w-7 h-7 text-red-600 dark:text-red-400"></i>
                 </div>
                 <h2 class="text-2xl md:text-3xl font-extrabold mb-2">Store Not Found or Inactive</h2>
-                <p class="text-red-700/80 mb-6">This store may not exist or has not been activated by an administrator
-                    yet.</p>
+                <p class="text-red-700/80 dark:text-red-200/80 mb-6">This store may not exist or has not been activated
+                    by an administrator yet.</p>
                 <div class="flex flex-col sm:flex-row items-center gap-3">
                     <a href="<?= BASE_URL ?>"
                         class="bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-primary/90 btn-ghost">Go to
                         Home</a>
                     <a href="<?= BASE_URL ?>vendors"
-                        class="px-5 py-2.5 rounded-lg border border-red-300 text-red-700 hover:bg-white">Browse
+                        class="px-5 py-2.5 rounded-lg border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 hover:bg-white dark:hover:bg-slate-900">Browse
                         Vendors</a>
                 </div>
             </div>
@@ -325,20 +400,21 @@ ob_start();
 
     <div x-show="error" x-cloak class="max-w-3xl mx-auto my-14 px-6">
         <div
-            class="bg-gradient-to-br from-amber-50 to-yellow-50 border border-yellow-200 text-yellow-900 rounded-2xl p-8 md:p-10 shadow-sm fade-in-up">
+            class="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-slate-800 dark:to-slate-900 border border-yellow-200 dark:border-yellow-800 text-yellow-900 dark:text-yellow-200 rounded-2xl p-8 md:p-10 shadow-sm fade-in-up">
             <div class="flex flex-col items-center text-center">
-                <div class="h-14 w-14 rounded-full bg-yellow-100 flex items-center justify-center soft-bounce mb-4">
-                    <i data-lucide="shield-alert" class="w-7 h-7 text-yellow-600"></i>
+                <div
+                    class="h-14 w-14 rounded-full bg-yellow-100 dark:bg-yellow-900/40 flex items-center justify-center soft-bounce mb-4">
+                    <i data-lucide="shield-alert" class="w-7 h-7 text-yellow-600 dark:text-yellow-400"></i>
                 </div>
                 <h2 class="text-2xl md:text-3xl font-extrabold mb-2">Profile Not Found</h2>
-                <p class="text-yellow-800/80 mb-6">We could not load this vendor profile. It might have been moved or is
-                    temporarily unavailable.</p>
+                <p class="text-yellow-800/80 dark:text-yellow-200/80 mb-6">We could not load this vendor profile. It
+                    might have been moved or is temporarily unavailable.</p>
                 <div class="flex flex-col sm:flex-row items-center gap-3">
                     <a href="<?= BASE_URL ?>"
                         class="bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-primary/90 btn-ghost">Go to
                         Home</a>
                     <button onclick="location.reload()"
-                        class="px-5 py-2.5 rounded-lg border border-yellow-300 text-yellow-800 hover:bg-white">Try
+                        class="px-5 py-2.5 rounded-lg border border-yellow-300 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 hover:bg-white dark:hover:bg-slate-900">Try
                         Again</button>
                 </div>
             </div>
@@ -347,25 +423,26 @@ ob_start();
 
     <div x-show="!loading && !error && !notFound" x-cloak id="content-state"
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-16 relative z-10">
-        <div class="bg-white rounded-lg shadow-lg p-6 fade-in-up">
+        <div class="bg-white dark:bg-slate-900 rounded-lg shadow-lg p-6 fade-in-up">
             <div class="flex flex-col md:flex-row">
                 <div class="flex-shrink-0 flex md:block justify-center">
                     <div class="relative">
                         <div
-                            class="h-32 w-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-white flex items-center justify-center">
+                            class="h-32 w-32 rounded-full border-4 border-white dark:border-slate-800 shadow-md overflow-hidden bg-white dark:bg-slate-800 flex items-center justify-center">
                             <template x-if="logoUrl">
                                 <img :src="logoUrl" :alt="store?.name || 'Store Logo'"
                                     class="w-full h-full object-cover rounded-full">
                             </template>
                             <template x-if="!logoUrl">
-                                <div class="w-full h-full flex items-center justify-center bg-gray-100">
-                                    <i data-lucide="store" class="w-10 h-10 text-gray-400"></i>
+                                <div
+                                    class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-slate-700">
+                                    <i data-lucide="store" class="w-10 h-10 text-gray-400 dark:text-slate-300"></i>
                                 </div>
                             </template>
                         </div>
                         <?php if ($canEdit): ?>
                             <button @click="openLogoEditor"
-                                class="absolute bottom-0 right-0 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm cursor-pointer text-primary border border-gray-200 hover:bg-gray-50 transition-colors">
+                                class="absolute bottom-0 right-0 bg-white dark:bg-slate-900 rounded-full w-8 h-8 flex items-center justify-center shadow-sm cursor-pointer text-primary border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors p-0 sm:p-2">
                                 <i data-lucide="camera" class="w-4 h-4"></i>
                             </button>
                         <?php endif; ?>
@@ -376,51 +453,70 @@ ob_start();
                     <div class="flex flex-col md:flex-row md:justify-between md:items-center">
                         <div>
                             <h1
-                                class="text-3xl font-bold text-secondary flex items-center justify-center md:justify-start">
+                                class="text-3xl font-bold text-secondary dark:text-white flex items-center justify-center md:justify-start">
                                 <span x-text="store?.name || 'Store Name'"></span>
                                 <?php if ($canEdit): ?>
                                     <button @click="openNameEditor"
-                                        class="ml-2 text-gray-500 hover:text-primary transition-colors">
+                                        class="ml-2 text-gray-500 dark:text-slate-300 hover:text-primary transition-colors p-0 sm:p-2">
                                         <i data-lucide="pencil" class="w-4 h-4"></i>
                                     </button>
                                 <?php endif; ?>
                             </h1>
-                            <p class="text-gray-600 mt-1 flex items-start justify-center md:justify-start">
+                            <p
+                                class="text-gray-600 dark:text-slate-300 mt-1 flex items-start justify-center md:justify-start line-clamp-3 md:line-clamp-2">
                                 <span x-text="store?.description || 'Premium Construction Materials & Services'"></span>
                                 <?php if ($canEdit): ?>
                                     <button @click="openDescriptionEditor"
-                                        class="ml-2 text-gray-500 hover:text-primary transition-colors">
+                                        class="ml-2 text-gray-500 dark:text-slate-300 hover:text-primary transition-colors p-0 sm:p-2">
                                         <i data-lucide="pencil" class="w-4 h-4"></i>
                                     </button>
                                 <?php endif; ?>
                             </p>
+
+                            <div class="md:hidden mt-3">
+                                <div class="flex items-center justify-center gap-1">
+                                    <div class="text-xl font-bold text-secondary dark:text-white">4.8</div>
+                                    <div class="ml-2 flex items-center">
+                                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
+                                        <i data-lucide="star-half" class="w-4 h-4 text-yellow-400"></i>
+                                        <span class="ml-1 text-sm text-gray-600 dark:text-slate-300">(128
+                                            reviews)</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="mt-6 flex flex-wrap gap-y-4 justify-center md:justify-start">
                         <div class="mr-8 flex items-center">
-                            <i data-lucide="calendar" class="w-4 h-4 text-gray-500 mr-2"></i>
-                            <span class="text-gray-700" x-text="'Joined ' + joinedAt"></span>
+                            <i data-lucide="calendar" class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
+                            <span class="text-gray-700 dark:text-slate-200" x-text="'Joined ' + joinedAt"></span>
                         </div>
 
                         <div class="mr-8 flex items-center">
                             <template x-if="canSeeContacts">
                                 <div class="flex items-center">
-                                    <i data-lucide="map-pin" class="w-4 h-4 text-gray-500 mr-2"></i>
-                                    <span class="text-gray-700" x-text="locationText"></span>
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
+                                    <span class="text-gray-700 dark:text-slate-200" x-text="locationText"></span>
                                 </div>
                             </template>
                             <template x-if="!canSeeContacts">
                                 <div>
                                     <button x-show="!viewed.location" x-cloak @click="revealLocation()"
                                         class="flex items-center text-primary text-sm font-medium hover:underline transition-all btn-ghost px-2 py-1 rounded">
-                                        <i data-lucide="map-pin" class="w-4 h-4 text-gray-500 mr-2"></i>
+                                        <i data-lucide="map-pin"
+                                            class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
                                         <span>View Location</span>
                                     </button>
                                     <div x-show="viewed.location" x-cloak class="fade-in-up">
                                         <div class="flex items-center">
-                                            <i data-lucide="map-pin" class="w-4 h-4 text-gray-500 mr-2"></i>
-                                            <span class="text-gray-700" x-text="locationText"></span>
+                                            <i data-lucide="map-pin"
+                                                class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
+                                            <span class="text-gray-700 dark:text-slate-200"
+                                                x-text="locationText"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -430,21 +526,23 @@ ob_start();
                         <div class="mr-8 flex items-center">
                             <template x-if="canSeeContacts">
                                 <div class="flex items-center">
-                                    <i data-lucide="phone" class="w-4 h-4 text-gray-500 mr-2"></i>
-                                    <span class="text-gray-700" x-text="phoneText"></span>
+                                    <i data-lucide="phone" class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
+                                    <span class="text-gray-700 dark:text-slate-200" x-text="phoneText"></span>
                                 </div>
                             </template>
                             <template x-if="!canSeeContacts">
                                 <div>
                                     <button x-show="!viewed.contact" x-cloak @click="revealPhone()"
                                         class="flex items-center text-primary text-sm font-medium hover:underline transition-all btn-ghost px-2 py-1 rounded">
-                                        <i data-lucide="phone" class="w-4 h-4 text-gray-500 mr-2"></i>
+                                        <i data-lucide="phone"
+                                            class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
                                         <span>View Contact</span>
                                     </button>
                                     <div x-show="viewed.contact" x-cloak class="fade-in-up">
                                         <div class="flex items-center">
-                                            <i data-lucide="phone" class="w-4 h-4 text-gray-500 mr-2"></i>
-                                            <span class="text-gray-700" x-text="phoneText"></span>
+                                            <i data-lucide="phone"
+                                                class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
+                                            <span class="text-gray-700 dark:text-slate-200" x-text="phoneText"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -454,21 +552,23 @@ ob_start();
                         <div class="mr-8 flex items-center">
                             <template x-if="canSeeContacts">
                                 <div class="flex items-center">
-                                    <i data-lucide="mail" class="w-4 h-4 text-gray-500 mr-2"></i>
-                                    <span class="text-gray-700" x-text="emailText"></span>
+                                    <i data-lucide="mail" class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
+                                    <span class="text-gray-700 dark:text-slate-200" x-text="emailText"></span>
                                 </div>
                             </template>
                             <template x-if="!canSeeContacts">
                                 <div>
                                     <button x-show="!viewed.email" x-cloak @click="revealEmail()"
                                         class="flex items-center text-primary text-sm font-medium hover:underline transition-all btn-ghost px-2 py-1 rounded">
-                                        <i data-lucide="mail" class="w-4 h-4 text-gray-500 mr-2"></i>
+                                        <i data-lucide="mail"
+                                            class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
                                         <span>View Email</span>
                                     </button>
                                     <div x-show="viewed.email" x-cloak class="fade-in-up">
                                         <div class="flex items-center">
-                                            <i data-lucide="mail" class="w-4 h-4 text-gray-500 mr-2"></i>
-                                            <span class="text-gray-700" x-text="emailText"></span>
+                                            <i data-lucide="mail"
+                                                class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
+                                            <span class="text-gray-700 dark:text-slate-200" x-text="emailText"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -476,63 +576,63 @@ ob_start();
                         </div>
 
                         <div class="mr-8 flex items-center">
-                            <i data-lucide="boxes" class="w-4 h-4 text-gray-500 mr-2"></i>
-                            <span class="text-gray-700" x-text="productCountText"></span>
+                            <i data-lucide="boxes" class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
+                            <span class="text-gray-700 dark:text-slate-200" x-text="productCountText"></span>
                         </div>
 
                         <div class="mr-8 flex items-center">
-                            <i data-lucide="tags" class="w-4 h-4 text-gray-500 mr-2"></i>
-                            <span class="text-gray-700" x-text="categoryCountText"></span>
+                            <i data-lucide="tags" class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
+                            <span class="text-gray-700 dark:text-slate-200" x-text="categoryCountText"></span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div
-                class="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-x-8 gap-y-4 justify-center md:justify-start">
+                class="mt-6 pt-6 border-t border-gray-200 dark:border-slate-800 flex flex-wrap gap-x-8 gap-y-4 justify-center md:justify-start">
                 <div class="flex items-center">
                     <div :class="statusBadgeClass" x-text="statusText"></div>
                     <div class="ml-2 bg-primary text-white px-3 py-1 rounded-full text-sm"
                         x-text="store?.nature_of_business_name || 'Operation Type'"></div>
                 </div>
 
-                <div class="flex items-center">
-                    <div class="text-xl font-bold text-secondary">4.8</div>
+                <div class="hidden md:flex items-center">
+                    <div class="text-xl font-bold text-secondary dark:text-white">4.8</div>
                     <div class="ml-2 flex items-center">
                         <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
                         <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
                         <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
                         <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
                         <i data-lucide="star-half" class="w-4 h-4 text-yellow-400"></i>
-                        <span class="ml-1 text-sm text-gray-600">(128 reviews)</span>
+                        <span class="ml-1 text-sm text-gray-600 dark:text-slate-300">(128 reviews)</span>
                     </div>
                 </div>
 
                 <div class="ml-0 sm:ml-auto flex items-center gap-2">
-                    <span class="text-xs font-medium text-gray-500">SHARE</span>
+                    <span class="text-xs font-medium text-gray-500 dark:text-slate-400">SHARE</span>
                     <div class="flex gap-2">
                         <button @click="copyLink"
-                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all">
+                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 dark:hover:bg-slate-800 hover:-translate-y-0.5 transition-all">
                             <span class="hidden md:block"><i data-lucide="link" class="w-3 h-3"></i></span>
                             <span class="md:hidden"><i class="fa-solid fa-link text-xs"></i></span>
                         </button>
                         <button @click="shareWhatsApp"
-                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all">
+                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 dark:hover:bg-slate-800 hover:-translate-y-0.5 transition-all">
                             <span class="hidden md:block"><i data-lucide="message-circle" class="w-3 h-3"></i></span>
                             <span class="md:hidden"><i class="fa-brands fa-whatsapp text-xs"></i></span>
                         </button>
                         <button @click="shareFacebook"
-                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all">
+                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 dark:hover:bg-slate-800 hover:-translate-y-0.5 transition-all">
                             <span class="hidden md:block"><i data-lucide="facebook" class="w-3 h-3"></i></span>
                             <span class="md:hidden"><i class="fa-brands fa-facebook-f text-xs"></i></span>
                         </button>
                         <button @click="shareTwitter"
-                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all">
+                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 dark:hover:bg-slate-800 hover:-translate-y-0.5 transition-all">
                             <span class="hidden md:block"><i data-lucide="twitter" class="w-3 h-3"></i></span>
                             <span class="md:hidden"><i class="fa-brands fa-x-twitter text-xs"></i></span>
                         </button>
                         <button @click="shareLinkedIn"
-                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 hover:-translate-y-0.5 transition-all">
+                            class="flex items-center justify-center w-6 h-6 rounded-full text-primary border-[1.5px] border-primary bg-transparent hover:bg-red-50 dark:hover:bg-slate-800 hover:-translate-y-0.5 transition-all">
                             <span class="hidden md:block"><i data-lucide="linkedin" class="w-3 h-3"></i></span>
                             <span class="md:hidden"><i class="fa-brands fa-linkedin-in text-xs"></i></span>
                         </button>
@@ -544,13 +644,13 @@ ob_start();
         <main class="py-8">
             <div class="mb-6">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
                         <i data-lucide="package-open" class="w-5 h-5 mr-2 text-primary"></i>
                         Products
                     </h2>
                     <div class="flex flex-col sm:flex-row gap-4">
                         <select x-model="selectedCategory" @change="applyFilters"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto">
+                            class="px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg text-sm w-full sm:w-auto">
                             <option value="">All Categories</option>
                             <template x-for="c in filterCategories" :key="c.id">
                                 <option :value="c.id" x-text="c.name"></option>
@@ -558,48 +658,49 @@ ob_start();
                         </select>
                         <input type="text" x-model.debounce.200ms="searchTerm" @input="applyFilters"
                             placeholder="Search products..."
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto">
+                            class="px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg text-sm w-full sm:w-auto">
                     </div>
                 </div>
 
                 <div id="products-container" class="masonry-grid">
                     <template x-if="filteredProducts.length === 0 && productsLoaded">
-                        <div class="col-span-full text-center py-8 text-gray-500">No products found for this vendor.
-                        </div>
+                        <div class="col-span-full text-center py-8 text-gray-500 dark:text-slate-300">No products found
+                            for this vendor.</div>
                     </template>
 
                     <template x-for="p in visibleProducts" :key="p.id">
                         <div
-                            class="transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                            class="transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
                             <div class="relative group">
                                 <img :src="p._img || placeholderFor(p)" :alt="p.name"
                                     class="w-full h-40 md:h-48 object-cover">
                                 <div
-                                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 md:flex items-center justify-center transition-opacity hidden">
                                     <a :href="BASE_URL + 'view/product/' + p.id"
-                                        class="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-primary hover:text-white transition-colors text-sm">View
+                                        class="bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 px-4 py-2 rounded-lg font-medium hover:bg-primary hover:text-white transition-colors text-sm">View
                                         Details</a>
                                 </div>
                             </div>
                             <div class="p-3 md:p-5 flex flex-col flex-1">
                                 <div>
-                                    <h3 class="font-bold text-gray-800 mb-2 line-clamp-2 text-sm md:text-base"
+                                    <h3 class="font-bold text-gray-800 dark:text-white mb-2 line-clamp-2 text-sm md:text-base"
                                         x-text="p.name"></h3>
-                                    <p class="text-gray-600 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block"
+                                    <p class="text-gray-600 dark:text-slate-300 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block"
                                         x-text="p.description || ''"></p>
                                 </div>
                                 <div class="flex-1"></div>
-                                <div
-                                    class="border-t border-gray-200 pt-3 mb-3 flex flex-col justify-between min-h-[20px]">
+
+                                <div class="hidden md:block border-t border-gray-200 dark:border-slate-800 pt-3 mb-3">
                                     <template x-if="(p._viewPricing.length === 0)">
                                         <div>
                                             <template x-if="!auth.canSeeAllCategories">
                                                 <button @click="setPendingAndLogin({type:'view-categories'})"
-                                                    class="block w-full text-center bg-gray-100 text-gray-600 px-3 py-2 rounded-md text-sm">View
+                                                    class="block w-full text-center bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 px-3 py-2 rounded-md text-sm">View
                                                     Price Categories</button>
                                             </template>
                                             <template x-if="auth.canSeeAllCategories">
-                                                <div class="text-sm text-gray-600 italic p-2">No price data</div>
+                                                <div class="text-sm text-gray-600 dark:text-slate-300 italic p-2">No
+                                                    price data</div>
                                             </template>
                                         </div>
                                     </template>
@@ -607,12 +708,12 @@ ob_start();
                                     <template x-if="p._viewPricing.length > 0">
                                         <div>
                                             <template x-for="(pr, idx) in p._viewPricing" :key="pr.pricing_id">
-                                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded"
+                                                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-slate-800 rounded"
                                                     :class="idx >= 2 && !p._showAll ? 'hidden' : ''">
                                                     <div class="flex flex-col min-w-0">
-                                                        <span class="font-medium text-gray-700"
+                                                        <span class="font-medium text-gray-700 dark:text-slate-200"
                                                             x-text="formatUnit(pr)"></span>
-                                                        <div class="flex items-center text-xs text-gray-500"
+                                                        <div class="flex items-center text-xs text-gray-500 dark:text-slate-400"
                                                             x-show="auth.canSeeAllCategories">
                                                             <span class="truncate"
                                                                 x-text="capitalize(pr.price_category)"></span>
@@ -642,12 +743,29 @@ ob_start();
                                             </template>
 
                                             <button
-                                                class="view-more-prices text-blue-600 underline text-sm w-full text-center mt-2 pt-2 border-t border-dashed border-gray-200"
+                                                class="view-more-prices text-blue-600 underline text-sm w-full text-center mt-2 pt-2 border-t border-dashed border-gray-200 dark:border-slate-700"
                                                 x-show="p._viewPricing.length > 2 && !p._showAll"
                                                 @click="expandPrices(p)">View More Prices</button>
-                                            <div class="login-note text-center text-gray-500 text-sm"
+                                            <div class="login-note text-center text-gray-500 dark:text-slate-400 text-sm"
                                                 x-show="!auth.canSeeAllCategories && p._hasRetail">Login to view more
                                                 price categories</div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div class="md:hidden border-t border-gray-200 dark:border-slate-800 pt-3 mb-3">
+                                    <template x-if="Array.isArray(p.pricing) && p.pricing.length>0 && !auth.loggedIn">
+                                        <button @click="setPendingAndLogin({type:'view-categories'})"
+                                            class="w-full text-center bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 px-3 py-2 rounded-md text-sm">Login
+                                            to View Price</button>
+                                    </template>
+                                    <template x-if="(p._viewPricing.length > 0) && auth.loggedIn">
+                                        <button @click="openPriceSheet(p)"
+                                            class="w-full text-center bg-gray-900 dark:bg-black text-white px-3 py-2 rounded-md text-sm">View
+                                            Prices</button>
+                                    </template>
+                                    <template x-if="(p._viewPricing.length === 0) && auth.loggedIn">
+                                        <div class="text-sm text-gray-600 dark:text-slate-300 italic p-2">No price data
                                         </div>
                                     </template>
                                 </div>
@@ -667,7 +785,7 @@ ob_start();
                                     </template>
                                     <button @click="openVendorSell(p)"
                                         class="bg-sky-600 hover:bg-sky-700 text-white px-3 md:px-4 py-2 rounded-lg transition-colors flex items-center flex-1 justify-center text-xs md:text-sm">
-                                        <i data-lucide="tags" class="w-4 h-4 mr-1"></i>Sell
+                                        <i data-lucide="tags" class="w-4 h-4"></i>Sell
                                     </button>
                                 </div>
                             </div>
@@ -676,211 +794,306 @@ ob_start();
                 </div>
 
                 <button x-show="pagination.page < pagination.pages" @click="loadMore"
-                    class="mx-auto mt-8 block bg-gray-100 text-gray-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors">Load
+                    class="mx-auto mt-8 block bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">Load
                     More Products</button>
             </div>
         </main>
     </div>
 
-    <div x-show="modals.buy.visible" x-cloak class="fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-black/50" @click="closeBuy"></div>
-        <div
-            class="relative w-full max-w-6xl mx-auto top-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl max-h-[95vh] overflow-hidden">
+    <div x-show="modals.prices.visible" x-cloak class="fixed inset-0 z-[1200]" x-transition.opacity>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closePriceSheet"></div>
+        <div class="fixed inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
             <div
-                class="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100">
-                <h3 class="text-xl font-bold text-gray-900">Complete Your Request</h3>
-                <button @click="closeBuy" class="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+                class="w-full sm:w-[94%] lg:max-w-2xl bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden modal-panel">
+                <div
+                    class="p-4 sm:p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-red-50 to-red-100 dark:from-slate-800 dark:to-slate-900">
+                    <h3 class="text-base sm:text-xl font-bold text-gray-900 dark:text-slate-100 whitespace-nowrap overflow-hidden text-ellipsis max-w-[calc(100%-3rem)]"
+                        x-text="modals.prices.product?.name || 'Prices'"></h3>
+                    <button @click="closePriceSheet"
+                        class="text-gray-500 dark:text-slate-300 hover:text-gray-700 dark:hover:text-white p-2 rounded-full hover:bg-white/60 dark:hover:bg-white/10">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <div class="modal-scroll p-4 sm:p-6">
+                    <template x-if="!modals.prices.product">
+                        <div class="text-center text-gray-500 dark:text-slate-300 py-10">No product selected</div>
+                    </template>
+                    <template x-if="modals.prices.product">
+                        <div class="space-y-3">
+                            <template x-if="modals.prices.entries.length===0 && !auth.loggedIn">
+                                <div class="text-center">
+                                    <button @click="setPendingAndLogin({type:'view-categories'})"
+                                        class="px-4 py-2 rounded-lg bg-gray-900 dark:bg-black text-white">Login to View
+                                        Price</button>
+                                </div>
+                            </template>
+                            <template x-if="modals.prices.entries.length===0 && auth.loggedIn">
+                                <div class="text-center text-gray-500 dark:text-slate-300 py-6">No price data</div>
+                            </template>
+                            <template x-for="pr in modals.prices.entries" :key="pr.pricing_id">
+                                <div
+                                    class="flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-gray-900 dark:text-slate-100 line-clamp-1"
+                                            x-text="formatUnit(pr)"></div>
+                                        <div class="text-xs text-gray-600 dark:text-slate-300">
+                                            <span class="uppercase" x-text="pr.price_category"></span>
+                                            <span x-show="pr.delivery_capacity && pr.price_category==='retail'"> • Max:
+                                                <span x-text="pr.delivery_capacity"></span></span>
+                                            <span x-show="pr.delivery_capacity && pr.price_category!=='retail'"> • Min:
+                                                <span x-text="pr.delivery_capacity"></span></span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <template
+                                            x-if="auth.showPriceDirectly || viewed.prices.includes(pr.pricing_id)">
+                                            <span class="text-primary font-bold whitespace-nowrap"
+                                                x-text="'UGX ' + nf(pr.price)"></span>
+                                        </template>
+                                        <template
+                                            x-if="!auth.showPriceDirectly && !viewed.prices.includes(pr.pricing_id)">
+                                            <button class="text-blue-600 underline text-sm whitespace-nowrap"
+                                                @click="revealPriceMobile(pr)">View Price</button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+                <div
+                    class="md:hidden sticky bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-gray-200 dark:border-slate-800 p-3">
+                    <button @click="closePriceSheet"
+                        class="w-full px-3 py-2 rounded-lg bg-gray-900 dark:bg-black text-white">Done</button>
+                </div>
             </div>
+        </div>
+    </div>
 
-            <div class="overflow-y-auto max-h-[calc(95vh-120px)]">
-                <div class="flex h-full">
-                    <div class="w-full md:w-1/2 border-r border-gray-100 overflow-y-auto">
-                        <div x-show="modals.buy.loading" class="text-center py-8">
-                            <div
-                                class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary">
+    <div x-show="modals.buy.visible" x-cloak class="fixed inset-0 z-[1200]" x-transition.opacity>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeBuy"></div>
+        <div class="fixed inset-0 flex items-center justify-center p-0 sm:p-4">
+            <div
+                class="w-full sm:w-[94%] lg:max-w-6xl bg-white dark:bg-slate-900 rounded-none sm:rounded-2xl shadow-2xl overflow-hidden modal-panel">
+                <div
+                    class="p-4 sm:p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-blue-50 to-blue-100 dark:from-slate-800 dark:to-slate-900">
+                    <h3 class="text-base sm:text-xl font-bold text-gray-900 dark:text-slate-100">Complete Your Request
+                    </h3>
+                    <button @click="closeBuy"
+                        class="text-gray-500 dark:text-slate-300 hover:text-gray-700 dark:hover:text-white p-2 rounded-full hover:bg-white/60 dark:hover:bg-white/10">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <div class="modal-scroll">
+                    <div class="flex flex-col md:flex-row">
+                        <div
+                            class="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-gray-100 dark:border-slate-800">
+                            <div x-show="modals.buy.loading" class="text-center py-8">
+                                <div
+                                    class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary">
+                                </div>
+                                <p class="mt-2 text-gray-600 dark:text-slate-300">Loading your information...</p>
                             </div>
-                            <p class="mt-2 text-gray-600">Loading your information...</p>
+
+                            <form x-show="!modals.buy.loading" @submit.prevent="submitBuy" class="p-4 sm:p-6 space-y-6">
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Visit
+                                        Date <span class="text-red-500">*</span></label>
+                                    <div class="relative">
+                                        <div id="datepicker-container" class="w-full"></div>
+                                        <input type="hidden" x-model="buyForm.visitDate" required>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1">Please select a date when
+                                        you plan to visit our store</p>
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Package
+                                        <span class="text-red-500">*</span></label>
+                                    <select x-model="buyForm.packageId" @change="updateCapacity"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                                        required>
+                                        <option value="">Select a package</option>
+                                        <template x-for="pr in modals.buy.packages" :key="pr.pricing_id">
+                                            <option :value="pr.pricing_id" :data-category="pr.price_category"
+                                                :data-capacity="pr.delivery_capacity || 1" :data-price="pr.price"
+                                                :data-unit="formatUnit(pr)"
+                                                x-text="formatUnit(pr) + ' (' + capitalize(pr.price_category) + ') - UGX ' + nf(pr.price)">
+                                            </option>
+                                        </template>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Quantity
+                                        <span class="text-red-500">*</span></label>
+                                    <div class="flex items-center">
+                                        <button type="button" @click="decQty"
+                                            class="px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-l-md bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700">
+                                            <i data-lucide="minus" class="w-4 h-4"></i>
+                                        </button>
+                                        <input type="number" x-model.number="buyForm.quantity"
+                                            class="w-full px-3 py-2 border-t border-b border-gray-300 dark:border-slate-700 text-center focus:ring-0 focus:border-gray-300 dark:focus:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                                            min="1">
+                                        <button type="button" @click="incQty"
+                                            class="px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-r-md bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700">
+                                            <i data-lucide="plus" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1" x-text="capacityNote"></p>
+                                </div>
+
+                                <div>
+                                    <label class="flex items-center mb-2">
+                                        <input type="checkbox" x-model="buyForm.showAlt"
+                                            class="h-4 w-4 text-primary focus:ring-primary/20 border-gray-300 dark:border-slate-700 rounded">
+                                        <span class="ml-2 block text-sm text-gray-700 dark:text-slate-200">Add
+                                            alternative contact details (optional)</span>
+                                    </label>
+
+                                    <div class="space-y-4" x-show="buyForm.showAlt">
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Alternative
+                                                Phone</label>
+                                            <input type="text" x-model="buyForm.altPhone"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                                                placeholder="Alternative phone number">
+                                        </div>
+
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Alternative
+                                                Email</label>
+                                            <input type="email" x-model="buyForm.altEmail"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                                                placeholder="Alternative email address">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Notes
+                                        (Optional)</label>
+                                    <textarea x-model="buyForm.notes" rows="3"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                                        placeholder="Any special requests or notes for your visit"></textarea>
+                                </div>
+
+                                <div class="pb-20 md:pb-0"></div>
+                            </form>
                         </div>
 
-                        <form x-show="!modals.buy.loading" @submit.prevent="submitBuy" class="p-6 space-y-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Visit Date <span
-                                        class="text-red-500">*</span></label>
-                                <div class="relative">
-                                    <div id="datepicker-container" class="w-full"></div>
-                                    <input type="hidden" x-model="buyForm.visitDate" required>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">Please select a date when you plan to visit our
-                                    store</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Package <span
-                                        class="text-red-500">*</span></label>
-                                <select x-model="buyForm.packageId" @change="updateCapacity"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                    required>
-                                    <option value="">Select a package</option>
-                                    <template x-for="pr in modals.buy.packages" :key="pr.pricing_id">
-                                        <option :value="pr.pricing_id" :data-category="pr.price_category"
-                                            :data-capacity="pr.delivery_capacity || 1" :data-price="pr.price"
-                                            :data-unit="formatUnit(pr)"
-                                            x-text="formatUnit(pr) + ' (' + capitalize(pr.price_category) + ') - UGX ' + nf(pr.price)">
-                                        </option>
-                                    </template>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Quantity <span
-                                        class="text-red-500">*</span></label>
-                                <div class="flex items-center">
-                                    <button type="button" @click="decQty"
-                                        class="px-3 py-2 border border-gray-300 rounded-l-md bg-gray-100 hover:bg-gray-200">
-                                        <i data-lucide="minus" class="w-4 h-4"></i>
-                                    </button>
-                                    <input type="number" x-model.number="buyForm.quantity"
-                                        class="w-full px-3 py-2 border-t border-b border-gray-300 text-center focus:ring-0 focus:border-gray-300"
-                                        min="1">
-                                    <button type="button" @click="incQty"
-                                        class="px-3 py-2 border border-gray-300 rounded-r-md bg-gray-100 hover:bg-gray-200">
-                                        <i data-lucide="plus" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1" x-text="capacityNote"></p>
-                            </div>
-
-                            <div>
-                                <label class="flex items-center mb-2">
-                                    <input type="checkbox" x-model="buyForm.showAlt"
-                                        class="h-4 w-4 text-primary focus:ring-primary/20 border-gray-300 rounded">
-                                    <span class="ml-2 block text-sm text-gray-700">Add alternative contact details
-                                        (optional)</span>
-                                </label>
-
-                                <div class="space-y-4" x-show="buyForm.showAlt">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Alternative
-                                            Phone</label>
-                                        <input type="text" x-model="buyForm.altPhone"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                            placeholder="Alternative phone number">
+                        <div class="md:w-1/2 hidden md:block">
+                            <div class="h-full flex flex-col">
+                                <div class="p-6 flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-800">
+                                    <div class="mb-6">
+                                        <h3 class="text-xl font-bold text-gray-800 dark:text-slate-100 mb-2"
+                                            x-text="modals.buy.product?.name || ''"></h3>
+                                        <div
+                                            class="bg-white dark:bg-slate-900 rounded-lg shadow-sm overflow-hidden mb-4">
+                                            <img :src="modals.buy.product?._img || placeholderFor(modals.buy.product)"
+                                                alt="Product Image" class="w-full h-48 object-cover">
+                                        </div>
+                                        <p class="text-gray-600 dark:text-slate-300 text-sm line-clamp-2 mb-2"
+                                            x-text="modals.buy.product?.description || 'No description available.'"></p>
                                     </div>
 
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Alternative
-                                            Email</label>
-                                        <input type="email" x-model="buyForm.altEmail"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                            placeholder="Alternative email address">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
-                                <textarea x-model="buyForm.notes" rows="3"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                                    placeholder="Any special requests or notes for your visit"></textarea>
-                            </div>
-
-                            <div class="pt-4 border-t border-gray-200">
-                                <div class="flex justify-between">
-                                    <button type="button" @click="closeBuy"
-                                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">Cancel</button>
-                                    <button type="submit" :disabled="modals.buy.submitting"
-                                        class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2">
-                                        <span x-show="!modals.buy.submitting">Submit Order</span>
-                                        <span x-show="modals.buy.submitting" class="inline-flex items-center">
-                                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                                    stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                </path>
-                                            </svg>Loading...
-                                        </span>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div class="hidden md:block md:w-1/2">
-                        <div class="h-full flex flex-col">
-                            <div class="p-6 flex-1 overflow-y-auto bg-gray-50">
-                                <div class="mb-6">
-                                    <h3 class="text-xl font-bold text-gray-800 mb-2"
-                                        x-text="modals.buy.product?.name || ''"></h3>
-                                    <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-4">
-                                        <img :src="modals.buy.product?._img || placeholderFor(modals.buy.product)"
-                                            alt="Product Image" class="w-full h-48 object-cover">
-                                    </div>
-                                    <p class="text-gray-600 text-sm line-clamp-2 mb-2"
-                                        x-text="modals.buy.product?.description || 'No description available.'"></p>
-                                </div>
-
-                                <div class="border-t border-gray-200 pt-6 mb-6">
-                                    <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Order
-                                        Summary</h4>
-                                    <div class="space-y-3">
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Selected Package:</span>
-                                            <span class="font-medium line-clamp-1"
-                                                x-text="summaryPackage || '-'"></span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Quantity:</span>
-                                            <span class="font-medium" x-text="buyForm.quantity || '-'"></span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span class="text-gray-600">Visit Date:</span>
-                                            <span class="font-medium" x-text="summaryDate || '-'"></span>
-                                        </div>
-                                        <div class="space-y-2 pt-2 border-t border-gray-200"
-                                            x-show="buyForm.showAlt && (buyForm.altPhone || buyForm.altEmail)">
-                                            <h5 class="text-sm font-medium text-gray-500">Alternative Contact</h5>
-                                            <div class="text-sm" x-show="buyForm.altPhone">
-                                                <span class="text-gray-600">Phone:</span>
-                                                <span class="ml-2 font-medium" x-text="buyForm.altPhone"></span>
+                                    <div class="border-t border-gray-200 dark:border-slate-700 pt-6 mb-6">
+                                        <h4
+                                            class="text-sm font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+                                            Order Summary</h4>
+                                        <div class="space-y-3">
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600 dark:text-slate-300">Selected Package:</span>
+                                                <span class="font-medium line-clamp-1"
+                                                    x-text="summaryPackage || '-'"></span>
                                             </div>
-                                            <div class="text-sm" x-show="buyForm.altEmail">
-                                                <span class="text-gray-600">Email:</span>
-                                                <span class="ml-2 font-medium" x-text="buyForm.altEmail"></span>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600 dark:text-slate-300">Quantity:</span>
+                                                <span class="font-medium" x-text="buyForm.quantity || '-'"></span>
+                                            </div>
+                                            <div class="flex justify-between">
+                                                <span class="text-gray-600 dark:text-slate-300">Visit Date:</span>
+                                                <span class="font-medium" x-text="summaryDate || '-'"></span>
+                                            </div>
+                                            <div class="space-y-2 pt-2 border-t border-gray-200 dark:border-slate-700"
+                                                x-show="buyForm.showAlt && (buyForm.altPhone || buyForm.altEmail)">
+                                                <h5 class="text-sm font-medium text-gray-500 dark:text-slate-400">
+                                                    Alternative Contact</h5>
+                                                <div class="text-sm" x-show="buyForm.altPhone">
+                                                    <span class="text-gray-600 dark:text-slate-300">Phone:</span>
+                                                    <span class="ml-2 font-medium" x-text="buyForm.altPhone"></span>
+                                                </div>
+                                                <div class="text-sm" x-show="buyForm.altEmail">
+                                                    <span class="text-gray-600 dark:text-slate-300">Email:</span>
+                                                    <span class="ml-2 font-medium" x-text="buyForm.altEmail"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-white dark:bg-slate-900 rounded-lg shadow-sm p-4">
+                                        <h4
+                                            class="text-sm font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+                                            Your Information</h4>
+                                        <div class="grid grid-cols-1 gap-4">
+                                            <div class="flex items-center">
+                                                <i data-lucide="user"
+                                                    class="h-5 w-5 text-gray-400 dark:text-slate-300 mr-3"></i>
+                                                <div>
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400">Name</p>
+                                                    <p class="font-medium text-gray-900 dark:text-slate-100"
+                                                        x-text="userSummary.name || '-'"></p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <i data-lucide="mail"
+                                                    class="h-5 w-5 text-gray-400 dark:text-slate-300 mr-3"></i>
+                                                <div>
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400">Email</p>
+                                                    <p class="font-medium text-gray-900 dark:text-slate-100"
+                                                        x-text="userSummary.email || '-'"></p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <i data-lucide="phone"
+                                                    class="h-5 w-5 text-gray-400 dark:text-slate-300 mr-3"></i>
+                                                <div>
+                                                    <p class="text-xs text-gray-500 dark:text-slate-400">Phone</p>
+                                                    <p class="font-medium text-gray-900 dark:text-slate-100"
+                                                        x-text="userSummary.phone || '-'"></p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div class="bg-white rounded-lg shadow-sm p-4">
-                                    <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Your
-                                        Information</h4>
-                                    <div class="grid grid-cols-1 gap-4">
-                                        <div class="flex items-center">
-                                            <i data-lucide="user" class="h-5 w-5 text-gray-400 mr-3"></i>
-                                            <div>
-                                                <p class="text-xs text-gray-500">Name</p>
-                                                <p class="font-medium" x-text="userSummary.name || '-'"></p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <i data-lucide="mail" class="h-5 w-5 text-gray-400 mr-3"></i>
-                                            <div>
-                                                <p class="text-xs text-gray-500">Email</p>
-                                                <p class="font-medium" x-text="userSummary.email || '-'"></p>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center">
-                                            <i data-lucide="phone" class="h-5 w-5 text-gray-400 mr-3"></i>
-                                            <div>
-                                                <p class="text-xs text-gray-500">Phone</p>
-                                                <p class="font-medium" x-text="userSummary.phone || '-'"></p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div
+                            class="md:hidden sticky bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-gray-200 dark:border-slate-800 p-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <button @click="closeBuy"
+                                    class="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-200">Cancel</button>
+                                <button @click="submitBuy" :disabled="modals.buy.submitting"
+                                    class="px-3 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
+                                    <span x-show="!modals.buy.submitting">Submit Order</span>
+                                    <span x-show="modals.buy.submitting" class="inline-flex items-center">
+                                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>Loading...
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -890,31 +1103,35 @@ ob_start();
     </div>
 
     <div x-show="modals.confirm.visible" x-cloak
-        class="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-2">Review & Confirm</h3>
-            <p class="text-gray-600 mb-4">A processing fee will be charged to your account and refunded upon
-                completion of the order</p>
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1300] flex items-center justify-center"
+        x-transition.opacity>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Review & Confirm</h3>
+            <p class="text-gray-600 dark:text-slate-300 mb-4">A processing fee will be charged to your account and
+                refunded upon completion of the order</p>
 
-            <div class="rounded-md bg-gray-50 p-4 mb-4">
-                <div class="font-medium text-gray-900" x-text="modals.confirm.payload?.product?.name || '-'"></div>
-                <div class="text-sm text-gray-600 mt-1"
+            <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-4 mb-4">
+                <div class="font-medium text-gray-900 dark:text-slate-100"
+                    x-text="modals.confirm.payload?.product?.name || '-'"></div>
+                <div class="text-sm text-gray-600 dark:text-slate-300 mt-1"
                     x-text="'Store: ' + (modals.confirm.payload?.product?.store_name || '-')"></div>
             </div>
 
             <div class="space-y-3">
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Fee</span>
-                    <span class="font-medium" x-text="'UGX ' + nf(modals.confirm.payload?.fee || 0)"></span>
+                    <span class="text-gray-600 dark:text-slate-300">Fee</span>
+                    <span class="font-medium text-gray-900 dark:text-slate-100"
+                        x-text="'UGX ' + nf(modals.confirm.payload?.fee || 0)"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Current Balance</span>
-                    <span class="font-medium" x-text="'UGX ' + nf(modals.confirm.payload?.balance || 0)"></span>
+                    <span class="text-gray-600 dark:text-slate-300">Current Balance</span>
+                    <span class="font-medium text-gray-900 dark:text-slate-100"
+                        x-text="'UGX ' + nf(modals.confirm.payload?.balance || 0)"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Balance After</span>
+                    <span class="text-gray-600 dark:text-slate-300">Balance After</span>
                     <span
-                        :class="(modals.confirm.payload?.remaining_balance ?? 0) < 0 ? 'text-red-600 font-semibold' : 'font-medium'"
+                        :class="(modals.confirm.payload?.remaining_balance ?? 0) < 0 ? 'text-red-600 font-semibold' : 'font-medium text-gray-900 dark:text-slate-100'"
                         x-text="'UGX ' + nf((modals.confirm.payload?.remaining_balance) || 0)"></span>
                 </div>
                 <div class="flex justify-between text-red-600" x-show="!modals.confirm.payload?.can_submit">
@@ -923,15 +1140,12 @@ ob_start();
                 </div>
             </div>
 
-            <p class="text-sm text-red-600 mt-3" x-show="!modals.confirm.payload?.can_submit">
-                Insufficient balance. Please top up your wallet to continue.
-            </p>
+            <p class="text-sm text-red-600 mt-3" x-show="!modals.confirm.payload?.can_submit">Insufficient balance.
+                Please top up your wallet to continue.</p>
 
             <div class="mt-6 flex justify-between">
                 <button @click="modals.confirm.visible=false"
-                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    Back
-                </button>
+                    class="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-md text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800">Back</button>
                 <button @click="submitBuyConfirmed"
                     :disabled="modals.confirm.submitting || !modals.confirm.payload?.can_submit"
                     class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50">
@@ -951,46 +1165,50 @@ ob_start();
     </div>
 
     <div x-show="modals.error.visible" x-cloak
-        class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1200] flex items-center justify-center"
+        x-transition.opacity>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div class="bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 dark:border-red-600 p-4 mb-6">
                 <div class="flex">
                     <i data-lucide="shield-alert" class="h-5 w-5 text-red-500"></i>
-                    <p class="text-sm text-red-700 ml-3"
+                    <p class="text-sm text-red-700 dark:text-red-200 ml-3"
                         x-text="modals.error.message || 'An error occurred. Please try again.'"></p>
                 </div>
             </div>
             <button @click="closeError"
-                class="w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none">Close</button>
+                class="w-full px-4 py-2 bg-gray-200 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-md hover:bg-gray-300 dark:hover:bg-slate-700">Close</button>
         </div>
     </div>
 
     <div x-show="modals.success.visible" x-cloak
-        class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <i data-lucide="check" class="h-6 w-6 text-green-600"></i>
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1200] flex items-center justify-center"
+        x-transition.opacity>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-6 text-center">
+            <div
+                class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+                <i data-lucide="check" class="h-6 w-6 text-green-600 dark:text-green-400"></i>
             </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Request Submitted</h3>
-            <p class="text-gray-600 mb-4" x-text="modals.success.message || defaultSuccessMessage"></p>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-slate-100 mb-2">Request Submitted</h3>
+            <p class="text-gray-600 dark:text-slate-300 mb-4" x-text="modals.success.message || defaultSuccessMessage">
+            </p>
             <div class="text-left space-y-2 mb-4"
                 x-show="modals.success.payload && (('fee_charged' in modals.success.payload) || ('remaining_balance' in modals.success.payload) || ('transaction_id' in modals.success.payload))">
                 <div class="flex justify-between"
                     x-show="modals.success.payload && ('fee_charged' in modals.success.payload)">
-                    <span class="text-gray-600">Fee Charged</span>
-                    <span class="font-medium"
+                    <span class="text-gray-600 dark:text-slate-300">Fee Charged</span>
+                    <span class="font-medium text-gray-900 dark:text-slate-100"
                         x-text="'UGX ' + nf((modals.success.payload && modals.success.payload.fee_charged) || 0)"></span>
                 </div>
                 <div class="flex justify-between"
                     x-show="modals.success.payload && ('remaining_balance' in modals.success.payload)">
-                    <span class="text-gray-600">Remaining Balance</span>
-                    <span class="font-medium"
+                    <span class="text-gray-600 dark:text-slate-300">Remaining Balance</span>
+                    <span class="font-medium text-gray-900 dark:text-slate-100"
                         x-text="'UGX ' + nf((modals.success.payload && modals.success.payload.remaining_balance) || 0)"></span>
                 </div>
                 <div class="flex justify-between"
                     x-show="modals.success.payload && ('transaction_id' in modals.success.payload)">
-                    <span class="text-gray-600">Transaction ID</span>
-                    <span class="font-mono text-sm"
+                    <span class="text-gray-600 dark:text-slate-300">Transaction ID</span>
+                    <span class="font-mono text-sm text-gray-900 dark:text-slate-100"
                         x-text="(modals.success.payload && modals.success.payload.transaction_id) || '-'"></span>
                 </div>
             </div>
@@ -1000,21 +1218,24 @@ ob_start();
     </div>
 
     <?php if ($canEdit): ?>
-        <div x-show="modals.name.visible" x-cloak class="fixed inset-0 z-[1000] bg-black bg-opacity-50">
-            <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
-                <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Edit Store Name</h2>
-                    <button @click="modals.name.visible=false" class="text-gray-400 hover:text-gray-900">
+        <div x-show="modals.name.visible" x-cloak class="fixed inset-0 z-[1400] bg-black/60 backdrop-blur-sm">
+            <div
+                class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
+                <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200 dark:border-slate-800">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-slate-100">Edit Store Name</h2>
+                    <button @click="modals.name.visible=false"
+                        class="text-gray-400 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white">
                         <i data-lucide="x" class="w-6 h-6"></i>
                     </button>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Store Name</label>
                     <input type="text" x-model="editForms.name"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-primary focus:border-primary">
                 </div>
-                <div class="flex justify-end gap-2 pt-2 border-t border-gray-200">
-                    <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                <div class="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-slate-800">
+                    <button type="button"
+                        class="px-4 py-2 bg-gray-200 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-md hover:bg-gray-300 dark:hover:bg-slate-700"
                         @click="modals.name.visible=false">Cancel</button>
                     <button type="button" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
                         @click="saveName">Save</button>
@@ -1022,21 +1243,25 @@ ob_start();
             </div>
         </div>
 
-        <div x-show="modals.description.visible" x-cloak class="fixed inset-0 z-[1000] bg-black bg-opacity-50">
-            <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
-                <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Edit Store Description</h2>
-                    <button @click="modals.description.visible=false" class="text-gray-400 hover:text-gray-900">
+        <div x-show="modals.description.visible" x-cloak class="fixed inset-0 z-[1400] bg-black/60 backdrop-blur-sm">
+            <div
+                class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
+                <div class="flex justify-between items-center pb-2 mb-4 border-b border-gray-200 dark:border-slate-800">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-slate-100">Edit Store Description</h2>
+                    <button @click="modals.description.visible=false"
+                        class="text-gray-400 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white">
                         <i data-lucide="x" class="w-6 h-6"></i>
                     </button>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Store Description</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Store
+                        Description</label>
                     <textarea x-model="editForms.description" rows="4"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"></textarea>
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-primary focus:border-primary"></textarea>
                 </div>
-                <div class="flex justify-end gap-2 pt-2 border-t border-gray-200">
-                    <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                <div class="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-slate-800">
+                    <button type="button"
+                        class="px-4 py-2 bg-gray-200 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-md hover:bg-gray-300 dark:hover:bg-slate-700"
                         @click="modals.description.visible=false">Cancel</button>
                     <button type="button" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
                         @click="saveDescription">Save</button>
@@ -1044,25 +1269,28 @@ ob_start();
             </div>
         </div>
 
-        <div x-show="modals.logo.visible" x-cloak class="fixed inset-0 z-[1000] bg-black bg-opacity-50">
-            <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
-                <div class="flex justify-between items-center pb-2 mb-4 border-gray-200 border-b">
-                    <h2 class="text-xl font-semibold text-gray-900">Edit Store Logo</h2>
-                    <button @click="closeLogoEditor" class="text-gray-400 hover:text-gray-900">
+        <div x-show="modals.logo.visible" x-cloak class="fixed inset-0 z-[1400] bg-black/60 backdrop-blur-sm">
+            <div
+                class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
+                <div class="flex justify-between items-center pb-2 mb-4 border-gray-200 dark:border-slate-800 border-b">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-slate-100">Edit Store Logo</h2>
+                    <button @click="closeLogoEditor"
+                        class="text-gray-400 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white">
                         <i data-lucide="x" class="w-6 h-6"></i>
                     </button>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Upload Logo</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Upload Logo</label>
                     <input type="file" accept="image/*" @change="onLogoFile"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
-                    <p class="text-sm text-gray-500 mt-1">Select a square image for best results.</p>
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-primary focus:border-primary">
+                    <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Select a square image for best results.</p>
                 </div>
                 <div x-show="logoCrop.visible" class="h-[300px] mb-4">
                     <img id="cropper-image" src="https://placehold.co/600x400?text=Image+to+Crop" alt="Image to crop">
                 </div>
-                <div class="flex justify-end gap-2 pt-2 border-t border-gray-200">
-                    <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                <div class="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-slate-800">
+                    <button type="button"
+                        class="px-4 py-2 bg-gray-200 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-md hover:bg-gray-300 dark:hover:bg-slate-700"
                         @click="closeLogoEditor">Cancel</button>
                     <button type="button" x-show="logoCrop.visible"
                         class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90" @click="cropAndSaveLogo">Crop
@@ -1071,26 +1299,31 @@ ob_start();
             </div>
         </div>
 
-        <div x-show="modals.cover.visible" x-cloak class="fixed inset-0 z-[1000] bg-black bg-opacity-50">
-            <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
-                <div class="flex justify-between items-center pb-2 mb-4 border-gray-200 border-b">
-                    <h2 class="text-xl font-semibold text-gray-900">Edit Cover Photo</h2>
-                    <button @click="closeCoverEditor" class="text-gray-400 hover:text-gray-900">
+        <div x-show="modals.cover.visible" x-cloak class="fixed inset-0 z-[1400] bg-black/60 backdrop-blur-sm">
+            <div
+                class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-11/12 max-w-md mx-auto my-8 overflow-y-auto max-h-screen p-5">
+                <div class="flex justify-between items-center pb-2 mb-4 border-gray-200 dark:border-slate-800 border-b">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-slate-100">Edit Cover Photo</h2>
+                    <button @click="closeCoverEditor"
+                        class="text-gray-400 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white">
                         <i data-lucide="x" class="w-6 h-6"></i>
                     </button>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Upload Cover Photo</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Upload Cover
+                        Photo</label>
                     <input type="file" accept="image/*" @change="onCoverFile"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
-                    <p class="text-sm text-gray-500 mt-1">Select an image that will be cropped to a 3:1 ratio.</p>
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-primary focus:border-primary">
+                    <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Select an image that will be cropped to a 3:1
+                        ratio.</p>
                 </div>
                 <div x-show="coverCrop.visible" class="h-[300px] mb-4">
                     <img id="cover-cropper-image" src="https://placehold.co/1200x400?text=Cover+Image+to+Crop"
                         alt="Image to crop">
                 </div>
-                <div class="flex justify-end gap-2 pt-2 border-t border-gray-200">
-                    <button type="button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                <div class="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-slate-800">
+                    <button type="button"
+                        class="px-4 py-2 bg-gray-200 dark:bg-slate-800 text-gray-800 dark:text-slate-200 rounded-md hover:bg-gray-300 dark:hover:bg-slate-700"
                         @click="closeCoverEditor">Cancel</button>
                     <button type="button" x-show="coverCrop.visible"
                         class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
@@ -1101,7 +1334,7 @@ ob_start();
     <?php endif; ?>
 
     <div x-show="toast.visible" x-cloak
-        class="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-md shadow-md z-[10000] text-white"
+        class="fixed top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-md shadow-md z-[1500] text-white"
         :class="toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'">
         <span x-text="toast.message"></span>
     </div>
@@ -1117,7 +1350,15 @@ ob_start();
 
 <script>
     (function () {
-        const wrap = () => { const orig = window.updateUIAfterLogin; window.updateUIAfterLogin = function (user) { try { typeof orig === 'function' && orig(user) } catch (e) { } try { window.dispatchEvent(new CustomEvent('zz:session-login', { detail: user || {} })) } catch (e) { } const el = document.querySelector('[x-data="vendorProfile"]'); if (el && el.__x) { el.__x.$data.handlePostLogin(user || {}) } } };
+        const wrap = () => {
+            const orig = window.updateUIAfterLogin;
+            window.updateUIAfterLogin = function (user) {
+                try { typeof orig === 'function' && orig(user) } catch (e) { }
+                try { window.dispatchEvent(new CustomEvent('zz:session-login', { detail: user || {} })) } catch (e) { }
+                const el = document.querySelector('[x-data="vendorProfile"]');
+                if (el && el.__x) { el.__x.$data.handlePostLogin(user || {}) }
+            };
+        };
         if (document.readyState === 'complete' || document.readyState === 'interactive') { wrap() } else { document.addEventListener('DOMContentLoaded', wrap) }
     })();
     async function fetchStoreRole(storeId) {
@@ -1165,7 +1406,8 @@ ob_start();
                 name: { visible: false },
                 description: { visible: false },
                 logo: { visible: false },
-                cover: { visible: false }
+                cover: { visible: false },
+                prices: { visible: false, product: null, entries: [] }
             },
             editForms: { name: '', description: '' },
             logoCrop: { visible: false, cropper: null, file: null },
@@ -1185,7 +1427,7 @@ ob_start();
             get categoryCountText() { const n = Number(this.store?.category_count || 0); return `${n} ${n === 1 ? 'Category' : 'Categories'}` },
             get canSeeContacts() { return this.auth.isAdminOrManager },
             get statusText() { const s = (this.store?.status || '').toLowerCase(); if (s === 'active') return 'Active'; if (s === 'pending') return 'Pending Verification'; return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Status' },
-            get statusBadgeClass() { const s = (this.store?.status || '').toLowerCase(); if (s === 'active') return 'px-3 py-1 rounded-full text-sm bg-green-100 text-green-800'; if (s === 'pending') return 'px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800'; return 'px-3 py-1 rounded-full text-sm bg-red-100 text-red-800' },
+            get statusBadgeClass() { const s = (this.store?.status || '').toLowerCase(); if (s === 'active') return 'px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'; if (s === 'pending') return 'px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'; return 'px-3 py-1 rounded-full text-sm bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' },
 
             get filteredProducts() {
                 let arr = this.products.slice();
@@ -1242,6 +1484,7 @@ ob_start();
                         else if (a.type === 'phone') { this.revealPhone(true) }
                         else if (a.type === 'email') { this.revealEmail(true) }
                         else if (a.type === 'location') { this.viewed.location = true }
+                        else if (a.type === 'view-categories' && this.modals.prices.visible && this.modals.prices.product) { this.openPriceSheet(this.modals.prices.product) }
                         window.setPendingVendorAction(null);
                     }
                 }
@@ -1253,6 +1496,7 @@ ob_start();
                     const pricing = Array.isArray(p.pricing) ? p.pricing : [];
                     const filtered = this.auth.canSeeAllCategories ? pricing : pricing.filter(x => x.price_category === 'retail');
                     p._viewPricing = filtered;
+                    p._hasRetail = pricing.some(x => x.price_category === 'retail');
                 }
                 this.$nextTick(() => this.renderIcons());
             },
@@ -1391,7 +1635,17 @@ ob_start();
                     if (pr?.pricing_id) await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=logPriceView', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'pricing_id=' + encodeURIComponent(pr.pricing_id) + '&session_id=' + encodeURIComponent(sid || '') });
                 } catch (e) { }
                 if (!this.viewed.prices.includes(pr.pricing_id)) this.viewed.prices.push(pr.pricing_id);
-                evt.target.replaceWith(Object.assign(document.createElement('span'), { className: 'text-primary font-bold', textContent: 'UGX ' + this.nf(pr.price) }));
+            },
+
+            async revealPriceMobile(pr) {
+                const ok = await this.ensureSession({ type: 'price', pricingId: pr?.pricing_id });
+                if (!ok) return;
+                try {
+                    const sid = this.sessionId();
+                    if (pr?.pricing_id) await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=logPriceView', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'pricing_id=' + encodeURIComponent(pr.pricing_id) + '&session_id=' + encodeURIComponent(sid || '') });
+                } catch (e) { }
+                if (!this.viewed.prices.includes(pr.pricing_id)) this.viewed.prices.push(pr.pricing_id);
+                this.openPriceSheet(this.modals.prices.product);
             },
 
             expandPrices(p) { this.ensureSession({ type: 'expand-prices' }).then(ok => { if (ok) p._showAll = true }) },
@@ -1454,6 +1708,19 @@ ob_start();
             shareLinkedIn() { const msg = `${this.store?.name || 'Vendor'} is now on Zzimba Online! Follow the link to view our profile and offer of the day.`; window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(this.store?.name || 'Vendor')}&summary=${encodeURIComponent(msg)}`, '_blank') },
 
             openVendorSell(p) { if (typeof openVendorSellModal === 'function') openVendorSellModal(p.id, p.name) },
+
+            openPriceSheet(p) {
+                this.modals.prices.product = p;
+                const source = this.auth.canSeeAllCategories ? (Array.isArray(p.pricing) ? p.pricing : []) : p._viewPricing;
+                this.modals.prices.entries = Array.isArray(source) ? source : [];
+                this.modals.prices.visible = true;
+                this.$nextTick(() => this.renderIcons());
+            },
+            closePriceSheet() {
+                this.modals.prices.visible = false;
+                this.modals.prices.product = null;
+                this.modals.prices.entries = [];
+            },
 
             async openBuyInStore(p) {
                 if (this.auth.isAdmin) { this.showToast('Administrators cannot place store orders.', 'error'); return }
@@ -1549,9 +1816,9 @@ ob_start();
                 container.innerHTML = `
                 <div class="datepicker">
                     <div class="datepicker-controls">
-                        <button type="button" class="prev p-1 rounded hover:bg-gray-100"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+                        <button type="button" class="prev p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
                         <span class="month font-medium"></span>
-                        <button type="button" class="next p-1 rounded hover:bg-gray-100"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+                        <button type="button" class="next p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
                     </div>
                     <div class="datepicker-grid">
                         <div class="datepicker-day-header">Sun</div>
@@ -1600,9 +1867,7 @@ ob_start();
                 if (!this.buyForm.visitDate) { this.showToast('Please select a visit date', 'error'); return }
                 if (!this.buyForm.packageId) { this.showToast('Please select a package', 'error'); return }
                 if (!this.buyForm.quantity || parseInt(this.buyForm.quantity) < 1) { this.showToast('Please enter a valid quantity', 'error'); return }
-
                 this.modals.buy.submitting = true;
-
                 const payload = {
                     productId: this.modals.buy.product.store_product_id,
                     visitDate: this.buyForm.visitDate,
@@ -1612,21 +1877,14 @@ ob_start();
                     altEmail: this.buyForm.altEmail,
                     notes: this.buyForm.notes
                 };
-
                 try {
-                    const res = await fetch(this.BASE_URL + 'fetch/manageBuyInStore.php?action=previewBuyInStore', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    const res = await fetch(this.BASE_URL + 'fetch/manageBuyInStore.php?action=previewBuyInStore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     const data = await res.json();
                     this.modals.buy.submitting = false;
-
                     if (data && data.success) {
                         const fee = Number(data.fee || 0);
                         const bal = Number(data.balance || 0);
                         const remaining = bal - fee;
-
                         this.modals.confirm.payload = {
                             fee,
                             balance: bal,
@@ -1684,7 +1942,13 @@ ob_start();
                 this.modals.logo.visible = true;
                 this.logoCrop.file = file;
                 const reader = new FileReader();
-                reader.onload = () => { const img = document.getElementById('cropper-image'); img.src = reader.result; if (this.logoCrop.cropper) this.logoCrop.cropper.destroy(); this.logoCrop.cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 1, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false }); this.logoCrop.visible = true; };
+                reader.onload = () => {
+                    const img = document.getElementById('cropper-image');
+                    img.src = reader.result;
+                    if (this.logoCrop.cropper) this.logoCrop.cropper.destroy();
+                    this.logoCrop.cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 1, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false });
+                    this.logoCrop.visible = true;
+                };
                 reader.readAsDataURL(file);
             },
 
@@ -1709,7 +1973,13 @@ ob_start();
             async onCoverFile(e) {
                 const file = e.target.files?.[0]; if (!file) return;
                 const reader = new FileReader();
-                reader.onload = () => { const img = document.getElementById('cover-cropper-image'); img.src = reader.result; if (this.coverCrop.cropper) this.coverCrop.cropper.destroy(); this.coverCrop.cropper = new Cropper(img, { aspectRatio: 3 / 1, viewMode: 1, dragMode: 'move', autoCropArea: 1, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false }); this.coverCrop.visible = true; };
+                reader.onload = () => {
+                    const img = document.getElementById('cover-cropper-image');
+                    img.src = reader.result;
+                    if (this.coverCrop.cropper) this.coverCrop.cropper.destroy();
+                    this.coverCrop.cropper = new Cropper(img, { aspectRatio: 3 / 1, viewMode: 1, dragMode: 'move', autoCropArea: 1, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false });
+                    this.coverCrop.visible = true;
+                };
                 reader.readAsDataURL(file);
             },
 
@@ -1717,7 +1987,17 @@ ob_start();
             openCoverEditor() {
                 this.modals.cover.visible = true;
                 if (this.store?.vendor_cover_url) {
-                    fetch(this.BASE_URL + this.store.vendor_cover_url).then(res => res.blob()).then(blob => { const reader = new FileReader(); reader.onload = () => { const img = document.getElementById('cover-cropper-image'); img.src = reader.result; if (this.coverCrop.cropper) this.coverCrop.cropper.destroy(); this.coverCrop.cropper = new Cropper(img, { aspectRatio: 3 / 1, viewMode: 1, dragMode: 'move', autoCropArea: 1, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false }); this.coverCrop.visible = true; }; reader.readAsDataURL(blob); }).catch(() => { });
+                    fetch(this.BASE_URL + this.store.vendor_cover_url).then(res => res.blob()).then(blob => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const img = document.getElementById('cover-cropper-image');
+                            img.src = reader.result;
+                            if (this.coverCrop.cropper) this.coverCrop.cropper.destroy();
+                            this.coverCrop.cropper = new Cropper(img, { aspectRatio: 3 / 1, viewMode: 1, dragMode: 'move', autoCropArea: 1, restore: false, guides: true, center: true, highlight: false, cropBoxMovable: true, cropBoxResizable: true, toggleDragModeOnDblclick: false });
+                            this.coverCrop.visible = true;
+                        };
+                        reader.readAsDataURL(blob);
+                    }).catch(() => { });
                 }
             },
             closeCoverEditor() { this.modals.cover.visible = false; if (this.coverCrop.cropper) { this.coverCrop.cropper.destroy(); this.coverCrop.cropper = null } this.coverCrop.visible = false },

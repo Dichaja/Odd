@@ -66,6 +66,7 @@ $menuItems = [
         'title' => 'Management',
         'items' => [
             'products' => ['title' => 'Products', 'icon' => 'fa-box'],
+            'products-pricing' => ['title' => 'Products Pricing', 'icon' => 'fa-tags'],
             'products-performance' => ['title' => 'Product Performance', 'icon' => 'fa-chart-line'],
             'vendor-stores' => ['title' => 'Vendor Stores', 'icon' => 'fa-store'],
             'fundi' => ['title' => 'Fundi', 'icon' => 'fa-hard-hat'],
