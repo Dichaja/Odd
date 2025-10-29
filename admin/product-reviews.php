@@ -166,11 +166,9 @@ ob_start();
                                             <i data-lucide="check" class="w-4 h-4"></i>
                                         </button>
                                     </template>
-                                    <template x-if="review.status !== 'rejected'">
-                                        <button @click="updateStatus(review.id, 'rejected')" class="text-red-600 hover:text-red-800" title="Reject">
-                                            <i data-lucide="x" class="w-4 h-4"></i>
-                                        </button>
-                                    </template>
+                                    <button @click="updateStatus(review.id, 'rejected')" class="text-red-600 hover:text-red-800" title="Reject">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
                                     <button @click="deleteReview(review.id)" class="text-red-600 hover:text-red-800" title="Delete">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
@@ -265,6 +263,16 @@ ob_start();
 </div>
 
 <script>
+// Notifications helper
+const notifications = {
+    success: (message) => {
+        alert(message);
+    },
+    error: (message) => {
+        alert('Error: ' + message);
+    }
+};
+
 function reviewsManagement() {
     return {
         reviews: [],

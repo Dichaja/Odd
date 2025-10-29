@@ -64,6 +64,49 @@ switch ($action) {
     case 'get_user_review':
         getUserReview($pdo, $currentUser);
         break;
+    case 'getStoreReviews':
+        try {
+            $storeId = $_GET['store_id'] ?? null;
+            
+            if (!$storeId) {
+                echo json_encode(['success' => false, 'error' => 'Store ID is required']);
+                exit;
+            }
+
+            $stmt = $pdo->prepare("
+                SELECT 
+                    pr.id,
+                    pr.rating,
+                    pr.review_text,
+                    pr.created_at,
+                    pr.status,
+                    p.name as product_name,
+                    COALESCE(u.name, u.username, 'Anonymous') as reviewer_name
+                FROM product_reviews pr
+                INNER JOIN products p ON pr.product_id = p.id
+                INNER JOIN vendor_stores vs ON p.store_id = vs.id
+                LEFT JOIN users u ON pr.user_id = u.id
+                WHERE vs.id = ? AND pr.status = 'approved'
+                ORDER BY pr.created_at DESC
+            ");
+            
+            $stmt->execute([$storeId]);
+            $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            echo json_encode([
+                'success' => true,
+                'reviews' => $reviews
+            ]);
+            exit;
+            
+        } catch (Exception $e) {
+            error_log("Error fetching store reviews: " . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to fetch reviews'
+            ]);
+            exit;
+        }
     default:
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid action']);

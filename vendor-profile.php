@@ -642,7 +642,26 @@ ob_start();
         </div>
 
         <main class="py-8">
-            <div class="mb-6">
+            <!-- Tab Navigation -->
+            <div class="mb-6 border-b border-gray-200 dark:border-slate-700">
+                <nav class="flex space-x-8" aria-label="Tabs">
+                    <button @click="activeTab = 'products'" 
+                        :class="activeTab === 'products' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-lucide="package-open" class="w-4 h-4 inline-block mr-2"></i>
+                        Products
+                    </button>
+                    <button @click="activeTab = 'reviews'" 
+                        :class="activeTab === 'reviews' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-lucide="star" class="w-4 h-4 inline-block mr-2"></i>
+                        Reviews
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Products Tab -->
+            <div x-show="activeTab === 'products'" x-cloak>
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
                         <i data-lucide="package-open" class="w-5 h-5 mr-2 text-primary"></i>
@@ -796,6 +815,49 @@ ob_start();
                 <button x-show="pagination.page < pagination.pages" @click="loadMore"
                     class="mx-auto mt-8 block bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">Load
                     More Products</button>
+            </div>
+
+            <!-- Reviews Tab -->
+            <div x-show="activeTab === 'reviews'" x-cloak>
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center mb-4">
+                        <i data-lucide="star" class="w-5 h-5 mr-2 text-primary"></i>
+                        Customer Reviews
+                    </h2>
+                    
+                    <div x-show="reviewsLoading" class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                        <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
+                    </div>
+
+                    <div x-show="!reviewsLoading && reviews.length === 0" class="text-center py-8 text-gray-500 dark:text-slate-300">
+                        No reviews yet for this store.
+                    </div>
+
+                    <div x-show="!reviewsLoading && reviews.length > 0" class="space-y-4">
+                        <template x-for="review in reviews" :key="review.id">
+                            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md border border-gray-200 dark:border-slate-800 p-6">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex-1">
+                                        <div class="flex items-center mb-2">
+                                            <div class="flex items-center">
+                                                <template x-for="i in 5" :key="i">
+                                                    <i data-lucide="star" 
+                                                        :class="i <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-slate-600'"
+                                                        class="w-4 h-4"></i>
+                                                </template>
+                                            </div>
+                                            <span class="ml-2 text-sm font-medium text-gray-700 dark:text-slate-200" x-text="review.rating + '/5'"></span>
+                                        </div>
+                                        <h3 class="font-semibold text-gray-900 dark:text-white" x-text="review.product_name"></h3>
+                                        <p class="text-sm text-gray-500 dark:text-slate-400" x-text="'By ' + review.reviewer_name + ' • ' + formatDate(review.created_at)"></p>
+                                    </div>
+                                </div>
+                                <p class="text-gray-700 dark:text-slate-300" x-text="review.review_text"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -1376,6 +1438,9 @@ ob_start();
             BASE_URL: window.BASE_URL || '<?= BASE_URL ?>',
             vendorId: '<?= $vendorId ?>',
             defaultSuccessMessage: 'Your buy-in-store request has been submitted successfully.',
+            activeTab: 'products',
+            reviews: [],
+            reviewsLoading: false,
             auth: {
                 loggedIn: <?= $isLoggedIn ? 'true' : 'false' ?>,
                 canEdit: <?= $canEdit ? 'true' : 'false' ?>,
@@ -1465,6 +1530,14 @@ ob_start();
                 window.addEventListener('zz:session-login', e => this.handlePostLogin(e.detail || {}));
                 if (this.auth.isAdminOrManager) { this.revealPhone(true); this.revealEmail(true) }
                 this.logProfileView();
+                
+                // Watch for tab changes
+                this.$watch('activeTab', (value) => {
+                    if (value === 'reviews' && this.reviews.length === 0) {
+                        this.loadReviews();
+                    }
+                    this.$nextTick(() => this.renderIcons());
+                });
             },
 
             async handlePostLogin(user) {
@@ -2038,6 +2111,29 @@ ob_start();
                     if (data.success) { this.store.description = this.editForms.description || 'No description provided.'; this.modals.description.visible = false; this.showToast('Store description updated successfully', 'success') }
                     else { this.showToast(data.error || 'Failed to update store description', 'error') }
                 } catch (e) { this.showToast('Failed to update store description', 'error') }
+            },
+
+            async loadReviews() {
+                if (!this.vendorId) return;
+                this.reviewsLoading = true;
+                try {
+                    const r = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getStoreReviews&store_id=' + encodeURIComponent(this.vendorId));
+                    const data = await r.json();
+                    if (data.success) {
+                        this.reviews = data.reviews || [];
+                    }
+                } catch (e) {
+                    console.error('Failed to load reviews:', e);
+                } finally {
+                    this.reviewsLoading = false;
+                    this.$nextTick(() => this.renderIcons());
+                }
+            },
+
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
             }
         }));
     });
