@@ -19,6 +19,23 @@ if (!$storeId) {
 ob_start();
 ?>
 <script>
+    if (!window.$) window.$ = {};
+    if (typeof window.$.getJSON !== 'function') {
+        window.$.getJSON = function (url, data, success) {
+            if (typeof data === 'function') { success = data; data = undefined; }
+            let full = url;
+            if (data && typeof data === 'object') {
+                const qs = new URLSearchParams(data).toString();
+                full += (url.includes('?') ? '&' : '?') + qs;
+            }
+            return fetch(full, { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(json => { if (typeof success === 'function') success(json); return json; })
+                .catch(() => { if (typeof success === 'function') success(null); });
+        };
+    }
+</script>
+<script>
     const vendorId = '<?= $storeId ?>';
 </script>
 
@@ -263,7 +280,6 @@ ob_start();
     function formatTimeAgo(date) {
         const now = new Date();
         const diffInSeconds = Math.floor((now - date) / 1000);
-
         if (diffInSeconds < 60) return 'just now';
         if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
@@ -287,16 +303,12 @@ ob_start();
     async function loadStoreManagers() {
         const container = document.getElementById('store-managers-container');
         const loading = document.getElementById('loadingIndicator');
-
         loading.classList.remove('hidden');
         container.innerHTML = '';
-
         try {
             const response = await fetch(`${BASE_URL}vendor-store/fetch/manageStoreManagers.php?action=getStoreManagers&store_id=${vendorId}`);
             const data = await response.json();
-
             loading.classList.add('hidden');
-
             if (data.success) {
                 storeManagers = data.managers || [];
                 storeName = data.store_name || 'Store';
@@ -307,14 +319,13 @@ ob_start();
             }
         } catch (error) {
             loading.classList.add('hidden');
-            console.error('Error loading managers:', error);
             container.innerHTML = '<p class="text-center text-red-500 py-8">Failed to load managers.</p>';
         }
     }
 
     function renderStoreManagers(managers) {
         const container = document.getElementById('store-managers-container');
-
+        container.innerHTML = '';
         if (!managers || managers.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-12">
@@ -330,37 +341,55 @@ ob_start();
                     </button>
                 </div>
             `;
-
             document.getElementById('empty-invite-btn').addEventListener('click', function () {
                 openModal('inviteManagerModal');
             });
             return;
         }
-
         const managersGrid = document.createElement('div');
         managersGrid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
-
         managers.forEach(manager => {
             const managerCard = createManagerCard(manager);
             managersGrid.appendChild(managerCard);
         });
-
         container.appendChild(managersGrid);
     }
 
     function createManagerCard(manager) {
+        const isApproved = String(manager.approved) === '1';
         const card = document.createElement('div');
         card.className = 'bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 p-6';
         card.dataset.id = manager.id;
 
         const statusClass = manager.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
         const statusText = manager.status === 'active' ? 'Active' : 'Inactive';
-        const approvedBadge = manager.approved ? '' : '<span class="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Pending</span>';
+        const approvedBadge = isApproved ? '' : '<span class="ml-2 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Pending</span>';
 
         let roleOptions = '';
         Object.entries(roleLabels).forEach(([value, label]) => {
             roleOptions += `<option value="${value}" ${manager.role === value ? 'selected' : ''}>${label}</option>`;
         });
+
+        const statusControl = isApproved ? `
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-gray-500">Status</span>
+                <label class="inline-flex items-center cursor-pointer">
+                    <input type="checkbox" class="sr-only peer manager-toggle" 
+                        data-id="${manager.id}" 
+                        data-name="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}"
+                        ${manager.status === 'active' ? 'checked' : ''}>
+                    <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+                    <span class="ml-2 text-xs font-medium text-gray-700">
+                        ${manager.status === 'active' ? 'Active' : 'Inactive'}
+                    </span>
+                </label>
+            </div>
+        ` : `
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-gray-500">Status</span>
+                <span class="text-xs font-medium text-blue-700 bg-blue-100 px-2 py-1 rounded-full">Awaiting approval</span>
+            </div>
+        `;
 
         card.innerHTML = `
             <div class="flex items-start justify-between mb-4">
@@ -369,8 +398,7 @@ ob_start();
                         <i class="fas fa-user text-gray-600"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="font-semibold text-gray-900 truncate max-w-full" 
-                            title="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}">
+                        <h3 class="font-semibold text-gray-900 truncate max-w-full" title="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}">
                             ${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}
                         </h3>
                         <div class="flex items-center gap-2">
@@ -410,56 +438,33 @@ ob_start();
                         ${roleOptions}
                     </select>
                 </div>
-                
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-gray-500">Status</span>
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer manager-toggle" 
-                            data-id="${manager.id}" 
-                            data-name="${escapeHtml(manager.first_name)} ${escapeHtml(manager.last_name)}"
-                            ${manager.status === 'active' ? 'checked' : ''}>
-                        <div class="relative w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
-                        <span class="ml-2 text-xs font-medium text-gray-700">
-                            ${manager.status === 'active' ? 'Active' : 'Inactive'}
-                        </span>
-                    </label>
-                </div>
+                ${statusControl}
             </div>
         `;
 
-        // Add event listeners
         const toggle = card.querySelector('.manager-toggle');
-        toggle.addEventListener('change', function () {
-            const managerId = this.dataset.id;
-            const managerName = this.dataset.name;
-            const newStatus = this.checked ? 'active' : 'inactive';
-
-            this.checked = !this.checked; // Revert until confirmed
-
-            const statusText = newStatus === 'active' ? 'activate' : 'deactivate';
-            const statusColor = newStatus === 'active' ? 'text-green-600' : 'text-yellow-600';
-            const statusIcon = newStatus === 'active' ? 'fa-user-check' : 'fa-user-clock';
-
-            document.getElementById('status-change-title').textContent = newStatus === 'active' ? 'Activate Manager' : 'Deactivate Manager';
-            document.getElementById('status-change-name').textContent = managerName;
-            document.getElementById('status-change-message').innerHTML = `This will <span class="${statusColor} font-medium">${statusText}</span> the manager's account.`;
-
-            const iconElement = document.getElementById('status-change-icon');
-            iconElement.className = `w-12 h-12 rounded-full flex items-center justify-center mr-4 ${newStatus === 'active' ? 'bg-green-100' : 'bg-yellow-100'}`;
-            iconElement.innerHTML = `<i class="fas ${statusIcon} ${statusColor} text-xl"></i>`;
-
-            const confirmBtn = document.getElementById('confirm-status-change-btn');
-            confirmBtn.className = `px-4 py-2 ${newStatus === 'active' ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'} text-white rounded-lg transition-colors`;
-            confirmBtn.textContent = newStatus === 'active' ? 'Activate Manager' : 'Deactivate Manager';
-
-            statusChangeData = {
-                managerId: managerId,
-                newStatus: newStatus,
-                toggle: this
-            };
-
-            openModal('statusChangeModal');
-        });
+        if (toggle) {
+            toggle.addEventListener('change', function () {
+                const managerId = this.dataset.id;
+                const managerName = this.dataset.name;
+                const newStatus = this.checked ? 'active' : 'inactive';
+                this.checked = !this.checked;
+                const statusText = newStatus === 'active' ? 'activate' : 'deactivate';
+                const statusColor = newStatus === 'active' ? 'text-green-600' : 'text-yellow-600';
+                const statusIcon = newStatus === 'active' ? 'fa-user-check' : 'fa-user-clock';
+                document.getElementById('status-change-title').textContent = newStatus === 'active' ? 'Activate Manager' : 'Deactivate Manager';
+                document.getElementById('status-change-name').textContent = managerName;
+                document.getElementById('status-change-message').innerHTML = `This will <span class="${statusColor} font-medium">${statusText}</span> the manager's account.`;
+                const iconElement = document.getElementById('status-change-icon');
+                iconElement.className = `w-12 h-12 rounded-full flex items-center justify-center mr-4 ${newStatus === 'active' ? 'bg-green-100' : 'bg-yellow-100'}`;
+                iconElement.innerHTML = `<i class="fas ${statusIcon} ${statusColor} text-xl"></i>`;
+                const confirmBtn = document.getElementById('confirm-status-change-btn');
+                confirmBtn.className = `px-4 py-2 ${newStatus === 'active' ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-600 hover:bg-yellow-700'} text-white rounded-lg transition-colors`;
+                confirmBtn.textContent = newStatus === 'active' ? 'Activate Manager' : 'Deactivate Manager';
+                statusChangeData = { managerId: managerId, newStatus: newStatus, toggle: this };
+                openModal('statusChangeModal');
+            });
+        }
 
         const roleSelect = card.querySelector('.manager-role-select');
         roleSelect.addEventListener('change', function () {
@@ -467,23 +472,13 @@ ob_start();
             const managerName = this.dataset.name;
             const currentRole = this.dataset.current;
             const newRole = this.value;
-
             if (currentRole === newRole) return;
-
             const currentRoleLabel = roleLabels[currentRole] || currentRole;
             const newRoleLabel = roleLabels[newRole] || newRole;
-
             document.getElementById('role-change-name').textContent = managerName;
             document.getElementById('role-change-message').innerHTML = `Change role from <strong>${currentRoleLabel}</strong> to <strong>${newRoleLabel}</strong>?`;
-
-            roleChangeData = {
-                managerId: managerId,
-                newRole: newRole,
-                select: this,
-                originalValue: currentRole
-            };
-
-            this.value = currentRole; // Revert until confirmed
+            roleChangeData = { managerId: managerId, newRole: newRole, select: this, originalValue: currentRole };
+            this.value = currentRole;
             openModal('roleChangeModal');
         });
 
@@ -491,7 +486,6 @@ ob_start();
         removeBtn.addEventListener('click', function () {
             const managerId = this.dataset.id;
             const managerName = this.dataset.name;
-
             managerToDelete = managerId;
             document.getElementById('delete-manager-name').textContent = managerName;
             openModal('deleteManagerModal');
@@ -503,35 +497,24 @@ ob_start();
     function checkEmailAvailability(email) {
         const indicator = document.getElementById('email-validation-indicator');
         const message = document.getElementById('email-validation-message');
-
         validatedEmail = null;
         reinviteData = null;
         message.className = 'text-xs mt-1 hidden';
         message.textContent = '';
-
         if (!email || !email.includes('@')) return;
-
         indicator.classList.remove('hidden');
-
         if (emailCheckTimeout) clearTimeout(emailCheckTimeout);
-
         emailCheckTimeout = setTimeout(async () => {
             try {
                 const response = await fetch(`${BASE_URL}vendor-store/fetch/manageStoreManagers.php?action=checkEmailAvailability&email=${encodeURIComponent(email)}&store_id=${vendorId}`);
                 const data = await response.json();
-
                 indicator.classList.add('hidden');
                 message.classList.remove('hidden');
-
                 if (data.success) {
                     if (data.was_removed) {
                         message.className = 'text-xs mt-1 text-amber-600';
                         message.textContent = `User found: ${data.user.first_name} ${data.user.last_name} (previously removed)`;
-                        reinviteData = {
-                            email: email,
-                            firstName: data.user.first_name,
-                            lastName: data.user.last_name
-                        };
+                        reinviteData = { email: email, firstName: data.user.first_name, lastName: data.user.last_name };
                     } else {
                         message.className = 'text-xs mt-1 text-green-600';
                         message.textContent = `User found: ${data.user.first_name} ${data.user.last_name}`;
@@ -544,7 +527,6 @@ ob_start();
                     reinviteData = null;
                 }
             } catch (error) {
-                console.error('Error checking email:', error);
                 indicator.classList.add('hidden');
                 message.classList.remove('hidden');
                 message.className = 'text-xs mt-1 text-red-600';
@@ -559,30 +541,21 @@ ob_start();
         const card = toggle.closest('.bg-white');
         const statusSpan = card.querySelector('.px-2.py-1');
         const toggleLabel = toggle.parentElement.querySelector('span');
-
         statusSpan.textContent = 'Updating...';
         statusSpan.className = 'px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800';
         toggleLabel.textContent = 'Updating...';
         toggle.disabled = true;
-
         try {
             const response = await fetch(`${BASE_URL}vendor-store/fetch/manageStoreManagers.php?action=updateManagerStatus`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    store_id: vendorId,
-                    manager_id: managerId,
-                    status: newStatus
-                })
+                body: JSON.stringify({ store_id: vendorId, manager_id: managerId, status: newStatus })
             });
-
             const data = await response.json();
             toggle.disabled = false;
-
             if (data.success) {
                 toggle.checked = newStatus === 'active';
                 toggleLabel.textContent = newStatus === 'active' ? 'Active' : 'Inactive';
-
                 if (newStatus === 'active') {
                     statusSpan.className = 'px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
                     statusSpan.textContent = 'Active';
@@ -590,18 +563,13 @@ ob_start();
                     statusSpan.className = 'px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
                     statusSpan.textContent = 'Inactive';
                 }
-
                 const managerIndex = storeManagers.findIndex(m => m.id === managerId);
-                if (managerIndex !== -1) {
-                    storeManagers[managerIndex].status = newStatus;
-                }
-
+                if (managerIndex !== -1) storeManagers[managerIndex].status = newStatus;
                 const emailStatus = data.email_sent ? 'and notification email sent' : 'but email notification failed';
                 showAlert('success', `Manager status updated to ${newStatus} ${emailStatus}`);
             } else {
                 toggle.checked = newStatus !== 'active';
                 toggleLabel.textContent = newStatus !== 'active' ? 'Active' : 'Inactive';
-
                 if (newStatus !== 'active') {
                     statusSpan.className = 'px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
                     statusSpan.textContent = 'Active';
@@ -609,11 +577,9 @@ ob_start();
                     statusSpan.className = 'px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800';
                     statusSpan.textContent = 'Inactive';
                 }
-
                 showAlert('error', data.error || 'Failed to update manager status');
             }
         } catch (error) {
-            console.error('Error updating manager status:', error);
             toggle.disabled = false;
             toggle.checked = newStatus !== 'active';
             toggleLabel.textContent = newStatus !== 'active' ? 'Active' : 'Inactive';
@@ -624,30 +590,19 @@ ob_start();
     async function updateManagerRole(managerId, newRole, select) {
         const originalValue = select.dataset.current;
         select.disabled = true;
-
         try {
             const response = await fetch(`${BASE_URL}vendor-store/fetch/manageStoreManagers.php?action=updateManagerRole`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    store_id: vendorId,
-                    manager_id: managerId,
-                    role: newRole
-                })
+                body: JSON.stringify({ store_id: vendorId, manager_id: managerId, role: newRole })
             });
-
             const data = await response.json();
             select.disabled = false;
-
             if (data.success) {
                 select.value = newRole;
                 select.dataset.current = newRole;
-
                 const managerIndex = storeManagers.findIndex(m => m.id === managerId);
-                if (managerIndex !== -1) {
-                    storeManagers[managerIndex].role = newRole;
-                }
-
+                if (managerIndex !== -1) storeManagers[managerIndex].role = newRole;
                 const emailStatus = data.email_sent ? 'and notification email sent' : 'but email notification failed';
                 showAlert('success', `Manager role updated to ${roleLabels[newRole]} ${emailStatus}`);
             } else {
@@ -655,7 +610,6 @@ ob_start();
                 showAlert('error', data.error || 'Failed to update manager role');
             }
         } catch (error) {
-            console.error('Error updating manager role:', error);
             select.disabled = false;
             select.value = originalValue;
             showAlert('error', 'Failed to update manager role. Please try again.');
@@ -667,25 +621,18 @@ ob_start();
             const response = await fetch(`${BASE_URL}vendor-store/fetch/manageStoreManagers.php?action=removeManager`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    store_id: vendorId,
-                    manager_id: managerId
-                })
+                body: JSON.stringify({ store_id: vendorId, manager_id: managerId })
             });
-
             const data = await response.json();
-
             if (data.success) {
                 storeManagers = storeManagers.filter(m => m.id !== managerId);
                 renderStoreManagers(storeManagers);
-
                 const emailStatus = data.email_sent ? 'and notification email sent' : 'but email notification failed';
                 showAlert('success', `Manager removed successfully ${emailStatus}`);
             } else {
                 showAlert('error', data.error || 'Failed to remove manager');
             }
         } catch (error) {
-            console.error('Error removing manager:', error);
             showAlert('error', 'Failed to remove manager. Please try again.');
         }
     }
@@ -693,7 +640,6 @@ ob_start();
     function resetModalForms() {
         const forms = document.querySelectorAll('#inviteManagerModal form, #reinviteManagerModal form');
         forms.forEach(form => form.reset());
-
         document.getElementById('email-validation-message').className = 'text-xs mt-1 hidden';
         document.getElementById('email-validation-message').textContent = '';
         validatedEmail = null;
@@ -726,10 +672,8 @@ ob_start();
 
         document.getElementById('inviteManagerForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-
             const email = document.getElementById('managerEmail').value;
             const role = document.getElementById('managerRole').value;
-
             if (reinviteData && reinviteData.email === email) {
                 document.getElementById('reinvite-manager-name').textContent = `${reinviteData.firstName} ${reinviteData.lastName}`;
                 document.getElementById('reinviteManagerRole').value = role;
@@ -737,35 +681,25 @@ ob_start();
                 closeModal('inviteManagerModal');
                 return;
             }
-
             if (email !== validatedEmail) {
                 showAlert('error', 'Please enter a valid email address');
                 return;
             }
-
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
-
             try {
                 const response = await fetch(`${BASE_URL}vendor-store/fetch/manageStoreManagers.php?action=inviteManager`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        store_id: vendorId,
-                        email: email,
-                        role: role
-                    })
+                    body: JSON.stringify({ store_id: vendorId, email: email, role: role })
                 });
-
                 const data = await response.json();
-
                 if (data.success) {
                     closeModal('inviteManagerModal');
                     this.reset();
                     loadStoreManagers();
-
                     const emailStatus = data.email_sent ? 'and notification email sent' : 'but email notification failed';
                     showAlert('success', `Invitation sent successfully ${emailStatus}`);
                 } else {
@@ -779,7 +713,6 @@ ob_start();
                     }
                 }
             } catch (error) {
-                console.error('Error inviting manager:', error);
                 showAlert('error', 'Failed to send invitation. Please try again.');
             } finally {
                 submitBtn.disabled = false;
@@ -792,38 +725,26 @@ ob_start();
                 showAlert('error', 'Invalid reinvitation data');
                 return;
             }
-
             const email = reinviteData.email;
             const role = document.getElementById('reinviteManagerRole').value;
-
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
-
             try {
                 const response = await fetch(`${BASE_URL}vendor-store/fetch/manageStoreManagers.php?action=inviteManager`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        store_id: vendorId,
-                        email: email,
-                        role: role,
-                        reinvite: true
-                    })
+                    body: JSON.stringify({ store_id: vendorId, email: email, role: role, reinvite: true })
                 });
-
                 const data = await response.json();
-
                 if (data.success) {
                     closeModal('reinviteManagerModal');
                     loadStoreManagers();
-
                     const emailStatus = data.email_sent ? 'and notification email sent' : 'but email notification failed';
                     showAlert('success', `Manager re-invited successfully ${emailStatus}`);
                 } else {
                     showAlert('error', data.error || 'Failed to re-invite manager');
                 }
             } catch (error) {
-                console.error('Error re-inviting manager:', error);
                 showAlert('error', 'Failed to re-invite manager. Please try again.');
             } finally {
                 this.disabled = false;
@@ -835,9 +756,7 @@ ob_start();
             if (managerToDelete) {
                 this.disabled = true;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Removing...';
-
                 deleteManager(managerToDelete);
-
                 setTimeout(() => {
                     closeModal('deleteManagerModal');
                     this.disabled = false;
@@ -851,13 +770,7 @@ ob_start();
             if (statusChangeData) {
                 this.disabled = true;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
-
-                updateManagerStatus(
-                    statusChangeData.managerId,
-                    statusChangeData.newStatus,
-                    statusChangeData.toggle
-                );
-
+                updateManagerStatus(statusChangeData.managerId, statusChangeData.newStatus, statusChangeData.toggle);
                 setTimeout(() => {
                     closeModal('statusChangeModal');
                     this.disabled = false;
@@ -871,13 +784,7 @@ ob_start();
             if (roleChangeData) {
                 this.disabled = true;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
-
-                updateManagerRole(
-                    roleChangeData.managerId,
-                    roleChangeData.newRole,
-                    roleChangeData.select
-                );
-
+                updateManagerRole(roleChangeData.managerId, roleChangeData.newRole, roleChangeData.select);
                 setTimeout(() => {
                     closeModal('roleChangeModal');
                     this.disabled = false;
@@ -887,7 +794,6 @@ ob_start();
             }
         });
 
-        // Modal click outside to close
         document.querySelectorAll('[id$="Modal"]').forEach(modal => {
             modal.addEventListener('click', function (event) {
                 if (event.target === this) {

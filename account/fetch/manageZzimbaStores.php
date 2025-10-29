@@ -144,7 +144,7 @@ function canAccessStore(PDO $pdo, string $storeId, ?string $userId): bool
     return $stmt->rowCount() > 0;
 }
 
-function storeFieldExists(PDO $pdo, string $field, string $value, string $excludeId = null, ?string $ownerId = null): bool
+function storeFieldExists(PDO $pdo, string $field, string $value, ?string $excludeId = null, ?string $ownerId = null): bool
 {
     $sql = "SELECT COUNT(*) FROM vendor_stores WHERE $field = ?";
     $params = [$value];
@@ -152,7 +152,7 @@ function storeFieldExists(PDO $pdo, string $field, string $value, string $exclud
         $sql .= " AND owner_id != ?";
         $params[] = $ownerId;
     }
-    if ($excludeId) {
+    if ($excludeId !== null) {
         $sql .= " AND id != ?";
         $params[] = $excludeId;
     }
@@ -966,7 +966,7 @@ function getStoreManagers(PDO $pdo, string $storeId, ?string $userId): void
         echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
         return;
     }
-    
+
     $stmt = $pdo->prepare("
         SELECT sm.id, sm.user_id, sm.role, sm.created_at,
                u.username, u.email, u.phone

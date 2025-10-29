@@ -68,6 +68,7 @@ $menuItems = [
             'products' => ['title' => 'Products', 'icon' => 'fa-box'],
             'products-pricing' => ['title' => 'Products Pricing', 'icon' => 'fa-tags'],
             'products-performance' => ['title' => 'Product Performance', 'icon' => 'fa-chart-line'],
+            'product-reviews' => ['title' => 'Product Reviews', 'icon' => 'fa-star'],
             'vendor-stores' => ['title' => 'Vendor Stores', 'icon' => 'fa-store'],
             'fundi' => ['title' => 'Fundi', 'icon' => 'fa-hard-hat'],
             'order-catalogue' => ['title' => 'Order Catalogue', 'icon' => 'fa-book'],
@@ -202,7 +203,7 @@ $sessionUlid = generateUlid();
             class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="flex flex-col h-full">
                 <div class="h-16 px-6 flex items-center border-b border-gray-100">
-                    <a href="<?= BASE_URL ?>admin/dashboard" class="flex items-center space-x-3">
+                    <a href="<?= BASE_URL ?>" class="flex items-center space-x-3">
                         <img src="<?= BASE_URL ?>img/logo_alt.png" alt="Logo" class="h-8 w-auto">
                     </a>
                 </div>

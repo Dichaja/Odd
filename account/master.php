@@ -102,9 +102,13 @@ try {
     $stmtS = $pdo->prepare("SELECT id FROM vendor_stores WHERE owner_id = :uid LIMIT 1");
     $stmtS->execute([':uid' => $_SESSION['user']['user_id']]);
     $hasStore = (bool) $stmtS->fetchColumn();
-    $stmtP = $pdo->prepare("SELECT id FROM request_for_quote WHERE user_id = :uid LIMIT 1");
-    $stmtP->execute([':uid' => $_SESSION['user']['user_id']]);
-    $hasPurchase = (bool) $stmtP->fetchColumn();
+    $stmtRFQ = $pdo->prepare("SELECT RFQ_ID FROM request_for_quote WHERE user_id = :uid LIMIT 1");
+    $stmtRFQ->execute([':uid' => $_SESSION['user']['user_id']]);
+    $hasRFQ = (bool) $stmtRFQ->fetchColumn();
+    $stmtB = $pdo->prepare("SELECT id FROM buy_in_store_requests WHERE user_id = :uid LIMIT 1");
+    $stmtB->execute([':uid' => $_SESSION['user']['user_id']]);
+    $hasBIS = (bool) $stmtB->fetchColumn();
+    $hasPurchase = $hasRFQ || $hasBIS;
 } catch (Throwable $e) {
     $hasWallet = $hasWallet ?? false;
     $hasStore = $hasStore ?? false;
@@ -367,7 +371,7 @@ if ($needsProfileCompletion) {
                             this.notes.forEach(n => { if (ids.includes(n.target_id)) n.is_seen = 1 });
                             this.selected = [];
                             const b = document.getElementById('selectAll'); if (b) b.checked = false;
-                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false;
+                            const b2 = document.getElementById('selectAllM'); if (b2) b.checked = false;
                             const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                             this.setBadge(c);
                         }).catch(() => { });
@@ -380,7 +384,7 @@ if ($needsProfileCompletion) {
                             this.notes = this.notes.filter(n => n.target_id !== id);
                             this.selected = this.selected.filter(sid => sid !== id);
                             const b = document.getElementById('selectAll'); if (b) b.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
-                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
+                            const b2 = document.getElementById('selectAllM'); if (b2) b.checked = (this.selected.length === this.notes.length && this.notes.length > 0);
                             const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                             this.setBadge(c);
                         }).catch(() => { });
@@ -394,7 +398,7 @@ if ($needsProfileCompletion) {
                             this.notes = this.notes.filter(n => !ids.includes(n.target_id));
                             this.selected = [];
                             const b = document.getElementById('selectAll'); if (b) b.checked = false;
-                            const b2 = document.getElementById('selectAllM'); if (b2) b2.checked = false;
+                            const b2 = document.getElementById('selectAllM'); if (b2) b.checked = false;
                             const c = Number.isInteger(res?.unread_count) ? res.unread_count : this.notes.filter(n => n.is_seen == 0).length;
                             this.setBadge(c);
                         }).catch(() => { });
@@ -719,10 +723,8 @@ if ($needsProfileCompletion) {
             </div>
         </div>
     </div>
-
     <div x-show="$store.ui.sheet" @click="$store.ui.closeSheet()" class="sheet-overlay hidden z-[48]"
         x-transition.opacity x-bind:class="{'hidden': !$store.ui.sheet}"></div>
-
     <div class="flex min-h-screen">
         <aside
             class="hidden lg:block user-sidebar dark:text-white fixed inset-y-0 left-0 z-50 w-64 transition-transform duration-300 ease-in-out">
@@ -767,13 +769,13 @@ if ($needsProfileCompletion) {
                 </div>
             </div>
         </aside>
-
         <div class="flex-1 lg:ml-64">
             <header
                 class="user-header sticky top-0 z-40 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-secondary">
                 <div class="flex h-16 items-center justify-between px-4 sm:px-6">
                     <div class="md:hidden text-sm font-medium text-secondary dark:text-white truncate">Hello
-                        <?= htmlspecialchars($userName) ?></div>
+                        <?= htmlspecialchars($userName) ?>
+                    </div>
                     <h1 class="hidden md:block text-xl font-semibold text-secondary dark:text-white">
                         <span id="greeting"></span>
                     </h1>
@@ -814,9 +816,9 @@ if ($needsProfileCompletion) {
                                 </button>
                             </div>
                         </div>
-
                         <div class="relative hidden md:block">
-                            <button @click="$store.notif.toggle()"
+                            <button @click="$store.notif.toggle()
+                                "
                                 class="relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10">
                                 <i data-lucide="bell" class="w-5 h-5"></i>
                                 <span x-show="$store.notif.count > 0" x-text="$store.notif.count"
@@ -868,7 +870,6 @@ if ($needsProfileCompletion) {
                                 </div>
                             </div>
                         </div>
-
                         <div class="relative hidden md:block" x-data="{open:false}">
                             <button @click="open=!open"
                                 class="flex items-center gap-3 rounded-lg px-3 py-2 theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
@@ -881,11 +882,14 @@ if ($needsProfileCompletion) {
                                 class="absolute right-0 mt-2 w-56 rounded-lg bg-white dark:bg-secondary shadow-lg border border-gray-100 dark:border-white/10 py-2 z-50">
                                 <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
                                     <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                        <?= htmlspecialchars($userName) ?></p>
+                                        <?= htmlspecialchars($userName) ?>
+                                    </p>
                                     <p class="text-xs text-gray-500 dark:text-white/70">
-                                        <?= htmlspecialchars($userEmail) ?></p>
+                                        <?= htmlspecialchars($userEmail) ?>
+                                    </p>
                                     <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
-                                        <?= htmlspecialchars($formattedLastLogin) ?></p>
+                                        <?= htmlspecialchars($formattedLastLogin) ?>
+                                    </p>
                                 </div>
                                 <a href="<?= BASE_URL ?>account/profile"
                                     class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-white dark:hover:bg-white/10">
@@ -910,7 +914,6 @@ if ($needsProfileCompletion) {
                                 </a>
                             </div>
                         </div>
-
                         <button
                             class="md:hidden relative w-10 h-10 flex items-center justify-center rounded-lg theme-pill bg-white text-gray-700 hover:bg-gray-50 dark:bg-secondary dark:text-white dark:hover:bg-white/10"
                             @click="$store.ui.openSheet('notif')">
@@ -926,7 +929,6 @@ if ($needsProfileCompletion) {
                     </div>
                 </div>
             </header>
-
             <div class="flex flex-col min-h-[calc(100vh-64px)]">
                 <main
                     class="main-content-area dark:bg-secondary p-4 sm:p-6 safe-bottom text-gray-900 dark:text-white main-fixed">
@@ -1038,7 +1040,6 @@ if ($needsProfileCompletion) {
             </div>
         </div>
     </div>
-
     <div
         class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-secondary border-t border-gray-200 dark:border-white/10 mobile-tabbar">
         <div class="grid grid-cols-5 h-full">
@@ -1064,7 +1065,6 @@ if ($needsProfileCompletion) {
             </button>
         </div>
     </div>
-
     <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet"
         x-bind:class="{'open': $store.ui.sheet==='more'}">
         <div class="px-4 pt-3 pb-2 border-b border-gray-100 dark:border-white/10">
@@ -1082,9 +1082,11 @@ if ($needsProfileCompletion) {
                                     class="w-5 h-5 text-secondary dark:text-white"></i></span>
                             <div>
                                 <div class="text-sm font-medium text-secondary dark:text-white">
-                                    <?= htmlspecialchars($item['title']) ?></div>
+                                    <?= htmlspecialchars($item['title']) ?>
+                                </div>
                                 <div class="text-[11px] text-gray-500 dark:text-white/70">
-                                    <?= htmlspecialchars(ucfirst($category['title'])) ?></div>
+                                    <?= htmlspecialchars(ucfirst($category['title'])) ?>
+                                </div>
                             </div>
                         </a>
                     <?php endforeach; endforeach; ?>
@@ -1115,7 +1117,6 @@ if ($needsProfileCompletion) {
                 class="w-full py-2.5 rounded-xl border text-sm font-medium text-secondary dark:text-white">Close</button>
         </div>
     </div>
-
     <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet"
         x-bind:class="{'open': $store.ui.sheet==='account'}">
         <div class="px-4 pt-3 pb-2 border-b border-gray-100 dark:border-white/10">
@@ -1124,7 +1125,8 @@ if ($needsProfileCompletion) {
                 <div class="user-initials w-10 h-10"><?= htmlspecialchars($userInitials) ?></div>
                 <div class="min-w-0">
                     <div class="text-sm font-medium text-secondary dark:text-white truncate">
-                        <?= htmlspecialchars($userName) ?></div>
+                        <?= htmlspecialchars($userName) ?>
+                    </div>
                     <div class="text-xs text-gray-500 dark:text-white/70 truncate"><?= htmlspecialchars($userEmail) ?>
                     </div>
                 </div>
@@ -1184,7 +1186,6 @@ if ($needsProfileCompletion) {
                 class="mt-2 w-full py-2.5 rounded-xl border text-sm font-medium text-secondary dark:text-white">Close</button>
         </div>
     </div>
-
     <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-secondary rounded-t-2xl border-t border-gray-200 dark:border-white/10 shadow-2xl sheet"
         x-bind:class="{'open': $store.ui.sheet==='notif'}">
         <div class="px-4 pt-3 pb-2 border-b border-gray-100 dark:border-white/10">
@@ -1236,7 +1237,6 @@ if ($needsProfileCompletion) {
                 @click="$store.ui.closeSheet()">Close</button>
         </div>
     </div>
-
     <div id="return-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
         <div class="bg-white dark:bg-secondary rounded-xl p-8 max-w-md mx-4 shadow-2xl">
             <h3 class="text-xl font-rubik font-semibold text-secondary dark:text-white mb-6">Resume Your Progress</h3>
@@ -1253,7 +1253,6 @@ if ($needsProfileCompletion) {
             </div>
         </div>
     </div>
-
     <script>
         const LOGGED_USER = <?= isset($_SESSION['user']) ? json_encode($_SESSION['user']) : 'null'; ?>;
         window.addEventListener('load', function () {

@@ -106,6 +106,24 @@ function formatCurrency($amount)
                                 <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
                             </div>
                         </button>
+                        <button id="price_view-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchSettingsTab('price_view')">
+                            <i class="fas fa-tags"></i>
+                            <span>Price View</span>
+                            <div id="price_view-warning" class="ml-auto hidden">
+                                <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
+                            </div>
+                        </button>
+                        <button id="contact_details_view-tab"
+                            class="tab-button w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            onclick="switchSettingsTab('contact_details_view')">
+                            <i class="fas fa-address-book"></i>
+                            <span>Contact Details View</span>
+                            <div id="contact_details_view-warning" class="ml-auto hidden">
+                                <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
+                            </div>
+                        </button>
                     </nav>
                 </div>
             </div>
@@ -208,6 +226,24 @@ function formatCurrency($amount)
                                         <i class="fas fa-store text-amber-600"></i>
                                         <span>Buy In Store</span>
                                         <div id="mobile-buy_in_store-warning" class="ml-auto hidden">
+                                            <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
+                                        </div>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="price_view">
+                                        <i class="fas fa-tags text-gray-700"></i>
+                                        <span>Price View</span>
+                                        <div id="mobile-price_view-warning" class="ml-auto hidden">
+                                            <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
+                                        </div>
+                                    </button>
+                                    <button
+                                        class="mobile-tab-option w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                                        data-tab="contact_details_view">
+                                        <i class="fas fa-address-book text-gray-700"></i>
+                                        <span>Contact Details View</span>
+                                        <div id="mobile-contact_details_view-warning" class="ml-auto hidden">
                                             <i class="fas fa-exclamation-triangle text-orange-500 text-sm"></i>
                                         </div>
                                     </button>
@@ -327,6 +363,8 @@ function formatCurrency($amount)
                         <option value="subscription">Subscription</option>
                         <option value="quote">Request for Quote</option>
                         <option value="buy_in_store">Buy In Store</option>
+                        <option value="price_view">Price View</option>
+                        <option value="contact_details_view">Contact Details View</option>
                     </select>
                 </div>
 
@@ -634,7 +672,7 @@ function formatCurrency($amount)
     }
 
     function checkAllCategoriesConfiguration() {
-        const categories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription', 'quote', 'buy_in_store'];
+        const categories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription', 'quote', 'buy_in_store', 'price_view', 'contact_details_view'];
         categories.forEach(category => {
             checkCategoryConfiguration(category);
         });
@@ -678,7 +716,9 @@ function formatCurrency($amount)
             'withdrawal': { label: 'Withdrawal', icon: 'fas fa-money-bill-wave' },
             'subscription': { label: 'Subscription', icon: 'fas fa-calendar-alt' },
             'quote': { label: 'Request for Quote', icon: 'fas fa-file-invoice' },
-            'buy_in_store': { label: 'Buy In Store', icon: 'fas fa-store' }
+            'buy_in_store': { label: 'Buy In Store', icon: 'fas fa-store' },
+            'price_view': { label: 'Price View', icon: 'fas fa-tags' },
+            'contact_details_view': { label: 'Contact Details View', icon: 'fas fa-address-book' }
         };
         const tabInfo = tabLabels[tabName] || tabLabels['sms'];
         updateMobileTabLabel(tabInfo.label, tabInfo.icon);

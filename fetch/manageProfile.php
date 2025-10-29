@@ -7,94 +7,79 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php-errors.log');
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../lib/ZzimbaCreditModule.php';
 
 use Ulid\Ulid;
+use ZzimbaCreditModule\CreditService as ZCM;
 
 header('Content-Type: application/json');
 
 $isLoggedIn = isset($_SESSION['user']['logged_in']) && $_SESSION['user']['logged_in'];
-$currentUser = $isLoggedIn ? $_SESSION['user']['user_id'] : null;
+$currentUser = $isLoggedIn ? ($_SESSION['user']['user_id'] ?? null) : null;
 
 ensureProductPricingTable($pdo);
 ensureViewLoggingTables($pdo);
 
-$action = $_GET['action'] ?? '';
+$action = $_GET['action'] ?? ($_GET['ajax'] ?? '');
 
 try {
     switch ($action) {
         case 'getStoreDetails':
             getStoreDetails($pdo, $_GET['id'] ?? null, $currentUser);
             break;
-
         case 'getStoreProducts':
-            getStoreProducts($pdo, $_GET['id'] ?? null, $_GET['page'] ?? 1, $_GET['limit'] ?? 12);
+            getStoreProducts($pdo, $_GET['id'] ?? null, (int) ($_GET['page'] ?? 1), (int) ($_GET['limit'] ?? 12));
             break;
-
         case 'logProfileView':
             logProfileView($pdo, $_POST['store_id'] ?? '', $_POST['session_id'] ?? '', $currentUser);
             break;
-
         case 'logContactView':
             logContactView($pdo, $_POST['store_id'] ?? '', $_POST['entity'] ?? '', $_POST['session_id'] ?? '', $currentUser);
             break;
-
         case 'logPriceView':
             logPriceView($pdo, $_POST['pricing_id'] ?? '', $_POST['session_id'] ?? '', $currentUser);
             break;
-
         case 'getViewedEntities':
             getViewedEntities($pdo, $_GET['store_id'] ?? '', $_GET['session_id'] ?? '', $currentUser);
             break;
-
         case 'getStoreContact':
             getStoreContact($pdo, $_GET['id'] ?? '', $_GET['type'] ?? '');
             break;
-
         case 'getPackageNamesForProduct':
             getPackageNamesForProduct($pdo);
             break;
-
         case 'getSIUnits':
             getSIUnits($pdo);
             break;
-
         case 'createSIUnit':
             requireLogin();
             createSIUnit($pdo);
             break;
-
         case 'updateCategoryStatus':
             requireLogin();
             updateCategoryStatus($pdo, $currentUser);
             break;
-
         case 'addStoreProduct':
             requireLogin();
             addStoreProduct($pdo, $currentUser);
             break;
-
         case 'updateStoreProduct':
             requireLogin();
             updateStoreProduct($pdo, $currentUser);
             break;
-
         case 'deleteProduct':
             requireLogin();
             deleteProduct($pdo, $_POST['id'] ?? '', $currentUser);
             break;
-
         case 'increaseStoreViews':
             increaseStoreViews($pdo, $_GET['id'] ?? null);
             break;
-
         case 'reportStore':
             reportStore($pdo, $_POST['id'] ?? '', $_POST['reason'] ?? '', $currentUser);
             break;
-
         case 'getUnitsForProduct':
             getUnitsForProduct($pdo);
             break;
-
         case 'getProductsForCategory':
             if (empty($_GET['store_id']) || empty($_GET['category_id'])) {
                 http_response_code(400);
@@ -103,7 +88,6 @@ try {
             }
             getProductsNotInStore($pdo, $_GET['store_id'], $_GET['category_id']);
             break;
-
         case 'getProductsNotInStore':
             if (empty($_GET['store_id'])) {
                 http_response_code(400);
@@ -112,7 +96,18 @@ try {
             }
             getAllProductsNotInStore($pdo, $_GET['store_id']);
             break;
-
+        case 'storeRole':
+        case 'getStoreRole':
+            getStoreRole($pdo, $_GET['id'] ?? '', $currentUser);
+            break;
+        case 'previewAccessCharge':
+            requireLogin();
+            previewAccessCharge($pdo, $currentUser);
+            break;
+        case 'confirmAccessCharge':
+            requireLogin();
+            confirmAccessCharge($pdo, $currentUser);
+            break;
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Invalid action: ' . $action]);
@@ -139,6 +134,9 @@ function ensureProductPricingTable(PDO $pdo)
             `price` DECIMAL(10,2) NOT NULL,
             `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail',
             `delivery_capacity` INT DEFAULT NULL,
+            `commission_type` ENUM('flat','percentage') NOT NULL DEFAULT 'percentage',
+            `commission_value` DECIMAL(10,2) NOT NULL DEFAULT '1.00',
+            `status` enum('active','inactive','suspended','deleted') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
@@ -148,6 +146,30 @@ function ensureProductPricingTable(PDO $pdo)
             FOREIGN KEY (`created_by`) REFERENCES `zzimba_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
     ");
+
+    $existsType = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+          AND TABLE_NAME = 'product_pricing' 
+          AND COLUMN_NAME = 'commission_type'
+    ");
+    $existsType->execute();
+    if (!$existsType->fetchColumn()) {
+        $pdo->exec("ALTER TABLE `product_pricing` ADD COLUMN `commission_type` ENUM('flat','percentage') NOT NULL DEFAULT 'percentage' AFTER `delivery_capacity`");
+    }
+
+    $existsValue = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+          AND TABLE_NAME = 'product_pricing' 
+          AND COLUMN_NAME = 'commission_value'
+    ");
+    $existsValue->execute();
+    if (!$existsValue->fetchColumn()) {
+        $pdo->exec("ALTER TABLE `product_pricing` ADD COLUMN `commission_value` DECIMAL(10,2) NOT NULL DEFAULT '1.00' AFTER `commission_type`");
+    }
 }
 
 function ensureViewLoggingTables(PDO $pdo)
@@ -349,11 +371,31 @@ function getStoreContact(PDO $pdo, string $storeId, string $type)
     }
 }
 
+function getStoreRole(PDO $pdo, string $storeId, ?string $userId)
+{
+    $logged_in = !empty($userId);
+    $is_admin = !empty($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin';
+    $is_owner_or_manager = $logged_in && (isStoreOwner($pdo, $storeId, $userId) || canManageStore($pdo, $storeId, $userId));
+    $can_edit = $is_admin || $is_owner_or_manager;
+
+    echo json_encode([
+        'success' => true,
+        'logged_in' => $logged_in,
+        'is_admin' => $is_admin,
+        'is_owner_or_manager' => $is_owner_or_manager,
+        'can_edit' => $can_edit
+    ]);
+}
+
 function requireLogin()
 {
     if (empty($_SESSION['user']['logged_in'])) {
         http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Authentication required', 'session_expired' => true]);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Authentication required',
+            'session_expired' => true
+        ]);
         exit;
     }
 }
@@ -365,39 +407,59 @@ function isValidUlid(string $id): bool
 
 function isStoreOwner(PDO $pdo, string $storeId, ?string $userId): bool
 {
-    if (!$userId)
+    if (!$userId) {
         return false;
+    }
 
-    $stmt = $pdo->prepare("SELECT 1 FROM vendor_stores WHERE id = ? AND owner_id = ? LIMIT 1");
+    $stmt = $pdo->prepare("
+        SELECT 1 
+        FROM vendor_stores 
+        WHERE id = ? AND owner_id = ? 
+        LIMIT 1
+    ");
     $stmt->execute([$storeId, $userId]);
+
     return (bool) $stmt->fetchColumn();
 }
 
 function canManageStore(PDO $pdo, string $storeId, ?string $userId): bool
 {
-    if (!$userId)
+    if (!$userId) {
         return false;
+    }
 
     if (isStoreOwner($pdo, $storeId, $userId)) {
         return true;
     }
 
-    $stmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active' LIMIT 1");
+    $stmt = $pdo->prepare("
+        SELECT 1 
+        FROM store_managers 
+        WHERE store_id = ? AND user_id = ? AND status = 'active' 
+        LIMIT 1
+    ");
     $stmt->execute([$storeId, $userId]);
+
     return (bool) $stmt->fetchColumn();
 }
 
 function getUserStoreRole(PDO $pdo, string $storeId, ?string $userId): ?string
 {
-    if (!$userId)
+    if (!$userId) {
         return null;
+    }
 
     if (isStoreOwner($pdo, $storeId, $userId)) {
         return 'owner';
     }
 
-    $stmt = $pdo->prepare("SELECT role FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active'");
+    $stmt = $pdo->prepare("
+        SELECT role 
+        FROM store_managers 
+        WHERE store_id = ? AND user_id = ? AND status = 'active'
+    ");
     $stmt->execute([$storeId, $userId]);
+
     return $stmt->fetchColumn() ?: null;
 }
 
@@ -425,8 +487,13 @@ function getPackageNamesForProduct(PDO $pdo)
 function getSIUnits(PDO $pdo)
 {
     try {
-        $stmt = $pdo->query("SELECT id, si_unit FROM product_si_units ORDER BY si_unit");
+        $stmt = $pdo->query("
+            SELECT id, si_unit 
+            FROM product_si_units 
+            ORDER BY si_unit
+        ");
         $units = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         echo json_encode(['success' => true, 'siUnits' => $units]);
     } catch (Exception $e) {
         error_log('Error in getSIUnits: ' . $e->getMessage());
@@ -447,10 +514,19 @@ function createSIUnit(PDO $pdo)
     }
 
     try {
-        $stmt = $pdo->prepare("SELECT id FROM product_si_units WHERE si_unit = ?");
+        $stmt = $pdo->prepare("
+            SELECT id 
+            FROM product_si_units 
+            WHERE si_unit = ?
+        ");
         $stmt->execute([$name]);
+
         if ($row = $stmt->fetch()) {
-            echo json_encode(['success' => true, 'message' => 'Already exists', 'id' => $row['id']]);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Already exists',
+                'id' => $row['id']
+            ]);
             return;
         }
 
@@ -463,7 +539,11 @@ function createSIUnit(PDO $pdo)
         ");
         $ins->execute([$id, $name, $now, $now]);
 
-        echo json_encode(['success' => true, 'message' => 'Created', 'id' => $id]);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Created',
+            'id' => $id
+        ]);
     } catch (Exception $e) {
         error_log('Error in createSIUnit: ' . $e->getMessage());
         http_response_code(500);
@@ -485,17 +565,34 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
                 v.*,
                 nob.name AS nature_of_business_name,
                 u.username AS owner_username,
-                u.email    AS owner_email,
-                u.phone    AS owner_phone,
+                u.email AS owner_email,
+                u.phone AS owner_phone,
                 u.current_login AS owner_current_login,
-                (SELECT COUNT(DISTINCT sc.id) FROM store_categories sc 
-                 JOIN store_products sp ON sc.id = sp.store_category_id
-                 WHERE sc.store_id = v.id AND sc.status = 'active' AND sp.status = 'active') AS category_count,
-                (SELECT COUNT(*) FROM product_pricing pp 
+                (
+                    SELECT COUNT(DISTINCT sc.id)
+                    FROM store_categories sc 
+                    JOIN store_products sp ON sc.id = sp.store_category_id
+                    WHERE sc.store_id = v.id 
+                      AND sc.status = 'active' 
+                      AND sp.status = 'active'
+                ) AS category_count,
+                (
+                    SELECT COUNT(DISTINCT p.id)
+                    FROM product_pricing pp
                     JOIN store_products sp ON pp.store_products_id = sp.id
                     JOIN store_categories sc ON sc.id = sp.store_category_id
-                 WHERE sc.store_id = v.id AND sp.status = 'active' AND sc.status = 'active') AS product_count,
-                (SELECT COUNT(*) FROM store_profile_views WHERE store_id = v.id) AS profile_views
+                    JOIN products p ON p.id = sp.product_id
+                    WHERE sc.store_id = v.id 
+                      AND sc.status = 'active' 
+                      AND sp.status = 'active' 
+                      AND p.status = 'published'
+                      AND pp.status = 'active'
+                ) AS product_count,
+                (
+                    SELECT COUNT(*) 
+                    FROM store_profile_views 
+                    WHERE store_id = v.id
+                ) AS profile_views
             FROM vendor_stores v
             LEFT JOIN nature_of_business nob ON v.nature_of_business = nob.id
             JOIN zzimba_users u ON v.owner_id = u.id
@@ -521,15 +618,23 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
                 sc.status,
                 sc.created_at,
                 sc.updated_at,
-                pc.id   AS category_id,
+                pc.id AS category_id,
                 pc.name,
                 pc.description,
-                (SELECT COUNT(*) FROM product_pricing pp 
-                    JOIN store_products sp ON pp.store_products_id = sp.id
-                    WHERE sp.store_category_id = sc.id AND sp.status = 'active') AS product_count
+                (
+                    SELECT COUNT(DISTINCT p2.id)
+                    FROM product_pricing pp2
+                    JOIN store_products sp2 ON pp2.store_products_id = sp2.id
+                    JOIN products p2 ON p2.id = sp2.product_id
+                    WHERE sp2.store_category_id = sc.id 
+                      AND sp2.status = 'active' 
+                      AND p2.status = 'published'
+                      AND pp2.status = 'active'
+                ) AS product_count
             FROM store_categories sc
             JOIN product_categories pc ON sc.category_id = pc.id
-            WHERE sc.store_id = ? AND sc.status != 'deleted'
+            WHERE sc.store_id = ? 
+              AND sc.status != 'deleted'
             ORDER BY pc.name
         ");
         $catStmt->execute([$storeId]);
@@ -550,7 +655,8 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
                     u.status AS user_status
                 FROM store_managers sm
                 JOIN zzimba_users u ON sm.user_id = u.id
-                WHERE sm.store_id = ? AND sm.status != 'removed'
+                WHERE sm.store_id = ? 
+                  AND sm.status != 'removed'
                 ORDER BY sm.created_at DESC
             ");
             $mgrStmt->execute([$storeId]);
@@ -579,57 +685,99 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
 
     try {
         $countStmt = $pdo->prepare("
-            SELECT COUNT(*)
-            FROM store_products sp
-            JOIN store_categories sc ON sp.store_category_id = sc.id
-            JOIN products p          ON sp.product_id        = p.id
+            SELECT COUNT(DISTINCT p.id)
+            FROM products p
+            JOIN store_products sp ON sp.product_id = p.id
+            JOIN store_categories sc ON sc.id = sp.store_category_id
+            JOIN product_pricing pp ON pp.store_products_id = sp.id
             WHERE sc.store_id = ?
-              AND sp.status  = 'active'
-              AND p.status   = 'published'
-              AND sc.status  = 'active'
+              AND sp.status = 'active'
+              AND sc.status = 'active'
+              AND p.status = 'published'
+              AND pp.status = 'active'
         ");
         $countStmt->execute([$storeId]);
         $total = (int) $countStmt->fetchColumn();
 
+        $idsStmt = $pdo->prepare("
+            SELECT p.id
+            FROM products p
+            JOIN store_products sp ON sp.product_id = p.id
+            JOIN store_categories sc ON sc.id = sp.store_category_id
+            JOIN product_pricing pp ON pp.store_products_id = sp.id
+            WHERE sc.store_id = ?
+              AND sp.status = 'active'
+              AND sc.status = 'active'
+              AND p.status = 'published'
+              AND pp.status = 'active'
+            GROUP BY p.id
+            ORDER BY p.featured DESC, p.created_at DESC
+            LIMIT ? OFFSET ?
+        ");
+        $idsStmt->bindValue(1, $storeId);
+        $idsStmt->bindValue(2, $limit, PDO::PARAM_INT);
+        $idsStmt->bindValue(3, $offset, PDO::PARAM_INT);
+        $idsStmt->execute();
+        $productIds = $idsStmt->fetchAll(PDO::FETCH_COLUMN);
+
+        if (empty($productIds)) {
+            echo json_encode([
+                'success' => true,
+                'products' => [],
+                'pagination' => [
+                    'total' => $total,
+                    'page' => $page,
+                    'limit' => $limit,
+                    'pages' => (int) ceil(max(1, $total) / $limit)
+                ]
+            ]);
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+
         $stmt = $pdo->prepare("
             SELECT
-                p.id               AS product_id,
-                p.title            AS name,
+                p.id AS product_id,
+                p.title AS name,
                 p.description,
                 p.featured,
-                pc.name            AS category_name,
-                sc.id              AS store_category_id,
-                sp.id              AS store_product_id,
-                pp.id              AS pricing_id,
+                pc.name AS category_name,
+                sc.id AS store_category_id,
+                sp.id AS store_product_id,
+                pp.id AS pricing_id,
                 pp.price,
                 pp.price_category,
                 pp.delivery_capacity,
                 pp.package_size,
-                ppm.id             AS package_mapping_id,
+                ppm.id AS package_mapping_id,
                 ppn.package_name,
-                psu.id             AS si_unit_id,
+                psu.id AS si_unit_id,
                 psu.si_unit
-            FROM store_products sp
-            JOIN store_categories sc ON sp.store_category_id = sc.id
-            JOIN products        p   ON sp.product_id        = p.id
+            FROM products p
             JOIN product_categories pc ON p.category_id = pc.id
-            LEFT JOIN product_pricing pp   ON pp.store_products_id = sp.id
+            JOIN store_products sp ON sp.product_id = p.id
+            JOIN store_categories sc ON sc.id = sp.store_category_id
+            JOIN product_pricing pp ON pp.store_products_id = sp.id
             LEFT JOIN product_package_name_mappings ppm ON pp.package_mapping_id = ppm.id
             LEFT JOIN product_package_name ppn ON ppm.product_package_name_id = ppn.id
             LEFT JOIN product_si_units psu ON pp.si_unit_id = psu.id
             WHERE sc.store_id = ?
-              AND sp.status   = 'active'
-              AND p.status    = 'published'
-              AND sc.status   = 'active'
-            ORDER BY p.featured DESC, p.created_at DESC
-            LIMIT ? OFFSET ?
+              AND sp.status = 'active'
+              AND sc.status = 'active'
+              AND p.status = 'published'
+              AND pp.status = 'active'
+              AND p.id IN ($placeholders)
+            ORDER BY p.featured DESC, p.created_at DESC, pp.created_at ASC
         ");
-        $stmt->execute([$storeId, $limit, $offset]);
+        $bind = array_merge([$storeId], $productIds);
+        $stmt->execute($bind);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $products = [];
         foreach ($rows as $r) {
             $pid = $r['product_id'];
+
             if (!isset($products[$pid])) {
                 $products[$pid] = [
                     'id' => $pid,
@@ -642,7 +790,8 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                     'pricing' => []
                 ];
             }
-            if ($r['pricing_id']) {
+
+            if (!empty($r['pricing_id'])) {
                 $products[$pid]['pricing'][] = [
                     'pricing_id' => $r['pricing_id'],
                     'unit_name' => trim(($r['si_unit'] ?? '') . ' ' . ($r['package_name'] ?? '')),
@@ -663,7 +812,7 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                 'total' => $total,
                 'page' => $page,
                 'limit' => $limit,
-                'pages' => (int) ceil($total / $limit)
+                'pages' => (int) ceil(max(1, $total) / $limit)
             ]
         ]);
     } catch (Exception $e) {
@@ -676,6 +825,7 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
 function updateCategoryStatus(PDO $pdo, string $currentUser)
 {
     $data = json_decode(file_get_contents('php://input'), true);
+
     if (empty($data['store_id']) || empty($data['category_updates']) || !isValidUlid($data['store_id'])) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Missing or invalid data']);
@@ -683,7 +833,8 @@ function updateCategoryStatus(PDO $pdo, string $currentUser)
     }
 
     $storeId = $data['store_id'];
-    if (!canManageStore($pdo, $storeId, $currentUser)) {
+
+    if (!canManageStore($pdo, $storeId, $currentUser) && (($_SESSION['user']['role'] ?? '') !== 'admin')) {
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'Permission denied']);
         return;
@@ -691,6 +842,7 @@ function updateCategoryStatus(PDO $pdo, string $currentUser)
 
     try {
         $pdo->beginTransaction();
+
         $upd = $pdo->prepare("
             UPDATE store_categories
             SET status = ?, updated_at = NOW()
@@ -705,6 +857,7 @@ function updateCategoryStatus(PDO $pdo, string $currentUser)
         }
 
         $pdo->commit();
+
         echo json_encode(['success' => true, 'message' => 'Statuses updated']);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
@@ -728,7 +881,7 @@ function addStoreProduct(PDO $pdo, string $currentUser)
         return;
     }
 
-    if (!canManageStore($pdo, $storeId, $currentUser)) {
+    if (!canManageStore($pdo, $storeId, $currentUser) && (($_SESSION['user']['role'] ?? '') !== 'admin')) {
         http_response_code(403);
         echo json_encode(['success' => false, 'error' => 'Permission denied']);
         return;
@@ -737,10 +890,13 @@ function addStoreProduct(PDO $pdo, string $currentUser)
     try {
         $pdo->beginTransaction();
 
-        $prodCatStmt = $pdo->prepare("SELECT category_id FROM products WHERE id = ?");
+        $prodCatStmt = $pdo->prepare("
+            SELECT category_id 
+            FROM products 
+            WHERE id = ?
+        ");
         $prodCatStmt->execute([$productId]);
         $categoryId = $prodCatStmt->fetchColumn();
-
         if (!$categoryId) {
             throw new Exception('Product category not found');
         }
@@ -748,7 +904,9 @@ function addStoreProduct(PDO $pdo, string $currentUser)
         $scStmt = $pdo->prepare("
             SELECT id
             FROM store_categories
-            WHERE store_id = ? AND category_id = ? AND status != 'deleted'
+            WHERE store_id = ? 
+              AND category_id = ? 
+              AND status != 'deleted'
         ");
         $scStmt->execute([$storeId, $categoryId]);
         $scId = $scStmt->fetchColumn();
@@ -771,7 +929,8 @@ function addStoreProduct(PDO $pdo, string $currentUser)
         $check = $pdo->prepare("
             SELECT id, status
             FROM store_products
-            WHERE store_category_id = ? AND product_id = ?
+            WHERE store_category_id = ? 
+              AND product_id = ?
         ");
         $check->execute([$scId, $productId]);
         $ex = $check->fetch(PDO::FETCH_ASSOC);
@@ -829,7 +988,9 @@ function addStoreProduct(PDO $pdo, string $currentUser)
         }
 
         updateEmptyCategories($pdo);
+
         $pdo->commit();
+
         echo json_encode(['success' => true, 'message' => 'Product & pricing added']);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
@@ -862,7 +1023,10 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
         $storeIdStmt->execute([$storeProductId]);
         $storeId = $storeIdStmt->fetchColumn();
 
-        if (!$storeId || !canManageStore($pdo, $storeId, $currentUser)) {
+        if (
+            !$storeId ||
+            (!canManageStore($pdo, $storeId, $currentUser) && (($_SESSION['user']['role'] ?? '') !== 'admin'))
+        ) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'Permission denied']);
             return;
@@ -871,91 +1035,76 @@ function updateStoreProduct(PDO $pdo, string $currentUser)
         $pdo->beginTransaction();
 
         $existingStmt = $pdo->prepare("
-            SELECT id, package_mapping_id, si_unit_id, package_size, price, price_category, delivery_capacity
-            FROM product_pricing
+            SELECT id 
+            FROM product_pricing 
             WHERE store_products_id = ?
         ");
         $existingStmt->execute([$storeProductId]);
-        $existingPricing = $existingStmt->fetchAll(PDO::FETCH_ASSOC);
+        $existingPricingIds = $existingStmt->fetchAll(PDO::FETCH_COLUMN);
 
-        $existingByKey = [];
-        foreach ($existingPricing as $item) {
-            $key = $item['package_mapping_id'] . '_' . $item['si_unit_id'] . '_' . $item['price_category'];
-            $existingByKey[$key] = $item;
-        }
+        $updateStmt = $pdo->prepare("
+            UPDATE product_pricing
+            SET package_mapping_id = ?, si_unit_id = ?, package_size = ?, price = ?, 
+                price_category = ?, delivery_capacity = ?, updated_at = NOW()
+            WHERE id = ?
+        ");
 
-        $updatedIds = [];
+        $insertStmt = $pdo->prepare("
+            INSERT INTO product_pricing
+                (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        ");
 
-        if (is_array($lineItems) && count($lineItems) > 0) {
-            $updateStmt = $pdo->prepare("
-                UPDATE product_pricing
-                SET package_size = ?, price = ?, delivery_capacity = ?, updated_at = NOW()
-                WHERE id = ?
-            ");
+        $postedIds = [];
+        foreach ($lineItems as $item) {
+            $pricingId = $item['pricing_id'] ?? '';
+            $pmId = $item['package_mapping_id'] ?? '';
+            $siId = $item['si_unit_id'] ?? '';
+            $packageSize = trim($item['package_size'] ?? '1');
+            $price = floatval($item['price'] ?? 0);
+            $cat = $item['price_category'] ?? 'retail';
+            $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
 
-            $insertStmt = $pdo->prepare("
-                INSERT INTO product_pricing
-                    (id, store_products_id, package_mapping_id, si_unit_id, package_size, created_by, price, price_category, delivery_capacity, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-            ");
+            if (!isValidUlid($pmId) || !isValidUlid($siId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
+                throw new Exception('Invalid line item data');
+            }
 
-            foreach ($lineItems as $item) {
-                $pmId = $item['package_mapping_id'] ?? '';
-                $siId = $item['si_unit_id'] ?? '';
-                $packageSize = trim($item['package_size'] ?? '1');
-                $price = floatval($item['price'] ?? 0);
-                $cat = $item['price_category'] ?? 'retail';
-                $cap = isset($item['delivery_capacity']) ? intval($item['delivery_capacity']) : null;
-
-                if (!isValidUlid($pmId) || !isValidUlid($siId) || !in_array($cat, ['retail', 'wholesale', 'factory'], true)) {
-                    throw new Exception('Invalid line item data');
-                }
-
-                $key = $pmId . '_' . $siId . '_' . $cat;
-
-                if (isset($existingByKey[$key])) {
-                    $existingId = $existingByKey[$key]['id'];
-                    $updateStmt->execute([
-                        $packageSize,
-                        $price,
-                        $cap,
-                        $existingId
-                    ]);
-                    $updatedIds[] = $existingId;
-                } else {
-                    $ppId = Ulid::generate();
-                    $insertStmt->execute([
-                        $ppId,
-                        $storeProductId,
-                        $pmId,
-                        $siId,
-                        $packageSize,
-                        $currentUser,
-                        $price,
-                        $cat,
-                        $cap
-                    ]);
-                }
+            if ($pricingId && in_array($pricingId, $existingPricingIds)) {
+                $updateStmt->execute([$pmId, $siId, $packageSize, $price, $cat, $cap, $pricingId]);
+                $postedIds[] = $pricingId;
+            } else {
+                $ppId = Ulid::generate();
+                $insertStmt->execute([
+                    $ppId,
+                    $storeProductId,
+                    $pmId,
+                    $siId,
+                    $packageSize,
+                    $currentUser,
+                    $price,
+                    $cat,
+                    $cap
+                ]);
+                $postedIds[] = $ppId;
             }
         }
 
-        if (!empty($existingPricing)) {
-            $toDelete = [];
-            foreach ($existingPricing as $item) {
-                if (!in_array($item['id'], $updatedIds)) {
-                    $toDelete[] = $item['id'];
-                }
-            }
-
+        if (!empty($existingPricingIds)) {
+            $toDelete = array_diff($existingPricingIds, $postedIds);
             if (!empty($toDelete)) {
                 $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
-                $deleteStmt = $pdo->prepare("DELETE FROM product_pricing WHERE id IN ($placeholders)");
+                $deleteStmt = $pdo->prepare("
+                    DELETE FROM product_pricing 
+                    WHERE id IN ($placeholders)
+                ");
                 $deleteStmt->execute($toDelete);
             }
         }
 
         updateEmptyCategories($pdo);
+
         $pdo->commit();
+
         echo json_encode(['success' => true, 'message' => 'Product pricing updated']);
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
@@ -992,7 +1141,10 @@ function deleteProduct(PDO $pdo, string $storeProductId, ?string $currentUser)
             return;
         }
 
-        if (!canManageStore($pdo, $res['store_id'], $currentUser)) {
+        if (
+            !canManageStore($pdo, $res['store_id'], $currentUser) &&
+            (($_SESSION['user']['role'] ?? '') !== 'admin')
+        ) {
             http_response_code(403);
             echo json_encode(['success' => false, 'error' => 'Permission denied']);
             return;
@@ -1027,16 +1179,17 @@ function getUnitsForProduct(PDO $pdo)
     try {
         $stmt = $pdo->query("
             SELECT
-                pum.id                AS product_unit_of_measure_id,
+                pum.id AS product_unit_of_measure_id,
                 ppn.package_name,
                 psu.si_unit
             FROM product_unit_of_measure pum
-            JOIN product_si_units psu ON pum.product_si_unit_id  = psu.id
+            JOIN product_si_units psu ON pum.product_si_unit_id = psu.id
             JOIN product_package_name ppn ON pum.product_package_name_id = ppn.id
             WHERE pum.status = 'Approved'
             ORDER BY psu.si_unit, ppn.package_name
         ");
         $units = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         echo json_encode(['success' => true, 'units' => $units]);
     } catch (Exception $e) {
         error_log('Error in getUnitsForProduct: ' . $e->getMessage());
@@ -1057,7 +1210,7 @@ function getProductsNotInStore(PDO $pdo, string $storeId, string $categoryId)
         $stmt = $pdo->prepare("
             SELECT
                 p.id,
-                p.title       AS name,
+                p.title AS name,
                 p.description
             FROM products p
             WHERE p.category_id = ?
@@ -1072,6 +1225,7 @@ function getProductsNotInStore(PDO $pdo, string $storeId, string $categoryId)
         ");
         $stmt->execute([$categoryId, $storeId]);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         echo json_encode(['success' => true, 'products' => $products]);
     } catch (Exception $e) {
         error_log('Error in getProductsNotInStore: ' . $e->getMessage());
@@ -1092,10 +1246,10 @@ function getAllProductsNotInStore(PDO $pdo, string $storeId)
         $stmt = $pdo->prepare("
             SELECT
                 p.id,
-                p.title       AS name,
+                p.title AS name,
                 p.description,
                 p.category_id,
-                pc.name       AS category_name
+                pc.name AS category_name
             FROM products p
             JOIN product_categories pc ON p.category_id = pc.id
             WHERE p.status = 'published'
@@ -1109,6 +1263,7 @@ function getAllProductsNotInStore(PDO $pdo, string $storeId)
         ");
         $stmt->execute([$storeId]);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         echo json_encode(['success' => true, 'products' => $products]);
     } catch (Exception $e) {
         error_log('Error in getAllProductsNotInStore: ' . $e->getMessage());
@@ -1133,12 +1288,206 @@ function updateEmptyCategories(PDO $pdo)
 
         if (!empty($emptyCategories)) {
             $placeholders = implode(',', array_fill(0, count($emptyCategories), '?'));
-            $deleteStmt = $pdo->prepare("UPDATE store_categories SET status = 'deleted', updated_at = NOW() WHERE id IN ($placeholders)");
+            $deleteStmt = $pdo->prepare("
+                UPDATE store_categories 
+                SET status = 'deleted', updated_at = NOW() 
+                WHERE id IN ($placeholders)
+            ");
             $deleteStmt->execute($emptyCategories);
-
-            error_log('Removed ' . count($emptyCategories) . ' empty categories');
         }
     } catch (Exception $e) {
         error_log('Error in updateEmptyCategories: ' . $e->getMessage());
     }
+}
+
+function previewAccessCharge(PDO $pdo, string $userId)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $type = $data['type'] ?? '';
+    $storeId = $data['store_id'] ?? '';
+    $pricingId = $data['pricing_id'] ?? null;
+
+    if (!in_array($type, ['phone', 'email', 'location', 'price'], true)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid access type']);
+        return;
+    }
+
+    if ($type !== 'price' && (!$storeId || !isValidUlid($storeId))) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid store id']);
+        return;
+    }
+
+    if ($type === 'price' && (!$pricingId || !isValidUlid($pricingId))) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid pricing id']);
+        return;
+    }
+
+    $isAdmin = (($_SESSION['user']['role'] ?? '') === 'admin');
+    $isOwnerOrManager = $storeId ? (isStoreOwner($pdo, $storeId, $userId) || canManageStore($pdo, $storeId, $userId)) : false;
+
+    if ($type === 'price') {
+        $feeInfo = ZCM::priceViewChargeInfo();
+        $fee = $feeInfo['fee'] ?? 0.0;
+    } else {
+        $feeInfo = ZCM::contactDetailsViewChargeInfo();
+        $fee = $feeInfo['fee'] ?? 0.0;
+    }
+
+    $fee = ($isAdmin || $isOwnerOrManager) ? 0.0 : (float) $fee;
+
+    $wallet = ZCM::getWallet('USER', $userId);
+    $bal = isset($wallet['wallet']['current_balance']) ? (float) $wallet['wallet']['current_balance'] : 0.0;
+
+    $canSubmit = $bal >= $fee;
+    $shortfall = $canSubmit ? 0.0 : max(0.0, $fee - $bal);
+
+    echo json_encode([
+        'success' => true,
+        'fee' => round($fee, 2),
+        'balance' => round($bal, 2),
+        'can_submit' => $canSubmit,
+        'shortfall' => round($shortfall, 2)
+    ]);
+}
+
+function confirmAccessCharge(PDO $pdo, string $userId)
+{
+    $data = json_decode(file_get_contents('php://input'), true);
+    $type = $data['type'] ?? '';
+    $storeId = $data['store_id'] ?? '';
+    $pricingId = $data['pricing_id'] ?? null;
+
+    if (!in_array($type, ['phone', 'email', 'location', 'price'], true)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid access type']);
+        return;
+    }
+
+    if ($type !== 'price' && (!$storeId || !isValidUlid($storeId))) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid store id']);
+        return;
+    }
+
+    if ($type === 'price' && (!$pricingId || !isValidUlid($pricingId))) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid pricing id']);
+        return;
+    }
+
+    $isAdmin = (($_SESSION['user']['role'] ?? '') === 'admin');
+    $isOwnerOrManager = $storeId ? (isStoreOwner($pdo, $storeId, $userId) || canManageStore($pdo, $storeId, $userId)) : false;
+
+    if ($isAdmin || $isOwnerOrManager) {
+        $wallet = ZCM::getWallet('USER', $userId);
+        $bal = isset($wallet['wallet']['current_balance']) ? (float) $wallet['wallet']['current_balance'] : 0.0;
+
+        $payload = [
+            'success' => true,
+            'log_id' => generateUlid(),
+            'fee' => 0.0,
+            'balance' => round($bal, 2),
+            'can_submit' => true
+        ];
+
+        if ($type === 'price') {
+            $product = fetchPricingSummary($pdo, $pricingId);
+            $payload['product'] = $product;
+        }
+
+        echo json_encode($payload);
+        return;
+    }
+
+    if ($type === 'price') {
+        $charge = ZCM::chargePriceView($userId);
+    } else {
+        $charge = ZCM::chargeContactDetailsView($userId);
+    }
+
+    if (empty($charge['success'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => $charge['message'] ?? 'Charge failed',
+            'balance' => $charge['balance'] ?? null,
+            'required' => $charge['required'] ?? null,
+            'can_submit' => false,
+            'shortfall' => isset($charge['fee']) && isset($charge['balance'])
+                ? max(0.0, (float) $charge['fee'] - (float) $charge['balance'])
+                : null
+        ]);
+        return;
+    }
+
+    $remaining = isset($charge['remaining_balance'])
+        ? (float) $charge['remaining_balance']
+        : (isset($charge['balance']) ? (float) $charge['balance'] : 0.0);
+
+    $feeCharged = isset($charge['fee_charged'])
+        ? (float) $charge['fee_charged']
+        : (isset($charge['amount']) ? (float) $charge['amount'] : 0.0);
+
+    $response = [
+        'success' => true,
+        'log_id' => $charge['transaction_id'] ?? generateUlid(),
+        'fee' => round($feeCharged, 2),
+        'balance' => round($remaining, 2),
+        'can_submit' => true
+    ];
+
+    if ($type === 'price') {
+        $product = fetchPricingSummary($pdo, $pricingId);
+        $response['product'] = $product;
+    }
+
+    echo json_encode($response);
+}
+
+function fetchPricingSummary(PDO $pdo, string $pricingId): ?array
+{
+    $stmt = $pdo->prepare("
+        SELECT 
+            pp.id AS pricing_id,
+            p.title AS product_name,
+            p.description AS product_description,
+            sc.store_id,
+            sp.id AS store_product_id,
+            pp.price,
+            pp.price_category,
+            pp.package_size,
+            psu.si_unit,
+            ppn.package_name
+        FROM product_pricing pp
+        JOIN store_products sp ON pp.store_products_id = sp.id
+        JOIN store_categories sc ON sc.id = sp.store_category_id
+        JOIN products p ON p.id = sp.product_id
+        LEFT JOIN product_package_name_mappings ppm ON pp.package_mapping_id = ppm.id
+        LEFT JOIN product_package_name ppn ON ppm.product_package_name_id = ppn.id
+        LEFT JOIN product_si_units psu ON pp.si_unit_id = psu.id
+        WHERE pp.id = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$pricingId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) {
+        return null;
+    }
+
+    $unit = trim(($row['si_unit'] ?? '') . ' ' . ($row['package_name'] ?? ''));
+
+    return [
+        'pricing_id' => $row['pricing_id'],
+        'product_name' => $row['product_name'],
+        'product_description' => $row['product_description'],
+        'store_id' => $row['store_id'],
+        'store_product_id' => $row['store_product_id'],
+        'unit_name' => $unit,
+        'price' => (float) $row['price'],
+        'price_category' => $row['price_category'],
+        'package_size' => $row['package_size']
+    ];
 }

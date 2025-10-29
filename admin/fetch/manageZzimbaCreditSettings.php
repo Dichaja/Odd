@@ -30,7 +30,7 @@ try {
             setting_name VARCHAR(200) NOT NULL,
             setting_value DECIMAL(10,2) NOT NULL,
             setting_type ENUM('flat','percentage') NOT NULL,
-            category ENUM('sms','bonus','access','commission','transfer','withdrawal','subscription','quote','buy_in_store') NOT NULL,
+            category ENUM('sms','bonus','access','commission','transfer','withdrawal','subscription','quote','buy_in_store','price_view','contact_details_view') NOT NULL,
             description TEXT,
             applicable_to ENUM('users','vendors','all') NOT NULL,
             status ENUM('active','inactive') NOT NULL DEFAULT 'active',
@@ -107,6 +107,7 @@ function validateCategoryCoverage(PDO $pdo, $category, $settingKey, $applicableT
         if (!isset($settingsByKey[$key])) {
             $settingsByKey[$key] = [];
         }
+        $settingsByKey[$key].= '';
         $settingsByKey[$key][] = $setting['applicable_to'];
     }
 
@@ -211,7 +212,7 @@ function createSetting(PDO $pdo)
     $applicableTo = $data['applicable_to'];
 
     $allowedTypes = ['flat', 'percentage'];
-    $allowedCategories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription', 'quote', 'buy_in_store'];
+    $allowedCategories = ['sms', 'bonus', 'access', 'commission', 'transfer', 'withdrawal', 'subscription', 'quote', 'buy_in_store', 'price_view', 'contact_details_view'];
     $allowedApplicable = ['users', 'vendors', 'all'];
 
     if (!in_array($settingType, $allowedTypes, true)) {

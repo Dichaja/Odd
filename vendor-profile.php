@@ -558,7 +558,8 @@ ob_start();
                             </template>
                             <template x-if="!canSeeContacts">
                                 <div>
-                                    <button x-show="!viewed.email" x-cloak @click="revealEmail()"
+                                    <button x-show="!viewed.email" x-cloak @click="revealEmail()
+                                        "
                                         class="flex items-center text-primary text-sm font-medium hover:underline transition-all btn-ghost px-2 py-1 rounded">
                                         <i data-lucide="mail"
                                             class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
@@ -669,10 +670,10 @@ ob_start();
                     </template>
 
                     <template x-for="p in visibleProducts" :key="p.id">
-                        <div
+                        <div data-product-card :data-product-id="p.id"
                             class="transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
                             <div class="relative group">
-                                <img :src="p._img || placeholderFor(p)" :alt="p.name"
+                                <img :src="p._imgLoaded ? p._img : p._imgPlaceholder" :alt="p.name" loading="lazy"
                                     class="w-full h-40 md:h-48 object-cover">
                                 <div
                                     class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 md:flex items-center justify-center transition-opacity hidden">
@@ -913,7 +914,7 @@ ob_start();
                                     <label
                                         class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Package
                                         <span class="text-red-500">*</span></label>
-                                    <select x-model="buyForm.packageId" @change="updateCapacity"
+                                    <select x-model="buyForm.packageId" @change="updateCapacity(); updateSummary()"
                                         class="w-full px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-md focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
                                         required>
                                         <option value="">Select a package</option>
@@ -944,7 +945,6 @@ ob_start();
                                             <i data-lucide="plus" class="w-4 h-4"></i>
                                         </button>
                                     </div>
-                                    <p class="text-xs text-gray-500 dark:text-slate-400 mt-1" x-text="capacityNote"></p>
                                 </div>
 
                                 <div>
@@ -1007,12 +1007,13 @@ ob_start();
                                     <div class="border-t border-gray-200 dark:border-slate-700 pt-6 mb-6">
                                         <h4
                                             class="text-sm font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-                                            Order Summary</h4>
+                                            Order Summary
+                                        </h4>
                                         <div class="space-y-3">
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600 dark:text-slate-300">Selected Package:</span>
                                                 <span class="font-medium line-clamp-1"
-                                                    x-text="summaryPackage || '-'"></span>
+                                                    x-text="summaryPackageText || '-'"></span>
                                             </div>
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600 dark:text-slate-300">Quantity:</span>
@@ -1020,12 +1021,13 @@ ob_start();
                                             </div>
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600 dark:text-slate-300">Visit Date:</span>
-                                                <span class="font-medium" x-text="summaryDate || '-'"></span>
+                                                <span class="font-medium" x-text="summaryDateText || '-'"></span>
                                             </div>
                                             <div class="space-y-2 pt-2 border-t border-gray-200 dark:border-slate-700"
                                                 x-show="buyForm.showAlt && (buyForm.altPhone || buyForm.altEmail)">
                                                 <h5 class="text-sm font-medium text-gray-500 dark:text-slate-400">
-                                                    Alternative Contact</h5>
+                                                    Alternative Contact
+                                                </h5>
                                                 <div class="text-sm" x-show="buyForm.altPhone">
                                                     <span class="text-gray-600 dark:text-slate-300">Phone:</span>
                                                     <span class="ml-2 font-medium" x-text="buyForm.altPhone"></span>
@@ -1098,6 +1100,26 @@ ob_start();
                         </div>
                     </div>
                 </div>
+                <div
+                    class="hidden md:flex justify-between items-center p-4 border-t border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <button @click="closeBuy"
+                        class="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-md text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800">
+                        Cancel
+                    </button>
+                    <button @click="submitBuy" :disabled="modals.buy.submitting"
+                        class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50">
+                        <span x-show="!modals.buy.submitting">Submit Order</span>
+                        <span x-show="modals.buy.submitting" class="inline-flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>Loading...
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1109,14 +1131,12 @@ ob_start();
             <h3 class="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-2">Review & Confirm</h3>
             <p class="text-gray-600 dark:text-slate-300 mb-4">A processing fee will be charged to your account and
                 refunded upon completion of the order</p>
-
             <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-4 mb-4">
                 <div class="font-medium text-gray-900 dark:text-slate-100"
                     x-text="modals.confirm.payload?.product?.name || '-'"></div>
                 <div class="text-sm text-gray-600 dark:text-slate-300 mt-1"
                     x-text="'Store: ' + (modals.confirm.payload?.product?.store_name || '-')"></div>
             </div>
-
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-gray-600 dark:text-slate-300">Fee</span>
@@ -1139,13 +1159,11 @@ ob_start();
                     <span class="font-semibold" x-text="'UGX ' + nf(modals.confirm.payload?.shortfall || 0)"></span>
                 </div>
             </div>
-
             <p class="text-sm text-red-600 mt-3" x-show="!modals.confirm.payload?.can_submit">Insufficient balance.
                 Please top up your wallet to continue.</p>
-
             <div class="mt-6 flex justify-between">
                 <button @click="modals.confirm.visible=false"
-                    class="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-md text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800">Back</button>
+                    class="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-md text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800">Decline</button>
                 <button @click="submitBuyConfirmed"
                     :disabled="modals.confirm.submitting || !modals.confirm.payload?.can_submit"
                     class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50">
@@ -1160,6 +1178,96 @@ ob_start();
                         </svg>Submitting...
                     </span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="modals.access.visible" x-cloak class="fixed inset-0 z-[1350]" x-transition.opacity>
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="declineAccessCharge()"></div>
+        <div class="fixed inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div
+                class="w-full sm:w-[94%] lg:max-w-2xl bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden modal-panel">
+                <div
+                    class="p-4 sm:p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-red-50 to-red-100 dark:from-slate-800 dark:to-slate-900">
+                    <h3 class="text-base sm:text-xl font-bold text-gray-900 dark:text-slate-100 whitespace-nowrap overflow-hidden text-ellipsis max-w-[calc(100%-3rem)]"
+                        x-text="modals.access.title || 'Confirm Access Charge'"></h3>
+                    <button @click="declineAccessCharge()"
+                        class="text-gray-500 dark:text-slate-300 hover:text-gray-700 dark:hover:text-white p-2 rounded-full hover:bg-white/60 dark:hover:bg-white/10">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <div class="modal-scroll p-4 sm:p-6">
+                    <p class="text-gray-600 dark:text-slate-300 mb-4"
+                        x-text="modals.access.note || 'This action will charge your wallet.'"></p>
+                    <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-4 mb-4">
+                        <div class="font-medium text-gray-900 dark:text-slate-100"
+                            x-text="modals.access.summary || '-'"></div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-slate-300">Fee</span>
+                            <span class="font-medium text-gray-900 dark:text-slate-100"
+                                x-text="'UGX ' + nf(modals.access.fee || 0)"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-slate-300">Current Balance</span>
+                            <span class="font-medium text-gray-900 dark:text-slate-100"
+                                x-text="'UGX ' + nf(modals.access.balance || 0)"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-slate-300">Balance After</span>
+                            <span
+                                :class="(modals.access.remaining_balance ?? 0) < 0 ? 'text-red-600 font-semibold' : 'font-medium text-gray-900 dark:text-slate-100'"
+                                x-text="'UGX ' + nf((modals.access.remaining_balance) || 0)"></span>
+                        </div>
+                        <div class="flex justify-between text-red-600" x-show="!modals.access.can_submit">
+                            <span>Shortfall</span>
+                            <span class="font-semibold" x-text="'UGX ' + nf(modals.access.shortfall || 0)"></span>
+                        </div>
+                        <p class="text-sm text-red-600" x-show="!modals.access.can_submit">Insufficient balance. Please
+                            top up your wallet to continue.</p>
+                    </div>
+                </div>
+                <div
+                    class="md:hidden sticky bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-gray-200 dark:border-slate-800 p-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button @click="declineAccessCharge()"
+                            class="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-200">Decline</button>
+                        <button @click="confirmAccessCharge()"
+                            :disabled="modals.access.submitting || !modals.access.can_submit"
+                            class="px-3 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
+                            <span x-show="!modals.access.submitting">Proceed</span>
+                            <span x-show="modals.access.submitting" class="inline-flex items-center">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>Processing...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                <div
+                    class="hidden md:flex justify-between items-center p-4 border-t border-gray-200 dark:border-slate-800">
+                    <button @click="declineAccessCharge()"
+                        class="px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-md text-gray-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800">Decline</button>
+                    <button @click="confirmAccessCharge()"
+                        :disabled="modals.access.submitting || !modals.access.can_submit"
+                        class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50">
+                        <span x-show="!modals.access.submitting">Proceed</span>
+                        <span x-show="modals.access.submitting" class="inline-flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>Processing...
+                        </span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1407,16 +1515,20 @@ ob_start();
                 description: { visible: false },
                 logo: { visible: false },
                 cover: { visible: false },
-                prices: { visible: false, product: null, entries: [] }
+                prices: { visible: false, product: null, entries: [] },
+                access: { visible: false, submitting: false, title: '', note: '', summary: '', fee: 0, balance: 0, remaining_balance: 0, can_submit: false, shortfall: 0, pending: null, requestId: '' }
             },
             editForms: { name: '', description: '' },
             logoCrop: { visible: false, cropper: null, file: null },
             coverCrop: { visible: false, cropper: null, file: null },
             buyForm: { visitDate: '', packageId: '', quantity: 1, showAlt: false, altPhone: '', altEmail: '', notes: '' },
+            summaryPackageText: '',
+            summaryDateText: '',
             userSummary: { name: '-', email: '-', phone: '-' },
             toast: { visible: false, message: '', type: 'success' },
             pendingPriorityId: '',
             priorityApplied: false,
+            imgObserver: null,
 
             get coverStyle() { return this.coverUrl ? `background-image:url(${this.coverUrl})` : '' },
             get joinedAt() { if (!this.store?.created_at) return '-'; const d = new Date(this.store.created_at); return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
@@ -1435,7 +1547,7 @@ ob_start();
                 if (this.searchTerm) { const q = this.searchTerm.toLowerCase(); arr = arr.filter(p => (p.name || '').toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q)) }
                 return arr;
             },
-            get visibleProducts() { const pageSize = this.pagination.page * 1e6; return this.filteredProducts.slice(0, pageSize) },
+            get visibleProducts() { return this.filteredProducts },
 
             async syncAuthOnLoad() {
                 if (!this.vendorId) return;
@@ -1460,11 +1572,14 @@ ob_start();
                     this.pendingPriorityId = '';
                 }
                 this.loadViewedEntities();
-                this.loadProfile().then(() => this.loadProducts(1)).finally(() => { this.loading = false; this.$nextTick(() => this.renderIcons()) });
+                this.loading = true;
+                this.loadProfile();
+                this.loadProducts(1);
                 this.syncAuthOnLoad();
                 window.addEventListener('zz:session-login', e => this.handlePostLogin(e.detail || {}));
                 if (this.auth.isAdminOrManager) { this.revealPhone(true); this.revealEmail(true) }
                 this.logProfileView();
+                this.$watch('modals.access.visible', v => { if (v) this.applyAccessMobileStyles() });
             },
 
             async handlePostLogin(user) {
@@ -1481,9 +1596,9 @@ ob_start();
                     const a = window.__pendingVendorAction;
                     if (a) {
                         if (a.type === 'buy') { const p = this.products.find(pp => String(pp.store_product_id) === String(a.productId)); if (p) this.openBuyInStore(p) }
-                        else if (a.type === 'phone') { this.revealPhone(true) }
-                        else if (a.type === 'email') { this.revealEmail(true) }
-                        else if (a.type === 'location') { this.viewed.location = true }
+                        else if (a.type === 'phone') { this.revealPhone() }
+                        else if (a.type === 'email') { this.revealEmail() }
+                        else if (a.type === 'location') { this.revealLocation() }
                         else if (a.type === 'view-categories' && this.modals.prices.visible && this.modals.prices.product) { this.openPriceSheet(this.modals.prices.product) }
                         window.setPendingVendorAction(null);
                     }
@@ -1498,13 +1613,13 @@ ob_start();
                     p._viewPricing = filtered;
                     p._hasRetail = pricing.some(x => x.price_category === 'retail');
                 }
-                this.$nextTick(() => this.renderIcons());
+                this.$nextTick(() => { this.renderIcons() });
             },
 
             renderIcons() { if (window.lucide && window.lucide.createIcons) window.lucide.createIcons() },
 
             async loadProfile() {
-                if (!this.vendorId) { this.error = true; return }
+                if (!this.vendorId) { this.error = true; this.loading = false; return }
                 try {
                     const r = await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=getStoreDetails&id=' + encodeURIComponent(this.vendorId));
                     const data = await r.json();
@@ -1517,30 +1632,35 @@ ob_start();
                         if (data.error === 'Store not found or not active') { this.notFound = true } else { this.error = true }
                     }
                 } catch (e) { this.error = true }
+                this.loading = false;
+                this.$nextTick(() => this.renderIcons());
             },
 
-            prepareCategories(cats) { const list = (cats || []).filter(c => c.status === 'active' && Number(c.product_count) > 0); this.filterCategories = list; },
+            prepareCategories(cats) { const list = (cats || []).filter(c => c.status === 'active' && Number(c.product_count) > 0); this.filterCategories = list },
 
             async loadProducts(page = 1) {
                 try {
                     const r = await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=getStoreProducts&id=' + encodeURIComponent(this.vendorId) + '&page=' + page);
                     const data = await r.json();
                     if (data.success) {
-                        const products = data.products || [];
-                        for (const p of products) {
-                            p._img = await this.firstProductImage(p);
+                        const incoming = data.products || [];
+                        for (const p of incoming) {
                             const pricing = Array.isArray(p.pricing) ? p.pricing : [];
                             const filtered = this.auth.canSeeAllCategories ? pricing : pricing.filter(x => x.price_category === 'retail');
                             p._viewPricing = filtered;
                             p._hasRetail = pricing.some(x => x.price_category === 'retail');
                             p._showAll = false;
+                            p._imgPlaceholder = this.placeholderFor(p);
+                            p._img = '';
+                            p._imgLoaded = false;
+                            p._imgLoading = false;
                         }
-                        if (page === 1) this.products = products; else this.products = this.products.concat(products);
+                        if (page === 1) this.products = incoming; else this.products = this.products.concat(incoming);
                         this.applyPriorityProduct();
-                        this.pagination.page = data.pagination?.page || page;
-                        this.pagination.pages = data.pagination?.pages || 1;
+                        this.pagination.page = data.pagination && data.pagination.page ? data.pagination.page : page;
+                        this.pagination.pages = data.pagination && data.pagination.pages ? data.pagination.pages : 1;
                         this.productsLoaded = true;
-                        this.$nextTick(() => this.renderIcons());
+                        this.$nextTick(() => { this.observeProductCards(); this.renderIcons() });
                     }
                 } catch (e) { }
             },
@@ -1550,7 +1670,7 @@ ob_start();
                 if (!wanted || this.priorityApplied) return;
                 const idx = this.products.findIndex(p => String(p.id) === String(wanted));
                 if (idx >= 0) {
-                    const [it] = this.products.splice(idx, 1);
+                    const it = this.products.splice(idx, 1)[0];
                     this.products.unshift(it);
                     this.products = this.products.slice();
                     try { localStorage.removeItem('zz_last_product_id') } catch (e) { }
@@ -1561,7 +1681,7 @@ ob_start();
 
             loadMore() { if (this.pagination.page < this.pagination.pages) { this.loadProducts(this.pagination.page + 1) } },
 
-            applyFilters() { this.$nextTick(() => this.renderIcons()) },
+            applyFilters() { this.$nextTick(() => { this.observeProductCards(); this.renderIcons() }) },
 
             async firstProductImage(product) {
                 const ph = `https://placehold.co/400x300/f0f0f0/808080?text=${encodeURIComponent((product.name || '').substring(0, 2))}`;
@@ -1574,42 +1694,80 @@ ob_start();
                 return ph;
             },
 
+            async ensureProductThumb(p) {
+                if (p._imgLoaded || p._imgLoading) return;
+                p._imgLoading = true;
+                const url = await this.firstProductImage(p);
+                p._img = url;
+                p._imgLoaded = true;
+                p._imgLoading = false;
+                this.$nextTick(() => this.renderIcons());
+            },
+
+            observeProductCards() {
+                if (!this.imgObserver) {
+                    this.imgObserver = new IntersectionObserver((entries, observer) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const card = entry.target;
+                                const pid = card.getAttribute('data-product-id');
+                                const prod = this.products.find(pp => String(pp.id) === String(pid));
+                                if (prod) this.ensureProductThumb(prod);
+                                observer.unobserve(card);
+                            }
+                        });
+                    }, { rootMargin: '200px 0px 200px 0px', threshold: 0.01 });
+                }
+                this.$root.querySelectorAll('[data-product-card]').forEach(el => {
+                    if (!el.__observed) {
+                        this.imgObserver.observe(el);
+                        el.__observed = true;
+                    }
+                });
+            },
+
             placeholderFor(p) { if (!p) return 'https://placehold.co/400x300/f0f0f0/808080?text=NA'; return `https://placehold.co/400x300/f0f0f0/808080?text=${encodeURIComponent((p.name || '').substring(0, 2))}` },
 
-            formatUnit(pr) { const parts = (pr.unit_name || '').split(' '); const si = parts[0] || ''; const pkg = parts.slice(1).join(' ') || ''; return `${pr.package_size} ${si} ${pkg}`.trim(); },
+            formatUnit(pr) { const parts = (pr.unit_name || '').split(' '); const si = parts[0] || ''; const pkg = parts.slice(1).join(' ') || ''; return `${pr.package_size} ${si} ${pkg}`.trim() },
 
             capitalize(s) { s = s || ''; return s.charAt(0).toUpperCase() + s.slice(1) },
             nf(n) { try { return new Intl.NumberFormat().format(n) } catch (e) { return n } },
 
-            async revealLocation(skipSession = false) {
+            async revealLocation(skip = false) {
                 if (this.canSeeContacts) { this.viewed.location = true; return }
-                if (skipSession) { this.viewed.location = true; if (!this.viewed.contacts.includes('location')) this.viewed.contacts.push('location'); return }
-                if (this.viewed.contacts?.includes('location')) { this.viewed.location = true; return }
+                if (skip) { this.viewed.location = true; if (!this.viewed.contacts.includes('location')) this.viewed.contacts.push('location'); return }
+                if (this.viewed.contacts.includes('location')) { this.viewed.location = true; return }
                 const ok = await this.ensureSession({ type: 'location' });
                 if (!ok) return;
+                const proceed = await this.previewAccessCharge({ type: 'location' });
+                if (!proceed) return;
                 await this.logContact('location');
                 this.viewed.contacts.push('location');
                 this.viewed.location = true;
             },
 
-            async revealPhone(skipSession = false) {
+            async revealPhone(skip = false) {
                 if (this.canSeeContacts) { this.viewed.contact = true; return }
-                if (skipSession) { await this.fetchContact('phone'); this.viewed.contact = true; if (!this.viewed.contacts.includes('contact')) this.viewed.contacts.push('contact'); return }
-                if (this.viewed.contacts?.includes('contact')) { await this.fetchContact('phone'); this.viewed.contact = true; return }
+                if (skip) { await this.fetchContact('phone'); this.viewed.contact = true; if (!this.viewed.contacts.includes('contact')) this.viewed.contacts.push('contact'); return }
+                if (this.viewed.contacts.includes('contact')) { await this.fetchContact('phone'); this.viewed.contact = true; return }
                 const ok = await this.ensureSession({ type: 'phone' });
                 if (!ok) return;
+                const proceed = await this.previewAccessCharge({ type: 'phone' });
+                if (!proceed) return;
                 await this.logContact('contact');
                 await this.fetchContact('phone');
                 this.viewed.contacts.push('contact');
                 this.viewed.contact = true;
             },
 
-            async revealEmail(skipSession = false) {
+            async revealEmail(skip = false) {
                 if (this.canSeeContacts) { this.viewed.email = true; return }
-                if (skipSession) { await this.fetchContact('email'); this.viewed.email = true; if (!this.viewed.contacts.includes('email')) this.viewed.contacts.push('email'); return }
-                if (this.viewed.contacts?.includes('email')) { await this.fetchContact('email'); this.viewed.email = true; return }
+                if (skip) { await this.fetchContact('email'); this.viewed.email = true; if (!this.viewed.contacts.includes('email')) this.viewed.contacts.push('email'); return }
+                if (this.viewed.contacts.includes('email')) { await this.fetchContact('email'); this.viewed.email = true; return }
                 const ok = await this.ensureSession({ type: 'email' });
                 if (!ok) return;
+                const proceed = await this.previewAccessCharge({ type: 'email' });
+                if (!proceed) return;
                 await this.logContact('email');
                 await this.fetchContact('email');
                 this.viewed.contacts.push('email');
@@ -1627,9 +1785,12 @@ ob_start();
                 } catch (e) { }
             },
 
-            async revealPrice(pr, evt) {
+            async revealPrice(pr) {
+                if (this.auth.showPriceDirectly || this.viewed.prices.includes(pr.pricing_id)) { if (!this.viewed.prices.includes(pr.pricing_id)) this.viewed.prices.push(pr.pricing_id); return }
                 const ok = await this.ensureSession({ type: 'price', pricingId: pr?.pricing_id });
                 if (!ok) return;
+                const proceed = await this.previewAccessCharge({ type: 'price', pricingId: pr?.pricing_id, product: pr });
+                if (!proceed) return;
                 try {
                     const sid = this.sessionId();
                     if (pr?.pricing_id) await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=logPriceView', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'pricing_id=' + encodeURIComponent(pr.pricing_id) + '&session_id=' + encodeURIComponent(sid || '') });
@@ -1638,8 +1799,11 @@ ob_start();
             },
 
             async revealPriceMobile(pr) {
+                if (this.auth.showPriceDirectly || this.viewed.prices.includes(pr.pricing_id)) { if (!this.viewed.prices.includes(pr.pricing_id)) this.viewed.prices.push(pr.pricing_id); this.openPriceSheet(this.modals.prices.product); return }
                 const ok = await this.ensureSession({ type: 'price', pricingId: pr?.pricing_id });
                 if (!ok) return;
+                const proceed = await this.previewAccessCharge({ type: 'price', pricingId: pr?.pricing_id, product: pr });
+                if (!proceed) return;
                 try {
                     const sid = this.sessionId();
                     if (pr?.pricing_id) await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=logPriceView', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'pricing_id=' + encodeURIComponent(pr.pricing_id) + '&session_id=' + encodeURIComponent(sid || '') });
@@ -1731,8 +1895,10 @@ ob_start();
                 this.modals.buy.loading = true;
                 this.modals.buy.product = p;
                 this.buyForm = { visitDate: '', packageId: '', quantity: 1, showAlt: false, altPhone: '', altEmail: '', notes: '' };
-                this.initDatepicker();
+                this.summaryPackageText = '';
+                this.summaryDateText = '';
                 this.modals.buy.packages = (p.pricing || []).map(pr => pr);
+                this.initDatepicker();
                 try {
                     const r = await fetch(this.BASE_URL + 'fetch/manageBuyInStore.php?action=getUserInfo');
                     const data = await r.json();
@@ -1742,6 +1908,7 @@ ob_start();
                         this.userSummary.email = u.email || '';
                         this.userSummary.phone = u.phone || '';
                         this.modals.buy.loading = false;
+                        this.updateSummary();
                         this.$nextTick(() => this.renderIcons());
                     } else {
                         this.modals.buy.visible = false;
@@ -1755,34 +1922,51 @@ ob_start();
 
             closeBuy() { this.modals.buy.visible = false; this.modals.error.visible = false },
 
-            get capacityNote() {
-                const opt = this.selectedPackageOption();
-                if (!opt) return 'Minimum quantity: 1';
-                const cat = opt.getAttribute('data-category');
-                const cap = parseInt(opt.getAttribute('data-capacity')) || 1;
-                if (cat === 'retail') return `Maximum quantity: ${cap}`;
-                return `Minimum quantity: ${cap}`;
-            },
-
             updateCapacity() {
                 const opt = this.selectedPackageOption();
-                if (!opt) { this.buyForm.quantity = 1; return }
+                if (!opt) { this.buyForm.quantity = 1; this.updateSummary(); return }
                 const cat = opt.getAttribute('data-category');
                 const cap = parseInt(opt.getAttribute('data-capacity')) || 1;
                 if (cat === 'retail') { this.buyForm.quantity = 1 } else { this.buyForm.quantity = cap }
+                this.updateSummary();
             },
 
             decQty() {
                 const opt = this.selectedPackageOption();
                 const min = opt && opt.getAttribute('data-category') !== 'retail' ? parseInt(opt.getAttribute('data-capacity')) || 1 : 1;
                 if (this.buyForm.quantity > min) this.buyForm.quantity--;
+                this.updateSummary();
             },
+
             incQty() {
                 const opt = this.selectedPackageOption();
-                if (!opt) { this.buyForm.quantity++; return }
+                if (!opt) { this.buyForm.quantity++; this.updateSummary(); return }
                 const cat = opt.getAttribute('data-category');
                 const cap = parseInt(opt.getAttribute('data-capacity')) || 9999;
-                if (cat === 'retail') { if (this.buyForm.quantity < cap) this.buyForm.quantity++ } else { this.buyForm.quantity++ }
+                if (cat === 'retail') {
+                    if (this.buyForm.quantity < cap) this.buyForm.quantity++;
+                } else {
+                    this.buyForm.quantity++;
+                }
+                this.updateSummary();
+            },
+
+            computeSummaryPackage() {
+                const opt = this.selectedPackageOption();
+                if (!opt) return '';
+                const unit = opt.getAttribute('data-unit') || '';
+                const cat = this.capitalize(opt.getAttribute('data-category') || '');
+                const price = this.nf(opt.getAttribute('data-price') || 0);
+                return `${unit} (${cat}) - UGX ${price}`;
+            },
+            computeSummaryDate() {
+                if (!this.buyForm.visitDate) return '';
+                const d = new Date(this.buyForm.visitDate + 'T00:00:00');
+                return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            },
+            updateSummary() {
+                this.summaryPackageText = this.computeSummaryPackage() || '';
+                this.summaryDateText = this.computeSummaryDate() || '';
             },
 
             selectedPackageOption() {
@@ -1850,15 +2034,22 @@ ob_start();
                         const date = new Date(currentYear, currentMonth, d); date.setHours(0, 0, 0, 0);
                         const dateStr = this.ymd(currentYear, currentMonth, d);
                         if (date.toDateString() === today.toDateString()) el.classList.add('today');
-                        if (date < today && date.toDateString() !== today.toDateString()) { el.classList.add('disabled') }
-                        else {
-                            el.addEventListener('click', () => { grid.querySelectorAll('.datepicker-day.selected').forEach(x => x.classList.remove('selected')); el.classList.add('selected'); this.buyForm.visitDate = dateStr; });
+                        if (date < today && date.toDateString() !== today.toDateString()) {
+                            el.classList.add('disabled');
+                        } else {
+                            el.addEventListener('click', () => {
+                                grid.querySelectorAll('.datepicker-day.selected').forEach(x => x.classList.remove('selected'));
+                                el.classList.add('selected');
+                                this.buyForm.visitDate = dateStr;
+                                this.updateSummary();
+                            });
                         }
                         if (this.buyForm.visitDate === dateStr) el.classList.add('selected');
                         grid.appendChild(el);
                     }
                 };
                 render();
+                this.updateSummary();
             },
 
             ymd(y, m, d) { const mm = String(m + 1).padStart(2, '0'); const dd = String(d).padStart(2, '0'); return `${y}-${mm}-${dd}` },
@@ -1895,6 +2086,10 @@ ob_start();
                         };
                         this.modals.confirm.form = payload;
                         this.modals.confirm.visible = true;
+                        this.$nextTick(() => {
+                            const btns = Array.from(document.querySelectorAll('[x-show="modals.confirm.visible"] button'));
+                            btns.forEach(b => { if (b.textContent.trim() === 'Back') b.textContent = 'Decline' });
+                        });
                     } else {
                         this.showToast(data.error || data.message || 'Could not load charges', 'error');
                     }
@@ -1930,6 +2125,102 @@ ob_start();
                 }
             },
 
+            async previewAccessCharge({ type, pricingId = null, product = null }) {
+                try {
+                    const body = { store_id: this.vendorId, type: type };
+                    if (pricingId) body.pricing_id = pricingId;
+                    const res = await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=previewAccessCharge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    const data = await res.json();
+                    if (!data || !data.success) { this.showToast(data?.message || 'Unable to load access fee', 'error'); return false }
+                    const fee = Number(data.fee || 0);
+                    const bal = Number(data.balance || 0);
+                    const remain = bal - fee;
+                    const reqId = `ac_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                    this.modals.access.title = 'Confirm Access Charge';
+                    this.modals.access.note = 'This action will charge your wallet.';
+                    this.modals.access.summary = this.buildAccessSummary(type, product);
+                    this.modals.access.fee = fee;
+                    this.modals.access.balance = bal;
+                    this.modals.access.remaining_balance = remain;
+                    this.modals.access.can_submit = !!data.can_submit;
+                    this.modals.access.shortfall = Number(data.shortfall ?? Math.max(0, fee - bal));
+                    this.modals.access.pending = { type, pricingId };
+                    this.modals.access.requestId = reqId;
+                    this.modals.access.visible = true;
+                    this.$nextTick(() => {
+                        this.applyAccessMobileStyles();
+                        const wrap = document.querySelector('.fixed.inset-0.z-\\[1350\\]');
+                        if (wrap) {
+                            const clickHandler = (e) => { if (e.target === wrap) this.declineAccessCharge() };
+                            wrap.addEventListener('click', clickHandler, { once: true });
+                        }
+                        const btns = Array.from(document.querySelectorAll('.fixed.inset-0.z-\\[1350\\] button'));
+                        btns.forEach(b => { if (b.textContent.trim() === 'Back') b.textContent = 'Decline' });
+                    });
+                    return new Promise((resolve) => {
+                        const handler = (e) => {
+                            if (!e.detail || e.detail.id !== reqId) return;
+                            window.removeEventListener('zz:access-confirmed', handler);
+                            resolve(e.detail.ok === true);
+                        };
+                        window.addEventListener('zz:access-confirmed', handler);
+                    });
+                } catch (e) {
+                    this.showToast('Network error. Please try again.', 'error');
+                    return false;
+                }
+            },
+
+            buildAccessSummary(type, product) {
+                if (type === 'price' && product) return `View price for ${this.formatUnit(product)} (${this.capitalize(product.price_category)})`;
+                if (type === 'phone') return `View phone number for ${this.store?.name || 'store'}`;
+                if (type === 'email') return `View email address for ${this.store?.name || 'store'}`;
+                if (type === 'location') return `View location for ${this.store?.name || 'store'}`;
+                return 'Proceed with this action';
+            },
+
+            async confirmAccessCharge() {
+                const pending = this.modals.access.pending;
+                const reqId = this.modals.access.requestId;
+                if (!pending) { this.modals.access.visible = false; window.dispatchEvent(new CustomEvent('zz:access-confirmed', { detail: { id: reqId, ok: false } })); return }
+                this.modals.access.submitting = true;
+                try {
+                    const body = { store_id: this.vendorId, type: pending.type };
+                    if (pending.pricingId) body.pricing_id = pending.pricingId;
+                    const res = await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=confirmAccessCharge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    const data = await res.json();
+                    this.modals.access.submitting = false;
+                    if (!data || !data.success) { this.showToast(data?.message || 'Failed to process charge', 'error'); window.dispatchEvent(new CustomEvent('zz:access-confirmed', { detail: { id: reqId, ok: false } })); return }
+                    this.modals.access.visible = false;
+                    window.dispatchEvent(new CustomEvent('zz:access-confirmed', { detail: { id: reqId, ok: true } }));
+                    if (pending.type === 'price' && pending.pricingId) {
+                        if (!this.viewed.prices.includes(pending.pricingId)) this.viewed.prices.push(pending.pricingId);
+                    }
+                    if (pending.type === 'phone') { await this.fetchContact('phone'); if (!this.viewed.contacts.includes('contact')) this.viewed.contacts.push('contact'); this.viewed.contact = true }
+                    if (pending.type === 'email') { await this.fetchContact('email'); if (!this.viewed.contacts.includes('email')) this.viewed.contacts.push('email'); this.viewed.email = true }
+                    if (pending.type === 'location') { if (!this.viewed.contacts.includes('location')) this.viewed.contacts.push('location'); this.viewed.location = true }
+                } catch (e) {
+                    this.modals.access.submitting = false;
+                    this.showToast('Network error. Please try again.', 'error');
+                    window.dispatchEvent(new CustomEvent('zz:access-confirmed', { detail: { id: reqId, ok: false } }));
+                }
+            },
+
+            declineAccessCharge() {
+                const reqId = this.modals.access.requestId || '';
+                this.modals.access.visible = false;
+                window.dispatchEvent(new CustomEvent('zz:access-confirmed', { detail: { id: reqId, ok: false } }));
+            },
+
+            applyAccessMobileStyles() {
+                const wrap = document.querySelector('.fixed.inset-0.z-\\[1350\\]');
+                const card = wrap ? wrap.querySelector('.bg-white.dark\\:bg-slate-900.rounded-2xl.shadow-2xl.w-full.max-w-md.p-6') : null;
+                if (!wrap || !card) return;
+                wrap.classList.add('items-end', 'sm:items-center', 'p-0', 'sm:p-4');
+                wrap.classList.remove('items-center');
+                card.classList.add('w-full', 'sm:w-[94%]', 'lg:max-w-2xl', 'rounded-t-2xl', 'sm:rounded-2xl', 'modal-panel');
+            },
+
             closeError() { this.modals.error.visible = false },
             closeSuccess() { this.modals.success.visible = false },
 
@@ -1938,7 +2229,7 @@ ob_start();
             showToast(msg, type = 'success') { this.toast.message = msg; this.toast.type = type; this.toast.visible = true; setTimeout(() => { this.toast.visible = false }, 3000) },
 
             async onLogoFile(e) {
-                const file = e.target.files?.[0]; if (!file) return;
+                const file = e.target.files && e.target.files[0] ? e.target.files[0] : null; if (!file) return;
                 this.modals.logo.visible = true;
                 this.logoCrop.file = file;
                 const reader = new FileReader();
@@ -1971,7 +2262,7 @@ ob_start();
             },
 
             async onCoverFile(e) {
-                const file = e.target.files?.[0]; if (!file) return;
+                const file = e.target.files && e.target.files[0] ? e.target.files[0] : null; if (!file) return;
                 const reader = new FileReader();
                 reader.onload = () => {
                     const img = document.getElementById('cover-cropper-image');
@@ -1984,9 +2275,10 @@ ob_start();
             },
 
             openLogoEditor() { this.modals.logo.visible = true },
+
             openCoverEditor() {
                 this.modals.cover.visible = true;
-                if (this.store?.vendor_cover_url) {
+                if (this.store && this.store.vendor_cover_url) {
                     fetch(this.BASE_URL + this.store.vendor_cover_url).then(res => res.blob()).then(blob => {
                         const reader = new FileReader();
                         reader.onload = () => {
@@ -2000,6 +2292,7 @@ ob_start();
                     }).catch(() => { });
                 }
             },
+
             closeCoverEditor() { this.modals.cover.visible = false; if (this.coverCrop.cropper) { this.coverCrop.cropper.destroy(); this.coverCrop.cropper = null } this.coverCrop.visible = false },
 
             async cropAndSaveCover() {
@@ -2012,34 +2305,66 @@ ob_start();
                         const up = await fetch(this.BASE_URL + 'account/fetch/manageZzimbaStores.php?action=uploadVendorCover', { method: 'POST', body: fd }).then(r => r.json());
                         if (up.success) {
                             const upd = await fetch(this.BASE_URL + 'account/fetch/manageZzimbaStores.php?action=updateStore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: this.vendorId, temp_cover_path: up.temp_path }) }).then(r => r.json());
-                            if (upd.success) { this.coverUrl = canvas.toDataURL(); this.closeCoverEditor(); this.showToast('Cover photo updated successfully', 'success'); setTimeout(() => { window.location.reload() }, 1200) } else { this.showToast(upd.error || 'Failed to update cover photo', 'error') }
-                        } else { this.showToast(up.message || 'Failed to upload cover photo', 'error') }
-                    } catch (e) { this.showToast('Failed to update cover photo', 'error') }
+                            if (upd.success) {
+                                this.coverUrl = canvas.toDataURL();
+                                this.closeCoverEditor();
+                                this.showToast('Cover photo updated successfully', 'success');
+                                setTimeout(() => { window.location.reload() }, 1200);
+                            } else {
+                                this.showToast(upd.error || 'Failed to update cover photo', 'error');
+                            }
+                        } else {
+                            this.showToast(up.message || 'Failed to upload cover', 'error');
+                        }
+                    } catch (e) {
+                        this.showToast('Failed to update cover photo', 'error');
+                    }
                 }, 'image/png');
             },
 
-            openNameEditor() { this.editForms.name = this.store?.name || ''; this.modals.name.visible = true },
-            async saveName() {
-                const name = (this.editForms.name || '').trim();
-                if (!name) { this.showToast('Store name cannot be empty', 'error'); return }
-                try {
-                    const res = await fetch(this.BASE_URL + 'account/fetch/manageZzimbaStores.php?action=updateStore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: this.vendorId, name }) });
-                    const data = await res.json();
-                    if (data.success) { this.store.name = name; this.modals.name.visible = false; this.showToast('Store name updated successfully', 'success') }
-                    else { this.showToast(data.error || 'Failed to update store name', 'error') }
-                } catch (e) { this.showToast('Failed to update store name', 'error') }
+            openNameEditor() {
+                this.editForms.name = this.store?.name || '';
+                this.modals.name.visible = true;
             },
 
-            openDescriptionEditor() { this.editForms.description = this.store?.description || ''; this.modals.description.visible = true },
-            async saveDescription() {
-                try {
-                    const res = await fetch(this.BASE_URL + 'account/fetch/manageZzimbaStores.php?action=updateStore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: this.vendorId, description: this.editForms.description || '' }) });
-                    const data = await res.json();
-                    if (data.success) { this.store.description = this.editForms.description || 'No description provided.'; this.modals.description.visible = false; this.showToast('Store description updated successfully', 'success') }
-                    else { this.showToast(data.error || 'Failed to update store description', 'error') }
-                } catch (e) { this.showToast('Failed to update store description', 'error') }
+            saveName() {
+                const newName = (this.editForms.name || '').trim();
+                if (!newName) { this.showToast('Store name cannot be empty', 'error'); return }
+                fetch(this.BASE_URL + 'account/fetch/manageZzimbaStores.php?action=updateStore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: this.vendorId, name: newName }) })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (this.store) this.store.name = newName;
+                            this.modals.name.visible = false;
+                            this.showToast('Store name updated', 'success');
+                        } else {
+                            this.showToast(data.error || 'Failed to update name', 'error');
+                        }
+                    })
+                    .catch(() => { this.showToast('Failed to update name', 'error') });
+            },
+
+            openDescriptionEditor() {
+                this.editForms.description = this.store?.description || '';
+                this.modals.description.visible = true;
+            },
+
+            saveDescription() {
+                const newDesc = (this.editForms.description || '').trim();
+                fetch(this.BASE_URL + 'account/fetch/manageZzimbaStores.php?action=updateStore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: this.vendorId, description: newDesc }) })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            if (this.store) this.store.description = newDesc;
+                            this.modals.description.visible = false;
+                            this.showToast('Store description updated', 'success');
+                        } else {
+                            this.showToast(data.error || 'Failed to update description', 'error');
+                        }
+                    })
+                    .catch(() => { this.showToast('Failed to update description', 'error') });
             }
-        }));
+        }))
     });
 </script>
 

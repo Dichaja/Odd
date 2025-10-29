@@ -207,7 +207,7 @@ function getStepTitle($mode, $step)
                 </div>
                 <div class="flex items-center justify-end">
                     <a href="javascript:void(0)" @click="showForgotPasswordOptions()"
-                        class="text-sm text-primary hover:text-red-700">Forgot Password?</a>
+                        class="text-sm text-primary hover:text-red-700">Forgot Password? Click Here!</a>
                 </div>
                 <button type="button" @click="handleLoginPasswordSubmit()"
                     class="w-full bg-primary dark:bg-black text-white py-2.5 rounded-lg hover:bg-red-600 hover:dark:bg-gray-900 transition-colors">

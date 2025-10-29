@@ -732,6 +732,7 @@ ob_start();
                     const url = BASE_URL + 'account/fetch/manageZzimbaStores.php?action=' + (mode === 'create' ? 'createStore' : 'updateStore');
                     const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) }).then(r => r.json());
                     this.loading = false;
+                    if (resp?.session_expired) { this.toastMsg('Session expired', 'Please log in again', 'error'); return; }
                     if (resp?.success) { this.modals.store = false; this.toastMsg('Success', resp.message || 'Store saved', 'success'); await this.loadStores(); }
                     else { this.toastMsg('Error', resp?.error || 'Failed to save store', 'error'); }
                 } catch { this.loading = false; this.toastMsg('Error', 'Failed to save store', 'error'); }
@@ -754,6 +755,33 @@ ob_start();
                     : `Are you sure you want to decline the invitation to manage <strong>${this.escapeText(storeName)}</strong>? This cannot be undone.`;
                 this.modals.invite = true;
                 this.$nextTick(() => this.renderIcons());
+            },
+
+            async confirmInvite() {
+                if (!this.inviteModal.action || !this.inviteModal.managerId) { this.toastMsg('Error', 'Invalid invitation', 'error'); return; }
+                const action = this.inviteModal.action === 'approve' ? 'approveManagerInvitation' : 'denyManagerInvitation';
+                try {
+                    this.loading = true;
+                    const resp = await fetch(BASE_URL + 'account/fetch/manageZzimbaStores.php?action=' + action, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ managerId: this.inviteModal.managerId })
+                    }).then(r => r.json());
+                    this.loading = false;
+                    this.modals.invite = false;
+                    if (resp?.session_expired) { this.toastMsg('Session expired', 'Please log in again', 'error'); return; }
+                    if (resp?.success) {
+                        const msg = this.inviteModal.action === 'approve' ? 'Invitation approved' : 'Invitation declined';
+                        this.toastMsg('Success', msg, 'success');
+                        await this.loadInvites();
+                        await this.loadStores();
+                    } else {
+                        this.toastMsg('Error', resp?.error || 'Operation failed', 'error');
+                    }
+                } catch {
+                    this.loading = false;
+                    this.toastMsg('Error', 'Network or server error', 'error');
+                }
             },
 
             initMap(lat = 1.3733, lng = 32.2903) {
@@ -843,7 +871,7 @@ ob_start();
                         const status = await navigator.permissions.query({ name: 'geolocation' });
                         this._geoPermStatus = status;
                         status.onchange = () => {
-                            if (status.state === 'granted' || status.state === 'prompt') request();
+                            if (status.state === 'granted' || 'prompt') request();
                         };
                         if (status.state === 'granted' || status.state === 'prompt') {
                             request();
@@ -897,7 +925,7 @@ ob_start();
             },
             reverseGeocode(lat, lng) {
                 const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-                fetch(url, { headers: { 'User-Agent': 'Zzimba Store Locator' } })
+                fetch(url)
                     .then(r => r.json())
                     .then(d => { if (d?.display_name) { this.storeForm.address = d.display_name; } })
                     .catch(() => { });
@@ -923,7 +951,7 @@ ob_start();
                 this.mapSearchLoading = true;
                 try {
                     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&countrycodes=ug&limit=8`;
-                    const resp = await fetch(url, { headers: { 'User-Agent': 'Zzimba Store Locator' }, signal: ctl.signal });
+                    const resp = await fetch(url, { signal: ctl.signal });
                     const data = await resp.json();
                     this.mapSearchResults = (data || []).map((d, i) => ({ key: `${d.place_id}-${i}`, lat: parseFloat(d.lat), lon: parseFloat(d.lon), name: d.display_name }));
                 } catch { }

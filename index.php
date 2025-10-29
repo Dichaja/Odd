@@ -212,7 +212,7 @@ ob_start();
 
     .hide-scrollbar::-webkit-scrollbar {
         display: none
-    }
+    } 
 
     .hide-scrollbar {
         scrollbar-width: none;
@@ -229,7 +229,7 @@ ob_start();
         padding-top: calc(clamp(12px, 2vw, 24px) + env(safe-area-inset-top, 0px));
         padding-bottom: calc(clamp(12px, 2vw, 24px) + env(safe-area-inset-bottom, 0px))
     }
-
+ 
     .hero-cta {
         background: #D92B13;
         color: #fff;
