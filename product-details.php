@@ -525,38 +525,6 @@ ob_start();
     .star-rating button:hover {
         background-color: rgba(217, 43, 19, 0.1);
     }
-
-    @media (max-width: 1023px) {
-        .reviews-mobile-layout {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .review-form-mobile {
-            order: 1;
-            margin-bottom: 1.5rem;
-        }
-
-        .review-list-mobile {
-            order: 2;
-        }
-    }
-
-    @media (min-width: 1024px) {
-        .reviews-desktop-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 2rem;
-        }
-
-        .review-list-desktop {
-            grid-column: span 2;
-        }
-
-        .review-form-desktop {
-            grid-column: span 1;
-        }
-    }
 </style>
 
 <script>
@@ -726,8 +694,7 @@ ob_start();
                     </h2>
 
                     <div class="flex flex-wrap items-center gap-6 text-sm">
-                        <div class="flex items-center cursor-pointer"
-                            @click="activeTab='reviews'; $nextTick(() => { document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); })">
+                        <div class="flex items-center">
                             <div class="flex mr-2">
                                 <?php
                                 $avgRating = $reviewStats['average_rating'];
@@ -879,64 +846,9 @@ ob_start();
             </div>
         </div>
 
-        <div x-show="activeTab==='reviews'" class="tab-content" id="reviews-section">
-            <div class="lg:hidden reviews-mobile-layout">
-                <div class="review-form-mobile">
-                    <div class="review-form-container sticky top-4">
-                        <h4 class="text-lg font-semibold mb-4 text-gray-800">Write a Review</h4>
-                        <form @submit.prevent="submitReview" class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Your Rating</label>
-                                <div class="star-rating flex space-x-1">
-                                    <template x-for="i in 5" :key="i">
-                                        <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i"
-                                            @mouseleave="hoverRating=0">
-                                            <i data-lucide="star" class="w-5 h-5"
-                                                :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
-                                        </button>
-                                    </template>
-                                </div>
-                                <p x-show="reviewRating > 0" class="text-sm text-gray-600 mt-1">
-                                    You rated this product <span x-text="reviewRating"></span> out of 5 stars
-                                </p>
-                            </div>
-                            <div>
-                                <label for="reviewComment" class="block text-sm font-medium text-gray-700 mb-1">Your
-                                    Review</label>
-                                <textarea rows="4" maxlength="500" x-model="reviewComment"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D92B13] focus:border-transparent resize-none"
-                                    placeholder="Share your experience with this product... (minimum 10 characters)"
-                                    required></textarea>
-                                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span x-show="reviewComment.length > 0 && reviewComment.length < 10"
-                                        class="text-red-500">
-                                        Minimum 10 characters required
-                                    </span>
-                                    <span class="ml-auto">
-                                        <span x-text="reviewComment?.length || 0"></span>/500 characters
-                                    </span>
-                                </div>
-                            </div>
-                            <button type="submit"
-                                :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting"
-                                :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''"
-                                class="review-submit-btn w-full bg-[#D92B13] hover:bg-[#B91C1C] text-white py-2 rounded-lg font-medium transition-colors">
-                                <span x-show="!isSubmitting" class="flex items-center justify-center">
-                                    <i data-lucide="send" class="w-5 h-5 mr-2"></i>
-                                    Submit Review
-                                </span>
-                                <span x-show="isSubmitting" class="flex items-center justify-center">
-                                    <div
-                                        class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2">
-                                    </div>
-                                    Submitting...
-                                </span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="review-list-mobile">
+        <div x-show="activeTab==='reviews'" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2">
                     <div
                         class="bg-white dark:bg-secondary rounded-xl shadow-sm p-6 lg:p-8 border border-gray-200 dark:border-white/10">
                         <div class="flex items-center justify-between mb-6">
@@ -998,125 +910,51 @@ ob_start();
                 </div>
             </div>
 
-            <div class="hidden lg:block">
-                <div class="reviews-desktop-layout">
-                    <div class="review-list-desktop">
-                        <div
-                            class="bg-white dark:bg-secondary rounded-xl shadow-sm p-6 lg:p-8 border border-gray-200 dark:border-white/10">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-xl font-semibold text-gray-800">Customer Reviews</h3>
-                                <div class="flex items-center gap-4">
-                                    <?php if ($reviewStats['average_rating'] > 0): ?>
-                                        <div class="flex items-center">
-                                            <div class="flex mr-2">
-                                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                    <i data-lucide="star"
-                                                        class="w-4 h-4 <?= $i <= round($reviewStats['average_rating']) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300' ?>"></i>
-                                                <?php endfor; ?>
-                                            </div>
-                                            <span
-                                                class="text-sm text-gray-600"><?= $reviewStats['average_rating'] ?>/5</span>
-                                        </div>
-                                    <?php endif; ?>
-                                    <span
-                                        class="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                        <?= $reviewStats['total_reviews'] ?> Reviews
-                                    </span>
-                                </div>
-                            </div>
+                <div>
+                    <div class="review-form-container sticky top-4">
+    <h4 class="text-lg font-semibold mb-4 text-gray-800">Write a Review</h4>
+    <form @submit.prevent="submitReview" class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Your Rating</label>
+            <div class="star-rating flex space-x-1">
+                <template x-for="i in 5" :key="i">
+                    <button  type="button" @click="reviewRating = i" @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
+                        <i  data-lucide="star" class="w-5 h-5" :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' 
+                                : 'stroke-gray-300'" ></i>
+                    </button>
+                </template>
+            </div>
+            <p x-show="reviewRating > 0" class="text-sm text-gray-600 mt-1">
+                You rated this product <span x-text="reviewRating"></span> out of 5 stars
+            </p>
+        </div>
+        <div>
+            <label for="reviewComment" class="block text-sm font-medium text-gray-700 mb-1">Your Review</label>
+            <textarea rows="4" maxlength="500" x-model="reviewComment" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D92B13] focus:border-transparent resize-none" placeholder="Share your experience with this product... (minimum 10 characters)" required ></textarea>
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                <span  x-show="reviewComment.length > 0 && reviewComment.length < 10" class="text-red-500">
+                    Minimum 10 characters required
+                </span>
+                <span class="ml-auto">
+                    <span x-text="reviewComment?.length || 0"></span>/500 characters
+                </span>
+            </div>
+        </div>
 
-                            <?php if (!empty($reviews)): ?>
-                                <div class="mb-6 max-h-[500px] overflow-y-auto pr-2 space-y-6">
-                                    <?php foreach ($reviews as $review): ?>
-                                        <div
-                                            class="border-b border-gray-200 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in">
-                                            <div class="flex items-center mb-1">
-                                                <span
-                                                    class="font-semibold text-gray-800"><?= htmlspecialchars($review['username']) ?></span>
-                                                <?php if ($review['is_verified']): ?>
-                                                    <span
-                                                        class="ml-2 bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                                                        Verified Purchase
-                                                    </span>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="text-gray-500 text-sm mb-2"><?= $review['review_date'] ?></div>
-                                            <div class="flex mb-3">
-                                                <?php for ($i = 1; $i <= 5; $i++): ?>
-                                                    <i data-lucide="star"
-                                                        class="w-4 h-4 <?= $i <= $review['rating'] ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300' ?>"></i>
-                                                <?php endfor; ?>
-                                            </div>
-                                            <p class="text-gray-700"><?= htmlspecialchars($review['comment']) ?></p>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="text-center py-8">
-                                    <div class="mb-4">
-                                        <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
-                                    </div>
-                                    <h4 class="text-xl font-semibold text-gray-600 mb-2">No Reviews Yet</h4>
-                                    <p class="text-gray-500 mb-4">Be the first to review this product!</p>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+        <!-- Submit -->
+        <button type="submit" :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting" :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''" class="review-submit-btn w-full bg-[#D92B13] hover:bg-[#B91C1C] text-white py-2 rounded-lg font-medium transition-colors">
+            <span x-show="!isSubmitting" class="flex items-center justify-center">
+                <i data-lucide="send" class="w-5 h-5 mr-2"></i> 
+                Submit Review
+            </span>
+            <span x-show="isSubmitting" class="flex items-center justify-center">
+                <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Submitting...
+            </span>
+        </button>
+    </form>
+</div>
 
-                    <div class="review-form-desktop">
-                        <div class="review-form-container sticky top-4">
-                            <h4 class="text-lg font-semibold mb-4 text-gray-800">Write a Review</h4>
-                            <form @submit.prevent="submitReview" class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Your Rating</label>
-                                    <div class="star-rating flex space-x-1">
-                                        <template x-for="i in 5" :key="i">
-                                            <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i"
-                                                @mouseleave="hoverRating=0">
-                                                <i data-lucide="star" class="w-5 h-5"
-                                                    :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
-                                            </button>
-                                        </template>
-                                    </div>
-                                    <p x-show="reviewRating > 0" class="text-sm text-gray-600 mt-1">
-                                        You rated this product <span x-text="reviewRating"></span> out of 5 stars
-                                    </p>
-                                </div>
-                                <div>
-                                    <label for="reviewComment" class="block text-sm font-medium text-gray-700 mb-1">Your
-                                        Review</label>
-                                    <textarea rows="4" maxlength="500" x-model="reviewComment"
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D92B13] focus:border-transparent resize-none"
-                                        placeholder="Share your experience with this product... (minimum 10 characters)"
-                                        required></textarea>
-                                    <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                        <span x-show="reviewComment.length > 0 && reviewComment.length < 10"
-                                            class="text-red-500">
-                                            Minimum 10 characters required
-                                        </span>
-                                        <span class="ml-auto">
-                                            <span x-text="reviewComment?.length || 0"></span>/500 characters
-                                        </span>
-                                    </div>
-                                </div>
-                                <button type="submit"
-                                    :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting"
-                                    :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''"
-                                    class="review-submit-btn w-full bg-[#D92B13] hover:bg-[#B91C1C] text-white py-2 rounded-lg font-medium transition-colors">
-                                    <span x-show="!isSubmitting" class="flex items-center justify-center">
-                                        <i data-lucide="send" class="w-5 h-5 mr-2"></i>
-                                        Submit Review
-                                    </span>
-                                    <span x-show="isSubmitting" class="flex items-center justify-center">
-                                        <div
-                                            class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2">
-                                        </div>
-                                        Submitting...
-                                    </span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1430,58 +1268,45 @@ ob_start();
                     body: formData,
                     credentials: 'same-origin'
                 })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        this.isSubmitting = false;
-                        if (data.success) {
-                            if (typeof showToast === 'function') {
-                                showToast(data.message || 'Review submitted successfully!', 'success');
-                            } else if (typeof notifications !== 'undefined') {
-                                notifications.success(data.message || 'Review submitted successfully!');
-                            } else {
-                                alert(data.message || 'Review submitted successfully!');
-                            }
-                            this.reviewComment = '';
-                            this.reviewRating = 0;
-                            this.hoverRating = 0;
-                            this.refreshIcons();
-                            setTimeout(() => {
-                                if (typeof closeAuthModal === 'function') {
-                                    closeAuthModal();
-                                }
-                                window.location.reload();
-                            }, 1500);
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    this.isSubmitting = false;
+                    console.log(data);
+                    if (data.success) {
+                        
+                        if (typeof showToast === 'function') {
+                            showToast(data.message || 'Review submitted successfully!', 'success');
+                        } else if (typeof notifications !== 'undefined') {
+                            notifications.success(data.message || 'Review submitted successfully!');
                         } else {
-                            let errorMessage = data.error || 'Failed to submit review';
-                            if (data.error && data.error.includes('Authentication required')) {
-                                errorMessage = 'Please log in to submit a review.';
-                                if (typeof openAuthModal === 'function') {
-                                    openAuthModal();
-                                }
-                            }
-                            if (typeof showToast === 'function') {
-                                showToast(errorMessage, 'error');
-                            } else if (typeof notifications !== 'undefined') {
-                                notifications.error(errorMessage);
-                            } else {
-                                alert(errorMessage);
-                            }
+                            alert(data.message || 'Review submitted successfully!');
                         }
-                    })
-                    .catch(error => {
-                        this.isSubmitting = false;
-                        let errorMessage = 'Network error. Please check your connection and try again.';
-                        if (error.message.includes('401')) {
+                        
+                        // Reset form
+                        this.reviewComment = '';
+                        this.reviewRating = 0;
+                        this.hoverRating = 0;
+                        this.refreshIcons();
+                        
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        
+                        let errorMessage = data.error || 'Failed to submit review';
+                        
+                        if (data.error && data.error.includes('Authentication required')) {
                             errorMessage = 'Please log in to submit a review.';
                             if (typeof openAuthModal === 'function') {
                                 openAuthModal();
                             }
                         }
+                        
                         if (typeof showToast === 'function') {
                             showToast(errorMessage, 'error');
                         } else if (typeof notifications !== 'undefined') {
@@ -1489,7 +1314,28 @@ ob_start();
                         } else {
                             alert(errorMessage);
                         }
-                    });
+                    }
+                })
+                .catch(error => {
+                    this.isSubmitting = false;
+                    console.error('Error submitting review:', error);
+                    
+                    let errorMessage = 'Network error. Please check your connection and try again.';
+                    if (error.message.includes('401')) {
+                        errorMessage = 'Please log in to submit a review.';
+                        if (typeof openAuthModal === 'function') {
+                            openAuthModal();
+                        }
+                    }
+                    
+                    if (typeof showToast === 'function') {
+                        showToast(errorMessage, 'error');
+                    } else if (typeof notifications !== 'undefined') {
+                        notifications.error(errorMessage);
+                    } else {
+                        alert(errorMessage);
+                    }
+                });
             },
             async showVendorsInRegion(region) {
                 const ok = await this.ensureSession({ type: 'view-suppliers', region });
