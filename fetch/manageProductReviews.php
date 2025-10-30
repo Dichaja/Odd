@@ -64,6 +64,24 @@ switch ($action) {
     case 'get_user_review':
         getUserReview($pdo, $currentUser);
         break;
+    case 'list':
+        listReviews($pdo);
+        break;
+    case 'stats':
+        getReviewStats($pdo);
+        break;
+    case 'update_status':
+        updateReviewStatus($pdo);
+        break;
+    case 'delete':
+        deleteReview($pdo);
+        break;
+    case 'search_products':
+        searchProducts($pdo);
+        break;
+    case 'search_vendors':
+        searchVendors($pdo);
+        break;
     case 'getStoreReviews':
         try {
             $storeId = $_GET['store_id'] ?? null;
@@ -77,15 +95,18 @@ switch ($action) {
                 SELECT 
                     pr.id,
                     pr.rating,
-                    pr.review_text,
+                    pr.comment as review_text,
                     pr.created_at,
                     pr.status,
-                    p.name as product_name,
+                    p.title as product_name,
+                    p.id as product_id,
                     COALESCE(u.name, u.username, 'Anonymous') as reviewer_name
                 FROM product_reviews pr
                 INNER JOIN products p ON pr.product_id = p.id
-                INNER JOIN vendor_stores vs ON p.store_id = vs.id
-                LEFT JOIN users u ON pr.user_id = u.id
+                INNER JOIN store_products sp ON p.id = sp.product_id
+                INNER JOIN store_categories sc ON sp.store_category_id = sc.id
+                INNER JOIN vendor_stores vs ON sc.store_id = vs.id
+                LEFT JOIN zzimba_users u ON pr.user_id = u.id
                 WHERE vs.id = ? AND pr.status = 'approved'
                 ORDER BY pr.created_at DESC
             ");
@@ -318,6 +339,230 @@ function getUserReview(PDO $pdo, string $currentUser)
         error_log('Error fetching user review: ' . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Failed to fetch user review']);
+    }
+}
+
+function listReviews(PDO $pdo) {
+    try {
+        $page = max(1, intval($_GET['page'] ?? 1));
+        $perPage = max(1, min(100, intval($_GET['per_page'] ?? 20)));
+        $offset = ($page - 1) * $perPage;
+
+        $where = [];
+        $params = [];
+
+        // Filter by product
+        if (!empty($_GET['product_id'])) {
+            $where[] = "pr.product_id = ?";
+            $params[] = $_GET['product_id'];
+        }
+
+        // Filter by vendor
+        if (!empty($_GET['vendor_id'])) {
+            $where[] = "vs.id = ?";
+            $params[] = $_GET['vendor_id'];
+        }
+
+        // Filter by status
+        if (!empty($_GET['status'])) {
+            $where[] = "pr.status = ?";
+            $params[] = $_GET['status'];
+        }
+
+        // Filter by rating
+        if (!empty($_GET['rating'])) {
+            $where[] = "pr.rating = ?";
+            $params[] = intval($_GET['rating']);
+        }
+
+        // Search
+        if (!empty($_GET['search'])) {
+            $where[] = "(pr.comment LIKE ? OR p.title LIKE ? OR u.username LIKE ?)";
+            $searchTerm = '%' . $_GET['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+
+        $whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        // Get total count
+        $countSql = "SELECT COUNT(*) as total 
+                     FROM product_reviews pr
+                     INNER JOIN products p ON pr.product_id = p.id
+                     LEFT JOIN store_products sp ON p.id = sp.product_id
+                     LEFT JOIN store_categories sc ON sp.store_category_id = sc.id
+                     LEFT JOIN vendor_stores vs ON sc.store_id = vs.id
+                     LEFT JOIN zzimba_users u ON pr.user_id = u.id
+                     $whereClause";
+        
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute($params);
+        $total = $countStmt->fetch()['total'];
+
+        // Get reviews
+        $sql = "SELECT 
+                    pr.id,
+                    pr.product_id,
+                    pr.rating,
+                    pr.comment,
+                    pr.status,
+                    pr.created_at,
+                    p.title as product_title,
+                    u.username,
+                    (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as product_image
+                FROM product_reviews pr
+                INNER JOIN products p ON pr.product_id = p.id
+                LEFT JOIN store_products sp ON p.id = sp.product_id
+                LEFT JOIN store_categories sc ON sp.store_category_id = sc.id
+                LEFT JOIN vendor_stores vs ON sc.store_id = vs.id
+                LEFT JOIN zzimba_users u ON pr.user_id = u.id
+                $whereClause
+                ORDER BY pr.created_at DESC
+                LIMIT ? OFFSET ?";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(array_merge($params, [$perPage, $offset]));
+        $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'reviews' => $reviews,
+            'pagination' => [
+                'total' => $total,
+                'totalPages' => ceil($total / $perPage),
+                'currentPage' => $page,
+                'perPage' => $perPage
+            ]
+        ]);
+
+    } catch (Exception $e) {
+        error_log('Error listing reviews: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to load reviews']);
+    }
+}
+
+function getReviewStats(PDO $pdo) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+                AVG(rating) as avgRating
+            FROM product_reviews
+        ");
+        $stmt->execute();
+        $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'stats' => [
+                'total' => intval($stats['total']),
+                'pending' => intval($stats['pending']),
+                'approved' => intval($stats['approved']),
+                'avgRating' => round(floatval($stats['avgRating']), 1)
+            ]
+        ]);
+
+    } catch (Exception $e) {
+        error_log('Error getting review stats: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to load stats']);
+    }
+}
+
+function updateReviewStatus(PDO $pdo) {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $reviewId = $data['review_id'] ?? '';
+    $status = $data['status'] ?? '';
+
+    if (!in_array($status, ['approved', 'pending', 'rejected'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid status']);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("UPDATE product_reviews SET status = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$status, $reviewId]);
+
+        echo json_encode(['success' => true, 'message' => "Review $status successfully"]);
+
+    } catch (Exception $e) {
+        error_log('Error updating review status: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to update review']);
+    }
+}
+
+function deleteReview(PDO $pdo) {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $reviewId = $data['review_id'] ?? '';
+
+    try {
+        $stmt = $pdo->prepare("DELETE FROM product_reviews WHERE id = ?");
+        $stmt->execute([$reviewId]);
+
+        echo json_encode(['success' => true, 'message' => 'Review deleted successfully']);
+
+    } catch (Exception $e) {
+        error_log('Error deleting review: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to delete review']);
+    }
+}
+
+function searchProducts(PDO $pdo) {
+    $query = $_GET['q'] ?? '';
+    
+    if (strlen($query) < 2) {
+        echo json_encode(['success' => true, 'products' => []]);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id, title 
+            FROM products 
+            WHERE title LIKE ? AND status = 'published'
+            LIMIT 10
+        ");
+        $stmt->execute(['%' . $query . '%']);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode(['success' => true, 'products' => $products]);
+
+    } catch (Exception $e) {
+        error_log('Error searching products: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'error' => 'Search failed']);
+    }
+}
+
+function searchVendors(PDO $pdo) {
+    $query = $_GET['q'] ?? '';
+    
+    if (strlen($query) < 2) {
+        echo json_encode(['success' => true, 'vendors' => []]);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id, name 
+            FROM vendor_stores 
+            WHERE name LIKE ? AND status = 'active'
+            LIMIT 10
+        ");
+        $stmt->execute(['%' . $query . '%']);
+        $vendors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode(['success' => true, 'vendors' => $vendors]);
+
+    } catch (Exception $e) {
+        error_log('Error searching vendors: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'error' => 'Search failed']);
     }
 }
 

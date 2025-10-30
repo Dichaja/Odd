@@ -15,7 +15,33 @@ ob_start();
 
     <!-- Filters -->
     <div class="bg-white dark:bg-secondary rounded-xl shadow-sm p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-white mb-2">Filter By</label>
+                <select x-model="filters.filterType" @change="handleFilterTypeChange()" class="w-full px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                    <option value="">All Reviews</option>
+                    <option value="product">By Product</option>
+                    <option value="vendor">By Vendor</option>
+                </select>
+            </div>
+            <div x-show="filters.filterType === 'product'">
+                <label class="block text-sm font-medium text-gray-700 dark:text-white mb-2">Product</label>
+                <input type="text" x-model="filters.productSearch" @input.debounce.300ms="searchProducts()" placeholder="Search products..." class="w-full px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                <div x-show="productResults.length > 0" class="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-white/10 rounded-lg shadow-lg max-h-60 overflow-auto">
+                    <template x-for="product in productResults" :key="product.id">
+                        <button @click="selectProduct(product)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white" x-text="product.title"></button>
+                    </template>
+                </div>
+            </div>
+            <div x-show="filters.filterType === 'vendor'">
+                <label class="block text-sm font-medium text-gray-700 dark:text-white mb-2">Vendor</label>
+                <input type="text" x-model="filters.vendorSearch" @input.debounce.300ms="searchVendors()" placeholder="Search vendors..." class="w-full px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                <div x-show="vendorResults.length > 0" class="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-white/10 rounded-lg shadow-lg max-h-60 overflow-auto">
+                    <template x-for="vendor in vendorResults" :key="vendor.id">
+                        <button @click="selectVendor(vendor)" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white" x-text="vendor.name"></button>
+                    </template>
+                </div>
+            </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-white mb-2">Status</label>
                 <select x-model="filters.status" @change="loadReviews()" class="w-full px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
@@ -36,15 +62,26 @@ ob_start();
                     <option value="1">1 Star</option>
                 </select>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-white mb-2">Search</label>
-                <input type="text" x-model="filters.search" @input.debounce.500ms="loadReviews()" placeholder="Search reviews..." class="w-full px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-            </div>
             <div class="flex items-end">
                 <button @click="resetFilters()" class="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
                     Reset Filters
                 </button>
             </div>
+        </div>
+        <div x-show="filters.selectedProduct || filters.selectedVendor" class="mt-4 flex items-center gap-2">
+            <span class="text-sm text-gray-600 dark:text-white/70">Filtering by:</span>
+            <span x-show="filters.selectedProduct" class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                <span x-text="filters.selectedProduct?.title"></span>
+                <button @click="clearProductFilter()" class="ml-2 hover:text-blue-600">
+                    <i data-lucide="x" class="w-3 h-3"></i>
+                </button>
+            </span>
+            <span x-show="filters.selectedVendor" class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                <span x-text="filters.selectedVendor?.name"></span>
+                <button @click="clearVendorFilter()" class="ml-2 hover:text-green-600">
+                    <i data-lucide="x" class="w-3 h-3"></i>
+                </button>
+            </span>
         </div>
     </div>
 
@@ -283,10 +320,17 @@ function reviewsManagement() {
             avgRating: 0
         },
         filters: {
+            filterType: '',
+            productSearch: '',
+            vendorSearch: '',
+            selectedProduct: null,
+            selectedVendor: null,
             status: '',
             rating: '',
             search: ''
         },
+        productResults: [],
+        vendorResults: [],
         pagination: {
             currentPage: 1,
             perPage: 20,
@@ -303,14 +347,94 @@ function reviewsManagement() {
             if (window.lucide && lucide.createIcons) lucide.createIcons();
         },
 
+        handleFilterTypeChange() {
+            this.filters.selectedProduct = null;
+            this.filters.selectedVendor = null;
+            this.filters.productSearch = '';
+            this.filters.vendorSearch = '';
+            this.productResults = [];
+            this.vendorResults = [];
+            this.loadReviews();
+        },
+
+        async searchProducts() {
+            if (!this.filters.productSearch || this.filters.productSearch.length < 2) {
+                this.productResults = [];
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}admin/fetch/manageProductReviews.php?action=search_products&q=${encodeURIComponent(this.filters.productSearch)}`);
+                const data = await response.json();
+                if (data.success) {
+                    this.productResults = data.products;
+                }
+            } catch (error) {
+                console.error('Error searching products:', error);
+            }
+        },
+
+        async searchVendors() {
+            if (!this.filters.vendorSearch || this.filters.vendorSearch.length < 2) {
+                this.vendorResults = [];
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_URL}admin/fetch/manageProductReviews.php?action=search_vendors&q=${encodeURIComponent(this.filters.vendorSearch)}`);
+                const data = await response.json();
+                if (data.success) {
+                    this.vendorResults = data.vendors;
+                }
+            } catch (error) {
+                console.error('Error searching vendors:', error);
+            }
+        },
+
+        selectProduct(product) {
+            this.filters.selectedProduct = product;
+            this.filters.productSearch = product.title;
+            this.productResults = [];
+            this.loadReviews();
+        },
+
+        selectVendor(vendor) {
+            this.filters.selectedVendor = vendor;
+            this.filters.vendorSearch = vendor.name;
+            this.vendorResults = [];
+            this.loadReviews();
+        },
+
+        clearProductFilter() {
+            this.filters.selectedProduct = null;
+            this.filters.productSearch = '';
+            this.loadReviews();
+        },
+
+        clearVendorFilter() {
+            this.filters.selectedVendor = null;
+            this.filters.vendorSearch = '';
+            this.loadReviews();
+        },
+
         async loadReviews() {
             this.loading = true;
             try {
                 const params = new URLSearchParams({
                     page: this.pagination.currentPage,
                     per_page: this.pagination.perPage,
-                    ...this.filters
+                    status: this.filters.status,
+                    rating: this.filters.rating,
+                    search: this.filters.search
                 });
+
+                if (this.filters.selectedProduct) {
+                    params.append('product_id', this.filters.selectedProduct.id);
+                }
+
+                if (this.filters.selectedVendor) {
+                    params.append('vendor_id', this.filters.selectedVendor.id);
+                }
 
                 const response = await fetch(`${BASE_URL}admin/fetch/manageProductReviews.php?action=list&${params}`);
                 const data = await response.json();
@@ -410,10 +534,17 @@ function reviewsManagement() {
 
         resetFilters() {
             this.filters = {
+                filterType: '',
+                productSearch: '',
+                vendorSearch: '',
+                selectedProduct: null,
+                selectedVendor: null,
                 status: '',
                 rating: '',
                 search: ''
             };
+            this.productResults = [];
+            this.vendorResults = [];
             this.pagination.currentPage = 1;
             this.loadReviews();
         },
