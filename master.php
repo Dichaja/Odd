@@ -920,7 +920,8 @@ $loggedName = $isLoggedIn ? ($_SESSION['user']['username'] ?? 'User') : 'Guest';
             background: #D92B13;
             border-color: #D92B13
         }
-    input,
+
+        input,
         select {
             min-height: auto !important;
             /* padding: 0.5rem 0% !important; */
@@ -1223,111 +1224,111 @@ $loggedName = $isLoggedIn ? ($_SESSION['user']['username'] ?? 'User') : 'Guest';
                         </div>
                         <div id="cart-or-bell">
                             <?php if ($isLoggedIn): ?>
-                                    <div class="relative">
-                                        <button @click="$store.notif.toggle()"
-                                            class="relative w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 text-secondary dark:text-white">
-                                            <i data-lucide="bell" class="w-5 h-5"></i>
-                                            <span id="desktopNotifCount"
-                                                class="absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center hidden">0</span>
-                                        </button>
-                                        <div x-show="$store.notif.open" @click.outside="$store.notif.open=false" x-transition
-                                            class="fixed top-16 left-2 right-2 w-auto max-w-full sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white dark:bg-secondary rounded-lg shadow-lg border border-gray-100 dark:border-white/10 py-1 z-50 max-h-96 overflow-auto">
-                                            <div
-                                                class="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-white/10">
-                                                <div class="flex items-center gap-2">
-                                                    <input type="checkbox" id="selectAll"
-                                                        @change="$store.notif.selectAll($event)" class="zz-checkbox">
-                                                    <label for="selectAll"
-                                                        class="text-xs text-gray-600 dark:text-white/80">Select All</label>
-                                                </div>
-                                                <div class="flex gap-2">
-                                                    <button @click="$store.notif.markBulkSeen()"
-                                                        class="text-xs px-2 py-1 bg-user-primary text-white rounded">Mark
-                                                        Read</button>
-                                                    <button @click="$store.notif.dismissBulk()"
-                                                        class="text-xs px-2 py-1 bg-red-500 text-white rounded">Dismiss</button>
-                                                </div>
+                                <div class="relative">
+                                    <button @click="$store.notif.toggle()"
+                                        class="relative w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 text-secondary dark:text-white">
+                                        <i data-lucide="bell" class="w-5 h-5"></i>
+                                        <span id="desktopNotifCount"
+                                            class="absolute -top-1 -right-1 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center hidden">0</span>
+                                    </button>
+                                    <div x-show="$store.notif.open" @click.outside="$store.notif.open=false" x-transition
+                                        class="fixed top-16 left-2 right-2 w-auto max-w-full sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-80 sm:max-w-none bg-white dark:bg-secondary rounded-lg shadow-lg border border-gray-100 dark:border-white/10 py-1 z-50 max-h-96 overflow-auto">
+                                        <div
+                                            class="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-white/10">
+                                            <div class="flex items-center gap-2">
+                                                <input type="checkbox" id="selectAll"
+                                                    @change="$store.notif.selectAll($event)" class="zz-checkbox">
+                                                <label for="selectAll"
+                                                    class="text-xs text-gray-600 dark:text-white/80">Select All</label>
                                             </div>
-                                            <template x-for="note in $store.notif.notes" :key="note.target_id">
-                                                <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
-                                                    class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
-                                                    <div class="px-3 py-3"><input type="checkbox" :value="note.target_id"
-                                                            x-model="$store.notif.selected" class="zz-checkbox"></div>
-                                                    <div class="flex-1">
-                                                        <a :href="note.link_url || '#'" class="block px-0 py-3"
-                                                            @click.prevent="$store.notif.handleClick(note)">
-                                                            <p class="text-sm font-medium text-secondary dark:text-white"
-                                                                x-text="note.title"></p>
-                                                            <p class="text-xs mt-1"
-                                                                :class="note.is_seen == 0 ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70'"
-                                                                x-text="note.message"></p>
-                                                            <span class="text-[10px] text-gray-400 dark:text-white/60"
-                                                                x-text="$store.notif.formatDate(note.created_at)"></span>
-                                                        </a>
-                                                    </div>
-                                                    <button @click.stop="$store.notif.dismiss(note.target_id)"
-                                                        class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
-                                                        <i data-lucide="x" class="w-4 h-4"></i>
-                                                    </button>
-                                                </div>
-                                            </template>
-                                            <div x-show="$store.notif.notes.length === 0"
-                                                class="p-4 text-sm text-center text-gray-500 dark:text-white/70">No
-                                                notifications</div>
+                                            <div class="flex gap-2">
+                                                <button @click="$store.notif.markBulkSeen()"
+                                                    class="text-xs px-2 py-1 bg-user-primary text-white rounded">Mark
+                                                    Read</button>
+                                                <button @click="$store.notif.dismissBulk()"
+                                                    class="text-xs px-2 py-1 bg-red-500 text-white rounded">Dismiss</button>
+                                            </div>
                                         </div>
+                                        <template x-for="note in $store.notif.notes" :key="note.target_id">
+                                            <div :class="note.is_seen == 0 ? 'bg-user-secondary/20 dark:bg-white/5' : 'bg-white dark:bg-secondary'"
+                                                class="relative group border-b border-gray-100 dark:border-white/10 last:border-none flex items-start">
+                                                <div class="px-3 py-3"><input type="checkbox" :value="note.target_id"
+                                                        x-model="$store.notif.selected" class="zz-checkbox"></div>
+                                                <div class="flex-1">
+                                                    <a :href="note.link_url || '#'" class="block px-0 py-3"
+                                                        @click.prevent="$store.notif.handleClick(note)">
+                                                        <p class="text-sm font-medium text-secondary dark:text-white"
+                                                            x-text="note.title"></p>
+                                                        <p class="text-xs mt-1"
+                                                            :class="note.is_seen == 0 ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70'"
+                                                            x-text="note.message"></p>
+                                                        <span class="text-[10px] text-gray-400 dark:text-white/60"
+                                                            x-text="$store.notif.formatDate(note.created_at)"></span>
+                                                    </a>
+                                                </div>
+                                                <button @click.stop="$store.notif.dismiss(note.target_id)"
+                                                    class="absolute top-2 right-2 text-secondary/60 hover:text-user-primary dark:text-white/60 dark:hover:text-white transition">
+                                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <div x-show="$store.notif.notes.length === 0"
+                                            class="p-4 text-sm text-center text-gray-500 dark:text-white/70">No
+                                            notifications</div>
                                     </div>
+                                </div>
                             <?php else: ?>
-                                    <a href="#"
-                                        class="text-secondary dark:text-white hover:text-primary transition-colors flex items-center">
-                                        <i data-lucide="shopping-cart" class="w-6 h-6" stroke-width="2.5"></i>
-                                    </a>
+                                <a href="#"
+                                    class="text-secondary dark:text-white hover:text-primary transition-colors flex items-center">
+                                    <i data-lucide="shopping-cart" class="w-6 h-6" stroke-width="2.5"></i>
+                                </a>
                             <?php endif; ?>
                         </div>
                         <div id="auth-section">
                             <?php if ($isLoggedIn): ?>
-                                    <div class="user-dropdown">
-                                        <button
-                                            class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
-                                            <i data-lucide="user" class="w-5 h-5 mr-2" stroke-width="2.5"></i>Halo
-                                            <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?>!
-                                            <i data-lucide="chevron-down" class="w-4 h-4 ml-2"></i>
-                                        </button>
-                                        <div class="user-dropdown-menu dark:bg-secondary dark:text-white dark:border-white/10">
-                                            <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?>
-                                                </p>
-                                                <p class="text-xs text-gray-500 dark:text-white/70">
-                                                    <?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?>
-                                                </p>
-                                                <?php if (!empty($_SESSION['user']['last_login'])): ?>
-                                                        <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
-                                                            <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?>
-                                                        </p>
-                                                <?php endif; ?>
-                                            </div>
-                                            <?php if (!empty($_SESSION['user']['is_admin'])): ?>
-                                                    <a href="<?= BASE_URL ?>admin/dashboard" class="user-dropdown-item"><i
-                                                            data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i>Dashboard</a>
-                                                    <a href="<?= BASE_URL ?>admin/profile" class="user-dropdown-item"><i
-                                                            data-lucide="user-round" class="w-4 h-4 mr-2"></i>Profile</a>
-                                            <?php else: ?>
-                                                    <a href="<?= BASE_URL ?>account/dashboard" class="user-dropdown-item"><i
-                                                            data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i>Dashboard</a>
-                                                    <a href="<?= BASE_URL ?>account/profile" class="user-dropdown-item"><i
-                                                            data-lucide="user-round" class="w-4 h-4 mr-2"></i>Profile</a>
-                                            <?php endif; ?>
-                                            <div class="border-t border-gray-200 dark:border-white/10 my-1"></div>
-                                            <a href="javascript:void(0);" onclick="logoutUser(); return false;"
-                                                class="user-dropdown-item text-red-600"><i data-lucide="log-out"
-                                                    class="w-4 h-4 mr-2"></i>Sign Out</a>
-                                        </div>
-                                    </div>
-                            <?php else: ?>
-                                    <a href="#" onclick="openAuthModal(); return false;"
+                                <div class="user-dropdown">
+                                    <button
                                         class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
-                                        <i data-lucide="user" class="w-5 h-5 mr-2" stroke-width="2.5"></i>Login / Register
-                                    </a>
+                                        <i data-lucide="user" class="w-5 h-5 mr-2" stroke-width="2.5"></i>Halo
+                                        <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?>!
+                                        <i data-lucide="chevron-down" class="w-4 h-4 ml-2"></i>
+                                    </button>
+                                    <div class="user-dropdown-menu dark:bg-secondary dark:text-white dark:border-white/10">
+                                        <div class="px-4 py-3 bg-gray-50 dark:bg-white/5">
+                                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                <?= htmlspecialchars($_SESSION['user']['username'] ?? '') ?>
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-white/70">
+                                                <?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?>
+                                            </p>
+                                            <?php if (!empty($_SESSION['user']['last_login'])): ?>
+                                                <p class="text-xs text-gray-500 dark:text-white/70 mt-1">Last login:
+                                                    <?= date('M d, Y g:i A', strtotime($_SESSION['user']['last_login'])) ?>
+                                                </p>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if (!empty($_SESSION['user']['is_admin'])): ?>
+                                            <a href="<?= BASE_URL ?>admin/dashboard" class="user-dropdown-item"><i
+                                                    data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i>Dashboard</a>
+                                            <a href="<?= BASE_URL ?>admin/profile" class="user-dropdown-item"><i
+                                                    data-lucide="user-round" class="w-4 h-4 mr-2"></i>Profile</a>
+                                        <?php else: ?>
+                                            <a href="<?= BASE_URL ?>account/dashboard" class="user-dropdown-item"><i
+                                                    data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i>Dashboard</a>
+                                            <a href="<?= BASE_URL ?>account/profile" class="user-dropdown-item"><i
+                                                    data-lucide="user-round" class="w-4 h-4 mr-2"></i>Profile</a>
+                                        <?php endif; ?>
+                                        <div class="border-t border-gray-200 dark:border-white/10 my-1"></div>
+                                        <a href="javascript:void(0);" onclick="logoutUser(); return false;"
+                                            class="user-dropdown-item text-red-600"><i data-lucide="log-out"
+                                                class="w-4 h-4 mr-2"></i>Sign Out</a>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <a href="#" onclick="openAuthModal(); return false;"
+                                    class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center">
+                                    <i data-lucide="user" class="w-5 h-5 mr-2" stroke-width="2.5"></i>Login / Register
+                                </a>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -1386,20 +1387,20 @@ $loggedName = $isLoggedIn ? ($_SESSION['user']['username'] ?? 'User') : 'Guest';
         <div id="mobile-menu-items" class="space-y-4"></div>
         <div class="mt-6 space-y-2" id="mobile-auth-section">
             <?php if ($isLoggedIn): ?>
-                    <a href="<?= !empty($_SESSION['user']['is_admin']) ? BASE_URL . 'admin/dashboard' : BASE_URL . 'account/dashboard' ?>"
-                        class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2 inline-block"></i>Dashboard
-                    </a>
-                    <a href="javascript:void(0);" onclick="logoutUser(); return false;"
-                        class="block text-center bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                        <i data-lucide="log-out" class="w-5 h-5 mr-2 inline-block"></i>Logout
-                    </a>
+                <a href="<?= !empty($_SESSION['user']['is_admin']) ? BASE_URL . 'admin/dashboard' : BASE_URL . 'account/dashboard' ?>"
+                    class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-2 inline-block"></i>Dashboard
+                </a>
+                <a href="javascript:void(0);" onclick="logoutUser(); return false;"
+                    class="block text-center bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    <i data-lucide="log-out" class="w-5 h-5 mr-2 inline-block"></i>Logout
+                </a>
             <?php else: ?>
-                    <a href="#" onclick="openAuthModal(); return false;"
-                        class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
-                        id="mobile-login-button">
-                        <i data-lucide="user" class="w-5 h-5 mr-2 inline-block"></i>Login / Register
-                    </a>
+                <a href="#" onclick="openAuthModal(); return false;"
+                    class="block text-center bg-secondary text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                    id="mobile-login-button">
+                    <i data-lucide="user" class="w-5 h-5 mr-2 inline-block"></i>Login / Register
+                </a>
             <?php endif; ?>
         </div>
     </div>
@@ -1496,21 +1497,22 @@ $loggedName = $isLoggedIn ? ($_SESSION['user']['username'] ?? 'User') : 'Guest';
                 class="flex flex-col items-center justify-center text-xs <?= $activeNav === 'materials' ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
                 <i data-lucide="package" class="w-5 h-5 mb-0.5"></i><span class="leading-none">Materials</span>
             </a>
-            <span id="tab-fourth">
+            <div id="tab-fourth" class="flex items-center justify-center">
                 <?php if ($isLoggedIn): ?>
-                        <button class="flex flex-col items-center justify-center text-xs text-secondary dark:text-white"
-                            @click="$store.ui.openSheet('notif')">
-                            <i data-lucide="bell" class="w-5 h-5 mb-0.5"></i><span class="leading-none">Alerts</span>
-                            <span id="mobileNotifCount" class="hidden absolute translate-x-3 -translate-y-3 text-[10px]
-                font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center">0
-                            </span>
-                        </button>
+                    <button
+                        class="relative flex flex-col items-center justify-center text-xs text-secondary dark:text-white w-full h-full"
+                        @click="$store.ui.openSheet('notif')">
+                        <i data-lucide="bell" class="w-5 h-5 mb-0.5"></i><span class="leading-none">Alerts</span>
+                        <span id="mobileNotifCount"
+                            class="hidden absolute translate-x-3 -translate-y-3 text-[10px] font-semibold text-white bg-user-primary rounded-full h-4 w-4 grid place-items-center">0</span>
+                    </button>
                 <?php else: ?>
-                        <a href="#" class="flex flex-col items-center justify-center text-xs text-gray-500 dark:text-white/70">
-                            <i data-lucide="shopping-cart" class="w-5 h-5 mb-0.5"></i><span class="leading-none">Cart</span>
-                        </a>
+                    <a href="#"
+                        class="flex flex-col items-center justify-center text-xs text-gray-500 dark:text-white/70 w-full h-full">
+                        <i data-lucide="shopping-cart" class="w-5 h-5 mb-0.5"></i><span class="leading-none">Cart</span>
+                    </a>
                 <?php endif; ?>
-            </span>
+            </div>
             <button id="tab-account"
                 class="flex flex-col items-center justify-center text-xs <?= $isLoggedIn ? 'text-secondary dark:text-white' : 'text-gray-500 dark:text-white/70' ?>">
                 <i data-lucide="user" class="w-5 h-5 mb-0.5"></i><span class="leading-none">

@@ -14,7 +14,7 @@ function loadHomepageData()
 }
 function getFeaturedProducts($pdo, $limit = 8)
 {
-    $stmt = $pdo->prepare("SELECT p.id, p.title, p.description, p.category_id, c.name AS category_name,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) AS views, EXISTS(SELECT 1 FROM store_products sp JOIN store_categories sc ON sc.id = sp.store_category_id JOIN vendor_stores vs ON vs.id = sc.store_id JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id AND vs.status = 'active') AS has_pricing,(SELECT MIN(pp.price) FROM store_products sp JOIN store_categories sc ON sc.id = sp.store_category_id JOIN vendor_stores vs ON vs.id = sc.store_id JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id AND vs.status = 'active') AS lowest_price FROM products p LEFT JOIN product_categories c ON p.category_id = c.id WHERE p.featured = 1 AND p.status = 'published' ORDER BY has_pricing DESC, p.created_at DESC LIMIT :limit");
+    $stmt = $pdo->prepare("SELECT p.id, p.title, p.description, p.category_id, c.name AS category_name,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) AS views, EXISTS(SELECT 1 FROM store_products sp JOIN store_categories sc ON sc.id = sp.store_category_id JOIN vendor_stores vs ON vs.id = sc.store_id JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id AND vs.status = 'active' AND pp.status = 'active') AS has_pricing,(SELECT MIN(pp.price) FROM store_products sp JOIN store_categories sc ON sc.id = sp.store_category_id JOIN vendor_stores vs ON vs.id = sc.store_id JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id AND vs.status = 'active' AND pp.status = 'active') AS lowest_price FROM products p LEFT JOIN product_categories c ON p.category_id = c.id WHERE p.featured = 1 AND p.status = 'published' ORDER BY has_pricing DESC, p.created_at DESC LIMIT :limit");
     $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
     $stmt->execute();
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -212,7 +212,7 @@ ob_start();
 
     .hide-scrollbar::-webkit-scrollbar {
         display: none
-    } 
+    }
 
     .hide-scrollbar {
         scrollbar-width: none;
@@ -229,7 +229,7 @@ ob_start();
         padding-top: calc(clamp(12px, 2vw, 24px) + env(safe-area-inset-top, 0px));
         padding-bottom: calc(clamp(12px, 2vw, 24px) + env(safe-area-inset-bottom, 0px))
     }
- 
+
     .hero-cta {
         background: #D92B13;
         color: #fff;
@@ -345,7 +345,7 @@ ob_start();
         </div>
 
         <?php if (!empty($requestQuoteSection['active'])): ?>
-            <div class="py-8 bg-gray-50 dark:bg-white/5">
+            <div class="py-8 bg-gray-50 dark:bg白/5">
                 <div class="container mx-auto px-4 text-center">
                     <a href="<?= BASE_URL . $requestQuoteSection['buttonUrl'] ?>"
                         class="inline-flex items-center px-8 py-4 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-shadow shadow-[0_16px_36px_rgba(217,43,19,0.45)]"><i
@@ -524,7 +524,8 @@ ob_start();
                                                     <?php endif; ?>
                                                     <p
                                                         class="text-center font-medium text-gray-800 dark:text-white text-sm md:text-base">
-                                                        <?= $partner['name'] ?></p>
+                                                        <?= $partner['name'] ?>
+                                                    </p>
                                                 </a>
                                             <?php endforeach; ?>
                                         </div>
@@ -591,7 +592,8 @@ ob_start();
                         data-lucide="file-text" class="w-5 h-5"></i><?= $requestQuoteSection['buttonText'] ?></a>
                 <?php if (!empty($requestQuoteSection['description'])): ?>
                     <p class="text-center text-gray-600 dark:text-white/70 text-xs mt-2">
-                        <?= $requestQuoteSection['description'] ?></p>
+                        <?= $requestQuoteSection['description'] ?>
+                    </p>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
@@ -600,7 +602,8 @@ ob_start();
             <div class="px-4 pt-2">
                 <div class="flex items-center justify-between mb-3">
                     <div class="text-base font-semibold text-secondary dark:text-white">
-                        <?= $featuredProductsSection['title'] ?></div>
+                        <?= $featuredProductsSection['title'] ?>
+                    </div>
                     <?php if (!empty($featuredProductsSection['linkText']) && !empty($featuredProductsSection['linkUrl'])): ?>
                         <a href="<?= BASE_URL . $featuredProductsSection['linkUrl'] ?>"
                             class="text-xs text-primary inline-flex items-center"><?= $featuredProductsSection['linkText'] ?><i
@@ -610,7 +613,7 @@ ob_start();
                 <div class="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory -mx-4 px-4 pb-2">
                     <template x-for="p in products.slice(0, 12)" :key="p.id">
                         <div
-                            class="snap-start shrink-0 w-64 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-secondary overflow-hidden flex flex-col">
+                            class="snap-start shrink-0 w-64 rounded-xl border border-gray-200 dark:border白/10 bg-white dark:bg-secondary overflow-hidden flex flex-col">
                             <a :href="'<?= BASE_URL ?>view/product/' + p.id" class="block">
                                 <div class="relative">
                                     <img :src="(p.images && p.images[0]) ? p.images[0] : 'https://placehold.co/600x400?text=No+Image'"
@@ -638,7 +641,7 @@ ob_start();
                                                 class="flex-1 inline-flex items-center justify-center h-10 rounded-lg bg-emerald-600 text-white text-sm font-medium">Buy</a>
                                         </template>
                                         <button @click="openSell(p)"
-                                            class="flex-1 inline-flex items-center justify-center h-10 rounded-lg bg-sky-600 text-white text-sm font-medium">Sell</button>
+                                            class="flex-1 inline-flex items-center justify-center h-10 rounded-lg bg-sky-600 text白 text-sm font-medium">Sell</button>
                                     </div>
                                 </div>
                             </div>
@@ -651,7 +654,8 @@ ob_start();
         <?php if (!empty($activeKeyFeatures)): ?>
             <div class="px-4 pt-4">
                 <div class="text-base font-semibold text-secondary dark:text-white mb-3">
-                    <?= $homepageData['benefitsTitle'] ?? 'Benefits' ?></div>
+                    <?= $homepageData['benefitsTitle'] ?? 'Benefits' ?>
+                </div>
                 <div class="grid grid-cols-1 gap-3">
                     <?php foreach ($activeKeyFeatures as $feature): ?>
                         <div
@@ -699,7 +703,8 @@ ob_start();
         <?php if (isset($partnersSection['active']) && $partnersSection['active'] && !empty($activePartners)): ?>
             <div class="px-4 pt-6 pb-8">
                 <div class="text-base font-semibold text-secondary dark:text-white text-center mb-3">
-                    <?= $partnersSection['title'] ?></div>
+                    <?= $partnersSection['title'] ?>
+                </div>
                 <div class="swiper partners-slider-m">
                     <div class="swiper-wrapper">
                         <?php foreach (array_chunk($activePartners, 6) as $chunk): ?>

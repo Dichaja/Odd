@@ -19,7 +19,6 @@ $currentUser = $isLoggedIn ? ($_SESSION['user']['user_id'] ?? null) : null;
 
 ensureProductPricingTable($pdo);
 ensureViewLoggingTables($pdo);
-ensureReviewTables($pdo);
 
 $action = $_GET['action'] ?? ($_GET['ajax'] ?? '');
 
@@ -109,17 +108,6 @@ try {
             requireLogin();
             confirmAccessCharge($pdo, $currentUser);
             break;
-        case 'submitStoreReview':
-            requireLogin();
-            submitStoreReview($pdo, $currentUser);
-            break;
-        case 'getStoreReviews':
-            getStoreReviews($pdo, $_GET['store_id'] ?? '', (int) ($_GET['page'] ?? 1), (int) ($_GET['limit'] ?? 10));
-            break;
-        case 'updateReviewStatus':
-            requireLogin();
-            updateReviewStatus($pdo, $currentUser);
-            break;
         default:
             http_response_code(404);
             echo json_encode(['success' => false, 'error' => 'Invalid action: ' . $action]);
@@ -182,81 +170,6 @@ function ensureProductPricingTable(PDO $pdo)
     if (!$existsValue->fetchColumn()) {
         $pdo->exec("ALTER TABLE `product_pricing` ADD COLUMN `commission_value` DECIMAL(10,2) NOT NULL DEFAULT '1.00' AFTER `commission_type`");
     }
-}
-
-function ensureReviewTables(PDO $pdo)
-{
-    // Add review stats columns to vendor_stores
-    $pdo->exec("
-        ALTER TABLE vendor_stores 
-        ADD COLUMN IF NOT EXISTS `review_count` INT UNSIGNED NOT NULL DEFAULT 0,
-        ADD COLUMN IF NOT EXISTS `average_rating` DECIMAL(3,2) DEFAULT NULL
-    ");
-
-    // Create store_reviews table
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS `store_reviews` (
-            `id` VARCHAR(26) NOT NULL,
-            `store_id` VARCHAR(26) NOT NULL,
-            `user_id` VARCHAR(26) NOT NULL,
-            `rating` TINYINT UNSIGNED NOT NULL CHECK (rating BETWEEN 1 AND 5),
-            `review_text` TEXT,
-            `status` ENUM('published','hidden') NOT NULL DEFAULT 'published',
-            `created_at` DATETIME NOT NULL,
-            `updated_at` DATETIME NOT NULL,
-            PRIMARY KEY (`id`),
-            KEY `idx_store_id` (`store_id`),
-            KEY `idx_user_id` (`user_id`),
-            KEY `idx_status_created` (`status`, `created_at`),
-            FOREIGN KEY (`store_id`) REFERENCES `vendor_stores` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-            FOREIGN KEY (`user_id`) REFERENCES `zzimba_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
-    ");
-
-    // Create trigger for review stats
-    $pdo->exec("
-        DROP TRIGGER IF EXISTS after_store_review_changes;
-        CREATE TRIGGER after_store_review_changes 
-        AFTER INSERT ON store_reviews 
-        FOR EACH ROW 
-        BEGIN
-            UPDATE vendor_stores vs
-            SET 
-                review_count = (
-                    SELECT COUNT(*) 
-                    FROM store_reviews sr 
-                    WHERE sr.store_id = vs.id AND sr.status = 'published'
-                ),
-                average_rating = (
-                    SELECT ROUND(AVG(rating), 2)
-                    FROM store_reviews sr 
-                    WHERE sr.store_id = vs.id AND sr.status = 'published'
-                )
-            WHERE vs.id = NEW.store_id;
-        END;
-    ");
-
-    $pdo->exec("
-        DROP TRIGGER IF EXISTS after_store_review_updates;
-        CREATE TRIGGER after_store_review_updates 
-        AFTER UPDATE ON store_reviews 
-        FOR EACH ROW 
-        BEGIN
-            UPDATE vendor_stores vs
-            SET 
-                review_count = (
-                    SELECT COUNT(*) 
-                    FROM store_reviews sr 
-                    WHERE sr.store_id = vs.id AND sr.status = 'published'
-                ),
-                average_rating = (
-                    SELECT ROUND(AVG(rating), 2)
-                    FROM store_reviews sr 
-                    WHERE sr.store_id = vs.id AND sr.status = 'published'
-                )
-            WHERE vs.id = NEW.store_id;
-        END;
-    ");
 }
 
 function ensureViewLoggingTables(PDO $pdo)
@@ -679,9 +592,7 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
                     SELECT COUNT(*) 
                     FROM store_profile_views 
                     WHERE store_id = v.id
-                ) AS profile_views,
-                v.review_count,
-                v.average_rating
+                ) AS profile_views
             FROM vendor_stores v
             LEFT JOIN nature_of_business nob ON v.nature_of_business = nob.id
             JOIN zzimba_users u ON v.owner_id = u.id
@@ -1579,195 +1490,4 @@ function fetchPricingSummary(PDO $pdo, string $pricingId): ?array
         'price_category' => $row['price_category'],
         'package_size' => $row['package_size']
     ];
-}
-
-function submitStoreReview(PDO $pdo, string $currentUser)
-{
-    $data = json_decode(file_get_contents('php://input'), true);
-    $storeId = $data['store_id'] ?? '';
-    $rating = (int) ($data['rating'] ?? 0);
-    $reviewText = trim($data['review_text'] ?? '');
-
-    if (!isValidUlid($storeId)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
-        return;
-    }
-
-    if ($rating < 1 || $rating > 5) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Rating must be between 1 and 5']);
-        return;
-    }
-
-    if (empty($reviewText)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Review text is required']);
-        return;
-    }
-
-    // Check if user has already reviewed this store
-    $checkStmt = $pdo->prepare("
-        SELECT id 
-        FROM store_reviews 
-        WHERE store_id = ? AND user_id = ? AND status = 'published'
-    ");
-    $checkStmt->execute([$storeId, $currentUser]);
-    if ($checkStmt->fetch()) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'You have already reviewed this store']);
-        return;
-    }
-
-    try {
-        $timezone = new DateTimeZone('Africa/Kampala');
-        $now = (new DateTime('now', $timezone))->format('Y-m-d H:i:s');
-        $reviewId = generateUlid();
-
-        $stmt = $pdo->prepare("
-            INSERT INTO store_reviews 
-                (id, store_id, user_id, rating, review_text, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, 'published', ?, ?)
-        ");
-        $stmt->execute([$reviewId, $storeId, $currentUser, $rating, $reviewText, $now, $now]);
-
-        echo json_encode(['success' => true, 'message' => 'Review submitted successfully']);
-    } catch (Exception $e) {
-        error_log('Error submitting review: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error submitting review']);
-    }
-}
-
-function getStoreReviews(PDO $pdo, string $storeId, int $page = 1, int $limit = 10)
-{
-    if (!isValidUlid($storeId)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
-        return;
-    }
-
-    $page = max(1, $page);
-    $limit = max(1, min(50, $limit));
-    $offset = ($page - 1) * $limit;
-
-    try {
-        // Get total count
-        $countStmt = $pdo->prepare("
-            SELECT COUNT(*) 
-            FROM store_reviews 
-            WHERE store_id = ? AND status = 'published'
-        ");
-        $countStmt->execute([$storeId]);
-        $total = (int) $countStmt->fetchColumn();
-
-        // Get reviews
-        $stmt = $pdo->prepare("
-            SELECT 
-                sr.id,
-                sr.rating,
-                sr.review_text,
-                sr.created_at,
-                sr.user_id,
-                u.username
-            FROM store_reviews sr
-            JOIN zzimba_users u ON sr.user_id = u.id
-            WHERE sr.store_id = ? AND sr.status = 'published'
-            ORDER BY sr.created_at DESC
-            LIMIT ? OFFSET ?
-        ");
-        $stmt->bindValue(1, $storeId);
-        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
-        $stmt->bindValue(3, $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode([
-            'success' => true,
-            'reviews' => array_map(static function ($review) {
-                return [
-                    'id' => $review['id'],
-                    'rating' => (int) $review['rating'],
-                    'review_text' => $review['review_text'],
-                    'created_at' => $review['created_at'],
-                    'user' => [
-                        'id' => $review['user_id'],
-                        'username' => $review['username']
-                    ]
-                ];
-            }, $reviews),
-            'pagination' => [
-                'total' => $total,
-                'page' => $page,
-                'limit' => $limit,
-                'pages' => (int) ceil(max(1, $total) / $limit)
-            ]
-        ]);
-    } catch (Exception $e) {
-        error_log('Error getting store reviews: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error retrieving reviews']);
-    }
-}
-
-function updateReviewStatus(PDO $pdo, string $currentUser)
-{
-    $data = json_decode(file_get_contents('php://input'), true);
-    $reviewId = $data['review_id'] ?? '';
-    $newStatus = $data['status'] ?? '';
-
-    if (!isValidUlid($reviewId)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid review ID']);
-        return;
-    }
-
-    if (!in_array($newStatus, ['published', 'hidden'], true)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid status']);
-        return;
-    }
-
-    try {
-        // Get review info
-        $stmt = $pdo->prepare("
-            SELECT sr.store_id, sr.user_id 
-            FROM store_reviews sr
-            WHERE sr.id = ?
-        ");
-        $stmt->execute([$reviewId]);
-        $review = $stmt->fetch();
-
-        if (!$review) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Review not found']);
-            return;
-        }
-
-        // Check permissions
-        $isAdmin = (($_SESSION['user']['role'] ?? '') === 'admin');
-        $isStoreManager = canManageStore($pdo, $review['store_id'], $currentUser);
-        $isReviewOwner = ($review['user_id'] === $currentUser);
-
-        if (!$isAdmin && !$isStoreManager && !$isReviewOwner) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'Permission denied']);
-            return;
-        }
-
-        // Update status
-        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-        $updStmt = $pdo->prepare("
-            UPDATE store_reviews 
-            SET status = ?, updated_at = ?
-            WHERE id = ?
-        ");
-        $updStmt->execute([$newStatus, $now, $reviewId]);
-
-        echo json_encode(['success' => true, 'message' => 'Review status updated']);
-    } catch (Exception $e) {
-        error_log('Error updating review status: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error updating review status']);
-    }
 }

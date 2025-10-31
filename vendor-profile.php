@@ -4,7 +4,7 @@ require_once __DIR__ . '/config/config.php';
 
 $vendorId = $_GET['id'] ?? null;
 $storeData = null;
-$canEdit = false;
+$canEdit = false; 
 
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'storeRole') {
     if (!headers_sent())
@@ -692,64 +692,18 @@ ob_start();
                                 <div class="flex-1"></div>
 
                                 <div class="hidden md:block border-t border-gray-200 dark:border-slate-800 pt-3 mb-3">
-                                    <template x-if="(p._viewPricing.length === 0)">
-                                        <div>
-                                            <template x-if="!auth.canSeeAllCategories">
-                                                <button @click="setPendingAndLogin({type:'view-categories'})"
-                                                    class="block w-full text-center bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 px-3 py-2 rounded-md text-sm">View
-                                                    Price Categories</button>
-                                            </template>
-                                            <template x-if="auth.canSeeAllCategories">
-                                                <div class="text-sm text-gray-600 dark:text-slate-300 italic p-2">No
-                                                    price data</div>
-                                            </template>
-                                        </div>
+                                    <template x-if="Array.isArray(p.pricing) && p.pricing.length>0 && !auth.loggedIn">
+                                        <button @click="setPendingAndLogin({type:'view-categories'})"
+                                            class="w-full text-center bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 px-3 py-2 rounded-md text-sm">Login
+                                            to View Price</button>
                                     </template>
-
-                                    <template x-if="p._viewPricing.length > 0">
-                                        <div>
-                                            <template x-for="(pr, idx) in p._viewPricing" :key="pr.pricing_id">
-                                                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-slate-800 rounded"
-                                                    :class="idx >= 2 && !p._showAll ? 'hidden' : ''">
-                                                    <div class="flex flex-col min-w-0">
-                                                        <span class="font-medium text-gray-700 dark:text-slate-200"
-                                                            x-text="formatUnit(pr)"></span>
-                                                        <div class="flex items-center text-xs text-gray-500 dark:text-slate-400"
-                                                            x-show="auth.canSeeAllCategories">
-                                                            <span class="truncate"
-                                                                x-text="capitalize(pr.price_category)"></span>
-                                                            <span class="ml-2"
-                                                                x-show="pr.delivery_capacity && pr.price_category === 'retail'">•
-                                                                Max Capacity: <span
-                                                                    x-text="pr.delivery_capacity"></span></span>
-                                                            <span class="ml-2"
-                                                                x-show="pr.delivery_capacity && pr.price_category !== 'retail'">•
-                                                                Min Capacity: <span
-                                                                    x-text="pr.delivery_capacity"></span></span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex items-center">
-                                                        <template
-                                                            x-if="auth.showPriceDirectly || viewed.prices.includes(pr.pricing_id)">
-                                                            <span class="text-primary font-bold"
-                                                                x-text="'UGX ' + nf(pr.price)"></span>
-                                                        </template>
-                                                        <template
-                                                            x-if="!auth.showPriceDirectly && !viewed.prices.includes(pr.pricing_id)">
-                                                            <button class="text-blue-600 underline text-sm"
-                                                                @click="revealPrice(pr, $event)">View Price</button>
-                                                        </template>
-                                                    </div>
-                                                </div>
-                                            </template>
-
-                                            <button
-                                                class="view-more-prices text-blue-600 underline text-sm w-full text-center mt-2 pt-2 border-t border-dashed border-gray-200 dark:border-slate-700"
-                                                x-show="p._viewPricing.length > 2 && !p._showAll"
-                                                @click="expandPrices(p)">View More Prices</button>
-                                            <div class="login-note text-center text-gray-500 dark:text-slate-400 text-sm"
-                                                x-show="!auth.canSeeAllCategories && p._hasRetail">Login to view more
-                                                price categories</div>
+                                    <template x-if="(p._viewPricing.length > 0) && auth.loggedIn">
+                                        <button @click="openPriceSheet(p)"
+                                            class="w-full text-center bg-gray-900 dark:bg-black text-white px-3 py-2 rounded-md text-sm">View
+                                            Prices</button>
+                                    </template>
+                                    <template x-if="(p._viewPricing.length === 0) && auth.loggedIn">
+                                        <div class="text-sm text-gray-600 dark:text-slate-300 italic p-2">No price data
                                         </div>
                                     </template>
                                 </div>
@@ -1190,7 +1144,7 @@ ob_start();
                 <div
                     class="p-4 sm:p-6 border-b border-gray-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-red-50 to-red-100 dark:from-slate-800 dark:to-slate-900">
                     <h3 class="text-base sm:text-xl font-bold text-gray-900 dark:text-slate-100 whitespace-nowrap overflow-hidden text-ellipsis max-w-[calc(100%-3rem)]"
-                        x-text="modals.access.title || 'Confirm Access Charge'"></h3>
+                        x-text="modals.access.title || 'Premium Access'"></h3>
                     <button @click="declineAccessCharge()"
                         class="text-gray-500 dark:text-slate-300 hover:text-gray-700 dark:hover:text-white p-2 rounded-full hover:bg-white/60 dark:hover:bg-white/10">
                         <i data-lucide="x" class="w-6 h-6"></i>
@@ -1198,7 +1152,7 @@ ob_start();
                 </div>
                 <div class="modal-scroll p-4 sm:p-6">
                     <p class="text-gray-600 dark:text-slate-300 mb-4"
-                        x-text="modals.access.note || 'This action will charge your wallet.'"></p>
+                        x-text="modals.access.note || 'This action will affec your zzimba credit balance.'"></p>
                     <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-4 mb-4">
                         <div class="font-medium text-gray-900 dark:text-slate-100"
                             x-text="modals.access.summary || '-'"></div>
@@ -2136,8 +2090,8 @@ ob_start();
                     const bal = Number(data.balance || 0);
                     const remain = bal - fee;
                     const reqId = `ac_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-                    this.modals.access.title = 'Confirm Access Charge';
-                    this.modals.access.note = 'This action will charge your wallet.';
+                    this.modals.access.title = 'Premium Access';
+                    this.modals.access.note = 'This action will affec your zzimba credit balance.';
                     this.modals.access.summary = this.buildAccessSummary(type, product);
                     this.modals.access.fee = fee;
                     this.modals.access.balance = bal;

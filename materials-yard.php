@@ -21,12 +21,12 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                           JOIN store_categories sc ON sc.id=sp.store_category_id
                           JOIN vendor_stores vs ON vs.id=sc.store_id
                           JOIN product_pricing pp ON pp.store_products_id=sp.id
-                          WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                          WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS has_pricing,
                    (SELECT MIN(pp.price) FROM store_products sp
                     JOIN store_categories sc ON sc.id=sp.store_category_id
                     JOIN vendor_stores vs ON vs.id=sc.store_id
                     JOIN product_pricing pp ON pp.store_products_id=sp.id
-                    WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+                    WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS lowest_price
             FROM products p JOIN product_categories c ON c.id=p.category_id
             WHERE p.status='published'
         ");
@@ -58,12 +58,12 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                               JOIN store_categories sc ON sc.id=sp.store_category_id
                               JOIN vendor_stores vs ON vs.id=sc.store_id
                               JOIN product_pricing pp ON pp.store_products_id=sp.id
-                              WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                              WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS has_pricing,
                        (SELECT MIN(pp.price) FROM store_products sp
                         JOIN store_categories sc ON sc.id=sp.store_category_id
                         JOIN vendor_stores vs ON vs.id=sc.store_id
                         JOIN product_pricing pp ON pp.store_products_id=sp.id
-                        WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+                        WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS lowest_price
                 FROM products p JOIN product_categories c ON c.id=p.category_id
                 WHERE p.category_id=? AND p.status='published'
                 ORDER BY has_pricing DESC,p.featured DESC,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) DESC
@@ -82,12 +82,12 @@ if (isset($_GET['ajax']) && ($_GET['ajax'] === 'search' || $_GET['ajax'] === 'pr
                               JOIN store_categories sc ON sc.id=sp.store_category_id
                               JOIN vendor_stores vs ON vs.id=sc.store_id
                               JOIN product_pricing pp ON pp.store_products_id=sp.id
-                              WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                              WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS has_pricing,
                        (SELECT MIN(pp.price) FROM store_products sp
                         JOIN store_categories sc ON sc.id=sp.store_category_id
                         JOIN vendor_stores vs ON vs.id=sc.store_id
                         JOIN product_pricing pp ON pp.store_products_id=sp.id
-                        WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+                        WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS lowest_price
                 FROM products p JOIN product_categories c ON c.id=p.category_id
                 WHERE p.status='published'
                 ORDER BY has_pricing DESC,p.featured DESC,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) DESC
@@ -305,10 +305,10 @@ if (empty($searchQuery)) {
                    (SELECT image_url FROM product_images WHERE product_id=p.id AND is_primary=1 LIMIT 1) AS primary_image,
                    EXISTS(SELECT 1 FROM store_products sp JOIN store_categories sc ON sc.id=sp.store_category_id
                           JOIN vendor_stores vs ON vs.id=sc.store_id JOIN product_pricing pp ON pp.store_products_id=sp.id
-                          WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                          WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS has_pricing,
                    (SELECT MIN(pp.price) FROM store_products sp JOIN store_categories sc ON sc.id=sp.store_category_id
                     JOIN vendor_stores vs ON vs.id=sc.store_id JOIN product_pricing pp ON pp.store_products_id=sp.id
-                    WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+                    WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS lowest_price
             FROM products p WHERE p.category_id=? AND p.status='published'
             ORDER BY has_pricing DESC,p.featured DESC,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) DESC
             LIMIT 12
@@ -320,10 +320,10 @@ if (empty($searchQuery)) {
                    (SELECT image_url FROM product_images WHERE product_id=p.id AND is_primary=1 LIMIT 1) AS primary_image,
                    EXISTS(SELECT 1 FROM store_products sp JOIN store_categories sc ON sc.id=sp.store_category_id
                           JOIN vendor_stores vs ON vs.id=sc.store_id JOIN product_pricing pp ON pp.store_products_id=sp.id
-                          WHERE sp.product_id=p.id AND vs.status='active') AS has_pricing,
+                          WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS has_pricing,
                    (SELECT MIN(pp.price) FROM store_products sp JOIN store_categories sc ON sc.id=sp.store_category_id
                     JOIN vendor_stores vs ON vs.id=sc.store_id JOIN product_pricing pp ON pp.store_products_id=sp.id
-                    WHERE sp.product_id=p.id AND vs.status='active') AS lowest_price
+                    WHERE sp.product_id=p.id AND vs.status='active' AND pp.status='active') AS lowest_price
             FROM products p WHERE p.status='published'
             ORDER BY has_pricing DESC,p.featured DESC,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id=p.id) DESC
             LIMIT 12
@@ -467,7 +467,8 @@ ob_start();
                             "<?= htmlspecialchars($searchQuery) ?>"</p>
                     <?php elseif (!empty($categoryId) && isset($category) && !empty($category['description'])): ?>
                         <p class="text-gray-100 mt-1 line-clamp-2 max-w-2xl hidden md:block">
-                            <?= htmlspecialchars($category['description']) ?></p>
+                            <?= htmlspecialchars($category['description']) ?>
+                        </p>
                     <?php else: ?>
                         <p class="text-gray-100 mt-1 line-clamp-2 max-w-2xl hidden md:block">Discover genuine building
                             materials and supplies.</p>
@@ -676,16 +677,19 @@ ob_start();
                                         <div class="p-3 md:p-5 flex flex-col flex-1">
                                             <h3
                                                 class="font-bold text-gray-800 dark:text-white mb-2 line-clamp-2 text-sm md:text-base">
-                                                <?= htmlspecialchars($product['title']) ?></h3>
+                                                <?= htmlspecialchars($product['title']) ?>
+                                            </h3>
                                             <div class="flex-1 flex flex-col">
                                                 <p
                                                     class="text-gray-600 dark:text-white/70 text-xs md:text-sm mb-3 line-clamp-2 hidden md:block">
-                                                    <?= htmlspecialchars($product['description']) ?></p>
+                                                    <?= htmlspecialchars($product['description']) ?>
+                                                </p>
                                                 <div
                                                     class="text-gray-500 dark:text-white/70 text-xs md:text-sm mb-3 flex items-center">
                                                     <i data-lucide="eye"
                                                         class="w-4 h-4 mr-1"></i><span><?= number_format($product['views']) ?>
-                                                        views</span></div>
+                                                        views</span>
+                                                </div>
                                                 <div class="mt-auto flex flex-col items-center">
                                                     <div
                                                         class="text-sm font-bold text-[#D92B13] h-5 flex items-center <?= ($product['has_pricing'] && $product['lowest_price']) ? '' : 'invisible' ?>">
