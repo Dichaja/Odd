@@ -91,6 +91,7 @@ switch ($action) {
                 exit;
             }
 
+            // Get reviews
             $stmt = $pdo->prepare("
                 SELECT 
                     pr.id,
@@ -113,10 +114,43 @@ switch ($action) {
             
             $stmt->execute([$storeId]);
             $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Get review statistics
+            $statsStmt = $pdo->prepare("
+                SELECT 
+                    COUNT(*) as total_reviews,
+                    AVG(pr.rating) as average_rating,
+                    SUM(CASE WHEN pr.rating = 5 THEN 1 ELSE 0 END) as five_star,
+                    SUM(CASE WHEN pr.rating = 4 THEN 1 ELSE 0 END) as four_star,
+                    SUM(CASE WHEN pr.rating = 3 THEN 1 ELSE 0 END) as three_star,
+                    SUM(CASE WHEN pr.rating = 2 THEN 1 ELSE 0 END) as two_star,
+                    SUM(CASE WHEN pr.rating = 1 THEN 1 ELSE 0 END) as one_star
+                FROM product_reviews pr
+                INNER JOIN products p ON pr.product_id = p.id
+                INNER JOIN store_products sp ON p.id = sp.product_id
+                INNER JOIN store_categories sc ON sp.store_category_id = sc.id
+                INNER JOIN vendor_stores vs ON sc.store_id = vs.id
+                WHERE vs.id = ? AND pr.status = 'approved'
+            ");
+            $statsStmt->execute([$storeId]);
+            $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
+
+            $reviewStats = [
+                'total_reviews' => intval($stats['total_reviews']),
+                'average_rating' => round(floatval($stats['average_rating']), 1),
+                'rating_breakdown' => [
+                    5 => intval($stats['five_star']),
+                    4 => intval($stats['four_star']),
+                    3 => intval($stats['three_star']),
+                    2 => intval($stats['two_star']),
+                    1 => intval($stats['one_star'])
+                ]
+            ];
             
             echo json_encode([
                 'success' => true,
-                'reviews' => $reviews
+                'reviews' => $reviews,
+                'stats' => $reviewStats
             ]);
             exit;
             
@@ -128,6 +162,9 @@ switch ($action) {
             ]);
             exit;
         }
+    case 'submit_store_review':
+        submitStoreReview($pdo, $currentUser, $username);
+        break;
     default:
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid action']);
@@ -563,6 +600,120 @@ function searchVendors(PDO $pdo) {
     } catch (Exception $e) {
         error_log('Error searching vendors: ' . $e->getMessage());
         echo json_encode(['success' => false, 'error' => 'Search failed']);
+    }
+}
+
+function submitStoreReview(PDO $pdo, string $currentUser, string $username)
+{
+    $storeId = trim($_POST['store_id'] ?? '');
+    $rating = intval($_POST['rating'] ?? 0);
+    $comment = trim($_POST['comment'] ?? '');
+    $comment = strip_tags($comment);                       
+    $comment = htmlspecialchars($comment, ENT_QUOTES, 'UTF-8');
+    $comment = preg_replace('/\bhttps?:\/\/[^\s]+/i', '[link removed]', $comment);
+    $comment = str_replace(['<', '>', '{', '}'], '', $comment);
+
+    if (empty($storeId) || !isValidUlid($storeId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
+        return;
+    }
+
+    if ($rating < 1 || $rating > 5) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Rating must be between 1 and 5']);
+        return;
+    }
+
+    if (empty($comment) || strlen($comment) < 10) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Comment must be at least 10 characters long']);
+        return;
+    }
+
+    if (strlen($comment) > 500) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Comment must be less than 500 characters']);
+        return;
+    }
+
+    // Check if store exists
+    $storeStmt = $pdo->prepare("SELECT id, name FROM vendor_stores WHERE id = ? AND status = 'active'");
+    $storeStmt->execute([$storeId]);
+    $store = $storeStmt->fetch();
+
+    if (!$store) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Store not found']);
+        return;
+    }
+
+    // Get a product from this store to associate the review with
+    $productStmt = $pdo->prepare("
+        SELECT p.id, p.title 
+        FROM products p
+        INNER JOIN store_products sp ON p.id = sp.product_id
+        INNER JOIN store_categories sc ON sp.store_category_id = sc.id
+        WHERE sc.store_id = ? AND p.status = 'published'
+        LIMIT 1
+    ");
+    $productStmt->execute([$storeId]);
+    $product = $productStmt->fetch();
+
+    if (!$product) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'No products found for this store']);
+        return;
+    }
+
+    try {
+        $pdo->beginTransaction();
+
+        $now = (new DateTime())->format('Y-m-d H:i:s');
+        $reviewId = generateUlid();
+
+        $insertStmt = $pdo->prepare("
+            INSERT INTO product_reviews (id, product_id, user_id, rating, comment, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
+        $insertStmt->execute([$reviewId, $product['id'], $currentUser, $rating, $comment, $now, $now]);
+
+        // Send admin notification
+        try {
+            $notificationService = new NotificationService($pdo);
+            $adminMessage = "Store Review: {$username} rated \"{$store['name']}\" {$rating}/5 stars.";
+
+            $recipients = [
+                [
+                    'type' => 'admin',
+                    'id' => 'admin',
+                    'message' => $adminMessage
+                ]
+            ];
+
+            $notificationService->create(
+                'info',
+                'Store Review',
+                $recipients,
+                BASE_URL . "/view/profile/vendor/{$storeId}#reviews",
+                'normal',
+                $currentUser
+            );
+
+        } catch (Exception $notifError) {
+            error_log('Store review notification creation failed: ' . $notifError->getMessage());  
+        }
+
+        $pdo->commit();
+        echo json_encode(['success' => true, 'message' => 'Review submitted successfully']);
+
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log('Error submitting store review: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to submit review']);
     }
 }
 

@@ -596,16 +596,24 @@ ob_start();
                         x-text="store?.nature_of_business_name || 'Operation Type'"></div>
                 </div>
 
-                <div class="hidden md:flex items-center">
-                    <div class="text-xl font-bold text-secondary dark:text-white">4.8</div>
-                    <div class="ml-2 flex items-center">
-                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                        <i data-lucide="star-half" class="w-4 h-4 text-yellow-400"></i>
-                        <span class="ml-1 text-sm text-gray-600 dark:text-slate-300">(128 reviews)</span>
-                    </div>
+                <div class="flex items-center">
+                    <template x-if="reviewStats.average_rating > 0">
+                        <div class="flex items-center">
+                            <div class="text-xl font-bold text-secondary dark:text-white" x-text="reviewStats.average_rating"></div>
+                            <div class="ml-2 flex items-center">
+                                <template x-for="i in 5" :key="i">
+                                    <i data-lucide="star" :class="i <= Math.round(reviewStats.average_rating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-4 h-4"></i>
+                                </template>
+                                <span class="ml-1 text-sm text-gray-600 dark:text-slate-300" x-text="'(' + reviewStats.total_reviews + ' reviews)'"></span>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="reviewStats.average_rating === 0">
+                        <div class="flex items-center text-gray-500 dark:text-slate-400">
+                            <i data-lucide="star" class="w-4 h-4 mr-1"></i>
+                            <span class="text-sm">No reviews yet</span>
+                        </div>
+                    </template>
                 </div>
 
                 <div class="ml-0 sm:ml-auto flex items-center gap-2">
@@ -819,43 +827,237 @@ ob_start();
 
             <!-- Reviews Tab -->
             <div x-show="activeTab === 'reviews'" x-cloak>
-                <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center mb-4">
-                        <i data-lucide="star" class="w-5 h-5 mr-2 text-primary"></i>
-                        Customer Reviews
-                    </h2>
-                    
-                    <div x-show="reviewsLoading" class="text-center py-8">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                        <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
+                <!-- Mobile Layout -->
+                <div class="lg:hidden reviews-mobile-layout">
+                    <!-- Review Form First on Mobile -->
+                    <div class="review-form-mobile">
+                        <div class="review-form-container bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 mb-6">
+                            <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Write a Review</h4>
+                            <template x-if="!auth.loggedIn">
+                                <div class="text-center py-4">
+                                    <p class="text-gray-600 dark:text-slate-300 mb-4">Please log in to write a review</p>
+                                    <button @click="promptLogin()" class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                        Log In
+                                    </button>
+                                </div>
+                            </template>
+                            <template x-if="auth.loggedIn && auth.isAdminOrManager">
+                                <div class="text-center py-4">
+                                    <p class="text-gray-600 dark:text-slate-300">Administrators and store managers cannot submit reviews</p>
+                                </div>
+                            </template>
+                            <template x-if="auth.loggedIn && !auth.isAdminOrManager">
+                                <form @submit.prevent="submitReview" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Rating</label>
+                                        <div class="star-rating flex space-x-1">
+                                            <template x-for="i in 5" :key="i">
+                                                <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
+                                                    <i data-lucide="star" class="w-5 h-5" :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
+                                                </button>
+                                            </template>
+                                        </div>
+                                        <p x-show="reviewRating > 0" class="text-sm text-gray-600 dark:text-slate-300 mt-1">
+                                            You rated this store <span x-text="reviewRating"></span> out of 5 stars
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Review</label>
+                                        <textarea rows="4" maxlength="500" x-model="reviewComment" class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="Share your experience with this store... (minimum 10 characters)" required></textarea>
+                                        <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
+                                            <span x-show="reviewComment.length > 0 && reviewComment.length < 10" class="text-red-500">
+                                                Minimum 10 characters required
+                                            </span>
+                                            <span class="ml-auto">
+                                                <span x-text="reviewComment?.length || 0"></span>/500 characters
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button type="submit" :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting" :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''" class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
+                                        <span x-show="!isSubmitting" class="flex items-center justify-center">
+                                            <i data-lucide="send" class="w-5 h-5 mr-2"></i> 
+                                            Submit Review
+                                        </span>
+                                        <span x-show="isSubmitting" class="flex items-center justify-center">
+                                            <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                            Submitting...
+                                        </span>
+                                    </button>
+                                </form>
+                            </template>
+                        </div>
                     </div>
 
-                    <div x-show="!reviewsLoading && reviews.length === 0" class="text-center py-8 text-gray-500 dark:text-slate-300">
-                        No reviews yet for this store.
-                    </div>
-
-                    <div x-show="!reviewsLoading && reviews.length > 0" class="space-y-4">
-                        <template x-for="review in reviews" :key="review.id">
-                            <div class="bg-white dark:bg-slate-900 rounded-lg shadow-md border border-gray-200 dark:border-slate-800 p-6">
-                                <div class="flex items-start justify-between mb-4">
-                                    <div class="flex-1">
-                                        <div class="flex items-center mb-2">
-                                            <div class="flex items-center">
+                    <!-- Review List Second on Mobile -->
+                    <div class="review-list-mobile">
+                        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Customer Reviews</h3>
+                                <div class="flex items-center gap-4">
+                                    <template x-if="reviewStats.average_rating > 0">
+                                        <div class="flex items-center">
+                                            <div class="flex mr-2">
                                                 <template x-for="i in 5" :key="i">
-                                                    <i data-lucide="star" 
-                                                        :class="i <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 dark:text-slate-600'"
-                                                        class="w-4 h-4"></i>
+                                                    <i data-lucide="star" :class="i <= Math.round(reviewStats.average_rating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-4 h-4"></i>
                                                 </template>
                                             </div>
-                                            <span class="ml-2 text-sm font-medium text-gray-700 dark:text-slate-200" x-text="review.rating + '/5'"></span>
+                                            <span class="text-sm text-gray-600 dark:text-slate-300" x-text="reviewStats.average_rating + '/5'"></span>
                                         </div>
-                                        <h3 class="font-semibold text-gray-900 dark:text-white" x-text="review.product_name"></h3>
-                                        <p class="text-sm text-gray-500 dark:text-slate-400" x-text="'By ' + review.reviewer_name + ' • ' + formatDate(review.created_at)"></p>
+                                    </template>
+                                    <span class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-medium px-2.5 py-0.5 rounded-full" x-text="reviewStats.total_reviews + ' Reviews'"></span>
+                                </div>
+                            </div>
+
+                            <div x-show="reviewsLoading" class="text-center py-8">
+                                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                                <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
+                            </div>
+
+                            <div x-show="!reviewsLoading && reviews.length === 0" class="text-center py-8">
+                                <div class="mb-4">
+                                    <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
+                                </div>
+                                <h4 class="text-xl font-semibold text-gray-600 dark:text-slate-300 mb-2">No Reviews Yet</h4>
+                                <p class="text-gray-500 dark:text-slate-400 mb-4">Be the first to review this store!</p>
+                            </div>
+
+                            <div x-show="!reviewsLoading && reviews.length > 0" class="space-y-6">
+                                <template x-for="review in reviews" :key="review.id">
+                                    <div class="border-b border-gray-200 dark:border-slate-800 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in-up">
+                                        <div class="flex items-center mb-1">
+                                            <span class="font-semibold text-gray-800 dark:text-white" x-text="review.reviewer_name"></span>
+                                        </div>
+                                        <div class="text-gray-500 dark:text-slate-400 text-sm mb-2" x-text="formatDate(review.created_at)"></div>
+                                        <div class="flex mb-3">
+                                            <template x-for="i in 5" :key="i">
+                                                <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-4 h-4"></i>
+                                            </template>
+                                        </div>
+                                        <p class="text-gray-700 dark:text-slate-300 mb-2" x-text="review.review_text"></p>
+                                        <p class="text-sm text-gray-500 dark:text-slate-400">
+                                            <span class="font-medium">Product:</span> <span x-text="review.product_name"></span>
+                                        </p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Layout -->
+                <div class="hidden lg:block">
+                    <div class="reviews-desktop-layout grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Customer Reviews</h3>
+                                    <div class="flex items-center gap-4">
+                                        <template x-if="reviewStats.average_rating > 0">
+                                            <div class="flex items-center">
+                                                <div class="flex mr-2">
+                                                    <template x-for="i in 5" :key="i">
+                                                        <i data-lucide="star" :class="i <= Math.round(reviewStats.average_rating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-4 h-4"></i>
+                                                    </template>
+                                                </div>
+                                                <span class="text-sm text-gray-600 dark:text-slate-300" x-text="reviewStats.average_rating + '/5'"></span>
+                                            </div>
+                                        </template>
+                                        <span class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-medium px-2.5 py-0.5 rounded-full" x-text="reviewStats.total_reviews + ' Reviews'"></span>
                                     </div>
                                 </div>
-                                <p class="text-gray-700 dark:text-slate-300" x-text="review.review_text"></p>
+
+                                <div x-show="reviewsLoading" class="text-center py-8">
+                                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                                    <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
+                                </div>
+
+                                <div x-show="!reviewsLoading && reviews.length === 0" class="text-center py-8">
+                                    <div class="mb-4">
+                                        <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
+                                    </div>
+                                    <h4 class="text-xl font-semibold text-gray-600 dark:text-slate-300 mb-2">No Reviews Yet</h4>
+                                    <p class="text-gray-500 dark:text-slate-400 mb-4">Be the first to review this store!</p>
+                                </div>
+
+                                <div x-show="!reviewsLoading && reviews.length > 0" class="max-h-[600px] overflow-y-auto pr-2 space-y-6">
+                                    <template x-for="review in reviews" :key="review.id">
+                                        <div class="border-b border-gray-200 dark:border-slate-800 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in-up">
+                                            <div class="flex items-center mb-1">
+                                                <span class="font-semibold text-gray-800 dark:text-white" x-text="review.reviewer_name"></span>
+                                            </div>
+                                            <div class="text-gray-500 dark:text-slate-400 text-sm mb-2" x-text="formatDate(review.created_at)"></div>
+                                            <div class="flex mb-3">
+                                                <template x-for="i in 5" :key="i">
+                                                    <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-4 h-4"></i>
+                                                </template>
+                                            </div>
+                                            <p class="text-gray-700 dark:text-slate-300 mb-2" x-text="review.review_text"></p>
+                                            <p class="text-sm text-gray-500 dark:text-slate-400">
+                                                <span class="font-medium">Product:</span> <span x-text="review.product_name"></span>
+                                            </p>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
-                        </template>
+                        </div>
+
+                        <div class="lg:col-span-1">
+                            <div class="review-form-container bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 sticky top-4">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Write a Review</h4>
+                                <template x-if="!auth.loggedIn">
+                                    <div class="text-center py-4">
+                                        <p class="text-gray-600 dark:text-slate-300 mb-4">Please log in to write a review</p>
+                                        <button @click="promptLogin()" class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                                            Log In
+                                        </button>
+                                    </div>
+                                </template>
+                                <template x-if="auth.loggedIn && auth.isAdminOrManager">
+                                    <div class="text-center py-4">
+                                        <p class="text-gray-600 dark:text-slate-300">Administrators and store managers cannot submit reviews</p>
+                                    </div>
+                                </template>
+                                <template x-if="auth.loggedIn && !auth.isAdminOrManager">
+                                    <form @submit.prevent="submitReview" class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Rating</label>
+                                            <div class="star-rating flex space-x-1">
+                                                <template x-for="i in 5" :key="i">
+                                                    <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
+                                                        <i data-lucide="star" class="w-5 h-5" :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
+                                                    </button>
+                                                </template>
+                                            </div>
+                                            <p x-show="reviewRating > 0" class="text-sm text-gray-600 dark:text-slate-300 mt-1">
+                                                You rated this store <span x-text="reviewRating"></span> out of 5 stars
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Review</label>
+                                            <textarea rows="4" maxlength="500" x-model="reviewComment" class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="Share your experience with this store... (minimum 10 characters)" required></textarea>
+                                            <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
+                                                <span x-show="reviewComment.length > 0 && reviewComment.length < 10" class="text-red-500">
+                                                    Minimum 10 characters required
+                                                </span>
+                                                <span class="ml-auto">
+                                                    <span x-text="reviewComment?.length || 0"></span>/500 characters
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <button type="submit" :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting" :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''" class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
+                                            <span x-show="!isSubmitting" class="flex items-center justify-center">
+                                                <i data-lucide="send" class="w-5 h-5 mr-2"></i> 
+                                                Submit Review
+                                            </span>
+                                            <span x-show="isSubmitting" class="flex items-center justify-center">
+                                                <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                                Submitting...
+                                            </span>
+                                        </button>
+                                    </form>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1441,6 +1643,15 @@ ob_start();
             activeTab: 'products',
             reviews: [],
             reviewsLoading: false,
+            reviewRating: 0,
+            hoverRating: 0,
+            reviewComment: '',
+            isSubmitting: false,
+            reviewStats: {
+                total_reviews: 0,
+                average_rating: 0,
+                rating_breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+            },
             auth: {
                 loggedIn: <?= $isLoggedIn ? 'true' : 'false' ?>,
                 canEdit: <?= $canEdit ? 'true' : 'false' ?>,
@@ -1530,6 +1741,9 @@ ob_start();
                 window.addEventListener('zz:session-login', e => this.handlePostLogin(e.detail || {}));
                 if (this.auth.isAdminOrManager) { this.revealPhone(true); this.revealEmail(true) }
                 this.logProfileView();
+                
+                // Load review stats on init
+                this.loadReviews();
                 
                 // Watch for tab changes
                 this.$watch('activeTab', (value) => {
@@ -2121,6 +2335,7 @@ ob_start();
                     const data = await r.json();
                     if (data.success) {
                         this.reviews = data.reviews || [];
+                        this.reviewStats = data.stats || this.reviewStats;
                     }
                 } catch (e) {
                     console.error('Failed to load reviews:', e);
@@ -2130,10 +2345,114 @@ ob_start();
                 }
             },
 
+            async submitReview() {
+                if (!this.auth.loggedIn) {
+                    this.promptLogin();
+                    return;
+                }
+
+                if (this.auth.isAdminOrManager) {
+                    this.showToast('Administrators and store managers cannot submit reviews', 'error');
+                    return;
+                }
+
+                if (this.reviewRating < 1) {
+                    this.showToast('Please select a rating', 'error');
+                    return;
+                }
+
+                if (!this.reviewComment.trim() || this.reviewComment.length < 10) {
+                    this.showToast('Review must be at least 10 characters long', 'error');
+                    return;
+                }
+
+                if (this.isSubmitting) return;
+
+                this.isSubmitting = true;
+
+                const formData = new FormData();
+                formData.append('action', 'submit_store_review');
+                formData.append('store_id', this.vendorId);
+                formData.append('rating', this.reviewRating);
+                formData.append('comment', this.reviewComment.trim());
+
+                try {
+                    const response = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    this.isSubmitting = false;
+
+                    if (data.success) {
+                        this.showToast(data.message || 'Review submitted successfully!', 'success');
+                        this.reviewComment = '';
+                        this.reviewRating = 0;
+                        this.hoverRating = 0;
+                        this.$nextTick(() => this.renderIcons());
+                        
+                        setTimeout(() => {
+                            this.loadReviews();
+                        }, 1500);
+                    } else {
+                        let errorMessage = data.error || 'Failed to submit review';
+                        if (data.error && data.error.includes('Authentication required')) {
+                            errorMessage = 'Please log in to submit a review.';
+                            this.promptLogin();
+                        }
+                        this.showToast(errorMessage, 'error');
+                    }
+                } catch (error) {
+                    this.isSubmitting = false;
+                    console.error('Error submitting review:', error);
+                    
+                    let errorMessage = 'Network error. Please check your connection and try again.';
+                    if (error.message.includes('401')) {
+                        errorMessage = 'Please log in to submit a review.';
+                        this.promptLogin();
+                    }
+                    this.showToast(errorMessage, 'error');
+                }
+            },
+
             formatDate(dateStr) {
                 if (!dateStr) return '';
                 const d = new Date(dateStr);
                 return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            },
+
+            // Review Form and Stats
+            reviewRating: 0,
+            hoverRating: 0,
+            reviewComment: '',
+            isSubmitting: false,
+            reviewStats: {
+                total_reviews: 0,
+                average_rating: 0,
+                rating_breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+            },
+
+            async loadReviewStats() {
+                if (!this.vendorId) return;
+                this.reviewsLoading = true;
+                try {
+                    const r = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getStoreReviewStats&store_id=' + encodeURIComponent(this.vendorId));
+                    const data = await r.json();
+                    if (data.success) {
+                        this.reviewStats = data.stats || { average_rating: 0, total_reviews: 0 };
+                    }
+                } catch (e) {
+                    console.error('Failed to load review stats:', e);
+                } finally {
+                    this.reviewsLoading = false;
+                    this.$nextTick(() => this.renderIcons());
+                }
             }
         }));
     });
