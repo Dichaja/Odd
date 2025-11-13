@@ -159,12 +159,25 @@ ob_start();
                         </tr>
                     </template>
                     <template x-for="review in reviews" :key="review.id">
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <tr class="border-b border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-gray-800/50">
                             <td class="px-6 py-4">
-                                <div class="flex items-center">
-                                    <img :src="review.product_image || 'https://placehold.co/40x40'" class="w-10 h-10 rounded object-cover mr-3">
+                                <div class="flex items-center space-x-3">
+                                    <template x-if="review.product_image">
+                                        <img :src="BASE_URL + review.product_image" :alt="review.product_title || review.store_name" class="w-12 h-12 rounded-lg object-cover">
+                                    </template>
+                                    <template x-if="!review.product_image">
+                                        <div class="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                            <i data-lucide="package" class="w-6 h-6 text-gray-400"></i>
+                                        </div>
+                                    </template>
                                     <div>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="review.product_title"></p>
+                                        <p class="font-medium text-gray-900 dark:text-white" x-text="review.product_title || review.store_name || 'N/A'"></p>
+                                        <p class="text-xs text-gray-500 dark:text-white/60">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" 
+                                                :class="review.review_type === 'product' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'"
+                                                x-text="review.review_type === 'product' ? 'Product Review' : 'Store Review'">
+                                            </span>
+                                        </p>
                                     </div>
                                 </div>
                             </td>

@@ -91,7 +91,7 @@ switch ($action) {
                 exit;
             }
 
-            // Get reviews
+            // Get reviews for this store
             $stmt = $pdo->prepare("
                 SELECT 
                     pr.id,
@@ -99,16 +99,11 @@ switch ($action) {
                     pr.comment as review_text,
                     pr.created_at,
                     pr.status,
-                    p.title as product_name,
-                    p.id as product_id,
-                    COALESCE(u.name, u.username, 'Anonymous') as reviewer_name
+                    COALESCE(u.name, u.username, 'Anonymous') as reviewer_name,
+                    'Store Review' as product_name
                 FROM product_reviews pr
-                INNER JOIN products p ON pr.product_id = p.id
-                INNER JOIN store_products sp ON p.id = sp.product_id
-                INNER JOIN store_categories sc ON sp.store_category_id = sc.id
-                INNER JOIN vendor_stores vs ON sc.store_id = vs.id
                 LEFT JOIN zzimba_users u ON pr.user_id = u.id
-                WHERE vs.id = ? AND pr.status = 'approved'
+                WHERE pr.store_id = ? AND pr.status = 'approved'
                 ORDER BY pr.created_at DESC
             ");
             
@@ -126,11 +121,7 @@ switch ($action) {
                     SUM(CASE WHEN pr.rating = 2 THEN 1 ELSE 0 END) as two_star,
                     SUM(CASE WHEN pr.rating = 1 THEN 1 ELSE 0 END) as one_star
                 FROM product_reviews pr
-                INNER JOIN products p ON pr.product_id = p.id
-                INNER JOIN store_products sp ON p.id = sp.product_id
-                INNER JOIN store_categories sc ON sp.store_category_id = sc.id
-                INNER JOIN vendor_stores vs ON sc.store_id = vs.id
-                WHERE vs.id = ? AND pr.status = 'approved'
+                WHERE pr.store_id = ? AND pr.status = 'approved'
             ");
             $statsStmt->execute([$storeId]);
             $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
@@ -394,9 +385,9 @@ function listReviews(PDO $pdo) {
             $params[] = $_GET['product_id'];
         }
 
-        // Filter by vendor
+        // Filter by vendor/store
         if (!empty($_GET['vendor_id'])) {
-            $where[] = "vs.id = ?";
+            $where[] = "pr.store_id = ?";
             $params[] = $_GET['vendor_id'];
         }
 
@@ -414,8 +405,9 @@ function listReviews(PDO $pdo) {
 
         // Search
         if (!empty($_GET['search'])) {
-            $where[] = "(pr.comment LIKE ? OR p.title LIKE ? OR u.username LIKE ?)";
+            $where[] = "(pr.comment LIKE ? OR p.title LIKE ? OR vs.name LIKE ? OR u.username LIKE ?)";
             $searchTerm = '%' . $_GET['search'] . '%';
+            $params[] = $searchTerm;
             $params[] = $searchTerm;
             $params[] = $searchTerm;
             $params[] = $searchTerm;
@@ -426,10 +418,8 @@ function listReviews(PDO $pdo) {
         // Get total count
         $countSql = "SELECT COUNT(*) as total 
                      FROM product_reviews pr
-                     INNER JOIN products p ON pr.product_id = p.id
-                     LEFT JOIN store_products sp ON p.id = sp.product_id
-                     LEFT JOIN store_categories sc ON sp.store_category_id = sc.id
-                     LEFT JOIN vendor_stores vs ON sc.store_id = vs.id
+                     LEFT JOIN products p ON pr.product_id = p.id
+                     LEFT JOIN vendor_stores vs ON pr.store_id = vs.id
                      LEFT JOIN zzimba_users u ON pr.user_id = u.id
                      $whereClause";
         
@@ -441,18 +431,23 @@ function listReviews(PDO $pdo) {
         $sql = "SELECT 
                     pr.id,
                     pr.product_id,
+                    pr.store_id,
                     pr.rating,
                     pr.comment,
                     pr.status,
                     pr.created_at,
                     p.title as product_title,
+                    vs.name as store_name,
                     u.username,
+                    CASE 
+                        WHEN pr.product_id IS NOT NULL THEN 'product'
+                        WHEN pr.store_id IS NOT NULL THEN 'store'
+                        ELSE 'unknown'
+                    END as review_type,
                     (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as product_image
                 FROM product_reviews pr
-                INNER JOIN products p ON pr.product_id = p.id
-                LEFT JOIN store_products sp ON p.id = sp.product_id
-                LEFT JOIN store_categories sc ON sp.store_category_id = sc.id
-                LEFT JOIN vendor_stores vs ON sc.store_id = vs.id
+                LEFT JOIN products p ON pr.product_id = p.id
+                LEFT JOIN vendor_stores vs ON pr.store_id = vs.id
                 LEFT JOIN zzimba_users u ON pr.user_id = u.id
                 $whereClause
                 ORDER BY pr.created_at DESC
@@ -648,35 +643,18 @@ function submitStoreReview(PDO $pdo, string $currentUser, string $username)
         return;
     }
 
-    // Get a product from this store to associate the review with
-    $productStmt = $pdo->prepare("
-        SELECT p.id, p.title 
-        FROM products p
-        INNER JOIN store_products sp ON p.id = sp.product_id
-        INNER JOIN store_categories sc ON sp.store_category_id = sc.id
-        WHERE sc.store_id = ? AND p.status = 'published'
-        LIMIT 1
-    ");
-    $productStmt->execute([$storeId]);
-    $product = $productStmt->fetch();
-
-    if (!$product) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'No products found for this store']);
-        return;
-    }
-
     try {
         $pdo->beginTransaction();
 
         $now = (new DateTime())->format('Y-m-d H:i:s');
         $reviewId = generateUlid();
 
+        // Insert review with store_id instead of product_id
         $insertStmt = $pdo->prepare("
-            INSERT INTO product_reviews (id, product_id, user_id, rating, comment, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO product_reviews (id, store_id, user_id, rating, comment, created_at, updated_at, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
         ");
-        $insertStmt->execute([$reviewId, $product['id'], $currentUser, $rating, $comment, $now, $now]);
+        $insertStmt->execute([$reviewId, $storeId, $currentUser, $rating, $comment, $now, $now]);
 
         // Send admin notification
         try {
@@ -695,7 +673,7 @@ function submitStoreReview(PDO $pdo, string $currentUser, string $username)
                 'info',
                 'Store Review',
                 $recipients,
-                BASE_URL . "/view/profile/vendor/{$storeId}#reviews",
+                BASE_URL . "/vendor-profile.php?id={$storeId}#reviews",
                 'normal',
                 $currentUser
             );
@@ -705,7 +683,7 @@ function submitStoreReview(PDO $pdo, string $currentUser, string $username)
         }
 
         $pdo->commit();
-        echo json_encode(['success' => true, 'message' => 'Review submitted successfully']);
+        echo json_encode(['success' => true, 'message' => 'Review submitted successfully and is pending approval']);
 
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {

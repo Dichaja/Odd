@@ -833,58 +833,43 @@ ob_start();
                     <div class="review-form-mobile">
                         <div class="review-form-container bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 mb-6">
                             <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Write a Review</h4>
-                            <template x-if="!auth.loggedIn">
-                                <div class="text-center py-4">
-                                    <p class="text-gray-600 dark:text-slate-300 mb-4">Please log in to write a review</p>
-                                    <button @click="promptLogin()" class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                                        Log In
-                                    </button>
-                                </div>
-                            </template>
-                            <template x-if="auth.loggedIn && auth.isAdminOrManager">
-                                <div class="text-center py-4">
-                                    <p class="text-gray-600 dark:text-slate-300">Administrators and store managers cannot submit reviews</p>
-                                </div>
-                            </template>
-                            <template x-if="auth.loggedIn && !auth.isAdminOrManager">
-                                <form @submit.prevent="submitReview" class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Rating</label>
-                                        <div class="star-rating flex space-x-1">
-                                            <template x-for="i in 5" :key="i">
-                                                <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
-                                                    <i data-lucide="star" class="w-5 h-5" :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
-                                                </button>
-                                            </template>
-                                        </div>
-                                        <p x-show="reviewRating > 0" class="text-sm text-gray-600 dark:text-slate-300 mt-1">
-                                            You rated this store <span x-text="reviewRating"></span> out of 5 stars
-                                        </p>
+                            <form @submit.prevent="submitReview" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Rating</label>
+                                    <div class="star-rating flex space-x-1">
+                                        <template x-for="i in 5" :key="i">
+                                            <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
+                                                <i data-lucide="star" class="w-5 h-5" :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
+                                            </button>
+                                        </template>
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Review</label>
-                                        <textarea rows="4" maxlength="500" x-model="reviewComment" class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="Share your experience with this store... (minimum 10 characters)" required></textarea>
-                                        <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
-                                            <span x-show="reviewComment.length > 0 && reviewComment.length < 10" class="text-red-500">
-                                                Minimum 10 characters required
-                                            </span>
-                                            <span class="ml-auto">
-                                                <span x-text="reviewComment?.length || 0"></span>/500 characters
-                                            </span>
-                                        </div>
+                                    <p x-show="reviewRating > 0" class="text-sm text-gray-600 dark:text-slate-300 mt-1">
+                                        You rated this store <span x-text="reviewRating"></span> out of 5 stars
+                                    </p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Review</label>
+                                    <textarea rows="4" maxlength="500" x-model="reviewComment" class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="Share your experience with this store... (minimum 10 characters)" required></textarea>
+                                    <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
+                                        <span x-show="reviewComment.length > 0 && reviewComment.length < 10" class="text-red-500">
+                                            Minimum 10 characters required
+                                        </span>
+                                        <span class="ml-auto">
+                                            <span x-text="reviewComment?.length || 0"></span>/500 characters
+                                        </span>
                                     </div>
-                                    <button type="submit" :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting" :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''" class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
-                                        <span x-show="!isSubmitting" class="flex items-center justify-center">
-                                            <i data-lucide="send" class="w-5 h-5 mr-2"></i> 
-                                            Submit Review
-                                        </span>
-                                        <span x-show="isSubmitting" class="flex items-center justify-center">
-                                            <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                            Submitting...
-                                        </span>
-                                    </button>
-                                </form>
-                            </template>
+                                </div>
+                                <button type="submit" :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting" :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''" class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
+                                    <span x-show="!isSubmitting" class="flex items-center justify-center">
+                                        <i data-lucide="send" class="w-5 h-5 mr-2"></i> 
+                                        Submit Review
+                                    </span>
+                                    <span x-show="isSubmitting" class="flex items-center justify-center">
+                                        <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                        Submitting...
+                                    </span>
+                                </button>
+                            </form>
                         </div>
                     </div>
 
@@ -1004,58 +989,43 @@ ob_start();
                         <div class="lg:col-span-1">
                             <div class="review-form-container bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 sticky top-4">
                                 <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Write a Review</h4>
-                                <template x-if="!auth.loggedIn">
-                                    <div class="text-center py-4">
-                                        <p class="text-gray-600 dark:text-slate-300 mb-4">Please log in to write a review</p>
-                                        <button @click="promptLogin()" class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                                            Log In
-                                        </button>
-                                    </div>
-                                </template>
-                                <template x-if="auth.loggedIn && auth.isAdminOrManager">
-                                    <div class="text-center py-4">
-                                        <p class="text-gray-600 dark:text-slate-300">Administrators and store managers cannot submit reviews</p>
-                                    </div>
-                                </template>
-                                <template x-if="auth.loggedIn && !auth.isAdminOrManager">
-                                    <form @submit.prevent="submitReview" class="space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Rating</label>
-                                            <div class="star-rating flex space-x-1">
-                                                <template x-for="i in 5" :key="i">
-                                                    <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
-                                                        <i data-lucide="star" class="w-5 h-5" :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
-                                                    </button>
-                                                </template>
-                                            </div>
-                                            <p x-show="reviewRating > 0" class="text-sm text-gray-600 dark:text-slate-300 mt-1">
-                                                You rated this store <span x-text="reviewRating"></span> out of 5 stars
-                                            </p>
+                                <form @submit.prevent="submitReview" class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Rating</label>
+                                        <div class="star-rating flex space-x-1">
+                                            <template x-for="i in 5" :key="i">
+                                                <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
+                                                    <i data-lucide="star" class="w-5 h-5" :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
+                                                </button>
+                                            </template>
                                         </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Review</label>
-                                            <textarea rows="4" maxlength="500" x-model="reviewComment" class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="Share your experience with this store... (minimum 10 characters)" required></textarea>
-                                            <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
-                                                <span x-show="reviewComment.length > 0 && reviewComment.length < 10" class="text-red-500">
-                                                    Minimum 10 characters required
-                                                </span>
-                                                <span class="ml-auto">
-                                                    <span x-text="reviewComment?.length || 0"></span>/500 characters
-                                                </span>
-                                            </div>
+                                        <p x-show="reviewRating > 0" class="text-sm text-gray-600 dark:text-slate-300 mt-1">
+                                            You rated this store <span x-text="reviewRating"></span> out of 5 stars
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your Review</label>
+                                        <textarea rows="4" maxlength="500" x-model="reviewComment" class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="Share your experience with this store... (minimum 10 characters)" required></textarea>
+                                        <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
+                                            <span x-show="reviewComment.length > 0 && reviewComment.length < 10" class="text-red-500">
+                                                Minimum 10 characters required
+                                            </span>
+                                            <span class="ml-auto">
+                                                <span x-text="reviewComment?.length || 0"></span>/500 characters
+                                            </span>
                                         </div>
-                                        <button type="submit" :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting" :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''" class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
-                                            <span x-show="!isSubmitting" class="flex items-center justify-center">
-                                                <i data-lucide="send" class="w-5 h-5 mr-2"></i> 
-                                                Submit Review
-                                            </span>
-                                            <span x-show="isSubmitting" class="flex items-center justify-center">
-                                                <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                                Submitting...
-                                            </span>
-                                        </button>
-                                    </form>
-                                </template>
+                                    </div>
+                                    <button type="submit" :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting" :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''" class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
+                                        <span x-show="!isSubmitting" class="flex items-center justify-center">
+                                            <i data-lucide="send" class="w-5 h-5 mr-2"></i> 
+                                            Submit Review
+                                        </span>
+                                        <span x-show="isSubmitting" class="flex items-center justify-center">
+                                            <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                            Submitting...
+                                        </span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -2348,11 +2318,6 @@ ob_start();
             async submitReview() {
                 if (!this.auth.loggedIn) {
                     this.promptLogin();
-                    return;
-                }
-
-                if (this.auth.isAdminOrManager) {
-                    this.showToast('Administrators and store managers cannot submit reviews', 'error');
                     return;
                 }
 
