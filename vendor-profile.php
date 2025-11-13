@@ -4,65 +4,8 @@ require_once __DIR__ . '/config/config.php';
 
 $vendorId = $_GET['id'] ?? null;
 $storeData = null;
-$canEdit = false; 
-
-if (isset($_GET['ajax']) && $_GET['ajax'] === 'storeRole') {
-    if (!headers_sent())
-        header('Content-Type: application/json');
-    $resp = ['logged_in' => false, 'is_admin' => false, 'is_owner_or_manager' => false, 'can_edit' => false];
-    try {
-        $storeId = $_GET['id'] ?? null;
-        if (!empty($_SESSION['user']['logged_in']) && $storeId) {
-            $userId = $_SESSION['user']['user_id'] ?? null;
-            $isAdmin = !empty($_SESSION['user']['is_admin']);
-            $resp['logged_in'] = true;
-            $resp['is_admin'] = $isAdmin ? true : false;
-            if ($isAdmin) {
-                $resp['is_owner_or_manager'] = true;
-                $resp['can_edit'] = true;
-            } else {
-                $stmt = $pdo->prepare("SELECT owner_id FROM vendor_stores WHERE id = ?");
-                $stmt->execute([$storeId]);
-                $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($row && (string) $row['owner_id'] === (string) $userId) {
-                    $resp['is_owner_or_manager'] = true;
-                    $resp['can_edit'] = true;
-                } else {
-                    $stmt = $pdo->prepare("SELECT id FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active'");
-                    $stmt->execute([$storeId, $userId]);
-                    if ($stmt->fetch()) {
-                        $resp['is_owner_or_manager'] = true;
-                        $resp['can_edit'] = true;
-                    }
-                }
-            }
-        }
-    } catch (Throwable $e) {
-    }
-    echo json_encode($resp);
-    exit;
-}
-
-if (!empty($_SESSION['user']['logged_in'])) {
-    $userId = $_SESSION['user']['user_id'];
-    $isAdmin = $_SESSION['user']['is_admin'] ?? false;
-    if ($isAdmin) {
-        $canEdit = true;
-    } elseif ($vendorId) {
-        $stmt = $pdo->prepare("SELECT owner_id FROM vendor_stores WHERE id = ?");
-        $stmt->execute([$vendorId]);
-        $store = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($store && (string) $store['owner_id'] === (string) $userId) {
-            $canEdit = true;
-        } else {
-            $stmt = $pdo->prepare("SELECT id FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active'");
-            $stmt->execute([$vendorId, $userId]);
-            if ($stmt->fetch()) {
-                $canEdit = true;
-            }
-        }
-    }
-}
+$canEdit = false;
+$isOwnerOrManager = false;
 
 function generateSeoMetaTags($store)
 {
@@ -89,42 +32,46 @@ function generateSeoMetaTags($store)
     ];
 }
 
-if ($vendorId) {
-    try {
-        $storeId = $vendorId;
-        $stmt = $pdo->prepare("SELECT name FROM vendor_stores WHERE id = ?");
-        $stmt->execute([$storeId]);
-        $store = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($store) {
-            $stmt = $pdo->prepare("SELECT * FROM vendor_stores WHERE id = ?");
-            $stmt->execute([$storeId]);
-            $storeData = $stmt->fetch(PDO::FETCH_ASSOC);
-            $seoTags = generateSeoMetaTags($storeData);
-            $pageTitle = $seoTags['title'];
-        }
-    } catch (Exception $e) {
-        error_log("Error fetching vendor data: " . $e->getMessage());
+try {
+    if ($vendorId) {
+        $stmt = $pdo->prepare("SELECT * FROM vendor_stores WHERE id = ?");
+        $stmt->execute([$vendorId]);
+        $storeData = $stmt->fetch(PDO::FETCH_ASSOC);
     }
+} catch (Throwable $e) {
+    $storeData = null;
 }
 
 $isLoggedIn = !empty($_SESSION['user']['logged_in']);
-$isAdmin = $_SESSION['user']['is_admin'] ?? false;
-$isOwnerOrManager = false;
-
-if ($isLoggedIn && $vendorId) {
-    $userId = $_SESSION['user']['user_id'];
-    $stmt = $pdo->prepare("SELECT owner_id FROM vendor_stores WHERE id = ?");
-    $stmt->execute([$vendorId]);
-    $store = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($store && (string) $store['owner_id'] === (string) $userId) {
+$isAdmin = !empty($_SESSION['user']['is_admin']);
+if ($isLoggedIn && $storeData) {
+    $userId = $_SESSION['user']['user_id'] ?? null;
+    if ($isAdmin) {
         $isOwnerOrManager = true;
+        $canEdit = true;
     } else {
-        $stmt = $pdo->prepare("SELECT id FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active'");
-        $stmt->execute([$vendorId, $userId]);
-        if ($stmt->fetch()) {
+        if ((string) ($storeData['owner_id'] ?? '') === (string) $userId) {
             $isOwnerOrManager = true;
+            $canEdit = true;
+        } else {
+            try {
+                $stmt = $pdo->prepare("SELECT 1 FROM store_managers WHERE store_id = ? AND user_id = ? AND status = 'active' LIMIT 1");
+                $stmt->execute([$vendorId, $userId]);
+                if ($stmt->fetchColumn()) {
+                    $isOwnerOrManager = true;
+                    $canEdit = true;
+                }
+            } catch (Throwable $e) {
+            }
         }
     }
+}
+
+$seoTags = [];
+$pageTitle = 'Vendor Store | Zzimba Store';
+if ($storeData) {
+    $seoTags = generateSeoMetaTags($storeData);
+    $pageTitle = $seoTags['title'];
 }
 
 ob_start();
@@ -358,7 +305,7 @@ ob_start();
 
 <div x-data="vendorProfile" x-init="init()" class="relative">
     <div class="relative h-40 md:h-64 w-full bg-gray-100 dark:bg-slate-800 overflow-hidden" id="vendor-cover-photo"
-        x-show="!loading && !error && !notFound" x-cloak>
+        x-show="!error && !notFound" x-cloak>
         <div id="vendor-cover" class="w-full h-full bg-center bg-cover" :style="coverStyle"></div>
         <?php if ($canEdit): ?>
             <button @click="openCoverEditor"
@@ -366,13 +313,6 @@ ob_start();
                 <i data-lucide="camera" class="w-5 h-5"></i>
             </button>
         <?php endif; ?>
-    </div>
-
-    <div x-show="loading" class="flex flex-col items-center justify-center py-16">
-        <div
-            class="border-4 border-gray-200 dark:border-slate-700 border-l-primary rounded-full w-12 h-12 animate-spin mb-5">
-        </div>
-        <p class="text-gray-600 dark:text-slate-300">Loading vendor profile...</p>
     </div>
 
     <div x-show="notFound" x-cloak class="max-w-3xl mx-auto my-14 px-6">
@@ -421,7 +361,7 @@ ob_start();
         </div>
     </div>
 
-    <div x-show="!loading && !error && !notFound" x-cloak id="content-state"
+    <div x-show="!error && !notFound" x-cloak id="content-state"
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-16 relative z-10">
         <div class="bg-white dark:bg-slate-900 rounded-lg shadow-lg p-6 fade-in-up">
             <div class="flex flex-col md:flex-row">
@@ -462,8 +402,7 @@ ob_start();
                                     </button>
                                 <?php endif; ?>
                             </h1>
-                            <p
-                                class="text-gray-600 dark:text-slate-300 mt-1 flex items-start justify-center md:justify-start line-clamp-3 md:line-clamp-2">
+                            <p class="text-gray-600 dark:text-slate-300 mt-1 flex items-start justify-center md:justify-start line-clamp-3 md:line-clamp-2">
                                 <span x-text="store?.description || 'Premium Construction Materials & Services'"></span>
                                 <?php if ($canEdit): ?>
                                     <button @click="openDescriptionEditor"
@@ -472,21 +411,6 @@ ob_start();
                                     </button>
                                 <?php endif; ?>
                             </p>
-
-                            <div class="md:hidden mt-3">
-                                <div class="flex items-center justify-center gap-1">
-                                    <div class="text-xl font-bold text-secondary dark:text-white">4.8</div>
-                                    <div class="ml-2 flex items-center">
-                                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                                        <i data-lucide="star-half" class="w-4 h-4 text-yellow-400"></i>
-                                        <span class="ml-1 text-sm text-gray-600 dark:text-slate-300">(128
-                                            reviews)</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -532,7 +456,8 @@ ob_start();
                             </template>
                             <template x-if="!canSeeContacts">
                                 <div>
-                                    <button x-show="!viewed.contact" x-cloak @click="revealPhone()"
+                                    <button x-show="!viewed.contact" x-cloak @click="revealPhone()
+                                            "
                                         class="flex items-center text-primary text-sm font-medium hover:underline transition-all btn-ghost px-2 py-1 rounded">
                                         <i data-lucide="phone"
                                             class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
@@ -558,8 +483,7 @@ ob_start();
                             </template>
                             <template x-if="!canSeeContacts">
                                 <div>
-                                    <button x-show="!viewed.email" x-cloak @click="revealEmail()
-                                        "
+                                    <button x-show="!viewed.email" x-cloak @click="revealEmail()"
                                         class="flex items-center text-primary text-sm font-medium hover:underline transition-all btn-ghost px-2 py-1 rounded">
                                         <i data-lucide="mail"
                                             class="w-4 h-4 text-gray-500 dark:text-slate-400 mr-2"></i>
@@ -589,24 +513,35 @@ ob_start();
                 </div>
             </div>
 
-            <div
-                class="mt-6 pt-6 border-t border-gray-200 dark:border-slate-800 flex flex-wrap gap-x-8 gap-y-4 justify-center md:justify-start">
+            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-slate-800 flex flex-wrap gap-x-8 gap-y-4 justify-center md:justify-start">
                 <div class="flex items-center">
                     <div :class="statusBadgeClass" x-text="statusText"></div>
                     <div class="ml-2 bg-primary text-white px-3 py-1 rounded-full text-sm"
                         x-text="store?.nature_of_business_name || 'Operation Type'"></div>
                 </div>
 
-                <div class="hidden md:flex items-center">
-                    <div class="text-xl font-bold text-secondary dark:text-white">4.8</div>
-                    <div class="ml-2 flex items-center">
-                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-yellow-400"></i>
-                        <i data-lucide="star-half" class="w-4 h-4 text-yellow-400"></i>
-                        <span class="ml-1 text-sm text-gray-600 dark:text-slate-300">(128 reviews)</span>
-                    </div>
+                <div class="flex items-center">
+                    <template x-if="reviewStats.average_rating > 0">
+                        <div class="flex items-center">
+                            <div class="text-xl font-bold text-secondary dark:text-white"
+                                x-text="reviewStats.average_rating"></div>
+                            <div class="ml-2 flex items-center">
+                                <template x-for="i in 5" :key="i">
+                                    <i data-lucide="star"
+                                        :class="i <= Math.round(reviewStats.average_rating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                        class="w-4 h-4"></i>
+                                </template>
+                                <span class="ml-1 text-sm text-gray-600 dark:text-slate-300"
+                                    x-text="'(' + reviewStats.total_reviews + ' reviews)'"></span>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="reviewStats.average_rating === 0">
+                        <div class="flex items-center text-gray-500 dark:text-slate-400">
+                            <i data-lucide="star" class="w-4 h-4 mr-1"></i>
+                            <span class="text-sm">No reviews yet</span>
+                        </div>
+                    </template>
                 </div>
 
                 <div class="ml-0 sm:ml-auto flex items-center gap-2">
@@ -643,7 +578,25 @@ ob_start();
         </div>
 
         <main class="py-8">
-            <div class="mb-6">
+            <!-- Tab Navigation -->
+            <div class="mb-6 border-b border-gray-200 dark:border-slate-700">
+                <nav class="flex space-x-8" aria-label="Tabs">
+                    <button @click="activeTab = 'products'"
+                        :class="activeTab === 'products' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-lucide="package-open" class="w-4 h-4 inline-block mr-2"></i>
+                        Products
+                    </button>
+                    <button @click="activeTab = 'reviews'"
+                        :class="activeTab === 'reviews' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                        <i data-lucide="star" class="w-4 h-4 inline-block mr-2"></i>
+                        Reviews
+                    </button>
+                </nav>
+            </div>
+            <!-- Products Tab -->
+            <div x-show="activeTab === 'products'" x-cloak>
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
                         <i data-lucide="package-open" class="w-5 h-5 mr-2 text-primary"></i>
@@ -661,6 +614,11 @@ ob_start();
                             placeholder="Search products..."
                             class="px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 rounded-lg text-sm w-full sm:w-auto">
                     </div>
+                    <button type="button"
+                        @click="selectedCategory ? (async () => { try { const u = await getCategoryShortUrl(selectedCategory); await navigator.clipboard.writeText(u); showToast('Category link copied', 'success') } catch(e) { showToast('Could not create link', 'error') } })() : showToast('Select a category first', 'error')"
+                        class="px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg text-sm">
+                        Copy Category Link
+                    </button>
                 </div>
 
                 <div id="products-container" class="masonry-grid">
@@ -673,8 +631,8 @@ ob_start();
                         <div data-product-card :data-product-id="p.id"
                             class="transform transition-transform duration-300 hover:-translate-y-1 h-full flex flex-col bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
                             <div class="relative group">
-                                <img :src="p._imgLoaded ? p._img : p._imgPlaceholder" :alt="p.name" loading="lazy"
-                                    class="w-full h-40 md:h-48 object-cover">
+                                <img :src="p.img_url ? (p.img_url.startsWith('http') ? p.img_url : BASE_URL + p.img_url) : placeholderFor(p)"
+                                    :alt="p.name" loading="lazy" class="w-full h-40 md:h-48 object-cover">
                                 <div
                                     class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 md:flex items-center justify-center transition-opacity hidden">
                                     <a :href="BASE_URL + 'view/product/' + p.id"
@@ -751,6 +709,272 @@ ob_start();
                 <button x-show="pagination.page < pagination.pages" @click="loadMore"
                     class="mx-auto mt-8 block bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">Load
                     More Products</button>
+            </div>
+            <!-- Reviews Tab -->
+            <div x-show="activeTab === 'reviews'" x-cloak>
+                <!-- Mobile Layout -->
+                <div class="lg:hidden reviews-mobile-layout">
+                    <!-- Review Form First on Mobile -->
+                    <div class="review-form-mobile">
+                        <div
+                            class="review-form-container bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 mb-6">
+                            <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Write a Review</h4>
+                            <form @submit.prevent="submitReview" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your
+                                        Rating</label>
+                                    <div class="star-rating flex space-x-1">
+                                        <template x-for="i in 5" :key="i">
+                                            <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i"
+                                                @mouseleave="hoverRating=0">
+                                                <i data-lucide="star" class="w-5 h-5"
+                                                    :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
+                                            </button>
+                                        </template>
+                                    </div>
+                                    <p x-show="reviewRating > 0" class="text-sm text-gray-600 dark:text-slate-300 mt-1">
+                                        You rated this store <span x-text="reviewRating"></span> out of 5 stars
+                                    </p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your
+                                        Review</label>
+                                    <textarea rows="4" maxlength="500" x-model="reviewComment"
+                                        class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                                        placeholder="Share your experience with this store... (minimum 10 characters)"
+                                        required></textarea>
+                                    <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
+                                        <span x-show="reviewComment.length > 0 && reviewComment.length < 10"
+                                            class="text-red-500">
+                                            Minimum 10 characters required
+                                        </span>
+                                        <span class="ml-auto">
+                                            <span x-text="reviewComment?.length || 0"></span>/500 characters
+                                        </span>
+                                    </div>
+                                </div>
+                                <button type="submit"
+                                    :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting"
+                                    :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''"
+                                    class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
+                                    <span x-show="!isSubmitting" class="flex items-center justify-center">
+                                        <i data-lucide="send" class="w-5 h-5 mr-2"></i>
+                                        Submit Review
+                                    </span>
+                                    <span x-show="isSubmitting" class="flex items-center justify-center">
+                                        <div
+                                            class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2">
+                                        </div>
+                                        Submitting...
+                                    </span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Review List Second on Mobile -->
+                    <div class="review-list-mobile">
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Customer Reviews</h3>
+                                <div class="flex items-center gap-4">
+                                    <template x-if="reviewStats.average_rating > 0">
+                                        <div class="flex items-center">
+                                            <div class="flex mr-2">
+                                                <template x-for="i in 5" :key="i">
+                                                    <i data-lucide="star"
+                                                        :class="i <= Math.round(reviewStats.average_rating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                                        class="w-4 h-4"></i>
+                                                </template>
+                                            </div>
+                                            <span class="text-sm text-gray-600 dark:text-slate-300"
+                                                x-text="reviewStats.average_rating + '/5'"></span>
+                                        </div>
+                                    </template>
+                                    <span
+                                        class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                                        x-text="reviewStats.total_reviews + ' Reviews'"></span>
+                                </div>
+                            </div>
+
+                            <div x-show="reviewsLoading" class="text-center py-8">
+                                <div
+                                    class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary">
+                                </div>
+                                <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
+                            </div>
+
+                            <div x-show="!reviewsLoading && reviews.length === 0" class="text-center py-8">
+                                <div class="mb-4">
+                                    <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
+                                </div>
+                                <h4 class="text-xl font-semibold text-gray-600 dark:text-slate-300 mb-2">No Reviews Yet
+                                </h4>
+                                <p class="text-gray-500 dark:text-slate-400 mb-4">Be the first to review this store!</p>
+                            </div>
+
+                            <div x-show="!reviewsLoading && reviews.length > 0" class="space-y-6">
+                                <template x-for="review in reviews" :key="review.id">
+                                    <div
+                                        class="border-b border-gray-200 dark:border-slate-800 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in-up">
+                                        <div class="flex items-center mb-1">
+                                            <span class="font-semibold text-gray-800 dark:text-white"
+                                                x-text="review.reviewer_name"></span>
+                                        </div>
+                                        <div class="text-gray-500 dark:text-slate-400 text-sm mb-2"
+                                            x-text="formatDate(review.created_at)"></div>
+                                        <div class="flex mb-3">
+                                            <template x-for="i in 5" :key="i">
+                                                <i data-lucide="star"
+                                                    :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                                    class="w-4 h-4"></i>
+                                            </template>
+                                        </div>
+                                        <p class="text-gray-700 dark:text-slate-300 mb-2" x-text="review.review_text">
+                                        </p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Layout -->
+                <div class="hidden lg:block">
+                    <div class="reviews-desktop-layout grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div
+                                class="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Customer Reviews
+                                    </h3>
+                                    <div class="flex items-center gap-4">
+                                        <template x-if="reviewStats.average_rating > 0">
+                                            <div class="flex items-center">
+                                                <div class="flex mr-2">
+                                                    <template x-for="i in 5" :key="i">
+                                                        <i data-lucide="star"
+                                                            :class="i <= Math.round(reviewStats.average_rating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                                            class="w-4 h-4"></i>
+                                                    </template>
+                                                </div>
+                                                <span class="text-sm text-gray-600 dark:text-slate-300"
+                                                    x-text="reviewStats.average_rating + '/5'"></span>
+                                            </div>
+                                        </template>
+                                        <span
+                                            class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                                            x-text="reviewStats.total_reviews + ' Reviews'"></span>
+                                    </div>
+                                </div>
+
+                                <div x-show="reviewsLoading" class="text-center py-8">
+                                    <div
+                                        class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary">
+                                    </div>
+                                    <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
+                                </div>
+
+                                <div x-show="!reviewsLoading && reviews.length === 0" class="text-center py-8">
+                                    <div class="mb-4">
+                                        <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
+                                    </div>
+                                    <h4 class="text-xl font-semibold text-gray-600 dark:text-slate-300 mb-2">No Reviews
+                                        Yet</h4>
+                                    <p class="text-gray-500 dark:text-slate-400 mb-4">Be the first to review this store!
+                                    </p>
+                                </div>
+
+                                <div x-show="!reviewsLoading && reviews.length > 0"
+                                    class="max-h-[600px] overflow-y-auto pr-2 space-y-6">
+                                    <template x-for="review in reviews" :key="review.id">
+                                        <div
+                                            class="border-b border-gray-200 dark:border-slate-800 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in-up">
+                                            <div class="flex items-center mb-1">
+                                                <span class="font-semibold text-gray-800 dark:text-white"
+                                                    x-text="review.reviewer_name"></span>
+                                            </div>
+                                            <div class="text-gray-500 dark:text-slate-400 text-sm mb-2"
+                                                x-text="formatDate(review.created_at)"></div>
+                                            <div class="flex mb-3">
+                                                <template x-for="i in 5" :key="i">
+                                                    <i data-lucide="star"
+                                                        :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                                        class="w-4 h-4"></i>
+                                                </template>
+                                            </div>
+                                            <p class="text-gray-700 dark:text-slate-300 mb-2"
+                                                x-text="review.review_text"></p>
+
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-1">
+                            <div
+                                class="review-form-container bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 sticky top-4">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Write a Review</h4>
+                                <form @submit.prevent="submitReview" class="space-y-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your
+                                            Rating</label>
+                                        <div class="star-rating flex space-x-1">
+                                            <template x-for="i in 5" :key="i">
+                                                <button type="button" @click="reviewRating = i"
+                                                    @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
+                                                    <i data-lucide="star" class="w-5 h-5"
+                                                        :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
+                                                </button>
+                                            </template>
+                                        </div>
+                                        <p x-show="reviewRating > 0"
+                                            class="text-sm text-gray-600 dark:text-slate-300 mt-1">
+                                            You rated this store <span x-text="reviewRating"></span> out of 5 stars
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your
+                                            Review</label>
+                                        <textarea rows="4" maxlength="500" x-model="reviewComment"
+                                            class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                                            placeholder="Share your experience with this store... (minimum 10 characters)"
+                                            required></textarea>
+                                        <div
+                                            class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
+                                            <span x-show="reviewComment.length > 0 && reviewComment.length < 10"
+                                                class="text-red-500">
+                                                Minimum 10 characters required
+                                            </span>
+                                            <span class="ml-auto">
+                                                <span x-text="reviewComment?.length || 0"></span>/500 characters
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button type="submit"
+                                        :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting"
+                                        :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''"
+                                        class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
+                                        <span x-show="!isSubmitting" class="flex items-center justify-center">
+                                            <i data-lucide="send" class="w-5 h-5 mr-2"></i>
+                                            Submit Review
+                                        </span>
+                                        <span x-show="isSubmitting" class="flex items-center justify-center">
+                                            <div
+                                                class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2">
+                                            </div>
+                                            Submitting...
+                                        </span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -951,7 +1175,7 @@ ob_start();
                                             x-text="modals.buy.product?.name || ''"></h3>
                                         <div
                                             class="bg-white dark:bg-slate-900 rounded-lg shadow-sm overflow-hidden mb-4">
-                                            <img :src="modals.buy.product?._img || placeholderFor(modals.buy.product)"
+                                            <img :src="modals.buy.product?.img_url ? (modals.buy.product.img_url.startsWith('http') ? modals.buy.product.img_url : BASE_URL + modals.buy.product.img_url) : placeholderFor(modals.buy.product)"
                                                 alt="Product Image" class="w-full h-48 object-cover">
                                         </div>
                                         <p class="text-gray-600 dark:text-slate-300 text-sm line-clamp-2 mb-2"
@@ -961,8 +1185,7 @@ ob_start();
                                     <div class="border-t border-gray-200 dark:border-slate-700 pt-6 mb-6">
                                         <h4
                                             class="text-sm font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-4">
-                                            Order Summary
-                                        </h4>
+                                            Order Summary</h4>
                                         <div class="space-y-3">
                                             <div class="flex justify-between">
                                                 <span class="text-gray-600 dark:text-slate-300">Selected Package:</span>
@@ -980,8 +1203,7 @@ ob_start();
                                             <div class="space-y-2 pt-2 border-t border-gray-200 dark:border-slate-700"
                                                 x-show="buyForm.showAlt && (buyForm.altPhone || buyForm.altEmail)">
                                                 <h5 class="text-sm font-medium text-gray-500 dark:text-slate-400">
-                                                    Alternative Contact
-                                                </h5>
+                                                    Alternative Contact</h5>
                                                 <div class="text-sm" x-show="buyForm.altPhone">
                                                     <span class="text-gray-600 dark:text-slate-300">Phone:</span>
                                                     <span class="ml-2 font-medium" x-text="buyForm.altPhone"></span>
@@ -1152,7 +1374,7 @@ ob_start();
                 </div>
                 <div class="modal-scroll p-4 sm:p-6">
                     <p class="text-gray-600 dark:text-slate-300 mb-4"
-                        x-text="modals.access.note || 'This action will affec your zzimba credit balance.'"></p>
+                        x-text="modals.access.note || 'This action will affect your zzimba credit balance.'"></p>
                     <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-4 mb-4">
                         <div class="font-medium text-gray-900 dark:text-slate-100"
                             x-text="modals.access.summary || '-'"></div>
@@ -1185,7 +1407,8 @@ ob_start();
                 <div
                     class="md:hidden sticky bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-gray-200 dark:border-slate-800 p-3">
                     <div class="grid grid-cols-2 gap-2">
-                        <button @click="declineAccessCharge()"
+                        <button @click="declineAccessCharge()
+                                "
                             class="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-200">Decline</button>
                         <button @click="confirmAccessCharge()"
                             :disabled="modals.access.submitting || !modals.access.can_submit"
@@ -1438,6 +1661,18 @@ ob_start();
             BASE_URL: window.BASE_URL || '<?= BASE_URL ?>',
             vendorId: '<?= $vendorId ?>',
             defaultSuccessMessage: 'Your buy-in-store request has been submitted successfully.',
+            activeTab: 'products',
+            reviews: [],
+            reviewsLoading: false,
+            reviewRating: 0,
+            hoverRating: 0,
+            reviewComment: '',
+            isSubmitting: false,
+            reviewStats: {
+                total_reviews: 0,
+                average_rating: 0,
+                rating_breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+            },
             auth: {
                 loggedIn: <?= $isLoggedIn ? 'true' : 'false' ?>,
                 canEdit: <?= $canEdit ? 'true' : 'false' ?>,
@@ -1447,10 +1682,20 @@ ob_start();
                 get canSeeAllCategories() { return this.isAdmin || this.isOwnerOrManager || this.loggedIn },
                 get showPriceDirectly() { return this.isAdmin || this.isOwnerOrManager }
             },
+            auth: {
+                loggedIn: <?= $isLoggedIn ? 'true' : 'false' ?>,
+                canEdit: <?= $canEdit ? 'true' : 'false' ?>,
+                isAdmin: <?= $isAdmin ? 'true' : 'false' ?>,
+                isOwnerOrManager: <?= $isOwnerOrManager ? 'true' : 'false' ?>,
+                get isAdminOrManager() { return this.isAdmin || this.isOwnerOrManager },
+                get canSeeAllCategories() { return this.isAdmin || this.isOwnerOrManager || this.loggedIn },
+                get showPriceDirectly() { return this.isAdmin || this.isOwnerOrManager }
+            },
+            SHORT_API: (window.BASE_URL || '<?= BASE_URL ?>') + 'fetch/manageShareLinks.php',
+            shortLinks: { store: '', categories: {}, products: {} },
             store: null,
             logoUrl: '',
             coverUrl: '',
-            loading: true,
             error: false,
             notFound: false,
             products: [],
@@ -1461,7 +1706,7 @@ ob_start();
             searchTerm: '',
             viewed: { contacts: [], prices: [], location: false, contact: false, email: false },
             modals: {
-                buy: { visible: false, loading: true, submitting: false, product: null, packages: [] },
+                buy: { visible: false, submitting: false, product: null, packages: [] },
                 confirm: { visible: false, submitting: false, payload: null, form: null },
                 error: { visible: false, message: '' },
                 success: { visible: false, message: '', payload: null },
@@ -1482,7 +1727,6 @@ ob_start();
             toast: { visible: false, message: '', type: 'success' },
             pendingPriorityId: '',
             priorityApplied: false,
-            imgObserver: null,
 
             get coverStyle() { return this.coverUrl ? `background-image:url(${this.coverUrl})` : '' },
             get joinedAt() { if (!this.store?.created_at) return '-'; const d = new Date(this.store.created_at); return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) },
@@ -1494,6 +1738,55 @@ ob_start();
             get canSeeContacts() { return this.auth.isAdminOrManager },
             get statusText() { const s = (this.store?.status || '').toLowerCase(); if (s === 'active') return 'Active'; if (s === 'pending') return 'Pending Verification'; return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Status' },
             get statusBadgeClass() { const s = (this.store?.status || '').toLowerCase(); if (s === 'active') return 'px-3 py-1 rounded-full text-sm bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'; if (s === 'pending') return 'px-3 py-1 rounded-full text-sm bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'; return 'px-3 py-1 rounded-full text-sm bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' },
+            currentUrl() {
+                try { return window.location.href } catch (e) { return this.BASE_URL + 'vendors?id=' + encodeURIComponent(this.vendorId) }
+            },
+            storeTargetUrl() {
+                return this.currentUrl()
+            },
+            categoryTargetUrl(categoryId) {
+                return this.BASE_URL + 'view/category/' + encodeURIComponent(categoryId)
+            },
+            productTargetUrl(productId) {
+                return this.BASE_URL + 'view/product/' + encodeURIComponent(productId)
+            },
+            toForm(obj) {
+                return Object.keys(obj).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(obj[k] ?? '')).join('&')
+            },
+            async createShortLink(targetType, targetId, targetUrl) {
+                const body = this.toForm({
+                    action: 'create',
+                    target_type: targetType,
+                    target_id: targetId,
+                    target_url: targetUrl
+                })
+                const r = await fetch(this.SHORT_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body
+                })
+                const j = await r.json()
+                if (j && j.success && j.data && j.data.short_url) return j.data.short_url
+                throw new Error((j && (j.error || j.message)) || 'link failed')
+            },
+            async getStoreShortUrl(force = false) {
+                if (!force && this.shortLinks.store) return this.shortLinks.store
+                const shortUrl = await this.createShortLink('store', this.vendorId, this.storeTargetUrl())
+                this.shortLinks.store = shortUrl
+                return shortUrl
+            },
+            async getCategoryShortUrl(categoryId, force = false) {
+                if (!force && this.shortLinks.categories[categoryId]) return this.shortLinks.categories[categoryId]
+                const shortUrl = await this.createShortLink('category', categoryId, this.categoryTargetUrl(categoryId))
+                this.shortLinks.categories[categoryId] = shortUrl
+                return shortUrl
+            },
+            async getProductShortUrl(productId, force = false) {
+                if (!force && this.shortLinks.products[productId]) return this.shortLinks.products[productId]
+                const shortUrl = await this.createShortLink('product', productId, this.productTargetUrl(productId))
+                this.shortLinks.products[productId] = shortUrl
+                return shortUrl
+            },
 
             get filteredProducts() {
                 let arr = this.products.slice();
@@ -1526,14 +1819,23 @@ ob_start();
                     this.pendingPriorityId = '';
                 }
                 this.loadViewedEntities();
-                this.loading = true;
                 this.loadProfile();
                 this.loadProducts(1);
                 this.syncAuthOnLoad();
                 window.addEventListener('zz:session-login', e => this.handlePostLogin(e.detail || {}));
                 if (this.auth.isAdminOrManager) { this.revealPhone(true); this.revealEmail(true) }
                 this.logProfileView();
-                this.$watch('modals.access.visible', v => { if (v) this.applyAccessMobileStyles() });
+
+                // Load review stats on init
+                this.loadReviews();
+
+                // Watch for tab changes
+                this.$watch('activeTab', (value) => {
+                    if (value === 'reviews' && this.reviews.length === 0) {
+                        this.loadReviews();
+                    }
+                    this.$nextTick(() => this.renderIcons());
+                });
             },
 
             async handlePostLogin(user) {
@@ -1573,7 +1875,7 @@ ob_start();
             renderIcons() { if (window.lucide && window.lucide.createIcons) window.lucide.createIcons() },
 
             async loadProfile() {
-                if (!this.vendorId) { this.error = true; this.loading = false; return }
+                if (!this.vendorId) { this.error = true; return }
                 try {
                     const r = await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=getStoreDetails&id=' + encodeURIComponent(this.vendorId));
                     const data = await r.json();
@@ -1586,7 +1888,6 @@ ob_start();
                         if (data.error === 'Store not found or not active') { this.notFound = true } else { this.error = true }
                     }
                 } catch (e) { this.error = true }
-                this.loading = false;
                 this.$nextTick(() => this.renderIcons());
             },
 
@@ -1604,19 +1905,29 @@ ob_start();
                             p._viewPricing = filtered;
                             p._hasRetail = pricing.some(x => x.price_category === 'retail');
                             p._showAll = false;
-                            p._imgPlaceholder = this.placeholderFor(p);
-                            p._img = '';
-                            p._imgLoaded = false;
-                            p._imgLoading = false;
+                            p.img_url = p.img_url ? (String(p.img_url).startsWith('http') ? p.img_url : this.BASE_URL + p.img_url) : '';
+                            // Add image loading from Copy 2
+                            p._img = await this.firstProductImage(p);
                         }
                         if (page === 1) this.products = incoming; else this.products = this.products.concat(incoming);
                         this.applyPriorityProduct();
                         this.pagination.page = data.pagination && data.pagination.page ? data.pagination.page : page;
                         this.pagination.pages = data.pagination && data.pagination.pages ? data.pagination.pages : 1;
                         this.productsLoaded = true;
-                        this.$nextTick(() => { this.observeProductCards(); this.renderIcons() });
+                        this.$nextTick(() => { this.renderIcons() });
                     }
                 } catch (e) { }
+            },
+
+            async firstProductImage(product) {
+                const ph = `https://placehold.co/400x300/f0f0f0/808080?text=${encodeURIComponent((product.name || '').substring(0, 2))}`;
+                try {
+                    const res = await fetch(this.BASE_URL + 'img/products/' + product.id + '/images.json');
+                    if (!res.ok) return ph;
+                    const json = await res.json();
+                    if (Array.isArray(json.images) && json.images.length > 0) return this.BASE_URL + 'img/products/' + product.id + '/' + json.images[0];
+                } catch (e) { }
+                return ph;
             },
 
             applyPriorityProduct() {
@@ -1635,50 +1946,7 @@ ob_start();
 
             loadMore() { if (this.pagination.page < this.pagination.pages) { this.loadProducts(this.pagination.page + 1) } },
 
-            applyFilters() { this.$nextTick(() => { this.observeProductCards(); this.renderIcons() }) },
-
-            async firstProductImage(product) {
-                const ph = `https://placehold.co/400x300/f0f0f0/808080?text=${encodeURIComponent((product.name || '').substring(0, 2))}`;
-                try {
-                    const res = await fetch(this.BASE_URL + 'img/products/' + product.id + '/images.json');
-                    if (!res.ok) return ph;
-                    const json = await res.json();
-                    if (Array.isArray(json.images) && json.images.length > 0) return this.BASE_URL + 'img/products/' + product.id + '/' + json.images[0];
-                } catch (e) { }
-                return ph;
-            },
-
-            async ensureProductThumb(p) {
-                if (p._imgLoaded || p._imgLoading) return;
-                p._imgLoading = true;
-                const url = await this.firstProductImage(p);
-                p._img = url;
-                p._imgLoaded = true;
-                p._imgLoading = false;
-                this.$nextTick(() => this.renderIcons());
-            },
-
-            observeProductCards() {
-                if (!this.imgObserver) {
-                    this.imgObserver = new IntersectionObserver((entries, observer) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                const card = entry.target;
-                                const pid = card.getAttribute('data-product-id');
-                                const prod = this.products.find(pp => String(pp.id) === String(pid));
-                                if (prod) this.ensureProductThumb(prod);
-                                observer.unobserve(card);
-                            }
-                        });
-                    }, { rootMargin: '200px 0px 200px 0px', threshold: 0.01 });
-                }
-                this.$root.querySelectorAll('[data-product-card]').forEach(el => {
-                    if (!el.__observed) {
-                        this.imgObserver.observe(el);
-                        el.__observed = true;
-                    }
-                });
-            },
+            applyFilters() { this.$nextTick(() => { this.renderIcons() }) },
 
             placeholderFor(p) { if (!p) return 'https://placehold.co/400x300/f0f0f0/808080?text=NA'; return `https://placehold.co/400x300/f0f0f0/808080?text=${encodeURIComponent((p.name || '').substring(0, 2))}` },
 
@@ -1819,11 +2087,46 @@ ob_start();
 
             promptLogin() { if (typeof openAuthModal === 'function') openAuthModal() },
 
-            copyLink() { navigator.clipboard.writeText(window.location.href).then(() => this.showToast('Link copied to clipboard!', 'success')).catch(() => this.showToast('Failed to copy link', 'error')) },
-            shareWhatsApp() { const msg = `*${this.store?.name || 'Vendor'}* is now on Zzimba Online!\n\nFollow the link to view our profile and offer of the day.\n\n${window.location.href}`; window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank') },
-            shareFacebook() { const msg = `${this.store?.name || 'Vendor'} is now on Zzimba Online! Follow the link to view our profile and offer of the day.`; window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${encodeURIComponent(msg)}`, '_blank') },
-            shareTwitter() { const msg = `${this.store?.name || 'Vendor'} is now on Zzimba Online!\n\nFollow the link to view our profile and offer of the day.`; window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(msg)}&url=${encodeURIComponent(window.location.href)}`, '_blank') },
-            shareLinkedIn() { const msg = `${this.store?.name || 'Vendor'} is now on Zzimba Online! Follow the link to view our profile and offer of the day.`; window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(this.store?.name || 'Vendor')}&summary=${encodeURIComponent(msg)}`, '_blank') },
+            async copyLink() {
+                try {
+                    const link = await this.getStoreShortUrl()
+                    await navigator.clipboard.writeText(link)
+                    this.showToast('Link copied to clipboard!', 'success')
+                } catch (e) {
+                    try {
+                        await navigator.clipboard.writeText(this.currentUrl())
+                        this.showToast('Shortener unavailable - copied full link instead', 'success')
+                    } catch (_) {
+                        this.showToast('Failed to copy link', 'error')
+                    }
+                }
+            },
+            async shareWhatsApp() {
+                const msgBase = `*${this.store?.name || 'Vendor'}* is now on Zzimba Online!\n\nFollow the link to view our profile and offer of the day.\n\n`
+                let url = this.currentUrl()
+                try { url = await this.getStoreShortUrl() } catch (e) { }
+                const msg = msgBase + url
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank')
+            },
+            async shareFacebook() {
+                const quote = `${this.store?.name || 'Vendor'} is now on Zzimba Online! Follow the link to view our profile and offer of the day.`
+                let url = this.currentUrl()
+                try { url = await this.getStoreShortUrl() } catch (e) { }
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(quote)}`, '_blank')
+            },
+            async shareTwitter() {
+                const text = `${this.store?.name || 'Vendor'} is now on Zzimba Online!\n\nFollow the link to view our profile and offer of the day.`
+                let url = this.currentUrl()
+                try { url = await this.getStoreShortUrl() } catch (e) { }
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank')
+            },
+            async shareLinkedIn() {
+                const title = this.store?.name || 'Vendor'
+                const summary = `${title} is now on Zzimba Online! Follow the link to view our profile and offer of the day.`
+                let url = this.currentUrl()
+                try { url = await this.getStoreShortUrl() } catch (e) { }
+                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}&summary=${encodeURIComponent(summary)}`, '_blank')
+            },
 
             openVendorSell(p) { if (typeof openVendorSellModal === 'function') openVendorSellModal(p.id, p.name) },
 
@@ -1875,6 +2178,15 @@ ob_start();
             },
 
             closeBuy() { this.modals.buy.visible = false; this.modals.error.visible = false },
+
+            get capacityNote() {
+                const opt = this.selectedPackageOption();
+                if (!opt) return 'Minimum quantity: 1';
+                const cat = opt.getAttribute('data-category');
+                const cap = parseInt(opt.getAttribute('data-capacity')) || 1;
+                if (cat === 'retail') return `Maximum quantity: ${cap}`;
+                return `Minimum quantity: ${cap}`;
+            },
 
             updateCapacity() {
                 const opt = this.selectedPackageOption();
@@ -1952,22 +2264,22 @@ ob_start();
                 let currentYear = today.getFullYear();
                 this.buyForm.visitDate = this.ymd(today.getFullYear(), today.getMonth(), today.getDate());
                 container.innerHTML = `
-                <div class="datepicker">
-                    <div class="datepicker-controls">
-                        <button type="button" class="prev p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-                        <span class="month font-medium"></span>
-                        <button type="button" class="next p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
-                    </div>
-                    <div class="datepicker-grid">
-                        <div class="datepicker-day-header">Sun</div>
-                        <div class="datepicker-day-header">Mon</div>
-                        <div class="datepicker-day-header">Tue</div>
-                        <div class="datepicker-day-header">Wed</div>
-                        <div class="datepicker-day-header">Thu</div>
-                        <div class="datepicker-day-header">Fri</div>
-                        <div class="datepicker-day-header">Sat</div>
-                    </div>
-                </div>`;
+            <div class="datepicker">
+                <div class="datepicker-controls">
+                    <button type="button" class="prev p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+                    <span class="month font-medium"></span>
+                    <button type="button" class="next p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></button>
+                </div>
+                <div class="datepicker-grid">
+                    <div class="datepicker-day-header">Sun</div>
+                    <div class="datepicker-day-header">Mon</div>
+                    <div class="datepicker-day-header">Tue</div>
+                    <div class="datepicker-day-header">Wed</div>
+                    <div class="datepicker-day-header">Thu</div>
+                    <div class="datepicker-day-header">Fri</div>
+                    <div class="datepicker-day-header">Sat</div>
+                </div>
+            </div>`;
                 const monthEl = container.querySelector('.month');
                 const grid = container.querySelector('.datepicker-grid');
                 const prev = container.querySelector('.prev');
@@ -2091,7 +2403,7 @@ ob_start();
                     const remain = bal - fee;
                     const reqId = `ac_${Date.now()}_${Math.random().toString(36).slice(2)}`;
                     this.modals.access.title = 'Premium Access';
-                    this.modals.access.note = 'This action will affec your zzimba credit balance.';
+                    this.modals.access.note = 'This action will affect your zzimba credit balance.';
                     this.modals.access.summary = this.buildAccessSummary(type, product);
                     this.modals.access.fee = fee;
                     this.modals.access.balance = bal;
@@ -2317,8 +2629,121 @@ ob_start();
                         }
                     })
                     .catch(() => { this.showToast('Failed to update description', 'error') });
+            },
+
+            // REVIEWS FUNCTIONALITY FROM COPY 2
+            async loadReviews() {
+                if (!this.vendorId) return;
+                this.reviewsLoading = true;
+                try {
+                    const r = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getStoreReviews&store_id=' + encodeURIComponent(this.vendorId));
+                    const data = await r.json();
+                    if (data.success) {
+                        this.reviews = data.reviews || [];
+                        this.reviewStats = data.stats || this.reviewStats;
+                    }
+                } catch (e) {
+                    console.error('Failed to load reviews:', e);
+                } finally {
+                    this.reviewsLoading = false;
+                    this.$nextTick(() => this.renderIcons());
+                }
+            },
+
+            async submitReview() {
+                if (!this.auth.loggedIn) {
+                    this.promptLogin();
+                    return;
+                }
+
+                if (this.reviewRating < 1) {
+                    this.showToast('Please select a rating', 'error');
+                    return;
+                }
+
+                if (!this.reviewComment.trim() || this.reviewComment.length < 10) {
+                    this.showToast('Review must be at least 10 characters long', 'error');
+                    return;
+                }
+
+                if (this.isSubmitting) return;
+
+                this.isSubmitting = true;
+
+                const formData = new FormData();
+                formData.append('action', 'submit_store_review');
+                formData.append('store_id', this.vendorId);
+                formData.append('rating', this.reviewRating);
+                formData.append('comment', this.reviewComment.trim());
+
+                try {
+                    const response = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    this.isSubmitting = false;
+
+                    if (data.success) {
+                        this.showToast(data.message || 'Review submitted successfully!', 'success');
+                        this.reviewComment = '';
+                        this.reviewRating = 0;
+                        this.hoverRating = 0;
+                        this.$nextTick(() => this.renderIcons());
+
+                        setTimeout(() => {
+                            this.loadReviews();
+                        }, 1500);
+                    } else {
+                        let errorMessage = data.error || 'Failed to submit review';
+                        if (data.error && data.error.includes('Authentication required')) {
+                            errorMessage = 'Please log in to submit a review.';
+                            this.promptLogin();
+                        }
+                        this.showToast(errorMessage, 'error');
+                    }
+                } catch (error) {
+                    this.isSubmitting = false;
+                    console.error('Error submitting review:', error);
+
+                    let errorMessage = 'Network error. Please check your connection and try again.';
+                    if (error.message.includes('401')) {
+                        errorMessage = 'Please log in to submit a review.';
+                        this.promptLogin();
+                    }
+                    this.showToast(errorMessage, 'error');
+                }
+            },
+
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            },
+
+            async loadReviewStats() {
+                if (!this.vendorId) return;
+                this.reviewsLoading = true;
+                try {
+                    const r = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getStoreReviewStats&store_id=' + encodeURIComponent(this.vendorId));
+                    const data = await r.json();
+                    if (data.success) {
+                        this.reviewStats = data.stats || { average_rating: 0, total_reviews: 0 };
+                    }
+                } catch (e) {
+                    console.error('Failed to load review stats:', e);
+                } finally {
+                    this.reviewsLoading = false;
+                    this.$nextTick(() => this.renderIcons());
+                }
             }
-        }))
+        }));
     });
 </script>
 
