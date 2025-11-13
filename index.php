@@ -12,6 +12,7 @@ function loadHomepageData()
     }
     return [];
 }
+
 function getFeaturedProducts($pdo, $limit = 8)
 {
     $stmt = $pdo->prepare("SELECT p.id, p.title, p.description, p.category_id, c.name AS category_name,(SELECT COUNT(DISTINCT session_id) FROM product_views WHERE product_id = p.id) AS views, EXISTS(SELECT 1 FROM store_products sp JOIN store_categories sc ON sc.id = sp.store_category_id JOIN vendor_stores vs ON vs.id = sc.store_id JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id AND vs.status = 'active' AND pp.status = 'active') AS has_pricing,(SELECT MIN(pp.price) FROM store_products sp JOIN store_categories sc ON sc.id = sp.store_category_id JOIN vendor_stores vs ON vs.id = sc.store_id JOIN product_pricing pp ON pp.store_products_id = sp.id WHERE sp.product_id = p.id AND vs.status = 'active' AND pp.status = 'active') AS lowest_price FROM products p LEFT JOIN product_categories c ON p.category_id = c.id WHERE p.featured = 1 AND p.status = 'published' ORDER BY has_pricing DESC, p.created_at DESC LIMIT :limit");
@@ -25,6 +26,7 @@ function getFeaturedProducts($pdo, $limit = 8)
     }
     return $products;
 }
+
 function getCategories($pdo, $limit = 8)
 {
     $stmt = $pdo->prepare("SELECT id, name, description, meta_title, meta_description, meta_keywords, status FROM product_categories WHERE status = 'active' AND featured = 1 ORDER BY name ASC LIMIT :limit");
@@ -36,6 +38,7 @@ function getCategories($pdo, $limit = 8)
     }
     return $categories;
 }
+
 function getProductImages($uuid)
 {
     $dir = __DIR__ . '/img/products/' . $uuid;
@@ -54,6 +57,7 @@ function getProductImages($uuid)
     }
     return $out;
 }
+
 function getCategoryImage($uuid)
 {
     $dir = __DIR__ . '/img/product-categories/' . $uuid;
@@ -64,6 +68,7 @@ function getCategoryImage($uuid)
     }
     return 'https://placehold.co/800x450?text=Category';
 }
+
 function formatPrice($price)
 {
     if ($price === null || $price <= 0)
@@ -71,8 +76,39 @@ function formatPrice($price)
     return 'UGX ' . number_format($price, 0) . '/=';
 }
 
+function generateSeoMetaTags($slides = [])
+{
+    $site = 'Zzimba Online Uganda';
+    $title = 'Buy and Sell Building Materials | ' . $site;
+    $desc = 'Discover, compare, and buy building materials from trusted vendors across Uganda. Browse featured products and categories, request quotes, and schedule fast delivery to your site.';
+    $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    $images = [];
+    foreach ($slides as $s) {
+        if (!empty($s['image']))
+            $images[] = BASE_URL . ltrim($s['image'], '/');
+    }
+    $ogImage = !empty($images) ? $images[array_rand($images)] : 'https://placehold.co/1200x630/e2e8f0/1e293b?text=' . urlencode('Zzimba Online Uganda');
+    $clean = strip_tags($desc);
+    if (mb_strlen($clean) > 160)
+        $clean = mb_substr($clean, 0, 157) . '...';
+    return [
+        'title' => htmlspecialchars($title),
+        'description' => htmlspecialchars($clean),
+        'og_title' => htmlspecialchars($title),
+        'og_description' => htmlspecialchars($clean),
+        'og_image' => $ogImage,
+        'og_url' => $currentUrl,
+        'og_type' => 'website'
+    ];
+}
+
 $homepageData = loadHomepageData();
 $heroSlides = $homepageData['heroSlides'] ?? [];
+$activeHeroSlides = array_values(array_filter($heroSlides, fn($s) => !empty($s['active'])));
+usort($activeHeroSlides, fn($a, $b) => (($a['order'] ?? 999) - ($b['order'] ?? 999)));
+$seoTags = generateSeoMetaTags($activeHeroSlides);
+$pageTitle = $seoTags['title'];
+
 $requestQuoteSection = $homepageData['requestQuoteSection'] ?? [];
 $keyFeatures = $homepageData['keyFeatures'] ?? [];
 $featuredProductsSection = $homepageData['featuredProductsSection'] ?? [];
@@ -80,8 +116,6 @@ $categoriesSection = $homepageData['categoriesSection'] ?? [];
 $partnersSection = $homepageData['partnersSection'] ?? [];
 $partners = $homepageData['partners'] ?? [];
 
-$activeHeroSlides = array_filter($heroSlides, fn($s) => !empty($s['active']));
-usort($activeHeroSlides, fn($a, $b) => (($a['order'] ?? 999) - ($b['order'] ?? 999)));
 $activeKeyFeatures = array_filter($keyFeatures, fn($f) => !empty($f['active']));
 usort($activeKeyFeatures, fn($a, $b) => (($a['order'] ?? 999) - ($b['order'] ?? 999)));
 $activePartners = array_filter($partners, fn($p) => !empty($p['active']));
@@ -97,6 +131,8 @@ $catDefaultRows = $categoriesSection['defaultRows'] ?? 1;
 
 ob_start();
 ?>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
     .container {
         max-width: 1200px;
@@ -287,6 +323,10 @@ ob_start();
             height: 18px
         }
     }
+
+    [x-cloak] {
+        display: none !important
+    }
 </style>
 
 <script>
@@ -327,10 +367,35 @@ ob_start();
                                         <h1 class="text-3xl md:text-5xl font-bold mb-3 leading-tight"><?= $slide['title'] ?>
                                         </h1>
                                         <p class="text-base md:text-lg mb-5 opacity-95"><?= $slide['subtitle'] ?></p>
-                                        <div x-show="!loggedIn">
+                                        <div x-show="sessionReady && !loggedIn" x-cloak>
                                             <button @click="openHeroLogin" class="hero-cta"><i
                                                     data-lucide="mouse-pointer-click"
                                                     class="w-5 h-5"></i><?= $slide['buttonText'] ?></button>
+                                        </div>
+                                        <div class="mt-4 flex items-center gap-3">
+                                            <span class="text-xs font-semibold tracking-wider">SHARE</span>
+                                            <div class="flex gap-2">
+                                                <button @click="copyHomeLink"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Copy link"><i
+                                                        class="fa-solid fa-link text-[14px]"></i></button>
+                                                <button @click="shareHomeWhatsApp"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Share on WhatsApp"><i
+                                                        class="fa-brands fa-whatsapp text-[14px]"></i></button>
+                                                <button @click="shareHomeFacebook"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Share on Facebook"><i
+                                                        class="fa-brands fa-facebook-f text-[14px]"></i></button>
+                                                <button @click="shareHomeTwitter"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Post on X"><i
+                                                        class="fa-brands fa-x-twitter text-[14px]"></i></button>
+                                                <button @click="shareHomeLinkedIn"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Share on LinkedIn"><i
+                                                        class="fa-brands fa-linkedin-in text-[14px]"></i></button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -345,7 +410,7 @@ ob_start();
         </div>
 
         <?php if (!empty($requestQuoteSection['active'])): ?>
-            <div class="py-8 bg-gray-50 dark:bg白/5">
+            <div class="py-8 bg-gray-50 dark:bg-white/5">
                 <div class="container mx-auto px-4 text-center">
                     <a href="<?= BASE_URL . $requestQuoteSection['buttonUrl'] ?>"
                         class="inline-flex items-center px-8 py-4 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-shadow shadow-[0_16px_36px_rgba(217,43,19,0.45)]"><i
@@ -464,7 +529,8 @@ ob_start();
                                     </div>
                                     <div
                                         class="text-white bg-red-600 bg-opacity-0 group-hover:bg-opacity-100 px-4 py-2 rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100 inline-flex items-center">
-                                        Explore <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
+                                        Explore <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i>
+                                    </div>
                                 </div>
                             </div>
                         </a>
@@ -550,57 +616,6 @@ ob_start();
                 </div>
             </div>
         <?php endif; ?>
-
-        <!-- Platform Reviews Section -->
-        <div class="container mx-auto px-4 py-12">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">What Our Users Say</h2>
-                <p class="text-gray-600 dark:text-white/70 max-w-2xl mx-auto">Real experiences from our community of buyers and vendors</p>
-            </div>
-
-            <div x-show="platformReviewsLoading" class="text-center py-8">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
-            </div>
-
-            <div x-show="!platformReviewsLoading && platformReviews.length === 0" class="text-center py-8">
-                <div class="mb-4">
-                    <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
-                </div>
-                <h4 class="text-xl font-semibold text-gray-600 dark:text-slate-300 mb-2">No Reviews Yet</h4>
-                <p class="text-gray-500 dark:text-slate-400 mb-4">Be the first to share your experience!</p>
-                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors">
-                    <i data-lucide="star" class="w-5 h-5 mr-2"></i>
-                    Write a Review
-                </a>
-            </div>
-
-            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <template x-for="review in platformReviews" :key="review.id">
-                    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 fade-in-up">
-                        <div class="flex items-center mb-4">
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-800 dark:text-white" x-text="review.reviewer_name"></div>
-                                <div class="text-gray-500 dark:text-slate-400 text-sm" x-text="formatDate(review.created_at)"></div>
-                            </div>
-                            <div class="flex">
-                                <template x-for="i in 5" :key="i">
-                                    <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-4 h-4"></i>
-                                </template>
-                            </div>
-                        </div>
-                        <p class="text-gray-700 dark:text-slate-300 line-clamp-3" x-text="review.review_text"></p>
-                    </div>
-                </template>
-            </div>
-
-            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="text-center mt-10">
-                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-6 py-3 border border-primary text-primary font-medium rounded-lg hover:bg-primary hover:text-white transition-colors duration-300">
-                    <i data-lucide="star" class="w-5 h-5 mr-2"></i>
-                    Share Your Experience
-                </a>
-            </div>
-        </div>
     </div>
 
     <div class="md:hidden">
@@ -622,10 +637,35 @@ ob_start();
                                     <div class="text-white max-w-3xl">
                                         <div class="text-xl font-bold mb-2 leading-tight"><?= $slide['title'] ?></div>
                                         <div class="text-sm opacity-90 mb-4"><?= $slide['subtitle'] ?></div>
-                                        <div x-show="!loggedIn">
+                                        <div x-show="sessionReady && !loggedIn" x-cloak>
                                             <button @click="openHeroLogin" class="hero-cta w-auto"><i
                                                     data-lucide="mouse-pointer-click"
                                                     class="w-5 h-5"></i><?= $slide['buttonText'] ?></button>
+                                        </div>
+                                        <div class="mt-4 flex items-center gap-3">
+                                            <span class="text-[10px] font-semibold tracking-wider">SHARE</span>
+                                            <div class="flex gap-2">
+                                                <button @click="copyHomeLink"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Copy link"><i
+                                                        class="fa-solid fa-link text-[14px]"></i></button>
+                                                <button @click="shareHomeWhatsApp"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Share on WhatsApp"><i
+                                                        class="fa-brands fa-whatsapp text-[14px]"></i></button>
+                                                <button @click="shareHomeFacebook"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Share on Facebook"><i
+                                                        class="fa-brands fa-facebook-f text-[14px]"></i></button>
+                                                <button @click="shareHomeTwitter"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Post on X"><i
+                                                        class="fa-brands fa-x-twitter text-[14px]"></i></button>
+                                                <button @click="shareHomeLinkedIn"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-full border-2 border-white text-white"
+                                                    aria-label="Share on LinkedIn"><i
+                                                        class="fa-brands fa-linkedin-in text-[14px]"></i></button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -664,7 +704,7 @@ ob_start();
                 <div class="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory -mx-4 px-4 pb-2">
                     <template x-for="p in products.slice(0, 12)" :key="p.id">
                         <div
-                            class="snap-start shrink-0 w-64 rounded-xl border border-gray-200 dark:border白/10 bg-white dark:bg-secondary overflow-hidden flex flex-col">
+                            class="snap-start shrink-0 w-64 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-secondary overflow-hidden flex flex-col">
                             <a :href="'<?= BASE_URL ?>view/product/' + p.id" class="block">
                                 <div class="relative">
                                     <img :src="(p.images && p.images[0]) ? p.images[0] : 'https://placehold.co/600x400?text=No+Image'"
@@ -692,7 +732,7 @@ ob_start();
                                                 class="flex-1 inline-flex items-center justify-center h-10 rounded-lg bg-emerald-600 text-white text-sm font-medium">Buy</a>
                                         </template>
                                         <button @click="openSell(p)"
-                                            class="flex-1 inline-flex items-center justify-center h-10 rounded-lg bg-sky-600 text白 text-sm font-medium">Sell</button>
+                                            class="flex-1 inline-flex items-center justify-center h-10 rounded-lg bg-sky-600 text-white text-sm font-medium">Sell</button>
                                     </div>
                                 </div>
                             </div>
@@ -796,50 +836,6 @@ ob_start();
                 <?php endif; ?>
             </div>
         <?php endif; ?>
-
-        <!-- Platform Reviews Section Mobile -->
-        <div class="px-4 pt-4 pb-8">
-            <div class="text-base font-semibold text-secondary dark:text-white text-center mb-3">What Our Users Say</div>
-            
-            <div x-show="platformReviewsLoading" class="text-center py-8">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-            </div>
-
-            <div x-show="!platformReviewsLoading && platformReviews.length === 0" class="text-center py-8">
-                <div class="mb-4">
-                    <i data-lucide="message-circle" class="w-12 h-12 text-gray-300 mx-auto"></i>
-                </div>
-                <p class="text-gray-500 dark:text-slate-400 text-sm mb-4">Be the first to share your experience!</p>
-                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg text-sm">
-                    <i data-lucide="star" class="w-4 h-4 mr-2"></i>
-                    Write a Review
-                </a>
-            </div>
-
-            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="space-y-3">
-                <template x-for="review in platformReviews.slice(0, 3)" :key="review.id">
-                    <div class="bg-white dark:bg-secondary rounded-lg p-4 border border-gray-200 dark:border-white/10">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="font-medium text-sm text-gray-800 dark:text-white" x-text="review.reviewer_name"></div>
-                            <div class="flex">
-                                <template x-for="i in 5" :key="i">
-                                    <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-3 h-3"></i>
-                                </template>
-                            </div>
-                        </div>
-                        <p class="text-gray-700 dark:text-slate-300 text-xs line-clamp-2" x-text="review.review_text"></p>
-                        <div class="text-gray-500 dark:text-slate-400 text-xs mt-2" x-text="formatDate(review.created_at)"></div>
-                    </div>
-                </template>
-            </div>
-
-            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="text-center mt-4">
-                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg text-sm">
-                    <i data-lucide="star" class="w-4 h-4 mr-2"></i>
-                    Share Your Experience
-                </a>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -860,8 +856,9 @@ ob_start();
             shownProducts: Math.min((window.__FP_DEFAULT_ROWS__ || 1) * (window.__FP_PER_ROW__ || 4), (window.__FP__ || []).length),
             shownCategories: Math.min((window.__CAT_DEFAULT_ROWS__ || 1) * (window.__CAT_PER_ROW__ || 4), (window.__CAT__ || []).length),
             loggedIn: false,
-            platformReviews: [],
-            platformReviewsLoading: false,
+            sessionReady: false,
+            homeShareUrl: '',
+            creatingShort: false,
             init() {
                 if (typeof Swiper !== 'undefined') {
                     new Swiper('.hero-slider', { loop: true, autoplay: { delay: 5000, disableOnInteraction: false }, effect: 'fade', fadeEffect: { crossFade: true }, speed: 1000, pagination: { el: '.swiper-pagination', clickable: true }, navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' } });
@@ -870,44 +867,13 @@ ob_start();
                     new Swiper('.partners-slider-m', { loop: true, autoplay: { delay: 3000, disableOnInteraction: false }, speed: 700, pagination: { el: '.partners-slider-m .swiper-pagination', clickable: true } });
                 }
                 if (window.lucide && lucide.createIcons) lucide.createIcons();
-                this.checkSession().then(s => { this.loggedIn = !!s.logged_in });
-                window.addEventListener('zz:session-login', e => { this.loggedIn = true; this.handlePostLogin(e.detail || {}) });
+                this.checkSession().then(s => { this.loggedIn = !!s.logged_in }).finally(() => { this.sessionReady = true });
+                window.addEventListener('zz:session-login', e => { this.loggedIn = true; this.sessionReady = true; this.handlePostLogin(e.detail || {}) });
                 const pending = window.__pendingVendorAction;
                 if (pending && pending.type === 'sell' && pending.product_id && pending.title) {
                     this.resumeSell(pending.product_id, pending.title);
                     window.setPendingVendorAction(null);
                 }
-                this.loadPlatformReviews();
-            },
-            async loadPlatformReviews() {
-                this.platformReviewsLoading = true;
-                try {
-                    const r = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getPlatformReviews&limit=6');
-                    const data = await r.json();
-                    if (data.success) {
-                        this.platformReviews = data.reviews || [];
-                    }
-                } catch (e) {
-                    console.error('Failed to load platform reviews:', e);
-                } finally {
-                    this.platformReviewsLoading = false;
-                    this.$nextTick(() => {
-                        if (window.lucide && lucide.createIcons) lucide.createIcons();
-                    });
-                }
-            },
-            formatDate(dateStr) {
-                if (!dateStr) return '';
-                const date = new Date(dateStr);
-                const now = new Date();
-                const diffMs = now - date;
-                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                if (diffDays === 0) return 'Today';
-                if (diffDays === 1) return 'Yesterday';
-                if (diffDays < 7) return `${diffDays} days ago`;
-                if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-                if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-                return date.toLocaleDateString();
             },
             openHeroLogin() { if (typeof openAuthModal === 'function') openAuthModal(); else alert('Please log in to continue.'); },
             moreProducts() { this.shownProducts = Math.min(this.shownProducts + this.perRow, this.products.length); this.$nextTick(() => { if (window.lucide && lucide.createIcons) lucide.createIcons(); }); },
@@ -919,9 +885,57 @@ ob_start();
             resumeSell(id, title) { if (typeof openVendorSellModal === 'function') { openVendorSellModal(id, title); } },
             async handlePostLogin(user) { const a = window.__pendingVendorAction; if (!a) return; if (a.type === 'sell' && a.product_id && a.title) { let isAdmin = this.isAdminUser(user); if (!isAdmin) { try { const s = await this.checkSession(); if (typeof s.is_admin !== 'undefined') isAdmin = !!s.is_admin; else if (s.user && typeof s.user.is_admin !== 'undefined') isAdmin = !!s.user.is_admin; } catch (e) { } } if (!isAdmin) this.resumeSell(a.product_id, a.title); window.setPendingVendorAction(null); } },
             checkSession() { return fetch((this.BASE_URL) + 'fetch/check-session.php', { credentials: 'include' }).then(res => res.json()).then(d => d.success ? d : { logged_in: false }).catch(() => ({ logged_in: false })); },
-            async ensureSession(pending) { try { const s = await this.checkSession(); if (!s.logged_in) { if (pending) window.setPendingVendorAction(pending); if (typeof openAuthModal === 'function') openAuthModal(); else alert('Please log in to continue.'); return false; } return true; } catch (e) { return false } }
+            async ensureSession(pending) { try { const s = await this.checkSession(); if (!s.logged_in) { if (pending) window.setPendingVendorAction(pending); if (typeof openAuthModal === 'function') openAuthModal(); else alert('Please log in to continue.'); return false; } return true; } catch (e) { return false } },
+            async getHomeShortUrl() {
+                if (this.homeShareUrl) return this.homeShareUrl;
+                if (this.creatingShort) {
+                    return new Promise(resolve => {
+                        const t = setInterval(() => { if (this.homeShareUrl) { clearInterval(t); resolve(this.homeShareUrl) } }, 50);
+                        setTimeout(() => { clearInterval(t); resolve(this.BASE_URL) }, 1500);
+                    });
+                }
+                this.creatingShort = true;
+                try {
+                    const fd = new FormData();
+                    fd.append('action', 'create');
+                    fd.append('target_type', 'home');
+                    fd.append('target_url', this.BASE_URL);
+                    const r = await fetch(this.BASE_URL + 'fetch/manageShareLinks.php', { method: 'POST', body: fd, credentials: 'include' });
+                    const j = await r.json().catch(() => ({}));
+                    if (j && j.success && j.data && j.data.short_url) this.homeShareUrl = String(j.data.short_url);
+                    else this.homeShareUrl = this.BASE_URL;
+                } catch (e) {
+                    this.homeShareUrl = this.BASE_URL;
+                } finally {
+                    this.creatingShort = false;
+                }
+                return this.homeShareUrl;
+            },
+            async copyHomeLink() {
+                const u = await this.getHomeShortUrl();
+                try { await navigator.clipboard.writeText(u); showToast('Link copied', 'success'); } catch (e) { showToast('Failed to copy', 'error'); }
+            },
+            async shareHomeWhatsApp() {
+                const u = await this.getHomeShortUrl();
+                const m = 'Check out Zzimba Online Uganda:\n\n' + u;
+                window.open('https://wa.me/?text=' + encodeURIComponent(m), '_blank');
+            },
+            async shareHomeFacebook() {
+                const u = await this.getHomeShortUrl();
+                window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank');
+            },
+            async shareHomeTwitter() {
+                const u = await this.getHomeShortUrl();
+                const t = 'Zzimba Online Uganda';
+                window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(t) + '&url=' + encodeURIComponent(u), '_blank');
+            },
+            async shareHomeLinkedIn() {
+                const u = await this.getHomeShortUrl();
+                window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(u), '_blank');
+            }
         }
     }
+    function showToast(m, t = 'success') { const el = document.createElement('div'); el.className = `fixed top-4 left-1/2 -translate-x-1/2 ${t === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity`; el.textContent = m; document.body.appendChild(el); setTimeout(() => el.classList.add('opacity-100'), 10); setTimeout(() => { el.classList.remove('opacity-100'); setTimeout(() => el.remove(), 300) }, 2500); }
 </script>
 
 <?php

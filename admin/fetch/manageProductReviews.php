@@ -35,6 +35,12 @@ switch ($action) {
     case 'delete':
         deleteReview($pdo);
         break;
+    case 'search_products':
+        searchProducts($pdo);
+        break;
+    case 'search_vendors':
+        searchVendors($pdo);
+        break;
     default:
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid action']);
@@ -48,68 +54,109 @@ function listReviews(PDO $pdo)
     $offset = ($page - 1) * $perPage;
 
     $status = $_GET['status'] ?? '';
-    $rating = $_GET['rating'] ?? '';
-    $search = $_GET['search'] ?? '';
+$rating = $_GET['rating'] ?? '';
+$search = $_GET['search'] ?? '';
+$productId = $_GET['product_id'] ?? '';
+$vendorId = $_GET['vendor_id'] ?? '';
+$filterType = $_GET['filter_type'] ?? '';
 
-    $where = [];
-    $params = [];
+$where = [];
+$params = [];
 
-    if (!empty($status)) {
-        $where[] = "r.status = ?";
-        $params[] = $status;
-    }
+if (!empty($status)) {
+    $where[] = "r.status = ?";
+    $params[] = $status;
+}
 
-    if (!empty($rating)) {
-        $where[] = "r.rating = ?";
-        $params[] = intval($rating);
-    }
+if (!empty($rating)) {
+    $where[] = "r.rating = ?";
+    $params[] = intval($rating);
+}
 
-    if (!empty($search)) {
-        $where[] = "(r.comment LIKE ? OR u.username LIKE ? OR p.title LIKE ?)";
-        $searchTerm = "%{$search}%";
-        $params[] = $searchTerm;
-        $params[] = $searchTerm;
-        $params[] = $searchTerm;
-    }
+if ($filterType === 'product') {
+    $where[] = "r.entity_type = 'product'";
+} elseif ($filterType === 'store') {
+    $where[] = "r.entity_type = 'store'";
+}
 
-    $whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+if (!empty($search)) {
+    $where[] = "(r.comment LIKE ? OR u.username LIKE ? OR p.title LIKE ? OR vs.name LIKE ?)";
+    $searchTerm = "%{$search}%";
+    array_push($params, $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+}
 
-    try {
-        // Get total count
-        $countStmt = $pdo->prepare("
-            SELECT COUNT(*) as total
-            FROM product_reviews r
-            INNER JOIN zzimba_users u ON r.user_id = u.id
-            INNER JOIN products p ON r.product_id = p.id
-            {$whereClause}
-        ");
-        $countStmt->execute($params);
-        $total = $countStmt->fetch()['total'];
+if (!empty($productId)) {
+    $where[] = "r.review_entity = ?";
+    $params[] = $productId;
+    $where[] = "r.entity_type = 'product'";
+}
 
-        // Get reviews
-        $stmt = $pdo->prepare("
-            SELECT 
-                r.id,
-                r.product_id,
-                r.user_id,
-                r.rating,
-                r.comment,
-                r.is_verified,
-                r.status,
-                r.created_at,
-                u.username,
-                p.title as product_title,
-                (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as product_image
-            FROM product_reviews r
-            INNER JOIN zzimba_users u ON r.user_id = u.id
-            INNER JOIN products p ON r.product_id = p.id
-            {$whereClause}
-            ORDER BY r.created_at DESC
-            LIMIT ? OFFSET ?
-        ");
+if (!empty($vendorId)) {
+    $where[] = "r.review_entity = ?";
+    $params[] = $vendorId;
+    $where[] = "r.entity_type = 'store'";
+}
+
+$whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
+try {
+    $countStmt = $pdo->prepare("
+        SELECT COUNT(*) AS total
+        FROM general_reviews r
+        LEFT JOIN zzimba_users u ON r.user_id = u.id
+        LEFT JOIN products p ON r.review_entity = p.id AND r.entity_type = 'product'
+        LEFT JOIN vendor_stores vs ON r.review_entity = vs.id AND r.entity_type = 'store'
+        {$whereClause}
+    ");
+    $countStmt->execute($params);
+    $total = $countStmt->fetch()['total'];
+
+
+
+ // Get reviews
+ $stmt = $pdo->prepare("
+    SELECT 
+        r.id,
+        r.entity_type,
+        r.review_entity,
+        r.user_id,
+        r.rating,
+        r.comment,
+        r.is_verified,
+        r.status,
+        r.created_at,
+        COALESCE(u.username, 'Anonymous') AS username,
+        CASE 
+            WHEN r.entity_type = 'product' THEN p.title
+            WHEN r.entity_type = 'store' THEN vs.name
+            ELSE 'General Review'
+        END AS review_target,
+        CASE 
+            WHEN r.entity_type = 'product' THEN (
+                SELECT image_url 
+                FROM product_images 
+                WHERE product_id = p.id AND is_primary = 1 
+                LIMIT 1
+            )
+            
+            ELSE NULL
+        END AS review_image,
+        p.id as product_id,
+        p.title as product_title,
+        vs.id as store_id,
+        vs.name as store_name
+    FROM general_reviews r
+    LEFT JOIN zzimba_users u ON r.user_id = u.id
+    LEFT JOIN products p ON r.review_entity = p.id AND r.entity_type = 'product'
+    LEFT JOIN vendor_stores vs ON r.review_entity = vs.id AND r.entity_type = 'store'
+    {$whereClause}
+    ORDER BY r.created_at DESC
+    LIMIT ? OFFSET ?
+");
         
-        $stmt->execute(array_merge($params, [$perPage, $offset]));
-        $reviews = $stmt->fetchAll();
+$stmt->execute(array_merge($params, [$perPage, $offset]));
+$reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 
         echo json_encode([
             'success' => true,
@@ -124,7 +171,7 @@ function listReviews(PDO $pdo)
     } catch (Exception $e) {
         error_log('Error listing reviews: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Failed to load reviews']);
+        echo json_encode(['success' => false, 'error' => 'Failed to load reviews'] . $e->getMessage());
     }
 }
 
@@ -138,7 +185,7 @@ function getStats(PDO $pdo)
                 SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
                 SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
                 AVG(rating) as avg_rating
-            FROM product_reviews
+            FROM general_reviews
         ");
         
         $stats = $stmt->fetch();
@@ -174,7 +221,7 @@ function updateStatus(PDO $pdo)
 
     try {
         $stmt = $pdo->prepare("
-            UPDATE product_reviews 
+            UPDATE general_reviews 
             SET status = ?, updated_at = NOW()
             WHERE id = ?
         ");
@@ -201,7 +248,7 @@ function deleteReview(PDO $pdo)
     }
 
     try {
-        $stmt = $pdo->prepare("DELETE FROM product_reviews WHERE id = ?");
+        $stmt = $pdo->prepare("DELETE FROM general_reviews WHERE id = ?");
         $stmt->execute([$reviewId]);
 
         echo json_encode(['success' => true, 'message' => 'Review deleted successfully']);
@@ -209,6 +256,66 @@ function deleteReview(PDO $pdo)
         error_log('Error deleting review: ' . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'error' => 'Failed to delete review']);
+    }
+}
+
+function searchProducts(PDO $pdo) {
+    $search = $_GET['q'] ?? '';
+    
+    if (empty($search)) {
+        echo json_encode(['success' => true, 'products' => []]);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT 
+                id,
+                title,
+                (SELECT image_url FROM product_images WHERE product_id = products.id AND is_primary = 1 LIMIT 1) as image_url
+            FROM products 
+            WHERE title LIKE ? 
+            LIMIT 10
+        ");
+        
+        $stmt->execute(["%{$search}%"]);
+        $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo json_encode(['success' => true, 'products' => $products]);
+    } catch (Exception $e) {
+        error_log('Error searching products: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to search products']);
+    }
+}
+
+function searchVendors(PDO $pdo) {
+    $search = $_GET['q'] ?? '';
+    
+    if (empty($search)) {
+        echo json_encode(['success' => true, 'vendors' => []]);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT 
+                id,
+                name,
+                store_image
+            FROM vendor_stores 
+            WHERE name LIKE ? OR business_name LIKE ?
+            LIMIT 10
+        ");
+        
+        $stmt->execute(["%{$search}%", "%{$search}%"]);
+        $vendors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo json_encode(['success' => true, 'vendors' => $vendors]);
+    } catch (Exception $e) {
+        error_log('Error searching vendors: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to search vendors']);
     }
 }
 ?>

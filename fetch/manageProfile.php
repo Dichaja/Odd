@@ -1,6 +1,5 @@
 <?php
 ob_start();
-
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
@@ -19,7 +18,7 @@ $currentUser = $isLoggedIn ? ($_SESSION['user']['user_id'] ?? null) : null;
 
 ensureProductPricingTable($pdo);
 ensureViewLoggingTables($pdo);
-ensureReviewTables($pdo);
+ensureStoreProductViewTable($pdo);
 
 $action = $_GET['action'] ?? ($_GET['ajax'] ?? '');
 
@@ -39,6 +38,14 @@ try {
             break;
         case 'logPriceView':
             logPriceView($pdo, $_POST['pricing_id'] ?? '', $_POST['session_id'] ?? '', $currentUser);
+            break;
+        case 'logStoreProductView':
+            $uid = $_POST['user_id'] ?? $currentUser;
+            logStoreProductView($pdo, $_POST['store_product_id'] ?? '', $_POST['session_id'] ?? '', $uid);
+            break;
+        case 'logProductView':
+            $uid = $_POST['user_id'] ?? $currentUser;
+            logStoreProductView($pdo, $_POST['store_product_id'] ?? '', $_POST['session_id'] ?? '', $uid);
             break;
         case 'getViewedEntities':
             getViewedEntities($pdo, $_GET['store_id'] ?? '', $_GET['session_id'] ?? '', $currentUser);
@@ -72,12 +79,6 @@ try {
             requireLogin();
             deleteProduct($pdo, $_POST['id'] ?? '', $currentUser);
             break;
-        case 'increaseStoreViews':
-            increaseStoreViews($pdo, $_GET['id'] ?? null);
-            break;
-        case 'reportStore':
-            reportStore($pdo, $_POST['id'] ?? '', $_POST['reason'] ?? '', $currentUser);
-            break;
         case 'getUnitsForProduct':
             getUnitsForProduct($pdo);
             break;
@@ -109,16 +110,11 @@ try {
             requireLogin();
             confirmAccessCharge($pdo, $currentUser);
             break;
-        case 'submitStoreReview':
-            requireLogin();
-            submitStoreReview($pdo, $currentUser);
+        case 'increaseStoreViews':
+            increaseStoreViews($pdo, $_GET['id'] ?? null);
             break;
-        case 'getStoreReviews':
-            getStoreReviews($pdo, $_GET['store_id'] ?? '', (int) ($_GET['page'] ?? 1), (int) ($_GET['limit'] ?? 10));
-            break;
-        case 'updateReviewStatus':
-            requireLogin();
-            updateReviewStatus($pdo, $currentUser);
+        case 'reportStore':
+            reportStore($pdo, $_POST['id'] ?? '', $_POST['reason'] ?? '', $currentUser);
             break;
         default:
             http_response_code(404);
@@ -137,45 +133,49 @@ function ensureProductPricingTable(PDO $pdo)
 {
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS `product_pricing` (
-            `id` VARCHAR(26) NOT NULL,
-            `store_products_id` VARCHAR(26) NOT NULL,
-            `package_mapping_id` VARCHAR(26) NOT NULL,
-            `si_unit_id` VARCHAR(26) NOT NULL,
-            `package_size` VARCHAR(20) NOT NULL DEFAULT '1',
-            `created_by` VARCHAR(26) NOT NULL,
+            `id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `store_products_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `package_mapping_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `si_unit_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `package_size` VARCHAR(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '1',
+            `created_by` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
             `price` DECIMAL(10,2) NOT NULL,
-            `price_category` ENUM('retail','wholesale','factory') NOT NULL DEFAULT 'retail',
+            `price_category` ENUM('retail','wholesale','factory') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'retail',
             `delivery_capacity` INT DEFAULT NULL,
-            `commission_type` ENUM('flat','percentage') NOT NULL DEFAULT 'percentage',
+            `commission_type` ENUM('flat','percentage') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'percentage',
             `commission_value` DECIMAL(10,2) NOT NULL DEFAULT '1.00',
-            `status` enum('active','inactive','suspended','deleted') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+            `status` ENUM('active','inactive','suspended','deleted') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
             `created_at` DATETIME NOT NULL,
             `updated_at` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
-            FOREIGN KEY (`store_products_id`) REFERENCES `store_products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-            FOREIGN KEY (`package_mapping_id`) REFERENCES `product_package_name_mappings` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-            FOREIGN KEY (`si_unit_id`) REFERENCES `product_si_units` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-            FOREIGN KEY (`created_by`) REFERENCES `zzimba_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+            KEY `store_products_id` (`store_products_id`),
+            KEY `package_mapping_id` (`package_mapping_id`),
+            KEY `si_unit_id` (`si_unit_id`),
+            KEY `created_by` (`created_by`),
+            CONSTRAINT `product_pricing_ibfk_1` FOREIGN KEY (`store_products_id`) REFERENCES `store_products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT `product_pricing_ibfk_2` FOREIGN KEY (`package_mapping_id`) REFERENCES `product_package_name_mappings` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT `product_pricing_ibfk_3` FOREIGN KEY (`si_unit_id`) REFERENCES `product_si_units` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT `product_pricing_ibfk_4` FOREIGN KEY (`created_by`) REFERENCES `zzimba_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
 
     $existsType = $pdo->prepare("
-        SELECT COUNT(*) 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = DATABASE() 
-          AND TABLE_NAME = 'product_pricing' 
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'product_pricing'
           AND COLUMN_NAME = 'commission_type'
     ");
     $existsType->execute();
     if (!$existsType->fetchColumn()) {
-        $pdo->exec("ALTER TABLE `product_pricing` ADD COLUMN `commission_type` ENUM('flat','percentage') NOT NULL DEFAULT 'percentage' AFTER `delivery_capacity`");
+        $pdo->exec("ALTER TABLE `product_pricing` ADD COLUMN `commission_type` ENUM('flat','percentage') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'percentage' AFTER `delivery_capacity`");
     }
 
     $existsValue = $pdo->prepare("
-        SELECT COUNT(*) 
-        FROM INFORMATION_SCHEMA.COLUMNS 
-        WHERE TABLE_SCHEMA = DATABASE() 
-          AND TABLE_NAME = 'product_pricing' 
+        SELECT COUNT(*)
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'product_pricing'
           AND COLUMN_NAME = 'commission_value'
     ");
     $existsValue->execute();
@@ -184,89 +184,14 @@ function ensureProductPricingTable(PDO $pdo)
     }
 }
 
-function ensureReviewTables(PDO $pdo)
-{
-    // Add review stats columns to vendor_stores
-    $pdo->exec("
-        ALTER TABLE vendor_stores 
-        ADD COLUMN IF NOT EXISTS `review_count` INT UNSIGNED NOT NULL DEFAULT 0,
-        ADD COLUMN IF NOT EXISTS `average_rating` DECIMAL(3,2) DEFAULT NULL
-    ");
-
-    // Create store_reviews table
-    $pdo->exec("
-        CREATE TABLE IF NOT EXISTS `store_reviews` (
-            `id` VARCHAR(26) NOT NULL,
-            `store_id` VARCHAR(26) NOT NULL,
-            `user_id` VARCHAR(26) NOT NULL,
-            `rating` TINYINT UNSIGNED NOT NULL CHECK (rating BETWEEN 1 AND 5),
-            `review_text` TEXT,
-            `status` ENUM('published','hidden') NOT NULL DEFAULT 'published',
-            `created_at` DATETIME NOT NULL,
-            `updated_at` DATETIME NOT NULL,
-            PRIMARY KEY (`id`),
-            KEY `idx_store_id` (`store_id`),
-            KEY `idx_user_id` (`user_id`),
-            KEY `idx_status_created` (`status`, `created_at`),
-            FOREIGN KEY (`store_id`) REFERENCES `vendor_stores` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-            FOREIGN KEY (`user_id`) REFERENCES `zzimba_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
-    ");
-
-    // Create trigger for review stats
-    $pdo->exec("
-        DROP TRIGGER IF EXISTS after_store_review_changes;
-        CREATE TRIGGER after_store_review_changes 
-        AFTER INSERT ON store_reviews 
-        FOR EACH ROW 
-        BEGIN
-            UPDATE vendor_stores vs
-            SET 
-                review_count = (
-                    SELECT COUNT(*) 
-                    FROM store_reviews sr 
-                    WHERE sr.store_id = vs.id AND sr.status = 'published'
-                ),
-                average_rating = (
-                    SELECT ROUND(AVG(rating), 2)
-                    FROM store_reviews sr 
-                    WHERE sr.store_id = vs.id AND sr.status = 'published'
-                )
-            WHERE vs.id = NEW.store_id;
-        END;
-    ");
-
-    $pdo->exec("
-        DROP TRIGGER IF EXISTS after_store_review_updates;
-        CREATE TRIGGER after_store_review_updates 
-        AFTER UPDATE ON store_reviews 
-        FOR EACH ROW 
-        BEGIN
-            UPDATE vendor_stores vs
-            SET 
-                review_count = (
-                    SELECT COUNT(*) 
-                    FROM store_reviews sr 
-                    WHERE sr.store_id = vs.id AND sr.status = 'published'
-                ),
-                average_rating = (
-                    SELECT ROUND(AVG(rating), 2)
-                    FROM store_reviews sr 
-                    WHERE sr.store_id = vs.id AND sr.status = 'published'
-                )
-            WHERE vs.id = NEW.store_id;
-        END;
-    ");
-}
-
 function ensureViewLoggingTables(PDO $pdo)
 {
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS `store_profile_views` (
-            `id` VARCHAR(26) NOT NULL,
-            `store_id` VARCHAR(26) NOT NULL,
-            `session_id` VARCHAR(64) NOT NULL,
-            `user_id` VARCHAR(26) NULL,
+            `id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `store_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `session_id` VARCHAR(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `user_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NULL,
             `created_at` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
             UNIQUE KEY `uq_store_session` (`store_id`, `session_id`),
@@ -274,16 +199,16 @@ function ensureViewLoggingTables(PDO $pdo)
             KEY `idx_session_id` (`session_id`),
             KEY `idx_user_id` (`user_id`),
             KEY `idx_created_at` (`created_at`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
 
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS `store_contact_views` (
-            `id` VARCHAR(26) NOT NULL,
-            `store_id` VARCHAR(26) NOT NULL,
-            `entity` ENUM('location','contact','email') NOT NULL,
-            `session_id` VARCHAR(64) NOT NULL,
-            `user_id` VARCHAR(26) NULL,
+            `id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `store_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `entity` ENUM('location','contact','email') COLLATE utf8mb4_unicode_ci NOT NULL,
+            `session_id` VARCHAR(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `user_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NULL,
             `created_at` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
             UNIQUE KEY `uq_store_entity_session` (`store_id`, `entity`, `session_id`),
@@ -292,15 +217,15 @@ function ensureViewLoggingTables(PDO $pdo)
             KEY `idx_session_id` (`session_id`),
             KEY `idx_user_id` (`user_id`),
             KEY `idx_created_at` (`created_at`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
 
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS `product_price_views` (
-            `id` VARCHAR(26) NOT NULL,
-            `pricing_id` VARCHAR(26) NOT NULL,
-            `session_id` VARCHAR(64) NOT NULL,
-            `user_id` VARCHAR(26) NULL,
+            `id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `pricing_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `session_id` VARCHAR(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `user_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NULL,
             `created_at` DATETIME NOT NULL,
             PRIMARY KEY (`id`),
             UNIQUE KEY `uq_pricing_session` (`pricing_id`, `session_id`),
@@ -308,8 +233,81 @@ function ensureViewLoggingTables(PDO $pdo)
             KEY `idx_session_id` (`session_id`),
             KEY `idx_user_id` (`user_id`),
             KEY `idx_created_at` (`created_at`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci
     ");
+}
+
+function ensureStoreProductViewTable(PDO $pdo)
+{
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `store_products_views` (
+            `id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `store_products_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `session_id` VARCHAR(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+            `user_id` VARCHAR(26) COLLATE utf8mb4_unicode_ci NULL,
+            `created_at` DATETIME NOT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `uq_store_product_session` (`store_products_id`, `session_id`),
+            KEY `idx_store_products_id` (`store_products_id`),
+            KEY `idx_session_id` (`session_id`),
+            KEY `idx_user_id` (`user_id`),
+            KEY `idx_created_at` (`created_at`),
+            CONSTRAINT `fk_spv_store_product` FOREIGN KEY (`store_products_id`) REFERENCES `store_products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT `fk_spv_user` FOREIGN KEY (`user_id`) REFERENCES `zzimba_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+
+    $hasComposite = $pdo->prepare("
+        SELECT COUNT(*) 
+        FROM INFORMATION_SCHEMA.STATISTICS 
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'store_products_views'
+          AND INDEX_NAME = 'uq_store_product_session'
+    ");
+    $hasComposite->execute();
+    if (!$hasComposite->fetchColumn()) {
+        $pdo->exec("ALTER TABLE `store_products_views` ADD UNIQUE KEY `uq_store_product_session` (`store_products_id`,`session_id`)");
+    }
+
+    $idxs = $pdo->query("
+        SELECT INDEX_NAME, GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) cols, NON_UNIQUE
+        FROM INFORMATION_SCHEMA.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'store_products_views'
+        GROUP BY INDEX_NAME, NON_UNIQUE
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($idxs as $ix) {
+        if ((int) $ix['NON_UNIQUE'] === 0 && strtolower($ix['INDEX_NAME']) !== 'primary' && $ix['INDEX_NAME'] !== 'uq_store_product_session' && $ix['cols'] === 'session_id') {
+            $pdo->exec("ALTER TABLE `store_products_views` DROP INDEX `{$ix['INDEX_NAME']}`");
+        }
+    }
+}
+
+function baseUrl(): string
+{
+    $b = defined('BASE_URL') ? BASE_URL : ($GLOBALS['baseUrl'] ?? '');
+    return rtrim($b, '/');
+}
+
+function productImageUrl(string $productId, ?string $title = null): string
+{
+    $dir = __DIR__ . '/../img/products/' . $productId;
+    if (is_dir($dir)) {
+        $files = scandir($dir, SCANDIR_SORT_ASCENDING);
+        if ($files !== false) {
+            foreach ($files as $f) {
+                if ($f === '.' || $f === '..') {
+                    continue;
+                }
+                $fp = $dir . '/' . $f;
+                if (is_file($fp) && preg_match('/\.(jpe?g|png|gif|webp|bmp|avif|svg)$/i', $f)) {
+                    return baseUrl() . '/img/products/' . $productId . '/' . $f;
+                }
+            }
+        }
+    }
+    $t = $title ?: 'No image';
+    return 'https://placehold.co/600x400/e2e8f0/1e293b?text=' . rawurlencode($t);
 }
 
 function logProfileView(PDO $pdo, string $storeId, string $sessionId, ?string $userId)
@@ -326,7 +324,7 @@ function logProfileView(PDO $pdo, string $storeId, string $sessionId, ?string $u
         $stmt = $pdo->prepare("
             INSERT INTO store_profile_views (id, store_id, session_id, user_id, created_at)
             VALUES (?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE user_id = COALESCE(VALUES(user_id), user_id)
+            ON DUPLICATE KEY UPDATE user_id = IF(user_id IS NULL, VALUES(user_id), user_id)
         ");
         $stmt->execute([generateUlid(), $storeId, $sessionId, $userId, $createdAt]);
 
@@ -356,7 +354,7 @@ function logContactView(PDO $pdo, string $storeId, string $entity, string $sessi
         $stmt = $pdo->prepare("
             INSERT INTO store_contact_views (id, store_id, entity, session_id, user_id, created_at)
             VALUES (?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE user_id = COALESCE(VALUES(user_id), user_id)
+            ON DUPLICATE KEY UPDATE user_id = IF(user_id IS NULL, VALUES(user_id), user_id)
         ");
         $stmt->execute([generateUlid(), $storeId, $entity, $sessionId, $userId, $createdAt]);
 
@@ -381,13 +379,47 @@ function logPriceView(PDO $pdo, string $pricingId, string $sessionId, ?string $u
         $stmt = $pdo->prepare("
             INSERT INTO product_price_views (id, pricing_id, session_id, user_id, created_at)
             VALUES (?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE user_id = COALESCE(VALUES(user_id), user_id)
+            ON DUPLICATE KEY UPDATE user_id = IF(user_id IS NULL, VALUES(user_id), user_id)
         ");
         $stmt->execute([generateUlid(), $pricingId, $sessionId, $userId, $createdAt]);
 
         echo json_encode(['success' => true]);
     } catch (Exception $e) {
         error_log('Error logging price view: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'error' => 'Database error']);
+    }
+}
+
+function logStoreProductView(PDO $pdo, string $storeProductId, string $sessionId, ?string $userId)
+{
+    if (!$storeProductId || !$sessionId || !isValidUlid($storeProductId)) {
+        echo json_encode(['success' => false, 'error' => 'Missing or invalid parameters']);
+        return;
+    }
+
+    try {
+        if (!empty($userId)) {
+            $u = $pdo->prepare("SELECT 1 FROM zzimba_users WHERE id = ? LIMIT 1");
+            $u->execute([$userId]);
+            if (!$u->fetchColumn()) {
+                echo json_encode(['success' => true]);
+                return;
+            }
+        }
+
+        $timezone = new DateTimeZone('Africa/Kampala');
+        $createdAt = (new DateTime('now', $timezone))->format('Y-m-d H:i:s');
+
+        $stmt = $pdo->prepare("
+            INSERT INTO store_products_views (id, store_products_id, session_id, user_id, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE user_id = IF(user_id IS NULL, VALUES(user_id), user_id)
+        ");
+        $stmt->execute([generateUlid(), $storeProductId, $sessionId, $userId, $createdAt]);
+
+        echo json_encode(['success' => true]);
+    } catch (Exception $e) {
+        error_log('Error logging store product view: ' . $e->getMessage());
         echo json_encode(['success' => false, 'error' => 'Database error']);
     }
 }
@@ -679,9 +711,7 @@ function getStoreDetails(PDO $pdo, ?string $storeId, ?string $currentUserId)
                     SELECT COUNT(*) 
                     FROM store_profile_views 
                     WHERE store_id = v.id
-                ) AS profile_views,
-                v.review_count,
-                v.average_rating
+                ) AS profile_views
             FROM vendor_stores v
             LEFT JOIN nature_of_business nob ON v.nature_of_business = nob.id
             JOIN zzimba_users u ON v.owner_id = u.id
@@ -866,7 +896,6 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
         $products = [];
         foreach ($rows as $r) {
             $pid = $r['product_id'];
-
             if (!isset($products[$pid])) {
                 $products[$pid] = [
                     'id' => $pid,
@@ -876,10 +905,10 @@ function getStoreProducts(PDO $pdo, ?string $storeId, int $page = 1, int $limit 
                     'category_name' => $r['category_name'],
                     'store_category_id' => $r['store_category_id'],
                     'store_product_id' => $r['store_product_id'],
+                    'img_url' => productImageUrl($pid, $r['name']),
                     'pricing' => []
                 ];
             }
-
             if (!empty($r['pricing_id'])) {
                 $products[$pid]['pricing'][] = [
                     'pricing_id' => $r['pricing_id'],
@@ -1315,7 +1344,17 @@ function getProductsNotInStore(PDO $pdo, string $storeId, string $categoryId)
         $stmt->execute([$categoryId, $storeId]);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        echo json_encode(['success' => true, 'products' => $products]);
+        $out = [];
+        foreach ($products as $p) {
+            $out[] = [
+                'id' => $p['id'],
+                'name' => $p['name'],
+                'description' => $p['description'],
+                'img_url' => productImageUrl($p['id'], $p['name'])
+            ];
+        }
+
+        echo json_encode(['success' => true, 'products' => $out]);
     } catch (Exception $e) {
         error_log('Error in getProductsNotInStore: ' . $e->getMessage());
         http_response_code(500);
@@ -1353,7 +1392,19 @@ function getAllProductsNotInStore(PDO $pdo, string $storeId)
         $stmt->execute([$storeId]);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        echo json_encode(['success' => true, 'products' => $products]);
+        $out = [];
+        foreach ($products as $p) {
+            $out[] = [
+                'id' => $p['id'],
+                'name' => $p['name'],
+                'description' => $p['description'],
+                'category_id' => $p['category_id'],
+                'category_name' => $p['category_name'],
+                'img_url' => productImageUrl($p['id'], $p['name'])
+            ];
+        }
+
+        echo json_encode(['success' => true, 'products' => $out]);
     } catch (Exception $e) {
         error_log('Error in getAllProductsNotInStore: ' . $e->getMessage());
         http_response_code(500);
@@ -1540,6 +1591,7 @@ function fetchPricingSummary(PDO $pdo, string $pricingId): ?array
     $stmt = $pdo->prepare("
         SELECT 
             pp.id AS pricing_id,
+            p.id AS product_id,
             p.title AS product_name,
             p.description AS product_description,
             sc.store_id,
@@ -1577,197 +1629,7 @@ function fetchPricingSummary(PDO $pdo, string $pricingId): ?array
         'unit_name' => $unit,
         'price' => (float) $row['price'],
         'price_category' => $row['price_category'],
-        'package_size' => $row['package_size']
+        'package_size' => $row['package_size'],
+        'img_url' => productImageUrl($row['product_id'], $row['product_name'])
     ];
-}
-
-function submitStoreReview(PDO $pdo, string $currentUser)
-{
-    $data = json_decode(file_get_contents('php://input'), true);
-    $storeId = $data['store_id'] ?? '';
-    $rating = (int) ($data['rating'] ?? 0);
-    $reviewText = trim($data['review_text'] ?? '');
-
-    if (!isValidUlid($storeId)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
-        return;
-    }
-
-    if ($rating < 1 || $rating > 5) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Rating must be between 1 and 5']);
-        return;
-    }
-
-    if (empty($reviewText)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Review text is required']);
-        return;
-    }
-
-    // Check if user has already reviewed this store
-    $checkStmt = $pdo->prepare("
-        SELECT id 
-        FROM store_reviews 
-        WHERE store_id = ? AND user_id = ? AND status = 'published'
-    ");
-    $checkStmt->execute([$storeId, $currentUser]);
-    if ($checkStmt->fetch()) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'You have already reviewed this store']);
-        return;
-    }
-
-    try {
-        $timezone = new DateTimeZone('Africa/Kampala');
-        $now = (new DateTime('now', $timezone))->format('Y-m-d H:i:s');
-        $reviewId = generateUlid();
-
-        $stmt = $pdo->prepare("
-            INSERT INTO store_reviews 
-                (id, store_id, user_id, rating, review_text, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, 'published', ?, ?)
-        ");
-        $stmt->execute([$reviewId, $storeId, $currentUser, $rating, $reviewText, $now, $now]);
-
-        echo json_encode(['success' => true, 'message' => 'Review submitted successfully']);
-    } catch (Exception $e) {
-        error_log('Error submitting review: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error submitting review']);
-    }
-}
-
-function getStoreReviews(PDO $pdo, string $storeId, int $page = 1, int $limit = 10)
-{
-    if (!isValidUlid($storeId)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid store ID']);
-        return;
-    }
-
-    $page = max(1, $page);
-    $limit = max(1, min(50, $limit));
-    $offset = ($page - 1) * $limit;
-
-    try {
-        // Get total count
-        $countStmt = $pdo->prepare("
-            SELECT COUNT(*) 
-            FROM store_reviews 
-            WHERE store_id = ? AND status = 'published'
-        ");
-        $countStmt->execute([$storeId]);
-        $total = (int) $countStmt->fetchColumn();
-
-        // Get reviews
-        $stmt = $pdo->prepare("
-            SELECT 
-                sr.id,
-                sr.rating,
-                sr.review_text,
-                sr.created_at,
-                sr.user_id,
-                u.username
-            FROM store_reviews sr
-            JOIN zzimba_users u ON sr.user_id = u.id
-            WHERE sr.store_id = ? AND sr.status = 'published'
-            ORDER BY sr.created_at DESC
-            LIMIT ? OFFSET ?
-        ");
-        $stmt->bindValue(1, $storeId);
-        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
-        $stmt->bindValue(3, $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        echo json_encode([
-            'success' => true,
-            'reviews' => array_map(static function ($review) {
-                return [
-                    'id' => $review['id'],
-                    'rating' => (int) $review['rating'],
-                    'review_text' => $review['review_text'],
-                    'created_at' => $review['created_at'],
-                    'user' => [
-                        'id' => $review['user_id'],
-                        'username' => $review['username']
-                    ]
-                ];
-            }, $reviews),
-            'pagination' => [
-                'total' => $total,
-                'page' => $page,
-                'limit' => $limit,
-                'pages' => (int) ceil(max(1, $total) / $limit)
-            ]
-        ]);
-    } catch (Exception $e) {
-        error_log('Error getting store reviews: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error retrieving reviews']);
-    }
-}
-
-function updateReviewStatus(PDO $pdo, string $currentUser)
-{
-    $data = json_decode(file_get_contents('php://input'), true);
-    $reviewId = $data['review_id'] ?? '';
-    $newStatus = $data['status'] ?? '';
-
-    if (!isValidUlid($reviewId)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid review ID']);
-        return;
-    }
-
-    if (!in_array($newStatus, ['published', 'hidden'], true)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Invalid status']);
-        return;
-    }
-
-    try {
-        // Get review info
-        $stmt = $pdo->prepare("
-            SELECT sr.store_id, sr.user_id 
-            FROM store_reviews sr
-            WHERE sr.id = ?
-        ");
-        $stmt->execute([$reviewId]);
-        $review = $stmt->fetch();
-
-        if (!$review) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Review not found']);
-            return;
-        }
-
-        // Check permissions
-        $isAdmin = (($_SESSION['user']['role'] ?? '') === 'admin');
-        $isStoreManager = canManageStore($pdo, $review['store_id'], $currentUser);
-        $isReviewOwner = ($review['user_id'] === $currentUser);
-
-        if (!$isAdmin && !$isStoreManager && !$isReviewOwner) {
-            http_response_code(403);
-            echo json_encode(['success' => false, 'error' => 'Permission denied']);
-            return;
-        }
-
-        // Update status
-        $now = (new DateTime('now', new DateTimeZone('Africa/Kampala')))->format('Y-m-d H:i:s');
-        $updStmt = $pdo->prepare("
-            UPDATE store_reviews 
-            SET status = ?, updated_at = ?
-            WHERE id = ?
-        ");
-        $updStmt->execute([$newStatus, $now, $reviewId]);
-
-        echo json_encode(['success' => true, 'message' => 'Review status updated']);
-    } catch (Exception $e) {
-        error_log('Error updating review status: ' . $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Error updating review status']);
-    }
 }

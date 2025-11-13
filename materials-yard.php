@@ -123,7 +123,7 @@ function logSearchActivity($pdo, $searchQuery, $resultsCount, $maxMatchScore, $m
         $logId = generateUlid();
         $timezone = new DateTimeZone('Africa/Kampala');
         $createdAt = (new DateTime('now', $timezone))->format('Y-m-d H:i:s');
-        $logStmt = $pdo->prepare("INSERT INTO search_log (id,session_id,search_query,results_count,max_match_score,min_match_score,average_match_score,duration_ms,created_at) VALUES (?,?,?, ?,?,?, ?,?,?)");
+        $logStmt = $pdo->prepare("INSERT INTO search_log (id,session_id,search_query,results_count,max_match_score,min_match_score,average_match_score,duration_ms,created_at) VALUES (?,?,?,?,?,?,?,?,?)");
         $logStmt->execute([$logId, null, $searchQuery, $resultsCount, round($maxMatchScore, 2), round($minMatchScore, 2), round($averageMatchScore, 2), $durationMs, $createdAt]);
     } catch (Exception $e) {
     }
@@ -272,6 +272,39 @@ function formatPrice($price)
         return null;
     return 'UGX ' . number_format($price, 0) . '/=';
 }
+function generateSeoMetaTags($mode, $data, $imageUrl)
+{
+    $siteName = 'Zzimba Online';
+    $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    $title = '';
+    $desc = '';
+    if ($mode === 'search') {
+        $q = trim($data['query'] ?? '');
+        $title = ($q !== '' ? 'Search: ' . $q : 'Search') . ' | ' . $siteName;
+        $desc = $q !== '' ? 'Explore building materials matching "' . $q . '" on Zzimba Online.' : 'Explore building materials search results on Zzimba Online.';
+    } elseif ($mode === 'category') {
+        $name = trim($data['name'] ?? 'Category');
+        $raw = trim($data['description'] ?? '');
+        $title = $name . ' | ' . $siteName;
+        $desc = $raw !== '' ? $raw : 'Browse ' . $name . ' building materials on Zzimba Online.';
+    } else {
+        $title = 'Building Materials | ' . $siteName;
+        $desc = 'Discover genuine building materials and supplies from trusted suppliers across Uganda.';
+    }
+    $clean = strip_tags($desc);
+    if (mb_strlen($clean) > 160)
+        $clean = mb_substr($clean, 0, 157) . '...';
+    $ogImage = $imageUrl ?: ('https://placehold.co/1200x630/e2e8f0/1e293b?text=' . urlencode('Building Materials'));
+    return [
+        'title' => htmlspecialchars($title),
+        'description' => htmlspecialchars($clean),
+        'og_title' => htmlspecialchars($title),
+        'og_description' => htmlspecialchars($clean),
+        'og_image' => $ogImage,
+        'og_url' => $currentUrl,
+        'og_type' => 'website'
+    ];
+}
 
 $categoryId = isset($_GET['categoryId']) ? $_GET['categoryId'] : '';
 $searchQuery = isset($_GET['s']) ? trim($_GET['s']) : '';
@@ -291,6 +324,18 @@ if (!empty($categoryId) && isset($category)) {
     $img = getCategoryImage($categoryId);
     if ($img)
         $categoryImageUrl = $img;
+}
+
+$seoTags = [];
+if (!empty($searchQuery)) {
+    $seoTags = generateSeoMetaTags('search', ['query' => $searchQuery], $categoryImageUrl);
+    $pageTitle = $seoTags['title'];
+} elseif (!empty($categoryId) && isset($category)) {
+    $seoTags = generateSeoMetaTags('category', ['name' => $category['name'] ?? '', 'description' => $category['description'] ?? ''], $categoryImageUrl);
+    $pageTitle = $seoTags['title'];
+} else {
+    $seoTags = generateSeoMetaTags('page', [], $categoryImageUrl);
+    $pageTitle = $seoTags['title'];
 }
 
 $allCategoriesStmt = $pdo->prepare("SELECT id,name,description FROM product_categories WHERE status='active' ORDER BY CASE WHEN id=? THEN 0 ELSE 1 END, name ASC");
@@ -767,7 +812,7 @@ ob_start();
                                         <div class="text-sm font-medium text-secondary dark:text-white line-clamp-2"
                                             x-text="p.title"></div>
                                     </a>
-                                    <div class="mt-1 text-[11px] text-gray-500 dark:text-white/70 flex items-center"><i
+                                    <div class="mt-1 text+[11px] text-gray-500 dark:text-white/70 flex items-center"><i
                                             data-lucide="eye" class="w-3.5 h-3.5 mr-1"></i><span
                                             x-text="Number(p.views||0).toLocaleString()"></span></div>
                                     <div class="mt-auto flex flex-col items-center">
@@ -805,6 +850,7 @@ ob_start();
             mobileQuery: '<?= $categoryNameForMobile ?>',
             allCategories: <?= $categoriesJson ?>,
             miniProducts: <?= json_encode(array_slice($products, 0, 12), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>,
+            shareCache: {}, sharePromises: {},
             init() {
                 this.$nextTick(() => {
                     if (this.currentSearchQuery) { this.performSearch(this.currentSearchQuery, 1); this.setupInfiniteScroll(); }
@@ -878,11 +924,76 @@ ob_start();
             escapeHtml(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML },
             escapeAttr(t) { return (t || '').replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])) },
             clearSelection() { window.location.href = '<?= BASE_URL ?>materials-yard'; },
-            copyLink() { const u = window.location.href; navigator.clipboard.writeText(u).then(() => { if (typeof showToast === 'function') showToast('Link copied', 'success') }).catch(() => { if (typeof showToast === 'function') showToast('Failed to copy', 'error') }); },
-            shareOnWhatsApp() { const url = window.location.href; const t = "<?= addslashes($pageTitle) ?>"; const m = `Check out *${t}* on Zzimba Online:\n\n${url}`; window.open(`https://wa.me/?text=${encodeURIComponent(m)}`, '_blank'); },
-            shareOnFacebook() { const u = window.location.href; window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}`, '_blank'); },
-            shareOnTwitter() { const u = window.location.href; const t = "<?= addslashes($pageTitle) ?>"; const m = `Check out ${t} on Zzimba Online:`; window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(m)}&url=${encodeURIComponent(u)}`, '_blank'); },
-            shareOnLinkedIn() { const u = window.location.href; const t = "<?= addslashes($pageTitle) ?>"; window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(u)}&title=${encodeURIComponent(t)}`, '_blank'); },
+            async getShareUrl() {
+                const key = this.currentCategoryId ? `category:${this.currentCategoryId}` : 'page';
+                if (this.shareCache[key]) return this.shareCache[key];
+                if (this.sharePromises[key]) return await this.sharePromises[key];
+                const payload = new URLSearchParams();
+                payload.set('action', 'create');
+                if (this.currentCategoryId) {
+                    payload.set('target_type', 'category');
+                    payload.set('target_id', this.currentCategoryId);
+                    payload.set('target_url', this.BASE_URL + 'view/category/' + this.currentCategoryId);
+                } else {
+                    payload.set('target_type', 'custom');
+                    payload.set('target_url', window.location.href);
+                }
+                const req = fetch(this.BASE_URL + 'fetch/manageShareLinks.php', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                    body: payload
+                }).then(r => r.json()).then(d => {
+                    if (d && d.success && d.data && d.data.short_url) return d.data.short_url;
+                    throw new Error(d && d.message ? d.message : 'Failed to create link');
+                });
+                this.sharePromises[key] = req;
+                try {
+                    const u = await req;
+                    this.shareCache[key] = u;
+                    return u;
+                } finally {
+                    delete this.sharePromises[key];
+                }
+            },
+            async copyLink() {
+                try {
+                    const u = await this.getShareUrl();
+                    await navigator.clipboard.writeText(u);
+                    if (typeof showToast === 'function') showToast('Link copied', 'success');
+                } catch (e) {
+                    if (typeof showToast === 'function') showToast('Failed to copy', 'error');
+                }
+            },
+            async shareOnWhatsApp() {
+                try {
+                    const url = await this.getShareUrl();
+                    const t = "<?= addslashes($pageTitle) ?>";
+                    const m = `Check out ${this.currentCategoryId ? '*' + t + '*' : '*' + t + '*'} on Zzimba Online:\n\n${url}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(m)}`, '_blank');
+                } catch (e) { }
+            },
+            async shareOnFacebook() {
+                try {
+                    const u = await this.getShareUrl();
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}`, '_blank');
+                } catch (e) { }
+            },
+            async shareOnTwitter() {
+                try {
+                    const u = await this.getShareUrl();
+                    const t = "<?= addslashes($pageTitle) ?>";
+                    const m = `Check out ${t} on Zzimba Online:`;
+                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(m)}&url=${encodeURIComponent(u)}`, '_blank');
+                } catch (e) { }
+            },
+            async shareOnLinkedIn() {
+                try {
+                    const u = await this.getShareUrl();
+                    const t = "<?= addslashes($pageTitle) ?>";
+                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(u)}&title=${encodeURIComponent(t)}`, '_blank');
+                } catch (e) { }
+            },
             isAdminUser(p) { if (!p) return false; if (p.is_admin === true) return true; if (p.user && p.user.is_admin === true) return true; const r = (p.role_slug || p.role || '').toString().toLowerCase(); return r === 'admin' || r === 'super-admin'; },
             async sellProduct(id, title) { const ok = await this.ensureSession({ type: 'sell', product_id: id, title: title }); if (!ok) return; const s = await this.checkSession().catch(() => ({})); const isAdmin = !!(s && (s.is_admin === true || (s.user && s.user.is_admin === true))); if (isAdmin) return; this.resumeSell(id, title); },
             resumeSell(id, title) { if (typeof openVendorSellModal === 'function') { openVendorSellModal(id, title) } },
@@ -896,5 +1007,6 @@ ob_start();
 
 <?php
 $mainContent = ob_get_clean();
+
 include __DIR__ . '/master.php';
 ?>

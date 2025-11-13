@@ -2,12 +2,12 @@ RewriteEngine On
 
 ##############################################
 # 1. Block direct browser hits to /login
-#    – still allow AJAX (XMLHttpRequest)
+#    - still allow AJAX (XMLHttpRequest)
 ##############################################
 #  • Catches “…/login” or “…/login/” at any depth.
 #  • Skips the block when the request comes from AJAX.
-RewriteCond %{REQUEST_URI} (^|/)login/?$               [NC]   # URI ends in “login”
-RewriteCond %{HTTP:X-Requested-With} !^XMLHttpRequest$ [NC]   # NOT an AJAX call
+RewriteCond %{REQUEST_URI} (^|/)login/?$               [NC]
+RewriteCond %{HTTP:X-Requested-With} !^XMLHttpRequest$ [NC]
 RewriteRule ^ - [F,L]
 
 ##############################################
@@ -23,12 +23,17 @@ RewriteRule ^account/?$      account/dashboard       [L,R=301]
 RewriteRule ^vendor-store/?$ vendor-store/dashboard  [L,R=301]
 
 ##############################################
+# 3b. Short Link Redirector
+##############################################
+RewriteRule ^r/([A-Za-z0-9_-]+)$ share/redirect.php?c=$1 [L,QSA]
+
+##############################################
 # 4. Clean URLs for Static Pages
 ##############################################
 RewriteRule ^(about-us|request-for-quote|contact-us|products-page)$ $1.php [L]
 
 ##############################################
-# 5. SEO‑Friendly Clean URLs for Any .php Page
+# 5. SEO-Friendly Clean URLs for Any .php Page
 ##############################################
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
@@ -42,24 +47,20 @@ RewriteRule ^auth/([a-zA-Z0-9_-]+)$ login/handleAuth.php?action=$1 [L,QSA]
 ##############################################
 # 7. Generalized API Routing (Admin & Account Fetch)
 ##############################################
-# /fetch/module/action  → fetch/module.php?action=action
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^fetch/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)$ fetch/$1.php?action=$2 [L,QSA]
 
-# /admin/fetch/module/action
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^admin/fetch/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)$ admin/fetch/$1.php?action=$2 [L,QSA]
 
-# /fetch/module  → fetch/module.php
 RewriteRule ^fetch/([a-zA-Z0-9_-]+)$ fetch/$1.php [L]
 
-# /admin/fetch/module → admin/fetch/module.php
 RewriteRule ^admin/fetch/([a-zA-Z0-9_-]+)$ admin/fetch/$1.php [L]
 
 ##############################################
-# 8. Account / Admin / Vendor‑Store Clean Page URLs
+# 8. Account / Admin / Vendor-Store Clean Page URLs
 ##############################################
 RewriteRule ^account/([a-zA-Z0-9_-]+)$      account/$1.php      [L]
 RewriteRule ^admin/([a-zA-Z0-9_-]+)$        admin/$1.php        [L]

@@ -177,6 +177,12 @@ $menuItems = [
             'buy-in-store' => ['title' => 'Buy in Store Sent', 'icon' => 'shopping-cart', 'notifications' => 0],
         ]
     ],
+    'analytics' => [
+        'title' => 'Analytics',
+        'items' => [
+            'share-insights' => ['title' => 'Share Insights', 'icon' => 'share-2', 'notifications' => 0],
+        ]
+    ],
 ];
 if ($needsProfileCompletion) {
     $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '';

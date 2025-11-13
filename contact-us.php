@@ -26,6 +26,46 @@ function loadContactData()
     ];
 }
 
+function loadHomepageDataForHero()
+{
+    $filePath = __DIR__ . '/page-data/homepage/index.json';
+    if (file_exists($filePath)) {
+        $jsonData = file_get_contents($filePath);
+        $data = json_decode($jsonData, true) ?: [];
+        $slides = $data['heroSlides'] ?? [];
+        $active = array_values(array_filter($slides, fn($s) => !empty($s['active'])));
+        usort($active, fn($a, $b) => (($a['order'] ?? 999) - ($b['order'] ?? 999)));
+        return $active;
+    }
+    return [];
+}
+
+function generateSeoMetaTagsContact($slides = [])
+{
+    $site = 'Zzimba Online Uganda';
+    $title = 'Contact Us | ' . $site;
+    $desc = 'Call, email, or send us a message. We will help you compare prices, request quotes, and schedule fast deliveries across Uganda.';
+    $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    $images = [];
+    foreach ($slides as $s) {
+        if (!empty($s['image']))
+            $images[] = BASE_URL . ltrim($s['image'], '/');
+    }
+    $ogImage = !empty($images) ? $images[array_rand($images)] : 'https://placehold.co/1200x630/e2e8f0/1e293b?text=' . urlencode('Zzimba Online Uganda');
+    $clean = strip_tags($desc);
+    if (mb_strlen($clean) > 160)
+        $clean = mb_substr($clean, 0, 157) . '...';
+    return [
+        'title' => htmlspecialchars($title),
+        'description' => htmlspecialchars($clean),
+        'og_title' => htmlspecialchars($title),
+        'og_description' => htmlspecialchars($clean),
+        'og_image' => $ogImage,
+        'og_url' => $currentUrl,
+        'og_type' => 'website'
+    ];
+}
+
 $contactData = loadContactData();
 $contactInfo = $contactData['contactInfo'] ?? [];
 $formSettings = $contactData['formSettings'] ?? [];
@@ -43,6 +83,10 @@ $user = $_SESSION['user'] ?? [];
 $loggedIn = !empty($user['logged_in']);
 $isAdmin = !empty($user['is_admin']);
 $showFields = !$loggedIn || $isAdmin;
+
+$heroSlidesForSeo = loadHomepageDataForHero();
+$seoTags = generateSeoMetaTagsContact($heroSlidesForSeo);
+$pageTitle = $seoTags['title'];
 
 ob_start();
 ?>
@@ -285,7 +329,7 @@ ob_start();
                                 <span class="text-primary">*</span></label>
                             <input type="tel" id="phone" name="phone" required
                                 class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all duration-200 text-secondary placeholder-gray-400"
-                                placeholder="Enter your phone number" value="<?= htmlspecialchars($user['phone'] ?? '') ?>">
+                                value="<?= htmlspecialchars($user['phone'] ?? '') ?>">
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

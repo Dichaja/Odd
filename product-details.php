@@ -279,10 +279,11 @@ try {
             r.is_verified,
             r.created_at,
             DATE_FORMAT(r.created_at, '%Y-%m-%d') as review_date
-        FROM product_reviews r, zzimba_users u 
+        FROM general_reviews r, zzimba_users u 
         WHERE u.id = r.user_id 
-          AND r.product_id = ? 
+          AND r.review_entity = ? 
           AND r.status = 'approved'
+          AND r.entity_type = 'product'
         ORDER BY r.created_at DESC
         LIMIT 10
     ");
@@ -298,9 +299,10 @@ try {
             SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star,
             SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star,
             SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star
-        FROM product_reviews 
-        WHERE product_id = ? 
+        FROM general_reviews 
+        WHERE review_entity = ? 
           AND status = 'approved'
+          AND entity_type = 'product'
     ");
     $statsStmt->execute([$productId]);
     $stats = $statsStmt->fetch();
@@ -587,7 +589,7 @@ ob_start();
                 <div class="share-container mt-3 md:mt-0">
                     <span class="share-label">SHARE</span>
                     <div class="share-buttons">
-                        <button @click="copyLink" class="share-button" aria-label="Copy link">
+                        <button @click="shareCopy" class="share-button" aria-label="Copy link">
                             <span class="hidden md:block">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff"
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -748,7 +750,7 @@ ob_start();
                         </div>
 
                         <div class="flex items-center text-gray-600">
-                            <i data-lucide="eye" class="w-4 h-4 mr-1" style="color:#D92B13;\"></i>
+                            <i data-lucide="eye" class="w-4 h-4 mr-1" style="color:#D92B13;"></i>
                             <span id="view-count"><?= number_format($product['unique_views']) ?> Views</span>
                         </div>
                     </div>
@@ -835,8 +837,7 @@ ob_start();
                     <div class="mb-6">
                         <p class="text-gray-600 dark:text-white/70 mb-4">This product is available from suppliers in
                             <strong><?= count($supplierRegions) ?></strong> region(s). Click on a region to view available
-                            suppliers.
-                        </p>
+                            suppliers.</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <?php foreach ($supplierRegions as $region): ?>
@@ -909,12 +910,9 @@ ob_start();
                                     required></textarea>
                                 <div class="flex justify-between text-xs text-gray-500 mt-1">
                                     <span x-show="reviewComment.length > 0 && reviewComment.length < 10"
-                                        class="text-red-500">
-                                        Minimum 10 characters required
-                                    </span>
-                                    <span class="ml-auto">
-                                        <span x-text="reviewComment?.length || 0"></span>/500 characters
-                                    </span>
+                                        class="text-red-500">Minimum 10 characters required</span>
+                                    <span class="ml-auto"><span x-text="reviewComment?.length || 0"></span>/500
+                                        characters</span>
                                 </div>
                             </div>
                             <button type="submit"
@@ -969,9 +967,8 @@ ob_start();
                                                 class="font-semibold text-gray-800"><?= htmlspecialchars($review['username']) ?></span>
                                             <?php if ($review['is_verified']): ?>
                                                 <span
-                                                    class="ml-2 bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                                                    Verified Purchase
-                                                </span>
+                                                    class="ml-2 bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-0.5 rounded-full">Verified
+                                                    Purchase</span>
                                             <?php endif; ?>
                                         </div>
                                         <div class="text-gray-500 text-sm mb-2"><?= $review['review_date'] ?></div>
@@ -1035,9 +1032,8 @@ ob_start();
                                                     class="font-semibold text-gray-800"><?= htmlspecialchars($review['username']) ?></span>
                                                 <?php if ($review['is_verified']): ?>
                                                     <span
-                                                        class="ml-2 bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-0.5 rounded-full">
-                                                        Verified Purchase
-                                                    </span>
+                                                        class="ml-2 bg-emerald-100 text-emerald-800 text-xs font-medium px-2 py-0.5 rounded-full">Verified
+                                                        Purchase</span>
                                                 <?php endif; ?>
                                             </div>
                                             <div class="text-gray-500 text-sm mb-2"><?= $review['review_date'] ?></div>
@@ -1091,12 +1087,9 @@ ob_start();
                                         required></textarea>
                                     <div class="flex justify-between text-xs text-gray-500 mt-1">
                                         <span x-show="reviewComment.length > 0 && reviewComment.length < 10"
-                                            class="text-red-500">
-                                            Minimum 10 characters required
-                                        </span>
-                                        <span class="ml-auto">
-                                            <span x-text="reviewComment?.length || 0"></span>/500 characters
-                                        </span>
+                                            class="text-red-500">Minimum 10 characters required</span>
+                                        <span class="ml-auto"><span x-text="reviewComment?.length || 0"></span>/500
+                                            characters</span>
                                     </div>
                                 </div>
                                 <button type="submit"
@@ -1146,10 +1139,9 @@ ob_start();
                     <template x-if="vendors.length>0">
                         <div>
                             <div class="mb-4">
-                                <p class="text-gray-600 dark:text-white/70">
-                                    Found <strong x-text="vendors.length"></strong> supplier<span
-                                        x-text="vendors.length===1?'':'s'"></span> in this region:
-                                </p>
+                                <p class="text-gray-600 dark:text-white/70">Found <strong
+                                        x-text="vendors.length"></strong> supplier<span
+                                        x-text="vendors.length===1?'':'s'"></span> in this region:</p>
                             </div>
                             <template x-for="v in vendors" :key="v.id">
                                 <div class="bg-white dark:bg-secondary border border-gray-200 dark:border-white/10 rounded-xl p-4 mb-4 transition-all duration-200 hover:border-[#D92B13] hover:shadow-lg hover:shadow-red-50 hover:-translate-y-0.5 cursor-pointer flex items-center gap-4"
@@ -1320,6 +1312,9 @@ ob_start();
             hoverRating: 0,
             reviewComment: '',
             isSubmitting: false,
+            shareBusy: false,
+            sharePromise: null,
+            shareLinkCache: null,
             init() {
                 this.$nextTick(() => {
                     this.logProductView();
@@ -1370,28 +1365,48 @@ ob_start();
             },
             refreshIcons() { try { if (window.lucide && lucide.createIcons) lucide.createIcons(); } catch (e) { } },
             sellProduct(id, title) { if (typeof openVendorSellModal === 'function') { openVendorSellModal(id, title); } },
-            copyLink() {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url).then(() => { showToast('Link copied to clipboard!', 'success'); }).catch(() => { showToast('Failed to copy link', 'error'); });
+            async getShareLink(force = false) {
+                if (!force && this.shareLinkCache) return this.shareLinkCache;
+                if (this.shareBusy && this.sharePromise) return this.sharePromise;
+                this.shareBusy = true;
+                const form = new FormData();
+                form.append('action', 'create');
+                form.append('target_type', 'product');
+                form.append('target_id', this.productId);
+                form.append('current_url', window.location.href);
+                const p = fetch(this.BASE_URL + 'fetch/manageShareLinks.php', { method: 'POST', body: form, credentials: 'same-origin' })
+                    .then(r => r.json())
+                    .then(d => {
+                        const url = d && d.success && d.data && (d.data.short_url || d.data.target_url) ? (d.data.short_url || d.data.target_url) : window.location.href;
+                        this.shareLinkCache = url;
+                        return url;
+                    })
+                    .catch(() => window.location.href)
+                    .finally(() => { this.shareBusy = false; this.sharePromise = null; });
+                this.sharePromise = p;
+                return p;
             },
-            shareOnWhatsApp() {
-                const url = window.location.href;
+            async shareCopy() {
+                const url = await this.getShareLink(true);
+                try { await navigator.clipboard.writeText(url); showToast('Link copied to clipboard!', 'success'); } catch (e) { showToast('Failed to copy link', 'error'); }
+            },
+            async shareOnWhatsApp() {
+                const url = await this.getShareLink(true);
                 const message = `Check out *${this.productTitle}* available on Zzimba Online:\n\n${url}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
             },
-            shareOnFacebook() {
-                const url = window.location.href;
+            async shareOnFacebook() {
+                const url = await this.getShareLink(true);
                 window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
             },
-            shareOnTwitter() {
-                const url = window.location.href;
+            async shareOnTwitter() {
+                const url = await this.getShareLink(true);
                 const message = `Check out ${this.productTitle} on Zzimba Online:`;
                 window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}&url=${encodeURIComponent(url)}`, '_blank');
             },
-            shareOnLinkedIn() {
-                const url = window.location.href;
-                const message = `Check out ${this.productTitle} on Zzimba Online.`;
-                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(message)}`, '_blank');
+            async shareOnLinkedIn() {
+                const url = await this.getShareLink(true);
+                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
             },
             submitReview() {
                 if (!IS_LOGGED_IN) {
@@ -1402,29 +1417,23 @@ ob_start();
                     }
                     return;
                 }
-
                 if (this.reviewRating < 1) {
                     alert('Please select a rating.');
                     return;
                 }
-
                 if (!this.reviewComment.trim() || this.reviewComment.length < 10) {
                     alert('Review must be at least 10 characters long.');
                     return;
                 }
-
                 if (this.isSubmitting) {
                     return;
                 }
-
                 this.isSubmitting = true;
-
                 const formData = new FormData();
                 formData.append('action', 'submit_review');
                 formData.append('product_id', this.productId);
                 formData.append('rating', this.reviewRating);
                 formData.append('comment', this.reviewComment.trim());
-
                 fetch(BASE_URL + 'fetch/manageProductReviews.php', {
                     method: 'POST',
                     body: formData,

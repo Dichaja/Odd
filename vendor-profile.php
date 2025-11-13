@@ -304,8 +304,15 @@ ob_start();
 </style>
 
 <div x-data="vendorProfile" x-init="init()" class="relative">
+    <div x-show="!pageReady" x-cloak class="min-h-[60vh] flex items-center justify-center">
+        <div class="text-center">
+            <div class="mx-auto mb-3 h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin">
+            </div>
+            <p class="text-sm text-gray-600 dark:text-slate-300">Loading store…</p>
+        </div>
+    </div>
     <div class="relative h-40 md:h-64 w-full bg-gray-100 dark:bg-slate-800 overflow-hidden" id="vendor-cover-photo"
-        x-show="!error && !notFound" x-cloak>
+        x-show="pageReady && !error && !notFound" x-cloak>
         <div id="vendor-cover" class="w-full h-full bg-center bg-cover" :style="coverStyle"></div>
         <?php if ($canEdit): ?>
             <button @click="openCoverEditor"
@@ -315,7 +322,7 @@ ob_start();
         <?php endif; ?>
     </div>
 
-    <div x-show="notFound" x-cloak class="max-w-3xl mx-auto my-14 px-6">
+    <div x-show="pageReady && notFound" x-cloak class="max-w-3xl mx-auto my-14 px-6">
         <div
             class="bg-gradient-to-br from-red-50 to-rose-50 dark:from-slate-800 dark:to-slate-900 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-2xl p-8 md:p-10 shadow-sm fade-in-up">
             <div class="flex flex-col items-center text-center">
@@ -338,7 +345,7 @@ ob_start();
         </div>
     </div>
 
-    <div x-show="error" x-cloak class="max-w-3xl mx-auto my-14 px-6">
+    <div x-show="pageReady && error" x-cloak class="max-w-3xl mx-auto my-14 px-6">
         <div
             class="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-slate-800 dark:to-slate-900 border border-yellow-200 dark:border-yellow-800 text-yellow-900 dark:text-yellow-200 rounded-2xl p-8 md:p-10 shadow-sm fade-in-up">
             <div class="flex flex-col items-center text-center">
@@ -361,7 +368,7 @@ ob_start();
         </div>
     </div>
 
-    <div x-show="!error && !notFound" x-cloak id="content-state"
+    <div x-show="pageReady && !error && !notFound" x-cloak id="content-state"
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 md:-mt-16 relative z-10">
         <div class="bg-white dark:bg-slate-900 rounded-lg shadow-lg p-6 fade-in-up">
             <div class="flex flex-col md:flex-row">
@@ -402,7 +409,8 @@ ob_start();
                                     </button>
                                 <?php endif; ?>
                             </h1>
-                            <p class="text-gray-600 dark:text-slate-300 mt-1 flex items-start justify-center md:justify-start line-clamp-3 md:line-clamp-2">
+                            <p
+                                class="text-gray-600 dark:text-slate-300 mt-1 flex items-start justify-center md:justify-start line-clamp-3 md:line-clamp-2">
                                 <span x-text="store?.description || 'Premium Construction Materials & Services'"></span>
                                 <?php if ($canEdit): ?>
                                     <button @click="openDescriptionEditor"
@@ -513,7 +521,8 @@ ob_start();
                 </div>
             </div>
 
-            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-slate-800 flex flex-wrap gap-x-8 gap-y-4 justify-center md:justify-start">
+            <div
+                class="mt-6 pt-6 border-t border-gray-200 dark:border-slate-800 flex flex-wrap gap-x-8 gap-y-4 justify-center md:justify-start">
                 <div class="flex items-center">
                     <div :class="statusBadgeClass" x-text="statusText"></div>
                     <div class="ml-2 bg-primary text-white px-3 py-1 rounded-full text-sm"
@@ -523,7 +532,16 @@ ob_start();
                 <div class="flex items-center">
                     <template x-if="reviewStats.average_rating > 0">
                         <div class="flex items-center">
-
+                            <div class="text-xl font-bold text-secondary dark:text-white"
+                                x-text="reviewStats.average_rating"></div>
+                            <div class="ml-2 flex items-center">
+                                <template x-for="i in 5" :key="i">
+                                    <i data-lucide="star"
+                                        :class="i <= Math.round(reviewStats.average_rating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                        class="w-4 h-4"></i>
+                                </template>
+                                <span class="ml-1 text-sm text-gray-600 dark:text-slate-300"
+                                    x-text="'(' + reviewStats.total_reviews + ' reviews)'"></span>
                             </div>
                         </div>
                     </template>
@@ -572,13 +590,13 @@ ob_start();
             <!-- Tab Navigation -->
             <div class="mb-6 border-b border-gray-200 dark:border-slate-700">
                 <nav class="flex space-x-8" aria-label="Tabs">
-
+                    <button @click="activeTab = 'products'"
                         :class="activeTab === 'products' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'"
                         class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i data-lucide="package-open" class="w-4 h-4 inline-block mr-2"></i>
                         Products
                     </button>
-
+                    <button @click="activeTab = 'reviews'"
                         :class="activeTab === 'reviews' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:border-gray-300 dark:hover:border-slate-600'"
                         class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                         <i data-lucide="star" class="w-4 h-4 inline-block mr-2"></i>
@@ -586,7 +604,6 @@ ob_start();
                     </button>
                 </nav>
             </div>
-
             <!-- Products Tab -->
             <div x-show="activeTab === 'products'" x-cloak>
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -627,7 +644,8 @@ ob_start();
                                     :alt="p.name" loading="lazy" class="w-full h-40 md:h-48 object-cover">
                                 <div
                                     class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 md:flex items-center justify-center transition-opacity hidden">
-                                    <a :href="BASE_URL + 'view/product/' + p.id"
+                                    <a href=""
+                                        @click.prevent="logStoreProductView(p, 'click_view_details'); window.location.href = BASE_URL + 'view/product/' + p.id"
                                         class="bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 px-4 py-2 rounded-lg font-medium hover:bg-primary hover:text-white transition-colors text-sm">View
                                         Details</a>
                                 </div>
@@ -698,18 +716,43 @@ ob_start();
                     </template>
                 </div>
 
-                <button x-show="pagination.page < pagination.pages" @click="loadMore"
-                    class="mx-auto mt-8 block bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">Load
-                    More Products</button>
+                <button x-show="pagination.page < pagination.pages" @click="loadMore" :disabled="loadingMore"
+                    class="mx-auto mt-8 block bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-show="!loadingMore" class="inline-flex items-center">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                        Load More Products
+                    </span>
+                    <span x-show="loadingMore" class="inline-flex items-center">
+                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0A12 12 0 000 12h4zm2 5.291A7.962 7.962 0 014 12H0a12 12 0 006 10.392l0-5.101z">
+                            </path>
+                        </svg>
+                        Loading...
+                    </span>
+                </button>
             </div>
-
             <!-- Reviews Tab -->
             <div x-show="activeTab === 'reviews'" x-cloak>
                 <!-- Mobile Layout -->
                 <div class="lg:hidden reviews-mobile-layout">
                     <!-- Review Form First on Mobile -->
                     <div class="review-form-mobile">
-
+                        <div
+                            class="review-form-container bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 mb-6">
+                            <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Write a Review</h4>
+                            <form @submit.prevent="submitReview" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your
+                                        Rating</label>
+                                    <div class="star-rating flex space-x-1">
+                                        <template x-for="i in 5" :key="i">
+                                            <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i"
+                                                @mouseleave="hoverRating=0">
+                                                <i data-lucide="star" class="w-5 h-5"
+                                                    :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
                                             </button>
                                         </template>
                                     </div>
@@ -718,7 +761,15 @@ ob_start();
                                     </p>
                                 </div>
                                 <div>
-
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your
+                                        Review</label>
+                                    <textarea rows="4" maxlength="500" x-model="reviewComment"
+                                        class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                                        placeholder="Share your experience with this store... (minimum 10 characters)"
+                                        required></textarea>
+                                    <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
+                                        <span x-show="reviewComment.length > 0 && reviewComment.length < 10"
+                                            class="text-red-500">
                                             Minimum 10 characters required
                                         </span>
                                         <span class="ml-auto">
@@ -726,7 +777,18 @@ ob_start();
                                         </span>
                                     </div>
                                 </div>
-
+                                <button type="submit"
+                                    :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting"
+                                    :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''"
+                                    class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
+                                    <span x-show="!isSubmitting" class="flex items-center justify-center">
+                                        <i data-lucide="send" class="w-5 h-5 mr-2"></i>
+                                        Submit Review
+                                    </span>
+                                    <span x-show="isSubmitting" class="flex items-center justify-center">
+                                        <div
+                                            class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2">
+                                        </div>
                                         Submitting...
                                     </span>
                                 </button>
@@ -736,7 +798,8 @@ ob_start();
 
                     <!-- Review List Second on Mobile -->
                     <div class="review-list-mobile">
-
+                        <div
+                            class="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800">
                             <div class="flex items-center justify-between mb-6">
                                 <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Customer Reviews</h3>
                                 <div class="flex items-center gap-4">
@@ -744,12 +807,25 @@ ob_start();
                                         <div class="flex items-center">
                                             <div class="flex mr-2">
                                                 <template x-for="i in 5" :key="i">
-
+                                                    <i data-lucide="star"
+                                                        :class="i <= Math.round(reviewStats.average_rating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                                        class="w-4 h-4"></i>
+                                                </template>
+                                            </div>
+                                            <span class="text-sm text-gray-600 dark:text-slate-300"
+                                                x-text="reviewStats.average_rating + '/5'"></span>
+                                        </div>
+                                    </template>
+                                    <span
+                                        class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                                        x-text="reviewStats.total_reviews + ' Reviews'"></span>
                                 </div>
                             </div>
 
                             <div x-show="reviewsLoading" class="text-center py-8">
-
+                                <div
+                                    class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary">
+                                </div>
                                 <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
                             </div>
 
@@ -757,13 +833,29 @@ ob_start();
                                 <div class="mb-4">
                                     <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
                                 </div>
-
+                                <h4 class="text-xl font-semibold text-gray-600 dark:text-slate-300 mb-2">No Reviews Yet
+                                </h4>
                                 <p class="text-gray-500 dark:text-slate-400 mb-4">Be the first to review this store!</p>
                             </div>
 
                             <div x-show="!reviewsLoading && reviews.length > 0" class="space-y-6">
                                 <template x-for="review in reviews" :key="review.id">
-
+                                    <div
+                                        class="border-b border-gray-200 dark:border-slate-800 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in-up">
+                                        <div class="flex items-center mb-1">
+                                            <span class="font-semibold text-gray-800 dark:text-white"
+                                                x-text="review.reviewer_name"></span>
+                                        </div>
+                                        <div class="text-gray-500 dark:text-slate-400 text-sm mb-2"
+                                            x-text="formatDate(review.created_at)"></div>
+                                        <div class="flex mb-3">
+                                            <template x-for="i in 5" :key="i">
+                                                <i data-lucide="star"
+                                                    :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                                    class="w-4 h-4"></i>
+                                            </template>
+                                        </div>
+                                        <p class="text-gray-700 dark:text-slate-300 mb-2" x-text="review.review_text">
                                         </p>
                                     </div>
                                 </template>
@@ -776,18 +868,35 @@ ob_start();
                 <div class="hidden lg:block">
                     <div class="reviews-desktop-layout grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2">
-
+                            <div
+                                class="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Customer Reviews
+                                    </h3>
                                     <div class="flex items-center gap-4">
                                         <template x-if="reviewStats.average_rating > 0">
                                             <div class="flex items-center">
                                                 <div class="flex mr-2">
                                                     <template x-for="i in 5" :key="i">
-
+                                                        <i data-lucide="star"
+                                                            :class="i <= Math.round(reviewStats.average_rating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                                            class="w-4 h-4"></i>
+                                                    </template>
+                                                </div>
+                                                <span class="text-sm text-gray-600 dark:text-slate-300"
+                                                    x-text="reviewStats.average_rating + '/5'"></span>
+                                            </div>
+                                        </template>
+                                        <span
+                                            class="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                                            x-text="reviewStats.total_reviews + ' Reviews'"></span>
                                     </div>
                                 </div>
 
                                 <div x-show="reviewsLoading" class="text-center py-8">
-
+                                    <div
+                                        class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary">
+                                    </div>
                                     <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
                                 </div>
 
@@ -795,6 +904,32 @@ ob_start();
                                     <div class="mb-4">
                                         <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
                                     </div>
+                                    <h4 class="text-xl font-semibold text-gray-600 dark:text-slate-300 mb-2">No Reviews
+                                        Yet</h4>
+                                    <p class="text-gray-500 dark:text-slate-400 mb-4">Be the first to review this store!
+                                    </p>
+                                </div>
+
+                                <div x-show="!reviewsLoading && reviews.length > 0"
+                                    class="max-h-[600px] overflow-y-auto pr-2 space-y-6">
+                                    <template x-for="review in reviews" :key="review.id">
+                                        <div
+                                            class="border-b border-gray-200 dark:border-slate-800 pb-6 mb-6 last:border-0 last:pb-0 last:mb-0 fade-in-up">
+                                            <div class="flex items-center mb-1">
+                                                <span class="font-semibold text-gray-800 dark:text-white"
+                                                    x-text="review.reviewer_name"></span>
+                                            </div>
+                                            <div class="text-gray-500 dark:text-slate-400 text-sm mb-2"
+                                                x-text="formatDate(review.created_at)"></div>
+                                            <div class="flex mb-3">
+                                                <template x-for="i in 5" :key="i">
+                                                    <i data-lucide="star"
+                                                        :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"
+                                                        class="w-4 h-4"></i>
+                                                </template>
+                                            </div>
+                                            <p class="text-gray-700 dark:text-slate-300 mb-2"
+                                                x-text="review.review_text"></p>
 
                                         </div>
                                     </template>
@@ -803,12 +938,40 @@ ob_start();
                         </div>
 
                         <div class="lg:col-span-1">
-
+                            <div
+                                class="review-form-container bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 sticky top-4">
+                                <h4 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Write a Review</h4>
+                                <form @submit.prevent="submitReview" class="space-y-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your
+                                            Rating</label>
+                                        <div class="star-rating flex space-x-1">
+                                            <template x-for="i in 5" :key="i">
+                                                <button type="button" @click="reviewRating = i"
+                                                    @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
+                                                    <i data-lucide="star" class="w-5 h-5"
+                                                        :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
+                                                </button>
+                                            </template>
+                                        </div>
+                                        <p x-show="reviewRating > 0"
+                                            class="text-sm text-gray-600 dark:text-slate-300 mt-1">
                                             You rated this store <span x-text="reviewRating"></span> out of 5 stars
                                         </p>
                                     </div>
                                     <div>
-
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-1">Your
+                                            Review</label>
+                                        <textarea rows="4" maxlength="500" x-model="reviewComment"
+                                            class="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
+                                            placeholder="Share your experience with this store... (minimum 10 characters)"
+                                            required></textarea>
+                                        <div
+                                            class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
+                                            <span x-show="reviewComment.length > 0 && reviewComment.length < 10"
+                                                class="text-red-500">
                                                 Minimum 10 characters required
                                             </span>
                                             <span class="ml-auto">
@@ -816,7 +979,18 @@ ob_start();
                                             </span>
                                         </div>
                                     </div>
-
+                                    <button type="submit"
+                                        :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting"
+                                        :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''"
+                                        class="w-full bg-primary hover:bg-primary/90 text-white py-2 rounded-lg font-medium transition-colors">
+                                        <span x-show="!isSubmitting" class="flex items-center justify-center">
+                                            <i data-lucide="send" class="w-5 h-5 mr-2"></i>
+                                            Submit Review
+                                        </span>
+                                        <span x-show="isSubmitting" class="flex items-center justify-center">
+                                            <div
+                                                class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2">
+                                            </div>
                                             Submitting...
                                         </span>
                                     </button>
@@ -1224,7 +1398,7 @@ ob_start();
                 </div>
                 <div class="modal-scroll p-4 sm:p-6">
                     <p class="text-gray-600 dark:text-slate-300 mb-4"
-                        x-text="modals.access.note || 'This action will affect your zzimba credit balance.'"></p>
+                        x-text="modals.access.note || 'This action will impact your zzimba credit balance.'"></p>
                     <div class="rounded-md bg-gray-50 dark:bg-slate-800 p-4 mb-4">
                         <div class="font-medium text-gray-900 dark:text-slate-100"
                             x-text="modals.access.summary || '-'"></div>
@@ -1508,6 +1682,7 @@ ob_start();
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('vendorProfile', () => ({
+            logStoreProductViewOnce: new Set(),
             BASE_URL: window.BASE_URL || '<?= BASE_URL ?>',
             vendorId: '<?= $vendorId ?>',
             defaultSuccessMessage: 'Your buy-in-store request has been submitted successfully.',
@@ -1515,6 +1690,7 @@ ob_start();
             reviews: [],
             reviewsLoading: false,
             reviewRating: 0,
+            loadingMore: false,
             hoverRating: 0,
             reviewComment: '',
             isSubmitting: false,
@@ -1544,6 +1720,7 @@ ob_start();
             SHORT_API: (window.BASE_URL || '<?= BASE_URL ?>') + 'fetch/manageShareLinks.php',
             shortLinks: { store: '', categories: {}, products: {} },
             store: null,
+            pageReady: false,
             logoUrl: '',
             coverUrl: '',
             error: false,
@@ -1676,6 +1853,9 @@ ob_start();
                 if (this.auth.isAdminOrManager) { this.revealPhone(true); this.revealEmail(true) }
                 this.logProfileView();
 
+                // Load review stats on init
+                this.loadReviews();
+
                 // Watch for tab changes
                 this.$watch('activeTab', (value) => {
                     if (value === 'reviews' && this.reviews.length === 0) {
@@ -1719,7 +1899,26 @@ ob_start();
                 this.$nextTick(() => { this.renderIcons() });
             },
 
-            renderIcons() { if (window.lucide && window.lucide.createIcons) window.lucide.createIcons() },
+            renderIcons() { if (window.lucide && window.lucide.createIcons) window.lucide.createIcons(); this.observeProductCards() },
+
+            observeProductCards() {
+                const root = this.$root;
+                if (!root) return;
+                if (this._productObserver) return;
+                const obs = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const el = entry.target;
+                            const id = el.getAttribute('data-product-id');
+                            const p = this.products.find(x => String(x.id) === String(id));
+                            if (p) this.logStoreProductView(p, 'impression');
+                            obs.unobserve(el);
+                        }
+                    });
+                }, { rootMargin: '0px 0px -25% 0px', threshold: 0.2 });
+                this._productObserver = obs;
+                Array.from(root.querySelectorAll('[data-product-card]')).forEach(el => obs.observe(el));
+            },
 
             async loadProfile() {
                 if (!this.vendorId) { this.error = true; return }
@@ -1735,6 +1934,7 @@ ob_start();
                         if (data.error === 'Store not found or not active') { this.notFound = true } else { this.error = true }
                     }
                 } catch (e) { this.error = true }
+                this.pageReady = true;
                 this.$nextTick(() => this.renderIcons());
             },
 
@@ -1789,9 +1989,21 @@ ob_start();
                     this.pendingPriorityId = '';
                     this.priorityApplied = true;
                 }
+                if (this.products[0]) this.logStoreProductView(this.products[0], 'priority_top');
             },
 
-            loadMore() { if (this.pagination.page < this.pagination.pages) { this.loadProducts(this.pagination.page + 1) } },
+            loadMore() {
+                if (this.loadingMore) return;
+                if (this.pagination.page >= this.pagination.pages) return;
+                this.loadingMore = true;
+                const nextPage = this.pagination.page + 1;
+                this.loadProducts(nextPage)
+                    .catch(() => { })
+                    .finally(() => {
+                        this.loadingMore = false;
+                        this.$nextTick(() => this.renderIcons());
+                    });
+            },
 
             applyFilters() { this.$nextTick(() => { this.renderIcons() }) },
 
@@ -1855,6 +2067,7 @@ ob_start();
             },
 
             async revealPrice(pr) {
+                if (this.modals?.prices?.product) { this.logStoreProductView(this.modals.prices.product, 'reveal_price'); }
                 if (this.auth.showPriceDirectly || this.viewed.prices.includes(pr.pricing_id)) { if (!this.viewed.prices.includes(pr.pricing_id)) this.viewed.prices.push(pr.pricing_id); return }
                 const ok = await this.ensureSession({ type: 'price', pricingId: pr?.pricing_id });
                 if (!ok) return;
@@ -1868,6 +2081,7 @@ ob_start();
             },
 
             async revealPriceMobile(pr) {
+                if (this.modals?.prices?.product) { this.logStoreProductView(this.modals.prices.product, 'reveal_price'); }
                 if (this.auth.showPriceDirectly || this.viewed.prices.includes(pr.pricing_id)) { if (!this.viewed.prices.includes(pr.pricing_id)) this.viewed.prices.push(pr.pricing_id); this.openPriceSheet(this.modals.prices.product); return }
                 const ok = await this.ensureSession({ type: 'price', pricingId: pr?.pricing_id });
                 if (!ok) return;
@@ -1884,6 +2098,27 @@ ob_start();
             expandPrices(p) { this.ensureSession({ type: 'expand-prices' }).then(ok => { if (ok) p._showAll = true }) },
 
             sessionId() { try { const s = JSON.parse(localStorage.getItem('session_event_log') || '{}'); return s.sessionID || null } catch (e) { return null } },
+
+            async logStoreProductView(p, source = 'impression') {
+                if (!p || this.auth.isAdminOrManager) return;
+                const sid = this.sessionId();
+                if (!sid || !this.vendorId) return;
+                const key = `${p.store_product_id}:${source}`;
+                if (this.logStoreProductViewOnce.has(key)) return;
+                this.logStoreProductViewOnce.add(key);
+                try {
+                    const body = 'store_id=' + encodeURIComponent(this.vendorId)
+                        + '&store_product_id=' + encodeURIComponent(p.store_product_id || '')
+                        + '&product_id=' + encodeURIComponent(p.id || '')
+                        + '&session_id=' + encodeURIComponent(sid)
+                        + '&source=' + encodeURIComponent(source);
+                    await fetch(this.BASE_URL + 'fetch/manageProfile.php?action=logStoreProductView', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body
+                    });
+                } catch (e) { }
+            },
 
             async logProfileView() {
                 if (this.auth.isAdminOrManager) return;
@@ -1982,8 +2217,10 @@ ob_start();
                 const source = this.auth.canSeeAllCategories ? (Array.isArray(p.pricing) ? p.pricing : []) : p._viewPricing;
                 this.modals.prices.entries = Array.isArray(source) ? source : [];
                 this.modals.prices.visible = true;
+                this.logStoreProductView(p, 'open_price_sheet');
                 this.$nextTick(() => this.renderIcons());
             },
+
             closePriceSheet() {
                 this.modals.prices.visible = false;
                 this.modals.prices.product = null;
@@ -1991,6 +2228,7 @@ ob_start();
             },
 
             async openBuyInStore(p) {
+                this.logStoreProductView(p, 'open_buy_in_store');
                 if (this.auth.isAdmin) { this.showToast('Administrators cannot place store orders.', 'error'); return }
                 if (this.auth.isOwnerOrManager) { this.showToast('Store owners or managers cannot place store orders.', 'error'); return }
                 const ok = await this.ensureSession({ type: 'buy', productId: p.store_product_id });
@@ -2250,7 +2488,7 @@ ob_start();
                     const remain = bal - fee;
                     const reqId = `ac_${Date.now()}_${Math.random().toString(36).slice(2)}`;
                     this.modals.access.title = 'Premium Access';
-                    this.modals.access.note = 'This action will affect your zzimba credit balance.';
+                    this.modals.access.note = 'This action will impact your zzimba credit balance.';
                     this.modals.access.summary = this.buildAccessSummary(type, product);
                     this.modals.access.fee = fee;
                     this.modals.access.balance = bal;
@@ -2524,7 +2762,6 @@ ob_start();
                 formData.append('comment', this.reviewComment.trim());
 
                 try {
-
                     const response = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php', {
                         method: 'POST',
                         body: formData,
@@ -2574,7 +2811,6 @@ ob_start();
                 const d = new Date(dateStr);
                 return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
             },
-
 
             async loadReviewStats() {
                 if (!this.vendorId) return;

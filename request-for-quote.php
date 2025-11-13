@@ -2,6 +2,31 @@
 $pageTitle = 'Request for Quote';
 $activeNav = 'quote';
 require_once __DIR__ . '/config/config.php';
+
+function generateSeoMetaTags($data = [])
+{
+    $siteName = 'Zzimba Online';
+    $title = 'Request a Quote | ' . $siteName;
+    $desc = 'Get a tailored quote for building materials in Uganda. Share your item list and site location, and we will match you with trusted vendors for the best prices and delivery options.';
+    $currentUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+    $clean = strip_tags($desc);
+    if (mb_strlen($clean) > 160)
+        $clean = mb_substr($clean, 0, 157) . '...';
+    $ogImage = 'https://placehold.co/1200x630/e2e8f0/1e293b?text=' . urlencode('Request a Quote - Zzimba Online');
+    return [
+        'title' => htmlspecialchars($title),
+        'description' => htmlspecialchars($clean),
+        'og_title' => htmlspecialchars($title),
+        'og_description' => htmlspecialchars($clean),
+        'og_image' => $ogImage,
+        'og_url' => $currentUrl,
+        'og_type' => 'website'
+    ];
+}
+
+$seoTags = generateSeoMetaTags();
+$pageTitle = $seoTags['title'];
+
 ob_start();
 
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'data') {
@@ -28,13 +53,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
     $type = $_GET['type'] ?? '';
     $id = $_GET['id'] ?? '';
     if (!$type || !$id) {
-        echo json_encode(['image' => null]);
+        echo json_encode(['image' => 'https://placehold.co/60x60?text=No+Image']);
         exit;
     }
     $basePath = 'img/products/';
     $fullPath = __DIR__ . '/' . $basePath . $id . '/';
     if (!is_dir($fullPath)) {
-        echo json_encode(['image' => null]);
+        echo json_encode(['image' => 'https://placehold.co/60x60?text=No+Image']);
         exit;
     }
     $allowed = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
@@ -47,7 +72,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'image') {
             $images[] = $f;
     }
     if (empty($images)) {
-        echo json_encode(['image' => null]);
+        echo json_encode(['image' => 'https://placehold.co/60x60?text=No+Image']);
         exit;
     }
     $randomImage = $images[array_rand($images)];
@@ -637,7 +662,26 @@ $isAdmin = !empty($_SESSION['user']['is_admin']);
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="topbar">
             <h1 class="text-xl font-bold">Request for Quote</h1>
-            <div></div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold tracking-wider">SHARE</span>
+                <div class="flex gap-2">
+                    <button @click="copyRfqLink"
+                        class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="Copy link"><i class="fas fa-link text-sm"></i></button>
+                    <button @click="shareRfqWhatsApp"
+                        class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="Share on WhatsApp"><i class="fab fa-whatsapp text-sm"></i></button>
+                    <button @click="shareRfqFacebook"
+                        class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="Share on Facebook"><i class="fab fa-facebook-f text-sm"></i></button>
+                    <button @click="shareRfqTwitter"
+                        class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="Post on X"><i class="fab fa-x-twitter text-sm"></i></button>
+                    <button @click="shareRfqLinkedIn"
+                        class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="Share on LinkedIn"><i class="fab fa-linkedin-in text-sm"></i></button>
+                </div>
+            </div>
         </div>
 
         <div id="web-ui" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -824,6 +868,23 @@ $isAdmin = !empty($_SESSION['user']['is_admin']);
         <div id="mobile-app">
             <div class="m-head">
                 <div class="m-title">RFQ</div>
+                <div class="flex items-center gap-2">
+                    <button @click="copyRfqLink"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="Copy link"><i class="fas fa-link text-xs"></i></button>
+                    <button @click="shareRfqWhatsApp"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="WhatsApp"><i class="fab fa-whatsapp text-xs"></i></button>
+                    <button @click="shareRfqFacebook"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="Facebook"><i class="fab fa-facebook-f text-xs"></i></button>
+                    <button @click="shareRfqTwitter"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="X"><i class="fab fa-x-twitter text-xs"></i></button>
+                    <button @click="shareRfqLinkedIn"
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-700"
+                        aria-label="LinkedIn"><i class="fab fa-linkedin-in text-xs"></i></button>
+                </div>
             </div>
 
             <div class="m-wrap">
@@ -1068,7 +1129,8 @@ $isAdmin = !empty($_SESSION['user']['is_admin']);
                         x-text="'UGX '+nf((walletInfo.balance - walletInfo.fee) || 0)"></span></div>
                 <div class="flex justify-between text-red-600" x-show="!walletInfo.canSubmit">
                     <span>Shortfall</span><span class="font-semibold"
-                        x-text="'UGX '+nf(Math.max(0,(walletInfo.fee - walletInfo.balance)))"></span></div>
+                        x-text="'UGX '+nf(Math.max(0,(walletInfo.fee - walletInfo.balance)))"></span>
+                </div>
             </div>
             <p class="text-sm text-red-600 mt-1" x-show="!walletInfo.canSubmit">Insufficient balance. Please top up your
                 wallet to continue.</p>
@@ -1167,6 +1229,8 @@ $isAdmin = !empty($_SESSION['user']['is_admin']);
             lastActivityTime: Date.now(),
             successMessage: '',
             errors: { location: '', items: '' },
+            rfqShareUrl: '',
+            creatingShort: false,
             get UGANDA_BOUNDS() { return { north: 4.234077, south: -1.484456, east: 35.036133, west: 29.573252 } },
 
             init() {
@@ -1184,6 +1248,55 @@ $isAdmin = !empty($_SESSION['user']['is_admin']);
                     if (a && b && !a.contains(e.target) && !b.contains(e.target)) b.style.display = 'none';
                 });
                 window.addEventListener('zz:session-login', e => this.handlePostLogin(e.detail || {}));
+            },
+
+            async getRfqShortUrl() {
+                if (this.rfqShareUrl) return this.rfqShareUrl;
+                if (this.creatingShort) {
+                    return new Promise(resolve => {
+                        const t = setInterval(() => { if (this.rfqShareUrl) { clearInterval(t); resolve(this.rfqShareUrl) } }, 50);
+                        setTimeout(() => { clearInterval(t); resolve(this.BASE_URL + 'request-for-quote') }, 1500);
+                    });
+                }
+                this.creatingShort = true;
+                try {
+                    const fd = new FormData();
+                    fd.append('action', 'create');
+                    fd.append('target_type', 'request-for-quote');
+                    fd.append('target_url', this.BASE_URL + 'request-for-quote');
+                    const r = await fetch(this.BASE_URL + 'fetch/manageShareLinks.php', { method: 'POST', body: fd, credentials: 'include' });
+                    const j = await r.json().catch(() => ({}));
+                    if (j && j.success && j.data && j.data.short_url) this.rfqShareUrl = String(j.data.short_url);
+                    else this.rfqShareUrl = this.BASE_URL + 'request-for-quote';
+                } catch (e) {
+                    this.rfqShareUrl = this.BASE_URL + 'request-for-quote';
+                } finally {
+                    this.creatingShort = false;
+                }
+                return this.rfqShareUrl;
+            },
+
+            async copyRfqLink() {
+                const u = await this.getRfqShortUrl();
+                try { await navigator.clipboard.writeText(u); showToast('Link copied', 'success'); } catch (e) { showToast('Failed to copy', 'error'); }
+            },
+            async shareRfqWhatsApp() {
+                const u = await this.getRfqShortUrl();
+                const m = 'Request a quote on Zzimba Online Uganda:\n\n' + u;
+                window.open('https://wa.me/?text=' + encodeURIComponent(m), '_blank');
+            },
+            async shareRfqFacebook() {
+                const u = await this.getRfqShortUrl();
+                window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank');
+            },
+            async shareRfqTwitter() {
+                const u = await this.getRfqShortUrl();
+                const t = 'Request for Quote - Zzimba Online Uganda';
+                window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(t) + '&url=' + encodeURIComponent(u), '_blank');
+            },
+            async shareRfqLinkedIn() {
+                const u = await this.getRfqShortUrl();
+                window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(u), '_blank');
             },
 
             handlePostLogin(user) {
@@ -1526,6 +1639,15 @@ $isAdmin = !empty($_SESSION['user']['is_admin']);
 
     function checkSessionStatus() {
         return fetch((window.BASE_URL || '<?= BASE_URL ?>') + 'fetch/check-session.php').then(r => r.json()).then(j => !!j.logged_in).catch(() => false);
+    }
+
+    function showToast(m, t = 'success') {
+        const el = document.createElement('div');
+        el.className = `fixed top-4 left-1/2 -translate-x-1/2 ${t === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity`;
+        el.textContent = m;
+        document.body.appendChild(el);
+        setTimeout(() => el.classList.add('opacity-100'), 10);
+        setTimeout(() => { el.classList.remove('opacity-100'); setTimeout(() => el.remove(), 300) }, 2500);
     }
 </script>
 

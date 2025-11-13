@@ -81,7 +81,7 @@ function getStepTitle($mode, $step)
                 </button>
             </div>
             <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">
-                Don't have an account?
+                Do not have an account?
                 <a href="javascript:void(0)" @click="go('register-username')"
                     class="text-primary hover:text-red-700 font-medium">Create Account</a>
             </p>
@@ -248,7 +248,8 @@ function getStepTitle($mode, $step)
                             <div>
                                 <p class="font-medium text-gray-900 dark:text-white">Email</p>
                                 <p class="text-sm text-gray-500 dark:text-white/60">Receive a verification code via
-                                    <span id="empty-password-email-hint"></span></p>
+                                    <span id="empty-password-email-hint"></span>
+                                </p>
                             </div>
                         </label>
                         <label id="empty-password-phone-option"
@@ -258,7 +259,8 @@ function getStepTitle($mode, $step)
                             <div>
                                 <p class="font-medium text-gray-900 dark:text-white">Phone</p>
                                 <p class="text-sm text-gray-500 dark:text-white/60">Receive a verification code via
-                                    <span id="empty-password-phone-hint"></span></p>
+                                    <span id="empty-password-phone-hint"></span>
+                                </p>
                             </div>
                         </label>
                     </div>
@@ -318,7 +320,8 @@ function getStepTitle($mode, $step)
         <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    <?= getStepTitle('register', 'verification-method') ?></h2>
+                    <?= getStepTitle('register', 'verification-method') ?>
+                </h2>
                 <button @click="closeAuthModal()"
                     class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -361,7 +364,8 @@ function getStepTitle($mode, $step)
                         in your profile settings.</p>
                 </div>
                 <div id="register-verification-method-error" class="text-red-500 text-sm mt-1 hidden"></div>
-                <button type="button" @click="handleVerificationMethodSubmit()"
+                <button type="button" @click="handleVerificationMethodSubmit()
+                    "
                     class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Continue</button>
             </form>
         </div>
@@ -408,7 +412,8 @@ function getStepTitle($mode, $step)
         <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    <?= getStepTitle('register', 'email-verify') ?></h2>
+                    <?= getStepTitle('register', 'email-verify') ?>
+                </h2>
                 <button @click="closeAuthModal()"
                     class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -422,7 +427,7 @@ function getStepTitle($mode, $step)
             </p>
             <p class="mb-4 text-center text-sm text-gray-600 dark:text-white/70">Verifying for <strong
                     id="register-username-display-verify" class="text-gray-900 dark:text-white"></strong></p>
-            <p class="mb-4 text-center text-gray-700 dark:text-white/80">We've sent a verification code to <strong
+            <p class="mb-4 text-center text-gray-700 dark:text-white/80">We have sent a verification code to <strong
                     id="register-email-display" class="text-gray-900 dark:text-white"></strong></p>
             <p class="text-sm text-gray-500 dark:text-white/60 mt-1 text-center mb-4">Enter the 6-digit code below</p>
             <form id="register-email-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
@@ -431,7 +436,7 @@ function getStepTitle($mode, $step)
                 <input type="hidden" id="email-otp" value="">
                 <div id="email-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="mt-2 text-sm text-gray-500 dark:text-white/60 text-center">
-                    Didn't receive the code?
+                    Did not receive the code?
                     <button type="button" id="resend-email-otp"
                         class="text-primary hover:text-red-700 text-sm">Resend</button>
                     <span id="email-otp-timer" class="text-sm"></span>
@@ -481,7 +486,8 @@ function getStepTitle($mode, $step)
         <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    <?= getStepTitle('register', 'phone-verify') ?></h2>
+                    <?= getStepTitle('register', 'phone-verify') ?>
+                </h2>
                 <button @click="closeAuthModal()"
                     class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -495,7 +501,7 @@ function getStepTitle($mode, $step)
             </p>
             <p class="mb-4 text-sm text-gray-600 dark:text-white/70">Creating account for <strong
                     id="register-username-display-phone-verify" class="text-gray-900 dark:text-white"></strong></p>
-            <p class="mb-4 text-center text-gray-700 dark:text-white/80">We've sent a verification code to <strong
+            <p class="mb-4 text-center text-gray-700 dark:text-white/80">We have sent a verification code to <strong
                     id="register-phone-display" class="text-gray-900 dark:text-white"></strong></p>
             <p class="text-sm text-gray-500 dark:text-white/60 mt-1 text-center mb-4">Enter the 6-digit code below</p>
             <form id="register-phone-verify-form" class="space-y-4" autocomplete="off" data-mode="register"
@@ -504,13 +510,13 @@ function getStepTitle($mode, $step)
                 <input type="hidden" id="phone-otp" value="">
                 <div id="phone-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="mt-2 text-sm text-gray-500 dark:text-white/60 text-center">
-                    Didn't receive the code?
+                    Did not receive the code?
                     <button type="button" id="resend-phone-otp"
                         class="text-primary hover:text-red-700 text-sm">Resend</button>
                     <span id="phone-otp-timer" class="text-sm"></span>
                 </p>
-                <button type="button" id="phone-otp-submit-btn" @click="handlePhoneOTPSubmit()"
-                    class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Verify
+                <button type="button" id="phone-otp-submit-btn" @click="handlePhoneOTPSubmit()
+                    " class="w-full bg-primary text-white py-2.5 rounded-lg hover:bg-red-600 transition-colors">Verify
                     Phone</button>
             </form>
         </div>
@@ -595,7 +601,8 @@ function getStepTitle($mode, $step)
         <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    <?= getStepTitle('forgot_password', 'options') ?></h2>
+                    <?= getStepTitle('forgot_password', 'options') ?>
+                </h2>
                 <button @click="closeAuthModal()"
                     class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -652,7 +659,8 @@ function getStepTitle($mode, $step)
         <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    <?= getStepTitle('forgot_password', 'email-form') ?></h2>
+                    <?= getStepTitle('forgot_password', 'email-form') ?>
+                </h2>
                 <button @click="closeAuthModal()"
                     class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -690,7 +698,8 @@ function getStepTitle($mode, $step)
         <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    <?= getStepTitle('forgot_password', 'phone-form') ?></h2>
+                    <?= getStepTitle('forgot_password', 'phone-form') ?>
+                </h2>
                 <button @click="closeAuthModal()"
                     class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -725,7 +734,8 @@ function getStepTitle($mode, $step)
         <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    <?= getStepTitle('reset_password', 'verify') ?></h2>
+                    <?= getStepTitle('reset_password', 'verify') ?>
+                </h2>
                 <button @click="closeAuthModal()"
                     class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -738,7 +748,7 @@ function getStepTitle($mode, $step)
             </p>
             <p class="mb-2 text-sm text-gray-600 dark:text-white/70">Resetting password for <strong
                     id="forgot-username-display-reset" class="text-gray-900 dark:text-white"></strong></p>
-            <p class="mb-4 text-center text-gray-700 dark:text-white/80">We've sent a verification code to <strong
+            <p class="mb-4 text-center text-gray-700 dark:text-white/80">We have sent a verification code to <strong
                     id="reset-contact-display" class="text-gray-900 dark:text-white"></strong></p>
             <p class="text-sm text-gray-500 dark:text-white/60 mt-1 text-center mb-4">Enter the 6-digit code below</p>
             <form id="reset-verify-form" class="space-y-4" autocomplete="off" data-mode="reset_password"
@@ -747,7 +757,7 @@ function getStepTitle($mode, $step)
                 <input type="hidden" id="reset-otp" value="">
                 <div id="reset-otp-error" class="text-red-500 text-sm mt-1 hidden"></div>
                 <p class="mt-2 text-sm text-gray-500 dark:text-white/60 text-center">
-                    Didn't receive the code?
+                    Did not receive the code?
                     <button type="button" id="resend-reset-otp"
                         class="text-primary hover:text-red-700 text-sm">Resend</button>
                     <span id="reset-otp-timer" class="text-sm"></span>
@@ -764,7 +774,8 @@ function getStepTitle($mode, $step)
         <div class="p-6 border-b bg-white dark:bg-gray-900 border-gray-100 dark:border-white/10">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                    <?= getStepTitle('reset_password', 'form') ?></h2>
+                    <?= getStepTitle('reset_password', 'form') ?>
+                </h2>
                 <button @click="closeAuthModal()"
                     class="text-gray-500 hover:text-gray-700 dark:text-white/60 dark:hover:text-white">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -2015,9 +2026,9 @@ function getStepTitle($mode, $step)
         const meter = document.querySelector(id === 'register-password' ? '.password-strength-meter-fill' : '#reset-password-form .password-strength-meter-fill');
         const text = document.querySelector(id === 'register-password' ? '.password-strength-text' : '#reset-password-form .password-strength-text');
         if (!password) {
-            meter.style.width = '0%';
-            meter.style.backgroundColor = '#e0e0e0';
-            text.textContent = '';
+            if (meter) meter.style.width = '0%';
+            if (meter) meter.style.backgroundColor = '#e0e0e0';
+            if (text) text.textContent = '';
             return;
         }
         let strength = 0;
@@ -2027,19 +2038,19 @@ function getStepTitle($mode, $step)
         if (/[a-z]/.test(password)) { strength += 25; } else { feedback.push('lowercase letter'); }
         if (/[0-9]/.test(password)) { strength += 12.5; } else { feedback.push('number'); }
         if (/[^A-Za-z0-9]/.test(password)) { strength += 12.5; } else { feedback.push('special character'); }
-        meter.style.width = strength + '%';
+        if (meter) meter.style.width = strength + '%';
         if (strength < 40) {
-            meter.style.backgroundColor = '#f44336';
-            text.textContent = 'Weak password';
+            if (meter) meter.style.backgroundColor = '#f44336';
+            if (text) text.textContent = 'Weak password';
         } else if (strength < 70) {
-            meter.style.backgroundColor = '#ff9800';
-            text.textContent = 'Moderate password';
+            if (meter) meter.style.backgroundColor = '#ff9800';
+            if (text) text.textContent = 'Moderate password';
         } else {
-            meter.style.backgroundColor = '#4caf50';
-            text.textContent = 'Strong password';
+            if (meter) meter.style.backgroundColor = '#4caf50';
+            if (text) text.textContent = 'Strong password';
         }
         if (feedback.length > 0) {
-            text.textContent += ' - Add ' + feedback.join(', ');
+            if (text) text.textContent += ' - Add ' + feedback.join(', ');
         }
     }
 
@@ -2083,4 +2094,57 @@ function getStepTitle($mode, $step)
     function showForgotPasswordFormEntry(m) {
         showForgotPasswordForm(m);
     }
+
+    function resetAuthState() {
+        if (emailOTPTimer) { clearInterval(emailOTPTimer); emailOTPTimer = null; }
+        if (phoneOTPTimer) { clearInterval(phoneOTPTimer); phoneOTPTimer = null; }
+        if (resetOTPTimer) { clearInterval(resetOTPTimer); resetOTPTimer = null; }
+        const timers = ['email-otp', 'phone-otp', 'reset-otp'];
+        timers.forEach(t => {
+            const te = document.getElementById(t + '-timer');
+            if (te) te.textContent = '';
+            const rb = document.getElementById('resend-' + t);
+            if (rb) { rb.disabled = false; rb.classList.remove('text-gray-400'); }
+        });
+        registrationData = {};
+        loginData = {};
+        forgotPasswordData = {};
+        resetMethod = '';
+        document.querySelectorAll('.auth-form form').forEach(f => { try { f.reset(); } catch (_) { } });
+        const usernameRadio = document.querySelector('#login-identifier-form input[name="login_method"][value="username"]');
+        if (usernameRadio) {
+            usernameRadio.checked = true;
+            usernameRadio.dispatchEvent(new Event('input', { bubbles: true }));
+            usernameRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        ['login-identifier-display', 'empty-username-display', 'register-username-display', 'register-username-display-method', 'register-username-display-verify', 'register-username-display-phone', 'register-username-display-phone-verify', 'register-username-display-password', 'register-email-display', 'register-phone-display', 'forgot-username-display', 'forgot-username-display-email', 'forgot-username-display-phone', 'forgot-username-display-reset', 'forgot-username-display-reset-form', 'reset-contact-display'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
+        ['register-password', 'register-confirm-password', 'login-password', 'new-password', 'confirm-new-password', 'login-username', 'login-email', 'login-phone', 'register-username', 'register-email', 'forgot-email'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        const phonePi = document.querySelector('#phone');
+        if (phonePi && window.intlTelInputGlobals) { const inst = window.intlTelInputGlobals.getInstance(phonePi); if (inst) inst.setNumber(''); }
+        const fphonePi = document.querySelector('#forgot-phone');
+        if (fphonePi && window.intlTelInputGlobals) { const inst2 = window.intlTelInputGlobals.getInstance(fphonePi); if (inst2) inst2.setNumber(''); }
+        ['email-otp', 'phone-otp', 'reset-otp'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+        renderOtpInputs('email-otp'); renderOtpInputs('phone-otp'); renderOtpInputs('reset-otp');
+        document.querySelectorAll('[id$="-error"]').forEach(el => { el.classList.add('hidden'); el.textContent = ''; });
+        document.querySelectorAll('.password-strength-meter-fill').forEach(m => { m.style.width = '0%'; m.style.backgroundColor = '#e0e0e0'; });
+        document.querySelectorAll('.password-strength-text').forEach(t => { t.textContent = ''; });
+        const terms = document.getElementById('terms-checkbox'); if (terms) terms.checked = false;
+        if (typeof Alpine !== 'undefined') { Alpine.store?.auth ? Alpine.store('auth').go('start') : window.__auth?.go('start'); } else { window.__auth?.go && window.__auth.go('start'); }
+        spaceCount = 0;
+        if (window.lucide && lucide.createIcons) lucide.createIcons();
+    }
+
+    (function patchModalControls() {
+        const prevClose = window.closeAuthModal;
+        window.closeAuthModal = function () {
+            if (typeof prevClose === 'function') prevClose.apply(this, arguments);
+            resetAuthState();
+        };
+        const prevOpen = window.openAuthModal;
+        window.openAuthModal = function () {
+            resetAuthState();
+            if (typeof prevOpen === 'function') prevOpen.apply(this, arguments);
+        };
+        document.addEventListener('auth-modal:closed', resetAuthState);
+    })();
 </script>

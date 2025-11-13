@@ -1,15 +1,15 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 
-$pageTitle = 'Product Reviews Management';
+$pageTitle = 'General Reviews Management';
 $activeNav = 'products';
 
 ob_start();
 ?>
+<script src="https://unpkg.com/lucide@latest"></script>
 
 <div x-data="reviewsManagement()" x-init="init()">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Product Reviews Management</h1>
         <p class="text-gray-600 dark:text-white/70">Manage and moderate product reviews</p>
     </div>
 
@@ -21,7 +21,7 @@ ob_start();
                 <select x-model="filters.filterType" @change="handleFilterTypeChange()" class="w-full px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                     <option value="">All Reviews</option>
                     <option value="product">By Product</option>
-                    <option value="vendor">By Vendor</option>
+                    <option value="store">By Store</option>
                 </select>
             </div>
             <div x-show="filters.filterType === 'product'">
@@ -131,7 +131,7 @@ ob_start();
             <table class="w-full">
                 <thead class="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wider">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wider">Review Category</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wider">User</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wider">Rating</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-white/70 uppercase tracking-wider">Comment</th>
@@ -141,68 +141,92 @@ ob_start();
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-white/10">
-
+                    <template x-if="loading">
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <div class="flex justify-center items-center">
+                                    <div class="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                    <span class="ml-3 text-gray-600 dark:text-white/70">Loading reviews...</span>
+                                </div>
+                            </td>
+                        </tr>
                     </template>
-                    <span class="ml-2 text-sm text-gray-600 dark:text-white/70" x-text="review.rating"></span>
-                </div>
-            </td>
-
-            <!-- Comment -->
-            <td class="px-6 py-4">
-                <p class="text-sm text-gray-900 dark:text-white line-clamp-2" x-text="review.comment"></p>
-            </td>
-
-            <!-- Status -->
-            <td class="px-6 py-4">
-                <span class="px-2 py-1 text-xs font-medium rounded-full"
-                    :class="{
-                        'bg-emerald-100 text-emerald-800': review.status === 'approved',
-                        'bg-amber-100 text-amber-800': review.status === 'pending',
-                        'bg-red-100 text-red-800': review.status === 'rejected'
-                    }"
-                    x-text="review.status.charAt(0).toUpperCase() + review.status.slice(1)">
-                </span>
-            </td>
-
-            <!-- Date -->
-            <td class="px-6 py-4 text-sm text-gray-500 dark:text-white/70" x-text="formatDate(review.created_at)"></td>
-
-            <!-- Actions -->
-            <td class="px-6 py-4">
-                <div class="flex items-center space-x-2">
-                    <!-- View -->
-                    <button @click="viewReview(review)" class="text-blue-600 hover:text-blue-800" title="View">
-                        <i data-lucide="eye" class="w-4 h-4"></i>
-                    </button>
-                    <div class="px-2 py-1 text-xs font-medium rounded-full" @click="updateStatus(review.id, 'rejected')" style="border-radius: 9999px; background-color: #D7D2CB; color: #343434;cursor: pointer;">Reject</div>
-                    <div class="px-2 py-1 text-xs font-medium rounded-full" style="border-radius: 9999px; background-color: #D7D2CB; color: #343434;cursor: pointer;" @click="deleteReview(review.id)">Delete</div>
-                    <!-- Approve -->
-                    <button x-show="review.status?.toLowerCase() !== 'approved'" x-transition.opacity
-                        @click="updateStatus(review.id, 'approved')"
-                        class="text-emerald-600 hover:text-emerald-800"
-                        title="Approve">
-                        <i data-lucide="check" class="w-4 h-4"></i>
-                    </button>
-
-                    <!-- Reject -->
-                    <button x-show="review.status?.toLowerCase() !== 'rejected'" x-transition.opacity
-                        @click="updateStatus(review.id, 'rejected')"
-                        class="text-red-600 hover:text-red-800"
-                        title="Reject">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-
-                    <!-- Delete -->
-                    <button  class="text-red-600 hover:text-red-800" title="Delete">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </td>
-
-        </tr>
-    </template>
-</tbody>
-
+                    <template x-if="!loading && reviews.length === 0">
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500 dark:text-white/70">
+                                No reviews found
+                            </td>
+                        </tr>
+                    </template>
+                    <template x-for="review in reviews" :key="review.id">
+                        <tr class="border-b border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-3">
+                                    <template x-if="review.product_image">
+                                        <img :src="BASE_URL + review.product_image" :alt="review.product_title || review.store_name" class="w-12 h-12 rounded-lg object-cover">
+                                    </template>
+                                    <template x-if="!review.product_image">
+                                        <div class="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                            <i data-lucide="package" class="w-6 h-6 text-gray-400"></i>
+                                        </div>
+                                    </template>
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-white" x-text="review.review_target"></p>
+                                        <p class="text-xs text-gray-500 dark:text-white/60">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" 
+                                                :class="review.review_type === 'product' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'"
+                                                x-text="review.entity_type === 'product' ? 'Product Review' : 'Store Review'">
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm text-gray-900 dark:text-white" x-text="review.username"></p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <template x-for="i in 5" :key="i">
+                                        <i data-lucide="star" class="w-4 h-4" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
+                                    </template>
+                                    <span class="ml-2 text-sm text-gray-600 dark:text-white/70" x-text="review.rating"></span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm text-gray-900 dark:text-white line-clamp-2" x-text="review.comment"></p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full" 
+                                    :class="{
+                                        'bg-emerald-100 text-emerald-800': review.status === 'approved',
+                                        'bg-amber-100 text-amber-800': review.status === 'pending',
+                                        'bg-red-100 text-red-800': review.status === 'rejected'
+                                    }"
+                                    x-text="review.status.charAt(0).toUpperCase() + review.status.slice(1)">
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500 dark:text-white/70" x-text="formatDate(review.created_at)"></td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center space-x-2">
+                                    <button @click="viewReview(review)" class="text-blue-600 hover:text-blue-800" title="View">
+                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                    </button>
+                                    <template x-if="review.status !== 'approved'">
+                                        <button @click="updateStatus(review.id, 'approved')" class="text-emerald-600 hover:text-emerald-800" title="Approve">
+                                            <i data-lucide="check" class="w-4 h-4"></i>
+                                        </button>
+                                    </template>
+                                    <button @click="updateStatus(review.id, 'rejected')" class="text-red-600 hover:text-red-800" title="Reject">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
+                                    <button @click="deleteReview(review.id)" class="text-red-600 hover:text-red-800" title="Delete">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
             </table>
         </div>
 
@@ -289,7 +313,7 @@ ob_start();
 </div>
 
 <script>
-
+// Notifications helper
 const notifications = {
     success: (message) => {
         alert(message);
@@ -333,7 +357,9 @@ function reviewsManagement() {
         init() {
             this.loadReviews();
             this.loadStats();
-            if (window.lucide && lucide.createIcons) lucide.createIcons();
+            this.$nextTick(() => {
+                lucide.createIcons();
+            });
         },
 
         handleFilterTypeChange() {
@@ -417,6 +443,10 @@ function reviewsManagement() {
                     search: this.filters.search
                 });
 
+                if (this.filters.filterType) {
+                   params.append('filter_type', this.filters.filterType);
+                 }
+
                 if (this.filters.selectedProduct) {
                     params.append('product_id', this.filters.selectedProduct.id);
                 }
@@ -433,7 +463,7 @@ function reviewsManagement() {
                     this.pagination.total = data.pagination.total;
                     this.pagination.totalPages = data.pagination.totalPages;
                     this.$nextTick(() => {
-                        if (window.lucide && lucide.createIcons) lucide.createIcons();
+                        lucide.createIcons();
                     });
                 }
             } catch (error) {
@@ -470,7 +500,7 @@ function reviewsManagement() {
                 const data = await response.json();
 
                 if (data.success) {
-                    notifications.success(data.message || `Review ${status} successfully`);
+                    notifications.success(`Review ${status} successfully`);
                     this.loadReviews();
                     this.loadStats();
                 } else {
@@ -493,10 +523,9 @@ function reviewsManagement() {
                 });
 
                 const data = await response.json();
-               console.log(data)
+
                 if (data.success) {
-                    notifications.success();
-                     notifications.success(data.message || 'Review deleted successfully');
+                    notifications.success('Review deleted successfully');
                     this.loadReviews();
                     this.loadStats();
                 } else {

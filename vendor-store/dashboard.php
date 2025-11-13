@@ -59,7 +59,7 @@ ob_start();
                     <h3 class="text-xl font-semibold text-secondary"><?= htmlspecialchars($storeName) ?> • Store
                         Overview</h3>
                 </div>
-                <a href="<?= BASE_URL ?>view/profile/vendor/<?= htmlspecialchars($storeId) ?>" target="_blank"
+                <a href="<?= BASE_URL ?>view/profile/vendor/<?= htmlspecialchars($storeId) ?>"
                     class="h-9 px-4 bg-user-primary text-white rounded-lg hover:bg-user-primary/90 transition flex items-center gap-2 text-sm">
                     <i data-lucide="external-link" class="w-4 h-4"></i>
                     <span class="hidden sm:inline">View Public Profile</span>
@@ -135,7 +135,7 @@ ob_start();
                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="calendar-check-2" class="w-6 h-6 text-yellow-600"></i>
                 </div>
-                <span class="text-xs px-2 py-1 rounded-full" id="requestsStatus">—</span>
+                <span class="text-xs px-2 py-1 rounded-full" id="requestsStatus">-</span>
             </div>
             <div class="space-y-2">
                 <div class="text-3xl font-bold text-secondary" id="pendingRequests">0</div>
@@ -153,7 +153,7 @@ ob_start();
                 <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="package" class="w-6 h-6 text-red-600"></i>
                 </div>
-                <span class="text-xs px-2 py-1 rounded-full" id="productsStatus">—</span>
+                <span class="text-xs px-2 py-1 rounded-full" id="productsStatus">-</span>
             </div>
             <div class="space-y-2">
                 <div class="text-3xl font-bold text-secondary" id="totalProducts">0</div>
@@ -170,7 +170,7 @@ ob_start();
                 <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="users" class="w-6 h-6 text-green-600"></i>
                 </div>
-                <span class="text-xs px-2 py-1 rounded-full" id="managersStatus">—</span>
+                <span class="text-xs px-2 py-1 rounded-full" id="managersStatus">-</span>
             </div>
             <div class="space-y-2">
                 <div class="text-3xl font-bold text-secondary" id="totalManagers">0</div>
@@ -190,7 +190,8 @@ ob_start();
                 <div class="text-3xl font-bold text-secondary">UGX <span id="vendorMonthTotal">0</span></div>
                 <div class="text-sm text-gray-text">Total Transactions</div>
                 <div class="text-xs text-gray-500">Credits: UGX <span id="vendorMonthCredits">0</span> • Debits: UGX
-                    <span id="vendorMonthDebits">0</span></div>
+                    <span id="vendorMonthDebits">0</span>
+                </div>
             </div>
         </a>
         <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -198,7 +199,8 @@ ob_start();
                 <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <i data-lucide="eye" class="w-6 h-6 text-blue-600"></i>
                 </div>
-                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Monthly</span>
+                <span id="monthlyStoreViewsMonth"
+                    class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">-</span>
             </div>
             <div class="space-y-2">
                 <div class="text-3xl font-bold text-secondary" id="monthlyStoreViews">0</div>
@@ -249,7 +251,7 @@ ob_start();
             </div>
             <div class="p-6">
                 <div id="topProductsList" class="space-y-3">
-                    <div class="text-center py-6 text-gray-500">Loading products…</div>
+                    <div class="text-center py-6 text-gray-500">Loading products...</div>
                 </div>
             </div>
         </div>
@@ -339,6 +341,8 @@ ob_start();
         document.getElementById('vendorMonthCredits').textContent = formatCurrency(stats.transactions.month_credits);
         document.getElementById('vendorMonthDebits').textContent = formatCurrency(stats.transactions.month_debits);
         document.getElementById('monthlyStoreViews').textContent = formatCurrency(stats.monthly_store_views || 0);
+        const monthEl = document.getElementById('monthlyStoreViewsMonth');
+        if (monthEl) monthEl.textContent = stats.monthly_store_views_month || '-';
         if (stats.top_products) renderTopProducts(stats.top_products);
         if (window.lucide && lucide.createIcons) lucide.createIcons();
     }
@@ -398,9 +402,9 @@ ob_start();
                 </div>
                 <div class="flex-1 min-w-0">
                     <h4 class="font-medium text-secondary truncate">${escapeHtml(p.title)}</h4>
-                    <p class="text-xs text-gray-500">Price: UGX <span class="font-medium">${p.price !== null ? formatCurrency(p.price) : '—'}</span> • 30d Views: <span class="font-medium">${formatCurrency(p.views_30d)}</span> • All-time: <span class="font-medium">${formatCurrency(p.views_all)}</span></p>
+                    <p class="text-xs text-gray-500">Price: UGX <span class="font-medium">${p.price !== null ? formatCurrency(p.price) : '-'}</span> • Views: <span class="font-medium">${formatCurrency(p.views_all)}</span></p>
                 </div>
-                <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">${formatCurrency(p.views_30d)}</span>
+                <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">${formatCurrency(p.views_all)}</span>
             </a>
         `).join('');
     }

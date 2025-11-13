@@ -283,7 +283,7 @@ function sendManagerDenialNotification(string $ownerEmail, string $ownerName, st
     $subject = "Store Manager Invitation Declined - Zzimba Online";
 
     $content = '
-        <div style="padding:20px 0;">
+        <div style="padding:20px 0%;">
             <h2>Store Manager Invitation Declined</h2>
             <p>Hello ' . htmlspecialchars($ownerName) . ',</p>
             <p>This email is to inform you that <strong>' . htmlspecialchars($managerName) . '</strong> has declined your invitation to manage the store <strong>' . htmlspecialchars($storeName) . '</strong> on Zzimba Online.</p>
@@ -462,14 +462,14 @@ function getStoreDetails(PDO $pdo, string $storeId, ?string $userId): void
         FROM vendor_stores vs
         LEFT JOIN nature_of_business nob ON vs.nature_of_business = nob.id
         JOIN zzimba_users u ON vs.owner_id = u.id
-        WHERE vs.id = ? AND vs.status = 'active'
+        WHERE vs.id = ?
     ");
     $stmt->execute([$storeId]);
     $store = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$store) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'Store not found or not active']);
+        echo json_encode(['success' => false, 'error' => 'Store not found']);
         return;
     }
 
@@ -933,11 +933,11 @@ function getStoreCategories(PDO $pdo, string $storeId): void
         return;
     }
 
-    $storeStmt = $pdo->prepare("SELECT 1 FROM vendor_stores WHERE id = ? AND status = 'active'");
+    $storeStmt = $pdo->prepare("SELECT 1 FROM vendor_stores WHERE id = ?");
     $storeStmt->execute([$storeId]);
     if ($storeStmt->rowCount() === 0) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'Store not found or not active']);
+        echo json_encode(['success' => false, 'error' => 'Store not found']);
         return;
     }
 

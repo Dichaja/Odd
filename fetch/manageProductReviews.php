@@ -779,8 +779,8 @@ function submitPlatformReview(PDO $pdo, string $currentUser, string $username)
 
         // Insert platform review (no product_id or store_id)
         $insertStmt = $pdo->prepare("
-            INSERT INTO product_reviews (id, user_id, rating, comment, created_at, updated_at, status, review_type)
-            VALUES (?, ?, ?, ?, ?, ?, 'pending', 'platform')
+            INSERT INTO general_reviews (id, review_entity, user_id, rating, comment, created_at, updated_at, status, entity_type)
+            VALUES (?, 'platform', ?, ?, ?, ?, ?, 'approved', 'platform')
         ");
         $insertStmt->execute([$reviewId, $currentUser, $rating, $comment, $now, $now]);
 
@@ -835,10 +835,10 @@ function getPlatformReviews(PDO $pdo)
                 pr.rating,
                 pr.comment as review_text,
                 pr.created_at,
-                COALESCE(u.name, u.username, 'Anonymous') as reviewer_name
-            FROM product_reviews pr
+                COALESCE(u.username, 'Anonymous') as reviewer_name
+            FROM general_reviews pr
             LEFT JOIN zzimba_users u ON pr.user_id = u.id
-            WHERE pr.review_type = 'platform' AND pr.status = 'approved'
+            WHERE pr.entity_type = 'platform' AND pr.status = 'approved'
             ORDER BY pr.created_at DESC
             LIMIT ?
         ");
@@ -855,7 +855,7 @@ function getPlatformReviews(PDO $pdo)
         error_log("Error fetching platform reviews: " . $e->getMessage());
         echo json_encode([
             'success' => false,
-            'error' => 'Failed to fetch reviews'
+            'error' => 'Failed to fetch reviews' . $e->getMessage()
         ]);
     }
 }

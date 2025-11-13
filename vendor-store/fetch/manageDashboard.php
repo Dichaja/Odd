@@ -44,13 +44,15 @@ try {
 
 function getDashboardStats(string $storeId): void
 {
+    $views = getMonthlyStoreViewsForSessionStore();
     $stats = [
         'requests' => getRequestStats($storeId),
         'products' => getProductStats($storeId),
         'managers' => getManagersStats($storeId),
         'transactions' => getTransactionStatsMonthlyFromEntries($storeId),
         'wallet' => getWalletStatsVendor($storeId),
-        'monthly_store_views' => getMonthlyStoreViewsUgandaFromSession(),
+        'monthly_store_views' => $views['count'],
+        'monthly_store_views_month' => $views['month'],
         'top_products' => getTopProductsByViews($storeId, 6)
     ];
     echo json_encode(['success' => true, 'stats' => $stats, 'timestamp' => date('Y-m-d H:i:s')]);
@@ -94,6 +96,7 @@ function getProductStats(string $storeId): array
             FROM store_products sp
             JOIN store_categories sc ON sp.store_category_id = sc.id
             WHERE sc.store_id = :sid
+              AND sp.status IN ('active','inactive')
             GROUP BY sp.status
         ";
         $stmt = $pdo->prepare($sql);
@@ -130,16 +133,13 @@ function getTransactionStatsMonthlyFromEntries(string $storeId): array
 {
     global $pdo;
     $stats = ['month_total_amount' => 0.0, 'month_credits' => 0.0, 'month_debits' => 0.0];
-
     try {
         $walletStmt = $pdo->prepare("SELECT wallet_id FROM zzimba_wallets WHERE owner_type = 'VENDOR' AND vendor_id = :sid AND status = 'active'");
         $walletStmt->execute([':sid' => $storeId]);
         $walletIds = array_column($walletStmt->fetchAll(PDO::FETCH_ASSOC), 'wallet_id');
-
         if (empty($walletIds)) {
             return $stats;
         }
-
         $placeholders = implode(',', array_fill(0, count($walletIds), '?'));
         $sql = "
             SELECT e.entry_type, SUM(e.amount) AS amt
@@ -154,19 +154,16 @@ function getTransactionStatsMonthlyFromEntries(string $storeId): array
             $stmt->bindValue($i + 1, $id, PDO::PARAM_STR);
         }
         $stmt->execute();
-
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
             if ($r['entry_type'] === 'CREDIT')
                 $stats['month_credits'] = (float) $r['amt'];
             if ($r['entry_type'] === 'DEBIT')
                 $stats['month_debits'] = (float) $r['amt'];
         }
-
         $stats['month_total_amount'] = $stats['month_credits'] + $stats['month_debits'];
     } catch (Exception $e) {
         error_log("Vendor getTransactionStatsMonthlyFromEntries error: " . $e->getMessage());
     }
-
     return $stats;
 }
 
@@ -180,7 +177,6 @@ function getWalletStatsVendor(string $storeId): array
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $stats['total_wallets'] = (int) ($row['cnt'] ?? 0);
         $stats['main_balance'] = (float) ($row['total_bal'] ?? 0);
-
         $stmt = $pdo->prepare("SELECT COALESCE(current_balance, 0) AS bal FROM zzimba_sms_wallet WHERE owner_type = 'VENDOR' AND vendor_id = :sid AND status = 'active' ORDER BY created_at DESC LIMIT 1");
         $stmt->execute([':sid' => $storeId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -191,29 +187,41 @@ function getWalletStatsVendor(string $storeId): array
     return $stats;
 }
 
-function getMonthlyStoreViewsUgandaFromSession(): int
+function getMonthlyStoreViewsForSessionStore(): array
 {
     global $pdo;
     $sid = $_SESSION['active_store'] ?? null;
-    if (!$sid)
-        return 0;
-
-    $count = 0;
+    if (!$sid) {
+        return ['count' => 0, 'month' => ''];
+    }
     try {
+        $tzKla = new DateTimeZone('Africa/Kampala');
+        $tzUtc = new DateTimeZone('UTC');
+        $nowKla = new DateTimeImmutable('now', $tzKla);
+        $startKla = $nowKla->modify('first day of this month')->setTime(0, 0, 0);
+        $endKla = $startKla->modify('first day of next month')->setTime(0, 0, 0);
+        $startUtc = $startKla->setTimezone($tzUtc)->format('Y-m-d H:i:s');
+        $endUtc = $endKla->setTimezone($tzUtc)->format('Y-m-d H:i:s');
         $stmt = $pdo->prepare("
             SELECT COUNT(*) AS cnt
             FROM store_profile_views
             WHERE store_id = :sid
-              AND CONVERT_TZ(created_at,'UTC','Africa/Kampala') >= DATE_FORMAT(CONVERT_TZ(UTC_TIMESTAMP(),'UTC','Africa/Kampala'), '%Y-%m-01 00:00:00')
-              AND CONVERT_TZ(created_at,'UTC','Africa/Kampala') < DATE_ADD(DATE(CONVERT_TZ(UTC_TIMESTAMP(),'UTC','Africa/Kampala')), INTERVAL 1 DAY)
+              AND created_at >= :start_utc
+              AND created_at < :end_utc
         ");
-        $stmt->execute([':sid' => $sid]);
+        $stmt->execute([
+            ':sid' => $sid,
+            ':start_utc' => $startUtc,
+            ':end_utc' => $endUtc
+        ]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $count = (int) ($row['cnt'] ?? 0);
+        $label = $startKla->format('F Y');
+        return ['count' => $count, 'month' => $label];
     } catch (Exception $e) {
-        error_log("Vendor getMonthlyStoreViewsUgandaFromSession error: " . $e->getMessage());
+        error_log("Vendor getMonthlyStoreViewsForSessionStore error: " . $e->getMessage());
+        return ['count' => 0, 'month' => ''];
     }
-    return $count;
 }
 
 function getTopProductsByViews(string $storeId, int $limit = 6): array
@@ -226,13 +234,19 @@ function getTopProductsByViews(string $storeId, int $limit = 6): array
                 p.id AS product_id,
                 p.title AS title,
                 MIN(pp.price) AS price,
-                COUNT(ppv.id) AS views_all,
-                SUM(CASE WHEN CONVERT_TZ(ppv.created_at,'UTC','Africa/Kampala') >= DATE_SUB(DATE(CONVERT_TZ(UTC_TIMESTAMP(),'UTC','Africa/Kampala')), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS views_30d
+                COUNT(spv.id) AS views_all,
+                SUM(
+                    CASE
+                        WHEN CONVERT_TZ(spv.created_at,'UTC','Africa/Kampala') >= DATE_SUB(DATE(CONVERT_TZ(UTC_TIMESTAMP(),'UTC','Africa/Kampala')), INTERVAL 30 DAY)
+                        THEN 1 ELSE 0
+                    END
+                ) AS views_30d
             FROM store_products sp
             JOIN store_categories sc ON sp.store_category_id = sc.id AND sc.store_id = :sid
             JOIN products p ON sp.product_id = p.id
-            LEFT JOIN product_pricing pp ON pp.store_products_id = sp.id
-            LEFT JOIN product_price_views ppv ON ppv.pricing_id = pp.id
+            LEFT JOIN product_pricing pp ON pp.store_products_id = sp.id AND pp.status = 'active'
+            LEFT JOIN store_products_views spv ON spv.store_products_id = sp.id
+            WHERE sp.status = 'active'
             GROUP BY p.id, p.title
             ORDER BY views_30d DESC, views_all DESC, title ASC
             LIMIT :lim
@@ -307,7 +321,8 @@ function getRecentActivity(string $storeId): void
 
         $activities = array_merge($requests, $transactions);
         usort($activities, function ($a, $b) {
-            return strtotime($b['created_at']) <=> strtotime($a['created_at']); });
+            return strtotime($b['created_at']) <=> strtotime($a['created_at']);
+        });
         $activities = array_slice($activities, 0, 5);
         echo json_encode(['success' => true, 'activities' => $activities]);
     } catch (Exception $e) {

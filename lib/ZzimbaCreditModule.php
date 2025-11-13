@@ -27,7 +27,8 @@ final class Boot
 
     public static function init(): void
     {
-        if (self::$ready) return;
+        if (self::$ready)
+            return;
         global $pdo;
         self::$pdo = $pdo;
         date_default_timezone_set(ModuleConfig::TZ);
@@ -55,8 +56,10 @@ final class NotificationBus
     public function recipients(array $adminMessage, ?array $userMessage = null, ?array $vendorMessage = null): array
     {
         $r = [['type' => 'admin', 'id' => 'admin-global', 'message' => $adminMessage['message']]];
-        if ($userMessage && !empty($userMessage['id'])) $r[] = ['type' => 'user', 'id' => $userMessage['id'], 'message' => $userMessage['message']];
-        if ($vendorMessage && !empty($vendorMessage['id'])) $r[] = ['type' => 'store', 'id' => $vendorMessage['id'], 'message' => $vendorMessage['message']];
+        if ($userMessage && !empty($userMessage['id']))
+            $r[] = ['type' => 'user', 'id' => $userMessage['id'], 'message' => $userMessage['message']];
+        if ($vendorMessage && !empty($vendorMessage['id']))
+            $r[] = ['type' => 'store', 'id' => $vendorMessage['id'], 'message' => $vendorMessage['message']];
         return $r;
     }
 
@@ -68,7 +71,9 @@ final class NotificationBus
 
 final class WalletRepo
 {
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private PDO $pdo)
+    {
+    }
 
     public function byId(string $walletId): ?array
     {
@@ -106,7 +111,8 @@ final class WalletRepo
     public function operationsWallet(): ?array
     {
         $id = $this->pdo->query("SELECT platform_account_id FROM zzimba_platform_account_settings WHERE type='operations' LIMIT 1")->fetchColumn();
-        if (!$id) return null;
+        if (!$id)
+            return null;
         return $this->byId($id);
     }
 
@@ -187,12 +193,16 @@ final class WalletRepo
 
 final class EntityLookup
 {
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private PDO $pdo)
+    {
+    }
 
     public function entityInfo(?string $userId, ?string $vendorId): array
     {
-        if ($userId) return ['type' => 'User', 'name' => $this->userName($userId), 'id' => $userId];
-        if ($vendorId) return ['type' => 'Store', 'name' => $this->vendorName($vendorId), 'id' => $vendorId];
+        if ($userId)
+            return ['type' => 'User', 'name' => $this->userName($userId), 'id' => $userId];
+        if ($vendorId)
+            return ['type' => 'Store', 'name' => $this->vendorName($vendorId), 'id' => $vendorId];
         return ['type' => 'Unknown', 'name' => 'Unknown', 'id' => null];
     }
 
@@ -213,7 +223,9 @@ final class EntityLookup
 
 final class TxRepo
 {
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private PDO $pdo)
+    {
+    }
 
     public function insert(array $row): void
     {
@@ -255,7 +267,9 @@ final class TxRepo
 
 final class EntryRepo
 {
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private PDO $pdo)
+    {
+    }
 
     public function insert(array $row): string
     {
@@ -279,7 +293,9 @@ final class EntryRepo
 
 final class SettingsRepo
 {
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private PDO $pdo)
+    {
+    }
 
     public function activeSetting(string $key, string $category, array $applicable): ?array
     {
@@ -299,12 +315,15 @@ final class SettingsRepo
 
 final class FeeEngine
 {
-    public function __construct(private SettingsRepo $settings, private WalletRepo $wallets) {}
+    public function __construct(private SettingsRepo $settings, private WalletRepo $wallets)
+    {
+    }
 
     public function transferFeeForUser(float $amount): array
     {
         $s = $this->settings->activeSetting('transfer_fee', 'transfer', ['users']);
-        if (!$s) return ['fee' => 0.0, 'sink' => null, 'settingId' => null, 'type' => null];
+        if (!$s)
+            return ['fee' => 0.0, 'sink' => null, 'settingId' => null, 'type' => null];
         $fee = $s['setting_type'] === 'flat' ? (float) $s['setting_value'] : ($amount * (float) $s['setting_value'] / 100.0);
         $sink = $this->wallets->destinationForCreditSetting($s['id']);
         return ['fee' => $fee, 'sink' => $sink, 'settingId' => $s['id'], 'type' => $s['setting_type']];
@@ -313,7 +332,8 @@ final class FeeEngine
     public function smsCostSink(string $ownerType): ?array
     {
         $s = $this->settings->activeSetting('sms_cost', 'sms', [strtolower($ownerType) . 's']);
-        if (!$s) return null;
+        if (!$s)
+            return null;
         return $this->wallets->destinationForCreditSetting($s['id']);
     }
 
@@ -345,7 +365,9 @@ final class FeeEngine
 
 final class CommissionEngine
 {
-    public function __construct(private WalletRepo $wallets) {}
+    public function __construct(private WalletRepo $wallets)
+    {
+    }
 
     public function breakdown(string $txnType, float $amount, array $context): array
     {
@@ -355,7 +377,9 @@ final class CommissionEngine
 
 final class LedgerService
 {
-    public function __construct(private PDO $pdo, private WalletRepo $wallets, private EntryRepo $entries) {}
+    public function __construct(private PDO $pdo, private WalletRepo $wallets, private EntryRepo $entries)
+    {
+    }
 
     public function move(string $txnId, string $fromWalletId, string $toWalletId, float $amount, array $notes): void
     {
@@ -408,7 +432,8 @@ final class GatewayClient
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         } else {
             curl_setopt($ch, CURLOPT_HTTPGET, true);
-            if (!empty($data)) curl_setopt($ch, CURLOPT_URL, $url . '?' . http_build_query($data));
+            if (!empty($data))
+                curl_setopt($ch, CURLOPT_URL, $url . '?' . http_build_query($data));
         }
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Accept: application/vnd.relworx.v2', 'Authorization: Bearer ' . ModuleConfig::API_KEY]);
@@ -418,7 +443,8 @@ final class GatewayClient
         $err = curl_error($ch);
         curl_close($ch);
 
-        if ($resp === false || $http !== 200) return ['success' => false, 'message' => 'API request failed', 'error' => $err, 'http' => $http];
+        if ($resp === false || $http !== 200)
+            return ['success' => false, 'message' => 'API request failed', 'error' => $err, 'http' => $http];
 
         return json_decode($resp, true) ?? ['success' => false, 'message' => 'Invalid response'];
     }
@@ -442,13 +468,18 @@ final class GatewayClient
 
 final class StatementService
 {
-    public function __construct(private PDO $pdo, private EntryRepo $entries) {}
+    public function __construct(private PDO $pdo, private EntryRepo $entries)
+    {
+    }
 
     public function walletStatement(array $wallet, string $filter = 'all', ?string $start = null, ?string $end = null): array
     {
-        if ($wallet['owner_type'] === 'USER') $st = $this->pdo->prepare("SELECT transaction_id FROM zzimba_financial_transactions WHERE user_id=:id");
-        elseif ($wallet['owner_type'] === 'VENDOR') $st = $this->pdo->prepare("SELECT transaction_id FROM zzimba_financial_transactions WHERE vendor_id=:id");
-        else $st = $this->pdo->prepare("SELECT DISTINCT ft.transaction_id FROM zzimba_financial_transactions ft JOIN zzimba_transaction_entries e ON ft.transaction_id=e.transaction_id WHERE e.wallet_id=:id");
+        if ($wallet['owner_type'] === 'USER')
+            $st = $this->pdo->prepare("SELECT transaction_id FROM zzimba_financial_transactions WHERE user_id=:id");
+        elseif ($wallet['owner_type'] === 'VENDOR')
+            $st = $this->pdo->prepare("SELECT transaction_id FROM zzimba_financial_transactions WHERE vendor_id=:id");
+        else
+            $st = $this->pdo->prepare("SELECT DISTINCT ft.transaction_id FROM zzimba_financial_transactions ft JOIN zzimba_transaction_entries e ON ft.transaction_id=e.transaction_id WHERE e.wallet_id=:id");
 
         $param = $wallet['owner_type'] === 'USER' ? [':id' => $wallet['user_id']] : ($wallet['owner_type'] === 'VENDOR' ? [':id' => $wallet['vendor_id']] : [':id' => $wallet['wallet_id']]);
         $st->execute($param);
@@ -458,7 +489,8 @@ final class StatementService
         $et->execute([':w' => $wallet['wallet_id']]);
 
         $allTxnIds = array_unique(array_merge($ft, $et->fetchAll(\PDO::FETCH_COLUMN)));
-        if (empty($allTxnIds)) return [];
+        if (empty($allTxnIds))
+            return [];
 
         $ph = [];
         $pr = [];
@@ -508,7 +540,8 @@ final class CreditService
 
     private static function boot(): void
     {
-        if (self::$booted) return;
+        if (self::$booted)
+            return;
 
         Boot::init();
         self::$pdo = Boot::pdo();
@@ -546,8 +579,10 @@ final class CreditService
         $msisdn = trim($opts['msisdn'] ?? '');
         $amount = (float) ($opts['amount'] ?? 0);
 
-        if ($msisdn === '' || $amount <= 0) return ['success' => false, 'message' => 'MSISDN and positive amount required'];
-        if ($amount < 500) return ['success' => false, 'message' => 'Minimum amount is 500 UGX'];
+        if ($msisdn === '' || $amount <= 0)
+            return ['success' => false, 'message' => 'MSISDN and positive amount required'];
+        if ($amount < 500)
+            return ['success' => false, 'message' => 'Minimum amount is 500 UGX'];
 
         $reference = Ids::ulid();
         $res = self::$gateway->requestPayment($msisdn, $amount, $reference, trim($opts['description'] ?? 'Payment Request.'));
@@ -604,11 +639,15 @@ final class CreditService
                 $vendorMessage = null;
 
                 if ($newStatus === 'SUCCESS') {
-                    if (!empty($txn['user_id'])) $userMessage = ['id' => $txn['user_id'], 'message' => "Payment successful! {$txn['amount_total']} UGX has been credited to your wallet."];
-                    if (!empty($txn['vendor_id'])) $vendorMessage = ['id' => $txn['vendor_id'], 'message' => "Payment successful! {$txn['amount_total']} UGX has been credited to your store wallet."];
+                    if (!empty($txn['user_id']))
+                        $userMessage = ['id' => $txn['user_id'], 'message' => "Payment successful! {$txn['amount_total']} UGX has been credited to your wallet."];
+                    if (!empty($txn['vendor_id']))
+                        $vendorMessage = ['id' => $txn['vendor_id'], 'message' => "Payment successful! {$txn['amount_total']} UGX has been credited to your store wallet."];
                 } elseif ($newStatus === 'FAILED') {
-                    if (!empty($txn['user_id'])) $userMessage = ['id' => $txn['user_id'], 'message' => "Payment failed. Amount: {$txn['amount_total']} UGX"];
-                    if (!empty($txn['vendor_id'])) $vendorMessage = ['id' => $txn['vendor_id'], 'message' => "Payment failed. Amount: {$txn['amount_total']} UGX"];
+                    if (!empty($txn['user_id']))
+                        $userMessage = ['id' => $txn['user_id'], 'message' => "Payment failed. Amount: {$txn['amount_total']} UGX"];
+                    if (!empty($txn['vendor_id']))
+                        $vendorMessage = ['id' => $txn['vendor_id'], 'message' => "Payment failed. Amount: {$txn['amount_total']} UGX"];
                 }
 
                 $rec = self::$bus->recipients($adminMessage, $userMessage, $vendorMessage);
@@ -657,18 +696,27 @@ final class CreditService
             ? self::$pdo->query("SELECT wallet_id,wallet_number,wallet_name,current_balance,status,created_at FROM zzimba_wallets WHERE owner_type='PLATFORM' AND status='active' LIMIT 1")->fetch(\PDO::FETCH_ASSOC)
             : ($ownerType === 'USER' ? self::$wallets->userWallet($ownerId) : self::$wallets->vendorWallet($ownerId));
 
-        if ($wallet) return ['success' => true, 'newAccount' => false, 'wallet' => $wallet];
+        if ($wallet)
+            return ['success' => true, 'newAccount' => false, 'wallet' => $wallet];
 
         $name = 'My Wallet';
         if ($ownerType === 'USER') {
-            $st = self::$pdo->prepare("SELECT first_name,last_name FROM zzimba_users WHERE id=:id");
+            $st = self::$pdo->prepare("SELECT first_name,last_name FROM zzimba_users WHERE id=:id LIMIT 1");
             $st->execute([':id' => $ownerId]);
-            if ($r = $st->fetch(\PDO::FETCH_ASSOC)) $name = trim($r['first_name'] . ' ' . $r['last_name']);
+            $r = $st->fetch(\PDO::FETCH_ASSOC);
+            if (!$r)
+                return ['success' => false, 'newAccount' => false, 'message' => 'User not found'];
+            $first = trim((string) ($r['first_name'] ?? ''));
+            $last = trim((string) ($r['last_name'] ?? ''));
+            if ($first === '' || $last === '')
+                return ['success' => false, 'newAccount' => false, 'message' => 'Please add your first name and last name to your profile before creating a wallet'];
+            $name = trim($first . ' ' . $last);
         }
         if ($ownerType === 'VENDOR') {
             $st = self::$pdo->prepare("SELECT name FROM vendor_stores WHERE id=:id");
             $st->execute([':id' => $ownerId]);
-            if ($r = $st->fetch(\PDO::FETCH_ASSOC)) $name = trim($r['name']);
+            if ($r = $st->fetch(\PDO::FETCH_ASSOC))
+                $name = trim($r['name']);
         }
 
         $new = self::$wallets->create($ownerType, $ownerId, $name);
@@ -727,7 +775,8 @@ final class CreditService
 
                         self::$bus->send('Welcome Bonus Credited', $bonusRecipients, 'normal', $ownerId);
                     } catch (\Throwable $e) {
-                        if (self::$pdo->inTransaction()) self::$pdo->rollBack();
+                        if (self::$pdo->inTransaction())
+                            self::$pdo->rollBack();
                         self::$tx->updateStatus($txnId, 'FAILED');
                     }
                 }
@@ -742,7 +791,8 @@ final class CreditService
         self::boot();
 
         $w = self::$wallets->byId($walletId);
-        if (!$w) return ['success' => false, 'statement' => [], 'message' => 'Wallet not found or inactive'];
+        if (!$w)
+            return ['success' => false, 'statement' => [], 'message' => 'Wallet not found or inactive'];
 
         $statement = self::$statements->walletStatement($w, $filter, $start, $end);
 
@@ -756,24 +806,30 @@ final class CreditService
         $walletTo = trim($opts['wallet_to'] ?? '');
         $amount = (float) ($opts['amount'] ?? 0);
 
-        if ($walletTo === '' || $amount < 500) return ['success' => false, 'message' => 'Destination Account No. and amount >= 500 required'];
+        if ($walletTo === '' || $amount < 500)
+            return ['success' => false, 'message' => 'Destination Account No. and amount >= 500 required'];
 
         $userId = $_SESSION['user']['user_id'] ?? null;
-        if (!$userId) return ['success' => false, 'message' => 'Not authenticated'];
+        if (!$userId)
+            return ['success' => false, 'message' => 'Not authenticated'];
 
         $from = self::$wallets->userWallet($userId);
-        if (!$from) return ['success' => false, 'message' => 'Source wallet not found'];
+        if (!$from)
+            return ['success' => false, 'message' => 'Source wallet not found'];
 
         $to = self::$wallets->byNumber($walletTo);
-        if (!$to) return ['success' => false, 'message' => 'Destination wallet not found or inactive'];
+        if (!$to)
+            return ['success' => false, 'message' => 'Destination wallet not found or inactive'];
 
-        if ($from['wallet_id'] === $to['wallet_id']) return ['success' => false, 'message' => 'Cannot transfer to the same wallet'];
+        if ($from['wallet_id'] === $to['wallet_id'])
+            return ['success' => false, 'message' => 'Cannot transfer to the same wallet'];
 
         $fee = self::$fees->transferFeeForUser($amount);
         $transferFee = (float) $fee['fee'];
         $totalRequired = $amount + $transferFee;
 
-        if ((float) $from['current_balance'] < $totalRequired) return ['success' => false, 'message' => 'Insufficient funds for transfer and fees'];
+        if ((float) $from['current_balance'] < $totalRequired)
+            return ['success' => false, 'message' => 'Insufficient funds for transfer and fees'];
 
         $transferTxnId = Ids::ulid();
 
@@ -849,12 +905,14 @@ final class CreditService
                 ['id' => $senderEntity['id'], 'message' => "You sent {$amount} UGX to {$recipientEntity['type']} {$recipientEntity['name']}.{$feeMessage}"],
                 $recipientEntity['type'] === 'Store' ? ['id' => $recipientEntity['id'], 'message' => "{$senderEntity['type']} {$senderEntity['name']} sent you {$amount} UGX."] : null
             );
-            if ($recipientEntity['type'] === 'User') $rec[] = ['type' => 'user', 'id' => $recipientEntity['id'], 'message' => "{$senderEntity['type']} {$senderEntity['name']} sent you {$amount} UGX."];
+            if ($recipientEntity['type'] === 'User')
+                $rec[] = ['type' => 'user', 'id' => $recipientEntity['id'], 'message' => "{$senderEntity['type']} {$senderEntity['name']} sent you {$amount} UGX."];
             self::$bus->send('Wallet Transfer Completed', $rec, 'normal', $senderEntity['id']);
         } catch (\Throwable $e) {
             self::$pdo->rollBack();
             self::$tx->updateStatus($transferTxnId, 'FAILED');
-            if ($chargesTxnId) self::$tx->updateStatus($chargesTxnId, 'FAILED');
+            if ($chargesTxnId)
+                self::$tx->updateStatus($chargesTxnId, 'FAILED');
             return ['success' => false, 'message' => 'Transfer failed'];
         }
 
@@ -870,21 +928,27 @@ final class CreditService
         $amount = (float) ($opts['amount'] ?? 0);
         $userId = trim($opts['user_id'] ?? '');
 
-        if ($amount <= 0 || $userId === '') return ['success' => false, 'message' => 'Invalid amount or user ID'];
+        if ($amount <= 0 || $userId === '')
+            return ['success' => false, 'message' => 'Invalid amount or user ID'];
 
         $userWallet = self::$wallets->userWallet($userId);
-        if (!$userWallet) return ['success' => false, 'message' => 'User wallet not found'];
+        if (!$userWallet)
+            return ['success' => false, 'message' => 'User wallet not found'];
 
-        if ((float) $userWallet['current_balance'] < $amount) return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $userWallet['current_balance'], 'required' => $amount];
+        if ((float) $userWallet['current_balance'] < $amount)
+            return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $userWallet['current_balance'], 'required' => $amount];
 
         $setting = self::$fees->quoteFeeSetting();
-        if (!$setting) return ['success' => false, 'message' => 'Quote fee setting not found'];
+        if (!$setting)
+            return ['success' => false, 'message' => 'Quote fee setting not found'];
 
         $feeAmount = (float) $setting['setting_value'];
-        if ($amount != $feeAmount) return ['success' => false, 'message' => 'Amount does not match quote fee setting'];
+        if ($amount != $feeAmount)
+            return ['success' => false, 'message' => 'Amount does not match quote fee setting'];
 
         $destination = self::$wallets->destinationForCreditSetting($setting['id']);
-        if (!$destination) return ['success' => false, 'message' => 'Quote fee destination wallet not configured'];
+        if (!$destination)
+            return ['success' => false, 'message' => 'Quote fee destination wallet not configured'];
 
         $txnId = Ids::ulid();
 
@@ -919,15 +983,19 @@ final class CreditService
         $userId = trim($opts['user_id'] ?? '');
         $quotationId = trim($opts['quotation_id'] ?? '');
 
-        if ($amount <= 0 || $userId === '' || $quotationId === '') return ['success' => false, 'message' => 'Invalid amount, user ID, or quotation ID'];
+        if ($amount <= 0 || $userId === '' || $quotationId === '')
+            return ['success' => false, 'message' => 'Invalid amount, user ID, or quotation ID'];
 
         $userWallet = self::$wallets->userWallet($userId);
-        if (!$userWallet) return ['success' => false, 'message' => 'User wallet not found'];
+        if (!$userWallet)
+            return ['success' => false, 'message' => 'User wallet not found'];
 
-        if ((float) $userWallet['current_balance'] < $amount) return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $userWallet['current_balance'], 'required' => $amount];
+        if ((float) $userWallet['current_balance'] < $amount)
+            return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $userWallet['current_balance'], 'required' => $amount];
 
         $ops = self::$wallets->operationsWallet();
-        if (!$ops) return ['success' => false, 'message' => 'Operations account not configured'];
+        if (!$ops)
+            return ['success' => false, 'message' => 'Operations account not configured'];
 
         $txnId = Ids::ulid();
 
@@ -973,20 +1041,26 @@ final class CreditService
         $btDepositorName = trim($opts['btDepositorName'] ?? '');
         $btDateTime = trim($opts['btDateTime'] ?? '');
 
-        if (!$walletId || !$cashAccountId || $amount <= 0 || !in_array($paymentMethod, ['BANK', 'MOBILE_MONEY'], true)) return ['success' => false, 'message' => 'Invalid parameters'];
-        if ($paymentMethod === 'MOBILE_MONEY' && (!$mmPhoneNumber || !$mmDateTime)) return ['success' => false, 'message' => 'Phone & date/time required'];
-        if ($paymentMethod === 'BANK' && (!$btDepositorName || !$btDateTime)) return ['success' => false, 'message' => 'Depositor & date/time required'];
+        if (!$walletId || !$cashAccountId || $amount <= 0 || !in_array($paymentMethod, ['BANK', 'MOBILE_MONEY'], true))
+            return ['success' => false, 'message' => 'Invalid parameters'];
+        if ($paymentMethod === 'MOBILE_MONEY' && (!$mmPhoneNumber || !$mmDateTime))
+            return ['success' => false, 'message' => 'Phone & date/time required'];
+        if ($paymentMethod === 'BANK' && (!$btDepositorName || !$btDateTime))
+            return ['success' => false, 'message' => 'Depositor & date/time required'];
 
         $w = self::$wallets->byId($walletId);
-        if (!$w) return ['success' => false, 'message' => 'Wallet not found or inactive'];
+        if (!$w)
+            return ['success' => false, 'message' => 'Wallet not found or inactive'];
 
         $ownerType = $w['owner_type'];
 
         $txnId = Ids::ulid();
 
         $payload = ['transaction_id' => $txnId, 'transaction_type' => 'TOPUP', 'status' => 'PENDING', 'amount_total' => $amount, 'payment_method' => $paymentMethod, 'external_reference' => $externalRef, 'external_metadata' => json_encode($opts), 'wallet_id' => $walletId, 'note' => $note];
-        if ($ownerType === 'USER' && !empty($userId)) $payload['user_id'] = $userId;
-        if ($ownerType === 'VENDOR' && !empty($vendorId)) $payload['vendor_id'] = $vendorId;
+        if ($ownerType === 'USER' && !empty($userId))
+            $payload['user_id'] = $userId;
+        if ($ownerType === 'VENDOR' && !empty($vendorId))
+            $payload['vendor_id'] = $vendorId;
 
         try {
             self::$tx->insert($payload);
@@ -1011,7 +1085,8 @@ final class CreditService
                 $message = sprintf("%s initiated a cash top-up of %s UGX. Login to confirm.", $initiator, number_format($amount, 2));
                 \SMS::sendBulk($adminPhones, $message);
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         return ['success' => true, 'transaction_id' => $txnId];
     }
@@ -1021,14 +1096,16 @@ final class CreditService
         self::boot();
 
         $newStatus = strtoupper($newStatus);
-        if (!in_array($newStatus, ['SUCCESS', 'FAILED'], true)) return ['success' => false, 'message' => 'Invalid status'];
+        if (!in_array($newStatus, ['SUCCESS', 'FAILED'], true))
+            return ['success' => false, 'message' => 'Invalid status'];
 
         self::$tx->updateStatus($transactionId, $newStatus);
 
         $stmt = self::$pdo->prepare("SELECT amount_total, external_metadata, wallet_id, user_id, vendor_id FROM zzimba_financial_transactions WHERE transaction_id=:id");
         $stmt->execute([':id' => $transactionId]);
         $txn = $stmt->fetch(\PDO::FETCH_ASSOC);
-        if (!$txn) return ['success' => false, 'message' => 'Transaction not found'];
+        if (!$txn)
+            return ['success' => false, 'message' => 'Transaction not found'];
 
         $amount = (float) $txn['amount_total'];
 
@@ -1044,14 +1121,16 @@ final class CreditService
 
         $meta = json_decode($txn['external_metadata'], true);
         $cashAccountId = $meta['cash_account_id'] ?? null;
-        if (!$cashAccountId) return ['success' => false, 'message' => 'Cash account not specified'];
+        if (!$cashAccountId)
+            return ['success' => false, 'message' => 'Cash account not specified'];
 
         $wallet = $txn['wallet_id'] ? self::$wallets->byId($txn['wallet_id']) : null;
         if (!$wallet) {
             $ownerType = $txn['user_id'] ? 'USER' : 'VENDOR';
             $ownerId = $txn['user_id'] ?? $txn['vendor_id'] ?? null;
             $res = self::getWallet($ownerType, $ownerId);
-            if (!$res['success']) return ['success' => false, 'message' => 'Wallet not found'];
+            if (!$res['success'])
+                return ['success' => false, 'message' => 'Wallet not found'];
             $wallet = $res['wallet'];
         }
 
@@ -1095,19 +1174,24 @@ final class CreditService
         $ownerType = strtoupper(trim($opts['owner_type'] ?? ''));
         $amount = isset($opts['amount']) ? (float) $opts['amount'] : 0;
 
-        if (!$walletId || !in_array($ownerType, ['USER', 'VENDOR'], true) || $amount <= 0) return ['success' => false, 'message' => 'Invalid wallet, owner_type or amount'];
+        if (!$walletId || !in_array($ownerType, ['USER', 'VENDOR'], true) || $amount <= 0)
+            return ['success' => false, 'message' => 'Invalid wallet, owner_type or amount'];
 
         $ownerIdKey = $ownerType === 'USER' ? 'user_id' : 'vendor_id';
         $ownerId = trim($opts[$ownerIdKey] ?? '');
-        if (!$ownerId) return ['success' => false, 'message' => "Missing {$ownerIdKey}"];
+        if (!$ownerId)
+            return ['success' => false, 'message' => "Missing {$ownerIdKey}"];
 
         $debitWallet = self::$wallets->byId($walletId);
-        if (!$debitWallet || $debitWallet['owner_type'] !== $ownerType) return ['success' => false, 'message' => 'Debit wallet not found or inactive'];
+        if (!$debitWallet || $debitWallet['owner_type'] !== $ownerType)
+            return ['success' => false, 'message' => 'Debit wallet not found or inactive'];
 
-        if ($debitWallet['current_balance'] < $amount) return ['success' => false, 'message' => 'Insufficient funds'];
+        if ($debitWallet['current_balance'] < $amount)
+            return ['success' => false, 'message' => 'Insufficient funds'];
 
         $sink = self::$fees->smsCostSink($ownerType);
-        if (!$sink) return ['success' => false, 'message' => 'SMS-sink wallet not configured'];
+        if (!$sink)
+            return ['success' => false, 'message' => 'SMS-sink wallet not configured'];
 
         $txnId = Ids::ulid();
 
@@ -1152,7 +1236,8 @@ final class CreditService
         self::boot();
 
         $s = self::$fees->buyInStoreChargeSetting();
-        if (!$s) return ['success' => true, 'fee' => 0.0, 'setting_id' => null];
+        if (!$s)
+            return ['success' => true, 'fee' => 0.0, 'setting_id' => null];
 
         return ['success' => true, 'fee' => (float) $s['setting_value'], 'setting_id' => $s['id']];
     }
@@ -1170,15 +1255,19 @@ final class CreditService
             return ['success' => true, 'fee_charged' => 0.0, 'transaction_id' => null, 'remaining_balance' => $bal];
         }
 
-        if (!$setting) return ['success' => false, 'message' => 'Buy-in-store charge setting not found'];
+        if (!$setting)
+            return ['success' => false, 'message' => 'Buy-in-store charge setting not found'];
 
         $uw = self::$wallets->userWallet($userId);
-        if (!$uw) return ['success' => false, 'message' => 'No Zzimba Wallet found'];
+        if (!$uw)
+            return ['success' => false, 'message' => 'No Zzimba Wallet found'];
 
-        if ((float) $uw['current_balance'] < $fee) return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $uw['current_balance'], 'fee' => $fee, 'required' => $fee];
+        if ((float) $uw['current_balance'] < $fee)
+            return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $uw['current_balance'], 'fee' => $fee, 'required' => $fee];
 
         $sink = self::$wallets->destinationForCreditSetting($setting['id']);
-        if (!$sink) return ['success' => false, 'message' => 'Charge destination wallet not configured'];
+        if (!$sink)
+            return ['success' => false, 'message' => 'Charge destination wallet not configured'];
 
         $txnId = Ids::ulid();
 
@@ -1213,7 +1302,8 @@ final class CreditService
 
             return ['success' => true, 'transaction_id' => $txnId, 'fee_charged' => $fee, 'remaining_balance' => $remaining];
         } catch (\Throwable $e) {
-            if (self::$pdo->inTransaction()) self::$pdo->rollBack();
+            if (self::$pdo->inTransaction())
+                self::$pdo->rollBack();
             self::$tx->updateStatus($txnId, 'FAILED');
             return ['success' => false, 'message' => 'Error processing charge'];
         }
@@ -1227,17 +1317,20 @@ final class CreditService
         $amount = (float) ($opts['amount'] ?? 0);
         $context = $opts['context'] ?? [];
 
-        if ($vendorId === '' || $amount <= 0) return ['success' => false, 'message' => 'Invalid vendor or amount'];
+        if ($vendorId === '' || $amount <= 0)
+            return ['success' => false, 'message' => 'Invalid vendor or amount'];
 
         $vw = self::$wallets->vendorWallet($vendorId);
         if (!$vw) {
             $res = self::getWallet('VENDOR', $vendorId);
-            if (empty($res['success'])) return ['success' => false, 'message' => 'Vendor wallet not found'];
+            if (empty($res['success']))
+                return ['success' => false, 'message' => 'Vendor wallet not found'];
             $vw = $res['wallet'];
         }
 
         $ops = self::$wallets->operationsWallet();
-        if (!$ops) return ['success' => false, 'message' => 'Operations account not configured'];
+        if (!$ops)
+            return ['success' => false, 'message' => 'Operations account not configured'];
 
         $txnId = Ids::ulid();
 
@@ -1265,14 +1358,17 @@ final class CreditService
             $toNo = $ops['wallet_number'];
 
             $debitNote = "BIS commission charge";
-            if ($reqId !== '') $debitNote .= " for {$reqId}";
+            if ($reqId !== '')
+                $debitNote .= " for {$reqId}";
 
             $credit1 = "Commission collection from {$fromNo}";
             $debit2 = "Commission disbursement to {$toNo}";
 
             $credit2 = "Commission received";
-            if ($prod !== '') $credit2 .= " for {$prod}";
-            if ($qty !== null) $credit2 .= " x{$qty}";
+            if ($prod !== '')
+                $credit2 .= " for {$prod}";
+            if ($qty !== null)
+                $credit2 .= " x{$qty}";
 
             self::$ledger->move($txnId, $vw['wallet_id'], $ops['wallet_id'], $amount, [
                 'debit' => $debitNote,
@@ -1296,7 +1392,8 @@ final class CreditService
 
             return ['success' => true, 'transaction_id' => $txnId, 'amount_charged' => $amount, 'balance' => $newBal];
         } catch (\Throwable $e) {
-            if (self::$pdo->inTransaction()) self::$pdo->rollBack();
+            if (self::$pdo->inTransaction())
+                self::$pdo->rollBack();
             self::$tx->updateStatus($txnId, 'FAILED');
             return ['success' => false, 'message' => 'Commission charge failed'];
         }
@@ -1307,7 +1404,8 @@ final class CreditService
         self::boot();
 
         $s = self::$fees->priceViewSetting();
-        if (!$s) return ['success' => true, 'fee' => 0.0, 'setting_id' => null];
+        if (!$s)
+            return ['success' => true, 'fee' => 0.0, 'setting_id' => null];
 
         return ['success' => true, 'fee' => (float) $s['setting_value'], 'setting_id' => $s['id']];
     }
@@ -1329,9 +1427,11 @@ final class CreditService
         $detail = $productTitle !== '' ? $productTitle : 'a product';
         if ($unitName !== '' || $packageSize !== '') {
             $unitDesc = trim(($packageSize !== '' ? $packageSize . ' ' : '') . $unitName);
-            if ($unitDesc !== '') $detail .= " ({$unitDesc})";
+            if ($unitDesc !== '')
+                $detail .= " ({$unitDesc})";
         }
-        if ($priceCategory !== '') $detail .= " - " . ucfirst($priceCategory);
+        if ($priceCategory !== '')
+            $detail .= " - " . ucfirst($priceCategory);
 
         if ($fee <= 0) {
             $uw = self::$wallets->userWallet($userId);
@@ -1350,15 +1450,19 @@ final class CreditService
             return ['success' => true, 'fee_charged' => 0.0, 'transaction_id' => null, 'remaining_balance' => $bal];
         }
 
-        if (!$setting) return ['success' => false, 'message' => 'Price view setting not found'];
+        if (!$setting)
+            return ['success' => false, 'message' => 'Price view setting not found'];
 
         $uw = self::$wallets->userWallet($userId);
-        if (!$uw) return ['success' => false, 'message' => 'No Zzimba Wallet found'];
+        if (!$uw)
+            return ['success' => false, 'message' => 'No Zzimba Wallet found'];
 
-        if ((float) $uw['current_balance'] < $fee) return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $uw['current_balance'], 'fee' => $fee, 'required' => $fee];
+        if ((float) $uw['current_balance'] < $fee)
+            return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $uw['current_balance'], 'fee' => $fee, 'required' => $fee];
 
         $sink = self::$wallets->destinationForCreditSetting($setting['id']);
-        if (!$sink) return ['success' => false, 'message' => 'Charge destination wallet not configured'];
+        if (!$sink)
+            return ['success' => false, 'message' => 'Charge destination wallet not configured'];
 
         $txnId = Ids::ulid();
 
@@ -1403,7 +1507,8 @@ final class CreditService
 
             return ['success' => true, 'transaction_id' => $txnId, 'fee_charged' => $fee, 'remaining_balance' => $remaining];
         } catch (\Throwable $e) {
-            if (self::$pdo->inTransaction()) self::$pdo->rollBack();
+            if (self::$pdo->inTransaction())
+                self::$pdo->rollBack();
             self::$tx->updateStatus($txnId, 'FAILED');
             return ['success' => false, 'message' => 'Error processing price view charge'];
         }
@@ -1414,7 +1519,8 @@ final class CreditService
         self::boot();
 
         $s = self::$fees->contactDetailsViewSetting();
-        if (!$s) return ['success' => true, 'fee' => 0.0, 'setting_id' => null];
+        if (!$s)
+            return ['success' => true, 'fee' => 0.0, 'setting_id' => null];
 
         return ['success' => true, 'fee' => (float) $s['setting_value'], 'setting_id' => $s['id']];
     }
@@ -1448,15 +1554,19 @@ final class CreditService
             return ['success' => true, 'fee_charged' => 0.0, 'transaction_id' => null, 'remaining_balance' => $bal];
         }
 
-        if (!$setting) return ['success' => false, 'message' => 'Contact details view setting not found'];
+        if (!$setting)
+            return ['success' => false, 'message' => 'Contact details view setting not found'];
 
         $uw = self::$wallets->userWallet($userId);
-        if (!$uw) return ['success' => false, 'message' => 'No Zzimba Wallet found'];
+        if (!$uw)
+            return ['success' => false, 'message' => 'No Zzimba Wallet found'];
 
-        if ((float) $uw['current_balance'] < $fee) return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $uw['current_balance'], 'fee' => $fee, 'required' => $fee];
+        if ((float) $uw['current_balance'] < $fee)
+            return ['success' => false, 'message' => 'Insufficient wallet balance', 'balance' => (float) $uw['current_balance'], 'fee' => $fee, 'required' => $fee];
 
         $sink = self::$wallets->destinationForCreditSetting($setting['id']);
-        if (!$sink) return ['success' => false, 'message' => 'Charge destination wallet not configured'];
+        if (!$sink)
+            return ['success' => false, 'message' => 'Charge destination wallet not configured'];
 
         $txnId = Ids::ulid();
 
@@ -1498,7 +1608,8 @@ final class CreditService
 
             return ['success' => true, 'transaction_id' => $txnId, 'fee_charged' => $fee, 'remaining_balance' => $remaining];
         } catch (\Throwable $e) {
-            if (self::$pdo->inTransaction()) self::$pdo->rollBack();
+            if (self::$pdo->inTransaction())
+                self::$pdo->rollBack();
             self::$tx->updateStatus($txnId, 'FAILED');
             return ['success' => false, 'message' => 'Error processing contact details view charge'];
         }
