@@ -156,6 +156,12 @@ switch ($action) {
     case 'submit_store_review':
         submitStoreReview($pdo, $currentUser, $username);
         break;
+    case 'submit_platform_review':
+        submitPlatformReview($pdo, $currentUser, $username);
+        break;
+    case 'getPlatformReviews':
+        getPlatformReviews($pdo);
+        break;
     default:
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid action']);
@@ -695,8 +701,124 @@ function submitStoreReview(PDO $pdo, string $currentUser, string $username)
     }
 }
 
+function submitPlatformReview(PDO $pdo, string $currentUser, string $username)
+{
+    $rating = intval($_POST['rating'] ?? 0);
+    $comment = trim($_POST['comment'] ?? '');
+    $comment = strip_tags($comment);                       
+    $comment = htmlspecialchars($comment, ENT_QUOTES, 'UTF-8');
+    $comment = preg_replace('/\bhttps?:\/\/[^\s]+/i', '[link removed]', $comment);
+    $comment = str_replace(['<', '>', '{', '}'], '', $comment);
+
+    if ($rating < 1 || $rating > 5) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Rating must be between 1 and 5']);
+        return;
+    }
+
+    if (empty($comment) || strlen($comment) < 10) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Review must be at least 10 characters long']);
+        return;
+    }
+
+    if (strlen($comment) > 500) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Review must be less than 500 characters']);
+        return;
+    }
+
+    try {
+        $pdo->beginTransaction();
+
+        $now = (new DateTime())->format('Y-m-d H:i:s');
+        $reviewId = generateUlid();
+
+        // Insert platform review (no product_id or store_id)
+        $insertStmt = $pdo->prepare("
+            INSERT INTO product_reviews (id, user_id, rating, comment, created_at, updated_at, status, review_type)
+            VALUES (?, ?, ?, ?, ?, ?, 'pending', 'platform')
+        ");
+        $insertStmt->execute([$reviewId, $currentUser, $rating, $comment, $now, $now]);
+
+        // Send admin notification
+        try {
+            $notificationService = new NotificationService($pdo);
+            $adminMessage = "Platform Review: {$username} rated Zzimba Online {$rating}/5 stars.";
+
+            $recipients = [
+                [
+                    'type' => 'admin',
+                    'id' => 'admin',
+                    'message' => $adminMessage
+                ]
+            ];
+
+            $notificationService->create(
+                'info',
+                'Platform Review',
+                $recipients,
+                BASE_URL . "faq",
+                'normal',
+                $currentUser
+            );
+
+        } catch (Exception $notifError) {
+            error_log('Platform review notification creation failed: ' . $notifError->getMessage());  
+        }
+
+        $pdo->commit();
+        echo json_encode(['success' => true, 'message' => 'Thank you for your review! It will be published after approval.']);
+
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log('Error submitting platform review: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to submit review']);
+    }
+}
+
+function getPlatformReviews(PDO $pdo)
+{
+    try {
+        $limit = intval($_GET['limit'] ?? 6);
+        $limit = max(1, min(50, $limit));
+
+        $stmt = $pdo->prepare("
+            SELECT 
+                pr.id,
+                pr.rating,
+                pr.comment as review_text,
+                pr.created_at,
+                COALESCE(u.name, u.username, 'Anonymous') as reviewer_name
+            FROM product_reviews pr
+            LEFT JOIN zzimba_users u ON pr.user_id = u.id
+            WHERE pr.review_type = 'platform' AND pr.status = 'approved'
+            ORDER BY pr.created_at DESC
+            LIMIT ?
+        ");
+        
+        $stmt->execute([$limit]);
+        $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'reviews' => $reviews
+        ]);
+
+    } catch (Exception $e) {
+        error_log("Error fetching platform reviews: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'error' => 'Failed to fetch reviews'
+        ]);
+    }
+}
+
 function isValidUlid(string $ulid): bool
 {
-    return preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/i', $ulid) === 1;
+    return preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/', $ulid) === 1;
 }
 ?>
