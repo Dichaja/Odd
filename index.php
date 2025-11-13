@@ -550,6 +550,57 @@ ob_start();
                 </div>
             </div>
         <?php endif; ?>
+
+        <!-- Platform Reviews Section -->
+        <div class="container mx-auto px-4 py-12">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">What Our Users Say</h2>
+                <p class="text-gray-600 dark:text-white/70 max-w-2xl mx-auto">Real experiences from our community of buyers and vendors</p>
+            </div>
+
+            <div x-show="platformReviewsLoading" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
+            </div>
+
+            <div x-show="!platformReviewsLoading && platformReviews.length === 0" class="text-center py-8">
+                <div class="mb-4">
+                    <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
+                </div>
+                <h4 class="text-xl font-semibold text-gray-600 dark:text-slate-300 mb-2">No Reviews Yet</h4>
+                <p class="text-gray-500 dark:text-slate-400 mb-4">Be the first to share your experience!</p>
+                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-6 py-3 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors">
+                    <i data-lucide="star" class="w-5 h-5 mr-2"></i>
+                    Write a Review
+                </a>
+            </div>
+
+            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="review in platformReviews" :key="review.id">
+                    <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-slate-800 fade-in-up">
+                        <div class="flex items-center mb-4">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-800 dark:text-white" x-text="review.reviewer_name"></div>
+                                <div class="text-gray-500 dark:text-slate-400 text-sm" x-text="formatDate(review.created_at)"></div>
+                            </div>
+                            <div class="flex">
+                                <template x-for="i in 5" :key="i">
+                                    <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-4 h-4"></i>
+                                </template>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 dark:text-slate-300 line-clamp-3" x-text="review.review_text"></p>
+                    </div>
+                </template>
+            </div>
+
+            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="text-center mt-10">
+                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-6 py-3 border border-primary text-primary font-medium rounded-lg hover:bg-primary hover:text-white transition-colors duration-300">
+                    <i data-lucide="star" class="w-5 h-5 mr-2"></i>
+                    Share Your Experience
+                </a>
+            </div>
+        </div>
     </div>
 
     <div class="md:hidden">
@@ -745,6 +796,50 @@ ob_start();
                 <?php endif; ?>
             </div>
         <?php endif; ?>
+
+        <!-- Platform Reviews Section Mobile -->
+        <div class="px-4 pt-4 pb-8">
+            <div class="text-base font-semibold text-secondary dark:text-white text-center mb-3">What Our Users Say</div>
+            
+            <div x-show="platformReviewsLoading" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+            </div>
+
+            <div x-show="!platformReviewsLoading && platformReviews.length === 0" class="text-center py-8">
+                <div class="mb-4">
+                    <i data-lucide="message-circle" class="w-12 h-12 text-gray-300 mx-auto"></i>
+                </div>
+                <p class="text-gray-500 dark:text-slate-400 text-sm mb-4">Be the first to share your experience!</p>
+                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg text-sm">
+                    <i data-lucide="star" class="w-4 h-4 mr-2"></i>
+                    Write a Review
+                </a>
+            </div>
+
+            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="space-y-3">
+                <template x-for="review in platformReviews.slice(0, 3)" :key="review.id">
+                    <div class="bg-white dark:bg-secondary rounded-lg p-4 border border-gray-200 dark:border-white/10">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="font-medium text-sm text-gray-800 dark:text-white" x-text="review.reviewer_name"></div>
+                            <div class="flex">
+                                <template x-for="i in 5" :key="i">
+                                    <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-3 h-3"></i>
+                                </template>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 dark:text-slate-300 text-xs line-clamp-2" x-text="review.review_text"></p>
+                        <div class="text-gray-500 dark:text-slate-400 text-xs mt-2" x-text="formatDate(review.created_at)"></div>
+                    </div>
+                </template>
+            </div>
+
+            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="text-center mt-4">
+                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg text-sm">
+                    <i data-lucide="star" class="w-4 h-4 mr-2"></i>
+                    Share Your Experience
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -765,6 +860,8 @@ ob_start();
             shownProducts: Math.min((window.__FP_DEFAULT_ROWS__ || 1) * (window.__FP_PER_ROW__ || 4), (window.__FP__ || []).length),
             shownCategories: Math.min((window.__CAT_DEFAULT_ROWS__ || 1) * (window.__CAT_PER_ROW__ || 4), (window.__CAT__ || []).length),
             loggedIn: false,
+            platformReviews: [],
+            platformReviewsLoading: false,
             init() {
                 if (typeof Swiper !== 'undefined') {
                     new Swiper('.hero-slider', { loop: true, autoplay: { delay: 5000, disableOnInteraction: false }, effect: 'fade', fadeEffect: { crossFade: true }, speed: 1000, pagination: { el: '.swiper-pagination', clickable: true }, navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' } });
@@ -780,6 +877,37 @@ ob_start();
                     this.resumeSell(pending.product_id, pending.title);
                     window.setPendingVendorAction(null);
                 }
+                this.loadPlatformReviews();
+            },
+            async loadPlatformReviews() {
+                this.platformReviewsLoading = true;
+                try {
+                    const r = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getPlatformReviews&limit=6');
+                    const data = await r.json();
+                    if (data.success) {
+                        this.platformReviews = data.reviews || [];
+                    }
+                } catch (e) {
+                    console.error('Failed to load platform reviews:', e);
+                } finally {
+                    this.platformReviewsLoading = false;
+                    this.$nextTick(() => {
+                        if (window.lucide && lucide.createIcons) lucide.createIcons();
+                    });
+                }
+            },
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                if (diffDays === 0) return 'Today';
+                if (diffDays === 1) return 'Yesterday';
+                if (diffDays < 7) return `${diffDays} days ago`;
+                if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+                if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+                return date.toLocaleDateString();
             },
             openHeroLogin() { if (typeof openAuthModal === 'function') openAuthModal(); else alert('Please log in to continue.'); },
             moreProducts() { this.shownProducts = Math.min(this.shownProducts + this.perRow, this.products.length); this.$nextTick(() => { if (window.lucide && lucide.createIcons) lucide.createIcons(); }); },

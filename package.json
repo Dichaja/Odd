@@ -1,0 +1,9 @@
+{
+  "name": "zzimba-php-app",
+  "version": "1.0.0",
+  "description": "Zzimba PHP Application",
+  "private": true,
+  "scripts": {
+    "start": "echo 'This is a PHP application. Please use PHP server.'"
+  }
+}
