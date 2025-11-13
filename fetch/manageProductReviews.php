@@ -183,6 +183,15 @@ switch ($action) {
     case 'getPlatformReviews':
         getPlatformReviews($pdo);
         break;
+    case 'approve':
+        approveReview($pdo);
+        break;
+    case 'verify':
+        verifyReview($pdo);
+        break;
+    case 'reject':
+        rejectReview($pdo);
+        break;
     default:
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Invalid action']);
@@ -408,14 +417,25 @@ function listReviews(PDO $pdo) {
 
         // Filter by product
         if (!empty($_GET['product_id'])) {
-            $where[] = "pr.review_entity = ?";
+            $where[] = "pr.product_id = ?";
             $params[] = $_GET['product_id'];
         }
 
         // Filter by vendor/store
         if (!empty($_GET['vendor_id'])) {
-            $where[] = "pr.review_entity = ?";
+            $where[] = "pr.store_id = ?";
             $params[] = $_GET['vendor_id'];
+        }
+
+        // Filter by review type (platform, product, store)
+        if (!empty($_GET['review_type'])) {
+            if ($_GET['review_type'] === 'platform') {
+                $where[] = "pr.review_type = 'platform'";
+            } elseif ($_GET['review_type'] === 'product') {
+                $where[] = "pr.product_id IS NOT NULL";
+            } elseif ($_GET['review_type'] === 'store') {
+                $where[] = "pr.store_id IS NOT NULL AND pr.review_type != 'platform'";
+            }
         }
 
         // Filter by status
@@ -444,9 +464,9 @@ function listReviews(PDO $pdo) {
 
         // Get total count
         $countSql = "SELECT COUNT(*) as total 
-                     FROM general_reviews pr
-                     LEFT JOIN products p ON pr.review_entity = p.id
-                     LEFT JOIN vendor_stores vs ON pr.review_entity = vs.id
+                     FROM product_reviews pr
+                     LEFT JOIN products p ON pr.product_id = p.id
+                     LEFT JOIN vendor_stores vs ON pr.store_id = vs.id
                      LEFT JOIN zzimba_users u ON pr.user_id = u.id
                      $whereClause";
         
@@ -457,22 +477,27 @@ function listReviews(PDO $pdo) {
         // Get reviews
         $sql = "SELECT 
                     pr.id,
-                    pr.review_entity,
+                    pr.product_id,
+                    pr.store_id,
                     pr.rating,
                     pr.comment,
                     pr.status,
+                    pr.is_verified,
                     pr.created_at,
+                    pr.review_type,
                     p.title as product_title,
                     vs.name as store_name,
                     u.username,
                     CASE 
-                        WHEN pr.review_entity IS NOT NULL THEN 'product'
+                        WHEN pr.review_type = 'platform' THEN 'platform'
+                        WHEN pr.product_id IS NOT NULL THEN 'product'
+                        WHEN pr.store_id IS NOT NULL THEN 'store'
                         ELSE 'unknown'
-                    END as review_type,
-                    (SELECT image_url FROM product_images WHERE review_entity = p.id AND is_primary = 1 LIMIT 1) as product_image
-                FROM general_reviews pr
-                LEFT JOIN products p ON pr.review_entity = p.id
-                LEFT JOIN vendor_stores vs ON pr.review_entity = vs.id
+                    END as review_type_display,
+                    (SELECT image_url FROM product_images WHERE product_id = p.id AND is_primary = 1 LIMIT 1) as product_image
+                FROM product_reviews pr
+                LEFT JOIN products p ON pr.product_id = p.id
+                LEFT JOIN vendor_stores vs ON pr.store_id = vs.id
                 LEFT JOIN zzimba_users u ON pr.user_id = u.id
                 $whereClause
                 ORDER BY pr.created_at DESC
@@ -481,6 +506,11 @@ function listReviews(PDO $pdo) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute(array_merge($params, [$perPage, $offset]));
         $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Convert is_verified to boolean
+        foreach ($reviews as &$review) {
+            $review['is_verified'] = (bool)($review['is_verified'] ?? false);
+        }
 
         echo json_encode([
             'success' => true,
@@ -835,16 +865,22 @@ function getPlatformReviews(PDO $pdo)
                 pr.rating,
                 pr.comment as review_text,
                 pr.created_at,
-                COALESCE(u.username, 'Anonymous') as reviewer_name
-            FROM general_reviews pr
+                pr.is_verified,
+                COALESCE(u.name, u.username, 'Anonymous') as reviewer_name
+            FROM product_reviews pr
             LEFT JOIN zzimba_users u ON pr.user_id = u.id
-            WHERE pr.entity_type = 'platform' AND pr.status = 'approved'
+            WHERE pr.review_type = 'platform' AND pr.status = 'approved'
             ORDER BY pr.created_at DESC
             LIMIT ?
         ");
         
         $stmt->execute([$limit]);
         $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Convert is_verified to boolean
+        foreach ($reviews as &$review) {
+            $review['is_verified'] = (bool)($review['is_verified'] ?? false);
+        }
 
         echo json_encode([
             'success' => true,
@@ -855,8 +891,76 @@ function getPlatformReviews(PDO $pdo)
         error_log("Error fetching platform reviews: " . $e->getMessage());
         echo json_encode([
             'success' => false,
-            'error' => 'Failed to fetch reviews' . $e->getMessage()
+            'error' => 'Failed to fetch reviews'
         ]);
+    }
+}
+
+function approveReview(PDO $pdo)
+{
+    $reviewId = $_POST['review_id'] ?? null;
+
+    if (!$reviewId) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Review ID is required']);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("UPDATE product_reviews SET status = 'approved', updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$reviewId]);
+
+        echo json_encode(['success' => true, 'message' => 'Review approved successfully']);
+    } catch (Exception $e) {
+        error_log('Error approving review: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to approve review']);
+    }
+}
+
+function verifyReview(PDO $pdo)
+{
+    $reviewId = $_POST['review_id'] ?? null;
+
+    if (!$reviewId) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Review ID is required']);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("UPDATE product_reviews SET is_verified = 1, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$reviewId]);
+
+        echo json_encode(['success' => true, 'message' => 'Review verified successfully']);
+    } catch (Exception $e) {
+        error_log('Error verifying review: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to verify review']);
+    }
+}
+
+function rejectReview(PDO $pdo) {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $reviewId = $data['review_id'] ?? '';
+    $status = $data['status'] ?? '';
+
+    if (!in_array($status, ['approved', 'pending', 'rejected'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid status']);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("UPDATE general_reviews SET status = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$status, $reviewId]);
+
+        echo json_encode(['success' => true, 'message' => "Review $status successfully"]);
+
+    } catch (Exception $e) {
+        error_log('Error updating review status: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to update review']);
     }
 }
 

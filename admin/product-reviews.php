@@ -20,8 +20,9 @@ ob_start();
                 <label class="block text-sm font-medium text-gray-700 dark:text-white mb-2">Filter By</label>
                 <select x-model="filters.filterType" @change="handleFilterTypeChange()" class="w-full px-4 py-2 border border-gray-300 dark:border-white/10 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                     <option value="">All Reviews</option>
-                    <option value="product">By Product</option>
-                    <option value="store">By Store</option>
+                    <option value="platform">Platform Reviews</option>
+                    <option value="product">Product Reviews</option>
+                    <option value="store">Store Reviews</option>
                 </select>
             </div>
             <div x-show="filters.filterType === 'product'">
@@ -214,6 +215,11 @@ ob_start();
                                     <template x-if="review.status !== 'approved'">
                                         <button @click="updateStatus(review.id, 'approved')" class="text-emerald-600 hover:text-emerald-800" title="Approve">
                                             <i data-lucide="check" class="w-4 h-4"></i>
+                                        </button>
+                                    </template>
+                                    <template x-if="!review.is_verified">
+                                        <button @click="verifyReview(review.id)" class="text-blue-600 hover:text-blue-800" title="Verify">
+                                            <i data-lucide="check-circle" class="w-4 h-4"></i>
                                         </button>
                                     </template>
                                     <button @click="updateStatus(review.id, 'rejected')" class="text-red-600 hover:text-red-800" title="Reject">
@@ -444,7 +450,7 @@ function reviewsManagement() {
                 });
 
                 if (this.filters.filterType) {
-                   params.append('filter_type', this.filters.filterType);
+                   params.append('review_type', this.filters.filterType);
                  }
 
                 if (this.filters.selectedProduct) {
@@ -455,7 +461,7 @@ function reviewsManagement() {
                     params.append('vendor_id', this.filters.selectedVendor.id);
                 }
 
-                const response = await fetch(`${BASE_URL}admin/fetch/manageProductReviews.php?action=list&${params}`);
+                const response = await fetch(`${BASE_URL}fetch/manageProductReviews.php?action=list&${params}`);
                 const data = await response.json();
 
                 if (data.success) {
@@ -509,6 +515,33 @@ function reviewsManagement() {
             } catch (error) {
                 console.error('Error updating review:', error);
                 notifications.error('Failed to update review');
+            }
+        },
+
+        async verifyReview(reviewId) {
+            if (!confirm('Mark this review as verified?')) return;
+
+            try {
+                const formData = new FormData();
+                formData.append('action', 'verify');
+                formData.append('review_id', reviewId);
+
+                const response = await fetch(`${BASE_URL}fetch/manageProductReviews.php`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    notifications.success('Review verified successfully');
+                    this.loadReviews();
+                } else {
+                    notifications.error(data.error || 'Failed to verify review');
+                }
+            } catch (error) {
+                console.error('Error verifying review:', error);
+                notifications.error('Failed to verify review');
             }
         },
 

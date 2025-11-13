@@ -836,6 +836,57 @@ ob_start();
                 <?php endif; ?>
             </div>
         <?php endif; ?>
+
+        <!-- Platform Reviews Section Mobile -->
+        <div class="px-4 pt-4 pb-8">
+            <div class="text-base font-semibold text-secondary dark:text-white text-center mb-3">What Our Users Say</div>
+            
+            <div x-show="platformReviewsLoading" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+            </div>
+
+            <div x-show="!platformReviewsLoading && platformReviews.length === 0" class="text-center py-8">
+                <div class="mb-4">
+                    <i data-lucide="message-circle" class="w-12 h-12 text-gray-300 mx-auto"></i>
+                </div>
+                <p class="text-gray-500 dark:text-slate-400 text-sm mb-4">Be the first to share your experience!</p>
+                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg text-sm">
+                    <i data-lucide="star" class="w-4 h-4 mr-2"></i>
+                    Write a Review
+                </a>
+            </div>
+
+            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="space-y-3">
+                <template x-for="review in platformReviews.slice(0, 3)" :key="review.id">
+                    <div class="bg-white dark:bg-secondary rounded-lg p-4 border border-gray-200 dark:border-white/10">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-sm text-gray-800 dark:text-white" x-text="review.reviewer_name"></span>
+                                <template x-if="review.is_verified">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                        <i data-lucide="check-circle" class="w-2.5 h-2.5"></i>
+                                    </span>
+                                </template>
+                            </div>
+                            <div class="flex">
+                                <template x-for="i in 5" :key="i">
+                                    <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-3 h-3"></i>
+                                </template>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 dark:text-slate-300 text-xs line-clamp-2" x-text="review.review_text"></p>
+                        <div class="text-gray-500 dark:text-slate-400 text-xs mt-2" x-text="formatDate(review.created_at)"></div>
+                    </div>
+                </template>
+            </div>
+
+            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="text-center mt-4">
+                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg text-sm">
+                    <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                    View All Reviews
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -859,6 +910,8 @@ ob_start();
             sessionReady: false,
             homeShareUrl: '',
             creatingShort: false,
+            platformReviews: [],
+            platformReviewsLoading: false,
             init() {
                 if (typeof Swiper !== 'undefined') {
                     new Swiper('.hero-slider', { loop: true, autoplay: { delay: 5000, disableOnInteraction: false }, effect: 'fade', fadeEffect: { crossFade: true }, speed: 1000, pagination: { el: '.swiper-pagination', clickable: true }, navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' } });
@@ -932,6 +985,23 @@ ob_start();
             async shareHomeLinkedIn() {
                 const u = await this.getHomeShortUrl();
                 window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(u), '_blank');
+            },
+            async loadPlatformReviews() {
+                this.platformReviewsLoading = true;
+                try {
+                    const r = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getPlatformReviews&limit=3');
+                    const data = await r.json();
+                    if (data.success) {
+                        this.platformReviews = data.reviews || [];
+                    }
+                } catch (e) {
+                    console.error('Failed to load platform reviews:', e);
+                } finally {
+                    this.platformReviewsLoading = false;
+                    this.$nextTick(() => {
+                        if (window.lucide && lucide.createIcons) lucide.createIcons();
+                    });
+                }
             }
         }
     }

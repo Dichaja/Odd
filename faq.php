@@ -101,45 +101,106 @@ ob_start();
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Share Your Experience</h2>
             <p class="text-gray-600 dark:text-slate-300 mb-6">Help us improve by sharing your feedback about Zzimba Online</p>
             
-            <form @submit.prevent="submitReview" class="space-y-6">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">Your Rating</label>
-                    <div class="star-rating flex space-x-2">
-                        <template x-for="i in 5" :key="i">
-                            <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
-                                <i data-lucide="star" class="w-8 h-8" :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
-                            </button>
-                        </template>
+            <template x-if="!auth.loggedIn">
+                <div class="text-center py-8">
+                    <div class="mb-4">
+                        <i data-lucide="lock" class="w-16 h-16 text-gray-300 mx-auto"></i>
                     </div>
-                    <p x-show="reviewRating > 0" class="text-sm text-gray-600 dark:text-slate-300 mt-2">
-                        You rated Zzimba Online <span x-text="reviewRating"></span> out of 5 stars
-                    </p>
+                    <p class="text-gray-600 dark:text-slate-300 mb-4">Please log in to write a review</p>
+                    <button @click="promptLogin()" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                        Log In to Review
+                    </button>
                 </div>
+            </template>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">Your Review</label>
-                    <textarea rows="5" maxlength="500" x-model="reviewComment" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="Tell us about your experience with Zzimba Online... (minimum 10 characters)" required></textarea>
-                    <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
-                        <span x-show="reviewComment.length > 0 && reviewComment.length < 10" class="text-red-500">
-                            Minimum 10 characters required
-                        </span>
-                        <span class="ml-auto">
-                            <span x-text="reviewComment?.length || 0"></span>/500 characters
-                        </span>
+            <template x-if="auth.loggedIn">
+                <form @submit.prevent="submitReview" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">Your Rating</label>
+                        <div class="star-rating flex space-x-2">
+                            <template x-for="i in 5" :key="i">
+                                <button type="button" @click="reviewRating = i" @mouseover="hoverRating=i" @mouseleave="hoverRating=0">
+                                    <i data-lucide="star" class="w-8 h-8" :class="(hoverRating ? i <= hoverRating : i <= reviewRating) ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'"></i>
+                                </button>
+                            </template>
+                        </div>
+                        <p x-show="reviewRating > 0" class="text-sm text-gray-600 dark:text-slate-300 mt-2">
+                            You rated Zzimba Online <span x-text="reviewRating"></span> out of 5 stars
+                        </p>
                     </div>
-                </div>
 
-                <button type="submit" :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting" :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''" class="w-full md:w-auto bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-medium transition-colors">
-                    <span x-show="!isSubmitting" class="flex items-center justify-center">
-                        <i data-lucide="send" class="w-5 h-5 mr-2"></i> 
-                        Submit Review
-                    </span>
-                    <span x-show="isSubmitting" class="flex items-center justify-center">
-                        <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                        Submitting...
-                    </span>
-                </button>
-            </form>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-slate-200 mb-2">Your Review</label>
+                        <textarea rows="5" maxlength="500" x-model="reviewComment" class="w-full px-4 py-3 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" placeholder="Tell us about your experience with Zzimba Online... (minimum 10 characters)" required></textarea>
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-slate-400 mt-1">
+                            <span x-show="reviewComment.length > 0 && reviewComment.length < 10" class="text-red-500">
+                                Minimum 10 characters required
+                            </span>
+                            <span class="ml-auto">
+                                <span x-text="reviewComment?.length || 0"></span>/500 characters
+                            </span>
+                        </div>
+                    </div>
+
+                    <button type="submit" :disabled="reviewRating < 1 || reviewComment.length < 10 || isSubmitting" :class="reviewRating < 1 || reviewComment.length < 10 || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''" class="w-full md:w-auto bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+                        <span x-show="!isSubmitting" class="flex items-center justify-center">
+                            <i data-lucide="send" class="w-5 h-5 mr-2"></i> 
+                            Submit Review
+                        </span>
+                        <span x-show="isSubmitting" class="flex items-center justify-center">
+                            <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Submitting...
+                        </span>
+                    </button>
+                </form>
+            </template>
+        </div>
+    </div>
+
+    <!-- Reviews Display Section -->
+    <div class="mb-16">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm p-6 md:p-8 border border-gray-200 dark:border-slate-800">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Recent Reviews</h2>
+
+            <div x-show="reviewsLoading" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                <p class="mt-2 text-gray-600 dark:text-slate-300">Loading reviews...</p>
+            </div>
+
+            <div x-show="!reviewsLoading && reviews.length === 0" class="text-center py-8">
+                <div class="mb-4">
+                    <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
+                </div>
+                <h4 class="text-xl font-semibold text-gray-600 dark:text-slate-300 mb-2">No Reviews Yet</h4>
+                <p class="text-gray-500 dark:text-slate-400">Be the first to share your experience!</p>
+            </div>
+
+            <div x-show="!reviewsLoading && reviews.length > 0" class="space-y-6">
+                <template x-for="review in reviews" :key="review.id">
+                    <div class="border-b border-gray-200 dark:border-slate-800 pb-6 last:border-0 last:pb-0 fade-in-up">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="font-semibold text-gray-800 dark:text-white" x-text="review.reviewer_name"></span>
+                                    <template x-if="review.is_verified">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
+                                            Verified
+                                        </span>
+                                    </template>
+                                </div>
+                                <div class="text-gray-500 dark:text-slate-400 text-sm" x-text="formatDate(review.created_at)"></div>
+                            </div>
+                            <div class="flex">
+                                <template x-for="i in 5" :key="i">
+                                    <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-5 h-5"></i>
+                                </template>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 dark:text-slate-300" x-text="review.review_text"></p>
+                    </div>
+                </template>
+            </div>
         </div>
     </div>
 
@@ -163,11 +224,52 @@ function faqPage() {
         hoverRating: 0,
         reviewComment: '',
         isSubmitting: false,
+        auth: {
+            loggedIn: false,
+            isAdminOrManager: false
+        },
+        reviews: [],
+        reviewsLoading: false,
 
         init() {
             this.$nextTick(() => {
                 if (window.lucide && lucide.createIcons) lucide.createIcons();
             });
+            this.checkAuth();
+            this.loadReviews();
+        },
+
+        async checkAuth() {
+            try {
+                const response = await fetch(this.BASE_URL + 'fetch/check-session.php', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (data.success && data.logged_in) {
+                    this.auth.loggedIn = true;
+                    this.auth.isAdminOrManager = data.is_admin || false;
+                }
+            } catch (error) {
+                console.error('Error checking auth:', error);
+            }
+        },
+
+        async loadReviews() {
+            this.reviewsLoading = true;
+            try {
+                const response = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getPlatformReviews&limit=50');
+                const data = await response.json();
+                if (data.success) {
+                    this.reviews = data.reviews || [];
+                }
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+            } finally {
+                this.reviewsLoading = false;
+                this.$nextTick(() => {
+                    if (window.lucide && lucide.createIcons) lucide.createIcons();
+                });
+            }
         },
 
         toggleFaq(id) {
@@ -177,7 +279,20 @@ function faqPage() {
             });
         },
 
+        promptLogin() {
+            if (typeof openAuthModal === 'function') {
+                openAuthModal();
+            } else {
+                window.location.href = this.BASE_URL + 'login/login.php';
+            }
+        },
+
         async submitReview() {
+            if (!this.auth.loggedIn) {
+                this.promptLogin();
+                return;
+            }
+
             if (this.reviewRating < 1) {
                 this.showToast('Please select a rating', 'error');
                 return;
@@ -219,6 +334,10 @@ function faqPage() {
                     this.$nextTick(() => {
                         if (window.lucide && lucide.createIcons) lucide.createIcons();
                     });
+                    
+                    setTimeout(() => {
+                        this.loadReviews();
+                    }, 1500);
                 } else {
                     this.showToast(data.error || 'Failed to submit review', 'error');
                 }
@@ -227,6 +346,20 @@ function faqPage() {
                 console.error('Error submitting review:', error);
                 this.showToast('Network error. Please check your connection and try again.', 'error');
             }
+        },
+
+        formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+            if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+            return date.toLocaleDateString();
         },
 
         showToast(message, type = 'info') {
