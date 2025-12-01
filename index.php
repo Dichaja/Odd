@@ -927,6 +927,7 @@ ob_start();
                     this.resumeSell(pending.product_id, pending.title);
                     window.setPendingVendorAction(null);
                 }
+                this.loadPlatformReviews();
             },
             openHeroLogin() { if (typeof openAuthModal === 'function') openAuthModal(); else alert('Please log in to continue.'); },
             moreProducts() { this.shownProducts = Math.min(this.shownProducts + this.perRow, this.products.length); this.$nextTick(() => { if (window.lucide && lucide.createIcons) lucide.createIcons(); }); },
@@ -1002,6 +1003,19 @@ ob_start();
                         if (window.lucide && lucide.createIcons) lucide.createIcons();
                     });
                 }
+            },
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                if (diffDays === 0) return 'Today';
+                if (diffDays === 1) return 'Yesterday';
+                if (diffDays < 7) return `${diffDays} days ago`;
+                if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+                if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+                return date.toLocaleDateString();
             }
         }
     }

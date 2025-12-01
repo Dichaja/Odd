@@ -8,3 +8,6 @@ track/session_log.json
 /js/google-analytics.js
 /img/tmp/
 /config/config.php
+node_modules
+**/tempobook/dynamic/
+**/tempobook/storyboards/
