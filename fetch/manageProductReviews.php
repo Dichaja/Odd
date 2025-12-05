@@ -313,6 +313,48 @@ function submitReview(PDO $pdo, string $currentUser, string $username, ?string $
             error_log('Review notification creation failed: ' . $notifError->getMessage());  
         }
 
+        // Notify all vendors selling this product
+        try {
+            $vendorStmt = $pdo->prepare("
+                SELECT DISTINCT vs.id as store_id, vs.name as store_name, vs.user_id as vendor_user_id
+                FROM vendor_stores vs
+                JOIN store_categories sc ON sc.store_id = vs.id
+                JOIN store_products sp ON sp.store_category_id = sc.id
+                WHERE sp.product_id = ? AND vs.status = 'active' AND sp.status = 'active'
+            ");
+            $vendorStmt->execute([$productId]);
+            $vendors = $vendorStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($vendors)) {
+                $notificationService = new NotificationService($pdo);
+                $shortComment = mb_substr($comment, 0, 100) . (mb_strlen($comment) > 100 ? '...' : '');
+                
+                $vendorRecipients = [];
+                foreach ($vendors as $vendor) {
+                    if (!empty($vendor['vendor_user_id']) && $vendor['vendor_user_id'] !== $currentUser) {
+                        $vendorRecipients[] = [
+                            'type' => 'user',
+                            'id' => $vendor['vendor_user_id'],
+                            'message' => "New {$rating}-star review on \"{$product['title']}\": \"{$shortComment}\""
+                        ];
+                    }
+                }
+
+                if (!empty($vendorRecipients)) {
+                    $notificationService->create(
+                        'info',
+                        'New Product Review',
+                        $vendorRecipients,
+                        BASE_URL . "/product-details.php?id={$productId}#reviews",
+                        'normal',
+                        $currentUser
+                    );
+                }
+            }
+        } catch (Exception $vendorNotifError) {
+            error_log('Vendor review notification failed: ' . $vendorNotifError->getMessage());
+        }
+
         $pdo->commit();
         echo json_encode(['success' => true, 'message' => 'Review submitted successfully']);
 
