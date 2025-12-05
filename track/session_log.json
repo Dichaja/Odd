@@ -1,7 +1,7 @@
 [
     {
-        "sessionID": "01kbpz7zfmt6rjd4rv0medfa2b",
-        "timestamp": "2025-12-05T10:36:47.346Z",
+        "sessionID": "01kbq9r6dp7mnd9qb3jmz4wcfh",
+        "timestamp": "2025-12-05T13:06:06.108Z",
         "ipAddress": "102.140.209.66",
         "country": "Kenya",
         "shortName": "ke",
@@ -12,11 +12,43 @@
             "latitude": -1.2920659,
             "longitude": 36.8219462
         },
-        "loggedUser": null,
+        "loggedUser": {
+            "logged_in": true,
+            "user_id": "01JS427VW0F9BGXBFNNERZYZ7Q",
+            "username": "admin",
+            "email": "admin@zzimbaonline.com",
+            "phone": "+256703945327",
+            "is_admin": true,
+            "last_login": "2025-11-26 17:55:00"
+        },
         "logs": [
             {
+                "event": "login_identifier_submit",
+                "timestamp": "2025-12-05T13:04:24.812Z",
+                "identifier": "Admin:admin",
+                "identifierType": "username"
+            },
+            {
+                "event": "login_identifier_success",
+                "timestamp": "2025-12-05T13:04:25.373Z",
+                "identifier": "Admin:admin",
+                "identifierType": "username"
+            },
+            {
+                "event": "login_password_submit",
+                "timestamp": "2025-12-05T13:05:48.532Z"
+            },
+            {
+                "event": "login_password_success",
+                "timestamp": "2025-12-05T13:05:48.934Z"
+            },
+            {
+                "event": "login_success",
+                "timestamp": "2025-12-05T13:05:48.935Z"
+            },
+            {
                 "event": "page_load",
-                "timestamp": "2025-12-05T10:36:26.454Z",
+                "timestamp": "2025-12-05T13:05:50.905Z",
                 "referrer": "",
                 "url": "http:\/\/localhost\/New-Zzimba\/",
                 "activeNavigation": "home",
@@ -24,11 +56,11 @@
             },
             {
                 "event": "page_load",
-                "timestamp": "2025-12-05T10:36:47.346Z",
-                "referrer": "http:\/\/localhost\/New-Zzimba\/",
-                "url": "http:\/\/localhost\/New-Zzimba\/view\/product\/01JS427WZSXWS4QF63VHGGDXD0",
-                "activeNavigation": "materials",
-                "pageTitle": "Lweera White Lake Sand | Zzimba Online"
+                "timestamp": "2025-12-05T13:06:06.108Z",
+                "referrer": "",
+                "url": "http:\/\/localhost\/New-Zzimba\/admin\/dashboard",
+                "activeNavigation": "\/New-Zzimba\/admin\/dashboard",
+                "pageTitle": "Dashboard | Admin Dashboard"
             }
         ]
     }
