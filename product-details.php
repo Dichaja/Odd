@@ -1529,7 +1529,6 @@ ob_start();
     }
     function showToast(message, type = 'success') { const t = document.createElement('div'); t.className = `fixed top-4 left-1/2 transform -translate-x-1/2 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity duration-300`; t.textContent = message; document.body.appendChild(t); setTimeout(() => t.classList.add('opacity-100'), 10); setTimeout(() => { t.classList.remove('opacity-100'); setTimeout(() => t.remove(), 300); }, 3000); }
 </script>
-
 <?php
 $mainContent = ob_get_clean();
 include __DIR__ . '/master.php';
