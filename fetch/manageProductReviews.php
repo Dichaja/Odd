@@ -12,29 +12,10 @@ use Ulid\Ulid;
 
 header('Content-Type: application/json');
 
-// Check if user is logged in
-if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in']) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Authentication required']);
-    exit;
-}
-
-$currentUser = $_SESSION['user']['user_id'] ?? $_SESSION['user']['id'] ?? null;
-
-if (!$currentUser) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'error' => 'Invalid user session']);
-    exit;
-}
-
-$userStmt = $pdo->prepare("
-    SELECT username FROM zzimba_users WHERE id = ?
-    UNION
-    SELECT username FROM admin_users WHERE id = ?
-");
-$userStmt->execute([$currentUser, $currentUser]);
-$userData = $userStmt->fetch(PDO::FETCH_ASSOC);
-$username = $userData ? $userData['username'] : 'Unknown';
+// Initialize variables that may be set in protected actions
+$currentUser = null;
+$username = 'Unknown';
+$currentUserStatus = null;
 
 try {
 
@@ -65,6 +46,17 @@ try {
         if (!$entityTypeCheck) {
             $pdo->exec("ALTER TABLE general_reviews ADD COLUMN entity_type ENUM('product', 'store') DEFAULT 'product' AFTER review_entity");
         }
+
+        $statusCheck = $pdo->query("SHOW COLUMNS FROM general_reviews LIKE 'status'")->fetch();
+if ($statusCheck) {
+    $pdo->exec("
+        ALTER TABLE general_reviews 
+        MODIFY COLUMN status 
+        ENUM('pending', 'approved', 'rejected', 'verified') 
+        DEFAULT 'approved'
+    ");
+}
+
     }
 } catch (PDOException $e) {
     error_log("Reviews table creation error: " . $e->getMessage());
@@ -75,27 +67,54 @@ try {
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+// Define protected actions that require authentication
+$protectedActions = [
+    'submit_review', 
+    'submit_store_review', 
+    'submit_platform_review',
+    'get_user_review',
+    'approve', 
+    'verify', 
+    'reject', 
+    'delete', 
+    'update_status', 
+    'update_review_status'
+];
+
+// Check authentication for protected actions
+if (in_array($action, $protectedActions, true)) {
+    if (!isset($_SESSION['user']) || !$_SESSION['user']['logged_in']) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Authentication required']);
+        exit;
+    }
+
+    $currentUser = $_SESSION['user']['user_id'] ?? $_SESSION['user']['id'] ?? null;
+
+    if (!$currentUser) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Invalid user session']);
+        exit;
+    }
+
+    // Get user info including status
+    $userStmt = $pdo->prepare("SELECT username, status FROM zzimba_users WHERE id = ? LIMIT 1");
+    $userStmt->execute([$currentUser]);
+    $userData = $userStmt->fetch(PDO::FETCH_ASSOC);
+    $username = $userData ? ($userData['username'] ?? 'Unknown') : 'Unknown';
+    $currentUserStatus = $userData['status'] ?? null;
+}
+
 switch ($action) {
     case 'submit_review':
-        submitReview($pdo, $currentUser, $username);
+        submitReview($pdo, $currentUser, $username, $currentUserStatus);
         break;
     case 'get_reviews':
         getReviews($pdo);
         break;
     case 'get_user_review':
         getUserReview($pdo, $currentUser);
-        break;
-    case 'list':
-        listReviews($pdo);
-        break;
-    case 'stats':
         getReviewStats($pdo);
-        break;
-    case 'update_status':
-        updateReviewStatus($pdo);
-        break;
-    case 'delete':
-        deleteReview($pdo);
         break;
     case 'search_products':
         searchProducts($pdo);
@@ -175,13 +194,16 @@ switch ($action) {
             exit;
         }
     case 'submit_store_review':
-        submitStoreReview($pdo, $currentUser, $username);
+        submitStoreReview($pdo, $currentUser, $username, $currentUserStatus);
         break;
     case 'submit_platform_review':
-        submitPlatformReview($pdo, $currentUser, $username);
+        submitPlatformReview($pdo, $currentUser, $username, $currentUserStatus);
         break;
     case 'getPlatformReviews':
         getPlatformReviews($pdo);
+        break;
+    case 'generalPlatformReviews':
+        generalPlatformReviews($pdo);
         break;
     case 'approve':
         approveReview($pdo);
@@ -198,7 +220,7 @@ switch ($action) {
         break;
 }
 
-function submitReview(PDO $pdo, string $currentUser, string $username)
+function submitReview(PDO $pdo, string $currentUser, string $username, ?string $currentUserStatus = null)
 {
     $productId = trim($_POST['product_id'] ?? '');
     $rating = intval($_POST['rating'] ?? 0);
@@ -241,6 +263,13 @@ function submitReview(PDO $pdo, string $currentUser, string $username)
     if (!$product) {
         http_response_code(404);
         echo json_encode(['success' => false, 'error' => 'Product not found']);
+        return;
+    }
+
+    // Ensure user account is active
+    if ($currentUserStatus !== 'active') {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Your account is not active. Please contact support.']);
         return;
     }
 
@@ -653,7 +682,7 @@ function searchVendors(PDO $pdo) {
     }
 }
 
-function submitStoreReview(PDO $pdo, string $currentUser, string $username)
+function submitStoreReview(PDO $pdo, string $currentUser, string $username, ?string $currentUserStatus = null)
 {
     $storeId = trim($_POST['store_id'] ?? '');
     $rating = intval($_POST['rating'] ?? 0);
@@ -695,6 +724,13 @@ function submitStoreReview(PDO $pdo, string $currentUser, string $username)
     if (!$store) {
         http_response_code(404);
         echo json_encode(['success' => false, 'error' => 'Store not found']);
+        return;
+    }
+
+    // Ensure user account is active
+    if ($currentUserStatus !== 'active') {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Your account is not active. Please contact support.']);
         return;
     }
 
@@ -774,7 +810,7 @@ function submitStoreReview(PDO $pdo, string $currentUser, string $username)
     }
 }
 
-function submitPlatformReview(PDO $pdo, string $currentUser, string $username)
+function submitPlatformReview(PDO $pdo, string $currentUser, string $username, ?string $currentUserStatus = null)
 {
     $rating = intval($_POST['rating'] ?? 0);
     $comment = trim($_POST['comment'] ?? '');
@@ -798,6 +834,13 @@ function submitPlatformReview(PDO $pdo, string $currentUser, string $username)
     if (strlen($comment) > 500) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Review must be less than 500 characters']);
+        return;
+    }
+
+    // Ensure user account is active
+    if ($currentUserStatus !== 'active') {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Your account is not active. Please contact support.']);
         return;
     }
 
@@ -859,20 +902,20 @@ function getPlatformReviews(PDO $pdo)
         $limit = intval($_GET['limit'] ?? 6);
         $limit = max(1, min(50, $limit));
 
-        $stmt = $pdo->prepare("
-            SELECT 
-                pr.id,
-                pr.rating,
-                pr.comment as review_text,
-                pr.created_at,
-                pr.is_verified,
-                COALESCE(u.name, u.username, 'Anonymous') as reviewer_name
-            FROM product_reviews pr
-            LEFT JOIN zzimba_users u ON pr.user_id = u.id
-            WHERE pr.review_type = 'platform' AND pr.status = 'approved'
-            ORDER BY pr.created_at DESC
-            LIMIT ?
-        ");
+            $stmt = $pdo->prepare("
+                SELECT 
+                    pr.id,
+                    pr.rating,
+                    pr.comment as review_text,
+                    pr.created_at,
+                    pr.is_verified,
+                    COALESCE(u.username, 'Anonymous') as reviewer_name
+                FROM general_reviews pr
+                LEFT JOIN zzimba_users u ON pr.user_id = u.id
+                WHERE pr.entity_type = 'platform' AND pr.status = 'verified'
+                ORDER BY pr.created_at DESC
+                LIMIT ?
+            ");
         
         $stmt->execute([$limit]);
         $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -891,10 +934,55 @@ function getPlatformReviews(PDO $pdo)
         error_log("Error fetching platform reviews: " . $e->getMessage());
         echo json_encode([
             'success' => false,
-            'error' => 'Failed to fetch reviews'
+            'error' => 'Failed to fetch review' . $e->getMessage()
         ]);
     }
 }
+
+function generalPlatformReviews(PDO $pdo)
+{
+    try {
+        $limit = intval($_GET['limit'] ?? 6);
+        $limit = max(1, min(50, $limit));
+
+        $stmt = $pdo->prepare("
+            SELECT 
+                pr.id,
+                pr.rating,
+                pr.comment AS review_text,
+                pr.created_at,
+                pr.is_verified,
+                COALESCE(u.username, 'Anonymous') AS reviewer_name
+            FROM general_reviews pr
+            LEFT JOIN zzimba_users u ON pr.user_id = u.id
+            WHERE pr.entity_type = 'platform' 
+              AND (pr.status = 'verified' OR pr.status = 'approved')
+            ORDER BY pr.created_at DESC
+            LIMIT ?
+        ");
+
+        $stmt->execute([$limit]);
+        $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Format boolean field
+        foreach ($reviews as &$review) {
+            $review['is_verified'] = (bool)($review['is_verified'] ?? false);
+        }
+
+        echo json_encode([
+            'success' => true,
+            'reviews' => $reviews
+        ]);
+
+    } catch (Exception $e) {
+        error_log("Error fetching approved/verified platform reviews: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'error' => 'Failed to fetch reviews: ' . $e->getMessage()
+        ]);
+    }
+}
+
 
 function approveReview(PDO $pdo)
 {

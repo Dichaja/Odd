@@ -1,146 +1,34 @@
 [
     {
-        "sessionID": "01k7zz07v58d1hapbehqmj8nkk",
-        "timestamp": "2025-10-20T04:53:15.929Z",
-        "ipAddress": "41.84.203.159",
-        "country": "Uganda",
-        "shortName": "ug",
-        "phoneCode": "256",
-        "browser": "Samsung Internet for Android",
-        "device": "mobile",
+        "sessionID": "01kbpz7zfmt6rjd4rv0medfa2b",
+        "timestamp": "2025-12-05T10:36:47.346Z",
+        "ipAddress": "102.140.209.66",
+        "country": "Kenya",
+        "shortName": "ke",
+        "phoneCode": "254",
+        "browser": "Firefox",
+        "device": "desktop",
         "coords": {
-            "latitude": 0.3970363,
-            "longitude": 32.638581
+            "latitude": -1.2920659,
+            "longitude": 36.8219462
         },
-        "loggedUser": {
-            "logged_in": true,
-            "user_id": "01JS427X3N4BJ2HPPYVD11B5G5",
-            "username": "Vadii",
-            "email": "obacheisaac@gmail.com",
-            "phone": "+256773089254",
-            "is_admin": false,
-            "last_login": "2025-10-18 07:22:33"
-        },
+        "loggedUser": null,
         "logs": [
             {
                 "event": "page_load",
-                "timestamp": "2025-10-20T04:46:12.814Z",
+                "timestamp": "2025-12-05T10:36:26.454Z",
                 "referrer": "",
-                "url": "http:\/\/localhost\/New\/view\/product\/01JS427WZAT9J5C8Y93JE1H6P1",
-                "activeNavigation": "materials",
-                "pageTitle": "Block slate Hardcore stone | Zzimba Online"
-            },
-            {
-                "event": "login_identifier_submit",
-                "timestamp": "2025-10-20T04:46:43.712Z",
-                "identifier": "Vadii",
-                "identifierType": "username"
-            },
-            {
-                "event": "login_identifier_success",
-                "timestamp": "2025-10-20T04:46:44.220Z",
-                "identifier": "Vadii",
-                "identifierType": "username"
-            },
-            {
-                "event": "login_password_submit",
-                "timestamp": "2025-10-20T04:46:55.144Z"
-            },
-            {
-                "event": "login_password_success",
-                "timestamp": "2025-10-20T04:46:56.517Z"
-            },
-            {
-                "event": "login_success",
-                "timestamp": "2025-10-20T04:46:56.521Z"
-            },
-            {
-                "event": "page_load",
-                "timestamp": "2025-10-20T04:47:11.241Z",
-                "referrer": "",
-                "url": "http:\/\/localhost\/New\/view\/product\/01JS427WZAT9J5C8Y93JE1H6P1",
-                "activeNavigation": "materials",
-                "pageTitle": "Block slate Hardcore stone | Zzimba Online"
-            },
-            {
-                "event": "page_load",
-                "timestamp": "2025-10-20T04:48:04.324Z",
-                "referrer": "",
-                "url": "http:\/\/localhost\/New\/",
+                "url": "http:\/\/localhost\/New-Zzimba\/",
                 "activeNavigation": "home",
-                "pageTitle": "Zzimba Online Uganda"
+                "pageTitle": "Buy and Sell Building Materials | Zzimba Online Uganda"
             },
             {
                 "event": "page_load",
-                "timestamp": "2025-10-20T04:48:27.905Z",
-                "referrer": "",
-                "url": "http:\/\/localhost\/New\/view\/product\/01JXPKKMGF7R3SMYFXX6ZH2ZFK",
+                "timestamp": "2025-12-05T10:36:47.346Z",
+                "referrer": "http:\/\/localhost\/New-Zzimba\/",
+                "url": "http:\/\/localhost\/New-Zzimba\/view\/product\/01JS427WZSXWS4QF63VHGGDXD0",
                 "activeNavigation": "materials",
-                "pageTitle": "Safety Boy Heavy duty Steel-Toe Work Boots | Zzimba Online"
-            },
-            {
-                "event": "page_refresh",
-                "timestamp": "2025-10-20T04:50:52.155Z",
-                "url": "http:\/\/localhost\/New\/view\/product\/01JXPKKMGF7R3SMYFXX6ZH2ZFK",
-                "activeNavigation": "materials",
-                "pageTitle": "Safety Boy Heavy duty Steel-Toe Work Boots | Zzimba Online"
-            },
-            {
-                "event": "login_identifier_submit",
-                "timestamp": "2025-10-20T04:52:22.631Z",
-                "identifier": "Newe",
-                "identifierType": "username"
-            },
-            {
-                "event": "login_identifier_success",
-                "timestamp": "2025-10-20T04:52:23.219Z",
-                "identifier": "Newe",
-                "identifierType": "username"
-            },
-            {
-                "event": "login_password_submit",
-                "timestamp": "2025-10-20T04:53:15.190Z"
-            },
-            {
-                "event": "login_password_success",
-                "timestamp": "2025-10-20T04:53:15.926Z"
-            },
-            {
-                "event": "login_success",
-                "timestamp": "2025-10-20T04:53:15.929Z"
-            }
-        ]
-    },
-    {
-        "sessionID": "01k7zze461b8nz3tm1j178dyrm",
-        "timestamp": "2025-10-20T04:53:30.899Z",
-        "ipAddress": "41.84.203.159",
-        "country": "Uganda",
-        "shortName": "ug",
-        "phoneCode": "256",
-        "browser": "Samsung Internet for Android",
-        "device": "mobile",
-        "coords": {
-            "latitude": 0.3970363,
-            "longitude": 32.638581
-        },
-        "loggedUser": {
-            "logged_in": true,
-            "user_id": "01JSJNS8DR2N72Q6VS7SMY3WSY",
-            "username": "Newe",
-            "email": "obacheisaac@gmail.com",
-            "phone": "+256773089254",
-            "is_admin": false,
-            "last_login": "2025-10-16 08:01:03"
-        },
-        "logs": [
-            {
-                "event": "page_load",
-                "timestamp": "2025-10-20T04:53:30.899Z",
-                "referrer": "",
-                "url": "http:\/\/localhost\/New\/view\/product\/01JXPKKMGF7R3SMYFXX6ZH2ZFK",
-                "activeNavigation": "materials",
-                "pageTitle": "Safety Boy Heavy duty Steel-Toe Work Boots | Zzimba Online"
+                "pageTitle": "Lweera White Lake Sand | Zzimba Online"
             }
         ]
     }

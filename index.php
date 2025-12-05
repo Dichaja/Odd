@@ -616,6 +616,67 @@ ob_start();
                 </div>
             </div>
         <?php endif; ?>
+
+        <!-- Platform Reviews Section - Desktop -->
+        <div class="container mx-auto px-4 py-12 md:py-16">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">What Our Users Say</h2>
+                <p class="text-gray-600 dark:text-white/70">Real experiences from our community</p>
+            </div>
+
+            <!-- Loading State -->
+            <div x-show="platformReviewsLoading" class="flex justify-center items-center py-12">
+                <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+            </div>
+
+            <!-- No Reviews State -->
+            <div x-show="!platformReviewsLoading && platformReviews.length === 0" class="text-center py-12">
+                <div class="mb-4">
+                    <i data-lucide="message-circle" class="w-16 h-16 text-gray-300 mx-auto"></i>
+                </div>
+                <p class="text-gray-600 dark:text-white/70 mb-4 text-lg">Be the first to share your experience!</p>
+                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg text-base font-medium hover:bg-primary-dark transition-colors">
+                    <i data-lucide="star" class="w-5 h-5 mr-2"></i>
+                    Write a Review
+                </a>
+            </div>
+
+            <!-- Reviews Grid - Desktop -->
+            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6">
+                <template x-for="review in platformReviews.slice(0, 6)" :key="review.id">
+                    <div class="bg-white dark:bg-secondary rounded-lg p-6 border border-gray-200 dark:border-white/10 shadow-md hover:shadow-lg transition-all">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-900 dark:text-white" x-text="review.reviewer_name"></p>
+                                    <template x-if="review.is_verified">
+                                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-1">
+                                            <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
+                                            Verified
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="flex">
+                                <template x-for="i in 5" :key="i">
+                                    <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-4 h-4"></i>
+                                </template>
+                            </div>
+                        </div>
+                        <p class="text-gray-700 dark:text-slate-300 text-sm leading-relaxed mb-4 line-clamp-4" x-text="review.review_text"></p>
+                        <div class="text-gray-500 dark:text-slate-400 text-xs" x-text="formatDate(review.created_at)"></div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- View All Button -->
+            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="text-center mt-10">
+                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-8 py-4 border-2 border-primary text-primary font-medium rounded-lg hover:bg-primary hover:text-white transition-all">
+                    <i data-lucide="eye" class="w-5 h-5 mr-2"></i>
+                    View All Reviews
+                </a>
+            </div>
+        </div>
     </div>
 
     <div class="md:hidden">
@@ -837,56 +898,60 @@ ob_start();
             </div>
         <?php endif; ?>
 
-        <!-- Platform Reviews Section Mobile -->
-        <div class="px-4 pt-4 pb-8">
-            <div class="text-base font-semibold text-secondary dark:text-white text-center mb-3">What Our Users Say</div>
-            
-            <div x-show="platformReviewsLoading" class="text-center py-8">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-            </div>
+        <!-- Platform Reviews Section -->
+<div class="px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-12">
+    <div class="text-base md:text-lg font-semibold text-secondary dark:text-white text-center mb-3 md:mb-6">What Our Users Say</div>
+    
+    <!-- Loading State -->
+    <div x-show="platformReviewsLoading" class="text-center py-8 md:py-12">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 md:h-10 md:w-10 border-t-2 border-b-2 border-primary"></div>
+    </div>
 
-            <div x-show="!platformReviewsLoading && platformReviews.length === 0" class="text-center py-8">
-                <div class="mb-4">
-                    <i data-lucide="message-circle" class="w-12 h-12 text-gray-300 mx-auto"></i>
-                </div>
-                <p class="text-gray-500 dark:text-slate-400 text-sm mb-4">Be the first to share your experience!</p>
-                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg text-sm">
-                    <i data-lucide="star" class="w-4 h-4 mr-2"></i>
-                    Write a Review
-                </a>
-            </div>
-
-            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="space-y-3">
-                <template x-for="review in platformReviews.slice(0, 3)" :key="review.id">
-                    <div class="bg-white dark:bg-secondary rounded-lg p-4 border border-gray-200 dark:border-white/10">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-2">
-                                <span class="font-medium text-sm text-gray-800 dark:text-white" x-text="review.reviewer_name"></span>
-                                <template x-if="review.is_verified">
-                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                        <i data-lucide="check-circle" class="w-2.5 h-2.5"></i>
-                                    </span>
-                                </template>
-                            </div>
-                            <div class="flex">
-                                <template x-for="i in 5" :key="i">
-                                    <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-3 h-3"></i>
-                                </template>
-                            </div>
-                        </div>
-                        <p class="text-gray-700 dark:text-slate-300 text-xs line-clamp-2" x-text="review.review_text"></p>
-                        <div class="text-gray-500 dark:text-slate-400 text-xs mt-2" x-text="formatDate(review.created_at)"></div>
-                    </div>
-                </template>
-            </div>
-
-            <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="text-center mt-4">
-                <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-4 py-2 border border-primary text-primary rounded-lg text-sm">
-                    <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
-                    View All Reviews
-                </a>
-            </div>
+    <!-- No Reviews State -->
+    <div x-show="!platformReviewsLoading && platformReviews.length === 0" class="text-center py-8 md:py-12">
+        <div class="mb-4">
+            <i data-lucide="message-circle" class="w-12 h-12 md:w-16 md:h-16 text-gray-300 mx-auto"></i>
         </div>
+        <p class="text-gray-500 dark:text-slate-400 text-sm md:text-base mb-4">Be the first to share your experience!</p>
+        <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-4 py-2 md:px-6 md:py-3 bg-primary text-white rounded-lg text-sm md:text-base hover:bg-primary-dark transition-colors">
+            <i data-lucide="star" class="w-4 h-4 md:w-5 md:h-5 mr-2"></i>
+            Write a Review
+        </a>
+    </div>
+
+    <!-- Reviews Grid - Responsive Layout -->
+    <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <template x-for="review in platformReviews.slice(0, 6)" :key="review.id">
+            <div class="bg-white dark:bg-secondary rounded-lg p-4 md:p-6 border border-gray-200 dark:border-white/10 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-sm md:text-base text-gray-800 dark:text-white" x-text="review.reviewer_name"></span>
+                        <template x-if="review.is_verified">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <i data-lucide="check-circle" class="w-2.5 h-2.5 md:w-3 md:h-3"></i>
+                            </span>
+                        </template>
+                    </div>
+                    <div class="flex">
+                        <template x-for="i in 5" :key="i">
+                            <i data-lucide="star" :class="i <= review.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-300'" class="w-3 h-3 md:w-4 md:h-4"></i>
+                        </template>
+                    </div>
+                </div>
+                <p class="text-gray-700 dark:text-slate-300 text-xs md:text-sm leading-relaxed" x-text="review.review_text"></p>
+                <div class="text-gray-500 dark:text-slate-400 text-xs md:text-sm mt-3 md:mt-4" x-text="formatDate(review.created_at)"></div>
+            </div>
+        </template>
+    </div>
+
+    <!-- View All Button -->
+    <div x-show="!platformReviewsLoading && platformReviews.length > 0" class="text-center mt-6 md:mt-8">
+        <a href="<?= BASE_URL ?>faq" class="inline-flex items-center px-6 py-3 md:px-8 md:py-4 border border-primary text-primary rounded-lg text-sm md:text-base hover:bg-primary hover:text-white transition-colors">
+            <i data-lucide="eye" class="w-4 h-4 md:w-5 md:h-5 mr-2"></i>
+            View All Reviews
+        </a>
+    </div>
+</div>
     </div>
 </div>
 
@@ -988,35 +1053,53 @@ ob_start();
                 window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(u), '_blank');
             },
             async loadPlatformReviews() {
-                this.platformReviewsLoading = true;
-                try {
-                    const r = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getPlatformReviews&limit=3');
-                    const data = await r.json();
-                    if (data.success) {
-                        this.platformReviews = data.reviews || [];
-                    }
-                } catch (e) {
-                    console.error('Failed to load platform reviews:', e);
-                } finally {
-                    this.platformReviewsLoading = false;
-                    this.$nextTick(() => {
-                        if (window.lucide && lucide.createIcons) lucide.createIcons();
-                    });
-                }
-            },
-            formatDate(dateStr) {
-                if (!dateStr) return '';
-                const date = new Date(dateStr);
-                const now = new Date();
-                const diffMs = now - date;
-                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                if (diffDays === 0) return 'Today';
-                if (diffDays === 1) return 'Yesterday';
-                if (diffDays < 7) return `${diffDays} days ago`;
-                if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-                if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-                return date.toLocaleDateString();
-            }
+    this.platformReviewsLoading = true;
+    
+    try {
+        const r = await fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=getPlatformReviews&limit=3');
+        const data = await r.json();
+        
+        console.log('Reviews API response:', data); // Debug log
+        
+        if (data.success && Array.isArray(data.reviews)) {
+            // Ensure proper data types
+            this.platformReviews = data.reviews.map(review => ({
+                ...review,
+                rating: Number(review.rating), // Ensure rating is a number
+                is_verified: Boolean(review.is_verified) // Ensure boolean
+            }));
+        } else {
+            this.platformReviews = [];
+        }
+    } catch (e) {
+        console.error('Failed to load platform reviews:', e);
+        this.platformReviews = [];
+    } finally {
+        this.platformReviewsLoading = false;
+        this.$nextTick(() => {
+            if (window.lucide && lucide.createIcons) lucide.createIcons();
+        });
+    }
+},
+formatDate(dateStr) {
+    if (!dateStr) return '';
+    
+    // Handle both ISO format and your API's format
+    const date = new Date(dateStr.replace(' ', 'T')); // Convert to ISO format
+    if (isNaN(date.getTime())) return ''; // Invalid date
+    
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+    
+    return date.toLocaleDateString();
+}
         }
     }
     function showToast(m, t = 'success') { const el = document.createElement('div'); el.className = `fixed top-4 left-1/2 -translate-x-1/2 ${t === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white px-4 py-2 rounded-md shadow-md z-[10000] opacity-0 transition-opacity`; el.textContent = m; document.body.appendChild(el); setTimeout(() => el.classList.add('opacity-100'), 10); setTimeout(() => { el.classList.remove('opacity-100'); setTimeout(() => el.remove(), 300) }, 2500); }
