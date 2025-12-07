@@ -272,7 +272,8 @@ $reviewStats = [
 
 try {
     $reviewStmt = $pdo->prepare("
-        SELECT 
+        SELECT
+            r.id, 
             u.username,
             r.rating,
             r.comment,
@@ -979,6 +980,43 @@ ob_start();
                                             <?php endfor; ?>
                                         </div>
                                         <p class="text-gray-700"><?= htmlspecialchars($review['comment']) ?></p>
+
+                                        <!-- Replies: show list and reply form -->
+                                        <div class="mt-3 text-sm text-gray-700">
+                                            <button type="button" @click="toggleReplies('<?= $review['id'] ?>')"
+                                                class="text-sm text-gray-500 hover:underline">Show replies
+                                                <span class="ml-1">(<span x-text="(replies['<?= $review['id'] ?>'] || []).length"></span>)</span>
+                                            </button>
+
+                                            <div x-show="showReplies['<?= $review['id'] ?>']" x-cloak class="mt-3 space-y-3">
+                                                <template x-for="r in replies['<?= $review['id'] ?>'] || []" :key="r.id">
+                                                    <div class="pl-3 border-l-2 border-gray-100 dark:border-white/5">
+                                                        <div class="flex items-center gap-2 mb-1">
+                                                            <span class="font-semibold text-gray-800" x-text="r.username"></span>
+                                                            <span x-show="r.is_vendor" class="ml-2 bg-sky-100 text-sky-800 text-xs font-medium px-2 py-0.5 rounded-full">Vendor</span>
+                                                        </div>
+                                                        <div class="text-gray-500 text-xs mb-1" x-text="r.created_at"></div>
+                                                        <div class="text-gray-700" x-text="r.comment"></div>
+                                                    </div>
+                                                </template>
+
+                                                <div class="mt-2">
+                                                    <textarea x-model="replyComment['<?= $review['id'] ?>']"
+                                                        rows="2" maxlength="300"
+                                                        class="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#D92B13] resize-none"
+                                                        placeholder="Write a reply... (minimum 3 characters)"></textarea>
+                                                    <div class="flex items-center gap-2 mt-2">
+                                                        <button type="button" @click="submitReply('<?= $review['id'] ?>')"
+                                                            :disabled="!(replyComment['<?= $review['id'] ?>] && replyComment['<?= $review['id'] ?>].trim().length >= 3) || replySubmitting['<?= $review['id'] ?>']"
+                                                            class="bg-[#D92B13] text-white px-3 py-1 rounded-md disabled:opacity-50">
+                                                            <span x-show="!replySubmitting['<?= $review['id'] ?>']">Reply</span>
+                                                            <span x-show="replySubmitting['<?= $review['id'] ?>']">Sending...</span>
+                                                        </button>
+                                                        <button type="button" @click="replyComment['<?= $review['id'] ?>']=''" class="text-sm text-gray-500">Cancel</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -1044,6 +1082,43 @@ ob_start();
                                                 <?php endfor; ?>
                                             </div>
                                             <p class="text-gray-700"><?= htmlspecialchars($review['comment']) ?></p>
+
+                                            <!-- Replies: show list and reply form -->
+                                            <div class="mt-3 text-sm text-gray-700">
+                                                <button type="button" @click="toggleReplies('<?= $review['id'] ?>')"
+                                                    class="text-sm text-gray-500 hover:underline">Show replies
+                                                    <span class="ml-1">(<span x-text="(replies['<?= $review['id'] ?>'] || []).length"></span>)</span>
+                                                </button>
+
+                                                <div x-show="showReplies['<?= $review['id'] ?>']" x-cloak class="mt-3 space-y-3">
+                                                    <template x-for="r in replies['<?= $review['id'] ?>'] || []" :key="r.id">
+                                                        <div class="pl-3 border-l-2 border-gray-100 dark:border-white/5">
+                                                            <div class="flex items-center gap-2 mb-1">
+                                                                <span class="font-semibold text-gray-800" x-text="r.username"></span>
+                                                                <span x-show="r.is_vendor" class="ml-2 bg-sky-100 text-sky-800 text-xs font-medium px-2 py-0.5 rounded-full">Vendor</span>
+                                                            </div>
+                                                            <div class="text-gray-500 text-xs mb-1" x-text="r.created_at"></div>
+                                                            <div class="text-gray-700" x-text="r.comment"></div>
+                                                        </div>
+                                                    </template>
+
+                                                    <div class="mt-2">
+                                                        <textarea x-model="replyComment['<?= $review['id'] ?>']"
+                                                            rows="2" maxlength="300"
+                                                            class="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#D92B13] resize-none"
+                                                            placeholder="Write a reply... (minimum 3 characters)"></textarea>
+                                                        <div class="flex items-center gap-2 mt-2">
+                                                            <button type="button" @click="submitReply('<?= $review['id'] ?>')"
+                                                                :disabled="(replyComment['<?= $review['id'] ?>'] || '').length < 3 || replySubmitting['<?= $review['id'] ?>']"
+                                                                class="bg-[#D92B13] text-white px-3 py-1 rounded-md disabled:opacity-50">
+                                                                <span x-show="!replySubmitting['<?= $review['id'] ?>']">Reply</span>
+                                                                <span x-show="replySubmitting['<?= $review['id'] ?>']">Sending...</span>
+                                                            </button>
+                                                            <button type="button" @click="replyComment['<?= $review['id'] ?>']=''" class="text-sm text-gray-500">Cancel</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -1311,6 +1386,10 @@ ob_start();
             reviewRating: 0,
             hoverRating: 0,
             reviewComment: '',
+            replies: {},
+            showReplies: {},
+            replyComment: {},
+            replySubmitting: {},
             isSubmitting: false,
             shareBusy: false,
             sharePromise: null,
@@ -1330,6 +1409,66 @@ ob_start();
                 const urlAction = new URLSearchParams(window.location.search).get('action');
                 if (urlAction === 'sell') this.sellProduct(this.productId, this.productTitle);
                 document.addEventListener('visibilitychange', () => { if (document.hidden) this.stopAuto(false); else this.startAuto(); });
+            },
+            toggleReplies(id) {
+                id = String(id);
+                if (!this.showReplies[id]) {
+                    this.loadReplies(id);
+                }
+                this.showReplies[id] = !this.showReplies[id];
+            },
+            loadReplies(id) {
+                id = String(id);
+                // fetch replies from backend
+                fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=get_review_replies&review_id=' + encodeURIComponent(id), { credentials: 'same-origin' })
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d && d.success && Array.isArray(d.replies)) {
+                            // ensure keys are strings
+                            this.replies[id] = d.replies.map(r => ({ ...r }));
+                            this.$nextTick(() => this.refreshIcons());
+                        } else {
+                            this.replies[id] = [];
+                        }
+                    })
+                    .catch(() => { this.replies[id] = []; });
+            },
+            submitReply(id) {
+                id = String(id);
+                if (!IS_LOGGED_IN) {
+                    if (typeof openAuthModal === 'function') openAuthModal(); else alert('Please log in to reply.');
+                    return;
+                }
+                const comment = (this.replyComment[id] || '').trim();
+                if (!comment || comment.length < 3) {
+                    alert('Reply must be at least 3 characters long.');
+                    return;
+                }
+                if (this.replySubmitting[id]) return;
+                this.replySubmitting[id] = true;
+                const form = new FormData();
+                form.append('action', 'submit_review_reply');
+                form.append('review_id', id);
+                form.append('comment', comment);
+                fetch(this.BASE_URL + 'fetch/manageProductReviews.php', { method: 'POST', body: form, credentials: 'same-origin' })
+                    .then(r => r.json())
+                    .then(d => {
+                        this.replySubmitting[id] = false;
+                        if (d && d.success) {
+                            if (typeof showToast === 'function') showToast(d.message || 'Reply posted', 'success');
+                            this.replyComment[id] = '';
+                            // reload replies
+                            setTimeout(() => this.loadReplies(id), 600);
+                        } else {
+                            const msg = (d && (d.error || d.message)) || 'Failed to post reply';
+                            if (typeof showToast === 'function') showToast(msg, 'error'); else alert(msg);
+                        }
+                    })
+                    .catch(err => {
+                        this.replySubmitting[id] = false;
+                        const msg = err && err.message ? err.message : 'Network error while posting reply';
+                        if (typeof showToast === 'function') showToast(msg, 'error'); else alert(msg);
+                    });
             },
             triggerFade() { this.imageFade = false; requestAnimationFrame(() => { this.imageFade = true; }); },
             shuffleImages() {

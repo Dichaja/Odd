@@ -36,6 +36,18 @@ try {
                 updated_at DATETIME NOT NULL
             )
         ");
+        // Create replies table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS review_replies (
+                id VARCHAR(26) PRIMARY KEY,
+                review_id VARCHAR(26) NOT NULL,
+                user_id VARCHAR(64) NOT NULL,
+                comment TEXT NOT NULL,
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL,
+                FOREIGN KEY (review_id) REFERENCES general_reviews(id) ON DELETE CASCADE
+            )
+        ");
     } else {
         $columnCheck = $pdo->query("SHOW COLUMNS FROM general_reviews LIKE 'product_id'")->fetch();
         if ($columnCheck) {
@@ -72,6 +84,7 @@ $protectedActions = [
     'submit_review', 
     'submit_store_review', 
     'submit_platform_review',
+    'submit_review_reply',
     'get_user_review',
     'approve', 
     'verify', 
@@ -193,6 +206,13 @@ switch ($action) {
             ]);
             exit;
         }
+        break;
+    case 'get_review_replies':
+        getReviewReplies($pdo);
+        break;
+    case 'submit_review_reply':
+        submitReviewReply($pdo, $currentUser, $username, $currentUserStatus);
+        break;
     case 'submit_store_review':
         submitStoreReview($pdo, $currentUser, $username, $currentUserStatus);
         break;
@@ -316,11 +336,12 @@ function submitReview(PDO $pdo, string $currentUser, string $username, ?string $
         // Notify all vendors selling this product
         try {
             $vendorStmt = $pdo->prepare("
-                SELECT DISTINCT vs.id as store_id, vs.name as store_name, vs.user_id as vendor_user_id
+                SELECT DISTINCT vs.id as store_id, vs.name as store_name, vs.owner_id as vendor_user_id
                 FROM vendor_stores vs
                 JOIN store_categories sc ON sc.store_id = vs.id
                 JOIN store_products sp ON sp.store_category_id = sc.id
-                WHERE sp.product_id = ? AND vs.status = 'active' AND sp.status = 'active'
+                INNER JOIN product_pricing pp ON sp.id=pp.store_products_id
+                WHERE sp.product_id = ? AND vs.status = 'active' AND sp.status = 'active';
             ");
             $vendorStmt->execute([$productId]);
             $vendors = $vendorStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -335,7 +356,8 @@ function submitReview(PDO $pdo, string $currentUser, string $username, ?string $
                         $vendorRecipients[] = [
                             'type' => 'user',
                             'id' => $vendor['vendor_user_id'],
-                            'message' => "New {$rating}-star review on \"{$product['title']}\": \"{$shortComment}\""
+                            //'message' => "New {$rating}-star review on \"{$product['title']}\": \"{$shortComment}\""
+                            'message' => "User {$username} has Commented and Rated \"{$product['title']}\" {$rating}/5 stars."
                         ];
                     }
                 }
@@ -399,7 +421,7 @@ function getReviews(PDO $pdo)
             LIMIT ? OFFSET ?
         ");
         $stmt->execute([$productId, $limit, $offset]);
-        $reviews = $stmt->fetchAll();
+            $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC); // Ensure associative array
 
         // Get total count and average rating
         $countStmt = $pdo->prepare("
@@ -1097,5 +1119,84 @@ function rejectReview(PDO $pdo) {
 function isValidUlid(string $ulid): bool
 {
     return preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/i', $ulid) === 1;
+}
+
+function getReviewReplies(PDO $pdo)
+{
+    $reviewId = trim($_GET['review_id'] ?? '');
+    if (empty($reviewId) || !isValidUlid($reviewId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid review id']);
+        return;
+    }
+
+    try {
+        $stmt = $pdo->prepare("SELECT rr.id, rr.comment AS reply_text, rr.created_at, COALESCE(u.username, 'Anonymous') AS reviewer_name, (EXISTS(SELECT 1 FROM vendor_stores vs WHERE vs.owner_id = rr.user_id AND vs.status = 'active')) AS is_vendor FROM review_replies rr LEFT JOIN zzimba_users u ON rr.user_id = u.id WHERE rr.review_id = ? ORDER BY rr.created_at ASC");
+        $stmt->execute([$reviewId]);
+        $replies = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Normalize is_vendor to boolean
+        foreach ($replies as &$r) {
+            $r['is_vendor'] = (bool) ($r['is_vendor'] ?? false);
+        }
+
+        echo json_encode(['success' => true, 'replies' => $replies]);
+    } catch (Exception $e) {
+        error_log('Error fetching review replies: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to fetch replies']);
+    }
+}
+
+function submitReviewReply(PDO $pdo, string $currentUser = null, string $username = 'Unknown', ?string $currentUserStatus = null)
+{
+    if (!$currentUser) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Authentication required']);
+        return;
+    }
+
+    if ($currentUserStatus !== 'active') {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Your account is not active']);
+        return;
+    }
+
+    $reviewId = trim($_POST['review_id'] ?? '');
+    $comment = trim($_POST['comment'] ?? '');
+    $comment = strip_tags($comment);
+    $comment = htmlspecialchars($comment, ENT_QUOTES, 'UTF-8');
+    $comment = preg_replace('/\bhttps?:\/\/[^\s]+/i', '[link removed]', $comment);
+
+    if (empty($reviewId) || !isValidUlid($reviewId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Invalid review id']);
+        return;
+    }
+
+    if (empty($comment) || strlen($comment) < 3) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Reply must be at least 3 characters long']);
+        return;
+    }
+
+    if (strlen($comment) > 1000) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Reply too long']);
+        return;
+    }
+
+    try {
+        $now = (new DateTime())->format('Y-m-d H:i:s');
+        $replyId = generateUlid();
+        $stmt = $pdo->prepare("INSERT INTO review_replies (id, review_id, user_id, comment, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$replyId, $reviewId, $currentUser, $comment, $now, $now]);
+
+        echo json_encode(['success' => true, 'message' => 'Reply posted successfully']);
+    } catch (Exception $e) {
+        error_log('Error submitting review reply: ' . $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => 'Failed to post reply']);
+    }
 }
 ?>
