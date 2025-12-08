@@ -17,12 +17,34 @@ $currentUser = null;
 $username = 'Unknown';
 $currentUserStatus = null;
 
+$tableExists = $pdo->query("SHOW TABLES LIKE 'review_replies'")->rowCount() > 0;
+  if (!$tableExists) {
+        // Create replies table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS review_replies (
+                id VARCHAR(26) PRIMARY KEY,
+                review_id VARCHAR(26) NOT NULL,
+                user_id VARCHAR(64) NOT NULL,
+                comment TEXT NOT NULL,
+                is_vendor TINYINT(1) DEFAULT 0,
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL
+            )
+        ");
+    } else {
+        // Add is_vendor column if it doesn't exist
+        $isVendorCheck = $pdo->query("SHOW COLUMNS FROM review_replies LIKE 'is_vendor'")->fetch();
+        if (!$isVendorCheck) {
+            $pdo->exec("ALTER TABLE review_replies ADD COLUMN is_vendor TINYINT(1) DEFAULT 0 AFTER user_id");
+        }
+    }
+
 try {
 
     $tableExists = $pdo->query("SHOW TABLES LIKE 'general_reviews'")->rowCount() > 0;
 
     if (!$tableExists) {
-        $pdo->exec("
+         $pdo->exec("
             CREATE TABLE general_reviews (
                 id VARCHAR(26) PRIMARY KEY,
                 review_entity VARCHAR(36) NOT NULL,
@@ -34,18 +56,6 @@ try {
                 entity_type ENUM('product', 'store') DEFAULT 'product',
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL
-            )
-        ");
-        // Create replies table
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS review_replies (
-                id VARCHAR(26) PRIMARY KEY,
-                review_id VARCHAR(26) NOT NULL,
-                user_id VARCHAR(64) NOT NULL,
-                comment TEXT NOT NULL,
-                created_at DATETIME NOT NULL,
-                updated_at DATETIME NOT NULL,
-                FOREIGN KEY (review_id) REFERENCES general_reviews(id) ON DELETE CASCADE
             )
         ");
     } else {
@@ -208,7 +218,35 @@ switch ($action) {
         }
         break;
     case 'get_review_replies':
-        getReviewReplies($pdo);
+        $review_id = $_GET['review_id'] ?? null;
+        if (!$review_id) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Missing review_id']);
+            exit;
+        }
+        
+        $replStmt = $pdo->prepare("
+            SELECT 
+                r.id, 
+                u.username,
+                r.comment,
+                r.is_vendor,
+                DATE_FORMAT(r.created_at, '%Y-%m-%d %H:%i') as created_at
+            FROM review_replies r
+            JOIN zzimba_users u ON u.id = r.user_id
+            WHERE r.review_id = ?
+            ORDER BY r.created_at ASC
+        ");
+        $replStmt->execute([$review_id]);
+        $replies = $replStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'replies' => $replies,
+            'total' => count($replies)
+        ]);
+        exit;
         break;
     case 'submit_review_reply':
         submitReviewReply($pdo, $currentUser, $username, $currentUserStatus);
@@ -848,14 +886,15 @@ function submitStoreReview(PDO $pdo, string $currentUser, string $username, ?str
             }
 
         foreach ($recipients as $recipient) {
-                    $notificationService->create(
-                        'info', 
-                        'Store Review', 
-                        [$recipient], 
-                        $reviewUrl, 
-                        'normal', 
-                        $currentUser);
-                }
+            $notificationService->create(
+                'info',
+                'Store Review',
+                array($recipient),
+                $reviewUrl,
+                'normal',
+                $currentUser
+            );
+        }
 
         } catch (Exception $notifError) {
             error_log('Store review notification creation failed: ' . $notifError->getMessage());  
@@ -1131,7 +1170,18 @@ function getReviewReplies(PDO $pdo)
     }
 
     try {
-        $stmt = $pdo->prepare("SELECT rr.id, rr.comment AS reply_text, rr.created_at, COALESCE(u.username, 'Anonymous') AS reviewer_name, (EXISTS(SELECT 1 FROM vendor_stores vs WHERE vs.owner_id = rr.user_id AND vs.status = 'active')) AS is_vendor FROM review_replies rr LEFT JOIN zzimba_users u ON rr.user_id = u.id WHERE rr.review_id = ? ORDER BY rr.created_at ASC");
+        $stmt = $pdo->prepare("
+            SELECT 
+                rr.id, 
+                rr.comment AS reply_text, 
+                rr.created_at, 
+                COALESCE(u.username, 'Anonymous') AS reviewer_name,
+                rr.is_vendor
+            FROM review_replies rr
+            LEFT JOIN zzimba_users u ON rr.user_id = u.id
+            WHERE rr.review_id = ?
+            ORDER BY rr.created_at ASC
+        ");
         $stmt->execute([$reviewId]);
         $replies = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1184,13 +1234,25 @@ function submitReviewReply(PDO $pdo, string $currentUser = null, string $usernam
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Reply too long']);
         return;
-    }
+    } 
 
     try {
+        // Check if user is a vendor
+        $vendorCheck = $pdo->prepare("
+            SELECT COUNT(*) as vendor_count 
+            FROM vendor_stores 
+            WHERE owner_id = ? AND status = 'active'
+        ");
+        $vendorCheck->execute([$currentUser]);
+        $isVendor = $vendorCheck->fetch()['vendor_count'] > 0 ? 1 : 0;
+
         $now = (new DateTime())->format('Y-m-d H:i:s');
         $replyId = generateUlid();
-        $stmt = $pdo->prepare("INSERT INTO review_replies (id, review_id, user_id, comment, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$replyId, $reviewId, $currentUser, $comment, $now, $now]);
+        $stmt = $pdo->prepare("
+            INSERT INTO review_replies (id, review_id, user_id, comment, is_vendor, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([$replyId, $reviewId, $currentUser, $comment, $isVendor, $now, $now]);
 
         echo json_encode(['success' => true, 'message' => 'Reply posted successfully']);
     } catch (Exception $e) {

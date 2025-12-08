@@ -983,32 +983,43 @@ ob_start();
 
                                         <!-- Replies: show list and reply form -->
                                         <div class="mt-3 text-sm text-gray-700">
+                                            <template x-if="(replies['<?= $review['id'] ?>'] || []).length > 0">
+                                                <div class="mt-3 space-y-3">
+                                                    <template x-for="r in replies['<?= $review['id'] ?>'] || []" :key="r.id">
+                                                        <div class="pl-3 border-l-2 border-gray-100 dark:border-white/5">
+                                                            <div class="flex items-center gap-2 mb-1">
+                                                                <span class="font-semibold text-gray-800 dark:text-white" x-text="r.username"></span>
+                                                                <span x-show="r.is_vendor" class="ml-2 bg-sky-100 text-sky-800 text-xs font-medium px-2 py-0.5 rounded-full">Vendor</span>
+                                                            </div>
+                                                            <div class="text-gray-500 text-xs mb-1" x-text="r.created_at"></div>
+                                                            <div class="text-gray-700 dark:text-white/80" x-text="r.comment"></div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+
                                             <button type="button" @click="toggleReplies('<?= $review['id'] ?>')"
-                                                class="text-sm text-gray-500 hover:underline">Show replies
-                                                <span class="ml-1">(<span x-text="(replies['<?= $review['id'] ?>'] || []).length"></span>)</span>
+                                                class="text-sm text-gray-500 hover:underline mt-2">
+                                                <span x-show="!showReplies['<?= $review['id'] ?>']">
+                                                    Show replies
+                                                    <span class="ml-1">(<span x-text="(replies['<?= $review['id'] ?>'] || []).length"></span>)</span>
+                                                </span>
+                                                <span x-show="showReplies['<?= $review['id'] ?>']">
+                                                    Hide replies
+                                                    <span class="ml-1">(<span x-text="(replies['<?= $review['id'] ?>'] || []).length"></span>)</span>
+                                                </span>
                                             </button>
 
-                                            <div x-show="showReplies['<?= $review['id'] ?>']" x-cloak class="mt-3 space-y-3">
-                                                <template x-for="r in replies['<?= $review['id'] ?>'] || []" :key="r.id">
-                                                    <div class="pl-3 border-l-2 border-gray-100 dark:border-white/5">
-                                                        <div class="flex items-center gap-2 mb-1">
-                                                            <span class="font-semibold text-gray-800" x-text="r.username"></span>
-                                                            <span x-show="r.is_vendor" class="ml-2 bg-sky-100 text-sky-800 text-xs font-medium px-2 py-0.5 rounded-full">Vendor</span>
-                                                        </div>
-                                                        <div class="text-gray-500 text-xs mb-1" x-text="r.created_at"></div>
-                                                        <div class="text-gray-700" x-text="r.comment"></div>
-                                                    </div>
-                                                </template>
-
-                                                <div class="mt-2">
+                                            <div x-show="showReplies['<?= $review['id'] ?>']" x-cloak class="mt-3">
+                                                <div>
                                                     <textarea x-model="replyComment['<?= $review['id'] ?>']"
                                                         rows="2" maxlength="300"
-                                                        class="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#D92B13] resize-none"
+                                                        class="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-[#D92B13] resize-none"
                                                         placeholder="Write a reply... (minimum 3 characters)"></textarea>
                                                     <div class="flex items-center gap-2 mt-2">
                                                         <button type="button" @click="submitReply('<?= $review['id'] ?>')"
-                                                            :disabled="!(replyComment['<?= $review['id'] ?>] && replyComment['<?= $review['id'] ?>].trim().length >= 3) || replySubmitting['<?= $review['id'] ?>']"
-                                                            class="bg-[#D92B13] text-white px-3 py-1 rounded-md disabled:opacity-50">
+                                                            :disabled="!(replyComment['<?= $review['id'] ?>'] && replyComment['<?= $review['id'] ?>'].trim().length >= 3) || replySubmitting['<?= $review['id'] ?>']"
+                                                            class="bg-[#D92B13] text-white px-3 py-1 rounded-md disabled:opacity-50 text-sm font-medium">
                                                             <span x-show="!replySubmitting['<?= $review['id'] ?>']">Reply</span>
                                                             <span x-show="replySubmitting['<?= $review['id'] ?>']">Sending...</span>
                                                         </button>
@@ -1085,32 +1096,43 @@ ob_start();
 
                                             <!-- Replies: show list and reply form -->
                                             <div class="mt-3 text-sm text-gray-700">
+                                                <template x-if="(replies['<?= $review['id'] ?>'] || []).length > 0">
+                                                    <div class="mt-3 space-y-3">
+                                                        <template x-for="r in replies['<?= $review['id'] ?>'] || []" :key="r.id">
+                                                            <div class="pl-3 border-l-2 border-gray-100 dark:border-white/5">
+                                                                <div class="flex items-center gap-2 mb-1">
+                                                                    <span class="font-semibold text-gray-800 dark:text-white" x-text="r.username"></span>
+                                                                    <span x-show="r.is_vendor" class="ml-2 bg-sky-100 text-sky-800 text-xs font-medium px-2 py-0.5 rounded-full">Vendor</span>
+                                                                </div>
+                                                                <div class="text-gray-500 text-xs mb-1" x-text="r.created_at"></div>
+                                                                <div class="text-gray-700 dark:text-white/80" x-text="r.comment"></div>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+
                                                 <button type="button" @click="toggleReplies('<?= $review['id'] ?>')"
-                                                    class="text-sm text-gray-500 hover:underline">Show replies
-                                                    <span class="ml-1">(<span x-text="(replies['<?= $review['id'] ?>'] || []).length"></span>)</span>
+                                                    class="text-sm text-gray-500 hover:underline mt-2">
+                                                    <span x-show="!showReplies['<?= $review['id'] ?>']">
+                                                        Show replies
+                                                        <span class="ml-1">(<span x-text="(replies['<?= $review['id'] ?>'] || []).length"></span>)</span>
+                                                    </span>
+                                                    <span x-show="showReplies['<?= $review['id'] ?>']">
+                                                        Hide replies
+                                                        <span class="ml-1">(<span x-text="(replies['<?= $review['id'] ?>'] || []).length"></span>)</span>
+                                                    </span>
                                                 </button>
 
-                                                <div x-show="showReplies['<?= $review['id'] ?>']" x-cloak class="mt-3 space-y-3">
-                                                    <template x-for="r in replies['<?= $review['id'] ?>'] || []" :key="r.id">
-                                                        <div class="pl-3 border-l-2 border-gray-100 dark:border-white/5">
-                                                            <div class="flex items-center gap-2 mb-1">
-                                                                <span class="font-semibold text-gray-800" x-text="r.username"></span>
-                                                                <span x-show="r.is_vendor" class="ml-2 bg-sky-100 text-sky-800 text-xs font-medium px-2 py-0.5 rounded-full">Vendor</span>
-                                                            </div>
-                                                            <div class="text-gray-500 text-xs mb-1" x-text="r.created_at"></div>
-                                                            <div class="text-gray-700" x-text="r.comment"></div>
-                                                        </div>
-                                                    </template>
-
-                                                    <div class="mt-2">
+                                                <div x-show="showReplies['<?= $review['id'] ?>']" x-cloak class="mt-3">
+                                                    <div>
                                                         <textarea x-model="replyComment['<?= $review['id'] ?>']"
                                                             rows="2" maxlength="300"
-                                                            class="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#D92B13] resize-none"
+                                                            class="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-md focus:ring-2 focus:ring-[#D92B13] resize-none"
                                                             placeholder="Write a reply... (minimum 3 characters)"></textarea>
                                                         <div class="flex items-center gap-2 mt-2">
                                                             <button type="button" @click="submitReply('<?= $review['id'] ?>')"
-                                                                :disabled="(replyComment['<?= $review['id'] ?>'] || '').length < 3 || replySubmitting['<?= $review['id'] ?>']"
-                                                                class="bg-[#D92B13] text-white px-3 py-1 rounded-md disabled:opacity-50">
+                                                                :disabled="!(replyComment['<?= $review['id'] ?>'] && replyComment['<?= $review['id'] ?>'].trim().length >= 3) || replySubmitting['<?= $review['id'] ?>']"
+                                                                class="bg-[#D92B13] text-white px-3 py-1 rounded-md disabled:opacity-50 text-sm font-medium">
                                                                 <span x-show="!replySubmitting['<?= $review['id'] ?>']">Reply</span>
                                                                 <span x-show="replySubmitting['<?= $review['id'] ?>']">Sending...</span>
                                                             </button>
@@ -1396,6 +1418,9 @@ ob_start();
             shareLinkCache: null,
             init() {
                 this.$nextTick(() => {
+
+
+
                     this.logProductView();
                     this.refreshIcons();
                     if (IS_LOGGED_IN && typeof LOGGED_USER !== 'undefined' && LOGGED_USER) {
