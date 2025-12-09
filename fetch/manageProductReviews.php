@@ -477,26 +477,26 @@ function getReviews(PDO $pdo)
         $countStmt->execute([$productId]);
         $stats = $countStmt->fetch();
 
-        echo json_encode([
-            'success' => true,
-            'reviews' => $reviews,
-            'stats' => [
-                'total_reviews' => intval($stats['total_reviews']),
-                'average_rating' => round(floatval($stats['average_rating']), 1),
-                'rating_breakdown' => [
-                    5 => intval($stats['five_star']),
-                    4 => intval($stats['four_star']),
-                    3 => intval($stats['three_star']),
-                    2 => intval($stats['two_star']),
-                    1 => intval($stats['one_star'])
-                ]
-            ],
-            'pagination' => [
-                'current_page' => $page,
-                'total_pages' => ceil(intval($stats['total_reviews']) / $limit),
-                'has_more' => (intval($stats['total_reviews']) > ($page * $limit))
-            ]
-        ]);
+echo json_encode([
+    'success' => true,
+    'reviews' => $reviews,
+    'stats' => [
+        'total_reviews' => intval($stats['total_reviews']),
+        'average_rating' => round(floatval($stats['average_rating']), 1),
+        'rating_breakdown' => [
+            5 => intval($stats['five_star']),
+            4 => intval($stats['four_star']),
+            3 => intval($stats['three_star']),
+            2 => intval($stats['two_star']),
+            1 => intval($stats['one_star'])
+        ]
+    ],
+    'pagination' => [
+        'current_page' => $page,
+        'total_pages' => ceil(intval($stats['total_reviews']) / $limit),
+        'has_more' => (intval($stats['total_reviews']) > ($page * $limit))
+    ]
+]);
 
     } catch (Exception $e) {
         error_log('Error fetching reviews: ' . $e->getMessage());
@@ -1253,6 +1253,70 @@ function submitReviewReply(PDO $pdo, string $currentUser = null, string $usernam
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([$replyId, $reviewId, $currentUser, $comment, $isVendor, $now, $now]);
+
+        // --- create notifications via NotificationService ---
+        try {
+            $notificationService = new NotificationService($pdo);
+
+            // determine review owner and entity to build a helpful url
+            $metaStmt = $pdo->prepare("SELECT review_entity, entity_type, user_id FROM general_reviews WHERE id = ? LIMIT 1");
+            $metaStmt->execute([$reviewId]);
+            $meta = $metaStmt->fetch(PDO::FETCH_ASSOC);
+
+            $entityId = $meta['review_entity'] ?? null;
+            $entityType = $meta['entity_type'] ?? null;
+            $reviewOwner = $meta['user_id'] ?? null;
+
+            // Build URL to the review (product, store or faq)
+            $reviewUrl = BASE_URL;
+            if ($entityType === 'product' && $entityId) {
+                $reviewUrl .= "product-details.php?id={$entityId}#review-{$reviewId}";
+            } elseif ($entityType === 'store' && $entityId) {
+                $reviewUrl .= "vendor-profile.php?id={$entityId}#review-{$reviewId}";
+            } else {
+                $reviewUrl .= "faq.php#review-{$reviewId}";
+            }
+
+            // Notify the review author (if different from replier)
+            if ($reviewOwner && $reviewOwner !== $currentUser) {
+                $short = mb_substr($comment, 0, 200) . (mb_strlen($comment) > 200 ? '...' : '');
+                $recipients = [
+                    [
+                        'type' => 'user',
+                        'id' => $reviewOwner,
+                        'message' => "{$username} replied to your review: \"{$short}\""
+                    ]
+                ];
+                $notificationService->create(
+                    'info',
+                    'Review Reply',
+                    $recipients,
+                    $reviewUrl,
+                    'normal',
+                    $currentUser
+                );
+            }
+
+            // Notify admins
+            $adminRecipients = [
+                [
+                    'type' => 'admin',
+                    'id' => 'admin',
+                    'message' => "{$username} replied to review {$reviewId}: \"" . mb_substr($comment, 0, 200) . (mb_strlen($comment) > 200 ? '...' : '') . "\""
+                ]
+            ];
+            $notificationService->create(
+                'info',
+                'Review Reply',
+                $adminRecipients,
+                BASE_URL . "admin/product-reviews.php?review_id={$reviewId}",
+                'high',
+                $currentUser
+            );
+        } catch (Exception $nex) {
+            // notification errors should not prevent reply success
+            error_log('NotificationService error (submitReviewReply): ' . $nex->getMessage());
+        }
 
         echo json_encode(['success' => true, 'message' => 'Reply posted successfully']);
     } catch (Exception $e) {
