@@ -983,7 +983,8 @@ ob_start();
 
                                         <!-- Replies: show list and reply form -->
                                         <div class="mt-3 text-sm text-gray-700">
-                                            <template x-if="(replies['<?= $review['id'] ?>'] || []).length > 0">
+                                            <!-- Show replies list when toggled open -->
+                                            <template x-if="showReplies['<?= $review['id'] ?>'] && (replies['<?= $review['id'] ?>'] || []).length > 0">
                                                 <div class="mt-3 space-y-3">
                                                     <template x-for="r in replies['<?= $review['id'] ?>'] || []" :key="r.id">
                                                         <div class="pl-3 border-l-2 border-gray-100 dark:border-white/5">
@@ -998,6 +999,7 @@ ob_start();
                                                 </div>
                                             </template>
 
+                                            <!-- Toggle button with correct count -->
                                             <button type="button" @click="toggleReplies('<?= $review['id'] ?>')"
                                                 class="text-sm text-gray-500 hover:underline mt-2">
                                                 <span x-show="!showReplies['<?= $review['id'] ?>']">
@@ -1010,6 +1012,7 @@ ob_start();
                                                 </span>
                                             </button>
 
+                                            <!-- Reply form - only show when toggled open -->
                                             <div x-show="showReplies['<?= $review['id'] ?>']" x-cloak class="mt-3">
                                                 <div>
                                                     <textarea x-model="replyComment['<?= $review['id'] ?>']"
@@ -1096,7 +1099,8 @@ ob_start();
 
                                             <!-- Replies: show list and reply form -->
                                             <div class="mt-3 text-sm text-gray-700">
-                                                <template x-if="(replies['<?= $review['id'] ?>'] || []).length > 0">
+                                                <!-- Show replies list when toggled open -->
+                                                <template x-if="showReplies['<?= $review['id'] ?>'] && (replies['<?= $review['id'] ?>'] || []).length > 0">
                                                     <div class="mt-3 space-y-3">
                                                         <template x-for="r in replies['<?= $review['id'] ?>'] || []" :key="r.id">
                                                             <div class="pl-3 border-l-2 border-gray-100 dark:border-white/5">
@@ -1111,6 +1115,7 @@ ob_start();
                                                     </div>
                                                 </template>
 
+                                                <!-- Toggle button with correct count -->
                                                 <button type="button" @click="toggleReplies('<?= $review['id'] ?>')"
                                                     class="text-sm text-gray-500 hover:underline mt-2">
                                                     <span x-show="!showReplies['<?= $review['id'] ?>']">
@@ -1123,6 +1128,7 @@ ob_start();
                                                     </span>
                                                 </button>
 
+                                                <!-- Reply form - only show when toggled open -->
                                                 <div x-show="showReplies['<?= $review['id'] ?>']" x-cloak class="mt-3">
                                                     <div>
                                                         <textarea x-model="replyComment['<?= $review['id'] ?>']"
@@ -1421,10 +1427,24 @@ ob_start();
 
 
 
+
+
+
+
                     this.logProductView();
                     this.refreshIcons();
                     if (IS_LOGGED_IN && typeof LOGGED_USER !== 'undefined' && LOGGED_USER) {
                         this.reviewName = LOGGED_USER.username || '';
+                    }
+                    // Load replies count for all reviews
+                    this.reviews = <?= json_encode($reviews, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+                    if (Array.isArray(this.reviews)) {
+                        this.reviews.forEach(review => {
+                            if (review && review.id) {
+                                const id = String(review.id);
+                                this.loadReplies(id);
+                            }
+                        });
                     }
                 });
                 window.addEventListener('zz:session-login', e => this.handlePostLogin(e.detail || {}));
@@ -1437,27 +1457,33 @@ ob_start();
             },
             toggleReplies(id) {
                 id = String(id);
-                if (!this.showReplies[id]) {
+                this.showReplies[id] = !this.showReplies[id];
+                // Load replies only when opening
+                if (this.showReplies[id] && (!this.replies[id] || this.replies[id].length === 0)) {
                     this.loadReplies(id);
                 }
-                this.showReplies[id] = !this.showReplies[id];
             },
             loadReplies(id) {
-                id = String(id);
-                // fetch replies from backend
-                fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=get_review_replies&review_id=' + encodeURIComponent(id), { credentials: 'same-origin' })
-                    .then(r => r.json())
-                    .then(d => {
-                        if (d && d.success && Array.isArray(d.replies)) {
-                            // ensure keys are strings
-                            this.replies[id] = d.replies.map(r => ({ ...r }));
-                            this.$nextTick(() => this.refreshIcons());
-                        } else {
-                            this.replies[id] = [];
-                        }
-                    })
-                    .catch(() => { this.replies[id] = []; });
-            },
+    id = String(id);
+
+    // initialize Alpine reactive keys only if missing
+    if (this.replyComment[id] === undefined) this.replyComment[id] = '';
+    if (this.replySubmitting[id] === undefined) this.replySubmitting[id] = false;
+    if (this.showReplies[id] === undefined) this.showReplies[id] = false;
+
+    fetch(this.BASE_URL + 'fetch/manageProductReviews.php?action=get_review_replies&review_id=' + encodeURIComponent(id), { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(d => {
+            if (d && d.success && Array.isArray(d.replies)) {
+                this.replies[id] = d.replies.map(r => ({ ...r }));
+                this.$nextTick(() => this.refreshIcons());
+            } else {
+                this.replies[id] = [];
+            }
+        })
+        .catch(() => { this.replies[id] = []; });
+}
+,
             submitReply(id) {
                 id = String(id);
                 if (!IS_LOGGED_IN) {
