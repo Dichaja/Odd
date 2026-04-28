@@ -41,7 +41,7 @@ $db_pass = $_ENV['DB_PASS'] ?? '';
 
 try {
     $pdo = new PDO(
-        "mysql:host=$db_host;dbname=$db_name;port=3307;charset=utf8mb4",
+        "mysql:host=$db_host;dbname=$db_name;port=3306;charset=utf8mb4",
         $db_user,
         $db_pass,
         [

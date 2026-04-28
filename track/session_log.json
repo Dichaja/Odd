@@ -1,1 +1,100 @@
-[]
+[
+    {
+        "sessionID": "01kq6sygtqser8408wwpjasdkv",
+        "timestamp": "2026-04-27T06:30:45.182Z",
+        "ipAddress": "Fetching\u2026",
+        "country": "Fetching\u2026",
+        "shortName": "Fetching\u2026",
+        "phoneCode": "Fetching\u2026",
+        "browser": "Firefox",
+        "device": "desktop",
+        "coords": {
+            "latitude": null,
+            "longitude": null
+        },
+        "loggedUser": {
+            "logged_in": true,
+            "user_id": "01JS427VW0F9BGXBFNNERZYZ7Q",
+            "username": "admin",
+            "email": "admin@zzimbaonline.com",
+            "phone": "+256703945327",
+            "is_admin": true,
+            "last_login": "2025-12-05 16:05:48"
+        },
+        "logs": [
+            {
+                "event": "page_load",
+                "timestamp": "2026-04-27T06:29:40.284Z",
+                "referrer": "",
+                "url": "http:\/\/localhost\/New-Zzimba\/",
+                "activeNavigation": "home",
+                "pageTitle": "Buy and Sell Building Materials | Zzimba Online Uganda"
+            },
+            {
+                "event": "login_identifier_submit",
+                "timestamp": "2026-04-27T06:29:46.830Z",
+                "identifier": "Admin:admin",
+                "identifierType": "username"
+            },
+            {
+                "event": "login_identifier_success",
+                "timestamp": "2026-04-27T06:29:47.778Z",
+                "identifier": "Admin:admin",
+                "identifierType": "username"
+            },
+            {
+                "event": "login_password_submit",
+                "timestamp": "2026-04-27T06:30:06.038Z"
+            },
+            {
+                "event": "login_password_success",
+                "timestamp": "2026-04-27T06:30:06.621Z"
+            },
+            {
+                "event": "login_success",
+                "timestamp": "2026-04-27T06:30:06.622Z"
+            },
+            {
+                "event": "page_load",
+                "timestamp": "2026-04-27T06:30:21.167Z",
+                "referrer": "",
+                "url": "http:\/\/localhost\/New-Zzimba\/admin\/dashboard",
+                "activeNavigation": "\/New-Zzimba\/admin\/dashboard",
+                "pageTitle": "Dashboard | Admin Dashboard"
+            },
+            {
+                "event": "page_load",
+                "timestamp": "2026-04-27T06:30:45.182Z",
+                "referrer": "http:\/\/localhost\/New-Zzimba\/admin\/dashboard",
+                "url": "http:\/\/localhost\/New-Zzimba\/admin\/product-reviews",
+                "activeNavigation": "\/New-Zzimba\/admin\/product-reviews",
+                "pageTitle": "General Reviews Management | Admin Dashboard"
+            }
+        ]
+    },
+    {
+        "sessionID": "01kqa175d5d8hsyrvrh1j71xz2",
+        "timestamp": "2026-04-28T12:32:43.953Z",
+        "ipAddress": "Fetching\u2026",
+        "country": "Fetching\u2026",
+        "shortName": "Fetching\u2026",
+        "phoneCode": "Fetching\u2026",
+        "browser": "Firefox",
+        "device": "desktop",
+        "coords": {
+            "latitude": null,
+            "longitude": null
+        },
+        "loggedUser": null,
+        "logs": [
+            {
+                "event": "page_load",
+                "timestamp": "2026-04-28T12:32:43.953Z",
+                "referrer": "",
+                "url": "http:\/\/localhost\/New-Zzimba\/",
+                "activeNavigation": "home",
+                "pageTitle": "Buy and Sell Building Materials | Zzimba Online Uganda"
+            }
+        ]
+    }
+]
