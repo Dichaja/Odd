@@ -74,7 +74,7 @@
     },
     {
         "sessionID": "01kqa175d5d8hsyrvrh1j71xz2",
-        "timestamp": "2026-04-28T12:32:43.953Z",
+        "timestamp": "2026-04-28T12:38:35.534Z",
         "ipAddress": "Fetching\u2026",
         "country": "Fetching\u2026",
         "shortName": "Fetching\u2026",
@@ -94,6 +94,26 @@
                 "url": "http:\/\/localhost\/New-Zzimba\/",
                 "activeNavigation": "home",
                 "pageTitle": "Buy and Sell Building Materials | Zzimba Online Uganda"
+            },
+            {
+                "event": "login_identifier_submit",
+                "timestamp": "2026-04-28T12:38:21.530Z",
+                "identifier": "Admin:admin",
+                "identifierType": "username"
+            },
+            {
+                "event": "login_identifier_success",
+                "timestamp": "2026-04-28T12:38:21.672Z",
+                "identifier": "Admin:admin",
+                "identifierType": "username"
+            },
+            {
+                "event": "login_password_submit",
+                "timestamp": "2026-04-28T12:38:35.201Z"
+            },
+            {
+                "event": "login_password_success",
+                "timestamp": "2026-04-28T12:38:35.534Z"
             }
         ]
     }
